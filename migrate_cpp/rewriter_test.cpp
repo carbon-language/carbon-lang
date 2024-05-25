@@ -56,7 +56,7 @@ class Annotations {
 // Rewrites the `cpp_code`, return the Carbon equivalent. If the text has no
 // source range annotated with $[[...]]$, the entire translation unit will be
 // migrated and output. Otherwise, only the migrated output corresponding to the
-// annotated range will be be output. No more than one range may be annotated at
+// annotated range will be output. No more than one range may be annotated at
 // all.
 //
 // This annotation mechanism is useful in that it allows us to specifically test

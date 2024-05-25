@@ -4,67 +4,66 @@
 
 #include "toolchain/check/modifiers.h"
 
+#include "toolchain/check/decl_state.h"
+
 namespace Carbon::Check {
 
-static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
-                             Lex::TokenKind decl_kind,
-                             llvm::StringRef context_string,
-                             Parse::NodeId context_node) -> void {
+static auto DiagnoseNotAllowed(Context& context, Parse::NodeId modifier_node,
+                               Lex::TokenKind decl_kind,
+                               llvm::StringRef context_string,
+                               SemIR::LocId context_loc_id) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
                     "`{0}` not allowed on `{1}` declaration{2}.",
                     Lex::TokenKind, Lex::TokenKind, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
                                       context.token_kind(modifier_node),
                                       decl_kind, context_string.str());
-  if (context_node.is_valid()) {
+  if (context_loc_id.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
                       "Containing definition here.");
-    diag.Note(context_node, ModifierNotInContext);
+    diag.Note(context_loc_id, ModifierNotInContext);
   }
   diag.Emit();
 }
 
-auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
-                          Lex::TokenKind decl_kind) -> void {
-  auto& s = context.decl_state_stack().innermost();
-  auto not_allowed = s.modifier_set & ~allowed;
-  if (!!(not_allowed & KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_modifier, decl_kind, "",
-                     Parse::NodeId::Invalid);
-    not_allowed = not_allowed & ~KeywordModifierSet::Access;
-    s.saw_access_modifier = Parse::NodeId::Invalid;
+// Returns the KeywordModifierSet corresponding to the ModifierOrder entry.
+static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
+  switch (order) {
+    case ModifierOrder::Access:
+      return KeywordModifierSet::Access;
+    case ModifierOrder::Extern:
+      return KeywordModifierSet::Extern;
+    case ModifierOrder::Decl:
+      return KeywordModifierSet::Decl;
   }
-  if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_kind, "",
-                     Parse::NodeId::Invalid);
-    s.saw_decl_modifier = Parse::NodeId::Invalid;
-  }
-  s.modifier_set &= allowed;
 }
 
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
-                           Parse::NodeId context_node) -> void {
+                           SemIR::LocId context_loc_id) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
-  if (!!(not_allowed & KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_modifier, decl_kind, context_string,
-                     context_node);
-    not_allowed = not_allowed & ~KeywordModifierSet::Access;
-    s.saw_access_modifier = Parse::NodeId::Invalid;
+  if (!not_allowed) {
+    return;
   }
-  if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_kind, context_string,
-                     context_node);
-    s.saw_decl_modifier = Parse::NodeId::Invalid;
+
+  for (auto order_index = 0;
+       order_index <= static_cast<int8_t>(ModifierOrder::Last); ++order_index) {
+    auto order = static_cast<ModifierOrder>(order_index);
+    if (!!(not_allowed & ModifierOrderAsSet(order))) {
+      DiagnoseNotAllowed(context, s.modifier_node_id(order), decl_kind,
+                         context_string, context_loc_id);
+      s.set_modifier_node_id(order, Parse::NodeId::Invalid);
+    }
   }
-  s.modifier_set = s.modifier_set & ~forbidden;
+
+  s.modifier_set &= ~forbidden;
 }
 
 // Returns the instruction that owns the given scope, or Invalid if the scope is
 // not associated with an instruction.
-auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
+static auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
     -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     return SemIR::InstId::Invalid;
@@ -74,7 +73,7 @@ auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
 
 // Returns the instruction that owns the given scope, or Invalid if the scope is
 // not associated with an instruction.
-auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
+static auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::Inst> {
   auto inst_id = GetScopeInstId(context, scope_id);
   if (!inst_id.is_valid()) {
@@ -84,8 +83,8 @@ auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
 }
 
 auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                SemIR::NameScopeId target_scope_id) -> void {
-  auto target = GetScopeInst(context, target_scope_id);
+                                SemIR::NameScopeId enclosing_scope_id) -> void {
+  auto target = GetScopeInst(context, enclosing_scope_id);
   if (target && target->Is<SemIR::Namespace>()) {
     // TODO: This assumes that namespaces can only be declared at file scope. If
     // we add support for non-file-scope namespaces, we will need to check the
@@ -109,12 +108,11 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
       ", `private` is only allowed on class members and at file scope");
 }
 
-// Rules for abstract, virtual, and impl, which are only allowed in classes.
 auto CheckMethodModifiersOnFunction(Context& context,
-                                    SemIR::NameScopeId target_scope_id)
+                                    SemIR::NameScopeId enclosing_scope_id)
     -> void {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  auto target_id = GetScopeInstId(context, target_scope_id);
+  auto target_id = GetScopeInstId(context, enclosing_scope_id);
   if (target_id.is_valid()) {
     if (auto class_decl =
             context.insts().TryGetAs<SemIR::ClassDecl>(target_id)) {
@@ -123,12 +121,12 @@ auto CheckMethodModifiersOnFunction(Context& context,
       if (inheritance_kind == SemIR::Class::Final) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                               " in a non-abstract non-base `class` definition",
-                              context.insts().GetParseNode(target_id));
+                              context.insts().GetLocId(target_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                               " in a non-abstract `class` definition",
-                              context.insts().GetParseNode(target_id));
+                              context.insts().GetLocId(target_id));
       }
       return;
     }
@@ -138,11 +136,28 @@ auto CheckMethodModifiersOnFunction(Context& context,
                         " outside of a class");
 }
 
+auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
+                                  SemIR::NameScopeId enclosing_scope_id,
+                                  bool is_definition) -> void {
+  if (is_definition) {
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                          " that provides a definition");
+  }
+  if (enclosing_scope_id.is_valid()) {
+    auto target_id = context.name_scopes().Get(enclosing_scope_id).inst_id;
+    if (target_id.is_valid() &&
+        !context.insts().Is<SemIR::Namespace>(target_id)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                            " that is a member");
+    }
+  }
+}
+
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind,
-                                         SemIR::NameScopeId target_scope_id)
+                                         SemIR::NameScopeId enclosing_scope_id)
     -> void {
-  auto target = GetScopeInst(context, target_scope_id);
+  auto target = GetScopeInst(context, enclosing_scope_id);
   if (target && target->Is<SemIR::InterfaceDecl>()) {
     // Both `default` and `final` allowed in an interface definition.
     return;

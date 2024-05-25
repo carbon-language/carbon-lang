@@ -9,12 +9,13 @@ base class B2 {}
 
 class C {
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:3: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+7]]:3: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
   // CHECK:STDERR:   extend base: B2;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: Previous `base` declaration is here.
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   extend base: B2;
 }
 
@@ -46,21 +47,29 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B1.decl = class_decl @B1 {} [template = constants.%B1]
-// CHECK:STDOUT:   %B2.decl = class_decl @B2 {} [template = constants.%B2]
-// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
-// CHECK:STDOUT:   %D.decl = class_decl @D {} [template = constants.%D]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [template = constants.%B1] {}
+// CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B1 {}
+// CHECK:STDOUT: class @B1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B1
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B2 {}
+// CHECK:STDOUT: class @B2 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
@@ -68,17 +77,19 @@ class D {
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc11
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc23: <unbound element of class D> = base_decl B1, element0 [template]
-// CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc24: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:   %.loc24: <unbound element of class D> = base_decl B1, element0 [template]
+// CHECK:STDOUT:   %B1.ref.loc31: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc23
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   .base = %.loc24
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

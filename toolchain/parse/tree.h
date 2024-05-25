@@ -16,8 +16,40 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
+
+struct DeferredDefinition;
+
+// The index of a deferred function definition within the parse tree's deferred
+// definition store.
+struct DeferredDefinitionIndex : public IndexBase {
+  using ValueType = DeferredDefinition;
+
+  static const DeferredDefinitionIndex Invalid;
+
+  using IndexBase::IndexBase;
+};
+
+constexpr DeferredDefinitionIndex DeferredDefinitionIndex::Invalid =
+    DeferredDefinitionIndex(InvalidIndex);
+
+// A function whose definition is deferred because it is defined inline in a
+// class or similar scope.
+//
+// Such functions are type-checked out of order, with their bodies checked after
+// the enclosing declaration is complete. Some additional information is tracked
+// for these functions in the parse tree to support this reordering.
+struct DeferredDefinition {
+  // The node that starts the function definition.
+  FunctionDefinitionStartId start_id;
+  // The function definition node.
+  FunctionDefinitionId definition_id = NodeId::Invalid;
+  // The index of the next method that is not nested within this one.
+  DeferredDefinitionIndex next_definition_index =
+      DeferredDefinitionIndex::Invalid;
+};
 
 // Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
 struct File;
@@ -48,7 +80,7 @@ class Tree : public Printable<Tree> {
   class PostorderIterator;
   class SiblingIterator;
 
-  // For PackagingDirective.
+  // For PackagingDecl.
   enum class ApiOrImpl : uint8_t {
     Api,
     Impl,
@@ -57,15 +89,18 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    NodeId node;
+    ImportDeclId node_id;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralValueId library_id = StringLiteralValueId::Invalid;
+    // Whether an import is exported. This is on the file's packaging
+    // declaration even though it doesn't apply, for consistency in structure.
+    bool is_export = false;
   };
 
   // The file's packaging.
-  struct PackagingDirective {
+  struct PackagingDecl {
     PackagingNames names;
-    ApiOrImpl api_or_impl;
+    bool is_impl;
   };
 
   // Wires up the reference to the tokenized buffer. The `Parse` function should
@@ -145,10 +180,14 @@ class Tree : public Printable<Tree> {
     return T(n);
   }
 
-  auto packaging_directive() const -> const std::optional<PackagingDirective>& {
-    return packaging_directive_;
+  auto packaging_decl() const -> const std::optional<PackagingDecl>& {
+    return packaging_decl_;
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
+  auto deferred_definitions() const
+      -> const ValueStore<DeferredDefinitionIndex>& {
+    return deferred_definitions_;
+  }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -337,8 +376,9 @@ class Tree : public Printable<Tree> {
   // nodes as some tokens may have been skipped.
   bool has_errors_ = false;
 
-  std::optional<PackagingDirective> packaging_directive_;
+  std::optional<PackagingDecl> packaging_decl_;
   llvm::SmallVector<PackagingNames> imports_;
+  ValueStore<DeferredDefinitionIndex> deferred_definitions_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
@@ -492,10 +532,10 @@ struct Tree::ConvertTo<NodeIdInCategory<C>> {
   }
 };
 
-template <typename T, typename U>
-struct Tree::ConvertTo<NodeIdOneOf<T, U>> {
+template <typename... T>
+struct Tree::ConvertTo<NodeIdOneOf<T...>> {
   static auto AllowedFor(NodeKind kind) -> bool {
-    return kind == T::Kind || kind == U::Kind;
+    return ((kind == T::Kind) || ...);
   }
 };
 

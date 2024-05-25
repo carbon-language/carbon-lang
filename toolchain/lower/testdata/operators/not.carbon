@@ -12,6 +12,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: source_filename = "not.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @Not(i1 %b) {
-// CHECK:STDOUT:   %1 = xor i1 %b, true
-// CHECK:STDOUT:   ret i1 %1
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc8 = xor i1 %b, true
+// CHECK:STDOUT:   ret i1 %.loc8
 // CHECK:STDOUT: }

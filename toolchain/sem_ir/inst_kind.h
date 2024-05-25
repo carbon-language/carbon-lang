@@ -16,12 +16,35 @@ namespace Carbon::SemIR {
 // of value.
 enum class InstValueKind : int8_t {
   // This instruction doesn't produce a value, and shouldn't be referenced by
-  // other
-  // instructions.
+  // other instructions.
   None,
   // This instruction represents an expression or expression-like construct that
   // produces a value of the type indicated by its `type_id` field.
   Typed,
+};
+
+// Whether an instruction can be used to define a constant value. This specifies
+// whether the instruction can be added to the `constants()` list. Note that
+// even instructions that cannot define a constant value can still have an
+// associated `constant_value()`, but the constant value will be a different
+// kind of instruction.
+enum class InstConstantKind : int8_t {
+  // This instruction never defines a constant value. For example,
+  // `UnaryOperatorNot` never defines a constant value; if its operand is a
+  // template constant, its constant value will instead be a `BoolLiteral`. This
+  // is also used for instructions that don't produce a value at all.
+  Never,
+  // This instruction may be a symbolic constant, depending on its operands, but
+  // is never a template constant. For example, a `Call` instruction can be a
+  // symbolic constant but never a template constant.
+  SymbolicOnly,
+  // This instruction can define a symbolic or template constant, but might not
+  // have a constant value, depending on its operands. For example, a
+  // `TupleValue` can define a constant if its operands are constants.
+  Conditional,
+  // This instruction always has a constant value of the same kind. For example,
+  // `IntLiteral`.
+  Always,
 };
 
 // Whether an instruction is a terminator or part of the terminator sequence.
@@ -67,6 +90,9 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 
   // Returns whether this kind of instruction is expected to produce a value.
   auto value_kind() const -> InstValueKind;
+
+  // Returns whether this kind of instruction is able to define a constant.
+  auto constant_kind() const -> InstConstantKind;
 
   // Returns whether this instruction kind is a code block terminator, such as
   // an unconditional branch instruction, or part of the termination sequence,

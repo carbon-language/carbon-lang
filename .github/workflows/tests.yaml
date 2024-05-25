@@ -10,6 +10,10 @@ on:
   pull_request:
   merge_group:
 
+permissions:
+  contents: read # For actions/checkout.
+  pull-requests: read # For dorny/paths-filter to read pull requests.
+
 # Cancel previous workflows on the PR when there are multiple fast commits.
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
 concurrency:
@@ -37,45 +41,48 @@ jobs:
       os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       # Ubuntu images start with 23GB available, and this adds 14GB more. For
       # comparison, MacOS images have >100GB free.
+      #
+      # Although we could delete more, if we run into a limit, not deleting
+      # everything provides a little flexibility to get space while trying
+      # to shrink the build.
       - name: Free up disk space (Ubuntu)
         if: env.os == 'ubuntu'
-        uses: jlumbroso/free-disk-space@v1.2.0
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           android: true
           dotnet: true
           haskell: true
-          # Although we could delete more, if we run into a limit, it provides a
-          # little flexibility to get space while trying to shrink the build.
-          # There's also support for docker images at head (1.2.0 is still
-          # the latest release).
-          large-packages: false
-          swap-storage: false
 
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout branch
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       # Tests should only run on applicable paths, but we still need to have an
       # action run for the merge queue. We filter steps based on the paths here,
       # and condition steps on the output.
       - id: filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
           filters: |
             has_code:
               - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
 
       # Setup Python and related tools.
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         if: steps.filter.outputs.has_code == 'true'
         with:
           # Match the min version listed in docs/project/contribution_tools.md
@@ -89,7 +96,7 @@ jobs:
       - name: Cache Homebrew (macOS)
         if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
         id: cache-homebrew-macos
-        uses: actions/cache@v3
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         env:
           cache-name: cache-homebrew
         with:
@@ -154,7 +161,7 @@ jobs:
       - name: Cache LLVM and Clang installation (Ubuntu)
         if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
         id: cache-llvm-ubuntu
-        uses: actions/cache@v3
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         env:
           cache-name: cache-llvm
         with:
@@ -205,6 +212,8 @@ jobs:
           echo '*** bazelisk'
           which bazelisk
           bazelisk --version
+          echo '*** run_bazel.py'
+          ./scripts/run_bazel.py --version
           echo '*** python'
           which python
           python --version
@@ -289,7 +298,7 @@ jobs:
           build --verbose_failures
           test --test_output=errors
           EOF
-          bazelisk info
+          ./scripts/run_bazel.py info
 
       # Just for visibility, print space before and after the build.
       - name: Disk space before build
@@ -300,9 +309,13 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         run: |
           exit_code=0
-          bazelisk mod deps --lockfile_mode=error || exit_code=$?
+          ./scripts/run_bazel.py \
+            --attempts=5 \
+            mod deps --lockfile_mode=error || exit_code=$?
           if (( $exit_code != 0 )); then
-            bazelisk mod deps --lockfile_mode=update
+            ./scripts/run_bazel.py \
+              --attempts=5 \
+              mod deps --lockfile_mode=update
             echo "MODULE.bazel.lock is out of date! Use below file for update."
             echo "Platforms may require merging output, for example by applying"
             echo "an update, re-running triggers, and applying the next update."
@@ -360,47 +373,13 @@ jobs:
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
-          for i in {1..5}; do
-            if (( $i == 4 )); then
-              # Decrease the jobs sharply if we see repeated failures to try to
-              # work around transient network errors even if it makes things
-              # slower.
-              echo "build --jobs=4" >>user.bazelrc
-            fi
-
-            bazel_exit=0
-            bazelisk test -c ${{ matrix.build_mode }} \
-              --target_pattern_file=$TARGETS_FILE || bazel_exit=$?
-
-            # If we succeed, we're done.
-            if (( $bazel_exit == 0 )); then
-              break
-            fi
-
-            # Several error codes are reliably permanent, break immediately.
-            # `1`  -- The build failed.
-            # `2`  -- Command line or environment problem.
-            # `3`  -- Tests failed or timed out, we don't retry at this layer
-            #         on execution timeout.
-            # `4`  -- No tests found, which should be impossible here.
-            # `8`  -- Explicitly interrupted build.
-            #
-            # Note that `36` is documented as "likely permanent", but we retry
-            # it as most of our transient failures actually produce that error
-            # code.
-            if (( $bazel_exit == 1 || $bazel_exit == 2 || $bazel_exit == 3 || \
-                  $bazel_exit == 4 || $bazel_exit == 8 || $bazel_exit == 8 ))
-            then
-              break
-            fi
-
-            echo "Retrying a failed build as it may be transient..."
-            # Also sleep a bit to try to skip over transient machine load.
-            sleep $i
-          done
-
-          # Propagate the Bazel exit code.
-          exit $bazel_exit
+          # Decrease the jobs sharply if we see repeated failures to try to
+          # work around transient network errors even if it makes things
+          # slower.
+          ./scripts/run_bazel.py \
+            --attempts=5 --jobs-on-last-attempt=4 \
+            test -c ${{ matrix.build_mode }} \
+            --target_pattern_file=$TARGETS_FILE
 
       # Run in the clang-tidy config. This is done as part of tests so that we
       # aren't duplicating bazel/llvm setup.
@@ -413,7 +392,9 @@ jobs:
         env:
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
-          bazelisk build --config=clang-tidy -k \
+          ./scripts/run_bazel.py \
+            --attempts=5 \
+            build --config=clang-tidy -k \
             --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build".

@@ -8,20 +8,24 @@ fn F() {
   var a: i32;
   // Assignment can only appear as an expression statement, not as a subexpression.
   // TODO: Produce the "can only be used as a complete statement" diagnostic in each of these cases.
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:10: ERROR: Expected `,` or `)`.
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:10: ERROR: Expected `,` or `)`.
   // CHECK:STDERR:   1 + (a = 1);
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   1 + (a = 1);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+6]]:19: ERROR: Expected `else` after `if ... then ...`.
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+8]]:19: ERROR: Expected `else` after `if ... then ...`.
   // CHECK:STDERR:   (if true then a += 1 else a /= 2);
   // CHECK:STDERR:                   ^~
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:19: ERROR: Expected `,` or `)`.
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:19: ERROR: Expected `,` or `)`.
   // CHECK:STDERR:   (if true then a += 1 else a /= 2);
   // CHECK:STDERR:                   ^~
+  // CHECK:STDERR:
   (if true then a += 1 else a /= 2);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:7: ERROR: Operator `++` can only be used as a complete statement.
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:7: ERROR: Operator `++` can only be used as a complete statement.
   // CHECK:STDERR:   a + ++a;
   // CHECK:STDERR:       ^~
+  // CHECK:STDERR:
   a + ++a;
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:5: ERROR: Parentheses are required around this unary `if` operator.
   // CHECK:STDERR:   ++if c then a else b;
@@ -43,12 +47,12 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:             {kind: 'ExprOpenParen', text: '('},
+// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'a'},
 // CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'InfixOperatorPlus', text: '+', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'ExprOpenParen', text: '('},
+// CHECK:STDOUT:           {kind: 'ParenExprStart', text: '('},
 // CHECK:STDOUT:               {kind: 'BoolLiteralTrue', text: 'true'},
 // CHECK:STDOUT:             {kind: 'IfExprIf', text: 'if', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'a'},

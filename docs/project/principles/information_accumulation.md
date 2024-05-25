@@ -77,9 +77,8 @@ especially important to the coherence of generics and templates.
     attempt to observe a property of an incomplete class that is not known until
     the class is complete renders the program invalid.
 -   When an `impl` needs to be resolved, only those `impl` declarations that
-    have that appear earlier are considered. However, if a later `impl`
-    declaration would change the result of any earlier `impl` lookup, the
-    program is invalid.
+    appear earlier are considered. However, if a later `impl` declaration would
+    change the result of any earlier `impl` lookup, the program is invalid.
 
 ## Exceptions
 

@@ -4,26 +4,28 @@
 //
 // AUTOUPDATE
 
-// --- implicit.impl.carbon
+// --- fail_implicit.impl.carbon
 
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
-// CHECK:STDERR: package Implicit impl;
-// CHECK:STDERR: ^~~~~~~
-package Implicit impl;
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Implicit' not found.
+// CHECK:STDERR: impl package Implicit;
+// CHECK:STDERR:      ^~~~~~~
+impl package Implicit;
 
 var a: () = A();
 
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a

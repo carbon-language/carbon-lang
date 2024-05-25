@@ -12,11 +12,13 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/sem_ir/bind_name.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
@@ -26,27 +28,12 @@
 
 namespace Carbon::SemIR {
 
-struct BindNameInfo : public Printable<BindNameInfo> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << "}";
-  }
-
-  // The name.
-  NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
-};
-
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
-  // Produces a file for the builtins.
-  explicit File(SharedValueStores& value_stores);
-
-  // Starts a new file for Check::CheckParseTree. Builtins are required.
-  explicit File(SharedValueStores& value_stores, std::string filename,
-                const File* builtins);
+  // Starts a new file for Check::CheckParseTree.
+  explicit File(CheckIRId check_ir_id, SharedValueStores& value_stores,
+                std::string filename);
 
   File(const File&) = delete;
   auto operator=(const File&) -> File& = delete;
@@ -97,6 +84,8 @@ class File : public Printable<File> {
   // type expression rather than a canonical type.
   auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
 
+  auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
+
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return value_stores_->identifiers();
@@ -104,13 +93,17 @@ class File : public Printable<File> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto ints() -> ValueStore<IntId>& { return value_stores_->ints(); }
-  auto ints() const -> const ValueStore<IntId>& {
+  auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
+  auto ints() const -> const CanonicalValueStore<IntId>& {
     return value_stores_->ints();
   }
   auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
+  }
+  auto floats() -> FloatValueStore& { return value_stores_->floats(); }
+  auto floats() const -> const FloatValueStore& {
+    return value_stores_->floats();
   }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
@@ -120,10 +113,8 @@ class File : public Printable<File> {
     return value_stores_->string_literal_values();
   }
 
-  auto bind_names() -> ValueStore<BindNameId>& { return bind_names_; }
-  auto bind_names() const -> const ValueStore<BindNameId>& {
-    return bind_names_;
-  }
+  auto bind_names() -> BindNameStore& { return bind_names_; }
+  auto bind_names() const -> const BindNameStore& { return bind_names_; }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -137,6 +128,12 @@ class File : public Printable<File> {
   auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
   auto import_irs() const -> const ValueStore<ImportIRId>& {
     return import_irs_;
+  }
+  auto import_ir_insts() -> ValueStore<ImportIRInstId>& {
+    return import_ir_insts_;
+  }
+  auto import_ir_insts() const -> const ValueStore<ImportIRInstId>& {
+    return import_ir_insts_;
   }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
@@ -179,11 +176,9 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  // Common File initialization.
-  explicit File(SharedValueStores& value_stores, std::string filename,
-                const File* builtins, llvm::function_ref<void()> init_builtins);
-
   bool has_errors_ = false;
+
+  CheckIRId check_ir_id_;
 
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
@@ -196,7 +191,7 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for bind names.
-  ValueStore<BindNameId> bind_names_;
+  BindNameStore bind_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;
@@ -210,9 +205,12 @@ class File : public Printable<File> {
   // Storage for impls.
   ImplStore impls_;
 
-  // Related IRs. There will always be at least one entry, the builtin IR (used
-  // for references of builtins).
+  // Related IRs. There are some fixed entries at the start; see ImportIRId.
   ValueStore<ImportIRId> import_irs_;
+
+  // Related IR instructions. These are created for LocIds for instructions
+  // that are import-related.
+  ValueStore<ImportIRInstId> import_ir_insts_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_;
@@ -221,8 +219,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All instructions. The first entries will always be ImportRefs to builtins,
-  // at indices matching BuiltinKind ordering.
+  // All instructions. The first entries will always be Builtin insts, at
+  // indices matching BuiltinKind ordering.
   InstStore insts_;
 
   // Constant values for instructions.

@@ -6,15 +6,17 @@
 
 base class B {}
 
-// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:1: ERROR: `base` declaration can only be used in a class.
+// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: ERROR: `base` declaration can only be used in a class.
 // CHECK:STDERR: extend base: B;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extend base: B;
 
 fn F() {
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+6]]:3: ERROR: Expected expression.
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+7]]:3: ERROR: Expected expression.
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `HandleInvalidParse`.
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
@@ -26,11 +28,17 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {}
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:

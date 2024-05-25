@@ -42,20 +42,9 @@ auto HandleAliasAfterName(Context& context) -> void {
 auto HandleAliasFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  if (state.has_error) {
-    context.RecoverFromDeclError(state, NodeKind::Alias,
-                                 /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(NodeKind::Alias, *semi, state.subtree_start,
-                    state.has_error);
-  } else {
-    context.EmitExpectedDeclSemi(Lex::TokenKind::Alias);
-    context.RecoverFromDeclError(state, NodeKind::Alias,
-                                 /*skip_past_likely_end=*/true);
-  }
+  context.AddNodeExpectingDeclSemi(state, NodeKind::Alias,
+                                   Lex::TokenKind::Alias,
+                                   /*is_def_allowed=*/false);
 }
 
 }  // namespace Carbon::Parse

@@ -6,24 +6,35 @@
 
 namespace Carbon::Parse {
 
-// Handles processing of a complete `base: B` declaration.
-auto HandleBaseDecl(Context& context) -> void {
+// Handles a `base` declaration after the introducer.
+auto HandleBaseAfterIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
-  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
-  if (!semi && !state.has_error) {
-    context.EmitExpectedDeclSemi(context.tokens().GetKind(state.token));
-    state.has_error = true;
-  }
-
-  if (state.has_error) {
+  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Colon,
+                                       NodeKind::BaseColon)) {
+    // TODO: If the next token isn't a colon or `class`, try to recover
+    // based on whether we're in a class, whether we have an `extend`
+    // modifier, and the following tokens.
+    CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
+                      "`class` or `:` expected after `base`.");
+    context.emitter().Emit(*context.position(), ExpectedAfterBase);
     context.RecoverFromDeclError(state, NodeKind::BaseDecl,
                                  /*skip_past_likely_end=*/true);
     return;
   }
 
-  context.AddNode(NodeKind::BaseDecl, *semi, state.subtree_start,
-                  state.has_error);
+  state.state = State::BaseDecl;
+  context.PushState(state);
+  context.PushState(State::Expr);
+}
+
+// Handles processing of a complete `base: B` declaration.
+auto HandleBaseDecl(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNodeExpectingDeclSemi(state, NodeKind::BaseDecl,
+                                   Lex::TokenKind::Base,
+                                   /*is_def_allowed=*/false);
 }
 
 }  // namespace Carbon::Parse

@@ -7,6 +7,7 @@
 
 #include <type_traits>
 
+#include "common/hashing.h"
 #include "llvm/ADT/DenseMap.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -47,6 +48,25 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
     return values_.Get(id);
   }
 
+  // Adds a block or finds an existing canonical block with the given content,
+  // and returns an ID to reference it.
+  auto AddCanonical(llvm::ArrayRef<ElementType> content) -> IdT {
+    auto [it, added] = canonical_blocks_.insert({{content}, IdT::Invalid});
+    if (added) {
+      auto id = Add(content);
+      it->first.data = Get(id);
+      it->second = id;
+    }
+    return it->second;
+  }
+
+  // Promotes an existing block ID to a canonical block ID, or returns an
+  // existing canonical block ID if the block was already added. The specified
+  // block must not be modified after this point.
+  auto MakeCanonical(IdT id) -> IdT {
+    return canonical_blocks_.insert({{Get(id)}, id}).first->second;
+  }
+
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto block_index : llvm::seq(values_.size())) {
@@ -82,6 +102,41 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   }
 
  private:
+  // A canonical block, for which we allocate a deduplicated ID.
+  struct CanonicalBlock {
+    // This is mutable so we can repoint it at the allocated data if insertion
+    // succeeds.
+    mutable llvm::ArrayRef<ElementType> data;
+
+    // See common/hashing.h.
+    friend auto CarbonHashValue(CanonicalBlock block, uint64_t seed)
+        -> HashCode {
+      Hasher hasher(seed);
+      hasher.HashSizedBytes(block.data);
+      return static_cast<HashCode>(hasher);
+    }
+  };
+
+  struct CanonicalBlockDenseMapInfo {
+    // Blocks whose data() points to the start of `SpecialData` are used to
+    // represent the special "empty" and "tombstone" states.
+    static constexpr ElementType SpecialData[1] = {ElementType::Invalid};
+    static auto getEmptyKey() -> CanonicalBlock {
+      return CanonicalBlock{
+          llvm::ArrayRef(SpecialData, static_cast<size_t>(0))};
+    }
+    static auto getTombstoneKey() -> CanonicalBlock {
+      return CanonicalBlock{llvm::ArrayRef(SpecialData, 1)};
+    }
+    static auto getHashValue(CanonicalBlock val) -> unsigned {
+      return static_cast<uint64_t>(HashValue(val));
+    }
+    static auto isEqual(CanonicalBlock lhs, CanonicalBlock rhs) -> bool {
+      return lhs.data == rhs.data && (lhs.data.data() == SpecialData) ==
+                                         (rhs.data.data() == SpecialData);
+    }
+  };
+
   // Allocates an uninitialized array using our slab allocator.
   auto AllocateUninitialized(std::size_t size)
       -> llvm::MutableArrayRef<ElementType> {
@@ -103,6 +158,8 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
 
   llvm::BumpPtrAllocator* allocator_;
   ValueStore<IdT> values_;
+  llvm::DenseMap<CanonicalBlock, IdT, CanonicalBlockDenseMapInfo>
+      canonical_blocks_;
 };
 
 }  // namespace Carbon::SemIR

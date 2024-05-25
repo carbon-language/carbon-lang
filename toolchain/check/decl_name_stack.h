@@ -7,7 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/scope_index.h"
-#include "toolchain/parse/node_ids.h"
+#include "toolchain/check/scope_stack.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -91,28 +91,26 @@ class DeclNameStack {
       Error,
     };
 
-    // Returns whether the name resolved to an existing entity.
-    auto is_resolved() -> bool {
-      return state != State::Unresolved && state != State::Empty;
-    }
+    // Returns any name collision found, or Invalid.
+    auto prev_inst_id() -> SemIR::InstId;
 
     // Returns the name_id for a new instruction. This is invalid when the name
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
-      return !is_resolved() ? unresolved_name_id : SemIR::NameId::Invalid;
+      return state == State::Unresolved ? unresolved_name_id
+                                        : SemIR::NameId::Invalid;
     }
 
     // Returns the enclosing_scope_id for a new instruction. This is invalid
-    // when the name resolved. Note this is distinct from the enclosing_scope of
-    // the NameContext, which refers to the scope of the introducer rather than
-    // the scope of the name.
+    // when the name resolved.
     auto enclosing_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return !is_resolved() ? target_scope_id : SemIR::NameScopeId::Invalid;
+      return state == State::Unresolved ? enclosing_scope_id
+                                        : SemIR::NameScopeId::Invalid;
     }
 
     // The current scope when this name began. This is the scope that we will
     // return to at the end of the declaration.
-    ScopeIndex enclosing_scope;
+    ScopeIndex initial_scope_index;
 
     State state = State::Empty;
 
@@ -122,19 +120,34 @@ class DeclNameStack {
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
     // should be used.
-    SemIR::NameScopeId target_scope_id;
+    SemIR::NameScopeId enclosing_scope_id;
 
-    // The last parse node used.
-    Parse::NodeId parse_node = Parse::NodeId::Invalid;
+    // The last location ID used.
+    SemIR::LocId loc_id = SemIR::LocId::Invalid;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. Invalid indicates resolution failed.
-      SemIR::InstId resolved_inst_id = SemIR::InstId::Invalid;
+      SemIR::InstId resolved_inst_id;
 
       // The ID of an unresolved identifier.
-      SemIR::NameId unresolved_name_id;
+      SemIR::NameId unresolved_name_id = SemIR::NameId::Invalid;
     };
+  };
+
+  // Information about a declaration name that has been temporarily removed from
+  // the stack and will later be restored. Names can only be suspended once they
+  // are finished.
+  struct SuspendedName {
+    // The declaration name information.
+    NameContext name_context;
+
+    // Suspended scopes. We only preallocate space for two of these, because
+    // suspended names are usually used for classes and functions with
+    // unqualified names, which only need at most two scopes -- one scope for
+    // the parameter and one scope for the entity itself, and we can store quite
+    // a few of these when processing a large class definition.
+    llvm::SmallVector<ScopeStack::SuspendedScope, 2> scopes;
   };
 
   explicit DeclNameStack(Context* context) : context_(context) {}
@@ -144,11 +157,18 @@ class DeclNameStack {
   // state, `FinishName` and `PopScope` must be called, in that order.
   auto PushScopeAndStartName() -> void;
 
-  // Peeks the current target scope of the name on top of the stack. Note that
-  // if we're still processing the name qualifiers, this can change before the
-  // name is completed.
-  auto PeekTargetScope() -> SemIR::NameScopeId {
-    return decl_name_stack_.back().target_scope_id;
+  // Peeks the current enclosing scope of the name on top of the stack. Note
+  // that if we're still processing the name qualifiers, this can change before
+  // the name is completed. Also, if the name up to this point was already
+  // declared and is a scope, this will be that scope, rather than the scope
+  // enclosing it.
+  auto PeekEnclosingScopeId() const -> SemIR::NameScopeId {
+    return decl_name_stack_.back().enclosing_scope_id;
+  }
+
+  // Peeks the resolution scope index of the name on top of the stack.
+  auto PeekInitialScopeIndex() const -> ScopeIndex {
+    return decl_name_stack_.back().initial_scope_index;
   }
 
   // Finishes the current declaration name processing, returning the final
@@ -173,22 +193,31 @@ class DeclNameStack {
   // This should be called at the end of the declaration.
   auto PopScope() -> void;
 
+  // Temporarily remove the current declaration name and its associated scopes
+  // from the stack. Can only be called once the name is finished.
+  auto Suspend() -> SuspendedName;
+
+  // Restore a previously suspended name.
+  auto Restore(SuspendedName sus) -> void;
+
   // Creates and returns a name context corresponding to declaring an
   // unqualified name in the current context. This is suitable for adding to
   // name lookup in situations where a qualified name is not permitted, such as
   // a pattern binding.
-  auto MakeUnqualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id)
+  auto MakeUnqualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id)
       -> NameContext;
 
   // Applies a Name from the name stack to the top of the declaration name
   // stack. This will enter the scope corresponding to the name if the name
   // describes an existing scope, such as a namespace or a defined class.
-  auto ApplyNameQualifier(Parse::NodeId parse_node, SemIR::NameId name_id)
-      -> void;
+  auto ApplyNameQualifier(SemIR::LocId loc_id, SemIR::NameId name_id) -> void;
+
+  // Adds a name to name lookup. Assumes duplicates are already handled.
+  auto AddName(NameContext name_context, SemIR::InstId target_id) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
-      -> void;
+  auto AddNameOrDiagnoseDuplicate(NameContext name_context,
+                                  SemIR::InstId target_id) -> void;
 
   // Adds a name to name lookup, or returns the existing instruction if this
   // name has already been declared in this scope.
@@ -200,12 +229,12 @@ class DeclNameStack {
   auto MakeEmptyNameContext() -> NameContext;
 
   // Applies a Name from the name stack to given name context.
-  auto ApplyNameQualifierTo(NameContext& name_context, Parse::NodeId parse_node,
+  auto ApplyNameQualifierTo(NameContext& name_context, SemIR::LocId loc_id,
                             SemIR::NameId name_id, bool is_unqualified) -> void;
 
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
-  auto TryResolveQualifier(NameContext& name_context, Parse::NodeId parse_node)
+  auto TryResolveQualifier(NameContext& name_context, SemIR::LocId loc_id)
       -> bool;
 
   // Updates the scope on name_context as needed. This is called after

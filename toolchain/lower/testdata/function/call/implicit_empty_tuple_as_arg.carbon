@@ -17,17 +17,20 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "implicit_empty_tuple_as_arg.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Bar() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %x = alloca {}, align 8
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.var = alloca {}, align 8
 // CHECK:STDOUT:   call void @Foo()
-// CHECK:STDOUT:   %temp = alloca {}, align 8
+// CHECK:STDOUT:   %.loc13_22.1.temp = alloca {}, align 8
 // CHECK:STDOUT:   call void @Bar()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

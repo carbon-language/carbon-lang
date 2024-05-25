@@ -1,0 +1,28 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+HEADER
+
+package User;
+
+class C {};
+
+impl C as Core.INTERFACE {
+  fn Op[self: C](other: C) -> C {
+    return {};
+  }
+}
+impl C as Core.INTERFACEAssign {
+  fn Op[addr self: C*](other: C) {}
+}
+
+fn TestOp(a: C, b: C) -> C {
+  return a OP b;
+}
+
+fn TestAssign(a: C*, b: C) {
+  *a OP= b;
+}

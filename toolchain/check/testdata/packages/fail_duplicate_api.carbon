@@ -3,90 +3,117 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: main2.carbon: ERROR: Main//default previously provided by `main1.carbon`.
+// CHECK:STDERR: fail_main2.carbon: ERROR: Main//default previously provided by `main1.carbon`.
+// CHECK:STDERR:
 
 // --- main1.carbon
 
-// --- main2.carbon
+// --- fail_main2.carbon
 
 // --- main_lib1.carbon
 
-library "lib" api;
+library "lib";
 
-// --- main_lib2.carbon
+// --- fail_main_lib2.carbon
 
-// CHECK:STDERR: main_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `main_lib1.carbon`.
-// CHECK:STDERR: library "lib" api;
+// CHECK:STDERR: fail_main_lib2.carbon:[[@LINE+4]]:1: ERROR: Library's API previously provided by `main_lib1.carbon`.
+// CHECK:STDERR: library "lib";
 // CHECK:STDERR: ^~~~~~~
-library "lib" api;
+// CHECK:STDERR:
+library "lib";
 
 // --- package1.carbon
 
-package Package api;
+package Package;
 
-// --- package2.carbon
+// --- fail_package2.carbon
 
-// CHECK:STDERR: package2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package1.carbon`.
-// CHECK:STDERR: package Package api;
+// CHECK:STDERR: fail_package2.carbon:[[@LINE+4]]:1: ERROR: Library's API previously provided by `package1.carbon`.
+// CHECK:STDERR: package Package;
 // CHECK:STDERR: ^~~~~~~
-package Package api;
+// CHECK:STDERR:
+package Package;
 
 // --- package_lib1.carbon
 
-package Package library "lib" api;
+package Package library "lib";
 
-// --- package_lib2.carbon
+// --- fail_package_lib2.carbon
 
-// CHECK:STDERR: package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package_lib1.carbon`.
-// CHECK:STDERR: package Package library "lib" api;
+// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package_lib1.carbon`.
+// CHECK:STDERR: package Package library "lib";
 // CHECK:STDERR: ^~~~~~~
-package Package library "lib" api;
+package Package library "lib";
 
 // CHECK:STDOUT: --- main1.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main2.carbon
+// CHECK:STDOUT: --- fail_main2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib1.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_lib2.carbon
+// CHECK:STDOUT: --- fail_main_lib2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package1.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package2.carbon
+// CHECK:STDOUT: --- fail_package2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_lib1.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package_lib2.carbon
+// CHECK:STDOUT: --- fail_package_lib2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

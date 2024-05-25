@@ -41,6 +41,13 @@ class TypeStore : public ValueStore<TypeId> {
     return insts_->Get(GetInstId(type_id));
   }
 
+  // Returns whether the specified kind of instruction was used to define the
+  // type.
+  template <typename InstT>
+  auto Is(TypeId type_id) const -> bool {
+    return GetAsInst(type_id).Is<InstT>();
+  }
+
   // Returns the instruction used to define the specified type, which is known
   // to be a particular kind of instruction.
   template <typename InstT>
@@ -74,6 +81,16 @@ class TypeStore : public ValueStore<TypeId> {
   // determine whether the type could be completed, only whether it has been.
   auto IsComplete(TypeId type_id) const -> bool {
     return GetValueRepr(type_id).kind != ValueRepr::Unknown;
+  }
+
+  // Determines whether the given type is a signed integer type.
+  auto IsSignedInt(TypeId int_type_id) const -> bool {
+    auto inst_id = GetInstId(int_type_id);
+    if (inst_id == InstId::BuiltinIntType) {
+      return true;
+    }
+    auto int_type = insts_->TryGetAs<IntType>(inst_id);
+    return int_type && int_type->int_kind.is_signed();
   }
 
  private:

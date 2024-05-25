@@ -32,7 +32,7 @@ cc_test(
     deps = [
         ":token_kind",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -61,7 +61,7 @@ cc_library(
         "//common:check",
         "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -85,9 +85,10 @@ cc_binary(
     srcs = ["numeric_literal_benchmark.cpp"],
     deps = [
         ":numeric_literal",
+        "//common:benchmark_main",
         "//common:check",
         "//toolchain/diagnostics:null_diagnostics",
-        "@com_github_google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
     ],
 )
 
@@ -102,7 +103,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -139,8 +140,9 @@ cc_binary(
     srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
+        "//common:benchmark_main",
         "//toolchain/diagnostics:null_diagnostics",
-        "@com_github_google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
     ],
 )
 
@@ -155,7 +157,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -186,6 +188,7 @@ cc_library(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:variant_helpers",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
@@ -223,7 +226,7 @@ cc_library(
         ":tokenized_buffer",
         "//common:check",
         "//toolchain/base:value_store",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -234,6 +237,7 @@ cc_test(
     srcs = ["tokenized_buffer_test.cpp"],
     deps = [
         ":lex",
+        ":token_kind",
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
         "//testing/base:gtest_main",
@@ -242,7 +246,7 @@ cc_test(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -270,12 +274,13 @@ cc_binary(
         ":lex",
         ":token_kind",
         ":tokenized_buffer",
+        "//common:benchmark_main",
         "//common:check",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
-        "@com_github_google_benchmark//:benchmark_main",
-        "@com_google_absl//absl/random",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )

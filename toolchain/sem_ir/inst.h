@@ -9,11 +9,13 @@
 #include <cstdint>
 
 #include "common/check.h"
+#include "common/hashing.h"
 #include "common/ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/sem_ir/block_value_store.h"
 #include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -128,15 +130,17 @@ class Inst : public Printable<Inst> {
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
-      : kind_(InstKind::Make({})),
+      : kind_(),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
     if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
-      kind_ = typed_inst.kind;
+      kind_ = typed_inst.kind.AsInt();
     } else {
-      kind_ = TypedInst::Kind;
+      kind_ = TypedInst::Kind.AsInt();
     }
+    CARBON_CHECK(kind_ >= 0)
+        << "Negative kind values are reserved for DenseMapInfo.";
     if constexpr (Internal::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
@@ -204,10 +208,26 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  auto kind() const -> InstKind { return kind_; }
+  auto kind() const -> InstKind {
+    return InstKind::Make(static_cast<InstKind::RawEnumType>(kind_));
+  }
 
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
+
+  // Gets the kinds of IDs used for arg0 and arg1 of the specified kind of
+  // instruction.
+  //
+  // TODO: This would ideally live on InstKind, but can't be there for layering
+  // reasons.
+  static auto ArgKinds(InstKind kind) -> std::pair<IdKind, IdKind> {
+    return ArgKindTable[kind.AsInt()];
+  }
+
+  // Gets the kinds of IDs used for arg0 and arg1 of this instruction.
+  auto ArgKinds() const -> std::pair<IdKind, IdKind> {
+    return ArgKinds(kind());
+  }
 
   // Gets the first argument of the instruction. InvalidIndex if there is no
   // such argument.
@@ -217,13 +237,25 @@ class Inst : public Printable<Inst> {
   // such argument.
   auto arg1() const -> int32_t { return arg1_; }
 
+  // Sets the arguments of this instruction.
+  auto SetArgs(int32_t arg0, int32_t arg1) {
+    arg0_ = arg0;
+    arg1_ = arg1;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   friend class InstTestHelper;
+  friend struct llvm::DenseMapInfo<Carbon::SemIR::Inst>;
 
-  // Raw constructor, used for testing.
+  // Table mapping instruction kinds to their argument kinds.
+  static const std::pair<IdKind, IdKind> ArgKindTable[];
+
+  // Raw constructor, used for testing and by DenseMapInfo.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
+      : Inst(kind.AsInt(), type_id, arg0, arg1) {}
+  explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
@@ -242,7 +274,7 @@ class Inst : public Printable<Inst> {
     return BuiltinKind::FromInt(raw);
   }
 
-  InstKind kind_;
+  int32_t kind_;
   TypeId type_id_;
 
   // Use `As` to access arg0 and arg1.
@@ -266,40 +298,45 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
   return out;
 }
 
-// Associates a NodeId and Inst in order to provide type-checking that the
+// Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
-struct ParseNodeAndInst {
-  // In cases where the NodeId is untyped or the InstT is unknown, the check
-  // can't be done at compile time.
-  // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
-  // corresponds.
-  static auto Untyped(Parse::NodeId parse_node, Inst inst) -> ParseNodeAndInst {
-    return ParseNodeAndInst(parse_node, inst, /*is_untyped=*/true);
+struct LocIdAndInst {
+  // For cases with no location.
+  template <typename InstT>
+    requires(!Internal::HasNodeId<InstT>)
+  static auto NoLoc(InstT inst) -> LocIdAndInst {
+    return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
   }
 
   // For the common case, support construction as:
-  //   context.AddInst({parse_node, SemIR::MyInst{...}});
+  //   context.AddInst({node_id, SemIR::MyInst{...}});
   template <typename InstT>
-    requires(Internal::HasParseNode<InstT>)
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ParseNodeAndInst(decltype(InstT::Kind)::TypedNodeId parse_node, InstT inst)
-      : parse_node(parse_node), inst(inst) {}
+    requires(Internal::HasNodeId<InstT>)
+  LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      : loc_id(node_id), inst(inst) {}
 
-  // For cases with no parse node, support construction as:
-  //   context.AddInst({SemIR::MyInst{...}});
+  // If TypedNodeId is Parse::NodeId, allow construction with a LocId.
+  // TODO: This is somewhat historical due to fetching the NodeId from insts()
+  // for things like Temporary; should we require Untyped in these cases?
   template <typename InstT>
-    requires(!Internal::HasParseNode<InstT>)
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ParseNodeAndInst(InstT inst)
-      : parse_node(Parse::NodeId::Invalid), inst(inst) {}
+    requires(std::same_as<typename decltype(InstT::Kind)::TypedNodeId,
+                          Parse::NodeId>)
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  Parse::NodeId parse_node;
+  // Imports can pass an ImportIRInstId instead of another location.
+  template <typename InstT>
+  LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
+      : loc_id(import_ir_inst_id), inst(inst) {}
+
+  LocId loc_id;
   Inst inst;
 
  private:
-  explicit ParseNodeAndInst(Parse::NodeId parse_node, Inst inst,
-                            bool /*is_untyped*/)
-      : parse_node(parse_node), inst(inst) {}
+  // Expose the internal constructor for GetWithLocId.
+  friend class InstStore;
+
+  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
+      : loc_id(loc_id), inst(inst) {}
 };
 
 // Provides a ValueStore wrapper for an API specific to instructions.
@@ -310,17 +347,17 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(ParseNodeAndInst parse_node_and_inst) -> InstId {
-    parse_nodes_.push_back(parse_node_and_inst.parse_node);
-    return values_.Add(parse_node_and_inst.inst);
+  auto AddInNoBlock(LocIdAndInst loc_id_and_inst) -> InstId {
+    loc_ids_.push_back(loc_id_and_inst.loc_id);
+    return values_.Add(loc_id_and_inst.inst);
   }
 
   // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
-  // Returns the requested instruction and its parse node.
-  auto GetWithParseNode(InstId inst_id) const -> ParseNodeAndInst {
-    return ParseNodeAndInst::Untyped(GetParseNode(inst_id), Get(inst_id));
+  // Returns the requested instruction and its location ID.
+  auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
+    return LocIdAndInst(GetLocId(inst_id), Get(inst_id), /*is_untyped=*/true);
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -353,23 +390,30 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
-    return parse_nodes_[inst_id.index];
+  auto GetLocId(InstId inst_id) const -> LocId {
+    CARBON_CHECK(inst_id.index >= 0) << inst_id.index;
+    CARBON_CHECK(inst_id.index < (int)loc_ids_.size())
+        << inst_id.index << " " << loc_ids_.size();
+    return loc_ids_[inst_id.index];
   }
 
-  // Overwrites a given instruction and parse node with a new value.
-  auto Set(InstId inst_id, ParseNodeAndInst parse_node_and_inst) -> void {
-    values_.Get(inst_id) = parse_node_and_inst.inst;
-    parse_nodes_[inst_id.index] = parse_node_and_inst.parse_node;
+  // Overwrites a given instruction with a new value.
+  auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
+
+  // Overwrites a given instruction's location with a new value.
+  auto SetLocId(InstId inst_id, LocId loc_id) -> void {
+    loc_ids_[inst_id.index] = loc_id;
   }
 
-  auto SetParseNode(InstId inst_id, Parse::NodeId parse_node) -> void {
-    parse_nodes_[inst_id.index] = parse_node;
+  // Overwrites a given instruction and location ID with a new value.
+  auto SetLocIdAndInst(InstId inst_id, LocIdAndInst loc_id_and_inst) -> void {
+    Set(inst_id, loc_id_and_inst.inst);
+    SetLocId(inst_id, loc_id_and_inst.loc_id);
   }
 
   // Reserves space.
   auto Reserve(size_t size) -> void {
-    parse_nodes_.reserve(size);
+    loc_ids_.reserve(size);
     values_.Reserve(size);
   }
 
@@ -377,7 +421,7 @@ class InstStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<Parse::NodeId> parse_nodes_;
+  llvm::SmallVector<LocId> loc_ids_;
   ValueStore<InstId> values_;
 };
 
@@ -403,8 +447,38 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
     BlockValueStore<InstBlockId>::Set(block_id, content);
   }
+
+  // Returns the contents of the specified block, or an empty array if the block
+  // is empty.
+  auto GetOrEmpty(InstBlockId block_id) -> llvm::ArrayRef<InstId> {
+    return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
+  }
 };
 
+// See common/hashing.h.
+inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
+  Hasher hasher(seed);
+  hasher.Hash(value);
+  return static_cast<HashCode>(hasher);
+}
+
 }  // namespace Carbon::SemIR
+
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::Inst> {
+  using Inst = Carbon::SemIR::Inst;
+  static auto getEmptyKey() -> Inst {
+    return Inst(-1, Carbon::SemIR::TypeId::Invalid, 0, 0);
+  }
+  static auto getTombstoneKey() -> Inst {
+    return Inst(-2, Carbon::SemIR::TypeId::Invalid, 0, 0);
+  }
+  static auto getHashValue(const Inst& val) -> unsigned {
+    return static_cast<uint64_t>(Carbon::HashValue(val));
+  }
+  static auto isEqual(const Inst& lhs, const Inst& rhs) -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;
+  }
+};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

@@ -6,30 +6,32 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: ERROR: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-5]]:1: First declaration is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
+// CHECK:STDERR:
 import B;
 // Note this is still invalid, but doesn't warn because it's sequential.
 import C;
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: The `package` directive must be the first non-comment line.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: ERROR: The `package` declaration must be the first non-comment line.
 // CHECK:STDERR: package D;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-15]]:1: First non-comment line is here.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-16]]:1: First non-comment line is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
+// CHECK:STDERR:
 package D;
 
 fn E();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file.
 // CHECK:STDERR: import F;
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-25]]:1: First declaration is here.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-27]]:1: First declaration is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
 import F;
@@ -45,19 +47,19 @@ import G;
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'E'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -13,22 +13,10 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
                                    State definition_finish_state) -> void {
   auto state = context.PopState();
 
-  if (state.has_error) {
-    context.RecoverFromDeclError(state, decl_kind,
-                                 /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(decl_kind, *semi, state.subtree_start, state.has_error);
-    return;
-  }
-
-  if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    context.EmitExpectedDeclSemiOrDefinition(
-        context.tokens().GetKind(state.token));
-    context.RecoverFromDeclError(state, decl_kind,
-                                 /*skip_past_likely_end=*/true);
+  if (state.has_error || !context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
+    context.AddNodeExpectingDeclSemi(state, decl_kind,
+                                     context.tokens().GetKind(state.token),
+                                     /*is_def_allowed=*/true);
     return;
   }
 

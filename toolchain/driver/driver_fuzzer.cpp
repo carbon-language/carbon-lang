@@ -68,8 +68,8 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::vfs::InMemoryFileSystem fs;
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
-  Driver d(fs, dest, error_stream);
-  if (!d.RunCommand(args)) {
+  Driver d(fs, "", dest, error_stream);
+  if (!d.RunCommand(args).success) {
     if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";
       return 1;

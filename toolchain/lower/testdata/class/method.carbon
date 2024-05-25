@@ -24,7 +24,8 @@ fn F(p: C*) {
 // CHECK:STDOUT: declare void @Set(ptr, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr %p) {
-// CHECK:STDOUT:   %Get = call i32 @Get(ptr %p)
-// CHECK:STDOUT:   call void @Set(ptr %p, i32 %Get)
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Get.call = call i32 @Get(ptr %p)
+// CHECK:STDOUT:   call void @Set(ptr %p, i32 %Get.call)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

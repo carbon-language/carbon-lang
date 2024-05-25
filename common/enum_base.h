@@ -173,7 +173,6 @@ class EnumBase : public Printable<DerivedT> {
 // For use when multiple enums use the same list of names.
 #define CARBON_DEFINE_RAW_ENUM_CLASS_NO_NAMES(EnumClassName, UnderlyingType) \
   namespace Internal {                                                       \
-  /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                           \
   enum class EnumClassName##RawEnum : UnderlyingType;                        \
   }                                                                          \
   enum class Internal::EnumClassName##RawEnum : UnderlyingType

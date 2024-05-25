@@ -6,9 +6,10 @@
 
 virtual namespace B
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:1: ERROR: `namespace` declarations must end with a `;`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:1: ERROR: `namespace` declarations must end with a `;`.
 // CHECK:STDERR: impl namespace
 // CHECK:STDERR: ^~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:6: ERROR: `namespace` introducer should be followed by a name.
 // CHECK:STDERR: impl namespace
 // CHECK:STDERR:      ^~~~~~~~~

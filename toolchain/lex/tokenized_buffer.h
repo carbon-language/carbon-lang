@@ -111,16 +111,16 @@ class TokenIterator
   TokenIndex token_;
 };
 
-// A diagnostic location translator that maps token locations into source
+// A diagnostic location converter that maps token locations into source
 // buffer locations.
-class TokenLocationTranslator
-    : public DiagnosticLocationTranslator<TokenIndex> {
+class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
  public:
-  explicit TokenLocationTranslator(const TokenizedBuffer* buffer)
+  explicit TokenDiagnosticConverter(const TokenizedBuffer* buffer)
       : buffer_(buffer) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(TokenIndex token) -> DiagnosticLocation override;
+  auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
+      -> DiagnosticLoc override;
 
  private:
   const TokenizedBuffer* buffer_;
@@ -147,7 +147,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the line and 1-based column number of the first character after
   // this token.
-  auto GetEndLocation(TokenIndex token) const -> std::pair<LineIndex, int>;
+  auto GetEndLoc(TokenIndex token) const -> std::pair<LineIndex, int>;
 
   // Returns the source text lexed into this token.
   auto GetTokenText(TokenIndex token) const -> llvm::StringRef;
@@ -166,7 +166,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetStringLiteralValue(TokenIndex token) const -> StringLiteralValueId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
-  auto GetTypeLiteralSize(TokenIndex token) const -> const llvm::APInt&;
+  auto GetTypeLiteralSize(TokenIndex token) const -> IntId;
 
   // Returns the closing token matched with the given opening token.
   //
@@ -244,19 +244,20 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
  private:
   friend class Lexer;
-  friend class TokenLocationTranslator;
+  friend class TokenDiagnosticConverter;
 
-  // A diagnostic location translator that maps token locations into source
+  // A diagnostic location converter that maps token locations into source
   // buffer locations.
-  class SourceBufferLocationTranslator
-      : public DiagnosticLocationTranslator<const char*> {
+  class SourceBufferDiagnosticConverter
+      : public DiagnosticConverter<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer)
+    explicit SourceBufferDiagnosticConverter(const TokenizedBuffer* buffer)
         : buffer_(buffer) {}
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto GetLocation(const char* loc) -> DiagnosticLocation override;
+    auto ConvertLoc(const char* loc, ContextFnT context_fn) const
+        -> DiagnosticLoc override;
 
    private:
     const TokenizedBuffer* buffer_;

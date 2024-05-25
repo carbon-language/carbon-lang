@@ -255,7 +255,7 @@ features, or
 maintaining a C++/Rust FFI may not be economically viable today (but it is an
 area of active research: [cxx](https://crates.io/crates/cxx),
 [autocxx](https://crates.io/crates/autocxx),
-[Crubit](https://github.com/google/crubit/blob/main/docs/design.md)).
+[Crubit](https://github.com/google/crubit/blob/main/docs/design/design.md)).
 
 The Carbon community is looking for a language that existing, large, monolithic
 C++ codebases can incrementally adopt and have a prospect of migrating away from

@@ -15,6 +15,17 @@ cc_library(
 )
 
 cc_library(
+    name = "benchmark_main",
+    srcs = ["benchmark_main.cpp"],
+    deps = [
+        ":init_llvm",
+        "@abseil-cpp//absl/flags:parse",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "command_line",
     srcs = ["command_line.cpp"],
     hdrs = ["command_line.h"],
@@ -33,7 +44,7 @@ cc_test(
         ":command_line",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -58,7 +69,7 @@ cc_test(
     deps = [
         ":check",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -86,7 +97,7 @@ cc_test(
         ":enum_base_test_def",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -108,7 +119,7 @@ cc_test(
         ":error",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -130,7 +141,7 @@ cc_test(
         ":hashing",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -140,11 +151,12 @@ cc_binary(
     testonly = 1,
     srcs = ["hashing_benchmark.cpp"],
     deps = [
+        ":benchmark_main",
         ":check",
         ":hashing",
-        "@com_github_google_benchmark//:benchmark_main",
-        "@com_google_absl//absl/hash",
-        "@com_google_absl//absl/random",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -161,7 +173,7 @@ cc_test(
     deps = [
         ":indirect_value",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -217,7 +229,7 @@ cc_test(
     deps = [
         ":string_helpers",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -234,7 +246,16 @@ cc_test(
     deps = [
         ":struct_reflection",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "variant_helpers",
+    hdrs = ["variant_helpers.h"],
+    deps = [
+        ":error",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -256,6 +277,6 @@ cc_test(
         ":vlog",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

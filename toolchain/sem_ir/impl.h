@@ -18,7 +18,12 @@ struct Impl : public Printable<Impl> {
 
   // Determines whether this impl has been fully defined. This is false until we
   // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return defined; }
+  auto is_defined() const -> bool { return witness_id.is_valid(); }
+
+  // Determines whether this impl's definition has begun but not yet ended.
+  auto is_being_defined() const -> bool {
+    return definition_id.is_valid() && !is_defined();
+  }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the interface.
@@ -40,7 +45,9 @@ struct Impl : public Printable<Impl> {
   InstBlockId body_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the impl definition.
-  bool defined = false;
+
+  // The witness for the impl. This can be `BuiltinError`.
+  InstId witness_id = InstId::Invalid;
 };
 
 // A collection of `Impl`s, which can be accessed by the self type and

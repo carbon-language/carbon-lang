@@ -143,8 +143,8 @@ struct QualifiedName {
   IdentifierNameId rhs;
 };
 
-// Library, package, import
-// ------------------------
+// Library, package, import, export
+// --------------------------------
 
 // The `package` keyword in an expression.
 using PackageExpr = LeafNode<NodeKind::PackageExpr, NodeCategory::Expr>;
@@ -155,8 +155,6 @@ using LibraryName = LeafNode<NodeKind::LibraryName>;
 using DefaultLibrary = LeafNode<NodeKind::DefaultLibrary>;
 
 using PackageIntroducer = LeafNode<NodeKind::PackageIntroducer>;
-using PackageApi = LeafNode<NodeKind::PackageApi>;
-using PackageImpl = LeafNode<NodeKind::PackageImpl>;
 
 // `library` in `package` or `import`.
 struct LibrarySpecifier {
@@ -166,37 +164,45 @@ struct LibrarySpecifier {
 };
 
 // First line of the file, such as:
-//   `package MyPackage library "MyLibrary" impl;`
-struct PackageDirective {
-  static constexpr auto Kind =
-      NodeKind::PackageDirective.Define(NodeCategory::Decl);
+//   `impl package MyPackage library "MyLibrary";`
+struct PackageDecl {
+  static constexpr auto Kind = NodeKind::PackageDecl.Define(NodeCategory::Decl);
 
   PackageIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
-  NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
 };
 
 // `import TheirPackage library "TheirLibrary";`
 using ImportIntroducer = LeafNode<NodeKind::ImportIntroducer>;
-struct ImportDirective {
-  static constexpr auto Kind =
-      NodeKind::ImportDirective.Define(NodeCategory::Decl);
+struct ImportDecl {
+  static constexpr auto Kind = NodeKind::ImportDecl.Define(NodeCategory::Decl);
 
   ImportIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
 };
 
-// `library` as directive.
+// `library` as declaration.
 using LibraryIntroducer = LeafNode<NodeKind::LibraryIntroducer>;
-struct LibraryDirective {
-  static constexpr auto Kind =
-      NodeKind::LibraryDirective.Define(NodeCategory::Decl);
+struct LibraryDecl {
+  static constexpr auto Kind = NodeKind::LibraryDecl.Define(NodeCategory::Decl);
 
   LibraryIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   NodeIdOneOf<LibraryName, DefaultLibrary> library_name;
-  NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
+};
+
+// `export` as a declaration.
+using ExportIntroducer = LeafNode<NodeKind::ExportIntroducer>;
+struct ExportDecl {
+  static constexpr auto Kind = NodeKind::ExportDecl.Define(NodeCategory::Decl);
+
+  ExportIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyNameComponentId name;
 };
 
 // Namespace nodes
@@ -210,7 +216,7 @@ struct Namespace {
 
   NamespaceStartId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  NodeIdOneOf<IdentifierName, QualifiedName> name;
+  AnyNameComponentId name;
 };
 
 // Pattern nodes
@@ -312,6 +318,20 @@ struct FunctionDefinition {
   llvm::SmallVector<AnyStatementId> body;
 };
 
+using BuiltinFunctionDefinitionStart =
+    FunctionSignature<NodeKind::BuiltinFunctionDefinitionStart,
+                      NodeCategory::None>;
+using BuiltinName = LeafNode<NodeKind::BuiltinName>;
+
+// A builtin function definition: `fn F() -> i32 = "builtin name";`
+struct BuiltinFunctionDefinition {
+  static constexpr auto Kind =
+      NodeKind::BuiltinFunctionDefinition.Define(NodeCategory::Decl);
+
+  BuiltinFunctionDefinitionStartId signature;
+  BuiltinNameId builtin_name;
+};
+
 // `alias` nodes
 // -------------
 
@@ -345,8 +365,12 @@ struct LetDecl {
   LetIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   AnyPatternId pattern;
-  LetInitializerId equals;
-  AnyExprId initializer;
+
+  struct Initializer {
+    LetInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
 };
 
 // `var` nodes
@@ -612,16 +636,18 @@ struct IndexExpr {
   AnyExprId index;
 };
 
-using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
+using ParenExprStart = LeafNode<NodeKind::ParenExprStart>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
-  static constexpr auto Kind = NodeKind::ParenExpr.Define(NodeCategory::Expr);
+  static constexpr auto Kind =
+      NodeKind::ParenExpr.Define(NodeCategory::Expr | NodeCategory::MemberExpr);
 
-  ExprOpenParenId left_paren;
+  ParenExprStartId start;
   AnyExprId expr;
 };
 
+using TupleLiteralStart = LeafNode<NodeKind::TupleLiteralStart>;
 using TupleLiteralComma = LeafNode<NodeKind::TupleLiteralComma>;
 
 // A tuple literal: `()`, `(a, b, c)`, or `(a,)`.
@@ -629,7 +655,7 @@ struct TupleLiteral {
   static constexpr auto Kind =
       NodeKind::TupleLiteral.Define(NodeCategory::Expr);
 
-  ExprOpenParenId left_paren;
+  TupleLiteralStartId start;
   CommaSeparatedList<AnyExprId, TupleLiteralCommaId> elements;
 };
 
@@ -652,22 +678,22 @@ struct CallExpr {
   CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
 };
 
-// A simple member access expression: `a.b`.
+// A member access expression: `a.b` or `a.(b)`.
 struct MemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::MemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  AnyMemberNameId rhs;
+  AnyMemberNameOrMemberExprId rhs;
 };
 
-// A simple indirect member access expression: `a->b`.
+// An indirect member access expression: `a->b` or `a->(b)`.
 struct PointerMemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::PointerMemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  AnyMemberNameId rhs;
+  AnyMemberNameOrMemberExprId rhs;
 };
 
 // A prefix operator expression.
@@ -801,12 +827,12 @@ struct ChoiceDefinition {
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
 };
 
-// Struct literals and struct type literals
+// Struct type and value literals
 // ----------------------------------------
 
 // `{`
-using StructLiteralOrStructTypeLiteralStart =
-    LeafNode<NodeKind::StructLiteralOrStructTypeLiteralStart>;
+using StructLiteralStart = LeafNode<NodeKind::StructLiteralStart>;
+using StructTypeLiteralStart = LeafNode<NodeKind::StructTypeLiteralStart>;
 // `,`
 using StructComma = LeafNode<NodeKind::StructComma>;
 
@@ -818,16 +844,16 @@ struct StructFieldDesignator {
 };
 
 // `.a = 0`
-struct StructFieldValue {
-  static constexpr auto Kind = NodeKind::StructFieldValue.Define();
+struct StructField {
+  static constexpr auto Kind = NodeKind::StructField.Define();
 
   StructFieldDesignatorId designator;
   AnyExprId expr;
 };
 
 // `.a: i32`
-struct StructFieldType {
-  static constexpr auto Kind = NodeKind::StructFieldType.Define();
+struct StructTypeField {
+  static constexpr auto Kind = NodeKind::StructTypeField.Define();
 
   StructFieldDesignatorId designator;
   AnyExprId type_expr;
@@ -838,8 +864,8 @@ struct StructLiteral {
   static constexpr auto Kind =
       NodeKind::StructLiteral.Define(NodeCategory::Expr);
 
-  StructLiteralOrStructTypeLiteralStartId introducer;
-  CommaSeparatedList<StructFieldValueId, StructCommaId> fields;
+  StructLiteralStartId start;
+  CommaSeparatedList<StructFieldId, StructCommaId> fields;
 };
 
 // Struct type literals, such as `{.a: i32}`.
@@ -847,8 +873,8 @@ struct StructTypeLiteral {
   static constexpr auto Kind =
       NodeKind::StructTypeLiteral.Define(NodeCategory::Expr);
 
-  StructLiteralOrStructTypeLiteralStartId introducer;
-  CommaSeparatedList<StructFieldTypeId, StructCommaId> fields;
+  StructTypeLiteralStartId start;
+  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
 };
 
 // `class` declarations and definitions
@@ -882,6 +908,20 @@ struct ClassDefinition {
 
   ClassDefinitionStartId signature;
   llvm::SmallVector<AnyDeclId> members;
+};
+
+// Adapter declaration
+// -------------------
+
+// `adapt`
+using AdaptIntroducer = LeafNode<NodeKind::AdaptIntroducer>;
+// `adapt SomeType;`
+struct AdaptDecl {
+  static constexpr auto Kind = NodeKind::AdaptDecl.Define(NodeCategory::Decl);
+
+  AdaptIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyExprId adapted_type;
 };
 
 // Base class declaration

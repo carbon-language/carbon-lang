@@ -3,71 +3,73 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/decl_state.h"
+#include "toolchain/check/modifiers.h"
 
 namespace Carbon::Check {
 
 // `import` and `package` are structured by parsing. As a consequence, no
 // checking logic is needed here.
 
-auto HandleImportIntroducer(Context& /*context*/,
-                            Parse::ImportIntroducerId /*parse_node*/) -> bool {
+auto HandleImportIntroducer(Context& context,
+                            Parse::ImportIntroducerId /*node_id*/) -> bool {
+  context.decl_state_stack().Push(DeclState::Import);
   return true;
 }
 
-auto HandleImportDirective(Context& /*context*/,
-                           Parse::ImportDirectiveId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandleLibraryIntroducer(Context& /*context*/,
-                             Parse::LibraryIntroducerId /*parse_node*/)
+auto HandleImportDecl(Context& context, Parse::ImportDeclId /*node_id*/)
     -> bool {
+  LimitModifiersOnDecl(context, KeywordModifierSet::Export,
+                       Lex::TokenKind::Import);
+  context.decl_state_stack().Pop(DeclState::Import);
   return true;
 }
 
-auto HandleLibraryDirective(Context& /*context*/,
-                            Parse::LibraryDirectiveId /*parse_node*/) -> bool {
+auto HandleLibraryIntroducer(Context& context,
+                             Parse::LibraryIntroducerId /*node_id*/) -> bool {
+  context.decl_state_stack().Push(DeclState::PackageOrLibrary);
   return true;
 }
 
-auto HandlePackageIntroducer(Context& /*context*/,
-                             Parse::PackageIntroducerId /*parse_node*/)
+auto HandleLibraryDecl(Context& context, Parse::LibraryDeclId /*node_id*/)
     -> bool {
+  LimitModifiersOnDecl(context, KeywordModifierSet::Impl,
+                       Lex::TokenKind::Library);
+  context.decl_state_stack().Pop(DeclState::PackageOrLibrary);
   return true;
 }
 
-auto HandlePackageDirective(Context& /*context*/,
-                            Parse::PackageDirectiveId /*parse_node*/) -> bool {
+auto HandlePackageIntroducer(Context& context,
+                             Parse::PackageIntroducerId /*node_id*/) -> bool {
+  context.decl_state_stack().Push(DeclState::PackageOrLibrary);
+  return true;
+}
+
+auto HandlePackageDecl(Context& context, Parse::PackageDeclId /*node_id*/)
+    -> bool {
+  LimitModifiersOnDecl(context, KeywordModifierSet::Impl,
+                       Lex::TokenKind::Package);
+  context.decl_state_stack().Pop(DeclState::PackageOrLibrary);
   return true;
 }
 
 auto HandleLibrarySpecifier(Context& /*context*/,
-                            Parse::LibrarySpecifierId /*parse_node*/) -> bool {
+                            Parse::LibrarySpecifierId /*node_id*/) -> bool {
   return true;
 }
 
-auto HandlePackageName(Context& /*context*/,
-                       Parse::PackageNameId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandleLibraryName(Context& /*context*/,
-                       Parse::LibraryNameId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandleDefaultLibrary(Context& /*context*/,
-                          Parse::DefaultLibraryId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandlePackageApi(Context& /*context*/, Parse::PackageApiId /*parse_node*/)
+auto HandlePackageName(Context& /*context*/, Parse::PackageNameId /*node_id*/)
     -> bool {
   return true;
 }
 
-auto HandlePackageImpl(Context& /*context*/,
-                       Parse::PackageImplId /*parse_node*/) -> bool {
+auto HandleLibraryName(Context& /*context*/, Parse::LibraryNameId /*node_id*/)
+    -> bool {
+  return true;
+}
+
+auto HandleDefaultLibrary(Context& /*context*/,
+                          Parse::DefaultLibraryId /*node_id*/) -> bool {
   return true;
 }
 

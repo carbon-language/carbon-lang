@@ -15,34 +15,49 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: --- fail_call_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %ReturnType: type = fn_type @ReturnType [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: ReturnType = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Six: type = fn_type @Six [template]
+// CHECK:STDOUT:   %struct.3: Six = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
-// CHECK:STDOUT:     .ReturnType = %ReturnType
-// CHECK:STDOUT:     .Six = %Six
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType {
-// CHECK:STDOUT:     %return.var.loc9: ref type = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six {
-// CHECK:STDOUT:     %ReturnType.ref: <function> = name_ref ReturnType, %ReturnType [template = %ReturnType]
-// CHECK:STDOUT:     %.loc13_23.1: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc13_24: type = value_of_initializer %.loc13_23.1
-// CHECK:STDOUT:     %.loc13_23.2: type = converted %.loc13_23.1, %.loc13_24
-// CHECK:STDOUT:     %return.var.loc13: ref <error> = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .ReturnType = %ReturnType.decl
+// CHECK:STDOUT:     .Six = %Six.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %ReturnType.decl: ReturnType = fn_decl @ReturnType [template = constants.%struct.1] {
+// CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.3] {
+// CHECK:STDOUT:     %ReturnType.ref: ReturnType = name_ref ReturnType, %ReturnType.decl [template = constants.%struct.1]
+// CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
+// CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc13_24.2: type = converted %ReturnType.call, %.loc13_24.1
+// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnType() -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return i32
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc9_37.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc9_37.2: type = converted %int.make_type_32, %.loc9_37.1 [template = i32]
+// CHECK:STDOUT:   return %.loc9_37.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

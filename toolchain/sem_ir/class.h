@@ -29,6 +29,11 @@ struct Class : public Printable<Class> {
   // we reach the `}` of the class definition.
   auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 
+  // Determines whether this is a generic class.
+  auto is_generic() const -> bool {
+    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+  }
+
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
 
@@ -36,6 +41,10 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.
@@ -56,6 +65,11 @@ struct Class : public Printable<Class> {
 
   // The following members are accumulated throughout the class definition.
 
+  // The adapted type declaration, if any. Invalid if the class is not an
+  // adapter. This is an AdaptDecl instruction.
+  // TODO: Consider sharing the storage for `adapt_id` and `base_id`. A class
+  // can't have both.
+  InstId adapt_id = InstId::Invalid;
   // The base class declaration. Invalid if the class has no base class. This is
   // a BaseDecl instruction.
   InstId base_id = InstId::Invalid;
@@ -63,7 +77,8 @@ struct Class : public Printable<Class> {
   // The following members are set at the `}` of the class definition.
 
   // The object representation type to use for this class. This is valid once
-  // the class is defined.
+  // the class is defined. For an adapter, this is the non-adapter type that
+  // this class directly or transitively adapts.
   TypeId object_repr_id = TypeId::Invalid;
 };
 

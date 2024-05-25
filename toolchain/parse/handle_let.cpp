@@ -30,14 +30,6 @@ auto HandleLetAfterPattern(Context& context) -> void {
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::LetInitializer, *equals);
     context.PushState(State::Expr);
-  } else {
-    if (!state.has_error) {
-      CARBON_DIAGNOSTIC(
-          ExpectedInitializerAfterLet, Error,
-          "Expected `=`; `let` declaration must have an initializer.");
-      context.emitter().Emit(*context.position(), ExpectedInitializerAfterLet);
-    }
-    context.ReturnErrorOnState();
   }
 }
 
@@ -48,7 +40,7 @@ auto HandleLetFinish(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Semi)) {
     end_token = context.Consume();
   } else {
-    context.EmitExpectedDeclSemi(Lex::TokenKind::Let);
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Let);
     state.has_error = true;
     end_token = context.SkipPastLikelyEnd(state.token);
   }

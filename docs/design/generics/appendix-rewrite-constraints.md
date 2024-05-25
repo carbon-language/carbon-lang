@@ -261,7 +261,7 @@ constraint resolution, and it is possible for a facet type to be formed for
 which constraint resolution would always fail. For example:
 
 ```carbon
-package Broken api;
+package Broken;
 
 interface X {
   let T:! type;

@@ -6,36 +6,65 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 let a:! bool = true;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 let b:! bool = a;
 
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %a: bool = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %.loc4: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   %a: bool = bind_symbolic_name a, %.loc4 [symbolic]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:   %.loc4_9.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %bool.make_type, %.loc4_9.1 [template = bool]
+// CHECK:STDOUT:   %.loc4_16: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %a: bool = bind_symbolic_name a 0, %.loc4_16 [symbolic = constants.%a]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
-// CHECK:STDOUT:     .a = %import_ref
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %import_ref: bool = import_ref ir1, inst+1, used [symbolic]
-// CHECK:STDOUT:   %a.ref: bool = name_ref a, %import_ref [symbolic = %import_ref]
-// CHECK:STDOUT:   %b: bool = bind_symbolic_name b, %a.ref [symbolic]
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT:   %a: bool = bind_symbolic_name a 0 [symbolic]
+// CHECK:STDOUT:   %b: bool = bind_symbolic_name b 0 [symbolic]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .a = %import_ref.1
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: bool = import_ref ir0, inst+11, loaded [symbolic = constants.%a]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:   %.loc4_9.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %bool.make_type, %.loc4_9.1 [template = bool]
+// CHECK:STDOUT:   %a.ref: bool = name_ref a, %import_ref.1 [symbolic = constants.%a]
+// CHECK:STDOUT:   %b: bool = bind_symbolic_name b 0, %a.ref [symbolic = constants.%b]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:

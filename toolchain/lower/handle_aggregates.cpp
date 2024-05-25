@@ -9,6 +9,7 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
@@ -148,16 +149,6 @@ auto HandleClassInit(FunctionContext& context, SemIR::InstId inst_id,
                                         "class.init"));
 }
 
-auto HandleBaseDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                    SemIR::BaseDecl /*inst*/) -> void {
-  // No action to perform.
-}
-
-auto HandleFieldDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::FieldDecl /*inst*/) -> void {
-  // No action to perform.
-}
-
 auto HandleStructAccess(FunctionContext& context, SemIR::InstId inst_id,
                         SemIR::StructAccess inst) -> void {
   auto struct_type_id = context.sem_ir().insts().Get(inst.struct_id).type_id();
@@ -177,8 +168,7 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
 auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
-                            SemIR::InstBlockId refs_id, llvm::Twine name)
-    -> llvm::Value* {
+                            SemIR::InstBlockId refs_id) -> llvm::Value* {
   auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
@@ -205,9 +195,7 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
 
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.
-      auto* alloca =
-          context.builder().CreateAlloca(llvm_value_rep_type,
-                                         /*ArraySize=*/nullptr, name);
+      auto* alloca = context.builder().CreateAlloca(llvm_value_rep_type);
       for (auto [i, ref] :
            llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
         context.builder().CreateStore(
@@ -232,8 +220,14 @@ auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::StructValue inst) -> void {
-  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
-                                                   inst.elements_id, "struct"));
+  if (auto fn_type = context.sem_ir().types().TryGetAs<SemIR::FunctionType>(
+          inst.type_id)) {
+    context.SetLocal(inst_id, context.GetFunction(fn_type->function_id));
+    return;
+  }
+
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
 auto HandleStructTypeField(FunctionContext& /*context*/,
@@ -274,8 +268,8 @@ auto HandleTupleInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleTupleValue(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleValue inst) -> void {
-  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
-                                                   inst.elements_id, "tuple"));
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
 }  // namespace Carbon::Lower

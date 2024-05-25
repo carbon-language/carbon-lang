@@ -22,6 +22,7 @@ file_test(
     ],
     deps = [
         "//common:all_llvm_targets",
+        "//common:error",
         "//testing/file_test:file_test_base",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
@@ -36,7 +37,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -48,6 +49,6 @@ cc_test(
     deps = [
         ":yaml_test_helpers",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

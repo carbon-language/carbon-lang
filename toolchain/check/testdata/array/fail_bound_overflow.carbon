@@ -4,15 +4,20 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:14: ERROR: Array bound of 39999999999999999993 is too large.
+// TODO: Once we preserve the full value of integer literals in SemIR, check
+// that we reject the array bound being too large.
+
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:14: ERROR: Integer literal with value 39999999999999999993 does not fit in i32.
 // CHECK:STDERR: var a: [i32; 39999999999999999993];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var a: [i32; 39999999999999999993];
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:12: ERROR: Array bound of 39999999999999999993 is too large.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:12: ERROR: Integer literal with value 39999999999999999993 does not fit in i32.
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~
 var b: [1; 39999999999999999993];
@@ -20,23 +25,31 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT: --- fail_bound_overflow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 39999999999999999993 [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 39999999999999999993 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_34: type = array_type %.loc10_14, i32 [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc14_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_32, %.loc14_9.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_34: type = array_type <error>, i32 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc18_9: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_12: i32 = int_literal 39999999999999999993 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_32: type = array_type %.loc18_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_9: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc23_32: type = array_type <error>, <error> [template = <error>]
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

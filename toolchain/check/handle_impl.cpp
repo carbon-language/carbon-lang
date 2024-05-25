@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
@@ -12,14 +13,14 @@
 
 namespace Carbon::Check {
 
-auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
+auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId node_id)
     -> bool {
   // Create an instruction block to hold the instructions created for the type
   // and interface.
   context.inst_block_stack().Push();
 
   // Push the bracketing node.
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
 
   // Optional modifiers follow.
   context.decl_state_stack().Push(DeclState::Impl);
@@ -31,21 +32,24 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
   return true;
 }
 
-auto HandleImplForall(Context& context, Parse::ImplForallId parse_node)
-    -> bool {
+auto HandleImplForall(Context& context, Parse::ImplForallId node_id) -> bool {
   auto params_id =
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
-  context.node_stack().Push(parse_node, params_id);
+  context.node_stack().Push(node_id, params_id);
   return true;
 }
 
-auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId parse_node)
-    -> bool {
-  auto [self_node, self_id] = context.node_stack().PopExprWithParseNode();
+auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId node_id) -> bool {
+  auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id);
-  context.node_stack().Push(parse_node, self_type_id);
-  // TODO: `Self` should come into scope here, at least if it's not already in
-  // scope. Check the design for the latter case.
+  context.node_stack().Push(node_id, self_type_id);
+
+  // Introduce `Self`. Note that we add this name lexically rather than adding
+  // to the `NameScopeId` of the `impl`, because this happens before we enter
+  // the `impl` scope or even identify which `impl` we're declaring.
+  // TODO: Revisit this once #3714 is resolved.
+  context.AddNameToLookup(SemIR::NameId::SelfType,
+                          context.types().GetInstId(self_type_id));
   return true;
 }
 
@@ -65,7 +69,7 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
-  auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
+  auto enclosing_scope_id = context.decl_name_stack().PeekEnclosingScopeId();
 
   if (auto class_decl = TryAsClassScope(context, enclosing_scope_id)) {
     return context.classes().Get(class_decl->class_id).self_type_id;
@@ -77,34 +81,36 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
 }
 
 auto HandleDefaultSelfImplAs(Context& context,
-                             Parse::DefaultSelfImplAsId parse_node) -> bool {
+                             Parse::DefaultSelfImplAsId node_id) -> bool {
   auto self_type_id = GetDefaultSelfType(context);
   if (!self_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class.");
-    context.emitter().Emit(parse_node, ImplAsOutsideClass);
+    context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_type_id = SemIR::TypeId::Error;
   }
 
-  context.node_stack().Push(parse_node, self_type_id);
+  // There's no need to push `Self` into scope here, because we can find it in
+  // the enclosing class scope.
+  context.node_stack().Push(node_id, self_type_id);
   return true;
 }
 
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
-                       Parse::AnyImplDeclId parse_node,
+                       Parse::AnyImplDeclId node_id,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node, SemIR::TypeId constraint_id)
     -> void {
-  auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
+  auto enclosing_scope_id = context.decl_name_stack().PeekEnclosingScopeId();
   auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
 
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, enclosing_scope_id)) {
     CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
                       "`extend impl` can only be used in a class.");
-    context.emitter().Emit(parse_node, ExtendImplOutsideClass);
+    context.emitter().Emit(node_id, ExtendImplOutsideClass);
     return;
   }
 
@@ -143,7 +149,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   auto interface_type =
       context.types().TryGetAs<SemIR::InterfaceType>(constraint_id);
   if (!interface_type) {
-    context.TODO(parse_node, "extending non-interface constraint");
+    context.TODO(node_id, "extending non-interface constraint");
     enclosing_scope.has_error = true;
     return;
   }
@@ -154,7 +160,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
         ExtendUndefinedInterface, Error,
         "`extend impl` requires a definition for interface `{0}`.",
         SemIR::TypeId);
-    auto diag = context.emitter().Build(parse_node, ExtendUndefinedInterface,
+    auto diag = context.emitter().Build(node_id, ExtendUndefinedInterface,
                                         constraint_id);
     context.NoteUndefinedInterface(interface_type->interface_id, diag);
     diag.Emit();
@@ -167,16 +173,16 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
-static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
+static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
-      context.node_stack().PopExprWithParseNode();
+      context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeCategory::ImplAs>();
+      context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
   auto [params_node, params_id] =
-      context.node_stack().PopWithParseNodeIf<Parse::NodeKind::ImplForall>();
+      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
   auto decl_block_id = context.inst_block_stack().Pop();
-  context.node_stack().PopForSoloParseNode<Parse::NodeKind::ImplIntroducer>();
+  context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
   // Convert the constraint expression to a type.
   // TODO: Check that its constant value is a constraint.
@@ -203,13 +209,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
   // in the api file?
   auto impl_id = context.impls().LookupOrAdd(self_type_id, constraint_type_id);
   auto impl_decl = SemIR::ImplDecl{impl_id, decl_block_id};
-  auto impl_decl_id = context.AddInst({parse_node, impl_decl});
+  auto impl_decl_id = context.AddInst({node_id, impl_decl});
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (!!(context.decl_state_stack().innermost().modifier_set &
          KeywordModifierSet::Extend)) {
-    auto extend_node = context.decl_state_stack().innermost().saw_decl_modifier;
-    ExtendImpl(context, extend_node, parse_node, self_type_node, self_type_id,
+    auto extend_node = context.decl_state_stack().innermost().modifier_node_id(
+        ModifierOrder::Decl);
+    ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
                params_node, constraint_type_id);
   }
 
@@ -218,16 +225,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
   return {impl_decl.impl_id, impl_decl_id};
 }
 
-auto HandleImplDecl(Context& context, Parse::ImplDeclId parse_node) -> bool {
-  BuildImplDecl(context, parse_node);
+auto HandleImplDecl(Context& context, Parse::ImplDeclId node_id) -> bool {
+  BuildImplDecl(context, node_id);
   context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleImplDefinitionStart(Context& context,
-                               Parse::ImplDefinitionStartId parse_node)
-    -> bool {
-  auto [impl_id, impl_decl_id] = BuildImplDecl(context, parse_node);
+                               Parse::ImplDefinitionStartId node_id) -> bool {
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl_info = context.impls().Get(impl_id);
 
   if (impl_info.is_defined()) {
@@ -237,21 +243,21 @@ auto HandleImplDefinitionStart(Context& context,
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, ImplRedefinition, impl_info.self_id,
+        .Build(node_id, ImplRedefinition, impl_info.self_id,
                impl_info.constraint_id)
         .Note(impl_info.definition_id, ImplPreviousDefinition)
         .Emit();
   } else {
     impl_info.definition_id = impl_decl_id;
-    impl_info.scope_id =
-        context.name_scopes().Add(impl_decl_id, SemIR::NameId::Invalid,
-                                  context.decl_name_stack().PeekTargetScope());
+    impl_info.scope_id = context.name_scopes().Add(
+        impl_decl_id, SemIR::NameId::Invalid,
+        context.decl_name_stack().PeekEnclosingScopeId());
   }
 
   context.scope_stack().Push(impl_decl_id, impl_info.scope_id);
 
   context.inst_block_stack().Push();
-  context.node_stack().Push(parse_node, impl_id);
+  context.node_stack().Push(node_id, impl_id);
 
   // TODO: Handle the case where there's control flow in the impl body. For
   // example:
@@ -266,15 +272,18 @@ auto HandleImplDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleImplDefinition(Context& context,
-                          Parse::ImplDefinitionId /*parse_node*/) -> bool {
+auto HandleImplDefinition(Context& context, Parse::ImplDefinitionId /*node_id*/)
+    -> bool {
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
-  context.inst_block_stack().Pop();
-  context.decl_name_stack().PopScope();
 
-  // The impl is now fully defined.
-  context.impls().Get(impl_id).defined = true;
+  if (!context.impls().Get(impl_id).is_defined()) {
+    context.impls().Get(impl_id).witness_id =
+        BuildImplWitness(context, impl_id);
+  }
+
+  context.inst_block_stack().Pop();
+  // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
 }
 

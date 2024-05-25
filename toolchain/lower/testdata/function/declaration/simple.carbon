@@ -14,6 +14,7 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT: declare void @F(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @G(i32 %n) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @F(i32 %n)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

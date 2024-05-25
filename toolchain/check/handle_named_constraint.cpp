@@ -7,25 +7,26 @@
 namespace Carbon::Check {
 
 auto HandleNamedConstraintDecl(Context& context,
-                               Parse::NamedConstraintDeclId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleNamedConstraintDecl");
+                               Parse::NamedConstraintDeclId node_id) -> bool {
+  return context.TODO(node_id, "HandleNamedConstraintDecl");
 }
 
-auto HandleNamedConstraintDefinition(
-    Context& context, Parse::NamedConstraintDefinitionId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleNamedConstraintDefinition");
+auto HandleNamedConstraintDefinition(Context& context,
+                                     Parse::NamedConstraintDefinitionId node_id)
+    -> bool {
+  // Note that the decl_name_stack will be popped by `ProcessNodeIds`.
+  return context.TODO(node_id, "HandleNamedConstraintDefinition");
 }
 
 auto HandleNamedConstraintDefinitionStart(
-    Context& context, Parse::NamedConstraintDefinitionStartId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleNamedConstraintDefinitionStart");
+    Context& context, Parse::NamedConstraintDefinitionStartId node_id) -> bool {
+  return context.TODO(node_id, "HandleNamedConstraintDefinitionStart");
 }
 
-auto HandleNamedConstraintIntroducer(
-    Context& context, Parse::NamedConstraintIntroducerId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleNamedConstraintIntroducer");
+auto HandleNamedConstraintIntroducer(Context& context,
+                                     Parse::NamedConstraintIntroducerId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleNamedConstraintIntroducer");
 }
 
 }  // namespace Carbon::Check

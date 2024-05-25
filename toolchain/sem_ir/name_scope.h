@@ -74,6 +74,14 @@ struct NameScope : Printable<NameScope> {
   // to be missing names as a result of the error, and no further errors are
   // produced for lookup failures in this scope.
   bool has_error = false;
+
+  // True if this is a closed namespace created by importing a package.
+  bool is_closed_import = false;
+
+  // Imported IR scopes that compose this namespace. This will be empty for
+  // scopes that correspond to the current package.
+  llvm::SmallVector<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>, 0>
+      import_ir_scopes;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.

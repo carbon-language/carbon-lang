@@ -35,10 +35,12 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   void Flush() override {
     llvm::stable_sort(diagnostics_,
                       [](const Diagnostic& lhs, const Diagnostic& rhs) {
-                        return std::tie(lhs.message.location.line_number,
-                                        lhs.message.location.column_number) <
-                               std::tie(rhs.message.location.line_number,
-                                        rhs.message.location.column_number);
+                        const auto& lhs_loc = lhs.messages[0].loc;
+                        const auto& rhs_loc = rhs.messages[0].loc;
+                        return std::tie(lhs_loc.filename, lhs_loc.line_number,
+                                        lhs_loc.column_number) <
+                               std::tie(rhs_loc.filename, rhs_loc.line_number,
+                                        rhs_loc.column_number);
                       });
     for (auto& diag : diagnostics_) {
       next_consumer_->HandleDiagnostic(std::move(diag));

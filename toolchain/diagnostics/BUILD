@@ -13,10 +13,20 @@ filegroup(
 
 cc_library(
     name = "diagnostic_emitter",
-    hdrs = ["diagnostic_emitter.h"],
+    srcs = [
+        "diagnostic.cpp",
+        "diagnostic_consumer.cpp",
+    ],
+    hdrs = [
+        "diagnostic.h",
+        "diagnostic_consumer.h",
+        "diagnostic_converter.h",
+        "diagnostic_emitter.h",
+    ],
     deps = [
         ":diagnostic_kind",
         "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -29,7 +39,7 @@ cc_test(
         ":diagnostic_emitter",
         ":mocks",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -74,7 +84,7 @@ cc_test(
         ":mocks",
         ":sorting_diagnostic_consumer",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -86,7 +96,7 @@ cc_library(
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

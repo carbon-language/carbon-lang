@@ -35,7 +35,7 @@ auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   return GetTokenInfo(token).column + 1;
 }
 
-auto TokenizedBuffer::GetEndLocation(TokenIndex token) const
+auto TokenizedBuffer::GetEndLoc(TokenIndex token) const
     -> std::pair<LineIndex, int> {
   auto line = GetLine(token);
   int column = GetColumnNumber(token);
@@ -134,11 +134,10 @@ auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
   return token_info.string_literal_id;
 }
 
-auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const
-    -> const llvm::APInt& {
+auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return value_stores_->ints().Get(token_info.int_id);
+  return token_info.int_id;
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
@@ -198,7 +197,7 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 }
 
 // Compute the printed width of a number. When numbers are printed in decimal,
-// the number of digits needed is is one more than the log-base-10 of the
+// the number of digits needed is one more than the log-base-10 of the
 // value. We handle a value of `zero` explicitly.
 //
 // This routine requires its argument to be *non-negative*.
@@ -345,8 +344,8 @@ auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
   output << token_.index;
 }
 
-auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
-    const char* loc) -> DiagnosticLocation {
+auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
+    const char* loc, ContextFnT /*context_fn*/) const -> DiagnosticLoc {
   CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
       << "location not within buffer";
   int64_t offset = loc - buffer_->source_->text().begin();
@@ -384,14 +383,15 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     }
   }
 
-  return {.file_name = buffer_->source_->filename(),
+  return {.filename = buffer_->source_->filename(),
           .line = line,
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }
 
-auto TokenLocationTranslator::GetLocation(TokenIndex token)
-    -> DiagnosticLocation {
+auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
+                                          ContextFnT context_fn) const
+    -> DiagnosticLoc {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const auto& line_info = buffer_->GetLineInfo(token_info.token_line);
@@ -401,9 +401,9 @@ auto TokenLocationTranslator::GetLocation(TokenIndex token)
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  DiagnosticLocation loc =
-      TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
-          token_start);
+  DiagnosticLoc loc =
+      TokenizedBuffer::SourceBufferDiagnosticConverter(buffer_).ConvertLoc(
+          token_start, context_fn);
   loc.length = buffer_->GetTokenText(token).size();
   return loc;
 }

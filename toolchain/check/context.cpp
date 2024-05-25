@@ -10,16 +10,20 @@
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
+#include "toolchain/check/merge.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -50,10 +54,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
        SemIR::TypeId::TypeType});
 }
 
-auto Context::TODO(Parse::NodeId parse_node, std::string label) -> bool {
+auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
                     std::string);
-  emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
+  emitter_->Emit(loc, SemanticsTodo, std::move(label));
   return false;
 }
 
@@ -67,14 +71,14 @@ auto Context::VerifyOnFinish() -> void {
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
-auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
-  CARBON_VLOG() << "AddInst: " << parse_node_and_inst.inst << "\n";
+  auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+  CARBON_VLOG() << "AddInst: " << loc_id_and_inst.inst << "\n";
 
-  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  auto const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+    CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
     constant_values().Set(inst_id, const_id);
   }
@@ -82,24 +86,23 @@ auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
   return inst_id;
 }
 
-auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(parse_node_and_inst);
+auto Context::AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInstInNoBlock(
-    SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
-  CARBON_VLOG() << "AddPlaceholderInst: " << parse_node_and_inst.inst << "\n";
+auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+  CARBON_VLOG() << "AddPlaceholderInst: " << loc_id_and_inst.inst << "\n";
   constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = AddPlaceholderInstInNoBlock(parse_node_and_inst);
+  auto inst_id = AddPlaceholderInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
@@ -111,47 +114,62 @@ auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
   return const_id;
 }
 
-auto Context::AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> void {
-  auto inst_id = AddInst(parse_node_and_inst);
-  node_stack_.Push(parse_node_and_inst.parse_node, inst_id);
+auto Context::AddInstAndPush(SemIR::LocIdAndInst loc_id_and_inst) -> void {
+  auto inst_id = AddInst(loc_id_and_inst);
+  node_stack_.Push(loc_id_and_inst.loc_id.node_id(), inst_id);
 }
 
-auto Context::ReplaceInstBeforeConstantUse(
-    SemIR::InstId inst_id, SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> void {
-  sem_ir().insts().Set(inst_id, parse_node_and_inst);
+auto Context::ReplaceLocIdAndInstBeforeConstantUse(
+    SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
+  sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
 
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> "
-                << parse_node_and_inst.inst << "\n";
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << loc_id_and_inst.inst
+                << "\n";
 
   // Redo evaluation. This is only safe to do if this instruction has not
   // already been used as a constant, which is the caller's responsibility to
   // ensure.
-  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  auto const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+    CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
   }
   constant_values().Set(inst_id, const_id);
 }
 
-auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
-                                    SemIR::InstId prev_def_id) -> void {
+auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
+                                           SemIR::Inst inst) -> void {
+  sem_ir().insts().Set(inst_id, inst);
+
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << inst << "\n";
+
+  // Redo evaluation. This is only safe to do if this instruction has not
+  // already been used as a constant, which is the caller's responsibility to
+  // ensure.
+  auto const_id = TryEvalInst(*this, inst_id, inst);
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << inst << " -> " << const_id.inst_id()
+                  << "\n";
+  }
+  constant_values().Set(inst_id, const_id);
+}
+
+auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
+    -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
-  emitter_->Build(dup_def_id, NameDeclDuplicate)
-      .Note(prev_def_id, NameDeclPrevious)
+  emitter_->Build(dup_def, NameDeclDuplicate)
+      .Note(prev_def, NameDeclPrevious)
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::NodeId parse_node,
-                                   SemIR::NameId name_id) -> void {
+auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
+    -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     SemIR::NameId);
-  emitter_->Emit(parse_node, NameNotFound, name_id);
+  emitter_->Emit(loc, NameNotFound, name_id);
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -185,43 +203,6 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
   }
 }
 
-auto Context::AddPackageImports(Parse::NodeId import_node,
-                                IdentifierId package_id,
-                                llvm::ArrayRef<const SemIR::File*> sem_irs,
-                                bool has_load_error) -> void {
-  CARBON_CHECK(has_load_error || !sem_irs.empty())
-      << "There should be either a load error or at least one IR.";
-
-  auto name_id = SemIR::NameId::ForIdentifier(package_id);
-
-  SemIR::ImportIRId first_id(import_irs().size());
-  for (const auto* sem_ir : sem_irs) {
-    import_irs().Add(sem_ir);
-  }
-  if (has_load_error) {
-    import_irs().Add(nullptr);
-  }
-  SemIR::ImportIRId last_id(import_irs().size() - 1);
-
-  auto type_id = GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
-  auto inst_id =
-      AddInst({import_node, SemIR::Import{.type_id = type_id,
-                                          .first_import_ir_id = first_id,
-                                          .last_import_ir_id = last_id}});
-
-  // Add the import to lookup. Should always succeed because imports will be
-  // uniquely named.
-  AddNameToLookup(name_id, inst_id);
-  // Add a name for formatted output. This isn't used in name lookup in order
-  // to reduce indirection, but it's separate from the Import because it
-  // otherwise fits in an Inst.
-  auto bind_name_id = bind_names().Add(
-      {.name_id = name_id, .enclosing_scope_id = SemIR::NameScopeId::Package});
-  AddInst({import_node, SemIR::BindName{.type_id = type_id,
-                                        .bind_name_id = bind_name_id,
-                                        .value_id = inst_id}});
-}
-
 auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
     -> void {
   if (auto existing = scope_stack().LookupOrAddName(name_id, target_id);
@@ -230,8 +211,7 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
-                               SemIR::NameId name_id,
+auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
@@ -257,11 +237,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    auto result = scope_stack().LookupInCurrentScope(name_id);
-    if (result.is_valid()) {
-      TryResolveImportRefUnused(*this, result);
-    }
-    return result;
+    return scope_stack().LookupInCurrentScope(name_id);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally
@@ -272,11 +248,12 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(name_id, name_scopes().Get(scope_id));
+    return LookupNameInExactScope(loc_id, name_id, scope_id,
+                                  name_scopes().Get(scope_id));
   }
 }
 
-auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
+auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                     SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
@@ -288,7 +265,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
-            LookupQualifiedName(parse_node, name_id, name_scope_id,
+            LookupQualifiedName(node_id, name_id, name_scope_id,
                                 /*required=*/false);
         non_lexical_result.is_valid()) {
       return non_lexical_result;
@@ -296,27 +273,105 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   }
 
   if (lexical_result.is_valid()) {
-    TryResolveImportRefUnused(*this, lexical_result);
     return lexical_result;
   }
 
   // We didn't find anything at all.
-  DiagnoseNameNotFound(parse_node, name_id);
+  DiagnoseNameNotFound(node_id, name_id);
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupNameInExactScope(SemIR::NameId name_id,
+// Handles lookup through the import_ir_scopes for LookupNameInExactScope.
+static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
+                                   SemIR::NameId name_id,
+                                   SemIR::NameScopeId scope_id,
+                                   const SemIR::NameScope& scope)
+    -> SemIR::InstId {
+  auto identifier_id = name_id.AsIdentifierId();
+  llvm::StringRef identifier;
+  if (identifier_id.is_valid()) {
+    identifier = context.identifiers().Get(identifier_id);
+  }
+
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InNameLookup, Note, "In name lookup for `{0}`.",
+                          SemIR::NameId);
+        builder.Note(loc, InNameLookup, name_id);
+      });
+
+  auto result_id = SemIR::InstId::Invalid;
+  std::optional<SemIR::ImportIRInst> canonical_result_inst;
+
+  for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
+    auto& import_ir = context.import_irs().Get(import_ir_id);
+
+    // Determine the NameId in the import IR.
+    SemIR::NameId import_name_id = name_id;
+    if (identifier_id.is_valid()) {
+      auto import_identifier_id =
+          import_ir.sem_ir->identifiers().Lookup(identifier);
+      if (!import_identifier_id.is_valid()) {
+        // Name doesn't exist in the import IR.
+        continue;
+      }
+      import_name_id = SemIR::NameId::ForIdentifier(import_identifier_id);
+    }
+
+    // Look up the name in the import scope.
+    const auto& import_scope =
+        import_ir.sem_ir->name_scopes().Get(import_scope_id);
+    auto it = import_scope.names.find(import_name_id);
+    if (it == import_scope.names.end()) {
+      // Name doesn't exist in the import scope.
+      continue;
+    }
+    if (import_ir.sem_ir->insts().Is<SemIR::AnyImportRef>(it->second)) {
+      // This entity was added to name lookup by using an import, and is not
+      // exported.
+      continue;
+    }
+
+    if (result_id.is_valid()) {
+      // On a conflict, we verify the canonical instruction is the same.
+      if (!canonical_result_inst) {
+        canonical_result_inst =
+            GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
+      }
+      VerifySameCanonicalImportIRInst(context, result_id,
+                                      *canonical_result_inst, import_ir_id,
+                                      import_ir.sem_ir, it->second);
+    } else {
+      // Add the first result found.
+      auto bind_name_id = context.bind_names().Add(
+          {.name_id = name_id,
+           .enclosing_scope_id = scope_id,
+           .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+      result_id =
+          AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second},
+                       bind_name_id);
+      LoadImportRef(context, result_id);
+    }
+  }
+
+  return result_id;
+}
+
+auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+                                     SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    TryResolveImportRefUnused(*this, it->second);
+    LoadImportRef(*this, it->second);
     return it->second;
+  }
+  if (!scope.import_ir_scopes.empty()) {
+    return LookupInImportIRScopes(*this, loc, name_id, scope_id, scope);
   }
   return SemIR::InstId::Invalid;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId parse_node,
-                                  SemIR::NameId name_id,
+auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   llvm::SmallVector<SemIR::NameScopeId> scope_ids = {scope_id};
@@ -325,10 +380,12 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scope_ids.empty()) {
-    const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
+    auto scope_id = scope_ids.pop_back_val();
+    const auto& scope = name_scopes().Get(scope_id);
     has_error |= scope.has_error;
 
-    auto scope_result_id = LookupNameInExactScope(name_id, scope);
+    auto scope_result_id =
+        LookupNameInExactScope(node_id, name_id, scope_id, scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = llvm::reverse(scope.extended_scopes);
@@ -345,7 +402,7 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
           NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
           SemIR::NameId);
-      emitter_->Emit(parse_node, NameAmbiguousDueToExtend, name_id);
+      emitter_->Emit(node_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return SemIR::InstId::BuiltinError;
     }
@@ -355,7 +412,7 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
 
   if (required && !result_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(parse_node, name_id);
+      DiagnoseNameNotFound(node_id, name_id);
     }
     return SemIR::InstId::BuiltinError;
   }
@@ -363,39 +420,90 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
   return result_id;
 }
 
+// Returns the scope of the Core package, or Invalid if it's not found.
+//
+// TODO: Consider tracking the Core package in SemIR so we don't need to use
+// name lookup to find it.
+static auto GetCorePackage(Context& context, SemIRLoc loc)
+    -> SemIR::NameScopeId {
+  auto core_ident_id = context.identifiers().Add("Core");
+  auto packaging = context.parse_tree().packaging_decl();
+  if (packaging && packaging->names.package_id == core_ident_id) {
+    return SemIR::NameScopeId::Package;
+  }
+  auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
+
+  // Look up `package.Core`.
+  auto core_inst_id = context.LookupNameInExactScope(
+      loc, core_name_id, SemIR::NameScopeId::Package,
+      context.name_scopes().Get(SemIR::NameScopeId::Package));
+  if (!core_inst_id.is_valid()) {
+    context.DiagnoseNameNotFound(loc, core_name_id);
+    return SemIR::NameScopeId::Invalid;
+  }
+
+  // We expect it to be a namespace.
+  if (auto namespace_inst =
+          context.insts().TryGetAs<SemIR::Namespace>(core_inst_id)) {
+    return namespace_inst->name_scope_id;
+  }
+  // TODO: This should really diagnose the name issue.
+  context.DiagnoseNameNotFound(loc, core_name_id);
+  return SemIR::NameScopeId::Invalid;
+}
+
+auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
+    -> SemIR::InstId {
+  auto core_package_id = GetCorePackage(*this, loc);
+  if (!core_package_id.is_valid()) {
+    return SemIR::InstId::BuiltinError;
+  }
+
+  auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
+  auto inst_id = LookupNameInExactScope(loc, name_id, core_package_id,
+                                        name_scopes().Get(core_package_id));
+  if (!inst_id.is_valid()) {
+    DiagnoseNameNotFound(loc, name_id);
+    return SemIR::InstId::BuiltinError;
+  }
+
+  // Look through import_refs and aliases.
+  return constant_values().Get(inst_id).inst_id();
+}
+
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::NodeId parse_node,
-                                           Args... args) -> SemIR::InstBlockId {
+                                           Parse::NodeId node_id, Args... args)
+    -> SemIR::InstBlockId {
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst({parse_node, BranchNode{block_id, args...}});
+  context.AddInst({node_id, BranchNode{block_id, args...}});
   return block_id;
 }
 
-auto Context::AddDominatedBlockAndBranch(Parse::NodeId parse_node)
+auto Context::AddDominatedBlockAndBranch(Parse::NodeId node_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
+  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, node_id);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
+auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
                                                 SemIR::InstId arg_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, node_id,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
+auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
                                            SemIR::InstId cond_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, node_id,
                                                          cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
-                                         int num_blocks) -> void {
+auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
+    -> void {
   CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -404,7 +512,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({parse_node, SemIR::Branch{new_block_id}});
+      AddInst({node_id, SemIR::Branch{new_block_id}});
     }
     inst_block_stack().Pop();
   }
@@ -412,7 +520,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+    Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
     -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
@@ -422,7 +530,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({parse_node, SemIR::BranchWithArg{new_block_id, arg_id}});
+      AddInst({node_id, SemIR::BranchWithArg{new_block_id, arg_id}});
     }
     inst_block_stack().Pop();
   }
@@ -430,17 +538,46 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst({parse_node, SemIR::BlockArg{result_type_id, new_block_id}});
+  return AddInst({node_id, SemIR::BlockArg{result_type_id, new_block_id}});
+}
+
+auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
+                                                 SemIR::InstId cond_id,
+                                                 SemIR::InstId if_true,
+                                                 SemIR::InstId if_false)
+    -> void {
+  CARBON_CHECK(insts().Is<SemIR::BlockArg>(select_id));
+
+  // Determine the constant result based on the condition value.
+  SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
+  auto cond_const_id = constant_values().Get(cond_id);
+  if (!cond_const_id.is_template()) {
+    // Symbolic or non-constant condition means a non-constant result.
+  } else if (auto literal = insts().TryGetAs<SemIR::BoolLiteral>(
+                 cond_const_id.inst_id())) {
+    const_id = constant_values().Get(literal.value().value.ToBool() ? if_true
+                                                                    : if_false);
+  } else {
+    CARBON_CHECK(cond_const_id == SemIR::ConstantId::Error)
+        << "Unexpected constant branch condition.";
+    const_id = SemIR::ConstantId::Error;
+  }
+
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << insts().Get(select_id) << " -> "
+                  << const_id.inst_id() << "\n";
+    constant_values().Set(select_id, const_id);
+  }
 }
 
 // Add the current code block to the enclosing function.
-auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId parse_node) -> void {
+auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
 
   if (return_scope_stack().empty()) {
-    CARBON_CHECK(parse_node.is_valid())
-        << "No current function, but parse_node not provided";
-    TODO(parse_node,
+    CARBON_CHECK(node_id.is_valid())
+        << "No current function, but node_id not provided";
+    TODO(node_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
     return;
@@ -492,7 +629,9 @@ auto Context::FinalizeGlobalInit() -> void {
          .implicit_param_refs_id = SemIR::InstBlockId::Empty,
          .param_refs_id = SemIR::InstBlockId::Empty,
          .return_type_id = SemIR::TypeId::Invalid,
-         .return_slot_id = SemIR::InstId::Invalid,
+         .return_storage_id = SemIR::InstId::Invalid,
+         .is_extern = false,
+         .return_slot = SemIR::Function::ReturnSlot::Absent,
          .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
   } else {
     inst_block_stack().PopGlobalInit();
@@ -599,34 +738,32 @@ class TypeCompleter {
   // Adds any types nested within `type_inst` that need to be complete for
   // `type_inst` to be complete to our work list.
   auto AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
-    switch (type_inst.kind()) {
-      case SemIR::ArrayType::Kind:
-        Push(type_inst.As<SemIR::ArrayType>().element_type_id);
+    CARBON_KIND_SWITCH(type_inst) {
+      case CARBON_KIND(SemIR::ArrayType inst): {
+        Push(inst.element_type_id);
         break;
-
-      case SemIR::StructType::Kind:
-        for (auto field_id : context_.inst_blocks().Get(
-                 type_inst.As<SemIR::StructType>().fields_id)) {
+      }
+      case CARBON_KIND(SemIR::StructType inst): {
+        for (auto field_id : context_.inst_blocks().Get(inst.fields_id)) {
           Push(context_.insts()
                    .GetAs<SemIR::StructTypeField>(field_id)
                    .field_type_id);
         }
         break;
-
-      case SemIR::TupleType::Kind:
-        for (auto element_type_id : context_.type_blocks().Get(
-                 type_inst.As<SemIR::TupleType>().elements_id)) {
+      }
+      case CARBON_KIND(SemIR::TupleType inst): {
+        for (auto element_type_id :
+             context_.type_blocks().Get(inst.elements_id)) {
           Push(element_type_id);
         }
         break;
-
-      case SemIR::ClassType::Kind: {
-        auto class_type = type_inst.As<SemIR::ClassType>();
-        auto& class_info = context_.classes().Get(class_type.class_id);
+      }
+      case CARBON_KIND(SemIR::ClassType inst): {
+        auto& class_info = context_.classes().Get(inst.class_id);
         if (!class_info.is_defined()) {
           if (diagnoser_) {
             auto builder = (*diagnoser_)();
-            context_.NoteIncompleteClass(class_type.class_id, builder);
+            context_.NoteIncompleteClass(inst.class_id, builder);
             builder.Emit();
           }
           return false;
@@ -634,11 +771,10 @@ class TypeCompleter {
         Push(class_info.object_repr_id);
         break;
       }
-
-      case SemIR::ConstType::Kind:
-        Push(type_inst.As<SemIR::ConstType>().inner_id);
+      case CARBON_KIND(SemIR::ConstType inst): {
+        Push(inst.inner_id);
         break;
-
+      }
       default:
         break;
     }
@@ -697,8 +833,8 @@ class TypeCompleter {
       case SemIR::BuiltinKind::IntType:
       case SemIR::BuiltinKind::FloatType:
       case SemIR::BuiltinKind::NamespaceType:
-      case SemIR::BuiltinKind::FunctionType:
       case SemIR::BuiltinKind::BoundMethodType:
+      case SemIR::BuiltinKind::WitnessType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinKind::StringType:
@@ -708,16 +844,6 @@ class TypeCompleter {
         return MakePointerValueRepr(type_id);
     }
     llvm_unreachable("All builtin kinds were handled above");
-  }
-
-  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
-                                   SemIR::ImportRefUsed import_ref) const
-      -> SemIR::ValueRepr {
-    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id);
-    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
-    CARBON_CHECK(import_inst.kind() != SemIR::InstKind::ImportRefUsed)
-        << "If ImportRefUsed can point at another, this would be recursive.";
-    return BuildValueRepr(type_id, import_inst);
   }
 
   auto BuildStructOrTupleValueRepr(std::size_t num_elements,
@@ -813,62 +939,12 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    switch (inst.kind()) {
-      case SemIR::AddrOf::Kind:
-      case SemIR::AddrPattern::Kind:
-      case SemIR::ArrayIndex::Kind:
-      case SemIR::ArrayInit::Kind:
-      case SemIR::Assign::Kind:
-      case SemIR::AssociatedEntity::Kind:
-      case SemIR::BaseDecl::Kind:
-      case SemIR::BindAlias::Kind:
-      case SemIR::BindName::Kind:
-      case SemIR::BindValue::Kind:
-      case SemIR::BlockArg::Kind:
-      case SemIR::BoolLiteral::Kind:
-      case SemIR::BoundMethod::Kind:
-      case SemIR::Branch::Kind:
-      case SemIR::BranchIf::Kind:
-      case SemIR::BranchWithArg::Kind:
-      case SemIR::Call::Kind:
-      case SemIR::ClassDecl::Kind:
-      case SemIR::ClassElementAccess::Kind:
-      case SemIR::ClassInit::Kind:
-      case SemIR::Converted::Kind:
-      case SemIR::Deref::Kind:
-      case SemIR::FieldDecl::Kind:
-      case SemIR::FunctionDecl::Kind:
-      case SemIR::ImplDecl::Kind:
-      case SemIR::Import::Kind:
-      case SemIR::InitializeFrom::Kind:
-      case SemIR::InterfaceDecl::Kind:
-      case SemIR::IntLiteral::Kind:
-      case SemIR::ImportRefUnused::Kind:
-      case SemIR::NameRef::Kind:
-      case SemIR::Namespace::Kind:
-      case SemIR::Param::Kind:
-      case SemIR::RealLiteral::Kind:
-      case SemIR::Return::Kind:
-      case SemIR::ReturnExpr::Kind:
-      case SemIR::SpliceBlock::Kind:
-      case SemIR::StringLiteral::Kind:
-      case SemIR::StructAccess::Kind:
-      case SemIR::StructTypeField::Kind:
-      case SemIR::StructLiteral::Kind:
-      case SemIR::StructInit::Kind:
-      case SemIR::StructValue::Kind:
-      case SemIR::Temporary::Kind:
-      case SemIR::TemporaryStorage::Kind:
-      case SemIR::TupleAccess::Kind:
-      case SemIR::TupleIndex::Kind:
-      case SemIR::TupleLiteral::Kind:
-      case SemIR::TupleInit::Kind:
-      case SemIR::TupleValue::Kind:
-      case SemIR::UnaryOperatorNot::Kind:
-      case SemIR::ValueAsRef::Kind:
-      case SemIR::ValueOfInitializer::Kind:
-      case SemIR::VarStorage::Kind:
-        CARBON_FATAL() << "Type refers to non-type inst " << inst;
+    CARBON_KIND_SWITCH(inst) {
+#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
+#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
+#include "toolchain/sem_ir/inst_kind.def"
+      CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
@@ -877,44 +953,59 @@ class TypeCompleter {
         return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
 
-      case SemIR::ImportRefUsed::Kind:
-        return BuildImportRefUsedValueRepr(type_id,
-                                           inst.As<SemIR::ImportRefUsed>());
-
-      case SemIR::StructType::Kind:
-        return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
-
-      case SemIR::TupleType::Kind:
-        return BuildTupleTypeValueRepr(type_id, inst.As<SemIR::TupleType>());
-
-      case SemIR::ClassType::Kind:
-        // The value representation for a class is a pointer to the object
-        // representation.
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        return BuildStructTypeValueRepr(type_id, struct_type);
+      }
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        return BuildTupleTypeValueRepr(type_id, tuple_type);
+      }
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        auto& class_info = context_.classes().Get(class_type.class_id);
+        // The value representation of an adapter is the value representation of
+        // its adapted type.
+        if (class_info.adapt_id.is_valid()) {
+          return GetNestedValueRepr(class_info.object_repr_id);
+        }
+        // Otherwise, the value representation for a class is a pointer to the
+        // object representation.
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
-        return MakePointerValueRepr(
-            context_.classes()
-                .Get(inst.As<SemIR::ClassType>().class_id)
-                .object_repr_id,
-            SemIR::ValueRepr::ObjectAggregate);
-
-      case SemIR::InterfaceType::Kind:
-        // TODO: Should we model the value representation as a witness?
-        return MakeEmptyValueRepr();
-
-      case SemIR::Builtin::Kind:
-        return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
-
+        return MakePointerValueRepr(class_info.object_repr_id,
+                                    SemIR::ValueRepr::ObjectAggregate);
+      }
       case SemIR::AssociatedEntityType::Kind:
+      case SemIR::FunctionType::Kind:
+      case SemIR::GenericClassType::Kind:
+      case SemIR::InterfaceType::Kind:
+      case SemIR::UnboundElementType::Kind: {
+        // These types have no runtime operations, so we use an empty value
+        // representation.
+        //
+        // TODO: There is information we could model here:
+        // - For an interface, we could use a witness.
+        // - For an associated entity, we could use an index into the witness.
+        // - For an unbound element, we could use an index or offset.
+        return MakeEmptyValueRepr();
+      }
+      case CARBON_KIND(SemIR::Builtin builtin): {
+        return BuildBuiltinValueRepr(type_id, builtin);
+      }
+
       case SemIR::BindSymbolicName::Kind:
-      case SemIR::PointerType::Kind:
-      case SemIR::UnboundElementType::Kind:
+      case SemIR::InterfaceWitnessAccess::Kind:
+        // For symbolic types, we arbitrarily pick a copy representation.
         return MakeCopyValueRepr(type_id);
 
-      case SemIR::ConstType::Kind:
+      case SemIR::FloatType::Kind:
+      case SemIR::IntType::Kind:
+      case SemIR::PointerType::Kind:
+        return MakeCopyValueRepr(type_id);
+
+      case CARBON_KIND(SemIR::ConstType const_type): {
         // The value representation of `const T` is the same as that of `T`.
         // Objects are not modifiable through their value representations.
-        return GetNestedValueRepr(inst.As<SemIR::ConstType>().inner_id);
+        return GetNestedValueRepr(const_type.inner_id);
+      }
     }
   }
 
@@ -957,6 +1048,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   return it->second;
 }
 
+// Gets or forms a type_id for a type, given the instruction kind and arguments.
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
@@ -966,16 +1058,26 @@ static auto GetTypeImpl(Context& context, EachArgT... each_arg)
                   InstT{SemIR::TypeId::TypeType, each_arg...}));
 }
 
+// Gets or forms a type_id for a type, given the instruction kind and arguments,
+// and completes the type. This should only be used when type completion cannot
+// fail.
+template <typename InstT, typename... EachArgT>
+static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
+    -> SemIR::TypeId {
+  auto type_id = GetTypeImpl<InstT>(context, each_arg...);
+  bool complete = context.TryToCompleteType(type_id);
+  CARBON_CHECK(complete) << "Type completion should not fail";
+  return type_id;
+}
+
 auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::StructType>(*this, refs_id);
 }
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
-  // TODO: Deduplicate the type block here. Currently requesting the same tuple
-  // type more than once will create multiple type blocks, all but one of which
-  // is unused.
-  return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
+  return GetTypeImpl<SemIR::TupleType>(*this,
+                                       type_blocks().AddCanonical(type_ids));
 }
 
 auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
@@ -987,12 +1089,19 @@ auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
-  auto type_id = GetTypeIdForTypeConstant(
-      constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
+  auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";
   return type_id;
+}
+
+auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id);
+}
+
+auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

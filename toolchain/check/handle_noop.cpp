@@ -6,30 +6,29 @@
 
 namespace Carbon::Check {
 
-auto HandleEmptyDecl(Context& /*context*/, Parse::EmptyDeclId /*parse_node*/)
+auto HandleEmptyDecl(Context& /*context*/, Parse::EmptyDeclId /*node_id*/)
     -> bool {
   // Empty declarations have no actions associated.
   return true;
 }
 
-auto HandleInvalidParse(Context& context, Parse::InvalidParseId parse_node)
+auto HandleInvalidParse(Context& context, Parse::InvalidParseId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleInvalidParse");
+  return context.TODO(node_id, "HandleInvalidParse");
 }
 
 auto HandleInvalidParseStart(Context& context,
-                             Parse::InvalidParseStartId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleInvalidParseStart");
+                             Parse::InvalidParseStartId node_id) -> bool {
+  return context.TODO(node_id, "HandleInvalidParseStart");
 }
 
 auto HandleInvalidParseSubtree(Context& context,
-                               Parse::InvalidParseSubtreeId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleInvalidParseSubtree");
+                               Parse::InvalidParseSubtreeId node_id) -> bool {
+  return context.TODO(node_id, "HandleInvalidParseSubtree");
 }
 
-auto HandlePlaceholder(Context& /*context*/,
-                       Parse::PlaceholderId /*parse_node*/) -> bool {
+auto HandlePlaceholder(Context& /*context*/, Parse::PlaceholderId /*node_id*/)
+    -> bool {
   CARBON_FATAL()
       << "Placeholder node should always be replaced before parse completes";
 }

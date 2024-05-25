@@ -30,7 +30,7 @@ class ParamAndArgRefsStack {
   // On a comma, pushes the most recent instruction, becoming param or arg ref.
   // This also pops the NodeStack, meaning its top will remain start_kind.
   auto ApplyComma() -> void {
-    // Support expressions, parameters, and other nodes like `StructFieldValue`
+    // Support expressions, parameters, and other nodes like `StructField`
     // that produce InstIds.
     stack_.AddInstId(node_stack_->Pop<SemIR::InstId>());
   }
@@ -43,7 +43,7 @@ class ParamAndArgRefsStack {
   auto EndNoPop(Parse::NodeKind start_kind) -> void {
     if (!node_stack_->PeekIs(start_kind)) {
       // Support expressions, parameters, and other nodes like
-      // `StructFieldValue` that produce InstIds.
+      // `StructField` that produce InstIds.
       stack_.AddInstId(node_stack_->Pop<SemIR::InstId>());
     }
   }

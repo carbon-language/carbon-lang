@@ -4,75 +4,94 @@
 //
 // AUTOUPDATE
 
-// --- identifier.carbon
+// --- fail_identifier.carbon
 
-// CHECK:STDERR: identifier.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
-// CHECK:STDERR: library Shapes api;
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: library Shapes;
 // CHECK:STDERR:         ^~~~~~
-library Shapes api;
+// CHECK:STDERR:
+library Shapes;
 
-// --- raw_identifier.carbon
+// --- fail_raw_identifier.carbon
 
-// CHECK:STDERR: raw_identifier.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
-// CHECK:STDERR: library r#default api;
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: library r#default;
 // CHECK:STDERR:         ^~~~~~~
-library r#default api;
+// CHECK:STDERR:
+library r#default;
 
-// --- missing.carbon
+// --- fail_missing.carbon
 
-// CHECK:STDERR: missing.carbon:[[@LINE+3]]:8: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_missing.carbon:[[@LINE+4]]:8: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 library;
 
-// --- missing_with_api.carbon
+// --- fail_missing_with_api.carbon
 
-// CHECK:STDERR: missing_with_api.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
-// CHECK:STDERR: library api;
-// CHECK:STDERR:         ^~~
-library api;
+// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+4]]:8: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: library;
+// CHECK:STDERR:        ^
+// CHECK:STDERR:
+library;
 
-// --- no_semi.carbon
+// --- fail_trailing_impl.carbon
 
-library "NoSemi" api
+// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+4]]:25: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: library "trailing_impl" impl
+// CHECK:STDERR:                         ^~~~
+// CHECK:STDERR:
+library "trailing_impl" impl
 
-// CHECK:STDERR: no_semi.carbon:[[@LINE+39]]:21: ERROR: `library` declarations must end with a `;`.
+// --- fail_no_semi.carbon
+
+library "NoSemi"
+
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: ERROR: `library` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
-// CHECK:STDOUT: - filename: identifier.carbon
+// CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: raw_identifier.carbon
+// CHECK:STDOUT: - filename: fail_raw_identifier.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: missing.carbon
+// CHECK:STDOUT: - filename: fail_missing.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: missing_with_api.carbon
+// CHECK:STDOUT: - filename: fail_missing_with_api.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: no_semi.carbon
+// CHECK:STDOUT: - filename: fail_trailing_impl.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"trailing_impl"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: 'impl', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"NoSemi"'},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: 'api', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: '"NoSemi"', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

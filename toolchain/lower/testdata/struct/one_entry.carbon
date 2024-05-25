@@ -14,12 +14,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "one_entry.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca { i32 }, align 8
-// CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x, align 4
-// CHECK:STDOUT:   %y = alloca { i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %a, align 4
-// CHECK:STDOUT:   %struct.init = insertvalue { i32 } poison, i32 %1, 0
-// CHECK:STDOUT:   store { i32 } %struct.init, ptr %y, align 4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.var = alloca { i32 }, align 8
+// CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x.var, align 4
+// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8
+// CHECK:STDOUT:   %.loc9_22.1.a = getelementptr inbounds { i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc9_22.2 = load i32, ptr %.loc9_22.1.a, align 4
+// CHECK:STDOUT:   %.loc9_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc9_22.2, 0
+// CHECK:STDOUT:   store { i32 } %.loc9_22.3.struct.init, ptr %y.var, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

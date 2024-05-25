@@ -80,7 +80,7 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
     end_token = context.Consume();
   } else {
     // TODO: Disambiguate between statement and member declaration.
-    context.EmitExpectedDeclSemi(Lex::TokenKind::Var);
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Var);
     state.has_error = true;
     end_token = context.SkipPastLikelyEnd(state.token);
   }

@@ -29,7 +29,7 @@ cc_binary(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",
-        "@llvm-project//clang-tools-extra/clangd:clangd_library",
+        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
         "@llvm-project//llvm:Support",
     ],
 )

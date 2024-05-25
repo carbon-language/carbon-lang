@@ -52,8 +52,13 @@ const NodeKind& NodeIdForKind<K>::Kind = K;
 // NodeId that matches any NodeKind whose `category()` overlaps with `Category`.
 template <NodeCategory Category>
 struct NodeIdInCategory : public NodeId {
-  // TODO: Support conversion from `NodeIdForKind<Kind>` if `Kind::category()`
+  // Support conversion from `NodeIdForKind<Kind>` if Kind's category
   // overlaps with `Category`.
+  template <const NodeKind& Kind>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  NodeIdInCategory(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
+    CARBON_CHECK(!!(Kind.category() & Category));
+  }
 
   constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -65,20 +70,22 @@ struct NodeIdInCategory : public NodeId {
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
 using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
-using AnyMemberNameId = NodeIdInCategory<NodeCategory::MemberName>;
+using AnyMemberNameOrMemberExprId =
+    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
 
-// NodeId with kind that matches either T::Kind or U::Kind.
-template <typename T, typename U>
+// NodeId with kind that matches one of the `T::Kind`s.
+template <typename... T>
 struct NodeIdOneOf : public NodeId {
+  static_assert(sizeof...(T) >= 2, "Expected at least two types.");
   constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
   template <const NodeKind& Kind>
   // NOLINTNEXTLINE(google-explicit-constructor)
   NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
-    static_assert(T::Kind == Kind || U::Kind == Kind);
+    static_assert(((T::Kind == Kind) || ...));
   }
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdOneOf(InvalidNodeId /*invalid*/)
@@ -86,11 +93,14 @@ struct NodeIdOneOf : public NodeId {
 };
 
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
-using AnyFunctionDeclId =
-    NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId>;
+using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
+                                      BuiltinFunctionDefinitionStartId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDeclId>;
+using AnyPointerDeferenceExprId =
+    NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

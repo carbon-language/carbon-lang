@@ -39,8 +39,8 @@ class PendingBlock {
     size_t size_;
   };
 
-  auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
-    auto inst_id = context_.AddInstInNoBlock(parse_node_and_inst);
+  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = context_.AddInstInNoBlock(loc_id_and_inst);
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -56,26 +56,26 @@ class PendingBlock {
   // Replace the instruction at target_id with the instructions in this block.
   // The new value for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
-    auto value = context_.insts().GetWithParseNode(value_id);
+    auto value = context_.insts().GetWithLocId(value_id);
 
     // There are three cases here:
 
     if (insts_.empty()) {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
-      context_.ReplaceInstBeforeConstantUse(
-          target_id, {value.parse_node,
+      context_.ReplaceLocIdAndInstBeforeConstantUse(
+          target_id, {value.loc_id,
                       SemIR::SpliceBlock{value.inst.type_id(),
                                          SemIR::InstBlockId::Empty, value_id}});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
-      context_.ReplaceInstBeforeConstantUse(target_id, value);
+      context_.ReplaceLocIdAndInstBeforeConstantUse(target_id, value);
     } else {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
-      context_.ReplaceInstBeforeConstantUse(
+      context_.ReplaceLocIdAndInstBeforeConstantUse(
           target_id,
-          {value.parse_node,
+          {value.loc_id,
            SemIR::SpliceBlock{value.inst.type_id(),
                               context_.inst_blocks().Add(insts_), value_id}});
     }

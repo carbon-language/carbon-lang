@@ -23,11 +23,12 @@ enum class NodeCategory : uint32_t {
   Decl = 1 << 0,
   Expr = 1 << 1,
   ImplAs = 1 << 2,
-  MemberName = 1 << 3,
-  Modifier = 1 << 4,
-  NameComponent = 1 << 5,
-  Pattern = 1 << 6,
-  Statement = 1 << 7,
+  MemberExpr = 1 << 3,
+  MemberName = 1 << 4,
+  Modifier = 1 << 5,
+  NameComponent = 1 << 6,
+  Pattern = 1 << 7,
+  Statement = 1 << 8,
   None = 0,
 
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)
@@ -52,7 +53,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/node_kind.def"
 
-  // Validates that a `parse_node_kind` parser node can be generated for a
+  // Validates that a `node_kind` parser node can be generated for a
   // `lex_token_kind` lexer token.
   auto CheckMatchesTokenKind(Lex::TokenKind lex_token_kind, bool has_error)
       -> void;
@@ -94,7 +95,6 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 #include "toolchain/parse/node_kind.def"
 
 constexpr int NodeKind::ValidCount = 0
-// NOLINTNEXTLINE(bugprone-macro-parentheses)
 #define CARBON_PARSE_NODE_KIND(Name) +1
 #include "toolchain/parse/node_kind.def"
     ;

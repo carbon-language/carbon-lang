@@ -16,6 +16,14 @@ cc_library(
 )
 
 cc_library(
+    name = "kind_switch",
+    hdrs = ["kind_switch.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "pretty_stack_trace_function",
     hdrs = ["pretty_stack_trace_function.h"],
     deps = [
@@ -30,6 +38,7 @@ cc_library(
         ":index_base",
         ":yaml",
         "//common:check",
+        "//common:hashing",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -44,7 +53,7 @@ cc_test(
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 

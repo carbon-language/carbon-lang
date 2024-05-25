@@ -4,6 +4,8 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#include <gmock/gmock.h>
+
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -41,14 +43,13 @@ ABSL_FLAG(bool, dump_output, false,
 
 namespace Carbon::Testing {
 
-using ::testing::Eq;
 using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
 // Reads a file to string.
 static auto ReadFile(std::string_view path) -> std::string {
-  std::ifstream proto_file(path);
+  std::ifstream proto_file{std::string(path)};
   std::stringstream buffer;
   buffer << proto_file.rdbuf();
   proto_file.close();
@@ -64,6 +65,21 @@ static auto SplitOutput(llvm::StringRef output)
   llvm::SmallVector<llvm::StringRef> lines;
   llvm::StringRef(output).split(lines, "\n");
   return llvm::SmallVector<std::string_view>(lines.begin(), lines.end());
+}
+
+// Verify that the success and `fail_` prefix use correspond. Separately handle
+// both cases for clearer test failures.
+static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
+  if (success) {
+    EXPECT_FALSE(filename.starts_with("fail_"))
+        << "`" << filename
+        << "` succeeded; if success is expected, remove the `fail_` "
+           "prefix.";
+  } else {
+    EXPECT_TRUE(filename.starts_with("fail_"))
+        << "`" << filename
+        << "` failed; if failure is expected, add the `fail_` prefix.";
+  }
 }
 
 // Runs a test and compares output. This keeps output split by line so that
@@ -95,10 +111,30 @@ auto FileTestBase::TestBody() -> void {
   ASSERT_TRUE(run_result.ok()) << run_result.error();
   ValidateRun();
   auto test_filename = std::filesystem::path(test_name_.str()).filename();
-  EXPECT_THAT(!llvm::StringRef(test_filename).starts_with("fail_"),
-              Eq(context.exit_with_success))
-      << "Tests should be prefixed with `fail_` if and only if running them "
-         "is expected to fail.";
+
+  // Check success/failure against `fail_` prefixes.
+  if (context.run_result.per_file_success.empty()) {
+    CompareFailPrefix(test_filename.string(), context.run_result.success);
+  } else {
+    bool require_overall_failure = false;
+    for (const auto& [filename, success] :
+         context.run_result.per_file_success) {
+      CompareFailPrefix(filename, success);
+      if (!success) {
+        require_overall_failure = true;
+      }
+    }
+
+    if (require_overall_failure) {
+      EXPECT_FALSE(context.run_result.success)
+          << "There is a per-file failure expectation, so the overall result "
+             "should have been a failure.";
+    } else {
+      // Individual files all succeeded, so the prefix is enforced on the main
+      // test file.
+      CompareFailPrefix(test_filename.string(), context.run_result.success);
+    }
+  }
 
   // Check results. Include a reminder of the autoupdate command for any
   // stdout/stderr differences.
@@ -182,6 +218,7 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
 
 auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
   TestContext context;
+  context.capture_output = false;
   std::string banner(79, '=');
   banner.append("\n");
   llvm::errs() << banner << "= " << test_name_ << "\n";
@@ -191,10 +228,8 @@ auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
     return ErrorBuilder() << "Error updating " << test_name_ << ": "
                           << run_result.error();
   }
-  llvm::errs() << banner << "= stderr\n"
-               << banner << context.stderr << banner << "= stdout\n"
-               << banner << context.stdout << banner << "= Exit with success: "
-               << (context.exit_with_success ? "true" : "false") << "\n"
+  llvm::errs() << banner << context.stdout << banner << "= Exit with success: "
+               << (context.run_result.success ? "true" : "false") << "\n"
                << banner;
   return Success();
 }
@@ -251,11 +286,16 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   llvm::PrettyStackTraceProgram stack_trace_entry(
       test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
-  // Capture trace streaming, but only when in debug mode.
+  // Prepare string streams to capture output. In order to address casting
+  // constraints, we split calls to Run as a ternary based on whether we want to
+  // capture output.
   llvm::raw_svector_ostream stdout(context.stdout);
   llvm::raw_svector_ostream stderr(context.stderr);
-  CARBON_ASSIGN_OR_RETURN(context.exit_with_success,
-                          Run(test_args_ref, fs, stdout, stderr));
+  CARBON_ASSIGN_OR_RETURN(
+      context.run_result,
+      context.capture_output
+          ? Run(test_args_ref, fs, stdout, stderr)
+          : Run(test_args_ref, fs, llvm::outs(), llvm::errs()));
   return Success();
 }
 
@@ -436,21 +476,15 @@ static auto TryConsumeSplit(
   return true;
 }
 
-// Transforms an expectation on a given line from `FileCheck` syntax into a
-// standard regex matcher.
-static auto TransformExpectation(int line_index, llvm::StringRef in)
-    -> ErrorOr<Matcher<std::string>> {
-  if (in.empty()) {
-    return Matcher<std::string>{StrEq("")};
-  }
-  if (in[0] != ' ') {
-    return ErrorBuilder() << "Malformated CHECK line: " << in;
-  }
-  std::string str = in.substr(1).str();
+// Converts a `FileCheck`-style expectation string into a single complete regex
+// string by escaping all regex characters outside of the designated `{{...}}`
+// regex sequences, and switching those to a normal regex sub-pattern syntax.
+static void ConvertExpectationStringToRegex(std::string& str) {
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
       case '(':
       case ')':
+      case '[':
       case ']':
       case '}':
       case '.':
@@ -466,51 +500,21 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
         pos += 2;
         break;
       }
-      case '[': {
-        llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
-        if (line_keyword_cursor.consume_front("[[")) {
-          static constexpr llvm::StringLiteral LineKeyword = "@LINE";
-          if (line_keyword_cursor.consume_front(LineKeyword)) {
-            // Allow + or - here; consumeInteger handles -.
-            line_keyword_cursor.consume_front("+");
-            int offset;
-            // consumeInteger returns true for errors, not false.
-            if (line_keyword_cursor.consumeInteger(10, offset) ||
-                !line_keyword_cursor.consume_front("]]")) {
-              return ErrorBuilder()
-                     << "Unexpected @LINE offset at `"
-                     << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-            }
-            std::string int_str = llvm::Twine(line_index + offset).str();
-            int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
-            str.replace(pos, remove_len, int_str);
-            pos += int_str.size();
-          } else {
-            return ErrorBuilder()
-                   << "Unexpected [[, should be {{\\[\\[}} at `"
-                   << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-          }
-        } else {
-          // Escape the `[`.
-          str.insert(pos, "\\");
-          pos += 2;
-        }
-        break;
-      }
       case '{': {
         if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
           // Single `{`, escape it.
           str.insert(pos, "\\");
           pos += 2;
-        } else {
-          // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
-          str.replace(pos, 2, "(");
-          for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
-            if (str[pos] == '}' && str[pos + 1] == '}') {
-              str.replace(pos, 2, ")");
-              ++pos;
-              break;
-            }
+          break;
+        }
+
+        // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
+        str.replace(pos, 2, "(");
+        for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
+          if (str[pos] == '}' && str[pos + 1] == '}') {
+            str.replace(pos, 2, ")");
+            ++pos;
+            break;
           }
         }
         break;
@@ -520,7 +524,75 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
       }
     }
   }
+}
 
+// Transforms an expectation on a given line from `FileCheck` syntax into a
+// standard regex matcher.
+static auto TransformExpectation(int line_index, llvm::StringRef in)
+    -> ErrorOr<Matcher<std::string>> {
+  if (in.empty()) {
+    return Matcher<std::string>{StrEq("")};
+  }
+  if (!in.consume_front(" ")) {
+    return ErrorBuilder() << "Malformated CHECK line: " << in;
+  }
+
+  // Check early if we have a regex component as we can avoid building an
+  // expensive matcher when not using those.
+  bool has_regex = in.find("{{") != llvm::StringRef::npos;
+
+  // Now scan the string and expand any keywords. Note that this needs to be
+  // `size_t` to correctly store `npos`.
+  size_t keyword_pos = in.find("[[");
+
+  // If there are neither keywords nor regex sequences, we can match the
+  // incoming string directly.
+  if (!has_regex && keyword_pos == llvm::StringRef::npos) {
+    return Matcher<std::string>{StrEq(in)};
+  }
+
+  std::string str = in.str();
+
+  // First expand the keywords.
+  while (keyword_pos != std::string::npos) {
+    llvm::StringRef line_keyword_cursor =
+        llvm::StringRef(str).substr(keyword_pos);
+    CARBON_CHECK(line_keyword_cursor.consume_front("[["));
+
+    static constexpr llvm::StringLiteral LineKeyword = "@LINE";
+    if (!line_keyword_cursor.consume_front(LineKeyword)) {
+      return ErrorBuilder()
+             << "Unexpected [[, should be {{\\[\\[}} at `"
+             << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+    }
+
+    // Allow + or - here; consumeInteger handles -.
+    line_keyword_cursor.consume_front("+");
+    int offset;
+    // consumeInteger returns true for errors, not false.
+    if (line_keyword_cursor.consumeInteger(10, offset) ||
+        !line_keyword_cursor.consume_front("]]")) {
+      return ErrorBuilder()
+             << "Unexpected @LINE offset at `"
+             << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+    }
+    std::string int_str = llvm::Twine(line_index + offset).str();
+    int remove_len = (line_keyword_cursor.data() - str.data()) - keyword_pos;
+    str.replace(keyword_pos, remove_len, int_str);
+    keyword_pos += int_str.size();
+    // Find the next keyword start or the end of the string.
+    keyword_pos = str.find("[[", keyword_pos);
+  }
+
+  // If there was no regex, we can directly match the adjusted string.
+  if (!has_regex) {
+    return Matcher<std::string>{StrEq(str)};
+  }
+
+  // Otherwise, we need to turn the entire string into a regex by escaping
+  // things outside the regex region and transforming the regex region into a
+  // normal syntax.
+  ConvertExpectationStringToRegex(str);
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
@@ -777,7 +849,8 @@ static auto Main(int argc, char** argv) -> int {
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
-    llvm::ThreadPool pool({.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+    llvm::DefaultThreadPool pool(
+        {.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
     std::mutex errs_mutex;
 
     for (const auto& test_name : tests) {

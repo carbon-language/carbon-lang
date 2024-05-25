@@ -16,10 +16,11 @@ fn G() {
 // CHECK:STDOUT: declare void @F(ptr sret({ i32, i32, i32 }))
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @G() {
-// CHECK:STDOUT:   %v = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8
-// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v, i32 0, i32 0
-// CHECK:STDOUT:   call void @F(ptr %tuple.elem)
-// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v, i32 0, i32 1
-// CHECK:STDOUT:   call void @F(ptr %tuple.elem1)
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %v.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8
+// CHECK:STDOUT:   %.loc10_56.1.tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0
+// CHECK:STDOUT:   call void @F(ptr %.loc10_56.1.tuple.elem)
+// CHECK:STDOUT:   %.loc10_56.2.tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 1
+// CHECK:STDOUT:   call void @F(ptr %.loc10_56.2.tuple.elem)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

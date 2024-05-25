@@ -5,9 +5,10 @@
 // AUTOUPDATE
 
 choice InvalidAlternativeIdentifier {
-    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+3]]:5: ERROR: Expected choice alternative name.
+    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+4]]:5: ERROR: Expected choice alternative name.
     // CHECK:STDERR:     ,Some,
     // CHECK:STDERR:     ^
+    // CHECK:STDERR:
     ,Some,
     // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+3]]:5: ERROR: Expected choice alternative name.
     // CHECK:STDERR:     42,

@@ -3248,7 +3248,7 @@ parameter.
 
 **Comparison with other languages:** Both Swift
 ([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
-[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
+[2](https://github.com/apple/swift/blob/main/docs/archive/Generics.rst#constraint-inference))
 and
 [Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
 support some form of this feature as part of their type inference (and
@@ -4560,7 +4560,7 @@ declarations are selected.
     impl and `Z(i16)` for `i8` using the second. In this case,
     `(i8 as Z(i16)).Cond == Y`.
 
-There is no reason to to prefer one of these outcomes over the other.
+There is no reason to prefer one of these outcomes over the other.
 
 **Example:** Further, cycles can create contradictions in the type system:
 

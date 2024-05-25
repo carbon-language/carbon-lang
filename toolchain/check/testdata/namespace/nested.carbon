@@ -17,22 +17,28 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Wiz: type = fn_type @Wiz [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Wiz = struct_value () [template]
+// CHECK:STDOUT:   %Baz: type = fn_type @Baz [template]
+// CHECK:STDOUT:   %struct.2: Baz = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
-// CHECK:STDOUT:     .Foo = %.loc7
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
-// CHECK:STDOUT:     .Bar = %.loc8
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace {
-// CHECK:STDOUT:     .Wiz = %Wiz
-// CHECK:STDOUT:     .Baz = %Baz
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Wiz: <function> = fn_decl @Wiz {} [template]
-// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Bar = %Bar
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Wiz = %Wiz.decl
+// CHECK:STDOUT:     .Baz = %Baz.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Wiz.decl: Wiz = fn_decl @Wiz [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %Baz.decl: Baz = fn_decl @Baz [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
@@ -42,10 +48,10 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7 [template = file.%.loc7]
-// CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%.loc8 [template = file.%.loc8]
-// CHECK:STDOUT:   %Wiz.ref: <function> = name_ref Wiz, file.%Wiz [template = file.%Wiz]
-// CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
+// CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%Bar [template = file.%Bar]
+// CHECK:STDOUT:   %Wiz.ref: Wiz = name_ref Wiz, file.%Wiz.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Wiz.call: init () = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -54,34 +54,43 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "eval.cpp",
+        "function.cpp",
         "import_ref.cpp",
-        "import_ref.h",
         "inst_block_stack.cpp",
+        "merge.cpp",
         "modifiers.cpp",
         "return.cpp",
+        "subst.cpp",
     ],
     hdrs = [
         "context.h",
         "convert.h",
         "decl_name_stack.h",
         "decl_state.h",
+        "diagnostic_helpers.h",
         "eval.h",
+        "function.h",
+        "import_ref.h",
         "inst_block_stack.h",
+        "merge.h",
         "modifiers.h",
         "param_and_arg_refs_stack.h",
         "pending_block.h",
         "return.h",
+        "subst.h",
     ],
     deps = [
         ":node_stack",
         "//common:check",
         "//common:vlog",
         "//toolchain/base:index_base",
+        "//toolchain/base:kind_switch",
         "//toolchain/check:scope_stack",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/parse:tree_node_location_translator",
+        "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -93,18 +102,30 @@ cc_library(
 
 cc_library(
     name = "check",
-    srcs = ["check.cpp"] +
+    srcs = [
+        "check.cpp",
+        "handle.h",
+    ] +
     # Glob handler files to avoid missing any.
     glob([
         "handle_*.cpp",
     ]),
     hdrs = ["check.h"],
     deps = [
+        ":call",
         ":context",
+        ":impl",
         ":import",
         ":interface",
+        ":member_access",
+        ":operator",
+        ":pointer_dereference",
         "//common:check",
+        "//common:error",
         "//common:ostream",
+        "//common:variant_helpers",
+        "//common:vlog",
+        "//toolchain/base:kind_switch",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -112,7 +133,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/parse:tree_node_location_translator",
+        "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -134,12 +155,43 @@ cc_fuzz_test(
 )
 
 cc_library(
+    name = "call",
+    srcs = ["call.cpp"],
+    hdrs = ["call.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "impl",
+    srcs = ["impl.cpp"],
+    hdrs = ["impl.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/base:kind_switch",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
     name = "import",
     srcs = ["import.cpp"],
     hdrs = ["import.h"],
     deps = [
         ":context",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -159,6 +211,55 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "member_access",
+    srcs = ["member_access.cpp"],
+    hdrs = ["member_access.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/base:kind_switch",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "operator",
+    srcs = ["operator.cpp"],
+    hdrs = ["operator.h"],
+    deps = [
+        ":call",
+        ":context",
+        ":member_access",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "pointer_dereference",
+    srcs = ["pointer_dereference.cpp"],
+    hdrs = ["pointer_dereference.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
     ],
 )
 

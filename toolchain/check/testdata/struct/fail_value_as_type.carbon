@@ -17,9 +17,11 @@ var x: {.a = 1};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_15: {.a: i32} = struct_literal (%.loc10_14)
 // CHECK:STDOUT:   %x.var: ref <error> = var x

@@ -22,7 +22,7 @@ auto InstBlockStack::Push(SemIR::InstBlockId id) -> void {
 }
 
 auto InstBlockStack::PushGlobalInit() -> void {
-  Push(SemIR::InstBlockId::GlobalInit);
+  Push(init_block_id_);
   stack_[size_ - 1].content = std::move(init_block_);
 }
 
@@ -58,10 +58,8 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
 }
 
 auto InstBlockStack::PopGlobalInit() -> void {
-  CARBON_CHECK(stack_[size_ - 1].id == SemIR::InstBlockId::GlobalInit)
-      << "Trying to pop Inits block from " << name_
-      << " but a different block is present!";
   init_block_ = std::move(stack_[size_ - 1].content);
+  init_block_id_ = stack_[size_ - 1].id;
   PopAndDiscard();
 }
 
