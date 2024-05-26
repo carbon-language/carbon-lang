@@ -114,6 +114,7 @@ cc_binary(
         ":driver",
         "//common:all_llvm_targets",
         "//common:bazel_working_dir",
+        "//common:exe_path",
         "//common:init_llvm",
         "@llvm-project//llvm:Support",
     ],
