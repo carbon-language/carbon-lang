@@ -26,27 +26,15 @@ struct SuspendedFunction {
   DeclNameStack::SuspendedName saved_name_state;
 };
 
-// Checks that `new_function_id` has the same parameter types and return type as
-// `prev_function_id`, applying the specified set of substitutions to the
+// Checks that `new_function` has the same parameter types and return type as
+// `prev_function`, applying the specified set of substitutions to the
 // previous function. Prints a suitable diagnostic and returns false if not.
 // Note that this doesn't include the syntactic check that's performed for
 // redeclarations.
 auto CheckFunctionTypeMatches(Context& context,
-                              SemIR::FunctionId new_function_id,
-                              SemIR::FunctionId prev_function_id,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
                               Substitutions substitutions) -> bool;
-
-// Tries to merge new_function into prev_function_id. Since new_function won't
-// have a definition even if one is upcoming, set is_definition to indicate the
-// planned result.
-//
-// If merging is successful, returns true and may update the previous function.
-// Otherwise, returns false. Prints a diagnostic when appropriate.
-auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
-                         SemIR::Function& new_function, bool new_is_import,
-                         bool new_is_definition,
-                         SemIR::FunctionId prev_function_id,
-                         SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool;
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if

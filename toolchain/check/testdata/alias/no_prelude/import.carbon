@@ -6,7 +6,7 @@
 
 // --- class1.carbon
 
-library "class1" api;
+library "class1";
 
 class C {}
 
@@ -16,7 +16,7 @@ var a: C*;
 
 // --- class2.carbon
 
-library "class2" api;
+library "class2";
 
 import library "class1";
 
@@ -26,7 +26,7 @@ var b: c_alias*;
 
 // --- class3.carbon
 
-library "class3" api;
+library "class3";
 
 import library "class2";
 
@@ -34,7 +34,7 @@ var c: c_alias_alias*;
 
 // --- var1.carbon
 
-library "var1" api;
+library "var1";
 
 var a: () = ();
 
@@ -42,7 +42,7 @@ alias a_alias = a;
 
 // --- var2.carbon
 
-library "var2" api;
+library "var2";
 
 import library "var1";
 
@@ -52,7 +52,7 @@ var b: () = a_alias;
 
 // --- fail_var3.carbon
 
-library "var3" api;
+library "var3";
 
 // CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import library "var2";
@@ -111,7 +111,6 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, %import_ref.2 [template = constants.%C]
@@ -142,7 +141,6 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+9, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %c_alias_alias.ref: type = name_ref c_alias_alias, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc6: type = ptr_type C [template = constants.%.2]

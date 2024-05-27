@@ -127,7 +127,7 @@ class Formatter {
     llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
     out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::Constants) << " ";
     OpenBrace();
-    FormatCodeBlock(sem_ir_.constants().GetAsVector());
+    FormatCodeBlock(sem_ir_.constants().array_ref());
     CloseBrace();
     out_ << "\n\n";
   }
@@ -602,6 +602,14 @@ class Formatter {
   auto FormatInstructionRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
     FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(ClassType inst) -> void {
+    if (inst.args_id.is_valid()) {
+      FormatArgs(inst.class_id, inst.args_id);
+    } else {
+      FormatArgs(inst.class_id);
+    }
   }
 
   auto FormatInstructionRHS(ImplDecl inst) -> void {

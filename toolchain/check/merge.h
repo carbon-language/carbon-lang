@@ -6,8 +6,8 @@
 #define CARBON_TOOLCHAIN_CHECK_MERGE_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
 
@@ -32,22 +32,7 @@ struct RedeclInfo {
 auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
                           SemIR::NameId name_id, RedeclInfo new_decl,
                           RedeclInfo prev_decl,
-                          SemIR::ImportIRInstId prev_import_ir_inst_id) -> void;
-
-struct InstForMerge {
-  // The resolved instruction.
-  SemIR::Inst inst;
-  // The imported instruction, or invalid if not an import. This should
-  // typically only be used for the ImportIRId, but we only load it if needed.
-  SemIR::ImportIRInstId import_ir_inst_id;
-};
-
-// Resolves prev_inst_id for merging (or name conflicts). This handles imports
-// to return the instruction relevant for a merge. If an import is found and was
-// previously used, it notes it, although an invalid redeclaration may diagnose
-// for other reasons too.
-auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
-    -> InstForMerge;
+                          SemIR::ImportIRId prev_import_ir_id) -> void;
 
 // When the prior name lookup result is an import and we are successfully
 // merging, replace the name lookup result with the reference in the current
@@ -55,6 +40,32 @@ auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void;
+
+// Information about the parameters of a declaration, which is common across
+// different kinds of entity such as classes and functions.
+struct DeclParams {
+  template <typename Entity>
+  explicit DeclParams(const Entity& entity)
+      : decl_id(entity.decl_id),
+        implicit_param_refs_id(entity.implicit_param_refs_id),
+        param_refs_id(entity.param_refs_id) {}
+
+  // The declaration of the entity.
+  SemIR::InstId decl_id;
+  // The implicit parameters of the entity. Can be Invalid if there is no
+  // implicit parameter list.
+  SemIR::InstBlockId implicit_param_refs_id;
+  // The explicit parameters of the entity. Can be Invalid if there is no
+  // explicit parameter list.
+  SemIR::InstBlockId param_refs_id;
+};
+
+// Checks that the parameters in a redeclaration of an entity match the
+// parameters in the prior declaration. If not, produces a diagnostic and
+// returns false.
+auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
+                            const DeclParams& prev_entity,
+                            Substitutions substitutions) -> bool;
 
 }  // namespace Carbon::Check
 

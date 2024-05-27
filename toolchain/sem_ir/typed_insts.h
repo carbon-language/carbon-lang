@@ -231,6 +231,18 @@ struct AnyBindName {
   InstId value_id;
 };
 
+struct AnyBindNameOrExportDecl {
+  // TODO: Also handle BindTemplateName once it exists.
+  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
+                                       InstKind::BindSymbolicName,
+                                       InstKind::ExportDecl};
+
+  InstKind kind;
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
+};
+
 struct BindAlias {
   static constexpr auto Kind =
       InstKind::BindAlias.Define<Parse::NodeId>("bind_alias");
@@ -402,11 +414,11 @@ struct ClassInit {
 
 struct ClassType {
   static constexpr auto Kind =
-      InstKind::ClassType.Define<Parse::AnyClassDeclId>("class_type");
+      InstKind::ClassType.Define<Parse::NodeId>("class_type");
 
   TypeId type_id;
   ClassId class_id;
-  // TODO: Once we support generic classes, include the class's arguments here.
+  InstBlockId args_id = InstBlockId::Invalid;
 };
 
 struct ConstType {
@@ -432,6 +444,15 @@ struct Deref {
 
   TypeId type_id;
   InstId pointer_id;
+};
+
+struct ExportDecl {
+  static constexpr auto Kind =
+      InstKind::ExportDecl.Define<Parse::NodeId>("export");
+
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
 };
 
 // Represents accessing the `type` field in a facet value, which is notionally a
@@ -492,6 +513,18 @@ struct FunctionType {
   FunctionId function_id;
 };
 
+// The type of the name of a generic class. The corresponding value is an empty
+// `StructValue`.
+struct GenericClassType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::GenericClassType.Define<Parse::InvalidNodeId>(
+          "generic_class_type");
+
+  TypeId type_id;
+  ClassId class_id;
+};
+
 struct ImplDecl {
   static constexpr auto Kind =
       InstKind::ImplDecl.Define<Parse::AnyImplDeclId>("impl_decl");
@@ -510,6 +543,9 @@ struct AnyImportRef {
 
   InstKind kind;
   ImportIRInstId import_ir_inst_id;
+  // A BindName is currently only set on directly imported names. It is not
+  // generically available.
+  BindNameId bind_name_id;
 };
 
 // An imported entity that is not yet been loaded.
@@ -519,6 +555,7 @@ struct ImportRefUnloaded {
       InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>("import_ref");
 
   ImportIRInstId import_ir_inst_id;
+  BindNameId bind_name_id;
 };
 
 // A imported entity that is loaded, and may be used.
@@ -529,6 +566,7 @@ struct ImportRefLoaded {
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
+  BindNameId bind_name_id;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression

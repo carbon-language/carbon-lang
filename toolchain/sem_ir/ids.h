@@ -203,6 +203,8 @@ struct CompileTimeBindIndex : public IndexBase,
 
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
+// Note that InvalidIndex - 1 and InvalidIndex - 2 are used by
+// DenseMapInfo<BindNameInfo>.
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -538,12 +540,17 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
   using ElementType = TypeId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
+  // An explicitly invalid ID.
+  static const TypeBlockId Invalid;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "typeBlock";
     IdBase::Print(out);
   }
 };
+
+constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
 
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {

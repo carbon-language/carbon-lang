@@ -47,7 +47,6 @@ The following words are interpreted as keywords:
 -   `addr`
 -   `alias`
 -   `and`
--   `api`
 -   `as`
 -   `auto`
 -   `base`

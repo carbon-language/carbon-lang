@@ -279,6 +279,16 @@ class Hasher {
   // state along with the contents.
   auto HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void;
 
+  // Incorporate a dynamically sized sequence of bytes represented as an array
+  // of objects into the hasher's state.
+  template <typename T>
+    requires std::has_unique_object_representations_v<T>
+  auto HashSizedBytes(llvm::ArrayRef<T> data) -> void {
+    HashSizedBytes(llvm::ArrayRef<std::byte>(
+        reinterpret_cast<const std::byte*>(data.data()),
+        data.size() * sizeof(T)));
+  }
+
   // An out-of-line, throughput-optimized routine for incorporating a
   // dynamically sized sequence when the sequence size is guaranteed to be >32.
   // The size is always incorporated into the state.
@@ -385,7 +395,7 @@ class Hasher {
   //  | sed -e "s/.\{4\}/&'/g" \
   //  | sed -e "s/\(.\{4\}'.\{4\}'.\{4\}'.\{4\}\)'/0x\1,\n/g"
   // ```
-  static inline constexpr std::array<uint64_t, 8> StaticRandomData = {
+  static constexpr std::array<uint64_t, 8> StaticRandomData = {
       0x243f'6a88'85a3'08d3, 0x1319'8a2e'0370'7344, 0xa409'3822'299f'31d0,
       0x082e'fa98'ec4e'6c89, 0x4528'21e6'38d0'1377, 0xbe54'66cf'34e9'0c6c,
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
@@ -558,11 +568,10 @@ inline auto HashValue(const T& value) -> HashCode {
   return HashValue(value, Hasher::StaticRandomData[7]);
 }
 
-inline constexpr auto HashCode::ExtractIndex() -> ssize_t { return value_; }
+constexpr auto HashCode::ExtractIndex() -> ssize_t { return value_; }
 
 template <int N>
-inline constexpr auto HashCode::ExtractIndexAndTag()
-    -> std::pair<ssize_t, uint32_t> {
+constexpr auto HashCode::ExtractIndexAndTag() -> std::pair<ssize_t, uint32_t> {
   static_assert(N >= 1);
   static_assert(N <= 32);
   return {static_cast<ssize_t>(value_ >> N),

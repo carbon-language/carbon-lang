@@ -23,6 +23,7 @@
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -247,7 +248,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(loc_id, name_id, name_scopes().Get(scope_id));
+    return LookupNameInExactScope(loc_id, name_id, scope_id,
+                                  name_scopes().Get(scope_id));
   }
 }
 
@@ -282,6 +284,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 // Handles lookup through the import_ir_scopes for LookupNameInExactScope.
 static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
                                    SemIR::NameId name_id,
+                                   SemIR::NameScopeId scope_id,
                                    const SemIR::NameScope& scope)
     -> SemIR::InstId {
   auto identifier_id = name_id.AsIdentifierId();
@@ -298,6 +301,8 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       });
 
   auto result_id = SemIR::InstId::Invalid;
+  std::optional<SemIR::ImportIRInst> canonical_result_inst;
+
   for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
     auto& import_ir = context.import_irs().Get(import_ir_id);
 
@@ -321,13 +326,31 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Name doesn't exist in the import scope.
       continue;
     }
-    auto import_inst_id =
-        AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second});
+    if (import_ir.sem_ir->insts().Is<SemIR::AnyImportRef>(it->second)) {
+      // This entity was added to name lookup by using an import, and is not
+      // exported.
+      continue;
+    }
+
     if (result_id.is_valid()) {
-      context.DiagnoseDuplicateName(import_inst_id, result_id);
+      // On a conflict, we verify the canonical instruction is the same.
+      if (!canonical_result_inst) {
+        canonical_result_inst =
+            GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
+      }
+      VerifySameCanonicalImportIRInst(context, result_id,
+                                      *canonical_result_inst, import_ir_id,
+                                      import_ir.sem_ir, it->second);
     } else {
-      LoadImportRef(context, import_inst_id);
-      result_id = import_inst_id;
+      // Add the first result found.
+      auto bind_name_id = context.bind_names().Add(
+          {.name_id = name_id,
+           .enclosing_scope_id = scope_id,
+           .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+      result_id =
+          AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second},
+                       bind_name_id);
+      LoadImportRef(context, result_id);
     }
   }
 
@@ -335,6 +358,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+                                     SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
@@ -342,7 +366,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
     return it->second;
   }
   if (!scope.import_ir_scopes.empty()) {
-    return LookupInImportIRScopes(*this, loc, name_id, scope);
+    return LookupInImportIRScopes(*this, loc, name_id, scope_id, scope);
   }
   return SemIR::InstId::Invalid;
 }
@@ -356,10 +380,12 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scope_ids.empty()) {
-    const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
+    auto scope_id = scope_ids.pop_back_val();
+    const auto& scope = name_scopes().Get(scope_id);
     has_error |= scope.has_error;
 
-    auto scope_result_id = LookupNameInExactScope(node_id, name_id, scope);
+    auto scope_result_id =
+        LookupNameInExactScope(node_id, name_id, scope_id, scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = llvm::reverse(scope.extended_scopes);
@@ -401,7 +427,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
 static auto GetCorePackage(Context& context, SemIRLoc loc)
     -> SemIR::NameScopeId {
   auto core_ident_id = context.identifiers().Add("Core");
-  auto packaging = context.parse_tree().packaging_directive();
+  auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == core_ident_id) {
     return SemIR::NameScopeId::Package;
   }
@@ -409,7 +435,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
 
   // Look up `package.Core`.
   auto core_inst_id = context.LookupNameInExactScope(
-      loc, core_name_id,
+      loc, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (!core_inst_id.is_valid()) {
     context.DiagnoseNameNotFound(loc, core_name_id);
@@ -434,8 +460,8 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
-  auto inst_id =
-      LookupNameInExactScope(loc, name_id, name_scopes().Get(core_package_id));
+  auto inst_id = LookupNameInExactScope(loc, name_id, core_package_id,
+                                        name_scopes().Get(core_package_id));
   if (!inst_id.is_valid()) {
     DiagnoseNameNotFound(loc, name_id);
     return SemIR::InstId::BuiltinError;
@@ -949,6 +975,7 @@ class TypeCompleter {
       }
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::FunctionType::Kind:
+      case SemIR::GenericClassType::Kind:
       case SemIR::InterfaceType::Kind:
       case SemIR::UnboundElementType::Kind: {
         // These types have no runtime operations, so we use an empty value
@@ -1021,6 +1048,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   return it->second;
 }
 
+// Gets or forms a type_id for a type, given the instruction kind and arguments.
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
@@ -1030,16 +1058,26 @@ static auto GetTypeImpl(Context& context, EachArgT... each_arg)
                   InstT{SemIR::TypeId::TypeType, each_arg...}));
 }
 
+// Gets or forms a type_id for a type, given the instruction kind and arguments,
+// and completes the type. This should only be used when type completion cannot
+// fail.
+template <typename InstT, typename... EachArgT>
+static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
+    -> SemIR::TypeId {
+  auto type_id = GetTypeImpl<InstT>(context, each_arg...);
+  bool complete = context.TryToCompleteType(type_id);
+  CARBON_CHECK(complete) << "Type completion should not fail";
+  return type_id;
+}
+
 auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::StructType>(*this, refs_id);
 }
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
-  // TODO: Deduplicate the type block here. Currently requesting the same tuple
-  // type more than once will create multiple type blocks, all but one of which
-  // is unused.
-  return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
+  return GetTypeImpl<SemIR::TupleType>(*this,
+                                       type_blocks().AddCanonical(type_ids));
 }
 
 auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
@@ -1059,11 +1097,11 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
 }
 
 auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
-  auto type_id = GetTypeImpl<SemIR::FunctionType>(*this, fn_id);
-  // To keep client code simpler, complete function types before returning them.
-  bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Failed to complete function type";
-  return type_id;
+  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id);
+}
+
+auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "prelude/operators" api;
+package Core library "prelude/operators";
 
-// TODO: Add a mechanism to re-export the names declared here.
-import library "prelude/operators/arithmetic";
-import library "prelude/operators/bitwise";
-import library "prelude/operators/comparison";
+export import library "prelude/operators/arithmetic";
+export import library "prelude/operators/bitwise";
+export import library "prelude/operators/comparison";

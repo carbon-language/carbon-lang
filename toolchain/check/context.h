@@ -109,6 +109,7 @@ class Context {
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+                              SemIR::NameScopeId scope_id,
                               const SemIR::NameScope& scope) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
@@ -241,6 +242,11 @@ class Context {
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId;
 
+  // Gets a generic class type, which is the type of a name of a generic class,
+  // such as the type of `Vector` given `class Vector(T:! type)`. The returned
+  // type will be complete.
+  auto GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 
@@ -268,6 +274,19 @@ class Context {
 
   // Finalizes the initialization function (__global_init).
   auto FinalizeGlobalInit() -> void;
+
+  // Sets the total number of IRs which exist. This is used to prepare a map
+  // from IR to imported IR.
+  auto SetTotalIRCount(int num_irs) -> void {
+    CARBON_CHECK(check_ir_map_.empty())
+        << "SetTotalIRCount is only called once";
+    check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
+  }
+
+  // Returns the imported IR ID for an IR, or invalid if not imported.
+  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
+    return check_ir_map_[sem_ir.check_ir_id().index];
+  }
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -312,10 +331,6 @@ class Context {
     return scope_stack().break_continue_stack();
   }
 
-  auto check_ir_map() -> llvm::SmallVector<SemIR::ImportIRId>& {
-    return check_ir_map_;
-  }
-
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -326,15 +341,13 @@ class Context {
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return sem_ir().identifiers();
   }
-  auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
+  auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto floats() -> ValueStore<FloatId>& { return sem_ir().floats(); }
+  auto floats() -> FloatValueStore& { return sem_ir().floats(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
-  auto bind_names() -> ValueStore<SemIR::BindNameId>& {
-    return sem_ir().bind_names();
-  }
+  auto bind_names() -> SemIR::BindNameStore& { return sem_ir().bind_names(); }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }

@@ -16,9 +16,11 @@ struct ImportIR : public Printable<ImportIR> {
   auto Print(llvm::raw_ostream& out) const -> void { out << node_id; }
 
   // The node ID for the import.
-  Parse::ImportDirectiveId node_id;
+  Parse::ImportDeclId node_id;
   // The imported IR.
   const File* sem_ir;
+  // True if this is part of an `export import`.
+  bool is_export;
 };
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
@@ -26,6 +28,10 @@ struct ImportIR : public Printable<ImportIR> {
 struct ImportIRInst : public Printable<ImportIRInst> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << ir_id << ":" << inst_id;
+  }
+
+  auto operator==(const ImportIRInst& rhs) const -> bool {
+    return ir_id == rhs.ir_id && inst_id == rhs.inst_id;
   }
 
   ImportIRId ir_id;

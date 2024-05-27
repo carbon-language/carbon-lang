@@ -4,21 +4,6 @@
 //
 // AUTOUPDATE
 
-// --- prelude.carbon
-
-package Core api;
-
-interface Negate {
-  fn Op[self: Self]() -> Self;
-}
-interface Mul {
-  fn Op[self: Self](other: Self) -> Self;
-}
-
-// --- overloaded.carbon
-
-import Core;
-
 class Number {
   var is_positive: bool;
 }
@@ -39,65 +24,63 @@ fn Calculate(a: Number, b: Number) -> Number {
   return -a * b;
 }
 
-// CHECK:STDOUT: ; ModuleID = 'prelude.carbon'
-// CHECK:STDOUT: source_filename = "prelude.carbon"
 // CHECK:STDOUT: ; ModuleID = 'overloaded.carbon'
 // CHECK:STDOUT: source_filename = "overloaded.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Op(ptr sret({ i1 }) %return, ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_36.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc10_36.2 = load i1, ptr %.loc10_36.1.is_positive, align 1
-// CHECK:STDOUT:   %.loc10_28 = xor i1 %.loc10_36.2, true
-// CHECK:STDOUT:   %.loc10_48.2.is_positive = getelementptr inbounds { i1 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i1 %.loc10_28, ptr %.loc10_48.2.is_positive, align 1
+// CHECK:STDOUT:   %.loc13_36.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_36.2 = load i1, ptr %.loc13_36.1.is_positive, align 1
+// CHECK:STDOUT:   %.loc13_28 = xor i1 %.loc13_36.2, true
+// CHECK:STDOUT:   %.loc13_48.2.is_positive = getelementptr inbounds { i1 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i1 %.loc13_28, ptr %.loc13_48.2.is_positive, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Op.1(ptr sret({ i1 }) %return, ptr %self, ptr %other) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_33.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc15_33.2 = load i1, ptr %.loc15_33.1.is_positive, align 1
-// CHECK:STDOUT:   br i1 %.loc15_33.2, label %and.rhs.loc15, label %and.result.loc15
+// CHECK:STDOUT:   %.loc18_33.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc18_33.2 = load i1, ptr %.loc18_33.1.is_positive, align 1
+// CHECK:STDOUT:   br i1 %.loc18_33.2, label %and.rhs.loc18, label %and.result.loc18
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.rhs.loc15:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc15_55.1.is_positive = getelementptr inbounds { i1 }, ptr %other, i32 0, i32 0
-// CHECK:STDOUT:   %.loc15_55.2 = load i1, ptr %.loc15_55.1.is_positive, align 1
-// CHECK:STDOUT:   br label %and.result.loc15
+// CHECK:STDOUT: and.rhs.loc18:                                    ; preds = %entry
+// CHECK:STDOUT:   %.loc18_55.1.is_positive = getelementptr inbounds { i1 }, ptr %other, i32 0, i32 0
+// CHECK:STDOUT:   %.loc18_55.2 = load i1, ptr %.loc18_55.1.is_positive, align 1
+// CHECK:STDOUT:   br label %and.result.loc18
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.result.loc15:                                 ; preds = %and.rhs.loc15, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc15_55.2, %and.rhs.loc15 ]
-// CHECK:STDOUT:   %.loc15_69.1 = xor i1 %0, true
-// CHECK:STDOUT:   br i1 %.loc15_69.1, label %or.rhs, label %or.result
+// CHECK:STDOUT: and.result.loc18:                                 ; preds = %and.rhs.loc18, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc18_55.2, %and.rhs.loc18 ]
+// CHECK:STDOUT:   %.loc18_69.1 = xor i1 %0, true
+// CHECK:STDOUT:   br i1 %.loc18_69.1, label %or.rhs, label %or.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc15
-// CHECK:STDOUT:   %.loc16_38.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc16_38.2 = load i1, ptr %.loc16_38.1.is_positive, align 1
-// CHECK:STDOUT:   %.loc16_30 = xor i1 %.loc16_38.2, true
-// CHECK:STDOUT:   br i1 %.loc16_30, label %and.rhs.loc16, label %and.result.loc16
+// CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc18
+// CHECK:STDOUT:   %.loc19_38.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc19_38.2 = load i1, ptr %.loc19_38.1.is_positive, align 1
+// CHECK:STDOUT:   %.loc19_30 = xor i1 %.loc19_38.2, true
+// CHECK:STDOUT:   br i1 %.loc19_30, label %and.rhs.loc19, label %and.result.loc19
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.rhs.loc16:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc16_64.1.is_positive = getelementptr inbounds { i1 }, ptr %other, i32 0, i32 0
-// CHECK:STDOUT:   %.loc16_64.2 = load i1, ptr %.loc16_64.1.is_positive, align 1
-// CHECK:STDOUT:   %.loc16_55 = xor i1 %.loc16_64.2, true
-// CHECK:STDOUT:   br label %and.result.loc16
+// CHECK:STDOUT: and.rhs.loc19:                                    ; preds = %or.rhs
+// CHECK:STDOUT:   %.loc19_64.1.is_positive = getelementptr inbounds { i1 }, ptr %other, i32 0, i32 0
+// CHECK:STDOUT:   %.loc19_64.2 = load i1, ptr %.loc19_64.1.is_positive, align 1
+// CHECK:STDOUT:   %.loc19_55 = xor i1 %.loc19_64.2, true
+// CHECK:STDOUT:   br label %and.result.loc19
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.result.loc16:                                 ; preds = %and.rhs.loc16, %or.rhs
-// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc16_55, %and.rhs.loc16 ]
+// CHECK:STDOUT: and.result.loc19:                                 ; preds = %and.rhs.loc19, %or.rhs
+// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc19_55, %and.rhs.loc19 ]
 // CHECK:STDOUT:   br label %or.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc16, %and.result.loc15
-// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc15 ], [ %1, %and.result.loc16 ]
-// CHECK:STDOUT:   %.loc16_77.2.is_positive = getelementptr inbounds { i1 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i1 %2, ptr %.loc16_77.2.is_positive, align 1
+// CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc19, %and.result.loc18
+// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc18 ], [ %1, %and.result.loc19 ]
+// CHECK:STDOUT:   %.loc19_77.2.is_positive = getelementptr inbounds { i1 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i1 %2, ptr %.loc19_77.2.is_positive, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Calculate(ptr sret({ i1 }) %return, ptr %a, ptr %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_10.2.temp = alloca { i1 }, align 8
-// CHECK:STDOUT:   call void @Op(ptr %.loc21_10.2.temp, ptr %a)
-// CHECK:STDOUT:   call void @Op.1(ptr %return, ptr %.loc21_10.2.temp, ptr %b)
+// CHECK:STDOUT:   %.loc24_10.2.temp = alloca { i1 }, align 8
+// CHECK:STDOUT:   call void @Op(ptr %.loc24_10.2.temp, ptr %a)
+// CHECK:STDOUT:   call void @Op.1(ptr %return, ptr %.loc24_10.2.temp, ptr %b)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -43,6 +43,12 @@ class CopyOnWriteBlock {
   // called once all modifications have been performed.
   auto id() const -> BlockIdType { return id_; }
 
+  // Gets a canonical block ID containing the resulting elements. This assumes
+  // the original block ID, if specified, was also canonical.
+  auto GetCanonical() const -> BlockIdType {
+    return id_ == source_id_ ? id_ : (file_.*ValueStore)().MakeCanonical(id_);
+  }
+
   // Sets the element at index `i` within the block. Lazily allocates a new
   // block when the value changes for the first time.
   auto Set(int i, typename BlockIdType::ElementType value) -> void {

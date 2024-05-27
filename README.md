@@ -347,10 +347,20 @@ Past Carbon focused talks from the community:
 -   [Modernizing Compiler Design for Carbon’s Toolchain](https://www.youtube.com/watch?v=ZI198eFghJk),
     C++Now
 
+### 2024
+
+-   [Carbon: An experiment in different tradeoffs](https://llvm.swoogo.com/2024eurollvm/session/2086974/carbon-an-experiment-in-different-tradeoffs),
+    panel session at EuroLLVM 2024
+    -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
+-   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
+    C++Now
+
 ### Upcoming
 
--   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/)
-    C++Now
+-   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://cppnorth.ca/speaker-chandler-carruth.html),
+    CppNorth, July 21-24
+-   [The Carbon Language: Road to 0.1](https://ndctechtown.com/agenda/the-carbon-language-road-to-01-0sqv/0526yb03a59),
+    NDC {TechTown}, Sept. 11
 
 ## Join us
 

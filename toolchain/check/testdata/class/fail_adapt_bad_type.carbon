@@ -6,7 +6,7 @@
 
 // --- fail_incomplete_type.carbon
 
-library "incomplete_type" api;
+library "incomplete_type";
 
 class Incomplete;
 

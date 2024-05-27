@@ -26,12 +26,12 @@ constexpr CommandInfo TestCommandInfo = {
     .help_epilogue = "TODO",
 };
 
-enum class TestEnum {
+enum class TestEnum : int8_t {
   Val1,
   Val2,
 };
 
-enum class TestSubcommand {
+enum class TestSubcommand : int8_t {
   Sub1,
   Sub2,
 };

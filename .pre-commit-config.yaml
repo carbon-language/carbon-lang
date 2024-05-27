@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: c4a0b883114b00d8d76b479c820ce7950211c99b # frozen: v4.5.0
+    rev: 2c9f875913ee60ca25ce70243dc24d5b6415598c # frozen: v4.6.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -30,7 +30,7 @@ repos:
       - id: trailing-whitespace
         exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: e006c8ab09f96ec32ba728b488ea5d17e1f8f6c0 # frozen: v1.2.4
+    rev: efaea7c61c774c0b1a9805fd999e754a2d19dbd1 # frozen: v1.2.5
     hooks:
       - id: check-google-doc-style
       - id: markdown-toc
@@ -45,7 +45,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 2a1c67e0b2f81df602ec1f6e7aeb030b9709dc7c # frozen: 23.11.0
+    rev: 3702ba224ecffbcec30af640c149f231d90aebdb # frozen: 24.4.2
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -131,11 +131,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: 10f4af6dbcf93456ba7df762278ae61ba3120dc6 # frozen: 6.1.0
+    rev: 7d37d9032d0d161634be4554273c30efd4dea0b3 # frozen: 7.0.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '4daa14b20c0f48f472528c2b5f5bca28a18a7ce0' # frozen: v1.7.1
+    rev: 'e5ea6670624c24f8321f6328ef3176dbba76db46' # frozen: v1.10.0
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -170,7 +170,7 @@ repos:
               .*/fuzzer_corpus/.*
           )$
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: e006c8ab09f96ec32ba728b488ea5d17e1f8f6c0 # frozen: v1.2.4
+    rev: efaea7c61c774c0b1a9805fd999e754a2d19dbd1 # frozen: v1.2.5
     hooks:
       - id: check-copyright
         args:
@@ -179,8 +179,12 @@ repos:
             Part of the Carbon Language project, under the Apache License v2.0 with LLVM
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+          - --skip_pattern
+          # The default skip pattern skips JSON which we use with VSCode and
+          # it, like most file-based parsers, can support comments easily.
+          - '(^LICENSE|\.(ico))$'
           - --custom_format
-          - '\.(carbon|proto|ypp)(\.tmpl)?$'
+          - '\.(carbon|c|json|proto|ypp)(\.tmpl)?$'
           - ''
           - '// '
           - ''
@@ -209,18 +213,15 @@ repos:
           - ''
           - '-- '
           - ''
-          - --custom_format
-          - '\.c$'
-          - ''
-          - '// '
-          - ''
         exclude: |
           (?x)^(
               .bazelversion|
               .github/pull_request_template.md|
+              .vscode/extensions.json|
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
+              utils/vscode/package(-lock)?.json|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|

@@ -10,25 +10,25 @@
 
 // --- decl.carbon
 
-library "decl" api;
+library "decl";
 
 class C;
 
 // --- extern_decl.carbon
 
-library "extern_decl" api;
+library "extern_decl";
 
 extern class C;
 
 // --- extern_decl_copy.carbon
 
-library "extern_decl_copy" api;
+library "extern_decl_copy";
 
 extern class C;
 
 // --- def.carbon
 
-library "def" api;
+library "def";
 
 class C {}
 
@@ -38,7 +38,7 @@ class C {}
 
 // --- fail_decl_fn_in_extern.carbon
 
-library "fail_decl_fn_in_extern" api;
+library "fail_decl_fn_in_extern";
 
 extern class C;
 // CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: ERROR: Cannot declare a member of incomplete class `C`.
@@ -52,7 +52,7 @@ fn C.F();
 
 // --- fail_extern_def.carbon
 
-library "fail_extern_def" api;
+library "fail_extern_def";
 
 // CHECK:STDERR: fail_extern_def.carbon:[[@LINE+4]]:1: ERROR: `extern` not allowed on `class` declaration that provides a definition.
 // CHECK:STDERR: extern class C {}
@@ -62,7 +62,7 @@ extern class C {}
 
 // --- fail_extern_decl_after_extern_decl.carbon
 
-library "fail_extern_decl_after_extern_decl" api;
+library "fail_extern_decl_after_extern_decl";
 
 extern class C;
 // CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
@@ -76,7 +76,7 @@ extern class C;
 
 // --- fail_decl_after_extern_decl.carbon
 
-library "fail_decl_after_extern_decl" api;
+library "fail_decl_after_extern_decl";
 
 extern class C;
 // CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
@@ -90,7 +90,7 @@ class C;
 
 // --- fail_extern_member_class.carbon
 
-library "fail_extern_member_class" api;
+library "fail_extern_member_class";
 
 class C {
   // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `class` declaration that is a member.
@@ -102,14 +102,14 @@ class C {
 
 // --- todo_fail_def_after_extern_decl.carbon
 
-library "fail_def_after_extern_decl" api;
+library "fail_def_after_extern_decl";
 
 extern class C;
 class C {}
 
 // --- fail_extern_decl_after_decl.carbon
 
-library "fail_extern_decl_after_decl" api;
+library "fail_extern_decl_after_decl";
 
 class C;
 // CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
@@ -123,7 +123,7 @@ extern class C;
 
 // --- fail_todo_import_extern_decl_then_decl.carbon
 
-library "import_extern_decl_then_decl" api;
+library "import_extern_decl_then_decl";
 
 import library "extern_decl";
 // CHECK:STDERR: fail_todo_import_extern_decl_then_decl.carbon:[[@LINE+13]]:1: In import.
@@ -143,7 +143,7 @@ import library "decl";
 
 // --- fail_todo_import_decl_then_extern_decl.carbon
 
-library "import_decl_then_extern_decl" api;
+library "import_decl_then_extern_decl";
 
 import library "decl";
 // CHECK:STDERR: fail_todo_import_decl_then_extern_decl.carbon:[[@LINE+13]]:1: In import.
@@ -163,7 +163,7 @@ import library "extern_decl";
 
 // --- fail_todo_import_extern_decl_then_def.carbon
 
-library "import_extern_decl_then_def" api;
+library "import_extern_decl_then_def";
 
 import library "extern_decl";
 // CHECK:STDERR: fail_todo_import_extern_decl_then_def.carbon:[[@LINE+13]]:1: In import.
@@ -183,7 +183,7 @@ import library "def";
 
 // --- fail_import_ownership_conflict.carbon
 
-library "fail_import_ownership_conflict" api;
+library "fail_import_ownership_conflict";
 
 import library "extern_decl";
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+13]]:1: In import.
@@ -217,7 +217,7 @@ import library "def";
 
 // --- fail_todo_import_extern_decl_copy.carbon
 
-library "import_extern_decl_copy" api;
+library "import_extern_decl_copy";
 
 import library "extern_decl";
 // CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+12]]:1: In import.
@@ -236,7 +236,7 @@ import library "extern_decl_copy";
 
 // --- extern_decl_after_import_extern_decl.carbon
 
-library "extern_decl_after_import_extern_decl" api;
+library "extern_decl_after_import_extern_decl";
 
 import library "extern_decl";
 
@@ -244,7 +244,7 @@ extern class C;
 
 // --- decl_after_import_extern_decl.carbon
 
-library "decl_after_import_extern_decl" api;
+library "decl_after_import_extern_decl";
 
 import library "decl";
 
@@ -252,7 +252,7 @@ extern class C;
 
 // --- def_after_import_extern_decl.carbon
 
-library "def_after_import_extern_decl" api;
+library "def_after_import_extern_decl";
 
 import library "def";
 
@@ -260,7 +260,7 @@ extern class C;
 
 // --- extern_decl_after_import_def.carbon
 
-library "extern_decl_after_import_def" api;
+library "extern_decl_after_import_def";
 
 import library "def";
 
@@ -555,13 +555,11 @@ extern class C;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc6
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -575,13 +573,11 @@ extern class C;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc6
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -596,14 +592,12 @@ extern class C;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc6
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -621,14 +615,12 @@ extern class C;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc6
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

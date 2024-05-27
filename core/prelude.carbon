@@ -4,13 +4,7 @@
 //
 // AUTOUPDATE
 
-package Core library "prelude" api;
+package Core library "prelude";
 
-import library "prelude/operators";
-import library "prelude/types";
-
-// TODO: Uncomment once name deduplication works.
-// TODO: These are here for name lookup. Add a way to export import and move them out.
-// fn Int32() -> type = "int.make_type_32";
-// fn Float(size: i32) -> type = "float.make_type";
-// fn Bool() -> type = "bool.make_type";
+export import library "prelude/operators";
+export import library "prelude/types";

@@ -21,11 +21,8 @@ var str2: String = "ab'\"c";
 // CHECK:STDOUT:   ints:
 // CHECK:STDOUT:     int0:            32
 // CHECK:STDOUT:     int1:            1
-// CHECK:STDOUT:     int2:            32
-// CHECK:STDOUT:     int3:            8
-// CHECK:STDOUT:     int4:            64
-// CHECK:STDOUT:     int5:            64
-// CHECK:STDOUT:     int6:            64
+// CHECK:STDOUT:     int2:            8
+// CHECK:STDOUT:     int3:            64
 // CHECK:STDOUT:   reals:
 // CHECK:STDOUT:     real0:           10*10^-1
 // CHECK:STDOUT:     real1:           8*10^7

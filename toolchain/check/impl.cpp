@@ -52,8 +52,9 @@ static auto CheckAssociatedFunctionImplementation(
   // TODO: This should be a semantic check rather than a syntactic one. The
   // functions should be allowed to have different signatures as long as we can
   // synthesize a suitable thunk.
-  if (!CheckFunctionTypeMatches(context, impl_function_decl->function_id,
-                                interface_function_id, substitutions)) {
+  if (!CheckFunctionTypeMatches(
+          context, context.functions().Get(impl_function_decl->function_id),
+          context.functions().Get(interface_function_id), substitutions)) {
     return SemIR::InstId::BuiltinError;
   }
   return impl_decl_id;
@@ -105,8 +106,8 @@ static auto BuildInterfaceWitness(
           CARBON_FATAL() << "Unexpected type: " << type_inst;
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto impl_decl_id =
-            context.LookupNameInExactScope(decl_id, fn.name_id, impl_scope);
+        auto impl_decl_id = context.LookupNameInExactScope(
+            decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);
           table.push_back(CheckAssociatedFunctionImplementation(

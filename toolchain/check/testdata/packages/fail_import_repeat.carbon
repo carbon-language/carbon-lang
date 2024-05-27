@@ -6,15 +6,15 @@
 
 // --- api.carbon
 
-package Api api;
+package Api;
 
 // --- api_lib.carbon
 
-package Api library "lib" api;
+package Api library "lib";
 
 // --- main_lib.carbon
 
-library "lib" api;
+library "lib";
 
 // --- fail_import.carbon
 
@@ -50,7 +50,7 @@ import library "lib";
 
 // --- fail_default_import.carbon
 
-package Api library "not_default" api;
+package Api library "not_default";
 
 import library default;
 // CHECK:STDERR: fail_default_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
@@ -92,11 +92,11 @@ import library default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Api = %Api
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Api = %Api
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Api: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Api: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_default_import.carbon

@@ -237,6 +237,7 @@ cc_test(
     srcs = ["tokenized_buffer_test.cpp"],
     deps = [
         ":lex",
+        ":token_kind",
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
         "//testing/base:gtest_main",

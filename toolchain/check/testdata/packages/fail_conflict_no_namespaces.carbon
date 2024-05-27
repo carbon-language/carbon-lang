@@ -6,19 +6,19 @@
 
 // --- fn.carbon
 
-package Example library "fn" api;
+package Example library "fn";
 
 fn Foo();
 
 // --- var.carbon
 
-package Example library "var" api;
+package Example library "var";
 
 var Foo: i32;
 
 // --- fail_conflict.carbon
 
-package Example library "conflict" api;
+package Example library "conflict";
 
 import library "fn";
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
@@ -56,15 +56,27 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Int32 = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc4_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc4_10.2: type = converted %int.make_type_32, %.loc4_10.1 [template = i32]
 // CHECK:STDOUT:   %Foo.var: ref i32 = var Foo
 // CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
@@ -74,7 +86,7 @@ import library "var";
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+12, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

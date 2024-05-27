@@ -13,9 +13,11 @@ var a: i32 = test_a();
 // CHECK:STDOUT: --- simple_with_fun.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %test_a: type = fn_type @test_a [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: test_a = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %test_a: type = fn_type @test_a [template]
+// CHECK:STDOUT:   %struct.2: test_a = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -26,12 +28,22 @@ var a: i32 = test_a();
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %test_a.decl: test_a = fn_decl @test_a [template = constants.%struct] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %test_a.decl: test_a = fn_decl @test_a [template = constants.%struct.2] {
+// CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
+// CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7, %.loc7_16.1 [template = i32]
 // CHECK:STDOUT:     @test_a.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @test_a() -> i32 {
 // CHECK:STDOUT: !entry:
@@ -41,7 +53,7 @@ var a: i32 = test_a();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %test_a.ref: test_a = name_ref test_a, file.%test_a.decl [template = constants.%struct]
+// CHECK:STDOUT:   %test_a.ref: test_a = name_ref test_a, file.%test_a.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %test_a.call: init i32 = call %test_a.ref()
 // CHECK:STDOUT:   assign file.%a.var, %test_a.call
 // CHECK:STDOUT:   return

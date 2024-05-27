@@ -7,7 +7,7 @@
 namespace Carbon::SemIR {
 
 auto Inst::Print(llvm::raw_ostream& out) const -> void {
-  out << "{kind: " << kind_;
+  out << "{kind: " << kind();
 
   auto print_args = [&](auto info) {
     using Info = decltype(info);
@@ -19,7 +19,7 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
     }
   };
 
-  switch (kind_) {
+  switch (kind()) {
 #define CARBON_SEM_IR_INST_KIND(Name)               \
   case Name::Kind:                                  \
     print_args(Internal::InstLikeTypeInfo<Name>()); \

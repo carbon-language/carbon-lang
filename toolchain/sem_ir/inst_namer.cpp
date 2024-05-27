@@ -27,7 +27,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   scopes.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
 
   // Build the constants scope.
-  CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().GetAsVector());
+  CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().array_ref());
 
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
@@ -392,8 +392,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case BindAlias::Kind:
       case BindName::Kind:
-      case BindSymbolicName::Kind: {
-        auto inst = untyped_inst.As<AnyBindName>();
+      case BindSymbolicName::Kind:
+      case ExportDecl::Kind: {
+        auto inst = untyped_inst.As<AnyBindNameOrExportDecl>();
         add_inst_name_id(sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
         continue;
       }
@@ -433,6 +434,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(FunctionType inst): {
         add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
+        continue;
+      }
+      case CARBON_KIND(GenericClassType inst): {
+        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {

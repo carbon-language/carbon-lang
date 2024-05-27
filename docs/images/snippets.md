@@ -16,7 +16,7 @@ Images are managed in
 A sample of quicksort in Carbon.
 
 ```cpp
-package Sorting api;
+package Sorting;
 
 fn Partition[T:! Comparable & Movable](s: Slice(T))
      -> i64 {
@@ -78,7 +78,7 @@ auto main() -> int {
 
 ```cpp
 // Carbon:
-package Geometry api;
+package Geometry;
 import Math;
 
 class Circle {
@@ -112,7 +112,7 @@ struct Circle {
 };
 
 // Carbon exposing a function for C++:
-package Geometry api;
+package Geometry;
 import Cpp library "circle.h";
 import Math;
 

@@ -25,20 +25,22 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: --- or.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Bool = struct_value () [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: G = struct_value () [template]
 // CHECK:STDOUT:   %Or: type = fn_type @Or [template]
-// CHECK:STDOUT:   %struct.3: Or = struct_value () [template]
+// CHECK:STDOUT:   %struct.4: Or = struct_value () [template]
 // CHECK:STDOUT:   %Constant: type = fn_type @Constant [template]
-// CHECK:STDOUT:   %struct.4: Constant = struct_value () [template]
+// CHECK:STDOUT:   %struct.5: Constant = struct_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT:   %PartialConstant: type = fn_type @PartialConstant [template]
-// CHECK:STDOUT:   %struct.5: PartialConstant = struct_value () [template]
+// CHECK:STDOUT:   %struct.6: PartialConstant = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,21 +53,44 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     .PartialConstant = %PartialConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
+// CHECK:STDOUT:     %bool.make_type.loc7: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7 [template = bool]
+// CHECK:STDOUT:     %.loc7_11.2: type = converted %bool.make_type.loc7, %.loc7_11.1 [template = bool]
 // CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
+// CHECK:STDOUT:     %bool.make_type.loc8: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc8_11.1: type = value_of_initializer %bool.make_type.loc8 [template = bool]
+// CHECK:STDOUT:     %.loc8_11.2: type = converted %bool.make_type.loc8, %.loc8_11.1 [template = bool]
 // CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Or.decl: Or = fn_decl @Or [template = constants.%struct.3] {
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %Or.decl: Or = fn_decl @Or [template = constants.%struct.4] {
+// CHECK:STDOUT:     %bool.make_type.loc10: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc10_12.1: type = value_of_initializer %bool.make_type.loc10 [template = bool]
+// CHECK:STDOUT:     %.loc10_12.2: type = converted %bool.make_type.loc10, %.loc10_12.1 [template = bool]
 // CHECK:STDOUT:     @Or.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.4] {}
-// CHECK:STDOUT:   %PartialConstant.decl: PartialConstant = fn_decl @PartialConstant [template = constants.%struct.5] {
+// CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %PartialConstant.decl: PartialConstant = fn_decl @PartialConstant [template = constants.%struct.6] {
+// CHECK:STDOUT:     %bool.make_type.loc21: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc21_23.1: type = value_of_initializer %bool.make_type.loc21 [template = bool]
+// CHECK:STDOUT:     %.loc21_23.2: type = converted %bool.make_type.loc21, %.loc21_23.1 [template = bool]
 // CHECK:STDOUT:     %x.loc21_20.1: bool = param x
 // CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc21_20.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
@@ -81,7 +106,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.call: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %F.call, %.loc11_14.1
@@ -90,7 +115,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc11_14.3 br !or.rhs else br !or.result(%.loc11_14.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %G.call: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc11_14.5: bool = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc11_14.6: bool = converted %G.call, %.loc11_14.5
@@ -117,7 +142,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc15_18.3 br !if.expr.then.loc15 else br !if.expr.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc15:
-// CHECK:STDOUT:   br !if.expr.result.loc15(bool)
+// CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc15_31.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]
+// CHECK:STDOUT:   %.loc15_31.2: type = converted %bool.make_type.loc15, %.loc15_31.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_31.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc15:
 // CHECK:STDOUT:   %.loc15_42: () = tuple_literal ()
@@ -144,7 +172,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc16_18.3 br !if.expr.then.loc16 else br !if.expr.else.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc16:
-// CHECK:STDOUT:   br !if.expr.result.loc16(bool)
+// CHECK:STDOUT:   %bool.make_type.loc16: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc16_32.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
+// CHECK:STDOUT:   %.loc16_32.2: type = converted %bool.make_type.loc16, %.loc16_32.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_32.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16:
 // CHECK:STDOUT:   %.loc16_43: () = tuple_literal ()
@@ -171,7 +202,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc17_19.3 br !if.expr.then.loc17 else br !if.expr.else.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc17:
-// CHECK:STDOUT:   br !if.expr.result.loc17(bool)
+// CHECK:STDOUT:   %bool.make_type.loc17: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc17_32.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
+// CHECK:STDOUT:   %.loc17_32.2: type = converted %bool.make_type.loc17, %.loc17_32.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc17(%.loc17_32.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc17:
 // CHECK:STDOUT:   %.loc17_43: () = tuple_literal ()
@@ -198,7 +232,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc18_19.3 br !if.expr.then.loc18 else br !if.expr.else.loc18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc18:
-// CHECK:STDOUT:   br !if.expr.result.loc18(bool)
+// CHECK:STDOUT:   %bool.make_type.loc18: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc18_33.1: type = value_of_initializer %bool.make_type.loc18 [template = bool]
+// CHECK:STDOUT:   %.loc18_33.2: type = converted %bool.make_type.loc18, %.loc18_33.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc18(%.loc18_33.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc18:
 // CHECK:STDOUT:   %.loc18_44: () = tuple_literal ()
@@ -232,7 +269,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc22_18.3 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   br !if.expr.result(bool)
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc22_28.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc22_28.2: type = converted %bool.make_type, %.loc22_28.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result(%.loc22_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc22_39: () = tuple_literal ()

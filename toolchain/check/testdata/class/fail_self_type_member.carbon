@@ -25,25 +25,32 @@ fn F() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type Class, bool [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.b: bool} [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Bool = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type Class, bool [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.b: bool} [template]
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {.b: bool} [template]
 // CHECK:STDOUT:   %.5: bool = bool_literal true [template]
-// CHECK:STDOUT:   %struct.2: Class = struct_value (%.5) [template]
+// CHECK:STDOUT:   %struct.3: Class = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl b, element0 [template]
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc8_10.2: type = converted %bool.make_type, %.loc8_10.1 [template = bool]
+// CHECK:STDOUT:   %.loc8_8: <unbound element of class Class> = field_decl b, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .b = %.loc8
+// CHECK:STDOUT:   .b = %.loc8_8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:

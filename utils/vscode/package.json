@@ -2,7 +2,7 @@
   "name": "carbon-lang",
   "displayName": "carbon-lang",
   "description": "Carbon Language support",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "url": "https://github.com/carbon-language/carbon-lang"
   },
@@ -18,7 +18,9 @@
     "languages": [
       {
         "id": "carbon",
-        "aliases": [],
+        "aliases": [
+          "Carbon"
+        ],
         "extensions": [
           ".carbon"
         ],
@@ -29,7 +31,7 @@
       {
         "language": "carbon",
         "scopeName": "source.carbon",
-        "path": "Carbon.plist"
+        "path": "./carbon.tmLanguage.json"
       }
     ]
   },

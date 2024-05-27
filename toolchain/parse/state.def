@@ -293,6 +293,8 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // ^~~~
 // default
 // ^~~~~~~
+// export import
+// ^~~~~~
 // extend base
 // ^~~~~~
 // final
@@ -309,13 +311,22 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //
 // adapt ...
 // ^~~~~
-//   1. Expr
-//   2. AdaptDecl
-//   3. DeclScopeLoop
+//   1. AdaptAfterIntroducer
+//   2. DeclScopeLoop
 //
 // alias ...
 // ^~~~~
 //   1. Alias
+//   2. DeclScopeLoop
+//
+// base : ...
+// ^~~~
+//   1. BaseAfterIntroducer
+//   2. DeclScopeLoop
+//
+// choice ...
+// ^~~~~~
+//   1. ChoiceIntroducer
 //   2. DeclScopeLoop
 //
 // class ...
@@ -323,15 +334,14 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. TypeAfterIntroducerAsClass
 //   2. DeclScopeLoop
 //
-// base : ...
-// ^~~~~~
-//   1. Expr
-//   2. BaseDecl
-//   3. DeclScopeLoop
-//
 // constraint ...
 // ^~~~~~~~~~
 //   1. TypeAfterIntroducerAsNamedConstraint
+//   2. DeclScopeLoop
+//
+// export <name> ...
+// ^~~~~~
+//   1. ExportName
 //   2. DeclScopeLoop
 //
 // fn ...
@@ -344,23 +354,14 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. ImplAfterIntroducer
 //   2. DeclScopeLoop
 //
+// import ...    (in packaging directives)
+// ^~~~~~
+//   1. Import
+//   2. DeclScopeLoop
+//
 // interface ...
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
-//   2. DeclScopeLoop
-//
-// namespace ...
-// ^~~~~~~~~
-//   1. Namespace
-//   2. DeclScopeLoop
-//
-// ;
-// ^
-//   1. DeclScopeLoop
-//
-// var ...
-// ^~~
-//   1. VarAsDecl
 //   2. DeclScopeLoop
 //
 // let ...
@@ -368,10 +369,29 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. Let
 //   2. DeclScopeLoop
 //
-//  choice ...
-// ^
-//   1. ChoiceIntroducer
+// library ...    (in packaging directives)
+// ^~~~~~~
+//   1. Library
 //   2. DeclScopeLoop
+//
+// namespace ...
+// ^~~~~~~~~
+//   1. Namespace
+//   2. DeclScopeLoop
+//
+// package ...    (in packaging directives)
+// ^~~~~~~
+//   1. Package
+//   2. DeclScopeLoop
+//
+// var ...
+// ^~~
+//   1. VarAsDecl
+//   2. DeclScopeLoop
+//
+// ;
+// ^
+//   1. DeclScopeLoop
 //
 // ??? ;
 // ^~~~~
@@ -670,18 +690,38 @@ CARBON_PARSE_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSE_STATE(FunctionDefinitionFinish)
 
+// Handles `export <name>`.
+//
+// export Name;
+//       ^
+//   1. DeclNameAndParamsAsNone
+//   2. ExportFinish
+CARBON_PARSE_STATE(ExportName)
+
+// Finishes an `export <name>`.
+//
+// export Name;
+//            ^
+//   (state done)
+CARBON_PARSE_STATE(ExportNameFinish)
+
 // Handles `import`.
 //
 // import pkgname [library "libname"] ;
-// ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// import library "libname" ;
+//        ^~~~~~~~~~~~~~~~~~~
 // import ??? ;
-// ^~~~~~~~~~~~
+//        ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(Import)
 
-// Handles `library` in directive form.
+// Handles `library` in declaration form.
 //
-// Always:
+// library "libname" ;
+//         ^~~~~~~~~~~
+// library ??? ;
+//         ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(Library)
 
@@ -704,10 +744,10 @@ CARBON_PARSE_STATE(NamespaceFinish)
 
 // Handles `package`.
 //
-// package pkgname [library "libname"] [api|impl] ;
-// ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// package pkgname [library "libname"] ;
+//         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // package ??? ;
-// ^~~~~~~~~~~~~
+//         ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(Package)
 
@@ -1197,6 +1237,14 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
                              NamedConstraint)
 
+// Handles processing of an `adapt T` declaration after the introducer.
+//
+// adapt T ;
+//      ^
+//   1. Expr
+//   2. AdaptDecl
+CARBON_PARSE_STATE(AdaptAfterIntroducer)
+
 // Handles processing of a completed `adapt T` declaration.
 //
 // adapt T ;
@@ -1205,6 +1253,17 @@ CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
 //         ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(AdaptDecl)
+
+// Handles processing of a `base: B` after the introducer.
+//
+// base: B ;
+//     ^
+//   1. Expr
+//   2. BaseDecl
+// base ??? ;
+//      ^~~
+//   (state done)
+CARBON_PARSE_STATE(BaseAfterIntroducer)
 
 // Handles processing of a completed `base: B` declaration.
 //

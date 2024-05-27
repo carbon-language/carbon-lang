@@ -6,7 +6,7 @@
 
 // --- fail_incomplete_return.carbon
 
-library "api" api;
+library "api";
 
 class C;
 class D;
@@ -45,7 +45,7 @@ class D {}
 
 // --- fail_use_imported.carbon
 
-library "use_imported" api;
+library "use_imported";
 
 import library "api";
 
@@ -197,12 +197,10 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %ReturnCUnused.ref: ReturnCUnused = name_ref ReturnCUnused, file.%import_ref.3 [template = constants.%struct.2]
 // CHECK:STDOUT:   %ReturnCUnused.call: init <error> = call %ReturnCUnused.ref()
 // CHECK:STDOUT:   %ReturnCUsed.ref: ReturnCUsed = name_ref ReturnCUsed, file.%import_ref.4 [template = constants.%struct.3]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %ReturnDUnused.ref: ReturnDUnused = name_ref ReturnDUnused, file.%import_ref.5 [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc24_16.1: ref D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUnused.call: init D = call %ReturnDUnused.ref() to %.loc24_16.1

@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
@@ -14,7 +14,7 @@ interface Add {
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 
@@ -103,7 +103,6 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %Add.decl: type = interface_decl @Add [template = constants.%.2] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {

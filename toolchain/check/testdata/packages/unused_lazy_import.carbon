@@ -6,13 +6,13 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 fn A();
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:

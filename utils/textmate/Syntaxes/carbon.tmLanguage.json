@@ -1,0 +1,201 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "carbon",
+  "foldingStartMarker": "\\{\\s*$",
+  "foldingStopMarker": "^\\s*\\}",
+  "fileTypes": ["carbon"],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#special-keywords"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#reserved-words"
+    },
+    {
+      "include": "#operator-dedicated-keywords-statements"
+    },
+    {
+      "include": "#ctrl-statements"
+    },
+    {
+      "include": "#true-false"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "name": "string.quoted.triple.carbon",
+      "begin": "'''([^\\s'#]*\\n)?",
+      "end": "'''",
+      "beginCaptures": {
+        "1": {
+          "name": "constant.character.escape.carbon"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string_escapes"
+        }
+      ]
+    },
+    {
+      "name": "string.quoted.double.carbon",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "include": "#string_escapes"
+        }
+      ]
+    },
+    {
+      "include": "#customs"
+    }
+  ],
+  "repository": {
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.carbon",
+          "match": "\\b(\\+|-|\\*|/|!)\\b"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "begin": "(^[ \\t]+)?(?=//)",
+          "end": "(?!\\G)",
+          "patterns": [
+            {
+              "name": "comment.line.carbon",
+              "begin": "//",
+              "end": "$"
+            }
+          ]
+        }
+      ]
+    },
+    "string_escapes": {
+      "patterns": [
+        {
+          "name": "constant.character.escape.carbon",
+          "match": "\\\\([tnr'\"0\\0]|x[0-9A-F]{2}|u\\{[0-9A-F]{4,}\\})"
+        }
+      ]
+    },
+    "special-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.carbon",
+          "match": "\\b(break|case|continue|default|else|if|for|match|return|returned|then|while)\\b"
+        }
+      ]
+    },
+    "operator-dedicated-keywords-statements": {
+      "patterns": [
+        {
+          "name": "keyword.other.carbon",
+          "match": "\\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\\b"
+        }
+      ]
+    },
+    "reserved-words": {
+      "patterns": [
+        {
+          "name": "support.type.carbon",
+          "match": "\\b(As|bool|Carbon\\.Int|Carbon\\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|type|u8|u16|u32|u64|u128|u256)\\b"
+        }
+      ]
+    },
+    "true-false": {
+      "patterns": [
+        {
+          "name": "constant.language.carbon",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "support.function.carbon",
+          "match": "\\b[a-zA-Z]+\\s*\\("
+        }
+      ]
+    },
+    "customs": {
+      "patterns": [
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\bpackage\\s)\\w+"
+        },
+        {
+          "name": "support.variable.carbon",
+          "match": "(?<=\\s*\\.)\\w+"
+        },
+        {
+          "name": "support.variable.carbon",
+          "match": "(?<=\\bas\\s)\\w+"
+        },
+        {
+          "name": "support.variable.carbon",
+          "match": "\\w+(?=\\s*:)"
+        },
+        {
+          "name": "support.variable.carbon",
+          "match": "(?<=\\blet\\s)\\w+"
+        },
+        {
+          "name": "support.variable.carbon",
+          "match": "(?<=\\bvar\\s)\\w+"
+        },
+        {
+          "name": "support.function.carbon",
+          "match": "(?<=\\bfn\\s)\\w+"
+        },
+        {
+          "name": "support.other.carbon",
+          "match": "(?<=\\bimpl\\s)\\w+"
+        },
+        {
+          "name": "support.type.property-name.carbon",
+          "match": "(?<=\\bimport\\s)\\w+"
+        },
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\bclass\\s)\\w+"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.carbon",
+          "match": "0x[_0-9A-F]+(\\.[_0-9A-F]+(p[-+]?[1-9][0-9]*)?)?"
+        },
+        {
+          "name": "constant.numeric.carbon",
+          "match": "0b[_01]+"
+        },
+        {
+          "name": "constant.numeric.carbon",
+          "match": "[1-9][_0-9]*(\\.[_0-9]+(e[-+]?[1-9][0-9]*)?)?"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.carbon"
+}

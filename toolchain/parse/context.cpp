@@ -402,6 +402,33 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
+auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
+                                       NodeKind node_kind,
+                                       Lex::TokenKind decl_kind,
+                                       bool is_def_allowed) -> void {
+  // TODO: This could better handle things like:
+  //   base: { }
+  //   var n: i32;
+  //       ^ Ends up at `n`, instead of `var`.
+  if (state.has_error) {
+    RecoverFromDeclError(state, node_kind,
+                         /*skip_past_likely_end=*/true);
+    return;
+  }
+
+  if (auto semi = ConsumeIf(Lex::TokenKind::Semi)) {
+    AddNode(node_kind, *semi, state.subtree_start, /*has_error=*/false);
+  } else {
+    if (is_def_allowed) {
+      DiagnoseExpectedDeclSemiOrDefinition(decl_kind);
+    } else {
+      DiagnoseExpectedDeclSemi(decl_kind);
+    }
+    RecoverFromDeclError(state, node_kind,
+                         /*skip_past_likely_end=*/true);
+  }
+}
+
 auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                                    bool skip_past_likely_end) -> void {
   auto token = state.token;

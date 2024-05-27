@@ -20,7 +20,7 @@ import Main library "lib";
 
 // --- fail_not_main.carbon
 
-package NotMain api;
+package NotMain;
 
 // CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: ERROR: Cannot import `Main` from other packages.
 // CHECK:STDERR: import Main;
@@ -36,7 +36,7 @@ import Main library "lib";
 
 // --- fail_this.carbon
 
-package This api;
+package This;
 
 // CHECK:STDERR: fail_this.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import This;
@@ -46,7 +46,7 @@ import This;
 
 // --- fail_this_lib.carbon
 
-package This library "lib" api;
+package This library "lib";
 
 // CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import library "lib";
@@ -56,11 +56,11 @@ import library "lib";
 
 // --- implicit_api.carbon
 
-package Implicit api;
+package Implicit;
 
 // --- fail_implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 // CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit;
@@ -70,11 +70,11 @@ import Implicit;
 
 // --- implicit_lib_api.carbon
 
-package Implicit library "lib" api;
+package Implicit library "lib";
 
 // --- fail_implicit_lib.impl.carbon
 
-package Implicit library "lib" impl;
+impl package Implicit library "lib";
 
 // CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit library "lib";
@@ -83,7 +83,7 @@ package Implicit library "lib" impl;
 import Implicit library "lib";
 
 // --- fail_not_found.carbon
-package NotFound api;
+package NotFound;
 
 // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:1: ERROR: Imported API 'ImportNotFound' not found.
 // CHECK:STDERR: import ImportNotFound;

@@ -182,38 +182,46 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryName, 0, StringLiteral)
 
 // `package`:
 //   PackageIntroducer
+//   _repeated_ _external_: modifier
 //   _optional_ _external_: PackageName
 //   _optional_ _external_: LibrarySpecifier
-//   PackageApi or PackageImpl
-// PackageDirective
+// PackageDecl
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageIntroducer, 0, Package)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0, Api)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0, Impl)
-CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(PackageDecl, PackageIntroducer,
                                CARBON_IF_VALID(Semi))
 
 // `import`:
 //   ImportIntroducer
+//   _repeated_ _external_: modifier
 //   _optional_ _external_: PackageName
 //   _optional_ _external_: LibrarySpecifier
-// ImportDirective
+// ImportDecl
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, Import)
-CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(ImportDecl, ImportIntroducer,
                                CARBON_IF_VALID(Semi))
-// `library` as directive:
+
+// `library` as declaration:
 //   LibraryIntroducer
+//   _repeated_ _external_: modifier
 //   DefaultLibrary or _external_: LibraryName
-//   PackageApi or PackageImpl
-// LibraryDirective
+// LibraryDecl
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultLibrary, 0, Default)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryIntroducer, 0, Library)
-CARBON_PARSE_NODE_KIND_BRACKET(LibraryDirective, LibraryIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(LibraryDecl, LibraryIntroducer,
                                CARBON_IF_VALID(Semi))
 
 // `library` in `package` or `import`:
 //   _external_: LibraryName or DefaultLibrary
 // LibrarySpecifier
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
+
+// `export`:
+//   ExportIntroducer
+//   _external_: IdentifierName or QualifiedName
+// ExportDecl
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExportIntroducer, 0, Export)
+CARBON_PARSE_NODE_KIND_BRACKET(ExportDecl, ExportIntroducer,
+                               CARBON_IF_VALID(Semi))
 
 // `namespace`:
 //   NamespaceStart
@@ -635,6 +643,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral, StructTypeLiteralStart,
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Abstract)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Base)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Default)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Export)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extend)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extern)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Final)

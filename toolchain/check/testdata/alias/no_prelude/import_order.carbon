@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class C { var v: (); }
 alias a = C;
@@ -16,7 +16,7 @@ alias d = c;
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 
@@ -93,7 +93,6 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+14, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+16, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+18, loaded [template = constants.%C]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.6: <unbound element of class C> = import_ref ir1, inst+7, loaded [template = imports.%.1]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.5 [template = constants.%C]

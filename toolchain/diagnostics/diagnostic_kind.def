@@ -98,7 +98,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterImport)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryNameOrDefault)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
-CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
+CARBON_DIAGNOSTIC_KIND(ExportImportPackage)
 
 // For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
@@ -148,6 +148,7 @@ CARBON_DIAGNOSTIC_KIND(ImportSelf)
 CARBON_DIAGNOSTIC_KIND(ExplicitImportApi)
 CARBON_DIAGNOSTIC_KIND(RepeatedImport)
 CARBON_DIAGNOSTIC_KIND(FirstImported)
+CARBON_DIAGNOSTIC_KIND(ExportFromImpl)
 
 // Merge-related redeclaration checking.
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDecl)
@@ -156,6 +157,12 @@ CARBON_DIAGNOSTIC_KIND(RedeclNonExtern)
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDef)
 CARBON_DIAGNOSTIC_KIND(RedeclRedef)
 CARBON_DIAGNOSTIC_KIND(RedeclExternMismatch)
+CARBON_DIAGNOSTIC_KIND(RedeclParamListDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamListPrevious)
+CARBON_DIAGNOSTIC_KIND(RedeclParamCountDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamCountPrevious)
+CARBON_DIAGNOSTIC_KIND(RedeclParamDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamPrevious)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
@@ -168,10 +175,6 @@ CARBON_DIAGNOSTIC_KIND(InCallToFunctionSelf)
 CARBON_DIAGNOSTIC_KIND(MissingObjectInMethodCall)
 
 // Function declaration checking.
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamCountDiffers)
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamCountPrevious)
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamDiffers)
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamPrevious)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffers)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffersNoReturn)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypePrevious)
@@ -196,6 +199,12 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclRepeated)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
+
+// Export checking.
+CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
+CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntitySource)
+CARBON_DIAGNOSTIC_KIND(ExportRedundant)
+CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)

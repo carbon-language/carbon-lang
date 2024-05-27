@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class Cycle {
   var a: Cycle*;
@@ -14,7 +14,7 @@ class Cycle {
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 
@@ -82,7 +82,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cycle.decl: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%import_ref.1 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc7: type = ptr_type Cycle [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref Cycle* = var a

@@ -29,6 +29,11 @@ struct Class : public Printable<Class> {
   // we reach the `}` of the class definition.
   auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 
+  // Determines whether this is a generic class.
+  auto is_generic() const -> bool {
+    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+  }
+
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
 
@@ -36,6 +41,10 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.

@@ -38,7 +38,7 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Process modifiers.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
-                             name_context.target_scope_id);
+                             name_context.enclosing_scope_id);
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 

@@ -30,10 +30,11 @@ enum class KeywordModifierSet : uint32_t {
   Abstract = 1 << 3,
   Base = 1 << 4,
   Default = 1 << 5,
-  Extend = 1 << 6,
-  Final = 1 << 7,
-  Impl = 1 << 8,
-  Virtual = 1 << 9,
+  Export = 1 << 6,
+  Extend = 1 << 7,
+  Final = 1 << 8,
+  Impl = 1 << 9,
+  Virtual = 1 << 10,
 
   // Sets of modifiers:
   Access = Private | Protected,
@@ -41,7 +42,7 @@ enum class KeywordModifierSet : uint32_t {
   Method = Abstract | Impl | Virtual,
   ImplDecl = Extend | Final,
   Interface = Default | Final,
-  Decl = Class | Method | ImplDecl | Interface,
+  Decl = Class | Method | ImplDecl | Interface | Export,
   None = 0,
 
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Virtual)
@@ -59,6 +60,10 @@ static_assert(!(KeywordModifierSet::Access & KeywordModifierSet::Extern) &&
                   !((KeywordModifierSet::Access | KeywordModifierSet::Extern) &
                     KeywordModifierSet::Decl),
               "Order-related sets must not overlap");
+static_assert(~KeywordModifierSet::None ==
+                  (KeywordModifierSet::Access | KeywordModifierSet::Extern |
+                   KeywordModifierSet::Decl),
+              "Modifier missing from all modifier sets");
 
 // State stored for each declaration we are currently in: the kind of
 // declaration and the keyword modifiers that apply to that declaration.
@@ -71,11 +76,14 @@ struct DeclState {
     Base,
     Class,
     Constraint,
+    Export,
     Fn,
     Impl,
+    Import,
     Interface,
     Let,
     Namespace,
+    PackageOrLibrary,
     Var
   };
 

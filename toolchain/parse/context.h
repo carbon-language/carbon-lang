@@ -39,7 +39,7 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Used for restricting ordering of `package` and `import` directives.
+  // Used for restricting ordering of `package` and `import` declarations.
   enum class PackagingState : int8_t {
     FileStart,
     InImports,
@@ -281,6 +281,13 @@ class Context {
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
+  // Adds a node for a declaration's semicolon. Includes error recovery when the
+  // token is not a semicolon, using `decl_kind` and `is_def_allowed` to inform
+  // diagnostics.
+  auto AddNodeExpectingDeclSemi(StateStackEntry state, NodeKind node_kind,
+                                Lex::TokenKind decl_kind, bool is_def_allowed)
+      -> void;
+
   // Emits a diagnostic for a declaration missing a semi.
   auto DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
 
@@ -295,12 +302,11 @@ class Context {
   auto RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                             bool skip_past_likely_end) -> void;
 
-  // Sets the package directive information. Called at most once.
-  auto set_packaging_directive(Tree::PackagingNames packaging_names,
-                               Tree::ApiOrImpl api_or_impl) -> void {
-    CARBON_CHECK(!tree_->packaging_directive_);
-    tree_->packaging_directive_ = {.names = packaging_names,
-                                   .api_or_impl = api_or_impl};
+  // Sets the package declaration information. Called at most once.
+  auto set_packaging_decl(Tree::PackagingNames packaging_names, bool is_impl)
+      -> void {
+    CARBON_CHECK(!tree_->packaging_decl_);
+    tree_->packaging_decl_ = {.names = packaging_names, .is_impl = is_impl};
   }
 
   // Adds an import.

@@ -2,14 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "prelude/types/i32" api;
+package Core library "prelude/types/i32";
 
+// For Int32():
+import library "prelude/types";
 import library "prelude/operators";
-
-// TODO: Remove these once prelude/operators re-exports their contents.
-import library "prelude/operators/arithmetic";
-import library "prelude/operators/bitwise";
-import library "prelude/operators/comparison";
 
 impl i32 as Add {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
