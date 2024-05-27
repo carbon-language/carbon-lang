@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 
+#include "common/map.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -48,16 +49,15 @@ class FunctionContext {
       return GetTypeAsValue();
     }
 
-    auto it = locals_.find(inst_id);
-    if (it != locals_.end()) {
-      return it->second;
+    if (auto result = locals_.Lookup(inst_id)) {
+      return result.value();
     }
     return file_context_->GetGlobal(inst_id);
   }
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
-    bool added = locals_.insert({inst_id, value}).second;
+    bool added = locals_.Insert(inst_id, value).is_inserted();
     CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
                         << sem_ir().insts().Get(inst_id);
   }
@@ -149,14 +149,14 @@ class FunctionContext {
   llvm::raw_ostream* vlog_stream_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
-  llvm::DenseMap<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;
+  Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;
 
   // The synthetic block we most recently created. May be null if there is no
   // such block.
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
   // Maps a function's SemIR::File instructions to lowered values.
-  llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;
+  Map<SemIR::InstId, llvm::Value*> locals_;
 };
 
 // Declare handlers for each SemIR::File instruction that is not always

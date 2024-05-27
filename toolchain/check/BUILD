@@ -52,6 +52,7 @@ cc_library(
     deps = [
         ":node_stack",
         "//common:check",
+        "//common:map",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
@@ -95,6 +96,7 @@ cc_library(
         ":sem_ir_diagnostic_converter",
         "//common:check",
         "//common:error",
+        "//common:map",
         "//common:ostream",
         "//common:variant_helpers",
         "//common:vlog",
@@ -183,6 +185,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//common:map",
         "//toolchain/base:kind_switch",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:file",
@@ -281,6 +284,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:ostream",
+        "//common:set",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/sem_ir:file",

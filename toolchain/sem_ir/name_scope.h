@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
+#include "common/map.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -47,9 +48,14 @@ struct NameScope : Printable<NameScope> {
 
   // Adds a name to the scope that must not already exist.
   auto AddRequired(Entry name_entry) -> void {
-    int index = names.size();
-    names.push_back(name_entry);
-    auto success = name_map.insert({name_entry.name_id, index}).second;
+    bool success = name_map
+                       .Insert(name_entry.name_id,
+                               [&] {
+                                 int index = names.size();
+                                 names.push_back(name_entry);
+                                 return index;
+                               })
+                       .is_inserted();
     CARBON_CHECK(success) << "Failed to add required name: "
                           << name_entry.name_id;
   }
@@ -64,7 +70,7 @@ struct NameScope : Printable<NameScope> {
   // intensive, we can also switch the lookup to a set of indices into the
   // vector rather than a map from `NameId` to index.
   llvm::SmallVector<Entry> names;
-  llvm::DenseMap<NameId, int> name_map = llvm::DenseMap<NameId, int>();
+  Map<NameId, int> name_map;
 
   // Scopes extended by this scope.
   //

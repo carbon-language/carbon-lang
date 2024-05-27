@@ -5,6 +5,7 @@
 #include "toolchain/check/import.h"
 
 #include "common/check.h"
+#include "common/map.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/import_ref.h"
@@ -86,10 +87,10 @@ static auto AddNamespace(
     std::optional<llvm::function_ref<SemIR::InstId()>> make_import_id)
     -> std::tuple<SemIR::NameScopeId, SemIR::ConstantId, bool> {
   auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
-  auto [it, success] =
-      parent_scope->name_map.insert({name_id, parent_scope->names.size()});
-  if (!success) {
-    auto inst_id = parent_scope->names[it->second].inst_id;
+  auto insert_result =
+      parent_scope->name_map.Insert(name_id, parent_scope->names.size());
+  if (!insert_result.is_inserted()) {
+    auto inst_id = parent_scope->names[insert_result.value()].inst_id;
     if (auto namespace_inst =
             context.insts().TryGetAs<SemIR::Namespace>(inst_id)) {
       if (diagnose_duplicate_namespace) {
@@ -117,8 +118,8 @@ static auto AddNamespace(
 
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics.
-  if (!success) {
-    auto& entry = parent_scope->names[it->second];
+  if (!insert_result.is_inserted()) {
+    auto& entry = parent_scope->names[insert_result.value()];
     context.DiagnoseDuplicateName(namespace_id, entry.inst_id);
     entry.inst_id = namespace_id;
     entry.access_kind = SemIR::AccessKind::Public;
@@ -134,11 +135,11 @@ static auto AddNamespace(
 
 // Adds a copied namespace to the cache.
 static auto CacheCopiedNamespace(
-    llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces,
+    Map<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces,
     SemIR::NameScopeId import_scope_id, SemIR::NameScopeId to_scope_id)
     -> void {
-  auto [it, success] = copied_namespaces.insert({import_scope_id, to_scope_id});
-  CARBON_CHECK(success || it->second == to_scope_id)
+  auto result = copied_namespaces.Insert(import_scope_id, to_scope_id);
+  CARBON_CHECK(result.is_inserted() || result.value() == to_scope_id)
       << "Copy result for namespace changed from " << import_scope_id << " to "
       << to_scope_id;
 }
@@ -148,7 +149,7 @@ static auto CacheCopiedNamespace(
 // other names in conflicts. copied_namespaces is optional.
 static auto CopySingleNameScopeFromImportIR(
     Context& context, SemIR::TypeId namespace_type_id,
-    llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>* copied_namespaces,
+    Map<SemIR::NameScopeId, SemIR::NameScopeId>* copied_namespaces,
     SemIR::ImportIRId ir_id, SemIR::InstId import_inst_id,
     SemIR::NameScopeId import_scope_id, SemIR::NameScopeId parent_scope_id,
     SemIR::NameId name_id) -> SemIR::NameScopeId {
@@ -185,7 +186,7 @@ static auto CopyAncestorNameScopesFromImportIR(
     Context& context, SemIR::TypeId namespace_type_id,
     const SemIR::File& import_sem_ir, SemIR::ImportIRId ir_id,
     SemIR::NameScopeId import_parent_scope_id,
-    llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces)
+    Map<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces)
     -> SemIR::NameScopeId {
   // Package-level names don't need work.
   if (import_parent_scope_id == SemIR::NameScopeId::Package) {
@@ -200,11 +201,10 @@ static auto CopyAncestorNameScopesFromImportIR(
   llvm::SmallVector<SemIR::NameScopeId> new_namespaces;
   while (import_parent_scope_id != SemIR::NameScopeId::Package) {
     // If the namespace was already copied, reuse the results.
-    if (auto it = copied_namespaces.find(import_parent_scope_id);
-        it != copied_namespaces.end()) {
+    if (auto result = copied_namespaces.Lookup(import_parent_scope_id)) {
       // We inject names at the provided scope, and don't need to keep
       // traversing parents.
-      scope_cursor = it->second;
+      scope_cursor = result.value();
       break;
     }
 
@@ -237,23 +237,25 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
                                 SemIR::NameId name_id) -> void {
   // Leave a placeholder that the inst comes from the other IR.
   auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-  auto [it, success] =
-      parent_scope.name_map.insert({name_id, parent_scope.names.size()});
-  if (success) {
+  auto insert = parent_scope.name_map.Insert(name_id, [&] {
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
          .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+    int index = parent_scope.names.size();
     parent_scope.names.push_back(
         {.name_id = name_id,
          .inst_id =
              AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
                           bind_name_id),
          .access_kind = SemIR::AccessKind::Public});
+    return index;
+  });
+  if (insert.is_inserted()) {
     return;
   }
 
-  auto inst_id = parent_scope.names[it->second].inst_id;
+  auto inst_id = parent_scope.names[insert.value()].inst_id;
   auto prev_ir_inst =
       GetCanonicalImportIRInst(context, &context.sem_ir(), inst_id);
   VerifySameCanonicalImportIRInst(context, inst_id, prev_ir_inst, ir_id,
@@ -361,7 +363,7 @@ auto ImportLibrariesFromCurrentPackage(
       auto [import_name_id, import_parent_scope_id] =
           GetImportName(*import_ir.sem_ir, import_inst);
 
-      llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId> copied_namespaces;
+      Map<SemIR::NameScopeId, SemIR::NameScopeId> copied_namespaces;
 
       auto name_id =
           CopyNameFromImportIR(context, *import_ir.sem_ir, import_name_id);

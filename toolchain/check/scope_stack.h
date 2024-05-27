@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 
-#include "llvm/ADT/DenseSet.h"
+#include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/scope_index.h"
@@ -64,7 +64,7 @@ class ScopeStack {
 
   // Pops the top scope from scope_stack_ if it contains no names.
   auto PopIfEmpty() -> void {
-    if (scope_stack_.back().names.empty()) {
+    if (!scope_stack_.back().has_names) {
       Pop();
     }
   }
@@ -178,9 +178,12 @@ class ScopeStack {
     // unregistered when the scope ends.
     bool has_returned_var = false;
 
+    // Whether there are any ids in the `names` set.
+    bool has_names = false;
+
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
-    llvm::DenseSet<SemIR::NameId> names = {};
+    Set<SemIR::NameId> names = {};
 
     // TODO: This likely needs to track things which need to be destructed.
   };

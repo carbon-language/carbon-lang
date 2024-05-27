@@ -203,12 +203,12 @@ class SelfNestedBadParam {
 
 class SelfNestedBadReturnType {
   impl as SelfNested {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+6]]:5: ERROR: Function redeclaration differs because return type is `[SelfNestedBadParam; 4]`.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+6]]:10: ERROR: Redeclaration differs at parameter 1.
     // CHECK:STDERR:     fn F(x: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32})) -> [SelfNestedBadParam; 4];
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-21]]:3: Previously declared with return type `[SelfNestedBadReturnType; 4]`.
+    // CHECK:STDERR:          ^
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-21]]:8: Previous declaration's corresponding parameter here.
     // CHECK:STDERR:   fn F(x: (Self*, {.x: Self, .y: i32})) -> [Self; 4];
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:        ^
     fn F(x: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32})) -> [SelfNestedBadParam; 4];
   }
 }
@@ -297,7 +297,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.26: type = tuple_type (%.24, %.25) [template]
 // CHECK:STDOUT:   %F.type.15: type = fn_type @F.15 [template]
 // CHECK:STDOUT:   %F.16: %F.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.27: type = array_type %.14, %SelfNestedBadReturnType [template]
+// CHECK:STDOUT:   %.27: type = tuple_type (%.24, %.25) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -48,12 +48,12 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       scope_stack_(sem_ir_->identifiers()) {
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
-  type_ids_for_type_constants_.insert(
-      {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinError),
-       SemIR::TypeId::Error});
-  type_ids_for_type_constants_.insert(
-      {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
-       SemIR::TypeId::TypeType});
+  type_ids_for_type_constants_.Insert(
+      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinError),
+      SemIR::TypeId::Error);
+  type_ids_for_type_constants_.Insert(
+      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
+      SemIR::TypeId::TypeType);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
   // in the right places.
@@ -329,12 +329,12 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
     // Look up the name in the import scope.
     const auto& import_scope =
         import_ir.sem_ir->name_scopes().Get(import_scope_id);
-    auto it = import_scope.name_map.find(import_name_id);
-    if (it == import_scope.name_map.end()) {
+    auto lookup = import_scope.name_map.Lookup(import_name_id);
+    if (!lookup) {
       // Name doesn't exist in the import scope.
       continue;
     }
-    const auto& import_scope_entry = import_scope.names[it->second];
+    const auto& import_scope_entry = import_scope.names[lookup.value()];
     auto import_inst =
         import_ir.sem_ir->insts().Get(import_scope_entry.inst_id);
     if (import_inst.Is<SemIR::AnyImportRef>()) {
@@ -378,8 +378,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
-  if (auto it = scope.name_map.find(name_id); it != scope.name_map.end()) {
-    auto inst_id = scope.names[it->second].inst_id;
+  if (auto lookup = scope.name_map.Lookup(name_id)) {
+    auto inst_id = scope.names[lookup.value()].inst_id;
     LoadImportRef(*this, inst_id);
     return inst_id;
   }
@@ -1058,12 +1058,9 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   CARBON_CHECK(constant_id.is_constant())
       << "Canonicalizing non-constant type: " << constant_id;
 
-  auto [it, added] = type_ids_for_type_constants_.insert(
-      {constant_id, SemIR::TypeId::Invalid});
-  if (added) {
-    it->second = types().Add({.constant_id = constant_id});
-  }
-  return it->second;
+  auto result = type_ids_for_type_constants_.Insert(
+      constant_id, [&]() { return types().Add({.constant_id = constant_id}); });
+  return result.value();
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.

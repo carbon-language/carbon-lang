@@ -9,20 +9,18 @@
 namespace Carbon::SemIR {
 
 auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
-  auto [it, added] = map_.insert({inst, ConstantId::Invalid});
-  if (added) {
+  auto result = map_.Insert(inst, [&] {
     auto inst_id = sem_ir_.insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     auto const_id = is_symbolic
                         ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
                         : SemIR::ConstantId::ForTemplateConstant(inst_id);
-    it->second = const_id;
     sem_ir_.constant_values().Set(inst_id, const_id);
     constants_.push_back(inst_id);
-  } else {
-    CARBON_CHECK(it->second != ConstantId::Invalid);
-    CARBON_CHECK(it->second.is_symbolic() == is_symbolic);
-  }
-  return it->second;
+    return const_id;
+  });
+  CARBON_CHECK(result.value() != ConstantId::Invalid);
+  CARBON_CHECK(result.value().is_symbolic() == is_symbolic);
+  return result.value();
 }
 
 }  // namespace Carbon::SemIR

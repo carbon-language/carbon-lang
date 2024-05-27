@@ -42,6 +42,7 @@ cc_library(
     ],
     deps = [
         "//common:check",
+        "//common:map",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/sem_ir:entry_point",

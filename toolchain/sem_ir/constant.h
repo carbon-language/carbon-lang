@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 
-#include "llvm/ADT/FoldingSet.h"
+#include "common/map.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -93,7 +93,7 @@ class ConstantStore {
 
  private:
   File& sem_ir_;
-  llvm::DenseMap<Inst, ConstantId> map_;
+  Map<Inst, ConstantId> map_;
   llvm::SmallVector<InstId, 0> constants_;
 };
 

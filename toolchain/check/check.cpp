@@ -8,6 +8,7 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "common/map.h"
 #include "common/variant_helpers.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
@@ -81,7 +82,7 @@ struct UnitInfo {
   llvm::SmallVector<PackageImports> package_imports;
 
   // A map of the package names to the outgoing imports above.
-  llvm::DenseMap<IdentifierId, int32_t> package_imports_map;
+  Map<IdentifierId, int32_t> package_imports_map;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.
@@ -184,15 +185,15 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
                                  SemIR::InstId package_inst_id,
                                  SemIR::TypeId namespace_type_id) -> void {
   // Add imports from the current package.
-  auto self_import_map_it =
-      unit_info.package_imports_map.find(IdentifierId::Invalid);
-  if (self_import_map_it == unit_info.package_imports_map.end()) {
+  auto import_map_lookup =
+      unit_info.package_imports_map.Lookup(IdentifierId::Invalid);
+  if (!import_map_lookup) {
     // Push the scope; there are no names to add.
     context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
     return;
   }
   UnitInfo::PackageImports& self_import =
-      unit_info.package_imports[self_import_map_it->second];
+      unit_info.package_imports[import_map_lookup.value()];
 
   if (self_import.has_load_error) {
     context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
@@ -239,11 +240,10 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
       // Translate the package ID from the API file to the implementation file.
       auto impl_package_id =
           impl_identifiers.Add(api_identifiers.Get(api_imports.package_id));
-      if (auto it = unit_info.package_imports_map.find(impl_package_id);
-          it != unit_info.package_imports_map.end()) {
+      if (auto lookup = unit_info.package_imports_map.Lookup(impl_package_id)) {
         // On a hit, replace the entry to unify the API and implementation
         // imports.
-        api_imports_list[it->second] = {impl_package_id, api_imports_index};
+        api_imports_list[lookup.value()] = {impl_package_id, api_imports_index};
       } else {
         // On a miss, add the package as API-only.
         api_imports_list.push_back({impl_package_id, api_imports_index});
@@ -938,10 +938,10 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 //
 // The ID comparisons between the import and unit are okay because they both
 // come from the same file.
-static auto TrackImport(
-    llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
-    llvm::DenseMap<ImportKey, Parse::NodeId>* explicit_import_map,
-    UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
+static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
+                        Map<ImportKey, Parse::NodeId>* explicit_import_map,
+                        UnitInfo& unit_info, Parse::Tree::PackagingNames import)
+    -> void {
   const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
 
   IdentifierId file_package_id =
@@ -957,14 +957,14 @@ static auto TrackImport(
   // that might be valid with syntax fixes.
   if (explicit_import_map) {
     // Diagnose redundant imports.
-    if (auto [insert_it, success] =
-            explicit_import_map->insert({import_key, import.node_id});
-        !success) {
+    if (auto insert_result =
+            explicit_import_map->Insert(import_key, import.node_id);
+        !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "Library imported more than once.");
       CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
-          .Note(insert_it->second, FirstImported)
+          .Note(insert_result.value(), FirstImported)
           .Emit();
       return;
     }
@@ -1039,26 +1039,28 @@ static auto TrackImport(
   }
 
   // Get the package imports, or create them if this is the first.
-  auto [package_imports_map_it, is_inserted] =
-      unit_info.package_imports_map.insert(
-          {import.package_id, unit_info.package_imports.size()});
-  if (is_inserted) {
-    unit_info.package_imports.push_back(
-        UnitInfo::PackageImports(import.package_id, import.node_id));
-  }
+  // auto [package_imports_map_it, is_inserted] =
+  auto insert_result =
+      unit_info.package_imports_map.Insert(import.package_id, [&]() -> int32_t {
+        int32_t index = unit_info.package_imports.size();
+        unit_info.package_imports.push_back(
+            UnitInfo::PackageImports(import.package_id, import.node_id));
+        return index;
+      });
   UnitInfo::PackageImports& package_imports =
-      unit_info.package_imports[package_imports_map_it->second];
+      unit_info.package_imports[insert_result.value()];
 
-  if (auto api = api_map.find(import_key); api != api_map.end()) {
+  if (auto api_lookup = api_map.Lookup(import_key)) {
     // Add references between the file and imported api.
-    package_imports.imports.push_back({import, api->second});
+    UnitInfo* api = api_lookup.value();
+    package_imports.imports.push_back({import, api});
     ++unit_info.imports_remaining;
-    api->second->incoming_imports.push_back(&unit_info);
+    api->incoming_imports.push_back(&unit_info);
 
     // If this is the implicit import, note we have it.
     if (!explicit_import_map) {
       CARBON_CHECK(!unit_info.api_for_impl);
-      unit_info.api_for_impl = api->second;
+      unit_info.api_for_impl = api;
     }
   } else {
     // The imported api is missing.
@@ -1078,9 +1080,8 @@ static auto TrackImport(
 // related to the packaging because the strings are loaded as part of getting
 // the ImportKey (which we then do for `impl` files too).
 static auto BuildApiMapAndDiagnosePackaging(
-    llvm::MutableArrayRef<UnitInfo> unit_infos)
-    -> llvm::DenseMap<ImportKey, UnitInfo*> {
-  llvm::DenseMap<ImportKey, UnitInfo*> api_map;
+    llvm::MutableArrayRef<UnitInfo> unit_infos) -> Map<ImportKey, UnitInfo*> {
+  Map<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
     const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
@@ -1111,10 +1112,10 @@ static auto BuildApiMapAndDiagnosePackaging(
     // where the user forgets (or has syntax errors with) a package line
     // multiple times.
     if (!is_impl) {
-      auto [entry, success] = api_map.insert({import_key, &unit_info});
-      if (!success) {
+      auto insert_result = api_map.Insert(import_key, &unit_info);
+      if (!insert_result.is_inserted()) {
         llvm::StringRef prev_filename =
-            entry->second->unit->tokens->source().filename();
+            insert_result.value()->unit->tokens->source().filename();
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "Library's API previously provided by `{0}`.",
@@ -1178,7 +1179,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     node_converters.push_back(&unit_infos.back().converter);
   }
 
-  llvm::DenseMap<ImportKey, UnitInfo*> api_map =
+  Map<ImportKey, UnitInfo*> api_map =
       BuildApiMapAndDiagnosePackaging(unit_infos);
 
   // Mark down imports for all files.
@@ -1193,7 +1194,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       TrackImport(api_map, nullptr, unit_info, implicit_names);
     }
 
-    llvm::DenseMap<ImportKey, Parse::NodeId> explicit_import_map;
+    Map<ImportKey, Parse::NodeId> explicit_import_map;
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.

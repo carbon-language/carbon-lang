@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/map.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
@@ -412,12 +413,13 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 
   // Prepare to look up fields in the source by index.
-  llvm::SmallDenseMap<SemIR::NameId, int32_t> src_field_indexes;
+  Map<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
-      auto [it, added] = src_field_indexes.insert(
-          {context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i});
-      CARBON_CHECK(added) << "Duplicate field in source structure";
+      auto result = src_field_indexes.Insert(
+          context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i);
+      CARBON_CHECK(result.is_inserted())
+          << "Duplicate field in source structure";
     }
   }
 
@@ -449,8 +451,8 @@ static auto ConvertStructToStructOrClass(Context& context,
     // Find the matching source field.
     auto src_field_index = i;
     if (src_type.fields_id != dest_type.fields_id) {
-      auto src_field_it = src_field_indexes.find(dest_field.name_id);
-      if (src_field_it == src_field_indexes.end()) {
+      auto src_field_lookup = src_field_indexes.Lookup(dest_field.name_id);
+      if (!src_field_lookup) {
         if (literal_elems_id.is_valid()) {
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
@@ -469,7 +471,7 @@ static auto ConvertStructToStructOrClass(Context& context,
         }
         return SemIR::InstId::BuiltinError;
       }
-      src_field_index = src_field_it->second;
+      src_field_index = src_field_lookup.value();
     }
     auto src_field = sem_ir.insts().GetAs<SemIR::StructTypeField>(
         src_elem_fields[src_field_index]);
