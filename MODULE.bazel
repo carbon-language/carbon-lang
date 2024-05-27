@@ -22,6 +22,7 @@ http_archive = use_repo_rule(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
+bazel_dep(name = "rules_pkg", version = "0.10.1")
 bazel_dep(name = "abseil-cpp", version = "20240116.1")
 bazel_dep(name = "re2", version = "2024-03-01")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
