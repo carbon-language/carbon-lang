@@ -57,7 +57,6 @@ cc_library(
     srcs = ["driver.cpp"],
     hdrs = ["driver.h"],
     data = [
-        "//core:prelude",
         "//toolchain/install:install_lib_data",
     ],
     textual_hdrs = ["flags.def"],

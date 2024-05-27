@@ -29,7 +29,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   // TODO: We should try to thread the executable path into here.
   const auto install_paths = InstallPaths::Make("");
   llvm::raw_null_ostream null_ostream;
-  Driver driver(fs, &install_paths, "", null_ostream, null_ostream);
+  Driver driver(fs, &install_paths, null_ostream, null_ostream);
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.

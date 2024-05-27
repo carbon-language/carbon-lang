@@ -32,9 +32,8 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    const llvm::StringRef data_dir = "";
-
-    auto prelude = Driver::FindPreludeFiles(data_dir, stderr);
+    auto prelude =
+        Driver::FindPreludeFiles(installation_.core_package(), stderr);
     if (prelude.empty()) {
       return Error("Could not find prelude");
     }
@@ -42,7 +41,7 @@ class ToolchainFileTest : public FileTestBase {
       CARBON_RETURN_IF_ERROR(AddFile(fs, file));
     }
 
-    Driver driver(fs, &installation_, data_dir, stdout, stderr);
+    Driver driver(fs, &installation_, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
 
     RunResult result{
@@ -84,7 +83,9 @@ class ToolchainFileTest : public FileTestBase {
       args.push_back("--no-prelude-import");
     }
 
-    args.insert(args.end(), {"--exclude-dump-file-prefix=core/", "%s"});
+    args.insert(
+        args.end(),
+        {"--exclude-dump-file-prefix=" + installation_.core_package(), "%s"});
     return args;
   }
 

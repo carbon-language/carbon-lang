@@ -101,6 +101,7 @@ class InstallPaths {
   auto prefix() const -> llvm::StringRef { return prefix_; }
 
   auto driver() const -> std::string;
+  auto core_package() const -> std::string;
   auto llvm_install_bin() const -> std::string;
 
  private:

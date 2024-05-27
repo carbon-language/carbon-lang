@@ -31,6 +31,12 @@ write_file(
     ],
 )
 
+symlink_filegroup(
+    name = "core_data",
+    srcs = ["//core:prelude"],
+    out_prefix = "prefix_root/lib/carbon/",
+)
+
 # Copy Clang and LLVM toolchain files into a synthetic LLVM installation under
 # `prefix_root/lib/carbon/llvm` so that parts of Clang that expect to find an LLVM
 # installation at relative paths work correctly without exposing these in an
@@ -72,6 +78,7 @@ filegroup(
 filegroup(
     name = "install_lib_data",
     srcs = [
+        ":core_data",
         ":install_marker",
         ":llvm_link_data",
     ],
@@ -171,9 +178,16 @@ pkg_files(
     for bin_name in lld_bin_names
 ]
 
+pkg_files(
+    name = "packaging_core_files",
+    srcs = [":core_data"],
+    strip_prefix = strip_prefix.from_pkg("prefix_root"),
+)
+
 pkg_filegroup(
     name = "packaging_files",
     srcs = [
+        ":packaging_core_files",
         ":packaging_exe_files",
     ] + [
         ":packaging_link_lld_alias_" + bin_name
