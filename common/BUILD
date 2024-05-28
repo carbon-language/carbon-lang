@@ -124,6 +124,27 @@ cc_test(
 )
 
 cc_library(
+    name = "exe_path",
+    srcs = ["exe_path.cpp"],
+    hdrs = ["exe_path.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "exe_path_test",
+    size = "small",
+    srcs = ["exe_path_test.cpp"],
+    deps = [
+        ":exe_path",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "hashing",
     srcs = ["hashing.cpp"],
     hdrs = ["hashing.h"],

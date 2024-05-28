@@ -5,11 +5,11 @@
 #include <cstdlib>
 
 #include "common/bazel_working_dir.h"
+#include "common/exe_path.h"
 #include "common/init_llvm.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/Program.h"
 #include "toolchain/driver/driver.h"
 
 auto main(int argc, char** argv) -> int {
@@ -19,15 +19,7 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  // Find the executable without resolving symlinks. Do a PATH lookup if argv[0]
-  // isn't a valid path.
-  llvm::SmallString<128> exe_path(argv[0]);
-  if (!llvm::sys::fs::exists(exe_path)) {
-    if (llvm::ErrorOr<std::string> path =
-            llvm::sys::findProgramByName(exe_path)) {
-      exe_path = *path;
-    }
-  }
+  std::string exe_path = Carbon::FindExecutablePath(argv[0]);
 
   Carbon::SetWorkingDirForBazel();
 
