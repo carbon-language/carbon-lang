@@ -329,7 +329,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // The main API for this class. This API will switch between a portable and
   // SIMD implementation based on what is most efficient, but in debug builds
   // will cross check that the implementations do not diverge.
-  static auto Load(uint8_t* metadata, ssize_t index) -> MetadataGroup;
+  static auto Load(const uint8_t* metadata, ssize_t index) -> MetadataGroup;
   auto Store(uint8_t* metadata, ssize_t index) const -> void;
 
   auto ClearByte(ssize_t byte_index) -> void;
@@ -394,7 +394,8 @@ class MetadataGroup : public Printable<MetadataGroup> {
   //
   // They directly verify their results to help establish baseline
   // functionality.
-  static auto PortableLoad(uint8_t* metadata, ssize_t index) -> MetadataGroup;
+  static auto PortableLoad(const uint8_t* metadata, ssize_t index)
+      -> MetadataGroup;
   auto PortableStore(uint8_t* metadata, ssize_t index) const -> void;
 
   auto PortableClearDeleted() -> void;
@@ -414,7 +415,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   //
   // These routines don't directly verify their results as we can build simpler
   // debug checks by comparing them against the verified portable results.
-  static auto SIMDLoad(uint8_t* metadata, ssize_t index) -> MetadataGroup;
+  static auto SIMDLoad(const uint8_t* metadata, ssize_t index) -> MetadataGroup;
   auto SIMDStore(uint8_t* metadata, ssize_t index) const -> void;
 
   auto SIMDClearDeleted() -> void;
@@ -437,7 +438,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
 inline constexpr ssize_t GroupSize = MetadataGroup::Size;
 inline constexpr ssize_t GroupMask = MetadataGroup::Mask;
 
-inline auto MetadataGroup::Load(uint8_t* metadata, ssize_t index)
+inline auto MetadataGroup::Load(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup portable_g;
   if constexpr (!UseSIMD || DebugSIMD) {
@@ -626,7 +627,7 @@ inline auto MetadataGroup::VerifyRangeMask(
   return true;
 }
 
-inline auto MetadataGroup::PortableLoad(uint8_t* metadata, ssize_t index)
+inline auto MetadataGroup::PortableLoad(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup g;
   static_assert(sizeof(g) == Size);
@@ -790,13 +791,14 @@ inline auto MetadataGroup::PortableCompareEqual(MetadataGroup lhs,
   return llvm::equal(lhs.bytes, rhs.bytes);
 }
 
-inline auto MetadataGroup::SIMDLoad(uint8_t* metadata, ssize_t index)
+inline auto MetadataGroup::SIMDLoad(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup g;
 #if CARBON_NEON_SIMD_SUPPORT
   g.byte_vec = vld1_u8(metadata + index);
 #elif CARBON_X86_SIMD_SUPPORT
-  g.byte_vec = _mm_load_si128(reinterpret_cast<__m128i*>(metadata + index));
+  g.byte_vec =
+      _mm_load_si128(reinterpret_cast<const __m128i*>(metadata + index));
 #else
   static_assert(!UseSIMD, "Unimplemented SIMD operation");
   static_cast<void>(metadata);

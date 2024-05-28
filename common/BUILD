@@ -162,6 +162,14 @@ cc_binary(
 )
 
 cc_library(
+    name = "hashtable_key_context",
+    hdrs = ["hashtable_key_context.h"],
+    deps = [
+        ":hashing",
+    ],
+)
+
+cc_library(
     name = "indirect_value",
     hdrs = ["indirect_value.h"],
 )
@@ -208,6 +216,7 @@ cc_library(
     hdrs = ["map.h"],
     deps = [
         ":check",
+        ":hashtable_key_context",
         ":raw_hashtable",
         "@llvm-project//llvm:Support",
     ],
@@ -264,6 +273,7 @@ cc_library(
     deps = [
         ":check",
         ":hashing",
+        ":hashtable_key_context",
         ":raw_hashtable_metadata_group",
         "@llvm-project//llvm:Support",
     ],
@@ -325,6 +335,7 @@ cc_library(
     deps = [
         ":check",
         ":hashing",
+        ":hashtable_key_context",
         ":ostream",
     ],
 )
@@ -334,6 +345,7 @@ cc_library(
     hdrs = ["set.h"],
     deps = [
         ":check",
+        ":hashtable_key_context",
         ":raw_hashtable",
         "@llvm-project//llvm:Support",
     ],

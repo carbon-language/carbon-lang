@@ -6,6 +6,7 @@
 #define CARBON_COMMON_RAW_HASHTABLE_H_
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <cstring>
 #include <new>
@@ -14,6 +15,7 @@
 
 #include "common/check.h"
 #include "common/hashing.h"
+#include "common/hashtable_key_context.h"
 #include "common/raw_hashtable_metadata_group.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
@@ -21,6 +23,11 @@
 // A namespace collecting a set of low-level utilities for building hashtable
 // data structures. These should only be used as implementation details of
 // higher-level data-structure APIs.
+//
+// The utilities here use the `hashtable_common.h` provided `KeyContext` to
+// support the necessary hashtable operations on keys: hashing and comparison.
+// This also serves as the customization point for hashtables built on this
+// infrastructure for those operations. See that header file for details.
 //
 // These utilities support hashtables following a *specific* API design pattern,
 // and using Small-Size Optimization, or "SSO", when desired. We expect there to
@@ -261,7 +268,8 @@ struct StorageEntry<KeyT, void> {
 struct Storage {};
 
 // Forward declaration to support friending, see the definition below.
-template <typename KeyT, typename ValueT = void>
+template <typename KeyT, typename ValueT = void,
+          typename InputKeyContextT = DefaultKeyContext>
 class BaseImpl;
 
 // Implementation helper for defining a read-only view type for a hashtable.
@@ -285,26 +293,28 @@ class BaseImpl;
 // Some methods are used by other parts of the raw hashtable implementation.
 // Those are kept `private` and where necessary the other components of the raw
 // hashtable implementation are friended to give access to them.
-template <typename InputKeyT, typename InputValueT = void>
+template <typename InputKeyT, typename InputValueT = void,
+          typename InputKeyContextT = DefaultKeyContext>
 class ViewImpl {
  protected:
   using KeyT = InputKeyT;
   using ValueT = InputValueT;
+  using KeyContextT = InputKeyContextT;
   using EntryT = StorageEntry<KeyT, ValueT>;
 
-  friend class BaseImpl<KeyT, ValueT>;
+  friend class BaseImpl<KeyT, ValueT, KeyContextT>;
 
   // Make more-`const` types friends to enable conversions that add `const`.
-  friend class ViewImpl<const KeyT, ValueT>;
-  friend class ViewImpl<KeyT, const ValueT>;
-  friend class ViewImpl<const KeyT, const ValueT>;
+  friend class ViewImpl<const KeyT, ValueT, KeyContextT>;
+  friend class ViewImpl<KeyT, const ValueT, KeyContextT>;
+  friend class ViewImpl<const KeyT, const ValueT, KeyContextT>;
 
   ViewImpl() = default;
 
   // Support adding `const` to either key or value type of some other view.
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  ViewImpl(ViewImpl<OtherKeyT, OtherValueT> other_view)
+  ViewImpl(ViewImpl<OtherKeyT, OtherValueT, KeyContextT> other_view)
     requires(std::same_as<KeyT, OtherKeyT> ||
              std::same_as<KeyT, const OtherKeyT>) &&
                 (std::same_as<ValueT, OtherValueT> ||
@@ -314,7 +324,8 @@ class ViewImpl {
   // Looks up an entry in the hashtable and returns its address or null if not
   // present.
   template <typename LookupKeyT>
-  auto LookupEntry(LookupKeyT lookup_key) const -> EntryT*;
+  auto LookupEntry(LookupKeyT lookup_key,
+                   KeyContextT key_context = KeyContextT()) const -> EntryT*;
 
   // Calls `entry_callback` for each entry in the hashtable. All the entries
   // within a specific group are visited first, and then `group_callback` is
@@ -326,7 +337,8 @@ class ViewImpl {
 
   // Counts the number of keys in the hashtable that required probing beyond the
   // initial group.
-  auto CountProbedKeys() const -> ssize_t;
+  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) const
+      -> ssize_t;
 
  private:
   ViewImpl(ssize_t alloc_size, Storage* storage)
@@ -369,12 +381,13 @@ class ViewImpl {
 // Other than the use of `protected` inheritance, the patterns for this type,
 // and how to build user-facing hashtable base types from it, mirror those of
 // `ViewImpl`. See its documentation for more details.
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 class BaseImpl {
  protected:
   using KeyT = InputKeyT;
   using ValueT = InputValueT;
-  using ViewImplT = ViewImpl<KeyT, ValueT>;
+  using KeyContextT = InputKeyContextT;
+  using ViewImplT = ViewImpl<KeyT, ValueT, KeyContextT>;
   using EntryT = typename ViewImplT::EntryT;
 
   BaseImpl(int small_alloc_size, Storage* small_storage)
@@ -382,7 +395,11 @@ class BaseImpl {
     CARBON_CHECK(small_alloc_size >= 0);
     Construct(small_storage);
   }
-
+  // Only used for copying and moving, and leaves storage uninitialized.
+  BaseImpl(ssize_t alloc_size, int growth_budget, int small_alloc_size)
+      : view_impl_(alloc_size, nullptr),
+        growth_budget_(growth_budget),
+        small_alloc_size_(small_alloc_size) {}
   ~BaseImpl();
 
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
@@ -398,7 +415,9 @@ class BaseImpl {
   // necessary, this will grow the hashtable to cause there to be sufficient
   // empty entries.
   template <typename LookupKeyT>
-  auto InsertImpl(LookupKeyT lookup_key) -> std::pair<EntryT*, bool>;
+  auto InsertImpl(LookupKeyT lookup_key,
+                  KeyContextT key_context = KeyContextT())
+      -> std::pair<EntryT*, bool>;
 
   // Looks up the entry in the hashtable, and if found destroys the entry and
   // returns `true`. If not found, returns `false`.
@@ -406,7 +425,8 @@ class BaseImpl {
   // Does not release any memory, just leaves a tombstone behind so this entry
   // cannot be found and the slot can in theory be re-used.
   template <typename LookupKeyT>
-  auto EraseImpl(LookupKeyT lookup_key) -> bool;
+  auto EraseImpl(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
+      -> bool;
 
   // Erases all entries in the hashtable but leaves the allocated storage.
   auto ClearImpl() -> void;
@@ -449,18 +469,17 @@ class BaseImpl {
   auto is_small() const -> bool { return alloc_size() <= small_alloc_size(); }
 
   auto Construct(Storage* small_storage) -> void;
-  auto CopyFrom(const BaseImpl& arg) -> void;
-  auto MoveFrom(BaseImpl&& arg) -> void;
   auto Destroy() -> void;
 
   template <typename LookupKeyT>
-  auto InsertIntoEmpty(LookupKeyT lookup_key) -> EntryT*;
+  auto InsertIntoEmpty(LookupKeyT lookup_key, KeyContextT key_context)
+      -> EntryT*;
 
   static auto ComputeNextAllocSize(ssize_t old_alloc_size) -> ssize_t;
   static auto GrowthThresholdForAllocSize(ssize_t alloc_size) -> ssize_t;
 
   template <typename LookupKeyT>
-  auto GrowAndInsert(LookupKeyT lookup_key) -> EntryT*;
+  auto GrowAndInsert(LookupKeyT lookup_key, KeyContextT key_context) -> EntryT*;
 
   ViewImplT view_impl_;
   int growth_budget_;
@@ -495,14 +514,8 @@ class TableImpl : public InputBaseT {
   using BaseT = InputBaseT;
 
   TableImpl() : BaseT(SmallSize, small_storage()) {}
-  TableImpl(const TableImpl& arg) : TableImpl() { this->CopyFrom(arg); }
-  explicit TableImpl(const BaseT& arg) : TableImpl() { this->CopyFrom(arg); }
-  TableImpl(TableImpl&& arg) noexcept : TableImpl() {
-    this->MoveFrom(std::move(arg));
-  }
-  explicit TableImpl(BaseT&& arg) noexcept : TableImpl() {
-    this->MoveFrom(std::move(arg));
-  }
+  TableImpl(const TableImpl& arg);
+  TableImpl(TableImpl&& arg) noexcept;
 
   // Resets the hashtable to its initial state, clearing all entries and
   // releasing all memory. If the hashtable had an SSO buffer, that is restored
@@ -512,6 +525,7 @@ class TableImpl : public InputBaseT {
  private:
   using KeyT = BaseT::KeyT;
   using ValueT = BaseT::ValueT;
+  using EntryT = BaseT::EntryT;
   using SmallStorage = BaseT::template SmallStorage<SmallSize>;
 
   auto small_storage() const -> Storage*;
@@ -606,10 +620,10 @@ class ProbeSequence {
 
 // TODO: Evaluate keeping this outlined to see if macro benchmarks observe the
 // same perf hit as micro benchmarks.
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto ViewImpl<InputKeyT, InputValueT>::LookupEntry(LookupKeyT lookup_key) const
-    -> EntryT* {
+auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
+    LookupKeyT lookup_key, KeyContextT key_context) const -> EntryT* {
   // Prefetch with a "low" temporal locality as we're primarily expecting a
   // brief use of the storage and then to return to application code.
   __builtin_prefetch(storage_, /*read*/ 0, /*low-locality*/ 1);
@@ -618,7 +632,7 @@ auto ViewImpl<InputKeyT, InputValueT>::LookupEntry(LookupKeyT lookup_key) const
   CARBON_DCHECK(local_size > 0);
 
   uint8_t* local_metadata = metadata();
-  HashCode hash = HashValue(lookup_key, ComputeSeed());
+  HashCode hash = key_context.HashKey(lookup_key, ComputeSeed());
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
 
   EntryT* local_entries = entries();
@@ -642,7 +656,7 @@ auto ViewImpl<InputKeyT, InputValueT>::LookupEntry(LookupKeyT lookup_key) const
       auto byte_end = metadata_matched_range.end();
       do {
         EntryT* entry = byte_it.index_ptr(group_entries);
-        if (LLVM_LIKELY(entry->key() == lookup_key)) {
+        if (LLVM_LIKELY(key_context.KeyEq(lookup_key, entry->key()))) {
           __builtin_assume(entry != nullptr);
           return entry;
         }
@@ -672,9 +686,10 @@ auto ViewImpl<InputKeyT, InputValueT>::LookupEntry(LookupKeyT lookup_key) const
 // boundaries within the loop for performance, and recognizing the degree of
 // simplification from inlining these callbacks may be difficult to
 // automatically recognize.
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename EntryCallbackT, typename GroupCallbackT>
-[[clang::always_inline]] auto ViewImpl<InputKeyT, InputValueT>::ForEachEntry(
+[[clang::always_inline]] auto
+ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ForEachEntry(
     EntryCallbackT entry_callback, GroupCallbackT group_callback) const
     -> void {
   uint8_t* local_metadata = metadata();
@@ -696,8 +711,9 @@ template <typename EntryCallbackT, typename GroupCallbackT>
   }
 }
 
-template <typename InputKeyT, typename InputValueT>
-auto ViewImpl<InputKeyT, InputValueT>::CountProbedKeys() const -> ssize_t {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::CountProbedKeys(
+    KeyContextT key_context) const -> ssize_t {
   uint8_t* local_metadata = metadata();
   EntryT* local_entries = entries();
   ssize_t local_size = alloc_size_;
@@ -708,7 +724,8 @@ auto ViewImpl<InputKeyT, InputValueT>::CountProbedKeys() const -> ssize_t {
     auto present_matched_range = g.MatchPresent();
     for (ssize_t byte_index : present_matched_range) {
       ssize_t index = group_index + byte_index;
-      HashCode hash = HashValue(local_entries[index].key(), ComputeSeed());
+      HashCode hash =
+          key_context.HashKey(local_entries[index].key(), ComputeSeed());
       ssize_t hash_index = hash.ExtractIndexAndTag<7>().first &
                            ComputeProbeMaskFromSize(local_size);
       count += static_cast<ssize_t>(hash_index != group_index);
@@ -717,23 +734,24 @@ auto ViewImpl<InputKeyT, InputValueT>::CountProbedKeys() const -> ssize_t {
   return count;
 }
 
-template <typename InputKeyT, typename InputValueT>
-BaseImpl<InputKeyT, InputValueT>::~BaseImpl() {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::~BaseImpl() {
   Destroy();
 }
 
 // TODO: Evaluate whether it is worth forcing this out-of-line given the
 // reasonable ABI boundary it forms and large volume of code necessary to
 // implement it.
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto BaseImpl<InputKeyT, InputValueT>::InsertImpl(LookupKeyT lookup_key)
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
+    LookupKeyT lookup_key, KeyContextT key_context)
     -> std::pair<EntryT*, bool> {
   CARBON_DCHECK(alloc_size() > 0);
 
   uint8_t* local_metadata = metadata();
 
-  HashCode hash = HashValue(lookup_key, ComputeSeed());
+  HashCode hash = key_context.HashKey(lookup_key, ComputeSeed());
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
 
   // We re-purpose the empty control byte to signal no insert is needed to the
@@ -763,7 +781,7 @@ auto BaseImpl<InputKeyT, InputValueT>::InsertImpl(LookupKeyT lookup_key)
       auto byte_end = control_byte_matched_range.end();
       do {
         EntryT* entry = byte_it.index_ptr(group_entries);
-        if (LLVM_LIKELY(entry->key() == lookup_key)) {
+        if (LLVM_LIKELY(key_context.KeyEq(lookup_key, entry->key()))) {
           return {entry, false};
         }
         ++byte_it;
@@ -799,7 +817,7 @@ auto BaseImpl<InputKeyT, InputValueT>::InsertImpl(LookupKeyT lookup_key)
     // empty slot. Without the growth budget we'll have to completely rehash and
     // so we can just bail here.
     if (LLVM_UNLIKELY(growth_budget_ == 0)) {
-      return {GrowAndInsert(lookup_key), true};
+      return {GrowAndInsert(lookup_key, key_context), true};
     }
 
     --growth_budget_;
@@ -812,11 +830,11 @@ auto BaseImpl<InputKeyT, InputValueT>::InsertImpl(LookupKeyT lookup_key)
                     "or an empty slot.";
 }
 
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto BaseImpl<InputKeyT, InputValueT>::EraseImpl(LookupKeyT lookup_key)
-    -> bool {
-  EntryT* entry = view_impl_.LookupEntry(lookup_key);
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::EraseImpl(
+    LookupKeyT lookup_key, KeyContextT key_context) -> bool {
+  EntryT* entry = view_impl_.LookupEntry(lookup_key, key_context);
   if (!entry) {
     return false;
   }
@@ -849,8 +867,8 @@ auto BaseImpl<InputKeyT, InputValueT>::EraseImpl(LookupKeyT lookup_key)
   return true;
 }
 
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::ClearImpl() -> void {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::ClearImpl() -> void {
   view_impl_.ForEachEntry(
       [](EntryT& entry) {
         if constexpr (!EntryT::IsTriviallyDestructible) {
@@ -869,9 +887,9 @@ auto BaseImpl<InputKeyT, InputValueT>::ClearImpl() -> void {
 //
 // The returned pointer *must* be deallocated by calling the below `Deallocate`
 // function with the same `alloc_size` as used here.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::Allocate(ssize_t alloc_size)
-    -> Storage* {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Allocate(
+    ssize_t alloc_size) -> Storage* {
   return reinterpret_cast<Storage*>(__builtin_operator_new(
       AllocByteSize(alloc_size), static_cast<std::align_val_t>(Alignment),
       std::nothrow_t()));
@@ -879,9 +897,9 @@ auto BaseImpl<InputKeyT, InputValueT>::Allocate(ssize_t alloc_size)
 
 // Deallocates a table's storage that was allocated with the `Allocate`
 // function.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::Deallocate(Storage* storage,
-                                                  ssize_t alloc_size) -> void {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Deallocate(
+    Storage* storage, ssize_t alloc_size) -> void {
   ssize_t allocated_size = AllocByteSize(alloc_size);
   // We don't need the size, but make sure it always compiles.
   static_cast<void>(allocated_size);
@@ -897,9 +915,9 @@ auto BaseImpl<InputKeyT, InputValueT>::Deallocate(Storage* storage,
 // and can be null. Regardless, after this the storage pointer is non-null and
 // the size is non-zero so that we can directly begin inserting or querying the
 // table.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::Construct(Storage* small_storage)
-    -> void {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Construct(
+    Storage* small_storage) -> void {
   if (small_alloc_size_ > 0) {
     alloc_size() = small_alloc_size_;
     storage() = small_storage;
@@ -913,73 +931,9 @@ auto BaseImpl<InputKeyT, InputValueT>::Construct(Storage* small_storage)
   growth_budget_ = GrowthThresholdForAllocSize(alloc_size());
 }
 
-// Implementation detail for copying from an existing hashtable with the same
-// key and value type.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::CopyFrom(const BaseImpl& arg) -> void {
-  arg.view_impl_.ForEachEntry(
-      [this](EntryT& arg_entry) {
-        const KeyT& key = arg_entry.key();
-        auto [new_entry, inserted] = InsertImpl(key);
-        CARBON_CHECK(inserted) << "Duplicate insert when copying key: " << key;
-        new_entry->CopyFrom(arg_entry);
-      },
-      [](auto...) {});
-}
-
-// Implementation details for moving from an existing hashtable with the same
-// key and value type.
-//
-// While this is implemented generically for the base type of the hashtable, it
-// correctly handles both an incoming SSO table and this table's SSO buffer,
-// trying to use the SSO buffer when it can and falling back to a copy or moving
-// the allocated table.
-//
-// Puts the incoming table into a moved-from state that can be destroyed or
-// re-initialized but must not be used otherwise.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::MoveFrom(BaseImpl&& arg) -> void {
-  // If either the incoming table is small or it would fit into our small size,
-  // we move the elements but not the allocation.
-  if (arg.is_small() || arg.alloc_size() <= small_alloc_size()) {
-    arg.view_impl_.ForEachEntry(
-        [this](EntryT& arg_entry) {
-          const KeyT& key = arg_entry.key();
-          auto [new_entry, inserted] = InsertImpl(key);
-          CARBON_CHECK(inserted) << "Duplicate insert when moving key: " << key;
-          new_entry->MoveFrom(std::move(arg_entry));
-        },
-        [](uint8_t* metadata_group) {
-          // Clear the group so that destructors aren't run.
-          std::memset(metadata_group, 0, GroupSize);
-        });
-    // If not small, deallocate the table storage.
-    if (!arg.is_small()) {
-      arg.Deallocate(arg.storage(), arg.alloc_size());
-      // Replace the pointer with null to ease debugging.
-      arg.storage() = nullptr;
-    }
-    // Put the table into a "moved from" state that will be trivially destroyed
-    // but can also be re-initialized.
-    arg.alloc_size() = 0;
-    return;
-  }
-
-  // We need the allocated table anyways, so just setup our state to point to
-  // it.
-  alloc_size() = arg.alloc_size();
-  storage() = arg.storage();
-  growth_budget_ = arg.growth_budget_;
-
-  // Finally, put the incoming table into a moved-from state.
-  arg.alloc_size() = 0;
-  // Replace the pointer with null to ease debugging.
-  arg.storage() = nullptr;
-}
-
 // Destroy the current table, releasing any memory used.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::Destroy() -> void {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Destroy() -> void {
   // Check for a moved-from state and don't do anything. Only a moved-from table
   // has a zero size.
   if (alloc_size() == 0) {
@@ -1007,11 +961,12 @@ auto BaseImpl<InputKeyT, InputValueT>::Destroy() -> void {
 // (and growth space) to insert into before any deleted slots. When both of
 // these are true, typically just after growth, we can dramatically simplify the
 // insert position search.
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-[[clang::noinline]] auto BaseImpl<InputKeyT, InputValueT>::InsertIntoEmpty(
-    LookupKeyT lookup_key) -> EntryT* {
-  HashCode hash = HashValue(lookup_key, ComputeSeed());
+[[clang::noinline]] auto
+BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertIntoEmpty(
+    LookupKeyT lookup_key, KeyContextT key_context) -> EntryT* {
+  HashCode hash = key_context.HashKey(lookup_key, ComputeSeed());
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
   uint8_t* local_metadata = metadata();
   EntryT* local_entries = entries();
@@ -1032,8 +987,8 @@ template <typename LookupKeyT>
 
 // Apply our doubling growth strategy and (re-)check invariants around table
 // size.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::ComputeNextAllocSize(
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeNextAllocSize(
     ssize_t old_alloc_size) -> ssize_t {
   CARBON_DCHECK(llvm::isPowerOf2_64(old_alloc_size))
       << "Expected a power of two!";
@@ -1044,9 +999,10 @@ auto BaseImpl<InputKeyT, InputValueT>::ComputeNextAllocSize(
 }
 
 // Compute the growth threshold for a given size.
-template <typename InputKeyT, typename InputValueT>
-auto BaseImpl<InputKeyT, InputValueT>::GrowthThresholdForAllocSize(
-    ssize_t alloc_size) -> ssize_t {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT,
+              InputKeyContextT>::GrowthThresholdForAllocSize(ssize_t alloc_size)
+    -> ssize_t {
   // We use a 7/8ths load factor to trigger growth.
   return alloc_size - alloc_size / 8;
 }
@@ -1056,10 +1012,11 @@ auto BaseImpl<InputKeyT, InputValueT>::GrowthThresholdForAllocSize(
 // selecting the insertion entry, this routine updates the metadata array so
 // that this function can be directly called and the result returned from
 // `InsertImpl`.
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-[[clang::noinline]] auto BaseImpl<InputKeyT, InputValueT>::GrowAndInsert(
-    LookupKeyT lookup_key) -> EntryT* {
+[[clang::noinline]] auto
+BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
+    LookupKeyT lookup_key, KeyContextT key_context) -> EntryT* {
   // We collect the probed elements in a small vector for re-insertion. It is
   // tempting to reuse the already allocated storage, but doing so appears to
   // be a (very slight) performance regression. These are relatively rare and
@@ -1156,7 +1113,8 @@ template <typename LookupKeyT>
         CARBON_DCHECK(new_metadata[old_index | old_size] ==
                       old_metadata[old_index]);
       }
-      HashCode hash = HashValue(old_entries[old_index].key(), ComputeSeed());
+      HashCode hash =
+          key_context.HashKey(old_entries[old_index].key(), ComputeSeed());
       ssize_t old_hash_index = hash.ExtractIndexAndTag<7>().first &
                                ComputeProbeMaskFromSize(old_size);
       if (LLVM_UNLIKELY(old_hash_index != group_index)) {
@@ -1222,7 +1180,8 @@ template <typename LookupKeyT>
   // We then need to do a normal insertion for anything that was probed before
   // growth, but we know we'll find an empty slot, so leverage that.
   for (ssize_t old_index : probed_indices) {
-    EntryT* new_entry = InsertIntoEmpty(old_entries[old_index].key());
+    EntryT* new_entry =
+        InsertIntoEmpty(old_entries[old_index].key(), key_context);
     new_entry->MoveFrom(std::move(old_entries[old_index]));
   }
   CARBON_DCHECK(count ==
@@ -1244,7 +1203,79 @@ template <typename LookupKeyT>
   // And lastly insert the lookup_key into an index in the newly grown map and
   // return that index for use.
   --growth_budget_;
-  return InsertIntoEmpty(lookup_key);
+  return InsertIntoEmpty(lookup_key, key_context);
+}
+
+template <typename InputBaseT, ssize_t SmallSize>
+TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
+    : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
+  CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
+
+  ssize_t local_size = arg.alloc_size();
+
+  if (SmallSize > 0 && arg.is_small()) {
+    CARBON_DCHECK(local_size == SmallSize);
+    this->storage() = small_storage();
+  } else {
+    this->storage() = BaseT::Allocate(local_size);
+  }
+
+  uint8_t* local_metadata = this->metadata();
+  EntryT* local_entries = this->entries();
+  const uint8_t* local_arg_metadata = arg.metadata();
+  const EntryT* local_arg_entries = arg.entries();
+  memcpy(local_metadata, local_arg_metadata, local_size);
+
+  for (ssize_t group_index = 0; group_index < local_size;
+       group_index += GroupSize) {
+    auto g = MetadataGroup::Load(local_arg_metadata, group_index);
+    for (ssize_t byte_index : g.MatchPresent()) {
+      local_entries[group_index + byte_index].CopyFrom(
+          local_arg_entries[group_index + byte_index]);
+    }
+  }
+}
+
+// Puts the incoming table into a moved-from state that can be destroyed or
+// re-initialized but must not be used otherwise.
+template <typename InputBaseT, ssize_t SmallSize>
+TableImpl<InputBaseT, SmallSize>::TableImpl(TableImpl&& arg) noexcept
+    : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
+  CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
+
+  ssize_t local_size = arg.alloc_size();
+
+  if (SmallSize > 0 && arg.is_small()) {
+    CARBON_DCHECK(local_size == SmallSize);
+    this->storage() = small_storage();
+
+    // We also have to move the entries between the tables.
+    uint8_t* local_metadata = this->metadata();
+    EntryT* local_entries = this->entries();
+    uint8_t* local_arg_metadata = arg.metadata();
+    EntryT* local_arg_entries = arg.entries();
+    memcpy(local_metadata, local_arg_metadata, local_size);
+    if (EntryT::IsTriviallyRelocatable) {
+      memcpy(local_entries, local_arg_entries, SmallSize * sizeof(EntryT));
+    } else {
+      for (ssize_t group_index = 0; group_index < local_size;
+           group_index += GroupSize) {
+        auto g = MetadataGroup::Load(local_arg_metadata, group_index);
+        for (ssize_t byte_index : g.MatchPresent()) {
+          local_entries[group_index + byte_index].MoveFrom(
+              std::move(local_arg_entries[group_index + byte_index]));
+        }
+      }
+    }
+  } else {
+    // Just point to the allocated storage.
+    this->storage() = arg.storage();
+  }
+
+  // Finally, put the incoming table into a moved-from state.
+  arg.alloc_size() = 0;
+  // Replace the pointer with null to ease debugging.
+  arg.storage() = nullptr;
 }
 
 // Reset a table to its original state, including releasing any allocated

@@ -17,7 +17,10 @@
 namespace Carbon::Testing {
 namespace {
 
+using RawHashtable::FixedHashKeyContext;
+using RawHashtable::IndexKeyContext;
 using RawHashtable::TestData;
+using RawHashtable::TestKeyContext;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAreArray;
 
@@ -63,9 +66,12 @@ auto MakeKeyValues(ValueCB value_cb, RangeT&& range, RangeTs&&... ranges) {
 template <typename MapT>
 class MapTest : public ::testing::Test {};
 
-using Types =
-    ::testing::Types<Map<int, int>, Map<int, int, 16>, Map<int, int, 64>,
-                     Map<TestData, TestData>, Map<TestData, TestData, 16>>;
+using Types = ::testing::Types<
+    Map<int, int>, Map<int, int, 16>, Map<int, int, 64>,
+    Map<int, int, 0, TestKeyContext>, Map<int, int, 16, TestKeyContext>,
+    Map<int, int, 64, TestKeyContext>, Map<TestData, TestData>,
+    Map<TestData, TestData, 16>, Map<TestData, TestData, 0, TestKeyContext>,
+    Map<TestData, TestData, 16, TestKeyContext>>;
 TYPED_TEST_SUITE(MapTest, Types);
 
 TYPED_TEST(MapTest, Basic) {
@@ -138,8 +144,6 @@ TYPED_TEST(MapTest, FactoryAPI) {
 
 TYPED_TEST(MapTest, Copy) {
   using MapT = TypeParam;
-  using KeyT = MapT::KeyT;
-  using ValueT = MapT::ValueT;
 
   MapT m;
   // Make sure we exceed the small size for some of the map types, but not all
@@ -168,17 +172,10 @@ TYPED_TEST(MapTest, Copy) {
   MapT other_m2{m};
   ExpectMapElementsAre(
       other_m2, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
-
-  // Also check copying into small size.
-  Map<KeyT, ValueT, 128> other_m3{m};
-  ExpectMapElementsAre(
-      other_m3, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
 }
 
 TYPED_TEST(MapTest, Move) {
   using MapT = TypeParam;
-  using KeyT = MapT::KeyT;
-  using ValueT = MapT::ValueT;
 
   MapT m;
   // Make sure we exceed the small size for some of the map types, but not all
@@ -198,16 +195,13 @@ TYPED_TEST(MapTest, Move) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(other_m1.Insert(i, i * 100).is_inserted());
   }
-
-  Map<KeyT, ValueT, 128> other_m2{std::move(other_m1)};
-  ExpectMapElementsAre(
-      other_m2, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
 }
 
 TYPED_TEST(MapTest, Conversions) {
   using MapT = TypeParam;
   using KeyT = MapT::KeyT;
   using ValueT = MapT::ValueT;
+  using KeyContextT = MapT::KeyContextT;
 
   MapT m;
 
@@ -216,10 +210,10 @@ TYPED_TEST(MapTest, Conversions) {
   ASSERT_TRUE(m.Insert(3, 103).is_inserted());
   ASSERT_TRUE(m.Insert(4, 104).is_inserted());
 
-  MapView<KeyT, ValueT> mv = m;
-  MapView<const KeyT, ValueT> cmv = m;
-  MapView<KeyT, const ValueT> cmv2 = m;
-  MapView<const KeyT, const ValueT> cmv3 = m;
+  MapView<KeyT, ValueT, KeyContextT> mv = m;
+  MapView<const KeyT, ValueT, KeyContextT> cmv = m;
+  MapView<KeyT, const ValueT, KeyContextT> cmv2 = m;
+  MapView<const KeyT, const ValueT, KeyContextT> cmv3 = m;
   EXPECT_TRUE(mv.Contains(1));
   EXPECT_TRUE(cmv.Contains(2));
   EXPECT_TRUE(cmv2.Contains(3));
@@ -455,6 +449,103 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100 + 2 + (k == 93); },
                        llvm::seq(75, 102), llvm::seq(136, 175)));
+}
+
+template <typename MapT>
+class MapCollisionTest : public ::testing::Test {};
+
+using CollisionTypes = ::testing::Types<
+    Map<int, int, 16,
+        FixedHashKeyContext<7, /*FixIndexBits*/ true, /*FixTagBits*/ false, 0>>,
+    Map<int, int, 16,
+        FixedHashKeyContext<7, /*FixIndexBits*/ false, /*FixTagBits*/ true, 0>>,
+    Map<int, int, 16,
+        FixedHashKeyContext<7, /*FixIndexBits*/ true, /*FixTagBits*/ true, 0>>,
+    Map<int, int, 16,
+        FixedHashKeyContext<7, /*FixIndexBits*/ true, /*FixTagBits*/ true,
+                            ~static_cast<uint64_t>(0)>>>;
+TYPED_TEST_SUITE(MapCollisionTest, CollisionTypes);
+
+TYPED_TEST(MapCollisionTest, Basic) {
+  TypeParam m;
+
+  // Fill the map through a couple of growth steps, verifying at each step. Note
+  // that because this is a collision test, we synthesize actively harmful
+  // hashes in terms of collisions and so this test is essentially quadratic. We
+  // need to keep it relatively small.
+  for (int i : llvm::seq(1, 256)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Insert(i, i * 100).is_inserted());
+
+    // Immediately do a basic check of all elements to pin down when an
+    // insertion corrupts the rest of the table.
+    for (int j : llvm::seq(1, i)) {
+      SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
+      ASSERT_EQ(j * 100, *m[j]);
+    }
+  }
+  EXPECT_FALSE(m.Contains(257));
+
+  // Verify all the elements.
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 256)));
+}
+
+TEST(MapContextTest, Basic) {
+  llvm::SmallVector<TestData> keys;
+  for (int i : llvm::seq(0, 513)) {
+    keys.push_back(i * 100);
+  }
+  IndexKeyContext<TestData> key_context(keys);
+  Map<ssize_t, int, 0, IndexKeyContext<TestData>> m;
+
+  EXPECT_FALSE(m.Contains(42, key_context));
+  EXPECT_TRUE(m.Insert(1, 100, key_context).is_inserted());
+  ASSERT_TRUE(m.Contains(1, key_context));
+  auto result = m.Lookup(TestData(100), key_context);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(1, result.key());
+  EXPECT_EQ(100, result.value());
+  // Reinsertion doesn't change the value. Also, double check a temporary
+  // context.
+  auto i_result = m.Insert(1, 101, IndexKeyContext<TestData>(keys));
+  EXPECT_FALSE(i_result.is_inserted());
+  EXPECT_EQ(100, i_result.value());
+  // Update does change the value.
+  i_result = m.Update(1, 101, key_context);
+  EXPECT_FALSE(i_result.is_inserted());
+  EXPECT_EQ(101, i_result.value());
+
+  // Verify all the elements.
+  ExpectMapElementsAre(m, {Pair(1, 101)});
+
+  // Fill up a bunch to ensure we trigger growth a few times.
+  for (int i : llvm::seq(2, 512)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Insert(i, i * 100, key_context).is_inserted());
+
+    // Immediately do a basic check of all elements to pin down when an
+    // insertion corrupts the rest of the table.
+    for (int j : llvm::seq(1, i)) {
+      SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
+      ASSERT_EQ(j * 100 + (int)(j == 1), m.Lookup(j, key_context).value());
+      ASSERT_EQ(j * 100 + (int)(j == 1),
+                m.Lookup(TestData(j * 100), key_context).value());
+    }
+  }
+  for (int i : llvm::seq(1, 512)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_FALSE(m.Insert(i, i * 100 + 1, key_context).is_inserted());
+    EXPECT_EQ(i * 100 + (int)(i == 1), m.Lookup(i, key_context).value());
+    EXPECT_FALSE(m.Update(i, i * 100 + 1, key_context).is_inserted());
+    EXPECT_EQ(i * 100 + 1, m.Lookup(i, key_context).value());
+  }
+  EXPECT_FALSE(m.Contains(0, key_context));
+  EXPECT_FALSE(m.Contains(512, key_context));
+
+  // Verify all the elements.
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100 + 1; }, llvm::seq(1, 512)));
 }
 
 }  // namespace

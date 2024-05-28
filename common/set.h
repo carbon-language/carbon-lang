@@ -6,17 +6,18 @@
 #define CARBON_COMMON_SET_H_
 
 #include "common/check.h"
+#include "common/hashtable_key_context.h"
 #include "common/raw_hashtable.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 // Forward declarations to resolve cyclic references.
-template <typename KeyT>
+template <typename KeyT, typename KeyContextT>
 class SetView;
-template <typename KeyT>
+template <typename KeyT, typename KeyContextT>
 class SetBase;
-template <typename KeyT, ssize_t MinSmallSize>
+template <typename KeyT, ssize_t SmallSize, typename KeyContextT>
 class Set;
 
 // A read-only view type for a set of keys.
@@ -37,12 +38,13 @@ class Set;
 // immutable data can always be obtained by using `SetView<const T>`, and we
 // enable conversions to more-const views. This mirrors the semantics of views
 // like `std::span`.
-template <typename InputKeyT>
-class SetView : RawHashtable::ViewImpl<InputKeyT> {
-  using ImplT = RawHashtable::ViewImpl<InputKeyT>;
+template <typename InputKeyT, typename InputKeyContextT = DefaultKeyContext>
+class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
+  using ImplT = RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT>;
 
  public:
   using KeyT = typename ImplT::KeyT;
+  using KeyContextT = typename ImplT::KeyContextT;
 
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key.
@@ -61,17 +63,19 @@ class SetView : RawHashtable::ViewImpl<InputKeyT> {
 
   // Enable implicit conversions that add `const`-ness to the key type.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SetView(SetView<std::remove_const_t<KeyT>> other_view)
+  SetView(SetView<std::remove_const_t<KeyT>, KeyContextT> other_view)
     requires(!std::same_as<KeyT, std::remove_const_t<KeyT>>)
       : ImplT(other_view) {}
 
   // Tests whether a key is present in the set.
   template <typename LookupKeyT>
-  auto Contains(LookupKeyT lookup_key) const -> bool;
+  auto Contains(LookupKeyT lookup_key,
+                KeyContextT key_context = KeyContextT()) const -> bool;
 
   // Lookup a key in the set.
   template <typename LookupKeyT>
-  auto Lookup(LookupKeyT lookup_key) const -> LookupResult;
+  auto Lookup(LookupKeyT lookup_key,
+              KeyContextT key_context = KeyContextT()) const -> LookupResult;
 
   // Run the provided callback for every key in the set.
   template <typename CallbackT>
@@ -80,13 +84,15 @@ class SetView : RawHashtable::ViewImpl<InputKeyT> {
   // Count the probed keys. This routine is purely informational and for use in
   // benchmarking or logging of performance anomalies. Its returns have no
   // semantic guarantee at all.
-  auto CountProbedKeys() -> ssize_t { return ImplT::CountProbedKeys(); }
+  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) -> ssize_t {
+    return ImplT::CountProbedKeys(key_context);
+  }
 
  private:
-  template <typename SetKeyT, ssize_t MinSmallSize>
+  template <typename SetKeyT, ssize_t SmallSize, typename KeyContextT>
   friend class Set;
-  friend class SetBase<KeyT>;
-  friend class SetView<const KeyT>;
+  friend class SetBase<KeyT, KeyContextT>;
+  friend class SetView<const KeyT, KeyContextT>;
 
   using EntryT = typename ImplT::EntryT;
 
@@ -103,13 +109,16 @@ class SetView : RawHashtable::ViewImpl<InputKeyT> {
 // A pointer or reference to this type is the preferred way to pass a mutable
 // handle to a `Set` type across API boundaries as it avoids encoding specific
 // SSO sizing information while providing a near-complete mutable API.
-template <typename InputKeyT>
-class SetBase : protected RawHashtable::BaseImpl<InputKeyT> {
-  using ImplT = RawHashtable::BaseImpl<InputKeyT>;
+template <typename InputKeyT, typename InputKeyContextT>
+class SetBase
+    : protected RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT> {
+ protected:
+  using ImplT = RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT>;
 
  public:
   using KeyT = typename ImplT::KeyT;
-  using ViewT = SetView<KeyT>;
+  using KeyContextT = typename ImplT::KeyContextT;
+  using ViewT = SetView<KeyT, KeyContextT>;
   using LookupResult = typename ViewT::LookupResult;
 
   // The result type for insertion operations both indicates whether an insert
@@ -139,18 +148,20 @@ class SetBase : protected RawHashtable::BaseImpl<InputKeyT> {
   // const, so explicitly support adding const to produce a view here.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  operator SetView<const KeyT>() const { return ViewT(*this); }
+  operator SetView<const KeyT, KeyContextT>() const { return ViewT(*this); }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto Contains(LookupKeyT lookup_key) const -> bool {
-    return ViewT(*this).Contains(lookup_key);
+  auto Contains(LookupKeyT lookup_key,
+                KeyContextT key_context = KeyContextT()) const -> bool {
+    return ViewT(*this).Contains(lookup_key, key_context);
   }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto Lookup(LookupKeyT lookup_key) const -> LookupResult {
-    return ViewT(*this).Lookup(lookup_key);
+  auto Lookup(LookupKeyT lookup_key,
+              KeyContextT key_context = KeyContextT()) const -> LookupResult {
+    return ViewT(*this).Lookup(lookup_key, key_context);
   }
 
   // Convenience forwarder to the view type.
@@ -160,8 +171,9 @@ class SetBase : protected RawHashtable::BaseImpl<InputKeyT> {
   }
 
   // Convenience forwarder to the view type.
-  auto CountProbedKeys() const -> ssize_t {
-    return ViewT(*this).CountProbedKeys();
+  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) const
+      -> ssize_t {
+    return ViewT(*this).CountProbedKeys(key_context);
   }
 
   // Insert a key into the set. If the key is already present, no insertion is
@@ -169,7 +181,8 @@ class SetBase : protected RawHashtable::BaseImpl<InputKeyT> {
   // key is inserted and constructed from the argument and available in the
   // result.
   template <typename LookupKeyT>
-  auto Insert(LookupKeyT lookup_key) -> InsertResult;
+  auto Insert(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
+      -> InsertResult;
 
   // Insert a key into the set and call the provided callback to allow in-place
   // construction of the key if not already present. The lookup key is passed
@@ -183,12 +196,14 @@ class SetBase : protected RawHashtable::BaseImpl<InputKeyT> {
   //   });
   // ```
   template <typename LookupKeyT, typename InsertCallbackT>
-  auto Insert(LookupKeyT lookup_key, InsertCallbackT insert_cb) -> InsertResult
+  auto Insert(LookupKeyT lookup_key, InsertCallbackT insert_cb,
+              KeyContextT key_context = KeyContextT()) -> InsertResult
     requires std::invocable<InsertCallbackT, LookupKeyT, void*>;
 
   // Erase a key from the set.
   template <typename LookupKeyT>
-  auto Erase(LookupKeyT lookup_key) -> bool;
+  auto Erase(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
+      -> bool;
 
   // Clear all key/value pairs from the set but leave the underlying hashtable
   // allocated and in place.
@@ -218,37 +233,38 @@ class SetBase : protected RawHashtable::BaseImpl<InputKeyT> {
 //
 // Note that this type should typically not appear on API boundaries; either
 // `SetBase` or `SetView` should be used instead.
-template <typename InputKeyT, ssize_t SmallSize = 0>
-class Set : public RawHashtable::TableImpl<SetBase<InputKeyT>, SmallSize> {
-  using BaseT = SetBase<InputKeyT>;
+template <typename InputKeyT, ssize_t SmallSize = 0,
+          typename InputKeyContextT = DefaultKeyContext>
+class Set : public RawHashtable::TableImpl<SetBase<InputKeyT, InputKeyContextT>,
+                                           SmallSize> {
+  using BaseT = SetBase<InputKeyT, InputKeyContextT>;
   using ImplT = RawHashtable::TableImpl<BaseT, SmallSize>;
 
  public:
-  using KeyT = InputKeyT;
+  using KeyT = typename BaseT::KeyT;
 
   Set() = default;
   Set(const Set& arg) = default;
-  template <ssize_t OtherMinSmallSize>
-  explicit Set(const Set<KeyT, OtherMinSmallSize>& arg) : ImplT(arg) {}
   Set(Set&& arg) noexcept = default;
-  template <ssize_t OtherMinSmallSize>
-  explicit Set(Set<KeyT, OtherMinSmallSize>&& arg) : ImplT(std::move(arg)) {}
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.
   void Reset();
 };
 
-template <typename InputKeyT>
+template <typename InputKeyT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto SetView<InputKeyT>::Contains(LookupKeyT lookup_key) const -> bool {
-  return this->LookupEntry(lookup_key) != nullptr;
+auto SetView<InputKeyT, InputKeyContextT>::Contains(
+    LookupKeyT lookup_key, KeyContextT key_context) const -> bool {
+  return this->LookupEntry(lookup_key, key_context) != nullptr;
 }
 
-template <typename KT>
+template <typename InputKeyT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto SetView<KT>::Lookup(LookupKeyT lookup_key) const -> LookupResult {
-  EntryT* entry = this->LookupEntry(lookup_key);
+auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
+                                                  KeyContextT key_context) const
+    -> LookupResult {
+  EntryT* entry = this->LookupEntry(lookup_key, key_context);
   if (!entry) {
     return LookupResult();
   }
@@ -256,28 +272,35 @@ auto SetView<KT>::Lookup(LookupKeyT lookup_key) const -> LookupResult {
   return LookupResult(entry->key());
 }
 
-template <typename KT>
+template <typename InputKeyT, typename InputKeyContextT>
 template <typename CallbackT>
-void SetView<KT>::ForEach(CallbackT callback) {
+void SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) {
   this->ForEachEntry([callback](EntryT& entry) { callback(entry.key()); },
                      [](auto...) {});
 }
 
-template <typename KT>
+template <typename InputKeyT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto SetBase<KT>::Insert(LookupKeyT lookup_key) -> InsertResult {
-  return Insert(lookup_key, [](LookupKeyT lookup_key, void* key_storage) {
-    new (key_storage) KeyT(std::move(lookup_key));
-  });
+auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
+                                                  KeyContextT key_context)
+    -> InsertResult {
+  return Insert(
+      lookup_key,
+      [](LookupKeyT lookup_key, void* key_storage) {
+        new (key_storage) KeyT(std::move(lookup_key));
+      },
+      key_context);
 }
 
-template <typename KT>
+template <typename InputKeyT, typename InputKeyContextT>
 template <typename LookupKeyT, typename InsertCallbackT>
-auto SetBase<KT>::Insert(LookupKeyT lookup_key, InsertCallbackT insert_cb)
+auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
+                                                  InsertCallbackT insert_cb,
+                                                  KeyContextT key_context)
     -> InsertResult
   requires std::invocable<InsertCallbackT, LookupKeyT, void*>
 {
-  auto [entry, inserted] = this->InsertImpl(lookup_key);
+  auto [entry, inserted] = this->InsertImpl(lookup_key, key_context);
   CARBON_DCHECK(entry) << "Should always result in a valid index.";
 
   if (LLVM_LIKELY(!inserted)) {
@@ -288,19 +311,21 @@ auto SetBase<KT>::Insert(LookupKeyT lookup_key, InsertCallbackT insert_cb)
   return InsertResult(true, entry->key());
 }
 
-template <typename KeyT>
+template <typename InputKeyT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto SetBase<KeyT>::Erase(LookupKeyT lookup_key) -> bool {
-  return this->EraseImpl(lookup_key);
+auto SetBase<InputKeyT, InputKeyContextT>::Erase(LookupKeyT lookup_key,
+                                                 KeyContextT key_context)
+    -> bool {
+  return this->EraseImpl(lookup_key, key_context);
 }
 
-template <typename KeyT>
-void SetBase<KeyT>::Clear() {
+template <typename InputKeyT, typename InputKeyContextT>
+void SetBase<InputKeyT, InputKeyContextT>::Clear() {
   this->ClearImpl();
 }
 
-template <typename KeyT, ssize_t SmallSize>
-void Set<KeyT, SmallSize>::Reset() {
+template <typename InputKeyT, ssize_t SmallSize, typename InputKeyContextT>
+void Set<InputKeyT, SmallSize, InputKeyContextT>::Reset() {
   this->ResetImpl();
 }
 

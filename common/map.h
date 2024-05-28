@@ -10,17 +10,19 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/hashtable_key_context.h"
 #include "common/raw_hashtable.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 // Forward declarations to resolve cyclic references.
-template <typename KeyT, typename ValueT>
+template <typename KeyT, typename ValueT, typename KeyContextT>
 class MapView;
-template <typename KeyT, typename ValueT>
+template <typename KeyT, typename ValueT, typename KeyContextT>
 class MapBase;
-template <typename KeyT, typename ValueT, ssize_t MinSmallSize>
+template <typename KeyT, typename ValueT, ssize_t SmallSize,
+          typename KeyContextT>
 class Map;
 
 // A read-only view type for a map from key to value.
@@ -40,14 +42,18 @@ class Map;
 // associative container is not. A view of immutable data can always be obtained
 // by using `MapView<const T, const V>`, and we enable conversions to more-const
 // views. This mirrors the semantics of views like `std::span`.
-template <typename InputKeyT, typename InputValueT>
-class MapView : RawHashtable::ViewImpl<InputKeyT, InputValueT> {
-  using ImplT = RawHashtable::ViewImpl<InputKeyT, InputValueT>;
+template <typename InputKeyT, typename InputValueT,
+          typename InputKeyContextT = DefaultKeyContext>
+class MapView
+    : RawHashtable::ViewImpl<InputKeyT, InputValueT, InputKeyContextT> {
+  using ImplT =
+      RawHashtable::ViewImpl<InputKeyT, InputValueT, InputKeyContextT>;
   using EntryT = typename ImplT::EntryT;
 
  public:
   using KeyT = typename ImplT::KeyT;
   using ValueT = typename ImplT::ValueT;
+  using KeyContextT = typename ImplT::KeyContextT;
 
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key and value.
@@ -70,7 +76,7 @@ class MapView : RawHashtable::ViewImpl<InputKeyT, InputValueT> {
   // needing all 3 versions.
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  MapView(MapView<OtherKeyT, OtherValueT> other_view)
+  MapView(MapView<OtherKeyT, OtherValueT, KeyContextT> other_view)
     requires(std::same_as<KeyT, OtherKeyT> ||
              std::same_as<KeyT, const OtherKeyT>) &&
             (std::same_as<ValueT, OtherValueT> ||
@@ -79,16 +85,19 @@ class MapView : RawHashtable::ViewImpl<InputKeyT, InputValueT> {
 
   // Tests whether a key is present in the map.
   template <typename LookupKeyT>
-  auto Contains(LookupKeyT lookup_key) const -> bool;
+  auto Contains(LookupKeyT lookup_key,
+                KeyContextT key_context = KeyContextT()) const -> bool;
 
   // Lookup a key in the map.
   template <typename LookupKeyT>
-  auto Lookup(LookupKeyT lookup_key) const -> LookupKVResult;
+  auto Lookup(LookupKeyT lookup_key,
+              KeyContextT key_context = KeyContextT()) const -> LookupKVResult;
 
   // Lookup a key in the map and try to return a pointer to its value. Returns
   // null on a missing key.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const -> ValueT*;
+  auto operator[](LookupKeyT lookup_key) const
+      -> ValueT* requires(std::default_initializable<KeyContextT>);
 
   // Run the provided callback for every key and value in the map.
   template <typename CallbackT>
@@ -97,15 +106,18 @@ class MapView : RawHashtable::ViewImpl<InputKeyT, InputValueT> {
   // Count the probed keys. This routine is purely informational and for use in
   // benchmarking or logging of performance anomalies. Its returns have no
   // semantic guarantee at all.
-  auto CountProbedKeys() -> ssize_t { return ImplT::CountProbedKeys(); }
+  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) -> ssize_t {
+    return ImplT::CountProbedKeys(key_context);
+  }
 
  private:
-  template <typename MapKeyT, typename MapValueT, ssize_t MinSmallSize>
+  template <typename MapKeyT, typename MapValueT, ssize_t MinSmallSize,
+            typename KeyContextT>
   friend class Map;
-  friend class MapBase<KeyT, ValueT>;
-  friend class MapView<const KeyT, ValueT>;
-  friend class MapView<KeyT, const ValueT>;
-  friend class MapView<const KeyT, const ValueT>;
+  friend class MapBase<KeyT, ValueT, KeyContextT>;
+  friend class MapView<const KeyT, ValueT, KeyContextT>;
+  friend class MapView<KeyT, const ValueT, KeyContextT>;
+  friend class MapView<const KeyT, const ValueT, KeyContextT>;
 
   MapView() = default;
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit by design.
@@ -120,15 +132,20 @@ class MapView : RawHashtable::ViewImpl<InputKeyT, InputValueT> {
 // A pointer or reference to this type is the preferred way to pass a mutable
 // handle to a `Map` type across API boundaries as it avoids encoding specific
 // SSO sizing information while providing a near-complete mutable API.
-template <typename InputKeyT, typename InputValueT>
-class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
-  using ImplT = RawHashtable::BaseImpl<InputKeyT, InputValueT>;
+template <typename InputKeyT, typename InputValueT,
+          typename InputKeyContextT = DefaultKeyContext>
+class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
+                                                 InputKeyContextT> {
+ protected:
+  using ImplT =
+      RawHashtable::BaseImpl<InputKeyT, InputValueT, InputKeyContextT>;
   using EntryT = typename ImplT::EntryT;
 
  public:
   using KeyT = typename ImplT::KeyT;
   using ValueT = typename ImplT::ValueT;
-  using ViewT = MapView<KeyT, ValueT>;
+  using KeyContextT = typename ImplT::KeyContextT;
+  using ViewT = MapView<KeyT, ValueT, KeyContextT>;
   using LookupKVResult = typename ViewT::LookupKVResult;
 
   // The result type for insertion operations both indicates whether an insert
@@ -159,7 +176,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
   // const, so explicitly support adding const to produce a view here.
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  operator MapView<OtherKeyT, OtherValueT>() const
+  operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
     requires(std::same_as<KeyT, OtherKeyT> ||
              std::same_as<const KeyT, OtherKeyT>) &&
             (std::same_as<ValueT, OtherValueT> ||
@@ -170,21 +187,24 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto Contains(LookupKeyT lookup_key) const -> bool {
-    return ViewT(*this).Contains(lookup_key);
+  auto Contains(LookupKeyT lookup_key,
+                KeyContextT key_context = KeyContextT()) const -> bool {
+    return ViewT(*this).Contains(lookup_key, key_context);
   }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto Lookup(LookupKeyT lookup_key) const -> LookupKVResult {
-    return ViewT(*this).Lookup(lookup_key);
+  auto Lookup(LookupKeyT lookup_key,
+              KeyContextT key_context = KeyContextT()) const -> LookupKVResult {
+    return ViewT(*this).Lookup(lookup_key, key_context);
   }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const -> ValueT* {
-    return ViewT(*this)[lookup_key];
-  }
+  auto operator[](LookupKeyT lookup_key) const
+      -> ValueT* requires(std::default_initializable<KeyContextT>) {
+        return ViewT(*this)[lookup_key];
+      }
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
@@ -193,14 +213,16 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
   }
 
   // Convenience forwarder to the view type.
-  auto CountProbedKeys() const -> ssize_t {
-    return ViewT(*this).CountProbedKeys();
+  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) const
+      -> ssize_t {
+    return ViewT(*this).CountProbedKeys(key_context);
   }
 
   // Insert a key and value into the map. If the key is already present, the new
   // value is discarded and the existing value preserved.
   template <typename LookupKeyT>
-  auto Insert(LookupKeyT lookup_key, ValueT new_v) -> InsertKVResult;
+  auto Insert(LookupKeyT lookup_key, ValueT new_v,
+              KeyContextT key_context = KeyContextT()) -> InsertKVResult;
 
   // Insert a key into the map and call the provided callback if necessary to
   // produce a new value when no existing value is found.
@@ -210,7 +232,8 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
   // TODO: The `;` formatting below appears to be bugs in clang-format with
   // concepts that should be filed upstream.
   template <typename LookupKeyT, typename ValueCallbackT>
-  auto Insert(LookupKeyT lookup_key, ValueCallbackT value_cb) -> InsertKVResult
+  auto Insert(LookupKeyT lookup_key, ValueCallbackT value_cb,
+              KeyContextT key_context = KeyContextT()) -> InsertKVResult
     requires(
         !std::same_as<ValueT, ValueCallbackT> &&
         std::convertible_to<decltype(std::declval<ValueCallbackT>()()), ValueT>)
@@ -230,15 +253,16 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
   //   });
   // ```
   template <typename LookupKeyT, typename InsertCallbackT>
-  auto Insert(LookupKeyT lookup_key, InsertCallbackT insert_cb)
-      -> InsertKVResult
+  auto Insert(LookupKeyT lookup_key, InsertCallbackT insert_cb,
+              KeyContextT key_context = KeyContextT()) -> InsertKVResult
     requires(!std::same_as<ValueT, InsertCallbackT> &&
              std::invocable<InsertCallbackT, LookupKeyT, void*, void*>);
 
   // Replace a key's value in a map if already present or insert it if not
   // already present. The new value is always used.
   template <typename LookupKeyT>
-  auto Update(LookupKeyT lookup_key, ValueT new_v) -> InsertKVResult;
+  auto Update(LookupKeyT lookup_key, ValueT new_v,
+              KeyContextT key_context = KeyContextT()) -> InsertKVResult;
 
   // Lookup or insert a key into the map, and set it's value to the result of
   // the `value_cb` callback. The callback is always run and its result is
@@ -247,7 +271,8 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
   //
   // Example: `m.Update(key, [] { return new_value; });`
   template <typename LookupKeyT, typename ValueCallbackT>
-  auto Update(LookupKeyT lookup_key, ValueCallbackT value_cb) -> InsertKVResult
+  auto Update(LookupKeyT lookup_key, ValueCallbackT value_cb,
+              KeyContextT key_context = KeyContextT()) -> InsertKVResult
     requires(
         !std::same_as<ValueT, ValueCallbackT> &&
         std::convertible_to<decltype(std::declval<ValueCallbackT>()()), ValueT>)
@@ -274,14 +299,16 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
   template <typename LookupKeyT, typename InsertCallbackT,
             typename UpdateCallbackT>
   auto Update(LookupKeyT lookup_key, InsertCallbackT insert_cb,
-              UpdateCallbackT update_cb) -> InsertKVResult
+              UpdateCallbackT update_cb,
+              KeyContextT key_context = KeyContextT()) -> InsertKVResult
     requires(!std::same_as<ValueT, InsertCallbackT> &&
              std::invocable<InsertCallbackT, LookupKeyT, void*, void*> &&
              std::invocable<UpdateCallbackT, KeyT&, ValueT&>);
 
   // Erase a key from the map.
   template <typename LookupKeyT>
-  auto Erase(LookupKeyT lookup_key) -> bool;
+  auto Erase(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
+      -> bool;
 
   // Clear all key/value pairs from the map but leave the underlying hashtable
   // allocated and in place.
@@ -311,12 +338,12 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT> {
 //
 // Note that this type should typically not appear on API boundaries; either
 // `MapBase` or `MapView` should be used instead.
-template <typename InputKeyT, typename InputValueT, ssize_t SmallSize = 0>
-class Map : public RawHashtable::TableImpl<MapBase<InputKeyT, InputValueT>,
-                                           SmallSize> {
-  using BaseT = MapBase<InputKeyT, InputValueT>;
-  using ImplT =
-      RawHashtable::TableImpl<MapBase<InputKeyT, InputValueT>, SmallSize>;
+template <typename InputKeyT, typename InputValueT, ssize_t SmallSize = 0,
+          typename InputKeyContextT = DefaultKeyContext>
+class Map : public RawHashtable::TableImpl<
+                MapBase<InputKeyT, InputValueT, InputKeyContextT>, SmallSize> {
+  using BaseT = MapBase<InputKeyT, InputValueT, InputKeyContextT>;
+  using ImplT = RawHashtable::TableImpl<BaseT, SmallSize>;
 
  public:
   using KeyT = typename BaseT::KeyT;
@@ -324,81 +351,90 @@ class Map : public RawHashtable::TableImpl<MapBase<InputKeyT, InputValueT>,
 
   Map() = default;
   Map(const Map& arg) = default;
-  explicit Map(const BaseT& arg) : ImplT(arg) {}
   Map(Map&& arg) noexcept = default;
-  explicit Map(BaseT&& arg) : ImplT(std::move(arg)) {}
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.
   void Reset();
 };
 
-template <typename InputKeyT, typename InputValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto MapView<InputKeyT, InputValueT>::Contains(LookupKeyT lookup_key) const
-    -> bool {
-  return this->LookupEntry(lookup_key) != nullptr;
+auto MapView<InputKeyT, InputValueT, InputKeyContextT>::Contains(
+    LookupKeyT lookup_key, KeyContextT key_context) const -> bool {
+  return this->LookupEntry(lookup_key, key_context) != nullptr;
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto MapView<KT, VT>::Lookup(LookupKeyT lookup_key) const -> LookupKVResult {
-  return LookupKVResult(this->LookupEntry(lookup_key));
+auto MapView<InputKeyT, InputValueT, InputKeyContextT>::Lookup(
+    LookupKeyT lookup_key, KeyContextT key_context) const -> LookupKVResult {
+  return LookupKVResult(this->LookupEntry(lookup_key, key_context));
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto MapView<KT, VT>::operator[](LookupKeyT lookup_key) const -> ValueT* {
-  auto result = Lookup(lookup_key);
-  return result ? &result.value() : nullptr;
-}
+auto MapView<InputKeyT, InputValueT, InputKeyContextT>::operator[](
+    LookupKeyT lookup_key) const
+    -> ValueT* requires(std::default_initializable<KeyContextT>) {
+      auto result = Lookup(lookup_key, KeyContextT());
+      return result ? &result.value() : nullptr;
+    }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename CallbackT>
-void MapView<KT, VT>::ForEach(CallbackT callback) {
+void MapView<InputKeyT, InputValueT, InputKeyContextT>::ForEach(
+    CallbackT callback) {
   this->ForEachEntry(
       [callback](EntryT& entry) { callback(entry.key(), entry.value()); },
       [](auto...) {});
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-[[clang::always_inline]] auto MapBase<KT, VT>::Insert(LookupKeyT lookup_key,
-                                                      ValueT new_v)
+[[clang::always_inline]] auto
+MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
+    LookupKeyT lookup_key, ValueT new_v, KeyContextT key_context)
     -> InsertKVResult {
-  return Insert(lookup_key, [&new_v](LookupKeyT lookup_key, void* key_storage,
-                                     void* value_storage) {
-    new (key_storage) KeyT(lookup_key);
-    new (value_storage) ValueT(std::move(new_v));
-  });
+  return Insert(
+      lookup_key,
+      [&new_v](LookupKeyT lookup_key, void* key_storage, void* value_storage) {
+        new (key_storage) KeyT(lookup_key);
+        new (value_storage) ValueT(std::move(new_v));
+      },
+      key_context);
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT, typename ValueCallbackT>
-[[clang::always_inline]] auto MapBase<KT, VT>::Insert(LookupKeyT lookup_key,
-                                                      ValueCallbackT value_cb)
+[[clang::always_inline]] auto
+MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
+    LookupKeyT lookup_key, ValueCallbackT value_cb, KeyContextT key_context)
     -> InsertKVResult
   requires(
       !std::same_as<ValueT, ValueCallbackT> &&
       std::convertible_to<decltype(std::declval<ValueCallbackT>()()), ValueT>)
 {
-  return Insert(lookup_key,
-                [&value_cb](LookupKeyT lookup_key, void* key_storage,
-                            void* value_storage) {
-                  new (key_storage) KeyT(lookup_key);
-                  new (value_storage) ValueT(value_cb());
-                });
+  return Insert(
+      lookup_key,
+      [&value_cb](LookupKeyT lookup_key, void* key_storage,
+                  void* value_storage) {
+        new (key_storage) KeyT(lookup_key);
+        new (value_storage) ValueT(value_cb());
+      },
+      key_context);
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT, typename InsertCallbackT>
-[[clang::always_inline]] auto MapBase<KT, VT>::Insert(LookupKeyT lookup_key,
-                                                      InsertCallbackT insert_cb)
+[[clang::always_inline]] auto
+MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
+    LookupKeyT lookup_key, InsertCallbackT insert_cb, KeyContextT key_context)
     -> InsertKVResult
   requires(!std::same_as<ValueT, InsertCallbackT> &&
            std::invocable<InsertCallbackT, LookupKeyT, void*, void*>)
 {
-  auto [entry, inserted] = this->InsertImpl(lookup_key);
+  auto [entry, inserted] = this->InsertImpl(lookup_key, key_context);
   CARBON_DCHECK(entry) << "Should always result in a valid index.";
 
   if (LLVM_LIKELY(!inserted)) {
@@ -410,10 +446,11 @@ template <typename LookupKeyT, typename InsertCallbackT>
   return InsertKVResult(true, *entry);
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-[[clang::always_inline]] auto MapBase<KT, VT>::Update(LookupKeyT lookup_key,
-                                                      ValueT new_v)
+[[clang::always_inline]] auto
+MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
+    LookupKeyT lookup_key, ValueT new_v, KeyContextT key_context)
     -> InsertKVResult {
   return Update(
       lookup_key,
@@ -424,13 +461,15 @@ template <typename LookupKeyT>
       [&new_v](KeyT& /*key*/, ValueT& value) {
         value.~ValueT();
         new (&value) ValueT(std::move(new_v));
-      });
+      },
+      key_context);
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT, typename ValueCallbackT>
-[[clang::always_inline]] auto MapBase<KT, VT>::Update(LookupKeyT lookup_key,
-                                                      ValueCallbackT value_cb)
+[[clang::always_inline]] auto
+MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
+    LookupKeyT lookup_key, ValueCallbackT value_cb, KeyContextT key_context)
     -> InsertKVResult
   requires(
       !std::same_as<ValueT, ValueCallbackT> &&
@@ -446,21 +485,22 @@ template <typename LookupKeyT, typename ValueCallbackT>
       [&value_cb](KeyT& /*key*/, ValueT& value) {
         value.~ValueT();
         new (&value) ValueT(value_cb());
-      });
+      },
+      key_context);
 }
 
-template <typename KT, typename VT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT, typename InsertCallbackT,
           typename UpdateCallbackT>
-[[clang::always_inline]] auto MapBase<KT, VT>::Update(LookupKeyT lookup_key,
-                                                      InsertCallbackT insert_cb,
-                                                      UpdateCallbackT update_cb)
-    -> InsertKVResult
+[[clang::always_inline]] auto
+MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
+    LookupKeyT lookup_key, InsertCallbackT insert_cb, UpdateCallbackT update_cb,
+    KeyContextT key_context) -> InsertKVResult
   requires(!std::same_as<ValueT, InsertCallbackT> &&
            std::invocable<InsertCallbackT, LookupKeyT, void*, void*> &&
            std::invocable<UpdateCallbackT, KeyT&, ValueT&>)
 {
-  auto [entry, inserted] = this->InsertImpl(lookup_key);
+  auto [entry, inserted] = this->InsertImpl(lookup_key, key_context);
   CARBON_DCHECK(entry) << "Should always result in a valid index.";
 
   if (LLVM_LIKELY(!inserted)) {
@@ -473,19 +513,21 @@ template <typename LookupKeyT, typename InsertCallbackT,
   return InsertKVResult(true, *entry);
 }
 
-template <typename KeyT, typename ValueT>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
-auto MapBase<KeyT, ValueT>::Erase(LookupKeyT lookup_key) -> bool {
-  return this->EraseImpl(lookup_key);
+auto MapBase<InputKeyT, InputValueT, InputKeyContextT>::Erase(
+    LookupKeyT lookup_key, KeyContextT key_context) -> bool {
+  return this->EraseImpl(lookup_key, key_context);
 }
 
-template <typename KeyT, typename ValueT>
-void MapBase<KeyT, ValueT>::Clear() {
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+void MapBase<InputKeyT, InputValueT, InputKeyContextT>::Clear() {
   this->ClearImpl();
 }
 
-template <typename KeyT, typename ValueT, ssize_t SmallSize>
-void Map<KeyT, ValueT, SmallSize>::Reset() {
+template <typename InputKeyT, typename InputValueT, ssize_t SmallSize,
+          typename InputKeyContextT>
+void Map<InputKeyT, InputValueT, SmallSize, InputKeyContextT>::Reset() {
   this->ResetImpl();
 }
 

@@ -16,6 +16,7 @@
 namespace Carbon {
 namespace {
 
+using RawHashtable::IndexKeyContext;
 using RawHashtable::TestData;
 using ::testing::UnorderedElementsAreArray;
 
@@ -108,7 +109,6 @@ TYPED_TEST(SetTest, FactoryAPI) {
 
 TYPED_TEST(SetTest, Copy) {
   using SetT = TypeParam;
-  using KeyT = SetT::KeyT;
 
   SetT s;
   // Make sure we exceed the small size for some of the set types, but not all
@@ -134,14 +134,10 @@ TYPED_TEST(SetTest, Copy) {
   // A new copy does.
   SetT other_s2{s};
   ExpectSetElementsAre(other_s2, MakeElements(llvm::seq(1, 32)));
-
-  Set<KeyT, 128> other_s3{s};
-  ExpectSetElementsAre(other_s3, MakeElements(llvm::seq(1, 32)));
 }
 
 TYPED_TEST(SetTest, Move) {
   using SetT = TypeParam;
-  using KeyT = SetT::KeyT;
 
   SetT s;
   // Make sure we exceed the small size for some of the set types, but not all
@@ -160,9 +156,6 @@ TYPED_TEST(SetTest, Move) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(other_s1.Insert(i).is_inserted());
   }
-
-  Set<KeyT, 128> other_s2{std::move(other_s1)};
-  ExpectSetElementsAre(other_s2, MakeElements(llvm::seq(1, 32)));
 }
 
 TYPED_TEST(SetTest, Conversions) {
@@ -180,6 +173,44 @@ TYPED_TEST(SetTest, Conversions) {
   EXPECT_TRUE(sv.Contains(1));
   EXPECT_TRUE(csv.Contains(2));
   EXPECT_TRUE(csv2.Contains(3));
+}
+
+TEST(SetContextTest, Basic) {
+  llvm::SmallVector<TestData> keys;
+  for (int i : llvm::seq(0, 513)) {
+    keys.push_back(i * 100);
+  }
+  IndexKeyContext<TestData> key_context(keys);
+  Set<ssize_t, 0, IndexKeyContext<TestData>> s;
+
+  EXPECT_FALSE(s.Contains(42, key_context));
+  EXPECT_TRUE(s.Insert(1, key_context).is_inserted());
+  EXPECT_TRUE(s.Contains(1, key_context));
+  auto result = s.Lookup(TestData(100), key_context);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(1, result.key());
+  auto i_result = s.Insert(1, IndexKeyContext<TestData>(keys));
+  EXPECT_FALSE(i_result.is_inserted());
+  EXPECT_TRUE(s.Contains(1, key_context));
+
+  // Verify all the elements.
+  ExpectSetElementsAre(s, {1});
+
+  // Fill up a bunch to ensure we trigger growth a few times.
+  for (int i : llvm::seq(2, 512)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(s.Insert(i, key_context).is_inserted());
+  }
+  for (int i : llvm::seq(1, 512)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(s.Contains(i, key_context));
+    EXPECT_FALSE(s.Insert(i, key_context).is_inserted());
+  }
+  EXPECT_FALSE(s.Contains(0, key_context));
+  EXPECT_FALSE(s.Contains(512, key_context));
+
+  // Verify all the elements.
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 512)));
 }
 
 }  // namespace
