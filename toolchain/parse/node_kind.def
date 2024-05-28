@@ -39,8 +39,8 @@
 // This tree represents the subset relationship between these macros, where if a
 // specific x-macro isn't defined, it'll fall back to the parent macro.
 //
-// Parse nodes are clustered based on language feature. Comments will show their
-// relationship in postorder, using indentation for child node relationships.
+// Parse nodes are clustered based on language feature. See typed_nodes.h for
+// the expected tree structure under each node kind.
 
 #if !(defined(CARBON_PARSE_NODE_KIND) ||          \
       (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
