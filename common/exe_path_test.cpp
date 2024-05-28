@@ -33,6 +33,10 @@ TEST(ExePath, File) {
 }
 
 TEST(ExePath, PathLookup) {
+  // TODO: This is not likely to work well on Windows (outside of WSL). But some
+  // of that may be hidden by Bazel's test environment. Regardless, we should
+  // revisit this when we have good coverage of Windows build with something
+  // appropriate for that platform.
   std::string exe_path = FindExecutablePath("bash");
   EXPECT_NE(exe_path, "bash");
   EXPECT_TRUE(llvm::sys::fs::exists(exe_path));
