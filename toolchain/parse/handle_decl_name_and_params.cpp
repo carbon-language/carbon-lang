@@ -11,11 +11,6 @@ auto HandleDeclNameAndParams(Context& context) -> void {
 
   auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
   if (!identifier) {
-    CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
-                      "`{0}` introducer should be followed by a name.",
-                      Lex::TokenKind);
-    CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
-                      "`.` should be followed by a name.");
     Lex::TokenIndex token = *context.position();
     if (context.tokens().GetKind(token) == Lex::TokenKind::FileEnd) {
       // The end of file is an unhelpful diagnostic location. Instead, use the
@@ -23,8 +18,13 @@ auto HandleDeclNameAndParams(Context& context) -> void {
       token = state.token;
     }
     if (state.token == *context.position()) {
+      CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
+                        "`.` should be followed by a name.");
       context.emitter().Emit(token, ExpectedDeclNameAfterPeriod);
     } else {
+      CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
+                        "`{0}` introducer should be followed by a name.",
+                        Lex::TokenKind);
       context.emitter().Emit(token, ExpectedDeclName,
                              context.tokens().GetKind(state.token));
     }
