@@ -225,9 +225,11 @@ auto Tree::Verify() const -> ErrorOr<Success> {
         if (n_impl.kind.bracket() == child_impl.kind) {
           // If there's a bracketing node and a child count, verify the child
           // count too.
-          if (n_impl.kind.has_child_count() && children != n_impl.kind.child_count()) {
+          if (n_impl.kind.has_child_count() &&
+              children != n_impl.kind.child_count()) {
             return Error(llvm::formatv(
-                "NodeId #{0} is a {1} with child_count {2}, but encountered {3} "
+                "NodeId #{0} is a {1} with child_count {2}, but encountered "
+                "{3} "
                 "nodes before we reached the bracketing node.",
                 n, n_impl.kind, n_impl.kind.child_count(), children));
           }

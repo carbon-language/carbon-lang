@@ -42,17 +42,13 @@ auto NodeKind::CheckMatchesTokenKind(Lex::TokenKind token_kind, bool has_error)
     -> void {
   static constexpr Lex::TokenKind TokenIfValid[] = {
 #define CARBON_IF_VALID(LexTokenKind) LexTokenKind
-#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind) \
-  Lex::TokenKind::LexTokenKind,
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, LexTokenKind) \
+#define CARBON_PARSE_NODE_KIND_WITH_TOKEN(Name, LexTokenKind) \
   Lex::TokenKind::LexTokenKind,
 #include "toolchain/parse/node_kind.def"
   };
   static constexpr Lex::TokenKind TokenIfError[] = {
 #define CARBON_IF_VALID(LexTokenKind) Error
-#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind) \
-  Lex::TokenKind::LexTokenKind,
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, LexTokenKind) \
+#define CARBON_PARSE_NODE_KIND_WITH_TOKEN(Name, LexTokenKind) \
   Lex::TokenKind::LexTokenKind,
 #include "toolchain/parse/node_kind.def"
   };
