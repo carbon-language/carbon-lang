@@ -17,7 +17,7 @@ static llvm::StringRef exe_path;
 
 namespace Carbon::Testing {
 
-auto TestExePath() -> llvm::StringRef {
+auto GetTestExePath() -> llvm::StringRef {
   CARBON_CHECK(after_main)
       << "Must not query the executable path until after `main` is entered!";
   return exe_path;

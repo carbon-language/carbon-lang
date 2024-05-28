@@ -13,7 +13,7 @@
 namespace Carbon::Testing {
 
 // The executable path of the test binary.
-auto TestExePath() -> llvm::StringRef;
+auto GetTestExePath() -> llvm::StringRef;
 
 }  // namespace Carbon::Testing
 

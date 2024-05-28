@@ -15,7 +15,7 @@ namespace {
 using ::testing::StrNe;
 
 TEST(TestExePathTest, Test) {
-  llvm::StringRef exe_path = TestExePath();
+  llvm::StringRef exe_path = GetTestExePath();
   EXPECT_THAT(exe_path, StrNe(""));
   EXPECT_TRUE(llvm::sys::fs::exists(exe_path));
   EXPECT_TRUE(llvm::sys::fs::can_execute(exe_path));
