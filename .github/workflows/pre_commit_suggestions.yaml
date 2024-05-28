@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Create PR suggestions based on problems found by pre-commit action.
-name: pre-commit-suggestions
+name: 'Add pre-commit suggestions'
 
 # This action is run whenever the `pre-commit` action finishes. Because the
 # `pre-commit` action is an unprivileged action running on (for example) the
@@ -60,19 +60,3 @@ jobs:
           cat ./diff | \
           GITHUB_EVENT_PATH=./event \
             reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review
-
-  delete-stale-suggestions:
-    if: github.event.workflow_run.event == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-        with:
-          egress-policy: audit
-
-      - name: Delete stale suggestions
-        uses: Ardiannn08/resolve-outdated-comment@3b3cf4b2651a84fac2d6a94c2aeca9ac7c05ac5f # v1.3
-        with:
-          token: ${{ secrets.CARBON_INFRA_BOT_FOR_REVIEWDOG }}
-          filter-user: 'CarbonInfraBot'
-          mode: 'delete'
