@@ -68,7 +68,7 @@ auto DeclNameStack::FinishName() -> NameContext {
   ApplyNameQualifier(loc_id, name_id);
 
   if (params_id || implicit_params_id) {
-    // TODO: Say which kind of declaraation we're parsing.
+    // TODO: Say which kind of declaration we're parsing.
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
                       "Declaration cannot have parameters.");
     // Point to the lexically first parameter list in the diagnostic.
