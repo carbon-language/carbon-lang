@@ -256,7 +256,7 @@ CARBON_PARSE_STATE(DeclNameAndParams)
 // name [ ... ] ( ... )
 //             ^
 //   1. PatternListAsTuple
-//   1. DeclNameAndParamsAfterParams
+//   2. DeclNameAndParamsAfterParams
 //
 // name [ ... ] ???
 //             ^
