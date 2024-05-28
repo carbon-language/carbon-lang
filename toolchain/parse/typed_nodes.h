@@ -478,7 +478,7 @@ struct ForIn {
 // The `for (var ... in ...)` portion of a `for` statement.
 struct ForHeader {
   static constexpr auto Kind =
-      NodeKind::ForHeader.Define(BracketedBy<ForHeaderStart>, ChildCount(3));
+      NodeKind::ForHeader.Define(BracketedBy<ForHeaderStart>);
 
   ForHeaderStartId introducer;
   ForInId var;
