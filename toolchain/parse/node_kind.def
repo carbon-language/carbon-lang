@@ -215,9 +215,24 @@ CARBON_PARSE_NODE_KIND_BRACKET(LibraryDecl, LibraryIntroducer,
 // LibrarySpecifier
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
 
+// Declaration names.
+//
+//   _repeated_: NameQualifier
+//   _external_: IdentifierName
+//   _optional_ _external_: ImplicitParamList
+//   _optional_ _external_: TuplePattern
+// _declaration name_
+//
+//   _external_: IdentifierName
+//   _optional_ _external_: ImplicitParamList
+//   _optional_ _external_: TuplePattern
+// NameQualifier
+CARBON_PARSE_NODE_KIND_BRACKET(NameQualifier, IdentifierName,
+                               CARBON_IF_VALID(Period))
+
 // `export`:
 //   ExportIntroducer
-//   _external_: IdentifierName or QualifiedName
+//   _external_: _declaration name_
 // ExportDecl
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExportIntroducer, 0, Export)
 CARBON_PARSE_NODE_KIND_BRACKET(ExportDecl, ExportIntroducer,
@@ -226,7 +241,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ExportDecl, ExportIntroducer,
 // `namespace`:
 //   NamespaceStart
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedName
+//   _external_: _declaration name_
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, Namespace)
 CARBON_PARSE_NODE_KIND_BRACKET(Namespace, NamespaceStart, CARBON_IF_VALID(Semi))
@@ -244,10 +259,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 //
 //   FunctionIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedName
-//   _optional_ _external_: ImplicitParamList
-//   _external_: TuplePattern
-//     _external_: type expression
+//   _external_: _declaration name_
 //   ReturnType
 // _function signature_
 //
@@ -283,7 +295,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BuiltinFunctionDefinition,
 // `alias`:
 //   AliasIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedName
+//   _external_: _declaration name_
 //   AliasInitializer
 //   _external_: expression
 // Alias
@@ -490,15 +502,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1, OpenParen)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, Comma)
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart, CloseParen)
 
-// A qualified declaration, such as `a.b`:
-//   _external_: IdentifierName or QualifiedName
-//   _external_: IdentifierName
-// QualifiedName
-//
-// TODO: This will eventually more general expressions, for example with
-// `GenericType(type_args).ChildType(child_type_args).Name`.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedName, 2, Period)
-
 // A member access expression, such as `a.b` or
 // `GetObject().(Interface.member)`:
 //   _external_: lhs expression
@@ -655,7 +658,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 // `class`:
 //     ClassIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
+//     _external_: _declaration name_
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   ClassDefinitionStart
@@ -695,7 +698,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer, CARBON_IF_VALID(Semi))
 // `interface`:
 //     InterfaceIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
+//     _external_: _declaration name_
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   InterfaceDefinitionStart
@@ -749,7 +752,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultSelfImplAs, 0, As)
 // `constraint`:
 //     NamedConstraintIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
+//     _external_: _declaration name_
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   NamedConstraintDefinitionStart
@@ -769,7 +772,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
 
 // `choice`:
 //     ChoiceIntroducer
-//     _external_: IdentifierName or QualifiedDecl
+//     _external_: _declaration name_
 //   ChoiceDefinitionStart
 //   _optional_ _external_: ChoiceAlternativeList
 // ChoiceDefinition

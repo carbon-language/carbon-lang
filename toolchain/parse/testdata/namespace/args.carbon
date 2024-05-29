@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_args.carbon:[[@LINE+3]]:14: ERROR: `namespace` declarations must end with a `;`.
-// CHECK:STDERR: namespace Foo();
-// CHECK:STDERR:              ^
+// This is rejected in check.
 namespace Foo();
 
-// CHECK:STDOUT: - filename: fail_args.carbon
+// CHECK:STDOUT: - filename: args.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

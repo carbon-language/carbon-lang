@@ -9,7 +9,7 @@
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+3]]:7: ERROR: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+3]]:7: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
 fn Div[();

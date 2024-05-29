@@ -20,11 +20,9 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
                                       NodeKind::IdentifierName)) {
     // OK, `.` identifier.
-  } else if (node_kind != NodeKind::QualifiedName &&
-             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
+  } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
-    // OK, `.base`. This is allowed in any name context other than declaring a
-    // new qualified name: `fn Namespace.base() {}`
+    // OK, `.base`.
   } else if (paren_state != State::Invalid &&
              context.PositionIs(Lex::TokenKind::OpenParen)) {
     state.state = paren_state;
@@ -52,11 +50,6 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   }
 
   context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
-}
-
-auto HandlePeriodAsDecl(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::QualifiedName, State::Invalid,
-                      /*is_arrow=*/false);
 }
 
 auto HandlePeriodAsExpr(Context& context) -> void {

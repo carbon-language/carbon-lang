@@ -6,118 +6,85 @@
 
 namespace Carbon::Parse {
 
-// Handles DeclNameAndParamsAs(Optional|Required).
-static auto HandleDeclNameAndParams(Context& context, State after_name)
-    -> void {
+auto HandleDeclNameAndParams(Context& context) -> void {
   auto state = context.PopState();
 
-  // TODO: Should handle designated names.
-  if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    context.PushState(state, after_name);
-
-    if (context.PositionIs(Lex::TokenKind::Period)) {
-      context.AddLeafNode(NodeKind::IdentifierName, *identifier);
-      context.PushState(state, State::PeriodAsDecl);
-    } else {
-      context.AddLeafNode(NodeKind::IdentifierName, *identifier);
-    }
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
-                      "`{0}` introducer should be followed by a name.",
-                      Lex::TokenKind);
+  auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
+  if (!identifier) {
     Lex::TokenIndex token = *context.position();
     if (context.tokens().GetKind(token) == Lex::TokenKind::FileEnd) {
       // The end of file is an unhelpful diagnostic location. Instead, use the
       // introducer token.
       token = state.token;
     }
-    context.emitter().Emit(token, ExpectedDeclName,
-                           context.tokens().GetKind(state.token));
+    if (state.token == *context.position()) {
+      CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
+                        "`.` should be followed by a name.");
+      context.emitter().Emit(token, ExpectedDeclNameAfterPeriod);
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
+                        "`{0}` introducer should be followed by a name.",
+                        Lex::TokenKind);
+      context.emitter().Emit(token, ExpectedDeclName,
+                             context.tokens().GetKind(state.token));
+    }
     context.ReturnErrorOnState();
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
-  }
-}
-
-auto HandleDeclNameAndParamsAsNone(Context& context) -> void {
-  HandleDeclNameAndParams(context, State::DeclNameAndParamsAfterNameAsNone);
-}
-
-auto HandleDeclNameAndParamsAsOptional(Context& context) -> void {
-  HandleDeclNameAndParams(context, State::DeclNameAndParamsAfterNameAsOptional);
-}
-
-auto HandleDeclNameAndParamsAsRequired(Context& context) -> void {
-  HandleDeclNameAndParams(context, State::DeclNameAndParamsAfterNameAsRequired);
-}
-
-enum class Params : int8_t {
-  None,
-  Optional,
-  Required,
-};
-
-static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
-    -> void {
-  auto state = context.PopState();
-
-  if (context.PositionIs(Lex::TokenKind::Period)) {
-    // Continue designator processing.
-    context.PushState(state);
-    context.PushState(state, State::PeriodAsDecl);
     return;
   }
 
-  // TODO: We can have a parameter list after a name qualifier, regardless of
-  // whether the entity itself permits or requires parameters:
-  //
-  //   fn Class(T:! type).AnotherClass(U:! type).Function(v: T) {}
-  //
-  // We should retain a `DeclNameAndParams...` state on the stack in all
-  // cases below to check for a period after a parameter list, which indicates
-  // that we've not finished parsing the declaration name.
+  context.AddLeafNode(NodeKind::IdentifierName, *identifier);
 
-  if (params == Params::None) {
-    return;
+  switch (context.PositionKind()) {
+    case Lex::TokenKind::Period:
+      context.AddNode(NodeKind::NameQualifier,
+                      context.ConsumeChecked(Lex::TokenKind::Period),
+                      state.subtree_start, state.has_error);
+      context.PushState(State::DeclNameAndParams);
+      break;
+
+    case Lex::TokenKind::OpenSquareBracket:
+      state.state = State::DeclNameAndParamsAfterImplicit;
+      context.PushState(state);
+      context.PushState(State::PatternListAsImplicit);
+      break;
+
+    case Lex::TokenKind::OpenParen:
+      state.state = State::DeclNameAndParamsAfterParams;
+      context.PushState(state);
+      context.PushState(State::PatternListAsTuple);
+      break;
+
+    default:
+      break;
   }
-
-  if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-    context.PushState(State::DeclNameAndParamsAfterImplicit);
-    context.PushState(State::PatternListAsImplicit);
-  } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::PatternListAsTuple);
-  } else if (params == Params::Required) {
-    CARBON_DIAGNOSTIC(ParamsRequiredByIntroducer, Error,
-                      "`{0}` requires a `(` for parameters.", Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ParamsRequiredByIntroducer,
-                           context.tokens().GetKind(state.token));
-    context.ReturnErrorOnState();
-  }
-}
-
-auto HandleDeclNameAndParamsAfterNameAsNone(Context& context) -> void {
-  HandleDeclNameAndParamsAfterName(context, Params::None);
-}
-
-auto HandleDeclNameAndParamsAfterNameAsOptional(Context& context) -> void {
-  HandleDeclNameAndParamsAfterName(context, Params::Optional);
-}
-
-auto HandleDeclNameAndParamsAfterNameAsRequired(Context& context) -> void {
-  HandleDeclNameAndParamsAfterName(context, Params::Required);
 }
 
 auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
-  context.PopAndDiscardState();
+  auto state = context.PopState();
 
-  if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::PatternListAsTuple);
-  } else {
+  if (!context.PositionIs(Lex::TokenKind::OpenParen)) {
     CARBON_DIAGNOSTIC(
         ParamsRequiredAfterImplicit, Error,
         "A `(` for parameters is required after implicit parameters.");
     context.emitter().Emit(*context.position(), ParamsRequiredAfterImplicit);
     context.ReturnErrorOnState();
+    return;
+  }
+
+  state.state = State::DeclNameAndParamsAfterParams;
+  context.PushState(state);
+  context.PushState(State::PatternListAsTuple);
+}
+
+auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
+    context.AddNode(NodeKind::NameQualifier, *period, state.subtree_start,
+                    state.has_error);
+    context.PushState(State::DeclNameAndParams);
   }
 }
 
