@@ -103,6 +103,8 @@ class Tree : public Printable<Tree> {
     bool is_impl;
   };
 
+  struct ExtractState;
+
   // Wires up the reference to the tokenized buffer. The `Parse` function should
   // be used to actually parse the tokens into a tree.
   explicit Tree(Lex::TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
@@ -352,13 +354,14 @@ class Tree : public Printable<Tree> {
   // to `*trace`, if `trace != nullptr`.
   template <typename T>
   auto TryExtractNodeFromChildren(
-      llvm::iterator_range<Tree::SiblingIterator> children,
+      NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children,
       ErrorBuilder* trace) const -> std::optional<T>;
 
   // Extract a node of type `T` from a sibling range. This is expected to
   // consume the complete sibling range. Malformed tree errors are fatal.
   template <typename T>
   auto ExtractNodeFromChildren(
+      NodeId node_id,
       llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
 
   // Depth-first postorder sequence of node implementation data.
@@ -476,12 +479,13 @@ class Tree::SiblingIterator
 
 template <typename T>
 auto Tree::ExtractNodeFromChildren(
+    NodeId node_id,
     llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
-  auto result = TryExtractNodeFromChildren<T>(children, nullptr);
+  auto result = TryExtractNodeFromChildren<T>(node_id, children, nullptr);
   if (!result.has_value()) {
     // On error try again, this time capturing a trace.
     ErrorBuilder trace;
-    TryExtractNodeFromChildren<T>(children, &trace);
+    TryExtractNodeFromChildren<T>(node_id, children, &trace);
     CARBON_FATAL() << "Malformed parse node:\n"
                    << static_cast<Error>(trace).message();
   }
@@ -495,7 +499,7 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
     return std::nullopt;
   }
 
-  return ExtractNodeFromChildren<T>(children(node_id));
+  return ExtractNodeFromChildren<T>(node_id, children(node_id));
 }
 
 template <typename T>
@@ -506,7 +510,7 @@ auto Tree::VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
     return std::nullopt;
   }
 
-  return TryExtractNodeFromChildren<T>(children(node_id), trace);
+  return TryExtractNodeFromChildren<T>(node_id, children(node_id), trace);
 }
 
 template <typename IdT>
@@ -517,7 +521,7 @@ auto Tree::Extract(IdT id) const
   }
 
   using T = typename NodeForId<IdT>::TypedNode;
-  return ExtractNodeFromChildren<T>(children(id));
+  return ExtractNodeFromChildren<T>(id, children(id));
 }
 
 template <const NodeKind& K>

@@ -273,10 +273,10 @@ auto Tree::Verify() const -> ErrorOr<Success> {
   }
 
   // Validate the roots, ensures Tree::ExtractFile() doesn't CHECK-fail.
-  if (!TryExtractNodeFromChildren<File>(roots(), nullptr)) {
+  if (!TryExtractNodeFromChildren<File>(NodeId::Invalid, roots(), nullptr)) {
     ErrorBuilder trace;
     trace << "Roots of tree couldn't be extracted as a `File`. Trace:\n";
-    TryExtractNodeFromChildren<File>(roots(), &trace);
+    TryExtractNodeFromChildren<File>(NodeId::Invalid, roots(), &trace);
     return trace;
   }
 

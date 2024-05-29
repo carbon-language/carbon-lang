@@ -21,7 +21,7 @@
 // - Only simple aggregate structs are supported. Types with base classes,
 //   non-public data members, constructors, or virtual functions are not
 //   supported.
-// - Structs with more than 6 fields are not supported. This limit is easy to
+// - Structs with more than 8 fields are not supported. This limit is easy to
 //   increase if needed, but removing it entirely is hard.
 // - Structs containing a reference to the same type are not supported.
 
@@ -76,7 +76,7 @@ constexpr auto CountFields() -> int {
     return CountFields<T, true, Fields..., AnyField<T>>();
   } else if constexpr (AnyWorkedSoFar) {
     constexpr int NumFields = sizeof...(Fields) - 1;
-    static_assert(NumFields <= 6, "Unsupported: too many fields in struct");
+    static_assert(NumFields <= 8, "Unsupported: too many fields in struct");
     return NumFields;
   } else if constexpr (sizeof...(Fields) > 32) {
     // If we go too far without finding a working initializer, something
@@ -158,6 +158,30 @@ struct FieldAccessor<6> {
     return std::tuple<decltype(field0), decltype(field1), decltype(field2),
                       decltype(field3), decltype(field4), decltype(field5)>(
         field0, field1, field2, field3, field4, field5);
+  }
+};
+
+template <>
+struct FieldAccessor<7> {
+  template <typename T>
+  static auto Get(T& value) -> auto {
+    auto& [field0, field1, field2, field3, field4, field5, field6] = value;
+    return std::tuple<decltype(field0), decltype(field1), decltype(field2),
+                      decltype(field3), decltype(field4), decltype(field5),
+                      decltype(field6)>(field0, field1, field2, field3, field4,
+                                        field5, field6);
+  }
+};
+
+template <>
+struct FieldAccessor<8> {
+  template <typename T>
+  static auto Get(T& value) -> auto {
+    auto& [field0, field1, field2, field3, field4, field5, field6, field7] = value;
+    return std::tuple<decltype(field0), decltype(field1), decltype(field2),
+                      decltype(field3), decltype(field4), decltype(field5),
+                      decltype(field6), decltype(field7)>(
+        field0, field1, field2, field3, field4, field5, field6, field7);
   }
 };
 

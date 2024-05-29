@@ -26,6 +26,7 @@ cc_library(
         "//common:check",
         "//common:enum_base",
         "//toolchain/base:index_base",
+        "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
         "@llvm-project//llvm:Support",
     ],
