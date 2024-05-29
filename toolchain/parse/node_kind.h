@@ -55,7 +55,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 //   is never the kind of any other child, or
 // - a fixed child count,
 //
-// or both. This is required even for nodes that are invalid.
+// or both. This is required even for nodes for which `Tree::node_has_errors` returns `true`.
 class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
