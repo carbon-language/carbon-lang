@@ -279,10 +279,17 @@ class Tree : public Printable<Tree> {
   auto Verify() const -> ErrorOr<Success>;
 
   // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
-  // used by `Verify()`.
+  // used by `Verify()` or by tests.
   template <typename T>
   auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
       -> std::optional<T>;
+
+  // Sets the kind of a node. This is intended to allow putting the tree into a
+  // state where verification can fail, in order to make the failure path of
+  // `Verify` testable.
+  auto SetNodeKindForVerifyTest(NodeId node_id, NodeKind kind) -> void {
+    node_impls_[node_id.index].kind = kind;
+  }
 
  private:
   friend class Context;
@@ -507,6 +514,10 @@ auto Tree::VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
     -> std::optional<T> {
   static_assert(HasKindMember<T>, "Not a parse node type");
   if (!IsValid<T>(node_id)) {
+    if (trace) {
+      *trace << "VerifyExtractAs error: wrong kind " << node_kind(node_id)
+             << ", expected " << T::Kind << "\n";
+    }
     return std::nullopt;
   }
 

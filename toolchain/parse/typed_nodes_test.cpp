@@ -276,6 +276,113 @@ Aggregate [^:]*: success
 )Trace"));
 }
 
+TEST_F(TypedNodeTest, Token) {
+  auto* tree = &GetTree(R"carbon(
+    var n: i32 = 0;
+  )carbon");
+  auto file = tree->ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+
+  auto n_var = tree->ExtractAs<VariableDecl>(file.decls[0]);
+  ASSERT_TRUE(n_var.has_value());
+  EXPECT_TRUE(n_var->token.index.index == 7);
+
+  auto n_intro = tree->ExtractAs<VariableIntroducer>(n_var->introducer);
+  ASSERT_TRUE(n_intro.has_value());
+  EXPECT_TRUE(n_intro->token.index.index == 1);
+
+  auto n_patt = tree->ExtractAs<BindingPattern>(n_var->pattern);
+  ASSERT_TRUE(n_patt.has_value());
+  EXPECT_TRUE(n_patt->token.index.index == 3);
+}
+
+TEST_F(TypedNodeTest, VerifyInvalid) {
+  auto* tree = &GetTree(R"carbon(
+    fn F() -> i32 { return 0; }
+  )carbon");
+
+  auto file = tree->ExtractFile();
+  ASSERT_EQ(file.decls.size(), 1);
+
+  auto f_fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
+  ASSERT_TRUE(f_fn.has_value());
+  auto f_sig = tree->ExtractAs<FunctionDefinitionStart>(f_fn->signature);
+  ASSERT_TRUE(f_sig.has_value());
+  auto f_intro = tree->ExtractAs<FunctionIntroducer>(f_sig->introducer);
+  ASSERT_TRUE(f_intro.has_value());
+
+  // Change the kind of the introducer and check we get a good trace log.
+  tree->SetNodeKindForVerifyTest(f_sig->introducer, NodeKind::ClassIntroducer);
+
+  // The introducer should not extract as a FunctionIntroducer any more because
+  // the kind is wrong.
+  {
+    ErrorBuilder trace;
+    EXPECT_FALSE(
+        tree->VerifyExtractAs<FunctionIntroducer>(f_sig->introducer, &trace));
+
+    Error err = trace;
+    EXPECT_EQ(err.message(),
+              "VerifyExtractAs error: wrong kind ClassIntroducer, expected "
+              "FunctionIntroducer\n");
+  }
+
+  // The introducer should also not extract as a ClassIntroducer because the
+  // token kind is wrong.
+  {
+    ErrorBuilder trace;
+    EXPECT_FALSE(
+        tree->VerifyExtractAs<ClassIntroducer>(f_sig->introducer, &trace));
+
+    // Use Regex matching to avoid hard-coding the result of
+    // `typeinfo(T).name()`.
+    Error err = trace;
+    EXPECT_THAT(err.message(),
+                testing::MatchesRegex(R"Trace(Aggregate [^:]*: begin
+Token Class expected for ClassIntroducer, found Fn
+Aggregate [^:]*: error
+)Trace"));
+  }
+
+  // The signature should not extract as a FunctionDefinitionStart because the
+  // kind for the introducer is wrong.
+  {
+    ErrorBuilder trace;
+    EXPECT_FALSE(tree->VerifyExtractAs<FunctionDefinitionStart>(f_fn->signature,
+                                                                &trace));
+
+    // Use Regex matching to avoid hard-coding the result of
+    // `typeinfo(T).name()`.
+    Error err = trace;
+    EXPECT_THAT(err.message(), testing::MatchesRegex(
+                                   R"Trace(Aggregate [^:]*: begin
+Optional [^:]*: begin
+NodeIdForKind: ReturnType consumed
+Optional [^:]*: found
+Aggregate [^:]*: begin
+Aggregate [^:]*: begin
+Optional [^:]*: begin
+NodeIdForKind: TuplePattern consumed
+Optional [^:]*: found
+Optional [^:]*: begin
+NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
+Optional [^:]*: missing
+NodeIdForKind: IdentifierName consumed
+Aggregate [^:]*: success
+Vector: begin
+NodeIdForKind error: wrong kind ClassIntroducer, expected NameQualifier
+Vector: end
+Aggregate [^:]*: success
+Vector: begin
+NodeIdInCategory Modifier error: kind ClassIntroducer doesn't match
+Vector: end
+NodeIdForKind error: wrong kind ClassIntroducer, expected FunctionIntroducer
+Aggregate [^:]*: error
+Error: ClassIntroducer node left unconsumed.)Trace"));
+  }
+}
+
 auto CategoryMatches(const NodeKind::Definition& def, NodeKind kind,
                      const char* name) {
   EXPECT_EQ(def.category(), kind.category()) << name;
