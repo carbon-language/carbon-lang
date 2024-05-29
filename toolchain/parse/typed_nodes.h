@@ -597,7 +597,7 @@ struct IfCondition {
 
   IfConditionStartId left_paren;
   AnyExprId condition;
-  TokenIfValid<Lex::TokenKind::OpenParen> token;
+  TokenIfValid<Lex::TokenKind::CloseParen> token;
 };
 
 using IfStatementElse =

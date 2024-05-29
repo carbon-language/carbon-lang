@@ -263,17 +263,19 @@ struct Extractable<Token<Kind, RequireIfInvalid>> {
       -> std::optional<Token<Kind, RequireIfInvalid>> {
     if (!state.node_id.is_valid()) {
       if (state.trace) {
-        *state.trace << "No token for root node\n";
+        *state.trace << "Token " << Kind
+                     << " expected but processing root node\n";
       }
       return std::nullopt;
     }
     if ((RequireIfInvalid || !state.tree->node_has_error(state.node_id)) &&
         state.token_kind() != Kind) {
       if (state.trace) {
-        *state.trace << "Expected token kind " << Kind << ", found "
+        *state.trace << "Token " << Kind << " expected for "
+                     << state.tree->node_kind(state.node_id) << ", found "
                      << state.token_kind() << "\n";
-        return std::nullopt;
       }
+      return std::nullopt;
     }
     return Token<Kind, RequireIfInvalid>(state.token());
   }
@@ -285,7 +287,7 @@ struct Extractable<AnyToken> {
   static auto Extract(ExtractState& state) -> std::optional<AnyToken> {
     if (!state.node_id.is_valid()) {
       if (state.trace) {
-        *state.trace << "No token for root node\n";
+        *state.trace << "Token expected but processing root node\n";
       }
       return std::nullopt;
     }
