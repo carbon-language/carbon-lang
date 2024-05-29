@@ -14,7 +14,7 @@ auto HandleAlias(Context& context) -> void {
   auto state = context.PopState();
 
   context.PushState(state, State::AliasAfterName);
-  context.PushState(State::DeclNameAndParamsAsNone, state.token);
+  context.PushState(State::DeclNameAndParams, state.token);
 }
 
 auto HandleAliasAfterName(Context& context) -> void {

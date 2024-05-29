@@ -74,7 +74,7 @@ export Foo
 
 package Pkg;
 
-// CHECK:STDERR: fail_incomplete_qual_name.carbon:[[@LINE+4]]:12: ERROR: Expected identifier after `.`.
+// CHECK:STDERR: fail_incomplete_qual_name.carbon:[[@LINE+4]]:12: ERROR: `.` should be followed by a name.
 // CHECK:STDERR: export Foo.;
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -157,8 +157,8 @@ export Foo;
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Bar'},
-// CHECK:STDOUT:       {kind: 'QualifiedName', text: '.', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'NameQualifier', text: '.', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Bar'},
 // CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -225,9 +225,9 @@ export Foo;
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'QualifiedName', text: '.', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'NameQualifier', text: '.', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:     {kind: 'ExportDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_incomplete_qual_name2.carbon

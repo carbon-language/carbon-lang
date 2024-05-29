@@ -26,19 +26,9 @@ class C {
   }
 }
 
-// TODO: The error recovery here is not very good. The `(` is treated as
-// starting the function parameter list.
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+11]]:6: ERROR: Expected identifier after `.`.
+// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+3]]:6: ERROR: `.` should be followed by a name.
 // CHECK:STDERR: fn C.(Self as Interface).F() {}
 // CHECK:STDERR:      ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+7]]:7: ERROR: Expected binding pattern.
-// CHECK:STDERR: fn C.(Self as Interface).F() {}
-// CHECK:STDERR:       ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+3]]:25: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
-// CHECK:STDERR: fn C.(Self as Interface).F() {}
-// CHECK:STDERR:                         ^
 fn C.(Self as Interface).F() {}
 
 // CHECK:STDOUT: - filename: fail_out_of_line_member.carbon
@@ -84,13 +74,8 @@ fn C.(Self as Interface).F() {}
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: '(', has_error: yes},
-// CHECK:STDOUT:       {kind: 'QualifiedName', text: '.', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'Self', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'Self', has_error: yes},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: 'Self', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: '}', has_error: yes, subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'NameQualifier', text: '.', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: '}', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -25,7 +25,7 @@ struct BindNameInfo : public Printable<BindNameInfo> {
   CompileTimeBindIndex bind_index;
 };
 
-// Hashing for BindNameInfo.
+// Hashing for BindNameInfo. See common/hashing.h.
 inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);

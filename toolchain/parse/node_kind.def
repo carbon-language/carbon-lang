@@ -203,9 +203,23 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(LibraryDecl, CARBON_IF_VALID(Semi))
 // LibrarySpecifier
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(LibrarySpecifier, Library)
 
+// Declaration names.
+//
+//   _repeated_: NameQualifier
+//   _external_: IdentifierName
+//   _optional_ _external_: ImplicitParamList
+//   _optional_ _external_: TuplePattern
+// _declaration name_
+//
+//   _external_: IdentifierName
+//   _optional_ _external_: ImplicitParamList
+//   _optional_ _external_: TuplePattern
+// NameQualifier
+CARBON_PARSE_NODE_KIND_WITH_TOKEN(NameQualifier, CARBON_IF_VALID(Period))
+
 // `export`:
 //   ExportIntroducer
-//   _external_: IdentifierName or QualifiedName
+//   _external_: _declaration name_
 // ExportDecl
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(ExportIntroducer, Export)
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(ExportDecl, CARBON_IF_VALID(Semi))
@@ -213,7 +227,7 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(ExportDecl, CARBON_IF_VALID(Semi))
 // `namespace`:
 //   NamespaceStart
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedName
+//   _external_: _declaration name_
 // Namespace
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(NamespaceStart, Namespace)
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(Namespace, CARBON_IF_VALID(Semi))
@@ -230,10 +244,7 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(CodeBlock, CARBON_IF_VALID(CloseCurlyBrace))
 //
 //   FunctionIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedName
-//   _optional_ _external_: ImplicitParamList
-//   _external_: TuplePattern
-//     _external_: type expression
+//   _external_: _declaration name_
 //   ReturnType
 // _function signature_
 //
@@ -264,7 +275,7 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(BuiltinFunctionDefinition,
 // `alias`:
 //   AliasIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedName
+//   _external_: _declaration name_
 //   AliasInitializer
 //   _external_: expression
 // Alias
@@ -463,15 +474,6 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(CallExprStart, OpenParen)
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(CallExprComma, Comma)
 CARBON_PARSE_NODE_KIND_WITH_TOKEN(CallExpr, CloseParen)
 
-// A qualified declaration, such as `a.b`:
-//   _external_: IdentifierName or QualifiedName
-//   _external_: IdentifierName
-// QualifiedName
-//
-// TODO: This will eventually more general expressions, for example with
-// `GenericType(type_args).ChildType(child_type_args).Name`.
-CARBON_PARSE_NODE_KIND_WITH_TOKEN(QualifiedName, Period)
-
 // A member access expression, such as `a.b` or
 // `GetObject().(Interface.member)`:
 //   _external_: lhs expression
@@ -626,7 +628,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 // `class`:
 //     ClassIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
+//     _external_: _declaration name_
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   ClassDefinitionStart
@@ -662,7 +664,7 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(BaseDecl, CARBON_IF_VALID(Semi))
 // `interface`:
 //     InterfaceIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
+//     _external_: _declaration name_
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   InterfaceDefinitionStart
@@ -711,7 +713,7 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(DefaultSelfImplAs, As)
 // `constraint`:
 //     NamedConstraintIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
+//     _external_: _declaration name_
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   NamedConstraintDefinitionStart
@@ -729,7 +731,7 @@ CARBON_PARSE_NODE_KIND_WITH_TOKEN(NamedConstraintDecl, CARBON_IF_VALID(Semi))
 
 // `choice`:
 //     ChoiceIntroducer
-//     _external_: IdentifierName or QualifiedDecl
+//     _external_: _declaration name_
 //   ChoiceDefinitionStart
 //   _optional_ _external_: ChoiceAlternativeList
 // ChoiceDefinition

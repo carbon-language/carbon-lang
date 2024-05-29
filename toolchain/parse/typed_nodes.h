@@ -110,8 +110,7 @@ using EmptyDecl =
 
 // A name in a non-expression context, such as a declaration.
 using IdentifierName =
-    LeafNode<NodeKind::IdentifierName,
-             NodeCategory::NameComponent | NodeCategory::MemberName>;
+    LeafNode<NodeKind::IdentifierName, NodeCategory::MemberName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
@@ -130,17 +129,27 @@ using SelfTypeNameExpr =
 // declared name, as in `{.base: partial B}`.
 using BaseName = LeafNode<NodeKind::BaseName, NodeCategory::MemberName>;
 
-// A qualified name: `A.B`.
-struct QualifiedName {
-  static constexpr auto Kind = NodeKind::QualifiedName.Define(
-      NodeCategory::NameComponent, ChildCount(2));
+// An unqualified name and optionally a following sequence of parameters.
+// For example, `A`, `A(n: i32)`, or `A[T:! type](n: T)`.
+struct NameAndParams {
+  IdentifierNameId name;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<TuplePatternId> params;
+};
 
-  // For now, this is either an IdentifierName or a QualifiedName.
-  AnyNameComponentId lhs;
+// A name qualifier: `A.`, `A(T:! type).`, or `A[T:! type](N:! T).`.
+struct NameQualifier {
+  static constexpr auto Kind =
+      NodeKind::NameQualifier.Define(BracketedBy<IdentifierName>);
 
-  // TODO: This will eventually need to support more general expressions, for
-  // example `GenericType(type_args).ChildType(child_type_args).Name`.
-  IdentifierNameId rhs;
+  NameAndParams name_and_params;
+};
+
+// A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
+// Note that this includes the parameters of the entity itself.
+struct DeclName {
+  llvm::SmallVector<NameQualifierId> qualifiers;
+  NameAndParams name_and_params;
 };
 
 // Library, package, import, export
@@ -206,7 +215,7 @@ struct ExportDecl {
 
   ExportIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AnyNameComponentId name;
+  DeclName name;
 };
 
 // Namespace nodes
@@ -221,7 +230,7 @@ struct Namespace {
 
   NamespaceStartId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AnyNameComponentId name;
+  DeclName name;
 };
 
 // Pattern nodes
@@ -306,10 +315,7 @@ struct FunctionSignature {
 
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  // For now, this is either an IdentifierName or a QualifiedName.
-  AnyNameComponentId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  TuplePatternId params;
+  DeclName name;
   std::optional<ReturnTypeId> return_type;
 };
 
@@ -355,8 +361,7 @@ struct Alias {
 
   AliasIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  // For now, this is either an IdentifierName or a QualifiedName.
-  AnyNameComponentId name;
+  DeclName name;
   AliasInitializerId equals;
   AnyExprId initializer;
 };
@@ -837,9 +842,7 @@ struct ChoiceSignature {
 
   ChoiceIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AnyNameComponentId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  DeclName name;
 };
 
 using ChoiceDefinitionStart = ChoiceSignature;
@@ -926,9 +929,7 @@ struct ClassSignature {
 
   ClassIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AnyNameComponentId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  DeclName name;
 };
 
 // `class C;`
@@ -992,9 +993,7 @@ struct InterfaceSignature {
 
   InterfaceIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AnyNameComponentId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  DeclName name;
 };
 
 // `interface I;`
@@ -1080,9 +1079,7 @@ struct NamedConstraintSignature {
 
   NamedConstraintIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AnyNameComponentId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<TuplePatternId> params;
+  DeclName name;
 };
 
 // `constraint NC;`

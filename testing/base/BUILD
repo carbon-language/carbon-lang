@@ -19,9 +19,24 @@ cc_library(
     name = "gtest_main",
     testonly = 1,
     srcs = ["gtest_main.cpp"],
+    hdrs = ["gtest_main.h"],
     deps = [
+        "//common:check",
+        "//common:exe_path",
         "//common:init_llvm",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "gtest_main_test",
+    size = "small",
+    srcs = ["gtest_main_test.cpp"],
+    deps = [
+        ":gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

@@ -227,50 +227,28 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 
 // Handles a declaration name and parameters, such as `Foo[...](...)`.
 //
-// Allowed parameters:
-// - None: `Foo` only.
-// - Optional: `Foo`, `Foo(...)`, or `Foo[...](...)`.
-// - Required: `Foo(...)` or `Foo[...](...)`.
-//
 // name . ...
+// ^~~~~~
+//   1. DeclNameAndParams
+//
+// name [ ... ]
 // ^~~~
-//   1. PeriodAsDecl
-//   2. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//   1. PatternListAsImplicit
+//   2. DeclNameAndParamsAfterImplicit
+//
+// name ( ... )
+// ^~~~
+//   1. PatternListAsTuple
+//   2. DeclNameAndParamsAfterParams
 //
 // name ...
 // ^~~~
-//   1. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//   (state done)
 //
 //  ???
 // ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, None, Optional, Required)
-
-// Handles a declaration name between the main name and implicit parameters.
-//
-// name . ...
-//     ^
-//   1. PeriodAsDecl
-//   2. DeclNameAndParamsAfterNameAs(None|Optional|Required)
-//
-// name [ ... ]    (variant is not None)
-//     ^
-//   1. PatternListAsImplicit
-//   2. DeclNameAndParamsAfterImplicit
-//
-// name ( ... )    (variant is not None)
-//     ^
-//   1. PatternListAsTuple
-//
-// name ...        (variant is not Required)
-//     ^
-//   (state done)
-//
-// name ???        (variant is Required)
-//     ^
-//   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParamsAfterName, None, Optional,
-                             Required)
+CARBON_PARSE_STATE(DeclNameAndParams)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
 // Only used after implicit parameters.
@@ -278,11 +256,24 @@ CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParamsAfterName, None, Optional,
 // name [ ... ] ( ... )
 //             ^
 //   1. PatternListAsTuple
+//   2. DeclNameAndParamsAfterParams
 //
 // name [ ... ] ???
 //             ^
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
+
+// Handles regular parameters such as `(...)` for the general declaration case.
+// Only used after implicit parameters.
+//
+// name [ ... ] ( ... ) .
+//                      ^
+//   1. DeclNameAndParams
+//
+// name [ ... ] ( ... ) ...
+//                     ^
+//   (state done)
+CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
@@ -402,12 +393,11 @@ CARBON_PARSE_STATE(DeclScopeLoop)
 // responsible for handling chaining.
 //
 // The forms of this are:
-// - Qualified names in declarations.
 // - Member access expressions.
 // - Designated names in structs.
 //
-// Declarations and expressions have qualifiers such as `x.y`, while structs
-// have designators such as `.z`.
+// Expressions have member accesses such as `x.y`, while structs have
+// designators such as `.z`.
 //
 // . name
 // ^~~~~~
@@ -432,7 +422,7 @@ CARBON_PARSE_STATE(DeclScopeLoop)
 //      ^~
 //   1. OnlyParenExpr
 //   2. CompoundPointerMemberAccess
-CARBON_PARSE_STATE_VARIANTS3(Period, Decl, Expr, Struct)
+CARBON_PARSE_STATE_VARIANTS2(Period, Expr, Struct)
 
 // Handles a compound member access after we parse the name expression.
 //
@@ -638,7 +628,7 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 //
 // fn ...
 //   ^
-//   1. DeclNameAndParamsAsRequired
+//   1. DeclNameAndParams
 //   2. FunctionAfterParams
 CARBON_PARSE_STATE(FunctionIntroducer)
 
@@ -694,7 +684,7 @@ CARBON_PARSE_STATE(FunctionDefinitionFinish)
 //
 // export Name;
 //       ^
-//   1. DeclNameAndParamsAsNone
+//   1. DeclNameAndParams
 //   2. ExportFinish
 CARBON_PARSE_STATE(ExportName)
 
@@ -729,7 +719,7 @@ CARBON_PARSE_STATE(Library)
 //
 // namespace ...
 //          ^
-//   1. DeclNameAndParamsAsNone
+//   1. DeclNameAndParams
 //   2. NamespaceFinish
 CARBON_PARSE_STATE(Namespace)
 
@@ -755,7 +745,7 @@ CARBON_PARSE_STATE(Package)
 //
 // alias ...
 //      ^
-//   1. DeclNameAndParamsAsNone
+//   1. DeclNameAndParams
 //   2. AliasInitializer
 CARBON_PARSE_STATE(Alias)
 
@@ -1217,7 +1207,7 @@ CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
 //
 // class/interface/constraint ...
 //                           ^
-//   1. DeclNameAndParamsAsOptional
+//   1. DeclNameAndParams
 //   2. DeclOrDefinitionAs(Class|Interface|NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
                              NamedConstraint)
@@ -1402,7 +1392,7 @@ CARBON_PARSE_STATE(LetFinish)
 //
 // choice ...
 // ^~~~~~
-//   1. DeclNameAndParamsAsOptional
+//   1. DeclNameAndParams
 //   2. ChoiceAlternativeListStart
 //   3. ChoiceDefinitionFinish
 CARBON_PARSE_STATE(ChoiceIntroducer)
