@@ -27,7 +27,7 @@ class ToolchainFileTest : public FileTestBase {
                              llvm::StringRef test_name)
       : FileTestBase(test_name),
         component_(GetComponent(test_name)),
-        installation_(exe_path) {}
+        installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,

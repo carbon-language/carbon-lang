@@ -31,7 +31,7 @@ auto main(int argc, char** argv) -> int {
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   auto fs = llvm::vfs::getRealFileSystem();
 
-  Carbon::InstallPaths install_paths(exe_path);
+  const auto install_paths = Carbon::InstallPaths::MakeExeRelative(exe_path);
 
   // Construct the data directory relative to the executable location.
   // TODO: Will be removed when everything moves to the install_paths.

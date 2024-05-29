@@ -35,7 +35,8 @@ TEST(SemIRTest, YAML) {
   CARBON_CHECK(fs.addFile(
       "test.carbon", /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
-  const InstallPaths install_paths(Testing::GetTestExePath());
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
   TestRawOstream print_stream;
   Driver d(fs, &install_paths, "", print_stream, llvm::errs());
   auto run_result =

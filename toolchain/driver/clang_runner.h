@@ -41,7 +41,7 @@ class ClangRunner {
   //
   // If `verbose` is passed as true, will enable verbose logging to the
   // `err_stream` both from the runner and Clang itself.
-  ClangRunner(const InstallPaths* installation, llvm::StringRef target,
+  ClangRunner(const InstallPaths* install_paths, llvm::StringRef target,
               llvm::raw_ostream* vlog_stream = nullptr);
 
   // Run Clang with the provided arguments.

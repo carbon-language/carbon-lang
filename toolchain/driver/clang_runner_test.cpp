@@ -55,7 +55,8 @@ static auto RunWithCapturedOutput(std::string& out, std::string& err,
 
 TEST(ClangRunnerTest, Version) {
   TestRawOstream test_os;
-  InstallPaths install_paths(Testing::GetTestExePath());
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
   std::string target = llvm::sys::getDefaultTargetTriple();
   ClangRunner runner(&install_paths, target, &test_os);
 
@@ -123,7 +124,8 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
   std::filesystem::path foo_file = WriteTestFile("foo.o", "");
   std::filesystem::path bar_file = WriteTestFile("bar.o", "");
 
-  InstallPaths install_paths(Testing::GetTestExePath());
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
   std::string verbose_out;
   llvm::raw_string_ostream verbose_os(verbose_out);
   std::string target = llvm::sys::getDefaultTargetTriple();

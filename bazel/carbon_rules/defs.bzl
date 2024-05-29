@@ -22,6 +22,9 @@ def carbon_binary(name, srcs):
         #
         # TODO: This is a hack; replace with something better once the toolchain
         # supports doing so.
+        #
+        # TODO: Switch to the `prefix_root` based rule similar to linking when
+        # the prelude moves there.
         out = src + ".o"
         srcs_reordered = [s for s in srcs if s != src] + [src]
         run_binary(
@@ -40,12 +43,13 @@ def carbon_binary(name, srcs):
     #
     # TODO: This will need to be revisited eventually.
     objs = [s + ".o" for s in srcs]
-    run_binary(
+    native.genrule(
         name = name + ".link",
-        tool = "//toolchain/driver:carbon",
-        args = (["link"] +
-                ["$(location %s)" % s for s in objs] +
-                ["--output=$(location %s)" % name]),
+        tools = [
+            "//toolchain/install:prefix_root/bin/carbon",
+            "//toolchain/install:install_data",
+        ],
+        cmd = "$(execpath //toolchain/install:prefix_root/bin/carbon) link --output=$@ $(SRCS)",
         srcs = objs,
         outs = [name],
     )

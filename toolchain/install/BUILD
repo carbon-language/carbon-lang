@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm-project//llvm:binary_alias.bzl", "binary_alias")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("symlink_filegroup.bzl", "symlink_filegroup")
@@ -10,16 +11,22 @@ package(default_visibility = ["//visibility:public"])
 
 # Build rules supporting the install data tree for the Carbon toolchain.
 #
-# The directory `prefix_root` should mirror a Unix-y FHS (Filesystem Hierarchy
-# Standard) style install of Carbon under some prefix (`/usr`, `/usr/local`, or
-# possibly a home directory or a custom prefix). When installed, user facing
-# binaries, which we largely expect to be solely the `carbon` driver will be at
-# `perfix_root/bin/carbon`. We collect data, private executables, and other
-# internals used by the toolchain in `prefix_root/lib/carbon`.
-#
-# Code that needs data files in the toolchain should add them to paths below
-# `prefix_root/lib/carbon` here and use data dependencies on these paths so that we
-# are always twesting against a realistic layout.
+# This populates a synthetic Carbon toolchain installation under the
+# `prefix_root` directory. For details on its layout, see `install_paths.h`.
+
+# A marker of a valid Carbon install. All filegroups in the install should
+# include this one.
+write_file(
+    name = "install_marker",
+    out = "prefix_root/lib/carbon/carbon_install.txt",
+    content = [
+        "// Part of the Carbon Language project, under the Apache License v2.0 with LLVM",
+        "// Exceptions. See /LICENSE for license information.",
+        "// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception",
+        "",
+        "This marks a valid Carbon install tree.",
+    ],
+)
 
 # Copy Clang and LLVM toolchain files into a synthetic LLVM installation under
 # `prefix_root/lib/carbon/llvm` so that parts of Clang that expect to find an LLVM
@@ -49,6 +56,7 @@ filegroup(
     name = "llvm_link_data",
     srcs = [
         "prefix_root/lib/carbon/llvm/bin/lld",
+        ":install_marker",
     ] + [
         "prefix_root/lib/carbon/llvm/bin/" + bin_name
         for bin_name in lld_bin_names
@@ -61,6 +69,7 @@ filegroup(
 filegroup(
     name = "install_lib_data",
     srcs = [
+        ":install_marker",
         ":llvm_link_data",
     ],
 )
@@ -75,6 +84,7 @@ filegroup(
     srcs = [
         "prefix_root/bin/carbon",
         ":install_lib_data",
+        ":install_marker",
     ],
 )
 
@@ -87,10 +97,8 @@ cc_library(
     srcs = ["install_paths.cpp"],
     hdrs = ["install_paths.h"],
     deps = [
-        "//common:check",
-        "//common:command_line",
-        "//common:ostream",
-        "//common:vlog",
+        "//common:error",
+        "@bazel_tools//tools/cpp/runfiles",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -108,28 +116,7 @@ cc_binary(
     name = "test_binary",
     testonly = 1,
     srcs = ["test_binary.cpp"],
-)
-
-binary_alias(
-    name = "test_direct_exec_root/test_binary",
-    testonly = 1,
-    binary = ":test_binary",
-)
-
-symlink_filegroup(
-    name = "test_direct_exec_runfiles",
-    testonly = 1,
-    srcs = [":install_data"],
-    out_prefix = "test_direct_exec_root/test_binary.runfiles/_main/",
-)
-
-filegroup(
-    name = "test_direct_exec_data",
-    testonly = 1,
-    srcs = [
-        "test_direct_exec_root/test_binary",
-        ":test_direct_exec_runfiles",
-    ],
+    data = [":install_data"],
 )
 
 cc_test(
@@ -138,7 +125,7 @@ cc_test(
     srcs = ["install_paths_test.cpp"],
     data = [
         ":install_data",
-        ":test_direct_exec_data",
+        ":test_binary",
         ":test_installed_data",
     ],
     deps = [
@@ -146,6 +133,7 @@ cc_test(
         "//common:check",
         "//common:ostream",
         "//testing/base:gtest_main",
+        "@bazel_tools//tools/cpp/runfiles",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

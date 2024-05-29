@@ -27,7 +27,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                        /*RequiresNullTerminator=*/false)));
 
   // TODO: We should try to thread the executable path into here.
-  const InstallPaths install_paths("");
+  const auto install_paths = InstallPaths::Make("");
   llvm::raw_null_ostream null_ostream;
   Driver driver(fs, &install_paths, "", null_ostream, null_ostream);
 

@@ -75,6 +75,10 @@ for dep in deps:
     if repo_base == "@@rules_cc" and rule == ":link_extra_lib":
         continue
 
+    # An utility library provided by Bazel that is under a compatible license.
+    if repo_base == "@@bazel_tools" and rule == "tools/cpp/runfiles:runfiles":
+        continue
+
     # These are stubs wrapping system libraries for LLVM. They aren't
     # distributed and so should be fine.
     if repo_base in (

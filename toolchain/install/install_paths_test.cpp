@@ -7,55 +7,41 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/ostream.h"
+#include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
 #include "testing/base/gtest_main.h"
+#include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
 namespace {
 
+using ::bazel::tools::cpp::runfiles::Runfiles;
+using ::testing::Eq;
+using ::testing::HasSubstr;
+using ::testing::Optional;
 using ::testing::StartsWith;
 
-static auto GetTestSrcdir() -> std::optional<std::string> {
-  if (char* test_srcdir = getenv("TEST_SRCDIR")) {
-    return std::string(test_srcdir);
-  }
-  return std::nullopt;
-}
-
-class InstallationTest : public ::testing::Test {
+class InstallPathsTest : public ::testing::Test {
  protected:
-  InstallationTest() : test_srcdir(GetTestSrcdir()) {}
-
-  // Compute the test runfiles path, either using Bazel's `TEST_SRCDIR`
-  // environment variable or the name of the test executable. Trying both of
-  // these allows tests to be run directly out of the Bazel build tree, for
-  // example by a debugger, and still find their runfiles.
-  //
-  // TODO: Extract this to a testing helper library and use it more broadly.
-  auto FindTestRunfiles() -> std::string {
-    if (test_srcdir && llvm::sys::fs::is_directory(*test_srcdir)) {
-      return *test_srcdir;
-    }
-
-    return Testing::GetTestExePath().str() + ".runfiles";
+  InstallPathsTest() {
+    std::string error;
+    test_runfiles_.reset(
+        Runfiles::Create(Testing::GetTestExePath().str(), &error));
+    CARBON_CHECK(test_runfiles_ != nullptr) << error;
   }
 
-  // Test the install paths found with the given `exe_path`. Will check that the
-  // detected install prefix path starts with `prefix_startswith`, and then
-  // check that the path accessors point to the right kind of file or directory.
-  auto TestInstallPaths(llvm::StringRef exe_path,
-                        llvm::StringRef prefix_startswith) -> void {
-    SCOPED_TRACE(llvm::formatv("Executable path: '%s'", exe_path));
-    InstallPaths paths(exe_path, &llvm::errs());
+  // Test the install paths found with the given `exe_path`. Will check that
+  // the detected install prefix path starts with `prefix_startswith`, and then
+  // check that the path accessors point to the right kind of file or
+  // directory.
+  auto TestInstallPaths(const InstallPaths& paths) -> void {
+    SCOPED_TRACE(llvm::formatv("Install prefix: '%s'", paths.prefix()));
 
     // Grab a the prefix into a string to make it easier to use in the test.
     std::string prefix = paths.prefix().str();
-    EXPECT_THAT(prefix, StartsWith(prefix_startswith));
-    SCOPED_TRACE(llvm::formatv("Install prefix path: '%s'", prefix));
     EXPECT_TRUE(llvm::sys::fs::exists(prefix));
     EXPECT_TRUE(llvm::sys::fs::is_directory(prefix));
 
@@ -85,43 +71,59 @@ class InstallationTest : public ::testing::Test {
     }
   }
 
-  // When run as a Bazel test, the `TEST_SRCDIR` environment variable.
-  std::optional<std::string> test_srcdir;
+  std::unique_ptr<Runfiles> test_runfiles_;
 };
 
-TEST_F(InstallationTest, Installations) {
-  // Use synthetic install trees to test detection of various patterns.
-  // Each of these trees is identified by a specific executable path.
+TEST_F(InstallPathsTest, PrefixRootDriver) {
+  std::string installed_driver_path = test_runfiles_->Rlocation(
+      "_main/toolchain/install/prefix_root/bin/carbon");
 
-  // First, test a simulated install using the driver's executable path.
-  std::string runfiles = FindTestRunfiles();
-  llvm::SmallString<128> test_installed_root = llvm::StringRef(runfiles);
-  llvm::sys::path::append(test_installed_root, llvm::sys::path::Style::posix,
-                          "_main/toolchain/install/test_installed_root/");
-  llvm::SmallString<128> installed_driver = test_installed_root;
-  llvm::sys::path::append(installed_driver, llvm::sys::path::Style::posix,
-                          "bin/carbon");
-  ASSERT_TRUE(llvm::sys::fs::can_execute(installed_driver))
-      << "Driver path: " << installed_driver;
-  TestInstallPaths(installed_driver, test_installed_root);
+  auto paths = InstallPaths::MakeExeRelative(installed_driver_path);
+  ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
+  TestInstallPaths(paths);
+}
 
-  // We simulate direct execution of a just-built binary by synthesizing a
-  // similar layout to `bazel-bin` and the runfiles tree path used there.
-  llvm::SmallString<128> test_binary = llvm::StringRef(runfiles);
-  llvm::sys::path::append(
-      test_binary, llvm::sys::path::Style::posix,
-      "_main/toolchain/install/test_direct_exec_root/test_binary");
-  ASSERT_TRUE(llvm::sys::fs::can_execute(test_binary))
-      << "Test binary path: " << test_binary;
-  // We expect the just-built binary path to be a string prefix of the detected
-  // install prefix, so we pass the path twice here.
-  TestInstallPaths(test_binary, test_binary);
+TEST_F(InstallPathsTest, PrefixRootExplicit) {
+  std::string marker_path = test_runfiles_->Rlocation(
+      "_main/toolchain/install/prefix_root/lib/carbon/carbon_install.txt");
 
-  // If we have `TEST_SRCDIR`, also check that it works by using a nonsense
-  // executable path.
-  if (test_srcdir) {
-    TestInstallPaths("test_exe", *test_srcdir);
-  }
+  llvm::StringRef prefix_path = marker_path;
+  CARBON_CHECK(prefix_path.consume_back("lib/carbon/carbon_install.txt"))
+      << "Unexpected suffix of the marker path: " << marker_path;
+
+  auto paths = InstallPaths::Make(prefix_path);
+  ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
+  TestInstallPaths(paths);
+}
+
+TEST_F(InstallPathsTest, TestRunfiles) {
+  auto paths = InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
+  ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
+  TestInstallPaths(paths);
+}
+
+TEST_F(InstallPathsTest, BinaryRunfiles) {
+  std::string test_binary_path =
+      test_runfiles_->Rlocation("_main/toolchain/install/test_binary");
+  CARBON_CHECK(llvm::sys::fs::can_execute(test_binary_path))
+      << test_binary_path;
+
+  auto paths = InstallPaths::MakeForBazelRunfiles(test_binary_path);
+  ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
+  TestInstallPaths(paths);
+}
+
+TEST_F(InstallPathsTest, Errors) {
+  auto paths = InstallPaths::Make("foo/bar/baz");
+  EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
+  EXPECT_THAT(paths.prefix(), Eq(""));
+
+  paths = InstallPaths::MakeExeRelative("foo/bar/baz");
+  EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
+  EXPECT_THAT(paths.prefix(), Eq(""));
+
+  // Note that we can't test the runfiles code path from within a test because
+  // it succeeds some of the time even with a bogus executable name.
 }
 
 }  // namespace

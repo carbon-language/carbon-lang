@@ -42,7 +42,8 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 class DriverTest : public testing::Test {
  protected:
   DriverTest()
-      : installation_(Testing::GetTestExePath()),
+      : installation_(
+            InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath())),
         driver_(fs_, &installation_, "", test_output_stream_,
                 test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
