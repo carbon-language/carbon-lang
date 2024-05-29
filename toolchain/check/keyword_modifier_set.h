@@ -23,7 +23,7 @@ class KeywordModifierSet {
   //
   // We expect this to grow, so are using a bigger size than needed.
   // NOLINTNEXTLINE(performance-enum-size)
-  enum Enum : uint32_t {
+  enum RawEnumType : uint32_t {
     // At most one of these access modifiers allowed for a given declaration,
     // and if present it must be first:
     Private = 1 << 0,
@@ -61,7 +61,7 @@ class KeywordModifierSet {
   // Support implicit conversion so that the difference with the member enum is
   // opaque.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr KeywordModifierSet(Enum set) : set_(set) {}
+  constexpr KeywordModifierSet(RawEnumType set) : set_(set) {}
 
   // Adds entries to the set.
   auto Add(KeywordModifierSet set) -> void { set_ |= set.set_; }
@@ -70,11 +70,11 @@ class KeywordModifierSet {
 
   // Returns true if there's a non-empty set intersection.
   constexpr auto HasAnyOf(KeywordModifierSet other) -> bool {
-    return !(*this & other).empty();
+    return set_ & other.set_;
   }
 
   // Returns true if empty.
-  constexpr auto empty() -> bool { return set_ == Enum::None; }
+  constexpr auto empty() -> bool { return !set_; }
 
   // Returns the set intersection.
   constexpr auto operator&(KeywordModifierSet other) -> KeywordModifierSet {
@@ -85,7 +85,7 @@ class KeywordModifierSet {
   auto operator~() -> KeywordModifierSet { return ~set_; }
 
  private:
-  Enum set_;
+  RawEnumType set_;
 };
 
 static_assert(!KeywordModifierSet(KeywordModifierSet::Access)

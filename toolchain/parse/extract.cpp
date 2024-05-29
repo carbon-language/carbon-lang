@@ -96,7 +96,7 @@ static auto NodeIdInCategoryAccept(NodeCategory category, const Tree* tree,
                                    const Tree::SiblingIterator& it,
                                    Tree::SiblingIterator end,
                                    ErrorBuilder* trace) -> bool {
-  if (it == end || !(tree->node_kind(*it).category() & category)) {
+  if (it == end || !tree->node_kind(*it).category().HasAnyOf(category)) {
     if (trace) {
       *trace << "NodeIdInCategory " << category << " error: ";
       if (it == end) {
@@ -115,7 +115,7 @@ static auto NodeIdInCategoryAccept(NodeCategory category, const Tree* tree,
 }
 
 // Extract a `NodeIdInCategory<Category>` as a single child.
-template <NodeCategory Category>
+template <NodeCategory::RawEnumType Category>
 struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
