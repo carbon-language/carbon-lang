@@ -86,12 +86,12 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
       Lex::TokenKind::Let);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Access)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
                  "access modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Interface)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Interface)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Decl),
                  "interface modifier");

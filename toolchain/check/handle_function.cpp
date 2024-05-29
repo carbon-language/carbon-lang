@@ -229,18 +229,18 @@ static auto BuildFunctionDecl(Context& context,
   // Process modifiers.
   auto modifiers = DiagnoseModifiers(context, is_definition,
                                      name_context.enclosing_scope_id);
-  if (!!(modifiers & KeywordModifierSet::Access)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
                  "access modifier");
   }
-  bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
-  if (!!(modifiers & KeywordModifierSet::Method)) {
+  bool is_extern = modifiers.HasAnyOf(KeywordModifierSet::Extern);
+  if (modifiers.HasAnyOf(KeywordModifierSet::Method)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Decl),
                  "method modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Interface)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(

@@ -102,7 +102,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Var);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Access)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
                  "access modifier");

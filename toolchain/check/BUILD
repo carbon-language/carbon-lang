@@ -72,6 +72,7 @@ cc_library(
         "function.h",
         "import_ref.h",
         "inst_block_stack.h",
+        "keyword_modifier_set.h",
         "merge.h",
         "modifiers.h",
         "param_and_arg_refs_stack.h",
