@@ -47,6 +47,15 @@ CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 
 // A class wrapping an enumeration of the different kinds of nodes in the parse
 // tree.
+//
+// In order to allow the children of a node to be determined without relying on
+// the subtree size field in the parse node, each node kind must have one of:
+//
+// - a bracketing node kind, which is always the kind for the first child, and
+//   is never the kind of any other child, or
+// - a fixed child count,
+//
+// or both. This is required even for nodes that are invalid.
 class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
@@ -57,19 +66,18 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   auto CheckMatchesTokenKind(Lex::TokenKind lex_token_kind, bool has_error)
       -> void;
 
-  // Returns true if the node is bracketed; otherwise, child_count is used.
+  // Returns true if the node is bracketed.
   auto has_bracket() const -> bool;
 
   // Returns the bracketing node kind for the current node kind. Requires that
   // has_bracket is true.
   auto bracket() const -> NodeKind;
 
-  // Returns true if the node is has a fixed child count; otherwise, bracket is
-  // used.
+  // Returns true if the node is has a fixed child count.
   auto has_child_count() const -> bool;
 
   // Returns the number of children that the node must have, often 0. Requires
-  // that has_bracket is false.
+  // that has_child_count is true.
   auto child_count() const -> int32_t;
 
   // Returns which categories this node kind is in.
@@ -82,17 +90,11 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   using EnumBase::Make;
 
   class Definition;
+  struct DefinitionArgs;
 
   // Provides a definition for this parse node kind. Should only be called
   // once, to construct the kind as part of defining it in `typed_nodes.h`.
-  //
-  // The arguments can be:
-  // - A NodeCategory value, specifying the category for the node.
-  // - A BracketedBy<Type> value, specifying the bracketing node.
-  // - A ChildCount instance, specifying the fixed number of children.
-  // At least one of BracketedBy and ChildCount is mandatory.
-  template <typename... Args>
-  constexpr auto Define(Args... args) const -> Definition;
+  constexpr auto Define(DefinitionArgs args) const -> Definition;
 
  private:
   // Looks up the definition for this instruction kind.
@@ -117,20 +119,15 @@ static_assert(
 // We expect the parse node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 
-// Wrapper type used to indicate the bracketing node in a node kind definition.
-struct BracketedByKind {
-  NodeKind kind;
-};
-
-// Convenience template to allow `BracketedByKind`s to be named as
-// `BracketedBy<Kind>`.
-template <typename Bracket>
-constexpr BracketedByKind BracketedBy = {Bracket::Kind};
-
-// Wrapper type used to indicate the constant child count in a node kind
-// definition.
-struct ChildCount {
-  int32_t count;
+// Optional arguments that can be supplied when defining a node kind. At least
+// one of `bracketed_by` and `child_count` is required.
+struct NodeKind::DefinitionArgs {
+  // The category for the node.
+  NodeCategory category = NodeCategory::None;
+  // The kind of the bracketing node, which is the first child.
+  std::optional<NodeKind> bracketed_by = std::nullopt;
+  // The fixed child count.
+  int32_t child_count = -1;
 };
 
 // A definition of a parse node kind. This is a NodeKind value, plus
@@ -144,7 +141,7 @@ class NodeKind::Definition : public NodeKind {
   Definition(const Definition&) = delete;
   auto operator=(const Definition&) -> Definition& = delete;
 
-  // Returns true if the node is bracketed; otherwise, child_count is used.
+  // Returns true if the node is bracketed.
   constexpr auto has_bracket() const -> bool { return bracket_ != *this; }
 
   // Returns the bracketing node kind for the current node kind. Requires that
@@ -154,12 +151,11 @@ class NodeKind::Definition : public NodeKind {
     return bracket_;
   }
 
-  // Returns true if the node is has a fixed child count; otherwise, bracket is
-  // used.
+  // Returns true if the node is has a fixed child count.
   constexpr auto has_child_count() const -> bool { return child_count_ >= 0; }
 
   // Returns the number of children that the node must have, often 0. Requires
-  // that has_bracket is false.
+  // that has_child_count is true.
   constexpr auto child_count() const -> int32_t {
     CARBON_CHECK(has_child_count()) << *this;
     return child_count_;
@@ -178,23 +174,14 @@ class NodeKind::Definition : public NodeKind {
         << "Must specify either bracketing node or fixed child count.";
   }
 
-  template <typename... Args>
-  constexpr explicit Definition(NodeKind kind, Args... args) : NodeKind(kind) {
-    (ApplyArg(args), ...);
-
+  constexpr explicit Definition(NodeKind kind, DefinitionArgs args)
+      : NodeKind(kind),
+        category_(args.category),
+        bracket_(args.bracketed_by.value_or(kind)),
+        child_count_(args.child_count) {
     if (!has_bracket() && !has_child_count()) {
       MustSpecifyEitherBracketingNodeOrChildCount();
     }
-  }
-
-  constexpr auto ApplyArg(NodeCategory category) -> void {
-    category_ = category;
-  }
-  constexpr auto ApplyArg(BracketedByKind bracket) -> void {
-    bracket_ = bracket.kind;
-  }
-  constexpr auto ApplyArg(ChildCount child_count) -> void {
-    child_count_ = child_count.count;
   }
 
   NodeCategory category_ = NodeCategory::None;
@@ -204,9 +191,8 @@ class NodeKind::Definition : public NodeKind {
   int32_t child_count_ = -1;
 };
 
-template <typename... Args>
-constexpr auto NodeKind::Define(Args... args) const -> Definition {
-  return Definition(*this, args...);
+constexpr auto NodeKind::Define(DefinitionArgs args) const -> Definition {
+  return Definition(*this, args);
 }
 
 // HasKindMember<T> is true if T has a `static const NodeKind::Definition Kind`
