@@ -68,7 +68,6 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
 
 auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
     -> void {
-  kind.CheckMatchesTokenKind(tokens_->GetKind(token), has_error);
   tree_->node_impls_.push_back(
       Tree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
   if (has_error) {
@@ -78,7 +77,6 @@ auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
 
 auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
                       bool has_error) -> void {
-  kind.CheckMatchesTokenKind(tokens_->GetKind(token), has_error);
   int subtree_size = tree_->size() - subtree_start + 1;
   tree_->node_impls_.push_back(
       Tree::NodeImpl(kind, has_error, token, subtree_size));

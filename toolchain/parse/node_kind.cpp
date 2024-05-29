@@ -4,7 +4,6 @@
 
 #include "toolchain/parse/node_kind.h"
 
-#include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/parse/typed_nodes.h"
 
@@ -39,30 +38,9 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
 #include "toolchain/parse/node_kind.def"
 };
 
-auto NodeKind::CheckMatchesTokenKind(Lex::TokenKind token_kind, bool has_error)
-    -> void {
-  static constexpr Lex::TokenKind TokenIfValid[] = {
-#define CARBON_IF_VALID(LexTokenKind) LexTokenKind
-#define CARBON_PARSE_NODE_KIND_WITH_TOKEN(Name, LexTokenKind) \
-  Lex::TokenKind::LexTokenKind,
+// Check that each typed node defines a `token` member.
+#define CARBON_PARSE_NODE_KIND(Name) static_assert(&Name::token != nullptr);
 #include "toolchain/parse/node_kind.def"
-  };
-  static constexpr Lex::TokenKind TokenIfError[] = {
-#define CARBON_IF_VALID(LexTokenKind) Error
-#define CARBON_PARSE_NODE_KIND_WITH_TOKEN(Name, LexTokenKind) \
-  Lex::TokenKind::LexTokenKind,
-#include "toolchain/parse/node_kind.def"
-  };
-
-  Lex::TokenKind expected_token_kind =
-      has_error ? TokenIfError[AsInt()] : TokenIfValid[AsInt()];
-  // Error indicates that the kind shouldn't be enforced.
-  CARBON_CHECK(Lex::TokenKind::Error == expected_token_kind ||
-               token_kind == expected_token_kind)
-      << "Created parse node with NodeKind " << *this << " and has_error "
-      << has_error << " for lexical token kind " << token_kind
-      << ", but expected token kind " << expected_token_kind;
-}
 
 auto NodeKind::has_bracket() const -> bool {
   return definition().has_bracket();
