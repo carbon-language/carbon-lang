@@ -70,8 +70,8 @@ struct Extractable<NodeId> {
   }
 };
 
-static auto NodeIdForKindAccept(const NodeKind& kind,
-                                ExtractState& state) -> bool {
+static auto NodeIdForKindAccept(const NodeKind& kind, ExtractState& state)
+    -> bool {
   if (state.at_end() || state.kind() != kind) {
     if (state.trace) {
       if (state.at_end()) {
@@ -104,7 +104,8 @@ struct Extractable<NodeIdForKind<Kind>> {
   }
 };
 
-static auto NodeIdInCategoryAccept(NodeCategory category, ExtractState& state) -> bool {
+static auto NodeIdInCategoryAccept(NodeCategory category, ExtractState& state)
+    -> bool {
   if (state.at_end() || !(state.kind().category() & category)) {
     if (state.trace) {
       *state.trace << "NodeIdInCategory " << category << " error: ";
@@ -145,7 +146,8 @@ static auto NodeIdOneOfAccept(std::initializer_list<NodeKind> kinds,
     }
   };
   auto kind = state.kind();
-  if (state.at_end() || std::find(kinds.begin(), kinds.end(), kind) == kinds.end()) {
+  if (state.at_end() ||
+      std::find(kinds.begin(), kinds.end(), kind) == kinds.end()) {
     if (state.trace) {
       if (state.at_end()) {
         *state.trace << "NodeIdOneOf error: no more children, expected ";
@@ -184,12 +186,12 @@ struct Extractable<NodeIdOneOf<T...>> {
 // Note: this is only instantiated once, so no need to create a helper function.
 template <typename T>
 struct Extractable<NodeIdNot<T>> {
-  static auto Extract(ExtractState& state)
-      -> std::optional<NodeIdNot<T>> {
+  static auto Extract(ExtractState& state) -> std::optional<NodeIdNot<T>> {
     if (state.at_end() || state.kind() == T::Kind) {
       if (state.trace) {
         if (state.at_end()) {
-          *state.trace << "NodeIdNot " << T::Kind << " error: no more children\n";
+          *state.trace << "NodeIdNot " << T::Kind
+                       << " error: no more children\n";
         } else {
           *state.trace << "NodeIdNot error: unexpected " << T::Kind << "\n";
         }
@@ -234,8 +236,7 @@ struct Extractable<llvm::SmallVector<T>> {
 // a `T`, and extracting nothing if that fails.
 template <typename T>
 struct Extractable<std::optional<T>> {
-  static auto Extract(ExtractState& state)
-      -> std::optional<std::optional<T>> {
+  static auto Extract(ExtractState& state) -> std::optional<std::optional<T>> {
     if (state.trace) {
       *state.trace << "Optional " << typeid(T).name() << ": begin\n";
     }
@@ -293,9 +294,10 @@ struct Extractable<AnyToken> {
 };
 
 template <typename T, typename... U, std::size_t... Index>
-static auto ExtractTupleLikeType(
-    ExtractState& state, std::index_sequence<Index...> /*indices*/,
-    std::tuple<U...>* /*type*/) -> std::optional<T> {
+static auto ExtractTupleLikeType(ExtractState& state,
+                                 std::index_sequence<Index...> /*indices*/,
+                                 std::tuple<U...>* /*type*/)
+    -> std::optional<T> {
   std::tuple<std::optional<U>...> fields;
   if (state.trace) {
     *state.trace << "Aggregate " << typeid(T).name() << ": begin\n";
@@ -340,8 +342,7 @@ struct Extractable {
 
 template <typename T>
 auto Tree::TryExtractNodeFromChildren(
-  NodeId node_id,
-    llvm::iterator_range<Tree::SiblingIterator> children,
+    NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children,
     ErrorBuilder* trace) const -> std::optional<T> {
   ExtractState state = {.tree = this,
                         .it = children.begin(),

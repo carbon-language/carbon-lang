@@ -177,7 +177,8 @@ template <>
 struct FieldAccessor<8> {
   template <typename T>
   static auto Get(T& value) -> auto {
-    auto& [field0, field1, field2, field3, field4, field5, field6, field7] = value;
+    auto& [field0, field1, field2, field3, field4, field5, field6, field7] =
+        value;
     return std::tuple<decltype(field0), decltype(field1), decltype(field2),
                       decltype(field3), decltype(field4), decltype(field5),
                       decltype(field6), decltype(field7)>(

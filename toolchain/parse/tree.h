@@ -479,8 +479,8 @@ class Tree::SiblingIterator
 
 template <typename T>
 auto Tree::ExtractNodeFromChildren(
-    NodeId node_id,
-    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
+    NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children) const
+    -> T {
   auto result = TryExtractNodeFromChildren<T>(node_id, children, nullptr);
   if (!result.has_value()) {
     // On error try again, this time capturing a trace.
