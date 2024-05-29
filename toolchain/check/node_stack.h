@@ -118,13 +118,13 @@ class NodeStack {
   // Returns whether the node on the top of the stack has an overlapping
   // category.
   auto PeekIs(Parse::NodeCategory category) const -> bool {
-    return !stack_.empty() && !!(PeekNodeKind().category() & category);
+    return !stack_.empty() && PeekNodeKind().category().HasAnyOf(category);
   }
 
   // Returns whether the node on the top of the stack has an overlapping
   // category. Templated for consistency with other functions taking a parse
   // node category.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PeekIs() const -> bool {
     return PeekIs(RequiredParseCategory);
   }
@@ -216,7 +216,7 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the node_id and the ID.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopWithNodeId() -> auto {
     auto id = Peek<RequiredParseCategory>();
     Parse::NodeIdInCategory<RequiredParseCategory> node_id(
@@ -242,7 +242,7 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the ID.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto Pop() -> auto {
     return PopWithNodeId<RequiredParseCategory>().second;
   }
@@ -265,7 +265,7 @@ class NodeStack {
 
   // Pops the top of the stack if it has the given category, and returns the ID.
   // Otherwise returns std::nullopt.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseCategory>())> {
     if (PeekIs<RequiredParseCategory>()) {
       return Pop<RequiredParseCategory>();
@@ -286,7 +286,7 @@ class NodeStack {
 
   // Pops the top of the stack and returns the node_id and the ID if it is
   // of the specified category.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopWithNodeIdIf()
       -> std::pair<Parse::NodeIdInCategory<RequiredParseCategory>,
                    decltype(PopIf<RequiredParseCategory>())> {
@@ -314,7 +314,7 @@ class NodeStack {
   }
 
   // Peeks at the ID associated with the top of the name stack.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto Peek() const -> auto {
     Entry back = stack_.back();
     RequireParseCategory<RequiredParseCategory>(back.node_id);
@@ -358,14 +358,14 @@ class NodeStack {
       -> std::optional<Id::Kind> {
     std::optional<Id::Kind> result;
     auto set_id_if_category_is = [&](Parse::NodeCategory cat, Id::Kind kind) {
-      if (!!(category & cat)) {
+      if (category.HasAnyOf(cat)) {
         // Check for no consistent Id::Kind due to category with multiple bits
         // set. When computing the Id::Kind for a node kind, a partial category
         // match is OK, so long as we don't match two inconsistent categories.
         // When computing the Id::Kind for a category query, the query can't
         // have any extra bits set or we could be popping a node that is not in
         // this category.
-        if (for_node_kind ? result.has_value() : !!(category & ~cat)) {
+        if (for_node_kind ? result.has_value() : category.HasAnyOf(~cat)) {
           result = Id::Kind::Invalid;
         } else {
           result = kind;
@@ -515,10 +515,10 @@ class NodeStack {
   }
 
   // Require an entry to have the given Parse::NodeCategory.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto RequireParseCategory(Parse::NodeId node_id) const -> void {
     auto kind = parse_tree_->node_kind(node_id);
-    CARBON_CHECK(!!(RequiredParseCategory & kind.category()))
+    CARBON_CHECK(kind.category().HasAnyOf(RequiredParseCategory))
         << "Expected " << RequiredParseCategory << ", found " << kind
         << " with category " << kind.category();
   }

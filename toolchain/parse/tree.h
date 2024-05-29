@@ -525,10 +525,10 @@ struct Tree::ConvertTo<NodeIdForKind<K>> {
   static auto AllowedFor(NodeKind kind) -> bool { return kind == K; }
 };
 
-template <NodeCategory C>
+template <NodeCategory::RawEnumType C>
 struct Tree::ConvertTo<NodeIdInCategory<C>> {
   static auto AllowedFor(NodeKind kind) -> bool {
-    return !!(kind.category() & C);
+    return kind.category().HasAnyOf(C);
   }
 };
 
