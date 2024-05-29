@@ -39,10 +39,10 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
 
   ModifierOrder order;
   KeywordModifierSet later_modifiers;
-  if (!!(keyword & KeywordModifierSet::Access)) {
+  if (keyword.HasAnyOf(KeywordModifierSet::Access)) {
     order = ModifierOrder::Access;
     later_modifiers = KeywordModifierSet::Extern | KeywordModifierSet::Decl;
-  } else if (keyword == KeywordModifierSet::Extern) {
+  } else if (keyword.HasAnyOf(KeywordModifierSet::Extern)) {
     order = ModifierOrder::Extern;
     later_modifiers = KeywordModifierSet::Decl;
   } else {
@@ -51,12 +51,12 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   }
 
   auto current_modifier_node_id = s.modifier_node_id(order);
-  if (!!(s.modifier_set & keyword)) {
+  if (s.modifier_set.HasAnyOf(keyword)) {
     DiagnoseRepeated(context, current_modifier_node_id, node_id);
   } else if (current_modifier_node_id.is_valid()) {
     DiagnoseNotAllowedWith(context, current_modifier_node_id, node_id);
   } else if (auto later_modifier_set = s.modifier_set & later_modifiers;
-             !!later_modifier_set) {
+             !later_modifier_set.empty()) {
     // At least one later modifier is present. Diagnose using the closest.
     Parse::NodeId closest_later_modifier = Parse::NodeId::Invalid;
     for (auto later_order = static_cast<int8_t>(order) + 1;
@@ -79,7 +79,7 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
               context.token_kind(closest_later_modifier))
         .Emit();
   } else {
-    s.modifier_set |= keyword;
+    s.modifier_set.Add(keyword);
     s.set_modifier_node_id(order, node_id);
   }
   return true;

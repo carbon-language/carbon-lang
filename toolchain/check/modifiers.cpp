@@ -44,21 +44,21 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            SemIR::LocId context_loc_id) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
-  if (!not_allowed) {
+  if (not_allowed.empty()) {
     return;
   }
 
   for (auto order_index = 0;
        order_index <= static_cast<int8_t>(ModifierOrder::Last); ++order_index) {
     auto order = static_cast<ModifierOrder>(order_index);
-    if (!!(not_allowed & ModifierOrderAsSet(order))) {
+    if (not_allowed.HasAnyOf(ModifierOrderAsSet(order))) {
       DiagnoseNotAllowed(context, s.modifier_node_id(order), decl_kind,
                          context_string, context_loc_id);
       s.set_modifier_node_id(order, Parse::NodeId::Invalid);
     }
   }
 
-  s.modifier_set &= ~forbidden;
+  s.modifier_set.Remove(forbidden);
 }
 
 // Returns the instruction that owns the given scope, or Invalid if the scope is

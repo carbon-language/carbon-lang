@@ -198,17 +198,17 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                                name_context.enclosing_scope_id, is_definition);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Access)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
                  "access modifier");
   }
 
-  bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
+  bool is_extern = modifiers.HasAnyOf(KeywordModifierSet::Extern);
   auto inheritance_kind =
-      !!(modifiers & KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
-      : !!(modifiers & KeywordModifierSet::Base)   ? SemIR::Class::Base
-                                                   : SemIR::Class::Final;
+      modifiers.HasAnyOf(KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
+      : modifiers.HasAnyOf(KeywordModifierSet::Base)   ? SemIR::Class::Base
+                                                       : SemIR::Class::Final;
 
   context.decl_state_stack().Pop(DeclState::Class);
   auto decl_block_id = context.inst_block_stack().Pop();
@@ -395,7 +395,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       context.AddInst({node_id, SemIR::AdaptDecl{adapted_type_id}});
 
   // Extend the class scope with the adapted type's scope if requested.
-  if (!!(modifiers & KeywordModifierSet::Extend)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extended_scope_id = SemIR::NameScopeId::Invalid;
     if (adapted_type_id == SemIR::TypeId::Error) {
       // Recover by not extending any scope. We instead set has_error to true
@@ -497,7 +497,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
                        Lex::TokenKind::Base);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!(modifiers & KeywordModifierSet::Extend)) {
+  if (!modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");
     context.emitter().Emit(node_id, BaseMissingExtend);
@@ -544,7 +544,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       class_info.base_id);
 
   // Extend the class scope with the base class.
-  if (!!(modifiers & KeywordModifierSet::Extend)) {
+  if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
       class_scope.extended_scopes.push_back(base_info.scope_id);
