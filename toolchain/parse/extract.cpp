@@ -277,7 +277,7 @@ struct Extractable<Token<Kind, RequireIfInvalid>> {
       }
       return std::nullopt;
     }
-    return Token<Kind, RequireIfInvalid>(state.token());
+    return Token<Kind, RequireIfInvalid>{state.token()};
   }
 };
 
@@ -291,7 +291,7 @@ struct Extractable<AnyToken> {
       }
       return std::nullopt;
     }
-    return AnyToken(state.token());
+    return AnyToken{state.token()};
   }
 };
 
