@@ -47,7 +47,7 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @F() -> {} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc18_17: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc18_9: <error> = bind_alias <invalid>, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_12: <error> = bind_alias <invalid>, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
