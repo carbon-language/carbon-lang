@@ -495,14 +495,15 @@ class ImportRefResolver {
   // unresolved constants to the work stack.
   auto GetLocalNameScopeId(SemIR::NameScopeId name_scope_id)
       -> SemIR::NameScopeId {
-    auto inst_id = import_ir_.name_scopes().GetInstIdIfValid(name_scope_id);
-    if (!inst_id.is_valid()) {
+    auto [inst_id, inst] =
+        import_ir_.name_scopes().GetInstIfValid(name_scope_id);
+    if (!inst) {
       // Map scopes that aren't associated with an instruction to invalid
       // scopes. For now, such scopes aren't used, and we don't have a good way
       // to remap them.
       return SemIR::NameScopeId::Invalid;
     }
-    if (import_ir_.insts().Is<SemIR::ImplDecl>(inst_id)) {
+    if (inst->Is<SemIR::ImplDecl>()) {
       // TODO: Import the scope for an `impl` definition.
       return SemIR::NameScopeId::Invalid;
     }

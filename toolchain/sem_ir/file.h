@@ -212,9 +212,6 @@ class File : public Printable<File> {
   // that are import-related.
   ValueStore<ImportIRInstId> import_ir_insts_;
 
-  // Storage for name scopes.
-  NameScopeStore name_scopes_;
-
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
@@ -222,6 +219,9 @@ class File : public Printable<File> {
   // All instructions. The first entries will always be Builtin insts, at
   // indices matching BuiltinKind ordering.
   InstStore insts_;
+
+  // Storage for name scopes.
+  NameScopeStore name_scopes_;
 
   // Constant values for instructions.
   ConstantValueStore constant_values_;

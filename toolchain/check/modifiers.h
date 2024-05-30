@@ -10,21 +10,22 @@
 namespace Carbon::Check {
 
 // Reports a diagnostic if access control modifiers on this are not allowed for
-// a declaration in `enclosing_scope_id`, and updates the declaration state in
+// a declaration in `enclosing_scope_inst`, and updates the declaration state in
 // `context`.
 //
-// `enclosing_scope_id` may be Invalid for a declaration in a block scope.
+// `enclosing_scope_inst` may be nullopt for a declaration in a block scope.
 auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                SemIR::NameScopeId enclosing_scope_id) -> void;
+                                std::optional<SemIR::Inst> enclosing_scope_inst)
+    -> void;
 
 // Reports a diagnostic if the method function modifiers `abstract`, `virtual`,
 // or `impl` are present but not permitted on a function declaration in
-// `enclosing_scope_id`.
+// `enclosing_scope_inst`.
 //
-// `enclosing_scope_id` may be Invalid for a declaration in a block scope.
-auto CheckMethodModifiersOnFunction(Context& context,
-                                    SemIR::NameScopeId enclosing_scope_id)
-    -> void;
+// `enclosing_scope_inst` may be nullopt for a declaration in a block scope.
+auto CheckMethodModifiersOnFunction(
+    Context& context, SemIR::InstId enclosing_scope_inst_id,
+    std::optional<SemIR::Inst> enclosing_scope_inst) -> void;
 
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_loc_id`) specifying the context in
@@ -48,19 +49,21 @@ inline auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 // declarations, diagnosing and removing it on:
 // - `extern` on a definition.
 // - `extern` on a scoped entity.
-auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                  SemIR::NameScopeId enclosing_scope_id,
-                                  bool is_definition) -> void;
+//
+// `enclosing_scope_inst` may be nullopt for a declaration in a block scope.
+auto RestrictExternModifierOnDecl(
+    Context& context, Lex::TokenKind decl_kind,
+    std::optional<SemIR::Inst> enclosing_scope_inst, bool is_definition)
+    -> void;
 
 // Report a diagonostic if `default` and `final` modifiers are used on
 // declarations where they are not allowed. Right now they are only allowed
 // inside interfaces.
 //
-// `enclosing_scope_id` may be Invalid for a declaration in a block scope.
-auto RequireDefaultFinalOnlyInInterfaces(Context& context,
-                                         Lex::TokenKind decl_kind,
-                                         SemIR::NameScopeId enclosing_scope_id)
-    -> void;
+// `enclosing_scope_inst` may be nullopt for a declaration in a block scope.
+auto RequireDefaultFinalOnlyInInterfaces(
+    Context& context, Lex::TokenKind decl_kind,
+    std::optional<SemIR::Inst> enclosing_scope_inst) -> void;
 
 }  // namespace Carbon::Check
 

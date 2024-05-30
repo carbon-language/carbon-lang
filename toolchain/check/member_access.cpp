@@ -97,18 +97,17 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
 // performed if we find an associated entity.
 static auto ScopeNeedsImplLookup(Context& context,
                                  SemIR::NameScopeId name_scope_id) -> bool {
-  auto inst_id = context.name_scopes().GetInstIdIfValid(name_scope_id);
-  if (!inst_id.is_valid()) {
+  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
+  if (!inst) {
     return false;
   }
 
-  auto inst = context.insts().Get(inst_id);
-  if (inst.Is<SemIR::InterfaceDecl>()) {
+  if (inst->Is<SemIR::InterfaceDecl>()) {
     // Don't perform impl lookup if an associated entity is named as a member of
     // a facet type.
     return false;
   }
-  if (inst.Is<SemIR::Namespace>()) {
+  if (inst->Is<SemIR::Namespace>()) {
     // Don't perform impl lookup if an associated entity is named as a namespace
     // member.
     // TODO: This case is not yet listed in the design.

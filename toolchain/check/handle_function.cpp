@@ -45,19 +45,21 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
 }
 
 static auto DiagnoseModifiers(Context& context, bool is_definition,
-                              SemIR::NameScopeId enclosing_scope_id)
+                              SemIR::InstId enclosing_scope_inst_id,
+                              std::optional<SemIR::Inst> enclosing_scope_inst)
     -> KeywordModifierSet {
-  const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  CheckAccessModifiersOnDecl(context, decl_kind, enclosing_scope_id);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Fn, enclosing_scope_inst);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
-                       decl_kind);
-  RestrictExternModifierOnDecl(context, decl_kind, enclosing_scope_id,
-                               is_definition);
-  CheckMethodModifiersOnFunction(context, enclosing_scope_id);
-  RequireDefaultFinalOnlyInInterfaces(context, decl_kind, enclosing_scope_id);
+                       Lex::TokenKind::Fn);
+  RestrictExternModifierOnDecl(context, Lex::TokenKind::Fn,
+                               enclosing_scope_inst, is_definition);
+  CheckMethodModifiersOnFunction(context, enclosing_scope_inst_id,
+                                 enclosing_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Fn,
+                                      enclosing_scope_inst);
 
   return context.decl_state_stack().innermost().modifier_set;
 }
@@ -222,8 +224,10 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto modifiers = DiagnoseModifiers(context, is_definition,
-                                     name_context.enclosing_scope_id);
+  auto [enclosing_scope_inst_id, enclosing_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
+  auto modifiers = DiagnoseModifiers(
+      context, is_definition, enclosing_scope_inst_id, enclosing_scope_inst);
   if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
@@ -279,13 +283,9 @@ static auto BuildFunctionDecl(Context& context,
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = function_info.decl_id;
-    if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
-        !name_context.has_qualifiers) {
-      auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
-          name_context.enclosing_scope_id_for_new_inst());
+    if (enclosing_scope_inst && !name_context.has_qualifiers) {
       if (auto interface_scope =
-              context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
-                  scope_inst_id)) {
+              enclosing_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
         lookup_result_id = BuildAssociatedEntity(
             context, interface_scope->interface_id, function_info.decl_id);
       }
