@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/if/fail_scope.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/if/fail_scope.carbon
 
 fn VarScope(b: bool) -> i32 {
   if (b) {
@@ -38,13 +42,13 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %VarScope.decl: VarScope = fn_decl @VarScope [template = constants.%struct.3] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc7_16.2: type = converted %bool.make_type, %.loc7_16.1 [template = bool]
-// CHECK:STDOUT:     %b.loc7_13.1: bool = param b
-// CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc7_13.1
+// CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc11_16.2: type = converted %bool.make_type, %.loc11_16.1 [template = bool]
+// CHECK:STDOUT:     %b.loc11_13.1: bool = param b
+// CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc11_13.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc7_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_25.2: type = converted %int.make_type_32, %.loc7_25.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32, %.loc11_25.1 [template = i32]
 // CHECK:STDOUT:     @VarScope.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
@@ -61,18 +65,18 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc9_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc9_12.2: type = converted %int.make_type_32, %.loc9_12.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32, %.loc13_12.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc9_18: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   assign %n.var, %.loc9_18
-// CHECK:STDOUT:   %n.ref.loc10: ref i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc10: i32 = bind_value %n.ref.loc10
-// CHECK:STDOUT:   return %.loc10
+// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   assign %n.var, %.loc13_18
+// CHECK:STDOUT:   %n.ref.loc14: ref i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc14: i32 = bind_value %n.ref.loc14
+// CHECK:STDOUT:   return %.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %n.ref.loc15: <error> = name_ref n, <error> [template = <error>]
+// CHECK:STDOUT:   %n.ref.loc19: <error> = name_ref n, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

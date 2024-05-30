@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_nested_incomplete.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_nested_incomplete.carbon
 
 class Incomplete;
 
@@ -40,15 +44,15 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (%int.make_type_32, %Incomplete.ref.loc15)
-// CHECK:STDOUT:   %.loc15_24.2: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc15_24.3: type = converted %int.make_type_32, %.loc15_24.2 [template = i32]
-// CHECK:STDOUT:   %.loc15_24.4: type = converted %.loc15_24.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
+// CHECK:STDOUT:   %.loc19_24.1: (type, type) = tuple_literal (%int.make_type_32, %Incomplete.ref.loc19)
+// CHECK:STDOUT:   %.loc19_24.2: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc19_24.3: type = converted %int.make_type_32, %.loc19_24.2 [template = i32]
+// CHECK:STDOUT:   %.loc19_24.4: type = converted %.loc19_24.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
-// CHECK:STDOUT:   %Incomplete.ref.loc17: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc17: type = ptr_type Incomplete [template = constants.%.4]
+// CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
+// CHECK:STDOUT:   %.loc21: type = ptr_type Incomplete [template = constants.%.4]
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT: }
@@ -60,8 +64,8 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, file.%t
-// CHECK:STDOUT:   %.loc17_25: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc17_22: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_25: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc21_22: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

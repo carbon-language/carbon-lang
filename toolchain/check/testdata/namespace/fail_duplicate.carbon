@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/namespace/fail_duplicate.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/namespace/fail_duplicate.carbon
 
 namespace Foo;
 
@@ -33,17 +37,17 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Baz = %Baz.decl.loc9
+// CHECK:STDOUT:     .Baz = %Baz.decl.loc13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc9: Baz = fn_decl @Baz [template = constants.%struct] {}
-// CHECK:STDOUT:   %Baz.decl.loc18: Baz = fn_decl @Baz [template = constants.%struct] {}
+// CHECK:STDOUT:   %Baz.decl.loc13: Baz = fn_decl @Baz [template = constants.%struct] {}
+// CHECK:STDOUT:   %Baz.decl.loc22: Baz = fn_decl @Baz [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc19:
+// CHECK:STDOUT: !.loc23:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

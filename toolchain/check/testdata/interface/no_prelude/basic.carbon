@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/basic.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/basic.carbon
 
 interface Empty {
 }
@@ -30,11 +34,11 @@ interface ForwardDeclared {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
-// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc10
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc10: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc12: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc14: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc16: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -48,11 +52,11 @@ interface ForwardDeclared {
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %Self: ForwardDeclared = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
-// CHECK:STDOUT:   %.loc13: <associated F in ForwardDeclared> = assoc_entity element0, %F.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17: <associated F in ForwardDeclared> = assoc_entity element0, %F.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc13
+// CHECK:STDOUT:   .F = %.loc17
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

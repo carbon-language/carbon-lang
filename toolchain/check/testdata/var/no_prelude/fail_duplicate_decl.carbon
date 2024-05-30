@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_duplicate_decl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_duplicate_decl.carbon
 
 
 fn Main() {
@@ -34,22 +38,22 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_11.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_11.2: type = converted %.loc9_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var.loc9: ref () = var x
-// CHECK:STDOUT:   %x.loc9: ref () = bind_name x, %x.var.loc9
-// CHECK:STDOUT:   %.loc9_16.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_16.2: init () = tuple_init () to %x.var.loc9 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc9_17: init () = converted %.loc9_16.1, %.loc9_16.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %x.var.loc9, %.loc9_17
-// CHECK:STDOUT:   %.loc16_11.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_11.2: type = converted %.loc16_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var.loc16: ref () = var x
-// CHECK:STDOUT:   %x.loc16: ref () = bind_name x, %x.var.loc16
-// CHECK:STDOUT:   %.loc16_16.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_16.2: init () = tuple_init () to %x.var.loc16 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_17: init () = converted %.loc16_16.1, %.loc16_16.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %x.var.loc16, %.loc16_17
+// CHECK:STDOUT:   %.loc13_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc13_11.2: type = converted %.loc13_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %x.var.loc13: ref () = var x
+// CHECK:STDOUT:   %x.loc13: ref () = bind_name x, %x.var.loc13
+// CHECK:STDOUT:   %.loc13_16.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc13_16.2: init () = tuple_init () to %x.var.loc13 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc13_17: init () = converted %.loc13_16.1, %.loc13_16.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %x.var.loc13, %.loc13_17
+// CHECK:STDOUT:   %.loc20_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_11.2: type = converted %.loc20_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %x.var.loc20: ref () = var x
+// CHECK:STDOUT:   %x.loc20: ref () = bind_name x, %x.var.loc20
+// CHECK:STDOUT:   %.loc20_16.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_16.2: init () = tuple_init () to %x.var.loc20 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc20_17: init () = converted %.loc20_16.1, %.loc20_16.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %x.var.loc20, %.loc20_17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

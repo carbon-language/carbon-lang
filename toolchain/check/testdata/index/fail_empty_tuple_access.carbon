@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_empty_tuple_access.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/index/fail_empty_tuple_access.carbon
 
 fn F() {}
 
@@ -44,10 +48,10 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
-// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_4.1: ref () = temporary_storage
-// CHECK:STDOUT:   %.loc13_4.2: ref () = temporary %.loc13_4.1, %F.call
-// CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.2, <error>
+// CHECK:STDOUT:   %.loc17_7: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc17_4.1: ref () = temporary_storage
+// CHECK:STDOUT:   %.loc17_4.2: ref () = temporary %.loc17_4.1, %F.call
+// CHECK:STDOUT:   %.loc17_8: ref <error> = tuple_index %.loc17_4.2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

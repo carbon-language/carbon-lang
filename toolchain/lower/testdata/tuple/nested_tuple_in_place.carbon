@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/tuple/nested_tuple_in_place.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/lower/testdata/tuple/nested_tuple_in_place.carbon
 
 fn F() -> (i32, i32, i32);
 
@@ -18,9 +22,9 @@ fn G() {
 // CHECK:STDOUT: define void @G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8
-// CHECK:STDOUT:   %.loc10_56.1.tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0
-// CHECK:STDOUT:   call void @F(ptr %.loc10_56.1.tuple.elem)
-// CHECK:STDOUT:   %.loc10_56.2.tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @F(ptr %.loc10_56.2.tuple.elem)
+// CHECK:STDOUT:   %.loc14_56.1.tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0
+// CHECK:STDOUT:   call void @F(ptr %.loc14_56.1.tuple.elem)
+// CHECK:STDOUT:   %.loc14_56.2.tuple.elem = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 1
+// CHECK:STDOUT:   call void @F(ptr %.loc14_56.2.tuple.elem)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

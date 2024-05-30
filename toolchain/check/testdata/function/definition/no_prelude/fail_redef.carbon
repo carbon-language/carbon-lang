@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/definition/no_prelude/fail_redef.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/definition/no_prelude/fail_redef.carbon
 
 fn F() {}
 // CHECK:STDERR: fail_redef.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn F`.
@@ -23,17 +27,17 @@ fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.decl.loc7
+// CHECK:STDOUT:     .F = %F.decl.loc11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc7: F = fn_decl @F [template = constants.%struct] {}
-// CHECK:STDOUT:   %F.decl.loc14: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc11: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc18: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc14:
+// CHECK:STDOUT: !.loc18:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

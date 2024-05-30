@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/pointer/basic.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/lower/testdata/pointer/basic.carbon
 
 fn G(p: i32*) -> i32 {
   return *p;
@@ -18,8 +22,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G(ptr %p) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_10.2 = load i32, ptr %p, align 4
-// CHECK:STDOUT:   ret i32 %.loc8_10.2
+// CHECK:STDOUT:   %.loc12_10.2 = load i32, ptr %p, align 4
+// CHECK:STDOUT:   ret i32 %.loc12_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() {

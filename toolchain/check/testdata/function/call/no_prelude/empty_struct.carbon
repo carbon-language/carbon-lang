@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/no_prelude/empty_struct.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/call/no_prelude/empty_struct.carbon
 
 fn Echo(a: {}) -> {} {
   return a;
@@ -30,12 +34,12 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: Echo = fn_decl @Echo [template = constants.%struct.1] {
-// CHECK:STDOUT:     %.loc7_13.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc7_13.2: type = converted %.loc7_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %a.loc7_9.1: {} = param a
-// CHECK:STDOUT:     @Echo.%a: {} = bind_name a, %a.loc7_9.1
-// CHECK:STDOUT:     %.loc7_20.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc7_20.2: type = converted %.loc7_20.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_13.1: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %a.loc11_9.1: {} = param a
+// CHECK:STDOUT:     @Echo.%a: {} = bind_name a, %a.loc11_9.1
+// CHECK:STDOUT:     %.loc11_20.1: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @Echo.%return: ref {} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
@@ -50,10 +54,10 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: Echo = name_ref Echo, file.%Echo.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc12_9: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc16_9: {} = struct_literal ()
 // CHECK:STDOUT:   %struct: {} = struct_value () [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc12_7: {} = converted %.loc12_9, %struct [template = constants.%struct.3]
-// CHECK:STDOUT:   %Echo.call: init {} = call %Echo.ref(%.loc12_7)
+// CHECK:STDOUT:   %.loc16_7: {} = converted %.loc16_9, %struct [template = constants.%struct.3]
+// CHECK:STDOUT:   %Echo.call: init {} = call %Echo.ref(%.loc16_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

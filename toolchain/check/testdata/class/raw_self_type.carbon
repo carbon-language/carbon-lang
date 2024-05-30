@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/raw_self_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/raw_self_type.carbon
 
 class Class {
   fn F() {
@@ -45,12 +49,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [template = constants.%MemberNamedSelf] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
-// CHECK:STDOUT:     %Self.ref.loc20_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc20_22.1: MemberNamedSelf = param x
-// CHECK:STDOUT:     @F.2.%x: MemberNamedSelf = bind_name x, %x.loc20_22.1
-// CHECK:STDOUT:     %Self.ref.loc20_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [template = constants.%Self]
-// CHECK:STDOUT:     %y.loc20_31.1: r#Self = param y
-// CHECK:STDOUT:     @F.2.%y: r#Self = bind_name y, %y.loc20_31.1
+// CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %x.loc24_22.1: MemberNamedSelf = param x
+// CHECK:STDOUT:     @F.2.%x: MemberNamedSelf = bind_name x, %x.loc24_22.1
+// CHECK:STDOUT:     %Self.ref.loc24_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [template = constants.%Self]
+// CHECK:STDOUT:     %y.loc24_31.1: r#Self = param y
+// CHECK:STDOUT:     @F.2.%y: r#Self = bind_name y, %y.loc24_31.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,12 +69,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: class @MemberNamedSelf {
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [template = constants.%Self] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
-// CHECK:STDOUT:     %Self.ref.loc17_11: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc17_8.1: MemberNamedSelf = param x
-// CHECK:STDOUT:     %x.loc17_8.2: MemberNamedSelf = bind_name x, %x.loc17_8.1
-// CHECK:STDOUT:     %Self.ref.loc17_20: type = name_ref r#Self, %Self.decl [template = constants.%Self]
-// CHECK:STDOUT:     %y.loc17_17.1: r#Self = param y
-// CHECK:STDOUT:     %y.loc17_17.2: r#Self = bind_name y, %y.loc17_17.1
+// CHECK:STDOUT:     %Self.ref.loc21_11: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %x.loc21_8.1: MemberNamedSelf = param x
+// CHECK:STDOUT:     %x.loc21_8.2: MemberNamedSelf = bind_name x, %x.loc21_8.1
+// CHECK:STDOUT:     %Self.ref.loc21_20: type = name_ref r#Self, %Self.decl [template = constants.%Self]
+// CHECK:STDOUT:     %y.loc21_17.1: r#Self = param y
+// CHECK:STDOUT:     %y.loc21_17.2: r#Self = bind_name y, %y.loc21_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -86,17 +90,17 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc9: type = ptr_type Class [template = constants.%.3]
+// CHECK:STDOUT:   %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %.loc13: type = ptr_type Class [template = constants.%.3]
 // CHECK:STDOUT:   %Self.var: ref Class* = var r#Self
 // CHECK:STDOUT:   %Self: ref Class* = bind_name r#Self, %Self.var
-// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc10_16: type = ptr_type Class [template = constants.%.3]
+// CHECK:STDOUT:   %Self.ref.loc14_12: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %.loc14_16: type = ptr_type Class [template = constants.%.3]
 // CHECK:STDOUT:   %p.var: ref Class* = var p
 // CHECK:STDOUT:   %p: ref Class* = bind_name p, %p.var
-// CHECK:STDOUT:   %Self.ref.loc10_20: ref Class* = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc10_20: Class* = bind_value %Self.ref.loc10_20
-// CHECK:STDOUT:   assign %p.var, %.loc10_20
+// CHECK:STDOUT:   %Self.ref.loc14_20: ref Class* = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc14_20: Class* = bind_value %Self.ref.loc14_20
+// CHECK:STDOUT:   assign %p.var, %.loc14_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -7,6 +7,10 @@
 // Check that the command-line flag to dump textual IR works.
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/raw_identifier.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/raw_identifier.carbon
 
 fn A(n: ()) -> () {
   return r#n;
@@ -39,30 +43,30 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.1] {
-// CHECK:STDOUT:     %.loc11_10.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_10.2: type = converted %.loc11_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %n.loc11_6.1: () = param n
-// CHECK:STDOUT:     @A.%n: () = bind_name n, %n.loc11_6.1
-// CHECK:STDOUT:     %.loc11_17.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_17.2: type = converted %.loc11_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc15_10.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %n.loc15_6.1: () = param n
+// CHECK:STDOUT:     @A.%n: () = bind_name n, %n.loc15_6.1
+// CHECK:STDOUT:     %.loc15_17.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_17.2: type = converted %.loc15_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @A.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.2] {
-// CHECK:STDOUT:     %.loc15_12.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %n.loc15_6.1: () = param n
-// CHECK:STDOUT:     @B.%n: () = bind_name n, %n.loc15_6.1
-// CHECK:STDOUT:     %.loc15_19.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19.2: type = converted %.loc15_19.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc19_12.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_12.2: type = converted %.loc19_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %n.loc19_6.1: () = param n
+// CHECK:STDOUT:     @B.%n: () = bind_name n, %n.loc19_6.1
+// CHECK:STDOUT:     %.loc19_19.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_19.2: type = converted %.loc19_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @B.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.3] {
-// CHECK:STDOUT:     %.loc19_13.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_13.2: type = converted %.loc19_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %if.loc19_6.1: () = param r#if
-// CHECK:STDOUT:     @C.%if: () = bind_name r#if, %if.loc19_6.1
-// CHECK:STDOUT:     %.loc19_20.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_20.2: type = converted %.loc19_20.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc23_13.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc23_13.2: type = converted %.loc23_13.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %if.loc23_6.1: () = param r#if
+// CHECK:STDOUT:     @C.%if: () = bind_name r#if, %if.loc23_6.1
+// CHECK:STDOUT:     %.loc23_20.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc23_20.2: type = converted %.loc23_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @C.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

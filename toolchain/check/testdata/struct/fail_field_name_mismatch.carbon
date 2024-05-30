@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_field_name_mismatch.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/struct/fail_field_name_mismatch.carbon
 
 // CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: ERROR: Missing value for field `a` in struct initialization.
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1};
@@ -34,17 +38,17 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:   %.loc11_13.2: type = converted %int.make_type_32.loc11, %.loc11_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc11_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:   %.loc15_13.2: type = converted %int.make_type_32.loc15, %.loc15_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc15_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc16: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc16_13.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
-// CHECK:STDOUT:   %.loc16_13.2: type = converted %int.make_type_32.loc16, %.loc16_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc16_16: type = struct_type {.b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_32.loc20: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc20_13.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
+// CHECK:STDOUT:   %.loc20_13.2: type = converted %int.make_type_32.loc20, %.loc20_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc20_16: type = struct_type {.b: i32} [template = constants.%.4]
 // CHECK:STDOUT:   %y.var: ref {.b: i32} = var y
 // CHECK:STDOUT:   %y: ref {.b: i32} = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -53,8 +57,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_26: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc11_27: {.b: i32} = struct_literal (%.loc11_26)
+// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_27: {.b: i32} = struct_literal (%.loc15_26)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, file.%x
 // CHECK:STDOUT:   assign file.%y.var, <error>

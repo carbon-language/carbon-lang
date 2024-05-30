@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/init_nested.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/init_nested.carbon
 
 class Inner {
   var a: i32;
@@ -66,31 +70,31 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class Inner> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_32.loc9, %.loc9_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_8: <unbound element of class Inner> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class Inner> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_8: <unbound element of class Inner> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .a = %.loc8_8
-// CHECK:STDOUT:   .b = %.loc9_8
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc15: <unbound element of class Outer> = field_decl c, element0 [template]
-// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc16: <unbound element of class Outer> = field_decl d, element1 [template]
+// CHECK:STDOUT:   %Inner.ref.loc19: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
+// CHECK:STDOUT:   %.loc19: <unbound element of class Outer> = field_decl c, element0 [template]
+// CHECK:STDOUT:   %Inner.ref.loc20: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
+// CHECK:STDOUT:   %.loc20: <unbound element of class Outer> = field_decl d, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
-// CHECK:STDOUT:   .c = %.loc15
-// CHECK:STDOUT:   .d = %.loc16
+// CHECK:STDOUT:   .c = %.loc19
+// CHECK:STDOUT:   .d = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -99,15 +103,15 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeOuter() -> %return: Outer {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %MakeInner.ref.loc20_16: MakeInner = name_ref MakeInner, file.%MakeInner.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc20_45.1: ref Inner = class_element_access %return, element0
-// CHECK:STDOUT:   %MakeInner.call.loc20_25: init Inner = call %MakeInner.ref.loc20_16() to %.loc20_45.1
-// CHECK:STDOUT:   %MakeInner.ref.loc20_34: MakeInner = name_ref MakeInner, file.%MakeInner.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc20_45.2: ref Inner = class_element_access %return, element1
-// CHECK:STDOUT:   %MakeInner.call.loc20_43: init Inner = call %MakeInner.ref.loc20_34() to %.loc20_45.2
-// CHECK:STDOUT:   %.loc20_45.3: {.c: Inner, .d: Inner} = struct_literal (%MakeInner.call.loc20_25, %MakeInner.call.loc20_43)
-// CHECK:STDOUT:   %.loc20_45.4: init Outer = class_init (%MakeInner.call.loc20_25, %MakeInner.call.loc20_43), %return
-// CHECK:STDOUT:   %.loc20_46: init Outer = converted %.loc20_45.3, %.loc20_45.4
-// CHECK:STDOUT:   return %.loc20_46 to %return
+// CHECK:STDOUT:   %MakeInner.ref.loc24_16: MakeInner = name_ref MakeInner, file.%MakeInner.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc24_45.1: ref Inner = class_element_access %return, element0
+// CHECK:STDOUT:   %MakeInner.call.loc24_25: init Inner = call %MakeInner.ref.loc24_16() to %.loc24_45.1
+// CHECK:STDOUT:   %MakeInner.ref.loc24_34: MakeInner = name_ref MakeInner, file.%MakeInner.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc24_45.2: ref Inner = class_element_access %return, element1
+// CHECK:STDOUT:   %MakeInner.call.loc24_43: init Inner = call %MakeInner.ref.loc24_34() to %.loc24_45.2
+// CHECK:STDOUT:   %.loc24_45.3: {.c: Inner, .d: Inner} = struct_literal (%MakeInner.call.loc24_25, %MakeInner.call.loc24_43)
+// CHECK:STDOUT:   %.loc24_45.4: init Outer = class_init (%MakeInner.call.loc24_25, %MakeInner.call.loc24_43), %return
+// CHECK:STDOUT:   %.loc24_46: init Outer = converted %.loc24_45.3, %.loc24_45.4
+// CHECK:STDOUT:   return %.loc24_46 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

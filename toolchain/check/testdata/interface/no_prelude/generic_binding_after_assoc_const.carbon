@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/generic_binding_after_assoc_const.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/generic_binding_after_assoc_const.carbon
 
 interface I {
   fn F(T:! type);
@@ -41,27 +45,27 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
-// CHECK:STDOUT:     %T.loc8_8.1: type = param T
-// CHECK:STDOUT:     %T.loc8_8.2: type = bind_symbolic_name T 1, %T.loc8_8.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
-// CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
-// CHECK:STDOUT:   %.loc9: <associated type in I> = assoc_entity element1, %U [template = constants.%.6]
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
 // CHECK:STDOUT:     %T.loc12_8.1: type = param T
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <associated G in I> = assoc_entity element2, %G.decl [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
+// CHECK:STDOUT:   %.loc13: <associated type in I> = assoc_entity element1, %U [template = constants.%.6]
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:     %T.loc16_8.1: type = param T
+// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T 1, %T.loc16_8.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16: <associated G in I> = assoc_entity element2, %G.decl [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:   .U = %.loc9
-// CHECK:STDOUT:   .G = %.loc12
+// CHECK:STDOUT:   .F = %.loc12
+// CHECK:STDOUT:   .U = %.loc13
+// CHECK:STDOUT:   .G = %.loc16
 // CHECK:STDOUT:   witness = (%F.decl, %U, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@I.%T.loc8_8.2: type);
+// CHECK:STDOUT: fn @F(@I.%T.loc12_8.2: type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@I.%T.loc12_8.2: type);
+// CHECK:STDOUT: fn @G(@I.%T.loc16_8.2: type);
 // CHECK:STDOUT:

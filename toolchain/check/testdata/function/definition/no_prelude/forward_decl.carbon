@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/definition/no_prelude/forward_decl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/definition/no_prelude/forward_decl.carbon
 
 fn Foo();
 
@@ -18,10 +22,10 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %Foo.decl.loc7
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc7: Foo = fn_decl @Foo [template = constants.%struct] {}
-// CHECK:STDOUT:   %Foo.decl.loc9: Foo = fn_decl @Foo [template = constants.%struct] {}
+// CHECK:STDOUT:   %Foo.decl.loc11: Foo = fn_decl @Foo [template = constants.%struct] {}
+// CHECK:STDOUT:   %Foo.decl.loc13: Foo = fn_decl @Foo [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

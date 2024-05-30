@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/array/fail_invalid_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/array/fail_invalid_type.carbon
 
 // CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var a: [1; 1];
@@ -21,9 +25,9 @@ var a: [1; 1];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14_9: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_12: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_13: type = array_type %.loc14_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

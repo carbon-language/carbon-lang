@@ -148,3 +148,11 @@ Supported comment markers are:
 
     Output line matchers may contain `[[@LINE+offset]` and `{{regex}}` syntaxes,
     similar to `FileCheck`.
+
+-   ```
+    // TIP: <tip>
+    ```
+
+    Tips like this are added by autoupdate, for example providing commands to
+    run the test directly. Tips have no impact on validation; the marker informs
+    autoupdate that in can update or remove them as needed.

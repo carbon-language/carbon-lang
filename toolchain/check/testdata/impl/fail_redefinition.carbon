@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_redefinition.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/impl/fail_redefinition.carbon
 
 interface I {}
 
@@ -36,17 +40,17 @@ impl i32 as I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %int.make_type_32.loc9: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:     %.loc9_6.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:     %.loc9_6.2: type = converted %int.make_type_32.loc9, %.loc9_6.1 [template = i32]
-// CHECK:STDOUT:     %I.ref.loc9: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:     %.loc13_6.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:     %.loc13_6.2: type = converted %int.make_type_32.loc13, %.loc13_6.1 [template = i32]
+// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %int.make_type_32.loc17: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:     %.loc17_6.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
-// CHECK:STDOUT:     %.loc17_6.2: type = converted %int.make_type_32.loc17, %.loc17_6.1 [template = i32]
-// CHECK:STDOUT:     %I.ref.loc17: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:     %.loc21_6.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
+// CHECK:STDOUT:     %.loc21_6.2: type = converted %int.make_type_32.loc21, %.loc21_6.1 [template = i32]
+// CHECK:STDOUT:     %I.ref.loc21: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

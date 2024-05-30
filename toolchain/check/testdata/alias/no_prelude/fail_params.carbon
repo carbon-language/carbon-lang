@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/no_prelude/fail_params.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/alias/no_prelude/fail_params.carbon
 
 // CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:8: ERROR: `alias` declaration cannot have parameters.
 // CHECK:STDERR: alias A(T:! type) = T*;
@@ -24,10 +28,10 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.loc14_9.1: type = param T
-// CHECK:STDOUT:   %T.loc14_9.2: type = bind_symbolic_name T 0, %T.loc14_9.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc14_9.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc14: type = ptr_type T [symbolic = constants.%.1]
+// CHECK:STDOUT:   %T.loc18_9.1: type = param T
+// CHECK:STDOUT:   %T.loc18_9.2: type = bind_symbolic_name T 0, %T.loc18_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc18_9.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc18: type = ptr_type T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

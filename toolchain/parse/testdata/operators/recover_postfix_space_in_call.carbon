@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/recover_postfix_space_in_call.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/operators/recover_postfix_space_in_call.carbon
 
 // CHECK:STDERR: recover_postfix_space_in_call.carbon:[[@LINE+3]]:18: ERROR: Whitespace is not allowed before this unary operator.
 // CHECK:STDERR: var n: i8 = F(i8 *);

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/as/fail_not_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/as/fail_not_type.carbon
 
 // CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: let n: i32 = 1 as 2;
@@ -26,10 +30,10 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc10_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc10_8.2: type = converted %int.make_type_32, %.loc10_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc14_8.2: type = converted %int.make_type_32, %.loc14_8.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_19: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

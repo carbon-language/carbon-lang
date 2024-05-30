@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_value_as_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_value_as_type.carbon
 
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var x: (1, );
@@ -22,8 +26,8 @@ var x: (1, );
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_12: (i32,) = tuple_literal (%.loc10_9)
+// CHECK:STDOUT:   %.loc14_9: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_12: (i32,) = tuple_literal (%.loc14_9)
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }

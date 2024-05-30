@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_not_pointer.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_not_pointer.carbon
 
 fn Deref(n: i32) {
   // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: ERROR: Cannot dereference operand of non-pointer type `i32`.
@@ -58,10 +62,10 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Deref.decl: Deref = fn_decl @Deref [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_13.2: type = converted %int.make_type_32, %.loc7_13.1 [template = i32]
-// CHECK:STDOUT:     %n.loc7_10.1: i32 = param n
-// CHECK:STDOUT:     @Deref.%n: i32 = bind_name n, %n.loc7_10.1
+// CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_13.2: type = converted %int.make_type_32, %.loc11_13.1 [template = i32]
+// CHECK:STDOUT:     %n.loc11_10.1: i32 = param n
+// CHECK:STDOUT:     @Deref.%n: i32 = bind_name n, %n.loc11_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,26 +73,26 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref.loc12: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc12: ref <error> = deref %n.ref.loc12
-// CHECK:STDOUT:   %n.ref.loc17: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc17: ref <error> = deref %n.ref.loc17
-// CHECK:STDOUT:   %.loc22_5.1: () = tuple_literal ()
-// CHECK:STDOUT:   %tuple.loc22: () = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc22_5.2: () = converted %.loc22_5.1, %tuple.loc22 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc22_3: ref <error> = deref %.loc22_5.2
-// CHECK:STDOUT:   %.loc27_4.1: () = tuple_literal ()
-// CHECK:STDOUT:   %tuple.loc27: () = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc27_4.2: () = converted %.loc27_4.1, %tuple.loc27 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc27_5: ref <error> = deref %.loc27_4.2
-// CHECK:STDOUT:   %.loc32_5.1: {} = struct_literal ()
-// CHECK:STDOUT:   %struct.loc32: {} = struct_value () [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc32_5.2: {} = converted %.loc32_5.1, %struct.loc32 [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc32_3: ref <error> = deref %.loc32_5.2
-// CHECK:STDOUT:   %.loc36_4.1: {} = struct_literal ()
+// CHECK:STDOUT:   %n.ref.loc16: i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16
+// CHECK:STDOUT:   %n.ref.loc21: i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc21: ref <error> = deref %n.ref.loc21
+// CHECK:STDOUT:   %.loc26_5.1: () = tuple_literal ()
+// CHECK:STDOUT:   %tuple.loc26: () = tuple_value () [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc26_5.2: () = converted %.loc26_5.1, %tuple.loc26 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc26_3: ref <error> = deref %.loc26_5.2
+// CHECK:STDOUT:   %.loc31_4.1: () = tuple_literal ()
+// CHECK:STDOUT:   %tuple.loc31: () = tuple_value () [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc31_4.2: () = converted %.loc31_4.1, %tuple.loc31 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc31_5: ref <error> = deref %.loc31_4.2
+// CHECK:STDOUT:   %.loc36_5.1: {} = struct_literal ()
 // CHECK:STDOUT:   %struct.loc36: {} = struct_value () [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc36_4.2: {} = converted %.loc36_4.1, %struct.loc36 [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc36_5: ref <error> = deref %.loc36_4.2
+// CHECK:STDOUT:   %.loc36_5.2: {} = converted %.loc36_5.1, %struct.loc36 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc36_3: ref <error> = deref %.loc36_5.2
+// CHECK:STDOUT:   %.loc40_4.1: {} = struct_literal ()
+// CHECK:STDOUT:   %struct.loc40: {} = struct_value () [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc40_4.2: {} = converted %.loc40_4.1, %struct.loc40 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc40_5: ref <error> = deref %.loc40_4.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

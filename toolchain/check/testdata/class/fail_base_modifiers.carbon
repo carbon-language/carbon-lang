@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_base_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_base_modifiers.carbon
 
 base class B {}
 
@@ -89,40 +93,40 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc14: <unbound element of class C1> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc18: <unbound element of class C1> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
-// CHECK:STDOUT:   .base = %.loc14
+// CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc26: <unbound element of class C2> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc30: <unbound element of class C2> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
-// CHECK:STDOUT:   .base = %.loc26
+// CHECK:STDOUT:   .base = %.loc30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc37: <unbound element of class C3> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc41: <unbound element of class C3> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
-// CHECK:STDOUT:   .base = %.loc37
+// CHECK:STDOUT:   .base = %.loc41
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc47: <unbound element of class C4> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc51: <unbound element of class C4> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C4
-// CHECK:STDOUT:   .base = %.loc47
+// CHECK:STDOUT:   .base = %.loc51
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

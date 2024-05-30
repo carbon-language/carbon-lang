@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_call_invalid.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/impl/fail_call_invalid.carbon
 
 interface Simple {
   fn G[self: Self]();
@@ -47,18 +51,18 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:     %.loc11_6.2: type = converted %int.make_type_32.loc11, %.loc11_6.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_32.loc15, %.loc15_6.1 [template = i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %InstanceCall.decl: InstanceCall = fn_decl @InstanceCall [template = constants.%struct.4] {
-// CHECK:STDOUT:     %int.make_type_32.loc18: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc18_20.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
-// CHECK:STDOUT:     %.loc18_20.2: type = converted %int.make_type_32.loc18, %.loc18_20.1 [template = i32]
-// CHECK:STDOUT:     %n.loc18_17.1: i32 = param n
-// CHECK:STDOUT:     @InstanceCall.%n: i32 = bind_name n, %n.loc18_17.1
+// CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
+// CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32.loc22, %.loc22_20.1 [template = i32]
+// CHECK:STDOUT:     %n.loc22_17.1: i32 = param n
+// CHECK:STDOUT:     @InstanceCall.%n: i32 = bind_name n, %n.loc22_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,24 +70,24 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref: Simple = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref, %.loc8_14.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc8_8.1: Self = param self
-// CHECK:STDOUT:     %self.loc8_8.2: Self = bind_name self, %self.loc8_8.1
+// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref, %.loc12_14.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc12_8.1: Self = param self
+// CHECK:STDOUT:     %self.loc12_8.2: Self = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_21: <associated G in Simple> = assoc_entity element0, %G.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_21: <associated G in Simple> = assoc_entity element0, %G.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .G = %.loc8_21
+// CHECK:STDOUT:   .G = %.loc12_21
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as Simple {
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G.2 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [template = <error>]
-// CHECK:STDOUT:     %self.loc15_8.1: <error> = param self
-// CHECK:STDOUT:     %self.loc15_8.2: <error> = bind_name self, %self.loc15_8.1
+// CHECK:STDOUT:     %self.loc19_8.1: <error> = param self
+// CHECK:STDOUT:     %self.loc19_8.2: <error> = bind_name self, %self.loc19_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -92,19 +96,19 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1[@Simple.%self.loc8_8.2: Self]();
+// CHECK:STDOUT: fn @G.1[@Simple.%self.loc12_8.2: Self]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[@impl.%self.loc15_8.2: <error>]();
+// CHECK:STDOUT: fn @G.2[@impl.%self.loc19_8.2: <error>]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCall(%n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
-// CHECK:STDOUT:   %G.ref: <associated G in Simple> = name_ref G, @Simple.%.loc8_21 [template = constants.%.4]
+// CHECK:STDOUT:   %G.ref: <associated G in Simple> = name_ref G, @Simple.%.loc12_21 [template = constants.%.4]
 // CHECK:STDOUT:   %.1: G = interface_witness_access @impl.%.1, element0 [template = <error>]
-// CHECK:STDOUT:   %.loc19: <bound method> = bound_method %n.ref, %.1
+// CHECK:STDOUT:   %.loc23: <bound method> = bound_method %n.ref, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

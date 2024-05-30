@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_redeclaration_scope.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_redeclaration_scope.carbon
 
 class A;
 
@@ -37,14 +41,14 @@ class Y {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .A = %A.decl.loc11
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A.1 [template = constants.%A.1] {}
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [template = constants.%A.1] {}
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
-// CHECK:STDOUT:   %A.decl.loc15: type = class_decl @A.1 [template = constants.%A.1] {}
+// CHECK:STDOUT:   %A.decl.loc19: type = class_decl @A.1 [template = constants.%A.1] {}
 // CHECK:STDOUT:   %Y.decl: type = class_decl @Y [template = constants.%Y] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

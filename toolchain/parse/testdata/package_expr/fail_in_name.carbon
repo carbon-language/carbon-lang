@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/package_expr/fail_in_name.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/package_expr/fail_in_name.carbon
 
 // CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: var package.val: i32;

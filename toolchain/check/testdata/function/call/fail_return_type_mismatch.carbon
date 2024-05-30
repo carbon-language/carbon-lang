@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/fail_return_type_mismatch.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/call/fail_return_type_mismatch.carbon
 
 fn Foo() -> f64 { return 1.0; }
 
@@ -38,10 +42,10 @@ fn Run() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct.2] {
-// CHECK:STDOUT:     %.loc7_13.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%struct.1(%.loc7_13.1) [template = f64]
-// CHECK:STDOUT:     %.loc7_13.2: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:     %.loc7_13.3: type = converted %float.make_type, %.loc7_13.2 [template = f64]
+// CHECK:STDOUT:     %.loc11_13.1: i32 = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%struct.1(%.loc11_13.1) [template = f64]
+// CHECK:STDOUT:     %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
 // CHECK:STDOUT:     @Foo.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.3] {}
@@ -52,15 +56,15 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: f64 = float_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT:   %.loc11: f64 = float_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.4() [template = i32]
-// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32, %.loc13_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32, %.loc17_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.2]

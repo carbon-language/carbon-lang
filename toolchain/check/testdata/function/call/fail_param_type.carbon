@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/fail_param_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/call/fail_param_type.carbon
 
 fn G(a: i32) {}
 
@@ -39,10 +43,10 @@ fn F() {
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_9.2: type = converted %int.make_type_32, %.loc7_9.1 [template = i32]
-// CHECK:STDOUT:     %a.loc7_6.1: i32 = param a
-// CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc7_6.1
+// CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32, %.loc11_9.1 [template = i32]
+// CHECK:STDOUT:     %a.loc11_6.1: i32 = param a
+// CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc11_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {}
 // CHECK:STDOUT: }
@@ -57,7 +61,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc16: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc20: f64 = float_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %G.call: init () = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/reorder_qualified.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/reorder_qualified.carbon
 
 class A {
   class B {
@@ -102,30 +106,30 @@ class A {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %AF.decl: AF = fn_decl @AF [template = constants.%struct.6] {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc42_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc42_10.2: type = converted %int.make_type_32, %.loc42_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc42_8: <unbound element of class A> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc46_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc46_10.2: type = converted %int.make_type_32, %.loc46_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc46_8: <unbound element of class A> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .AF = %AF.decl
-// CHECK:STDOUT:   .a = %.loc42_8
+// CHECK:STDOUT:   .a = %.loc46_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %BF.decl: BF = fn_decl @BF [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc12_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc12_12.2: type = converted %int.make_type_32, %.loc12_12.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_10: <unbound element of class B> = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc16_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc16_12.2: type = converted %int.make_type_32, %.loc16_12.1 [template = i32]
+// CHECK:STDOUT:   %.loc16_10: <unbound element of class B> = field_decl b, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .BF = %BF.decl
-// CHECK:STDOUT:   .b = %.loc12_10
+// CHECK:STDOUT:   .b = %.loc16_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -133,30 +137,30 @@ class A {
 // CHECK:STDOUT:   %DF.decl: DF = fn_decl @DF [template = constants.%struct.4] {}
 // CHECK:STDOUT:   %CF.decl: CF = fn_decl @CF [template = constants.%struct.5] {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc38_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc38_12.2: type = converted %int.make_type_32, %.loc38_12.1 [template = i32]
-// CHECK:STDOUT:   %.loc38_10: <unbound element of class C> = field_decl c, element0 [template]
+// CHECK:STDOUT:   %.loc42_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc42_12.2: type = converted %int.make_type_32, %.loc42_12.1 [template = i32]
+// CHECK:STDOUT:   %.loc42_10: <unbound element of class C> = field_decl c, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .D = %D.decl
 // CHECK:STDOUT:   .CF = %CF.decl
-// CHECK:STDOUT:   .c = %.loc38_10
+// CHECK:STDOUT:   .c = %.loc42_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {}
 // CHECK:STDOUT:   %DF.decl: DF = fn_decl @DF [template = constants.%struct.4] {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc20_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc20_14.2: type = converted %int.make_type_32, %.loc20_14.1 [template = i32]
-// CHECK:STDOUT:   %.loc20_12: <unbound element of class D> = field_decl d, element0 [template]
+// CHECK:STDOUT:   %.loc24_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc24_14.2: type = converted %int.make_type_32, %.loc24_14.1 [template = i32]
+// CHECK:STDOUT:   %.loc24_12: <unbound element of class D> = field_decl d, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .DF = %DF.decl
-// CHECK:STDOUT:   .d = %.loc20_12
+// CHECK:STDOUT:   .d = %.loc24_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BF();
@@ -170,43 +174,43 @@ class A {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref A = var a
 // CHECK:STDOUT:   %a: ref A = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc25_24: i32 = int_literal 1 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc25_25.1: {.a: i32} = struct_literal (%.loc25_24)
-// CHECK:STDOUT:   %.loc25_25.2: ref i32 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc25_25.3: init i32 = initialize_from %.loc25_24 to %.loc25_25.2 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc25_25.4: init A = class_init (%.loc25_25.3), %a.var [template = constants.%struct.7]
-// CHECK:STDOUT:   %.loc25_26: init A = converted %.loc25_25.1, %.loc25_25.4 [template = constants.%struct.7]
-// CHECK:STDOUT:   assign %a.var, %.loc25_26
+// CHECK:STDOUT:   %.loc29_24: i32 = int_literal 1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc29_25.1: {.a: i32} = struct_literal (%.loc29_24)
+// CHECK:STDOUT:   %.loc29_25.2: ref i32 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc29_25.3: init i32 = initialize_from %.loc29_24 to %.loc29_25.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc29_25.4: init A = class_init (%.loc29_25.3), %a.var [template = constants.%struct.7]
+// CHECK:STDOUT:   %.loc29_26: init A = converted %.loc29_25.1, %.loc29_25.4 [template = constants.%struct.7]
+// CHECK:STDOUT:   assign %a.var, %.loc29_26
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref B = var b
 // CHECK:STDOUT:   %b: ref B = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc26_24: i32 = int_literal 2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc26_25.1: {.b: i32} = struct_literal (%.loc26_24)
-// CHECK:STDOUT:   %.loc26_25.2: ref i32 = class_element_access %b.var, element0
-// CHECK:STDOUT:   %.loc26_25.3: init i32 = initialize_from %.loc26_24 to %.loc26_25.2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc26_25.4: init B = class_init (%.loc26_25.3), %b.var [template = constants.%struct.8]
-// CHECK:STDOUT:   %.loc26_26: init B = converted %.loc26_25.1, %.loc26_25.4 [template = constants.%struct.8]
-// CHECK:STDOUT:   assign %b.var, %.loc26_26
+// CHECK:STDOUT:   %.loc30_24: i32 = int_literal 2 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc30_25.1: {.b: i32} = struct_literal (%.loc30_24)
+// CHECK:STDOUT:   %.loc30_25.2: ref i32 = class_element_access %b.var, element0
+// CHECK:STDOUT:   %.loc30_25.3: init i32 = initialize_from %.loc30_24 to %.loc30_25.2 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc30_25.4: init B = class_init (%.loc30_25.3), %b.var [template = constants.%struct.8]
+// CHECK:STDOUT:   %.loc30_26: init B = converted %.loc30_25.1, %.loc30_25.4 [template = constants.%struct.8]
+// CHECK:STDOUT:   assign %b.var, %.loc30_26
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc27_24: i32 = int_literal 3 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc27_25.1: {.c: i32} = struct_literal (%.loc27_24)
-// CHECK:STDOUT:   %.loc27_25.2: ref i32 = class_element_access %c.var, element0
-// CHECK:STDOUT:   %.loc27_25.3: init i32 = initialize_from %.loc27_24 to %.loc27_25.2 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc27_25.4: init C = class_init (%.loc27_25.3), %c.var [template = constants.%struct.9]
-// CHECK:STDOUT:   %.loc27_26: init C = converted %.loc27_25.1, %.loc27_25.4 [template = constants.%struct.9]
-// CHECK:STDOUT:   assign %c.var, %.loc27_26
+// CHECK:STDOUT:   %.loc31_24: i32 = int_literal 3 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc31_25.1: {.c: i32} = struct_literal (%.loc31_24)
+// CHECK:STDOUT:   %.loc31_25.2: ref i32 = class_element_access %c.var, element0
+// CHECK:STDOUT:   %.loc31_25.3: init i32 = initialize_from %.loc31_24 to %.loc31_25.2 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc31_25.4: init C = class_init (%.loc31_25.3), %c.var [template = constants.%struct.9]
+// CHECK:STDOUT:   %.loc31_26: init C = converted %.loc31_25.1, %.loc31_25.4 [template = constants.%struct.9]
+// CHECK:STDOUT:   assign %c.var, %.loc31_26
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref D = var d
 // CHECK:STDOUT:   %d: ref D = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc28_24: i32 = int_literal 4 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc28_25.1: {.d: i32} = struct_literal (%.loc28_24)
-// CHECK:STDOUT:   %.loc28_25.2: ref i32 = class_element_access %d.var, element0
-// CHECK:STDOUT:   %.loc28_25.3: init i32 = initialize_from %.loc28_24 to %.loc28_25.2 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc28_25.4: init D = class_init (%.loc28_25.3), %d.var [template = constants.%struct.10]
-// CHECK:STDOUT:   %.loc28_26: init D = converted %.loc28_25.1, %.loc28_25.4 [template = constants.%struct.10]
-// CHECK:STDOUT:   assign %d.var, %.loc28_26
+// CHECK:STDOUT:   %.loc32_24: i32 = int_literal 4 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc32_25.1: {.d: i32} = struct_literal (%.loc32_24)
+// CHECK:STDOUT:   %.loc32_25.2: ref i32 = class_element_access %d.var, element0
+// CHECK:STDOUT:   %.loc32_25.3: init i32 = initialize_from %.loc32_24 to %.loc32_25.2 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc32_25.4: init D = class_init (%.loc32_25.3), %d.var [template = constants.%struct.10]
+// CHECK:STDOUT:   %.loc32_26: init D = converted %.loc32_25.1, %.loc32_25.4 [template = constants.%struct.10]
+// CHECK:STDOUT:   assign %d.var, %.loc32_26
 // CHECK:STDOUT:   %AF.ref: AF = name_ref AF, @A.%AF.decl [template = constants.%struct.6]
 // CHECK:STDOUT:   %AF.call: init () = call %AF.ref()
 // CHECK:STDOUT:   %BF.ref: BF = name_ref BF, @B.%BF.decl [template = constants.%struct.1]

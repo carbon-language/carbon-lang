@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/self_in_class.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/self_in_class.carbon
 
 interface DefaultConstructible {
   fn Make() -> Self;
@@ -53,15 +57,15 @@ class A {
 // CHECK:STDOUT:   %Self: DefaultConstructible = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: Make = fn_decl @Make.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref: DefaultConstructible = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_16.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_16.2: type = converted %Self.ref, %.loc8_16.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_20: <associated Make in DefaultConstructible> = assoc_entity element0, %Make.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_20: <associated Make in DefaultConstructible> = assoc_entity element0, %Make.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Make = %.loc8_20
+// CHECK:STDOUT:   .Make = %.loc12_20
 // CHECK:STDOUT:   witness = (%Make.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,9 +100,9 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_33.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc17_33.2: init C = class_init (), @impl.%return.var [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc17_34: init C = converted %.loc17_33.1, %.loc17_33.2 [template = constants.%struct.3]
-// CHECK:STDOUT:   return %.loc17_34 to @impl.%return.var
+// CHECK:STDOUT:   %.loc21_33.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc21_33.2: init C = class_init (), @impl.%return.var [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc21_34: init C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct.3]
+// CHECK:STDOUT:   return %.loc21_34 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

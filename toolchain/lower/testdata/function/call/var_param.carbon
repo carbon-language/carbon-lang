@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/call/var_param.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/lower/testdata/function/call/var_param.carbon
 
 fn DoNothing(a: i32) {}
 
@@ -23,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4
-// CHECK:STDOUT:   %.loc11 = load i32, ptr %a.var, align 4
-// CHECK:STDOUT:   call void @DoNothing(i32 %.loc11)
+// CHECK:STDOUT:   %.loc15 = load i32, ptr %a.var, align 4
+// CHECK:STDOUT:   call void @DoNothing(i32 %.loc15)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

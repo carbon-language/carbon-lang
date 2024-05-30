@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/lookup.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/lookup.carbon
 
 fn Main() {
   var x: () = ();
@@ -27,14 +31,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_11.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_11.2: type = converted %.loc8_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc8_16.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_16.2: init () = tuple_init () to %x.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_17: init () = converted %.loc8_16.1, %.loc8_16.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %x.var, %.loc8_17
+// CHECK:STDOUT:   %.loc12_16.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_16.2: init () = tuple_init () to %x.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_17: init () = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %x.var, %.loc12_17
 // CHECK:STDOUT:   %x.ref: ref () = name_ref x, %x
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

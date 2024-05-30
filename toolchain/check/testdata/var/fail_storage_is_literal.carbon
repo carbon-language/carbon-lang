@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
   // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `i32` to `type`.
@@ -31,10 +35,10 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_14: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

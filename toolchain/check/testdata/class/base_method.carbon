@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/base_method.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/base_method.carbon
 
 base class Base {
   var a: i32;
@@ -58,46 +62,46 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, %Base.decl [template = constants.%Base]
-// CHECK:STDOUT:     %.loc13_26: type = ptr_type Base [template = constants.%.3]
-// CHECK:STDOUT:     %self.loc13_16.1: Base* = param self
-// CHECK:STDOUT:     @F.%self: Base* = bind_name self, %self.loc13_16.1
-// CHECK:STDOUT:     @F.%.loc13: Base* = addr_pattern @F.%self
+// CHECK:STDOUT:     %.loc17_26: type = ptr_type Base [template = constants.%.3]
+// CHECK:STDOUT:     %self.loc17_16.1: Base* = param self
+// CHECK:STDOUT:     @F.%self: Base* = bind_name self, %self.loc17_16.1
+// CHECK:STDOUT:     @F.%.loc17: Base* = addr_pattern @F.%self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Call.decl: Call = fn_decl @Call [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc21: type = ptr_type Derived [template = constants.%.9]
-// CHECK:STDOUT:     %p.loc21_9.1: Derived* = param p
-// CHECK:STDOUT:     @Call.%p: Derived* = bind_name p, %p.loc21_9.1
+// CHECK:STDOUT:     %.loc25: type = ptr_type Derived [template = constants.%.9]
+// CHECK:STDOUT:     %p.loc25_9.1: Derived* = param p
+// CHECK:STDOUT:     @Call.%p: Derived* = bind_name p, %p.loc25_9.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class Base> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class Base> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %.loc10_23: type = ptr_type Base [template = constants.%.3]
-// CHECK:STDOUT:     %self.loc10_13.1: Base* = param self
-// CHECK:STDOUT:     %self.loc10_13.3: Base* = bind_name self, %self.loc10_13.1
-// CHECK:STDOUT:     %.loc10_8: Base* = addr_pattern %self.loc10_13.3
+// CHECK:STDOUT:     %.loc14_23: type = ptr_type Base [template = constants.%.3]
+// CHECK:STDOUT:     %self.loc14_13.1: Base* = param self
+// CHECK:STDOUT:     %self.loc14_13.3: Base* = bind_name self, %self.loc14_13.1
+// CHECK:STDOUT:     %.loc14_8: Base* = addr_pattern %self.loc14_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc8_8
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc18: <unbound element of class Derived> = base_decl Base, element0 [template]
+// CHECK:STDOUT:   %.loc22: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc18
+// CHECK:STDOUT:   .base = %.loc22
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,26 +110,26 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: fn @F[addr %self: Base*]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
-// CHECK:STDOUT:   %.loc14_4: ref Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: <unbound element of class Base> = name_ref a, @Base.%.loc8_8 [template = @Base.%.loc8_8]
-// CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
-// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   assign %.loc14_10, %.loc14_15
+// CHECK:STDOUT:   %.loc18_4: ref Base = deref %self.ref
+// CHECK:STDOUT:   %a.ref: <unbound element of class Base> = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
+// CHECK:STDOUT:   %.loc18_10: ref i32 = class_element_access %.loc18_4, element0
+// CHECK:STDOUT:   %.loc18_15: i32 = int_literal 1 [template = constants.%.6]
+// CHECK:STDOUT:   assign %.loc18_10, %.loc18_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p: Derived*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
-// CHECK:STDOUT:   %.loc22_4.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc26_4.1: ref Derived = deref %p.ref
 // CHECK:STDOUT:   %F.ref: F = name_ref F, @Base.%F.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc22_7: <bound method> = bound_method %.loc22_4.1, %F.ref
-// CHECK:STDOUT:   %.loc22_4.2: Derived* = addr_of %.loc22_4.1
-// CHECK:STDOUT:   %.loc22_9.1: ref Derived = deref %.loc22_4.2
-// CHECK:STDOUT:   %.loc22_9.2: ref Base = class_element_access %.loc22_9.1, element0
-// CHECK:STDOUT:   %.loc22_9.3: Base* = addr_of %.loc22_9.2
-// CHECK:STDOUT:   %.loc22_9.4: Base* = converted %.loc22_4.2, %.loc22_9.3
-// CHECK:STDOUT:   %F.call: init () = call %.loc22_7(%.loc22_9.4)
+// CHECK:STDOUT:   %.loc26_7: <bound method> = bound_method %.loc26_4.1, %F.ref
+// CHECK:STDOUT:   %.loc26_4.2: Derived* = addr_of %.loc26_4.1
+// CHECK:STDOUT:   %.loc26_9.1: ref Derived = deref %.loc26_4.2
+// CHECK:STDOUT:   %.loc26_9.2: ref Base = class_element_access %.loc26_9.1, element0
+// CHECK:STDOUT:   %.loc26_9.3: Base* = addr_of %.loc26_9.2
+// CHECK:STDOUT:   %.loc26_9.4: Base* = converted %.loc26_4.2, %.loc26_9.3
+// CHECK:STDOUT:   %F.call: init () = call %.loc26_7(%.loc26_9.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

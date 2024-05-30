@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
 
 fn Main() {
   // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:3: ERROR: Type `i32` does not support indexing.
@@ -32,8 +36,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_3: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_5: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

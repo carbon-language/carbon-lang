@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_return_with_returned_var.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/return/fail_return_with_returned_var.carbon
 
 fn F() -> i32 {
   returned var v: i32 = 0;
@@ -59,8 +63,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %int.make_type_32, %.loc7_11.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
@@ -74,19 +78,19 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %int.make_type_32.loc19_18: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc19_18.1: type = value_of_initializer %int.make_type_32.loc19_18 [template = i32]
-// CHECK:STDOUT:   %.loc19_18.2: type = converted %int.make_type_32.loc19_18, %.loc19_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_16: <unbound element of class C> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc19_30: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc19_30.1: type = value_of_initializer %int.make_type_32.loc19_30 [template = i32]
-// CHECK:STDOUT:   %.loc19_30.2: type = converted %int.make_type_32.loc19_30, %.loc19_30.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_28: <unbound element of class C> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc23_18: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc23_18.1: type = value_of_initializer %int.make_type_32.loc23_18 [template = i32]
+// CHECK:STDOUT:   %.loc23_18.2: type = converted %int.make_type_32.loc23_18, %.loc23_18.1 [template = i32]
+// CHECK:STDOUT:   %.loc23_16: <unbound element of class C> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc23_30: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc23_30.1: type = value_of_initializer %int.make_type_32.loc23_30 [template = i32]
+// CHECK:STDOUT:   %.loc23_30.2: type = converted %int.make_type_32.loc23_30, %.loc23_30.1 [template = i32]
+// CHECK:STDOUT:   %.loc23_28: <unbound element of class C> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .a = %.loc19_16
-// CHECK:STDOUT:   .b = %.loc19_28
+// CHECK:STDOUT:   .a = %.loc23_16
+// CHECK:STDOUT:   .b = %.loc23_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -94,13 +98,13 @@ fn G() -> C {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_19.2: type = converted %int.make_type_32, %.loc8_19.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_19.2: type = converted %int.make_type_32, %.loc12_19.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc8_25: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   assign %v.var, %.loc8_25
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_25: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   assign %v.var, %.loc12_25
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,16 +112,16 @@ fn G() -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref C = bind_name c, %return
-// CHECK:STDOUT:   %.loc21_29: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc21_37: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_38.1: {.a: i32, .b: i32} = struct_literal (%.loc21_29, %.loc21_37)
-// CHECK:STDOUT:   %.loc21_38.2: ref i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc21_38.3: init i32 = initialize_from %.loc21_29 to %.loc21_38.2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc21_38.4: ref i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc21_38.5: init i32 = initialize_from %.loc21_37 to %.loc21_38.4 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_38.6: init C = class_init (%.loc21_38.3, %.loc21_38.5), %return [template = constants.%struct.4]
-// CHECK:STDOUT:   %.loc21_39: init C = converted %.loc21_38.1, %.loc21_38.6 [template = constants.%struct.4]
-// CHECK:STDOUT:   assign %return, %.loc21_39
+// CHECK:STDOUT:   %.loc25_29: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_37: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_38.1: {.a: i32, .b: i32} = struct_literal (%.loc25_29, %.loc25_37)
+// CHECK:STDOUT:   %.loc25_38.2: ref i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc25_38.3: init i32 = initialize_from %.loc25_29 to %.loc25_38.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_38.4: ref i32 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc25_38.5: init i32 = initialize_from %.loc25_37 to %.loc25_38.4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_38.6: init C = class_init (%.loc25_38.3, %.loc25_38.5), %return [template = constants.%struct.4]
+// CHECK:STDOUT:   %.loc25_39: init C = converted %.loc25_38.1, %.loc25_38.6 [template = constants.%struct.4]
+// CHECK:STDOUT:   assign %return, %.loc25_39
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

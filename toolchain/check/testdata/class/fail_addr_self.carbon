@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_addr_self.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_addr_self.carbon
 
 class Class {
   fn F[addr self: Class*]();
@@ -65,29 +69,29 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.3] {
-// CHECK:STDOUT:     %Class.ref.loc12_9: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc12_6.1: Class = param c
-// CHECK:STDOUT:     @F.2.%c: Class = bind_name c, %c.loc12_6.1
-// CHECK:STDOUT:     %Class.ref.loc12_19: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc12: type = ptr_type Class [template = constants.%.1]
-// CHECK:STDOUT:     %p.loc12_16.1: Class* = param p
-// CHECK:STDOUT:     @F.2.%p: Class* = bind_name p, %p.loc12_16.1
+// CHECK:STDOUT:     %Class.ref.loc16_9: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.loc16_6.1: Class = param c
+// CHECK:STDOUT:     @F.2.%c: Class = bind_name c, %c.loc16_6.1
+// CHECK:STDOUT:     %Class.ref.loc16_19: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc16: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %p.loc16_16.1: Class* = param p
+// CHECK:STDOUT:     @F.2.%p: Class* = bind_name p, %p.loc16_16.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {
-// CHECK:STDOUT:     %Class.ref.loc8: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc8_24: type = ptr_type Class [template = constants.%.1]
-// CHECK:STDOUT:     %self.loc8_13.1: Class* = param self
-// CHECK:STDOUT:     %self.loc8_13.3: Class* = bind_name self, %self.loc8_13.1
-// CHECK:STDOUT:     %.loc8_8: Class* = addr_pattern %self.loc8_13.3
+// CHECK:STDOUT:     %Class.ref.loc12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc12_24: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc12_13.1: Class* = param self
+// CHECK:STDOUT:     %self.loc12_13.3: Class* = bind_name self, %self.loc12_13.1
+// CHECK:STDOUT:     %.loc12_8: Class* = addr_pattern %self.loc12_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
-// CHECK:STDOUT:     %Class.ref.loc9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc9_13.1: Class = param self
-// CHECK:STDOUT:     %self.loc9_13.3: Class = bind_name self, %self.loc9_13.1
-// CHECK:STDOUT:     %.loc9: Class = addr_pattern %self.loc9_13.3
+// CHECK:STDOUT:     %Class.ref.loc13: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc13_13.1: Class = param self
+// CHECK:STDOUT:     %self.loc13_13.3: Class = bind_name self, %self.loc13_13.1
+// CHECK:STDOUT:     %.loc13: Class = addr_pattern %self.loc13_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -96,32 +100,32 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @Class.%self.loc8_13.3: Class*]();
+// CHECK:STDOUT: fn @F.1[addr @Class.%self.loc12_13.3: Class*]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr @Class.%self.loc9_13.3: Class]();
+// CHECK:STDOUT: fn @G[addr @Class.%self.loc13_13.3: Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: Class, %p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc20: Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc20: F = name_ref F, @Class.%F.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc20: <bound method> = bound_method %c.ref.loc20, %F.ref.loc20
-// CHECK:STDOUT:   %F.call.loc20: init () = call %.loc20(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %c.ref.loc29: Class = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc29: G = name_ref G, @Class.%G.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
-// CHECK:STDOUT:   %G.call.loc29: init () = call %.loc29(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %p.ref.loc32: Class* = name_ref p, %p
-// CHECK:STDOUT:   %.loc32_4.1: ref Class = deref %p.ref.loc32
-// CHECK:STDOUT:   %F.ref.loc32: F = name_ref F, @Class.%F.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc32_7: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
-// CHECK:STDOUT:   %.loc32_4.2: Class* = addr_of %.loc32_4.1
-// CHECK:STDOUT:   %F.call.loc32: init () = call %.loc32_7(%.loc32_4.2)
-// CHECK:STDOUT:   %p.ref.loc40: Class* = name_ref p, %p
-// CHECK:STDOUT:   %.loc40_4.1: ref Class = deref %p.ref.loc40
-// CHECK:STDOUT:   %G.ref.loc40: G = name_ref G, @Class.%G.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc40_7: <bound method> = bound_method %.loc40_4.1, %G.ref.loc40
-// CHECK:STDOUT:   %.loc40_4.2: Class* = addr_of %.loc40_4.1
-// CHECK:STDOUT:   %G.call.loc40: init () = call %.loc40_7(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc24: Class = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc24: F = name_ref F, @Class.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc24: <bound method> = bound_method %c.ref.loc24, %F.ref.loc24
+// CHECK:STDOUT:   %F.call.loc24: init () = call %.loc24(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc33: Class = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc33: G = name_ref G, @Class.%G.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc33: <bound method> = bound_method %c.ref.loc33, %G.ref.loc33
+// CHECK:STDOUT:   %G.call.loc33: init () = call %.loc33(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %p.ref.loc36: Class* = name_ref p, %p
+// CHECK:STDOUT:   %.loc36_4.1: ref Class = deref %p.ref.loc36
+// CHECK:STDOUT:   %F.ref.loc36: F = name_ref F, @Class.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc36_7: <bound method> = bound_method %.loc36_4.1, %F.ref.loc36
+// CHECK:STDOUT:   %.loc36_4.2: Class* = addr_of %.loc36_4.1
+// CHECK:STDOUT:   %F.call.loc36: init () = call %.loc36_7(%.loc36_4.2)
+// CHECK:STDOUT:   %p.ref.loc44: Class* = name_ref p, %p
+// CHECK:STDOUT:   %.loc44_4.1: ref Class = deref %p.ref.loc44
+// CHECK:STDOUT:   %G.ref.loc44: G = name_ref G, @Class.%G.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc44_7: <bound method> = bound_method %.loc44_4.1, %G.ref.loc44
+// CHECK:STDOUT:   %.loc44_4.2: Class* = addr_of %.loc44_4.1
+// CHECK:STDOUT:   %G.call.loc44: init () = call %.loc44_7(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

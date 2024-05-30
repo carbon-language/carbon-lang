@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
 
 fn While() {
   // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: ERROR: Cannot implicitly convert from `String` to `bool`.
@@ -35,7 +39,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15: String = string_literal "Hello" [template = constants.%.3]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

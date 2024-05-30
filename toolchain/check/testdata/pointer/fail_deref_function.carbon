@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
 
 fn A() {
   // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: ERROR: Expression cannot be used as a value.
@@ -35,10 +39,10 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc12: A = name_ref A, file.%A.decl [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12: ref <error> = deref <error>
 // CHECK:STDOUT:   %A.ref.loc16: A = name_ref A, file.%A.decl [template = constants.%struct]
 // CHECK:STDOUT:   %.loc16: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc20: A = name_ref A, file.%A.decl [template = constants.%struct]
+// CHECK:STDOUT:   %.loc20: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

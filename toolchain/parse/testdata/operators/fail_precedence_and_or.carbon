@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_precedence_and_or.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_precedence_and_or.carbon
 
 fn F() {
   // CHECK:STDERR: fail_precedence_and_or.carbon:[[@LINE+3]]:11: ERROR: Parentheses are required to disambiguate operator precedence.

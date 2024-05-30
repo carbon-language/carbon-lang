@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_todo_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_todo_modifiers.carbon
 
 // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `access modifier`.
 // CHECK:STDERR: private var a: ();
@@ -19,8 +23,8 @@ private var a: ();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_17.2: type = converted %.loc10_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT: }

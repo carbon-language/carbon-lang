@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_extend_impl_type_as.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/impl/fail_extend_impl_type_as.carbon
 
 interface I {}
 
@@ -93,8 +97,8 @@ class E {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:     %.loc14_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc14_15.2: type = converted %int.make_type_32, %.loc14_15.1 [template = i32]
+// CHECK:STDOUT:     %.loc18_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc18_15.2: type = converted %int.make_type_32, %.loc18_15.1 [template = i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

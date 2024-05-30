@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_element_type_mismatch.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_element_type_mismatch.carbon
 
 // CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:21: ERROR: Cannot implicitly convert from `f64` to `i32`.
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
@@ -30,15 +34,15 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc10_9: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_9: init type = call constants.%struct() [template = i32]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc10_14: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc10_17.1: (type, type) = tuple_literal (%int.make_type_32.loc10_9, %int.make_type_32.loc10_14)
-// CHECK:STDOUT:   %.loc10_17.2: type = value_of_initializer %int.make_type_32.loc10_9 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.3: type = converted %int.make_type_32.loc10_9, %.loc10_17.2 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.4: type = value_of_initializer %int.make_type_32.loc10_14 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.5: type = converted %int.make_type_32.loc10_14, %.loc10_17.4 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.6: type = converted %.loc10_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc14_14: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc14_17.1: (type, type) = tuple_literal (%int.make_type_32.loc14_9, %int.make_type_32.loc14_14)
+// CHECK:STDOUT:   %.loc14_17.2: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.3: type = converted %int.make_type_32.loc14_9, %.loc14_17.2 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.4: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref (i32, i32) = var x
 // CHECK:STDOUT:   %x: ref (i32, i32) = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -47,11 +51,11 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_22: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_25: f64 = float_literal 65.890000000000001 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_30.1: (i32, f64) = tuple_literal (%.loc10_22, %.loc10_25)
-// CHECK:STDOUT:   %.loc10_30.2: ref i32 = tuple_access file.%x.var, element0
-// CHECK:STDOUT:   %.loc10_30.3: init i32 = initialize_from %.loc10_22 to %.loc10_30.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_22: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_25: f64 = float_literal 65.890000000000001 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_30.1: (i32, f64) = tuple_literal (%.loc14_22, %.loc14_25)
+// CHECK:STDOUT:   %.loc14_30.2: ref i32 = tuple_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc14_30.3: init i32 = initialize_from %.loc14_22 to %.loc14_30.2 [template = constants.%.5]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

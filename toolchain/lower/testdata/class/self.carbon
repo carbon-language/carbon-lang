@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/class/self.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/lower/testdata/class/self.carbon
 
 class C {
   var a: i32;
@@ -24,14 +28,14 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Get(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_14.1.a = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc15_14.2 = load i32, ptr %.loc15_14.1.a, align 4
-// CHECK:STDOUT:   ret i32 %.loc15_14.2
+// CHECK:STDOUT:   %.loc19_14.1.a = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc19_14.2 = load i32, ptr %.loc19_14.1.a, align 4
+// CHECK:STDOUT:   ret i32 %.loc19_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Set(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_10.a = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %.loc19_10.a, align 4
+// CHECK:STDOUT:   %.loc23_10.a = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %.loc23_10.a, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/function/definition/fail_builtin.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/function/definition/fail_builtin.carbon
 
 // CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:18: ERROR: Expected builtin function name after `=`.
 // CHECK:STDERR: fn NotString() = banana;

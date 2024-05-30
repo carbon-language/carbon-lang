@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/if/fail_reachable_fallthrough.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/if/fail_reachable_fallthrough.carbon
 
 fn If1(b: bool) -> i32 {
   if (b) {
@@ -64,40 +68,40 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If1.decl: If1 = fn_decl @If1 [template = constants.%struct.3] {
-// CHECK:STDOUT:     %bool.make_type.loc7: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7 [template = bool]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %bool.make_type.loc7, %.loc7_11.1 [template = bool]
-// CHECK:STDOUT:     %b.loc7_8.1: bool = param b
-// CHECK:STDOUT:     @If1.%b: bool = bind_name b, %b.loc7_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc7_20.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
-// CHECK:STDOUT:     %.loc7_20.2: type = converted %int.make_type_32.loc7, %.loc7_20.1 [template = i32]
+// CHECK:STDOUT:     %bool.make_type.loc11: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11, %.loc11_11.1 [template = bool]
+// CHECK:STDOUT:     %b.loc11_8.1: bool = param b
+// CHECK:STDOUT:     @If1.%b: bool = bind_name b, %b.loc11_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:     %.loc11_20.2: type = converted %int.make_type_32.loc11, %.loc11_20.1 [template = i32]
 // CHECK:STDOUT:     @If1.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If2.decl: If2 = fn_decl @If2 [template = constants.%struct.4] {
-// CHECK:STDOUT:     %bool.make_type.loc18: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc18_11.1: type = value_of_initializer %bool.make_type.loc18 [template = bool]
-// CHECK:STDOUT:     %.loc18_11.2: type = converted %bool.make_type.loc18, %.loc18_11.1 [template = bool]
-// CHECK:STDOUT:     %b.loc18_8.1: bool = param b
-// CHECK:STDOUT:     @If2.%b: bool = bind_name b, %b.loc18_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc18: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc18_20.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
-// CHECK:STDOUT:     %.loc18_20.2: type = converted %int.make_type_32.loc18, %.loc18_20.1 [template = i32]
+// CHECK:STDOUT:     %bool.make_type.loc22: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc22_11.1: type = value_of_initializer %bool.make_type.loc22 [template = bool]
+// CHECK:STDOUT:     %.loc22_11.2: type = converted %bool.make_type.loc22, %.loc22_11.1 [template = bool]
+// CHECK:STDOUT:     %b.loc22_8.1: bool = param b
+// CHECK:STDOUT:     @If2.%b: bool = bind_name b, %b.loc22_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
+// CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32.loc22, %.loc22_20.1 [template = i32]
 // CHECK:STDOUT:     @If2.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If3.decl: If3 = fn_decl @If3 [template = constants.%struct.5] {
-// CHECK:STDOUT:     %bool.make_type.loc29: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc29_11.1: type = value_of_initializer %bool.make_type.loc29 [template = bool]
-// CHECK:STDOUT:     %.loc29_11.2: type = converted %bool.make_type.loc29, %.loc29_11.1 [template = bool]
-// CHECK:STDOUT:     %b.loc29_8.1: bool = param b
-// CHECK:STDOUT:     @If3.%b: bool = bind_name b, %b.loc29_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc29: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc29_20.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
-// CHECK:STDOUT:     %.loc29_20.2: type = converted %int.make_type_32.loc29, %.loc29_20.1 [template = i32]
+// CHECK:STDOUT:     %bool.make_type.loc33: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc33_11.1: type = value_of_initializer %bool.make_type.loc33 [template = bool]
+// CHECK:STDOUT:     %.loc33_11.2: type = converted %bool.make_type.loc33, %.loc33_11.1 [template = bool]
+// CHECK:STDOUT:     %b.loc33_8.1: bool = param b
+// CHECK:STDOUT:     @If3.%b: bool = bind_name b, %b.loc33_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc33: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc33_20.1: type = value_of_initializer %int.make_type_32.loc33 [template = i32]
+// CHECK:STDOUT:     %.loc33_20.2: type = converted %int.make_type_32.loc33, %.loc33_20.1 [template = i32]
 // CHECK:STDOUT:     @If3.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -112,8 +116,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc9
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   br !if.done
@@ -130,8 +134,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc21
+// CHECK:STDOUT:   %.loc25: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc25
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
@@ -142,8 +146,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc31: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc31
+// CHECK:STDOUT:   %.loc35: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc35
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT: }

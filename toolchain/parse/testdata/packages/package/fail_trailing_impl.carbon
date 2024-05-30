@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/packages/package/fail_trailing_impl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/packages/package/fail_trailing_impl.carbon
 
 // CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+3]]:18: ERROR: `package` declarations must end with a `;`.
 // CHECK:STDERR: package Geometry impl;

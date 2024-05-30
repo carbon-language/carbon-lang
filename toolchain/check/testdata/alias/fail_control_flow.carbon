@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/fail_control_flow.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/alias/fail_control_flow.carbon
 
 // CHECK:STDERR: fail_control_flow.carbon:[[@LINE+11]]:11: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
 // CHECK:STDERR: alias a = true or false;
@@ -25,7 +29,7 @@ alias a = true or false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc18: bool = block_arg <unexpected instblockref block4> [template = constants.%.1]
+// CHECK:STDOUT:   %.loc22: bool = block_arg <unexpected instblockref block4> [template = constants.%.1]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param.carbon
 
 fn F(T:! type) {
   var p: T*;
@@ -24,23 +28,23 @@ fn F(T:! type) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %T.loc7_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc7_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_6.1: type = param T
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc8: type = ptr_type T [symbolic = constants.%.2]
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc12: type = ptr_type T [symbolic = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
-// CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %p.ref: ref T* = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_15: T* = bind_value %p.ref
-// CHECK:STDOUT:   %.loc9_14.1: ref T = deref %.loc9_15
-// CHECK:STDOUT:   %.loc9_14.2: T = bind_value %.loc9_14.1
-// CHECK:STDOUT:   %n: T = bind_name n, %.loc9_14.2
+// CHECK:STDOUT:   %.loc13_15: T* = bind_value %p.ref
+// CHECK:STDOUT:   %.loc13_14.1: ref T = deref %.loc13_15
+// CHECK:STDOUT:   %.loc13_14.2: T = bind_value %.loc13_14.1
+// CHECK:STDOUT:   %n: T = bind_name n, %.loc13_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

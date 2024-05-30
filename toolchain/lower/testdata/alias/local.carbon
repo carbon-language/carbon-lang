@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/alias/local.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/lower/testdata/alias/local.carbon
 
 fn F() -> i32 {
   var a: i32 = 0;
@@ -17,6 +21,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4
-// CHECK:STDOUT:   %.loc10 = load i32, ptr %a.var, align 4
-// CHECK:STDOUT:   ret i32 %.loc10
+// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4
+// CHECK:STDOUT:   ret i32 %.loc14
 // CHECK:STDOUT: }

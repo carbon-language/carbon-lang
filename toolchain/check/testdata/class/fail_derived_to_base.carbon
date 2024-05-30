@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_derived_to_base.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_derived_to_base.carbon
 
 base class A1 {
   var a: i32;
@@ -79,59 +83,59 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %ConvertUnrelated.decl: ConvertUnrelated = fn_decl @ConvertUnrelated [template = constants.%struct.2] {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, %B2.decl [template = constants.%B2]
-// CHECK:STDOUT:     %.loc24_26: type = ptr_type B2 [template = constants.%.9]
-// CHECK:STDOUT:     %p.loc24_21.1: B2* = param p
-// CHECK:STDOUT:     @ConvertUnrelated.%p: B2* = bind_name p, %p.loc24_21.1
+// CHECK:STDOUT:     %.loc28_26: type = ptr_type B2 [template = constants.%.9]
+// CHECK:STDOUT:     %p.loc28_21.1: B2* = param p
+// CHECK:STDOUT:     @ConvertUnrelated.%p: B2* = bind_name p, %p.loc28_21.1
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, %A1.decl [template = constants.%A1]
-// CHECK:STDOUT:     %.loc24_34: type = ptr_type A1 [template = constants.%.10]
+// CHECK:STDOUT:     %.loc28_34: type = ptr_type A1 [template = constants.%.10]
 // CHECK:STDOUT:     @ConvertUnrelated.%return: ref A1* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: ConvertIncomplete = fn_decl @ConvertIncomplete [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc31_35: type = ptr_type Incomplete [template = constants.%.14]
-// CHECK:STDOUT:     %p.loc31_22.1: Incomplete* = param p
-// CHECK:STDOUT:     @ConvertIncomplete.%p: Incomplete* = bind_name p, %p.loc31_22.1
+// CHECK:STDOUT:     %.loc35_35: type = ptr_type Incomplete [template = constants.%.14]
+// CHECK:STDOUT:     %p.loc35_22.1: Incomplete* = param p
+// CHECK:STDOUT:     @ConvertIncomplete.%p: Incomplete* = bind_name p, %p.loc35_22.1
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, %A2.decl [template = constants.%A2]
-// CHECK:STDOUT:     %.loc31_43: type = ptr_type A2 [template = constants.%.15]
+// CHECK:STDOUT:     %.loc35_43: type = ptr_type A2 [template = constants.%.15]
 // CHECK:STDOUT:     @ConvertIncomplete.%return: ref A2* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class A1> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class A1> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A1
-// CHECK:STDOUT:   .a = %.loc8_8
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_8: <unbound element of class A2> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc16_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc16_10.2: type = converted %int.make_type_32, %.loc16_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc16_8: <unbound element of class A2> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
-// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .a = %.loc16_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
-// CHECK:STDOUT:   %.loc16: <unbound element of class B2> = base_decl A2, element0 [template]
+// CHECK:STDOUT:   %.loc20: <unbound element of class B2> = base_decl A2, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32, %.loc17_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc17_8: <unbound element of class B2> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_32, %.loc21_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc21_8: <unbound element of class B2> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
-// CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   .b = %.loc17_8
+// CHECK:STDOUT:   .base = %.loc20
+// CHECK:STDOUT:   .b = %.loc21_8
 // CHECK:STDOUT:   extend name_scope3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

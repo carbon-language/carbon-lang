@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/generics/impl/fail_impl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/generics/impl/fail_impl.carbon
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:10: ERROR: Expected `as` in `impl` declaration.
 // CHECK:STDERR: impl foo bar;

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/base_method_qualified.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/base_method_qualified.carbon
 
 class Derived;
 
@@ -70,7 +74,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Derived = %Derived.decl.loc7
+// CHECK:STDOUT:     .Derived = %Derived.decl.loc11
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Call = %Call.decl
 // CHECK:STDOUT:     .CallIndirect = %CallIndirect.decl
@@ -78,72 +82,72 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     .PassDerivedToBaseIndirect = %PassDerivedToBaseIndirect.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Derived.decl.loc7: type = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Derived.decl.loc11: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %Derived.decl.loc14: type = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Derived.decl.loc18: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Call.decl: Call = fn_decl @Call [template = constants.%struct.6] {
-// CHECK:STDOUT:     %Derived.ref.loc21: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
-// CHECK:STDOUT:     %a.loc21_9.1: Derived = param a
-// CHECK:STDOUT:     @Call.%a: Derived = bind_name a, %a.loc21_9.1
-// CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc21_24.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
-// CHECK:STDOUT:     %.loc21_24.2: type = converted %int.make_type_32.loc21, %.loc21_24.1 [template = i32]
+// CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
+// CHECK:STDOUT:     %a.loc25_9.1: Derived = param a
+// CHECK:STDOUT:     @Call.%a: Derived = bind_name a, %a.loc25_9.1
+// CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc25_24.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
+// CHECK:STDOUT:     %.loc25_24.2: type = converted %int.make_type_32.loc25, %.loc25_24.1 [template = i32]
 // CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallIndirect.decl: CallIndirect = fn_decl @CallIndirect [template = constants.%struct.7] {
-// CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc25_27: type = ptr_type Derived [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc25_17.1: Derived* = param p
-// CHECK:STDOUT:     @CallIndirect.%p: Derived* = bind_name p, %p.loc25_17.1
-// CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc25_33.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
-// CHECK:STDOUT:     %.loc25_33.2: type = converted %int.make_type_32.loc25, %.loc25_33.1 [template = i32]
+// CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
+// CHECK:STDOUT:     %.loc29_27: type = ptr_type Derived [template = constants.%.8]
+// CHECK:STDOUT:     %p.loc29_17.1: Derived* = param p
+// CHECK:STDOUT:     @CallIndirect.%p: Derived* = bind_name p, %p.loc29_17.1
+// CHECK:STDOUT:     %int.make_type_32.loc29: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc29_33.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
+// CHECK:STDOUT:     %.loc29_33.2: type = converted %int.make_type_32.loc29, %.loc29_33.1 [template = i32]
 // CHECK:STDOUT:     @CallIndirect.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %PassDerivedToBase.decl: PassDerivedToBase = fn_decl @PassDerivedToBase [template = constants.%struct.8] {
-// CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
-// CHECK:STDOUT:     %a.loc29_22.1: Derived = param a
-// CHECK:STDOUT:     @PassDerivedToBase.%a: Derived = bind_name a, %a.loc29_22.1
-// CHECK:STDOUT:     %int.make_type_32.loc29: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc29_37.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
-// CHECK:STDOUT:     %.loc29_37.2: type = converted %int.make_type_32.loc29, %.loc29_37.1 [template = i32]
+// CHECK:STDOUT:     %Derived.ref.loc33: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
+// CHECK:STDOUT:     %a.loc33_22.1: Derived = param a
+// CHECK:STDOUT:     @PassDerivedToBase.%a: Derived = bind_name a, %a.loc33_22.1
+// CHECK:STDOUT:     %int.make_type_32.loc33: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc33_37.1: type = value_of_initializer %int.make_type_32.loc33 [template = i32]
+// CHECK:STDOUT:     %.loc33_37.2: type = converted %int.make_type_32.loc33, %.loc33_37.1 [template = i32]
 // CHECK:STDOUT:     @PassDerivedToBase.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %PassDerivedToBaseIndirect.decl: PassDerivedToBaseIndirect = fn_decl @PassDerivedToBaseIndirect [template = constants.%struct.9] {
-// CHECK:STDOUT:     %Derived.ref.loc33: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc33_40: type = ptr_type Derived [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc33_30.1: Derived* = param p
-// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: Derived* = bind_name p, %p.loc33_30.1
-// CHECK:STDOUT:     %int.make_type_32.loc33: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc33_46.1: type = value_of_initializer %int.make_type_32.loc33 [template = i32]
-// CHECK:STDOUT:     %.loc33_46.2: type = converted %int.make_type_32.loc33, %.loc33_46.1 [template = i32]
+// CHECK:STDOUT:     %Derived.ref.loc37: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
+// CHECK:STDOUT:     %.loc37_40: type = ptr_type Derived [template = constants.%.8]
+// CHECK:STDOUT:     %p.loc37_30.1: Derived* = param p
+// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: Derived* = bind_name p, %p.loc37_30.1
+// CHECK:STDOUT:     %int.make_type_32.loc37: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc37_46.1: type = value_of_initializer %int.make_type_32.loc37 [template = i32]
+// CHECK:STDOUT:     %.loc37_46.2: type = converted %int.make_type_32.loc37, %.loc37_46.1 [template = i32]
 // CHECK:STDOUT:     @PassDerivedToBaseIndirect.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc15: <unbound element of class Derived> = base_decl Base, element0 [template]
+// CHECK:STDOUT:   %.loc19: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.4] {
-// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Derived [template = constants.%Derived]
-// CHECK:STDOUT:     %self.loc17_8.1: Derived = param self
-// CHECK:STDOUT:     %self.loc17_8.2: Derived = bind_name self, %self.loc17_8.1
+// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Derived [template = constants.%Derived]
+// CHECK:STDOUT:     %self.loc21_8.1: Derived = param self
+// CHECK:STDOUT:     %self.loc21_8.2: Derived = bind_name self, %self.loc21_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G.2 [template = constants.%struct.5] {
-// CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Derived [template = constants.%Derived]
-// CHECK:STDOUT:     %self.loc18_8.1: Derived = param self
-// CHECK:STDOUT:     %self.loc18_8.2: Derived = bind_name self, %self.loc18_8.1
+// CHECK:STDOUT:     %Self.ref.loc22: type = name_ref Self, constants.%Derived [template = constants.%Derived]
+// CHECK:STDOUT:     %self.loc22_8.1: Derived = param self
+// CHECK:STDOUT:     %self.loc22_8.2: Derived = bind_name self, %self.loc22_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc15
+// CHECK:STDOUT:   .base = %.loc19
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   extend name_scope2
@@ -152,21 +156,21 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc10_8.1: Base = param self
-// CHECK:STDOUT:     %self.loc10_8.2: Base = bind_name self, %self.loc10_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc10: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc10_25.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
-// CHECK:STDOUT:     %.loc10_25.2: type = converted %int.make_type_32.loc10, %.loc10_25.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc10: ref i32 = var <return slot>
+// CHECK:STDOUT:     %self.loc14_8.1: Base = param self
+// CHECK:STDOUT:     %self.loc14_8.2: Base = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
+// CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32.loc14, %.loc14_25.1 [template = i32]
+// CHECK:STDOUT:     %return.var.loc14: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G.1 [template = constants.%struct.3] {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc7 [template = constants.%Derived]
-// CHECK:STDOUT:     %self.loc11_8.1: Derived = param self
-// CHECK:STDOUT:     %self.loc11_8.2: Derived = bind_name self, %self.loc11_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc11_28.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:     %.loc11_28.2: type = converted %int.make_type_32.loc11, %.loc11_28.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [template = constants.%Derived]
+// CHECK:STDOUT:     %self.loc15_8.1: Derived = param self
+// CHECK:STDOUT:     %self.loc15_8.2: Derived = bind_name self, %self.loc15_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc15_28.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:     %.loc15_28.2: type = converted %int.make_type_32.loc15, %.loc15_28.1 [template = i32]
+// CHECK:STDOUT:     %return.var.loc15: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -177,27 +181,27 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@Base.%self.loc10_8.2: Base]() -> i32;
+// CHECK:STDOUT: fn @F.1[@Base.%self.loc14_8.2: Base]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1[@Base.%self.loc11_8.2: Derived]() -> i32;
+// CHECK:STDOUT: fn @G.1[@Base.%self.loc15_8.2: Derived]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@Derived.%self.loc17_8.2: Derived]();
+// CHECK:STDOUT: fn @F.2[@Derived.%self.loc21_8.2: Derived]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[@Derived.%self.loc18_8.2: Derived]();
+// CHECK:STDOUT: fn @G.2[@Derived.%self.loc22_8.2: Derived]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a: Derived) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %F.ref: F = name_ref F, @Base.%F.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc22_11: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc22_20.1: ref Base = class_element_access %a.ref, element0
-// CHECK:STDOUT:   %.loc22_20.2: ref Base = converted %a.ref, %.loc22_20.1
-// CHECK:STDOUT:   %.loc22_20.3: Base = bind_value %.loc22_20.2
-// CHECK:STDOUT:   %F.call: init i32 = call %.loc22_11(%.loc22_20.3)
-// CHECK:STDOUT:   %.loc22_22.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc22_22.2: i32 = converted %F.call, %.loc22_22.1
-// CHECK:STDOUT:   return %.loc22_22.2
+// CHECK:STDOUT:   %.loc26_11: <bound method> = bound_method %a.ref, %F.ref
+// CHECK:STDOUT:   %.loc26_20.1: ref Base = class_element_access %a.ref, element0
+// CHECK:STDOUT:   %.loc26_20.2: ref Base = converted %a.ref, %.loc26_20.1
+// CHECK:STDOUT:   %.loc26_20.3: Base = bind_value %.loc26_20.2
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc26_11(%.loc26_20.3)
+// CHECK:STDOUT:   %.loc26_22.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc26_22.2: i32 = converted %F.call, %.loc26_22.1
+// CHECK:STDOUT:   return %.loc26_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallIndirect(%p: Derived*) -> i32 {
@@ -205,15 +209,15 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %F.ref: F = name_ref F, @Base.%F.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc26_11.1: ref Derived = deref %p.ref
-// CHECK:STDOUT:   %.loc26_11.2: <bound method> = bound_method %.loc26_11.1, %F.ref
-// CHECK:STDOUT:   %.loc26_21.1: ref Base = class_element_access %.loc26_11.1, element0
-// CHECK:STDOUT:   %.loc26_21.2: ref Base = converted %.loc26_11.1, %.loc26_21.1
-// CHECK:STDOUT:   %.loc26_21.3: Base = bind_value %.loc26_21.2
-// CHECK:STDOUT:   %F.call: init i32 = call %.loc26_11.2(%.loc26_21.3)
-// CHECK:STDOUT:   %.loc26_23.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc26_23.2: i32 = converted %F.call, %.loc26_23.1
-// CHECK:STDOUT:   return %.loc26_23.2
+// CHECK:STDOUT:   %.loc30_11.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc30_11.2: <bound method> = bound_method %.loc30_11.1, %F.ref
+// CHECK:STDOUT:   %.loc30_21.1: ref Base = class_element_access %.loc30_11.1, element0
+// CHECK:STDOUT:   %.loc30_21.2: ref Base = converted %.loc30_11.1, %.loc30_21.1
+// CHECK:STDOUT:   %.loc30_21.3: Base = bind_value %.loc30_21.2
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc30_11.2(%.loc30_21.3)
+// CHECK:STDOUT:   %.loc30_23.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc30_23.2: i32 = converted %F.call, %.loc30_23.1
+// CHECK:STDOUT:   return %.loc30_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBase(%a: Derived) -> i32 {
@@ -221,11 +225,11 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %a.ref: Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %G.ref: G = name_ref G, @Base.%G.decl [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc30_11: <bound method> = bound_method %a.ref, %G.ref
-// CHECK:STDOUT:   %G.call: init i32 = call %.loc30_11(%a.ref)
-// CHECK:STDOUT:   %.loc30_22.1: i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc30_22.2: i32 = converted %G.call, %.loc30_22.1
-// CHECK:STDOUT:   return %.loc30_22.2
+// CHECK:STDOUT:   %.loc34_11: <bound method> = bound_method %a.ref, %G.ref
+// CHECK:STDOUT:   %G.call: init i32 = call %.loc34_11(%a.ref)
+// CHECK:STDOUT:   %.loc34_22.1: i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc34_22.2: i32 = converted %G.call, %.loc34_22.1
+// CHECK:STDOUT:   return %.loc34_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBaseIndirect(%p: Derived*) -> i32 {
@@ -233,12 +237,12 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %G.ref: G = name_ref G, @Base.%G.decl [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc34_11.1: ref Derived = deref %p.ref
-// CHECK:STDOUT:   %.loc34_11.2: <bound method> = bound_method %.loc34_11.1, %G.ref
-// CHECK:STDOUT:   %.loc34_11.3: Derived = bind_value %.loc34_11.1
-// CHECK:STDOUT:   %G.call: init i32 = call %.loc34_11.2(%.loc34_11.3)
-// CHECK:STDOUT:   %.loc34_23.1: i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc34_23.2: i32 = converted %G.call, %.loc34_23.1
-// CHECK:STDOUT:   return %.loc34_23.2
+// CHECK:STDOUT:   %.loc38_11.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc38_11.2: <bound method> = bound_method %.loc38_11.1, %G.ref
+// CHECK:STDOUT:   %.loc38_11.3: Derived = bind_value %.loc38_11.1
+// CHECK:STDOUT:   %G.call: init i32 = call %.loc38_11.2(%.loc38_11.3)
+// CHECK:STDOUT:   %.loc38_23.1: i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc38_23.2: i32 = converted %G.call, %.loc38_23.1
+// CHECK:STDOUT:   return %.loc38_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_method_redefinition.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_method_redefinition.carbon
 
 class Class {
   fn F() {}
@@ -35,19 +39,19 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl.loc8: F = fn_decl @F [template = constants.%struct] {}
-// CHECK:STDOUT:   %F.decl.loc15: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc12: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc19: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F.decl.loc8
+// CHECK:STDOUT:   .F = %F.decl.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc15:
+// CHECK:STDOUT: !.loc19:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

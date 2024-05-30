@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/fail_bool_value.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/alias/fail_bool_value.carbon
 
 // CHECK:STDERR: fail_bool_value.carbon:[[@LINE+3]]:11: ERROR: Alias initializer must be a name reference.
 // CHECK:STDERR: alias a = false;
@@ -25,12 +29,12 @@ let a_test: bool = a;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc10: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
 // CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct() [template = bool]
-// CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc11_13.2: type = converted %bool.make_type, %.loc11_13.1 [template = bool]
+// CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc15_13.2: type = converted %bool.make_type, %.loc15_13.1 [template = bool]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, %a [template = <error>]
 // CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
 // CHECK:STDOUT: }

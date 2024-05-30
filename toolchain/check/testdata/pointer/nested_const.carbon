@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/nested_const.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/pointer/nested_const.carbon
 
 // TODO: The `const` in the return type should not be necessary.
 fn F(p: const (const (const i32*)*)) -> const i32 {
@@ -33,20 +37,20 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc8_29: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32.loc8_29 [template = i32]
-// CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_32.loc8_29, %.loc8_23.1 [template = i32]
-// CHECK:STDOUT:     %.loc8_23.3: type = const_type i32 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc8_32: type = ptr_type const i32 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc8_16: type = const_type const i32* [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8_34: type = ptr_type const (const i32*) [template = constants.%.5]
-// CHECK:STDOUT:     %.loc8_9: type = const_type const (const i32*)* [template = constants.%.6]
-// CHECK:STDOUT:     %p.loc8_6.1: const (const (const i32*)*) = param p
-// CHECK:STDOUT:     @F.%p: const (const (const i32*)*) = bind_name p, %p.loc8_6.1
-// CHECK:STDOUT:     %int.make_type_32.loc8_47: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc8_41.1: type = value_of_initializer %int.make_type_32.loc8_47 [template = i32]
-// CHECK:STDOUT:     %.loc8_41.2: type = converted %int.make_type_32.loc8_47, %.loc8_41.1 [template = i32]
-// CHECK:STDOUT:     %.loc8_41.3: type = const_type i32 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_32.loc12_29: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32.loc12_29 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32.loc12_29, %.loc12_23.1 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.3: type = const_type i32 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc12_32: type = ptr_type const i32 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc12_16: type = const_type const i32* [template = constants.%.4]
+// CHECK:STDOUT:     %.loc12_34: type = ptr_type const (const i32*) [template = constants.%.5]
+// CHECK:STDOUT:     %.loc12_9: type = const_type const (const i32*)* [template = constants.%.6]
+// CHECK:STDOUT:     %p.loc12_6.1: const (const (const i32*)*) = param p
+// CHECK:STDOUT:     @F.%p: const (const (const i32*)*) = bind_name p, %p.loc12_6.1
+// CHECK:STDOUT:     %int.make_type_32.loc12_47: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc12_41.1: type = value_of_initializer %int.make_type_32.loc12_47 [template = i32]
+// CHECK:STDOUT:     %.loc12_41.2: type = converted %int.make_type_32.loc12_47, %.loc12_41.1 [template = i32]
+// CHECK:STDOUT:     %.loc12_41.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     @F.%return: ref const i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -56,10 +60,10 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: const (const (const i32*)*) = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_11.1: ref const (const i32*) = deref %p.ref
-// CHECK:STDOUT:   %.loc9_11.2: const (const i32*) = bind_value %.loc9_11.1
-// CHECK:STDOUT:   %.loc9_10.1: ref const i32 = deref %.loc9_11.2
-// CHECK:STDOUT:   %.loc9_10.2: const i32 = bind_value %.loc9_10.1
-// CHECK:STDOUT:   return %.loc9_10.2
+// CHECK:STDOUT:   %.loc13_11.1: ref const (const i32*) = deref %p.ref
+// CHECK:STDOUT:   %.loc13_11.2: const (const i32*) = bind_value %.loc13_11.1
+// CHECK:STDOUT:   %.loc13_10.1: ref const i32 = deref %.loc13_11.2
+// CHECK:STDOUT:   %.loc13_10.2: const i32 = bind_value %.loc13_10.1
+// CHECK:STDOUT:   return %.loc13_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

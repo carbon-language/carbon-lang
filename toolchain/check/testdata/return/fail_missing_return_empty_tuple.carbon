@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_missing_return_empty_tuple.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/return/fail_missing_return_empty_tuple.carbon
 
 fn F() -> () {
 // CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
@@ -25,8 +29,8 @@ fn F() -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %.loc7_12.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_12.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @F.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

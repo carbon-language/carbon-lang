@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuples/no_prelude/fail_assign_to_empty.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/tuples/no_prelude/fail_assign_to_empty.carbon
 
 // CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13: ERROR: Cannot initialize tuple of 0 element(s) from tuple with 1 element(s).
 // CHECK:STDERR: var x: () = ((),);
@@ -20,16 +24,16 @@ var x: () = ((),);
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_15: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_17: ((),) = tuple_literal (%.loc10_15)
+// CHECK:STDOUT:   %.loc14_15: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc14_17: ((),) = tuple_literal (%.loc14_15)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

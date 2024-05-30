@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/eval/fail_symbolic.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/eval/fail_symbolic.carbon
 
 // TODO: This should work.
 fn G(N:! i32) {
@@ -32,10 +36,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:     %N.loc8_6.1: i32 = param N
-// CHECK:STDOUT:     @G.%N: i32 = bind_symbolic_name N 0, %N.loc8_6.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:     %N.loc12_6.1: i32 = param N
+// CHECK:STDOUT:     @G.%N: i32 = bind_symbolic_name N 0, %N.loc12_6.1 [symbolic = constants.%N]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
@@ -46,9 +50,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %N.ref: i32 = name_ref N, %N [symbolic = constants.%N]
-// CHECK:STDOUT:   %.loc12_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc12_11.2: type = converted %int.make_type_32, %.loc12_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_17: type = array_type %N.ref, i32 [template = <error>]
+// CHECK:STDOUT:   %.loc16_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc16_11.2: type = converted %int.make_type_32, %.loc16_11.1 [template = i32]
+// CHECK:STDOUT:   %.loc16_17: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:   %k.var: ref <error> = var k
 // CHECK:STDOUT:   %k: ref <error> = bind_name k, %k.var
 // CHECK:STDOUT:   return

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch_once.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch_once.carbon
 
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
@@ -44,8 +48,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_14.2: type = converted %int.make_type_32, %.loc7_14.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32, %.loc11_14.1 [template = i32]
 // CHECK:STDOUT:     @Main.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir4, inst+1, loaded [template = constants.%.4]
@@ -67,9 +71,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_10: i32 = int_literal 12 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_15: f64 = float_literal 3.4000000000000004 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21_10: i32 = int_literal 12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21_15: f64 = float_literal 3.4000000000000004 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc21_21: i32 = int_literal 12 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

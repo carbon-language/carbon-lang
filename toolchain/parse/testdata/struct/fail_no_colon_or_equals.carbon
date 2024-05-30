@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/struct/fail_no_colon_or_equals.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/struct/fail_no_colon_or_equals.carbon
 
 // CHECK:STDERR: fail_no_colon_or_equals.carbon:[[@LINE+3]]:11: ERROR: Expected `.field: field_type` or `.field = value`.
 // CHECK:STDERR: var x: {.a} = {};

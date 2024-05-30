@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/fail_not_copyable.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/var/fail_not_copyable.carbon
 
 class X {
 }
@@ -46,8 +50,8 @@ fn F(x: X) {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %x.loc10_6.1: X = param x
-// CHECK:STDOUT:     @F.%x: X = bind_name x, %x.loc10_6.1
+// CHECK:STDOUT:     %x.loc14_6.1: X = param x
+// CHECK:STDOUT:     @F.%x: X = bind_name x, %x.loc14_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +64,7 @@ fn F(x: X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref String = var s
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
-// CHECK:STDOUT:   %.loc17: String = string_literal "hello" [template = constants.%.5]
+// CHECK:STDOUT:   %.loc21: String = string_literal "hello" [template = constants.%.5]
 // CHECK:STDOUT:   assign %s.var, <error>
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %y.var: ref X = var y

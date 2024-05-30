@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_namespace_conflict.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_namespace_conflict.carbon
 
 namespace A;
 
@@ -32,25 +36,25 @@ var A: () = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.loc7
+// CHECK:STDOUT:     .A = %A.loc11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc7: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc16_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %A.var.loc16: ref () = var A
-// CHECK:STDOUT:   %A.loc16: ref () = bind_name A, %A.var.loc16
-// CHECK:STDOUT:   %.loc24_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc24_9.2: type = converted %.loc24_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %A.var.loc24: ref () = var A
-// CHECK:STDOUT:   %A.loc24: ref () = bind_name A, %A.var.loc24
+// CHECK:STDOUT:   %A.loc11: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.loc20_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_9.2: type = converted %.loc20_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %A.var.loc20: ref () = var A
+// CHECK:STDOUT:   %A.loc20: ref () = bind_name A, %A.var.loc20
+// CHECK:STDOUT:   %.loc28_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc28_9.2: type = converted %.loc28_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %A.var.loc28: ref () = var A
+// CHECK:STDOUT:   %A.loc28: ref () = bind_name A, %A.var.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_14.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc24_14.2: init () = tuple_init () to file.%A.var.loc24 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc24_15: init () = converted %.loc24_14.1, %.loc24_14.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign file.%A.var.loc24, %.loc24_15
+// CHECK:STDOUT:   %.loc28_14.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc28_14.2: init () = tuple_init () to file.%A.var.loc28 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc28_15: init () = converted %.loc28_14.1, %.loc28_14.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign file.%A.var.loc28, %.loc28_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/params_one_comma.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/call/params_one_comma.carbon
 
 fn Foo(a: i32,) {}
 
@@ -34,10 +38,10 @@ fn Main() {
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %int.make_type_32, %.loc7_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
-// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
+// CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
+// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc11_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.3] {}
 // CHECK:STDOUT: }
@@ -51,12 +55,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref.loc10: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Foo.call.loc10: init () = call %Foo.ref.loc10(%.loc10)
-// CHECK:STDOUT:   %Foo.ref.loc11: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Foo.call.loc11: init () = call %Foo.ref.loc11(%.loc11)
+// CHECK:STDOUT:   %Foo.ref.loc14: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %Foo.call.loc14: init () = call %Foo.ref.loc14(%.loc14)
+// CHECK:STDOUT:   %Foo.ref.loc15: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %Foo.call.loc15: init () = call %Foo.ref.loc15(%.loc15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

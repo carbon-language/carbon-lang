@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/reorder.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/reorder.carbon
 
 class Class {
   fn G() -> i32 {
@@ -42,16 +46,16 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc8: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:     %.loc8_13.2: type = converted %int.make_type_32.loc8, %.loc8_13.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32.loc12, %.loc12_13.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc16_13.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
+// CHECK:STDOUT:     %.loc16_13.2: type = converted %int.make_type_32.loc16, %.loc16_13.1 [template = i32]
+// CHECK:STDOUT:     %return.var.loc16: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -67,14 +71,14 @@ class Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: F = name_ref F, @Class.%F.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %F.call: init i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc9_21.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc9_21.2: i32 = converted %F.call, %.loc9_21.1
-// CHECK:STDOUT:   return %.loc9_21.2
+// CHECK:STDOUT:   %.loc13_21.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc13_21.2: i32 = converted %F.call, %.loc13_21.1
+// CHECK:STDOUT:   return %.loc13_21.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc13
+// CHECK:STDOUT:   %.loc17: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_constant.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_constant.carbon
 
 interface I {
   // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: ERROR: Pattern in associated constant declaration must be a single `:!` binding.
@@ -35,10 +39,10 @@ alias UseOther = I.other;
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   %I.ref.loc19: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   %I.ref.loc23: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]
-// CHECK:STDOUT:   %I.ref.loc22: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   %I.ref.loc26: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [template = <error>]
 // CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [template = <error>]
 // CHECK:STDOUT: }

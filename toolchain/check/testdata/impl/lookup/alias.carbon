@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/alias.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/alias.carbon
 
 interface HasF {
   fn F();
@@ -52,24 +56,24 @@ fn G(c: C) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, %HasF.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
-// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc19_6.1: C = param c
-// CHECK:STDOUT:     @G.%c: C = bind_name c, %c.loc19_6.1
+// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %c.loc23_6.1: C = param c
+// CHECK:STDOUT:     @G.%c: C = bind_name c, %c.loc23_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc8: <associated F in HasF> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: <associated F in HasF> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8
+// CHECK:STDOUT:   .F = %.loc12
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,8 +88,8 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated F in HasF> = name_ref F, @HasF.%.loc8 [template = constants.%.4]
-// CHECK:STDOUT:   %G: <associated F in HasF> = bind_alias G, @HasF.%.loc8 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated F in HasF> = name_ref F, @HasF.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %G: <associated F in HasF> = bind_alias G, @HasF.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -102,13 +106,13 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @G(%c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc20: <associated F in HasF> = name_ref G, @C.%G [template = constants.%.4]
+// CHECK:STDOUT:   %G.ref.loc24: <associated F in HasF> = name_ref G, @C.%G [template = constants.%.4]
 // CHECK:STDOUT:   %.1: F = interface_witness_access @impl.%.1, element0 [template = constants.%struct.2]
-// CHECK:STDOUT:   %F.call.loc20: init () = call %.1()
+// CHECK:STDOUT:   %F.call.loc24: init () = call %.1()
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc21: <associated F in HasF> = name_ref G, @C.%G [template = constants.%.4]
+// CHECK:STDOUT:   %G.ref.loc25: <associated F in HasF> = name_ref G, @C.%G [template = constants.%.4]
 // CHECK:STDOUT:   %.2: F = interface_witness_access @impl.%.1, element0 [template = constants.%struct.2]
-// CHECK:STDOUT:   %F.call.loc21: init () = call %.2()
+// CHECK:STDOUT:   %F.call.loc25: init () = call %.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

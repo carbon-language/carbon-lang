@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/fail_no_impl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/fail_no_impl.carbon
 
 package User;
 
@@ -90,10 +94,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %TestUnary.decl: TestUnary = fn_decl @TestUnary [template = constants.%struct.1] {
-// CHECK:STDOUT:     %C.ref.loc11_17: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc11_14.1: C = param a
-// CHECK:STDOUT:     @TestUnary.%a: C = bind_name a, %a.loc11_14.1
-// CHECK:STDOUT:     %C.ref.loc11_23: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc15_14.1: C = param a
+// CHECK:STDOUT:     @TestUnary.%a: C = bind_name a, %a.loc15_14.1
+// CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestUnary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.4]
@@ -102,13 +106,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT:   %TestBinary.decl: TestBinary = fn_decl @TestBinary [template = constants.%struct.3] {
-// CHECK:STDOUT:     %C.ref.loc19_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc19_15.1: C = param a
-// CHECK:STDOUT:     @TestBinary.%a: C = bind_name a, %a.loc19_15.1
-// CHECK:STDOUT:     %C.ref.loc19_24: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc19_21.1: C = param b
-// CHECK:STDOUT:     @TestBinary.%b: C = bind_name b, %b.loc19_21.1
-// CHECK:STDOUT:     %C.ref.loc19_30: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc23_15.1: C = param a
+// CHECK:STDOUT:     @TestBinary.%a: C = bind_name a, %a.loc23_15.1
+// CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc23_21.1: C = param b
+// CHECK:STDOUT:     @TestBinary.%b: C = bind_name b, %b.loc23_21.1
+// CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.6: type = import_ref ir4, inst+1, loaded [template = constants.%.7]
@@ -117,9 +121,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir4, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+19, unloaded
 // CHECK:STDOUT:   %TestRef.decl: TestRef = fn_decl @TestRef [template = constants.%struct.5] {
-// CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc27_12.1: C = param b
-// CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc27_12.1
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc31_12.1: C = param b
+// CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc31_12.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+26, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+28, unloaded
@@ -188,13 +192,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref C = var a
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc28_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc28_15.2: init C = class_init (), %a.var [template = constants.%struct.6]
-// CHECK:STDOUT:   %.loc28_16: init C = converted %.loc28_15.1, %.loc28_15.2 [template = constants.%struct.6]
-// CHECK:STDOUT:   assign %a.var, %.loc28_16
-// CHECK:STDOUT:   %a.ref.loc33: ref C = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: C = name_ref b, %b
+// CHECK:STDOUT:   %.loc32_15.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc32_15.2: init C = class_init (), %a.var [template = constants.%struct.6]
+// CHECK:STDOUT:   %.loc32_16: init C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%struct.6]
+// CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref C = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: C = name_ref b, %b
+// CHECK:STDOUT:   %a.ref.loc41: ref C = name_ref a, %a
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_method.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_method.carbon
 
 class Class {
   fn NoSelf();
@@ -66,13 +70,13 @@ fn F(c: Class) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Class.ref.loc12: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %A: WithSelf = bind_alias A, @Class.%WithSelf.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
-// CHECK:STDOUT:     %Class.ref.loc14: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc14_6.1: Class = param c
-// CHECK:STDOUT:     @F.%c: Class = bind_name c, %c.loc14_6.1
+// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.loc18_6.1: Class = param c
+// CHECK:STDOUT:     @F.%c: Class = bind_name c, %c.loc18_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,8 +84,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %NoSelf.decl: NoSelf = fn_decl @NoSelf [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %WithSelf.decl: WithSelf = fn_decl @WithSelf [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc9_15.1: Class = param self
-// CHECK:STDOUT:     %self.loc9_15.2: Class = bind_name self, %self.loc9_15.1
+// CHECK:STDOUT:     %self.loc13_15.1: Class = param self
+// CHECK:STDOUT:     %self.loc13_15.2: Class = bind_name self, %self.loc13_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -92,29 +96,29 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[@Class.%self.loc9_15.2: Class]();
+// CHECK:STDOUT: fn @WithSelf[@Class.%self.loc13_15.2: Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: Class) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc15: Class = name_ref c, %c
-// CHECK:STDOUT:   %NoSelf.ref.loc15: NoSelf = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %NoSelf.call.loc15: init () = call %NoSelf.ref.loc15()
-// CHECK:STDOUT:   %c.ref.loc16: Class = name_ref c, %c
-// CHECK:STDOUT:   %WithSelf.ref.loc16: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc16: <bound method> = bound_method %c.ref.loc16, %WithSelf.ref.loc16
-// CHECK:STDOUT:   %WithSelf.call.loc16: init () = call %.loc16(%c.ref.loc16)
-// CHECK:STDOUT:   %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %NoSelf.ref.loc18: NoSelf = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %NoSelf.call.loc18: init () = call %NoSelf.ref.loc18()
-// CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %WithSelf.ref.loc26: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %WithSelf.call.loc26: init () = call %WithSelf.ref.loc26(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Class.ref.loc34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %WithSelf.ref.loc34: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %c.ref.loc34: Class = name_ref c, %c
-// CHECK:STDOUT:   %WithSelf.call.loc34: init () = call %WithSelf.ref.loc34(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc19: Class = name_ref c, %c
+// CHECK:STDOUT:   %NoSelf.ref.loc19: NoSelf = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %NoSelf.call.loc19: init () = call %NoSelf.ref.loc19()
+// CHECK:STDOUT:   %c.ref.loc20: Class = name_ref c, %c
+// CHECK:STDOUT:   %WithSelf.ref.loc20: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc20: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
+// CHECK:STDOUT:   %WithSelf.call.loc20: init () = call %.loc20(%c.ref.loc20)
+// CHECK:STDOUT:   %Class.ref.loc22: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %NoSelf.ref.loc22: NoSelf = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %NoSelf.call.loc22: init () = call %NoSelf.ref.loc22()
+// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc30: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %WithSelf.call.loc30: init () = call %WithSelf.ref.loc30(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc38: WithSelf = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %c.ref.loc38: Class = name_ref c, %c
+// CHECK:STDOUT:   %WithSelf.call.loc38: init () = call %WithSelf.ref.loc38(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: WithSelf = name_ref A, file.%A [template = constants.%struct.2]
-// CHECK:STDOUT:   %WithSelf.call.loc42: init () = call %A.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %WithSelf.call.loc46: init () = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

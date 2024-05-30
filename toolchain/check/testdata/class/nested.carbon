@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/nested.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/nested.carbon
 
 class Outer {
   fn F() {
@@ -81,9 +85,9 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %.loc37: type = ptr_type Outer [template = constants.%.4]
-// CHECK:STDOUT:     %a.loc37_6.1: Outer* = param a
-// CHECK:STDOUT:     @F.2.%a: Outer* = bind_name a, %a.loc37_6.1
+// CHECK:STDOUT:     %.loc41: type = ptr_type Outer [template = constants.%.4]
+// CHECK:STDOUT:     %a.loc41_6.1: Outer* = param a
+// CHECK:STDOUT:     @F.2.%a: Outer* = bind_name a, %a.loc41_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,42 +96,42 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
 // CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
-// CHECK:STDOUT:   %.loc32_15: type = ptr_type Outer [template = constants.%.4]
-// CHECK:STDOUT:   %.loc32_9: <unbound element of class Outer> = field_decl po, element0 [template]
+// CHECK:STDOUT:   %.loc36_15: type = ptr_type Outer [template = constants.%.4]
+// CHECK:STDOUT:   %.loc36_9: <unbound element of class Outer> = field_decl po, element0 [template]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %.loc33_16: type = ptr_type Outer [template = constants.%.4]
-// CHECK:STDOUT:   %.loc33_9: <unbound element of class Outer> = field_decl qo, element1 [template]
+// CHECK:STDOUT:   %.loc37_16: type = ptr_type Outer [template = constants.%.4]
+// CHECK:STDOUT:   %.loc37_9: <unbound element of class Outer> = field_decl qo, element1 [template]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc34_16: type = ptr_type Inner [template = constants.%.2]
-// CHECK:STDOUT:   %.loc34_9: <unbound element of class Outer> = field_decl pi, element2 [template]
+// CHECK:STDOUT:   %.loc38_16: type = ptr_type Inner [template = constants.%.2]
+// CHECK:STDOUT:   %.loc38_9: <unbound element of class Outer> = field_decl pi, element2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT:   .H = %H.decl
-// CHECK:STDOUT:   .po = %.loc32_9
-// CHECK:STDOUT:   .qo = %.loc33_9
-// CHECK:STDOUT:   .pi = %.loc34_9
+// CHECK:STDOUT:   .po = %.loc36_9
+// CHECK:STDOUT:   .qo = %.loc37_9
+// CHECK:STDOUT:   .pi = %.loc38_9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc15_17: type = ptr_type Inner [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_11: <unbound element of class Inner> = field_decl pi, element0 [template]
+// CHECK:STDOUT:   %.loc19_17: type = ptr_type Inner [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_11: <unbound element of class Inner> = field_decl pi, element0 [template]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %.loc16_18: type = ptr_type Outer [template = constants.%.4]
-// CHECK:STDOUT:   %.loc16_11: <unbound element of class Inner> = field_decl po, element1 [template]
+// CHECK:STDOUT:   %.loc20_18: type = ptr_type Outer [template = constants.%.4]
+// CHECK:STDOUT:   %.loc20_11: <unbound element of class Inner> = field_decl po, element1 [template]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc17_18: type = ptr_type Inner [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_11: <unbound element of class Inner> = field_decl qi, element2 [template]
+// CHECK:STDOUT:   %.loc21_18: type = ptr_type Inner [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21_11: <unbound element of class Inner> = field_decl qi, element2 [template]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .pi = %.loc15_11
-// CHECK:STDOUT:   .po = %.loc16_11
-// CHECK:STDOUT:   .qi = %.loc17_11
+// CHECK:STDOUT:   .pi = %.loc19_11
+// CHECK:STDOUT:   .po = %.loc20_11
+// CHECK:STDOUT:   .qi = %.loc21_11
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -168,61 +172,61 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc38_21: type = ptr_type Inner [template = constants.%.2]
-// CHECK:STDOUT:   %a.ref.loc38: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc38_26: ref Outer = deref %a.ref.loc38
-// CHECK:STDOUT:   %pi.ref.loc38: <unbound element of class Outer> = name_ref pi, @Outer.%.loc34_9 [template = @Outer.%.loc34_9]
-// CHECK:STDOUT:   %.loc38_29.1: ref Inner* = class_element_access %.loc38_26, element2
-// CHECK:STDOUT:   %.loc38_29.2: Inner* = bind_value %.loc38_29.1
-// CHECK:STDOUT:   %b: Inner* = bind_name b, %.loc38_29.2
-// CHECK:STDOUT:   %a.ref.loc40_3: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc40_4.1: ref Outer = deref %a.ref.loc40_3
-// CHECK:STDOUT:   %po.ref.loc40: <unbound element of class Outer> = name_ref po, @Outer.%.loc32_9 [template = @Outer.%.loc32_9]
-// CHECK:STDOUT:   %.loc40_4.2: ref Outer* = class_element_access %.loc40_4.1, element0
-// CHECK:STDOUT:   %a.ref.loc40_11: Outer* = name_ref a, %a
-// CHECK:STDOUT:   assign %.loc40_4.2, %a.ref.loc40_11
-// CHECK:STDOUT:   %a.ref.loc41_3: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc41_4.1: ref Outer = deref %a.ref.loc41_3
-// CHECK:STDOUT:   %qo.ref: <unbound element of class Outer> = name_ref qo, @Outer.%.loc33_9 [template = @Outer.%.loc33_9]
-// CHECK:STDOUT:   %.loc41_4.2: ref Outer* = class_element_access %.loc41_4.1, element1
-// CHECK:STDOUT:   %a.ref.loc41_11: Outer* = name_ref a, %a
-// CHECK:STDOUT:   assign %.loc41_4.2, %a.ref.loc41_11
-// CHECK:STDOUT:   %a.ref.loc42_3: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc42_4.1: ref Outer = deref %a.ref.loc42_3
-// CHECK:STDOUT:   %pi.ref.loc42_4: <unbound element of class Outer> = name_ref pi, @Outer.%.loc34_9 [template = @Outer.%.loc34_9]
-// CHECK:STDOUT:   %.loc42_4.2: ref Inner* = class_element_access %.loc42_4.1, element2
-// CHECK:STDOUT:   %a.ref.loc42_11: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc42_12.1: ref Outer = deref %a.ref.loc42_11
-// CHECK:STDOUT:   %pi.ref.loc42_12: <unbound element of class Outer> = name_ref pi, @Outer.%.loc34_9 [template = @Outer.%.loc34_9]
-// CHECK:STDOUT:   %.loc42_12.2: ref Inner* = class_element_access %.loc42_12.1, element2
-// CHECK:STDOUT:   %.loc42_12.3: Inner* = bind_value %.loc42_12.2
-// CHECK:STDOUT:   assign %.loc42_4.2, %.loc42_12.3
-// CHECK:STDOUT:   %b.ref.loc43: Inner* = name_ref b, %b
-// CHECK:STDOUT:   %.loc43_4.1: ref Inner = deref %b.ref.loc43
-// CHECK:STDOUT:   %po.ref.loc43: <unbound element of class Inner> = name_ref po, @Inner.%.loc16_11 [template = @Inner.%.loc16_11]
-// CHECK:STDOUT:   %.loc43_4.2: ref Outer* = class_element_access %.loc43_4.1, element1
-// CHECK:STDOUT:   %a.ref.loc43: Outer* = name_ref a, %a
-// CHECK:STDOUT:   assign %.loc43_4.2, %a.ref.loc43
-// CHECK:STDOUT:   %b.ref.loc44: Inner* = name_ref b, %b
-// CHECK:STDOUT:   %.loc44_4.1: ref Inner = deref %b.ref.loc44
-// CHECK:STDOUT:   %pi.ref.loc44_4: <unbound element of class Inner> = name_ref pi, @Inner.%.loc15_11 [template = @Inner.%.loc15_11]
-// CHECK:STDOUT:   %.loc44_4.2: ref Inner* = class_element_access %.loc44_4.1, element0
-// CHECK:STDOUT:   %a.ref.loc44: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc44_12.1: ref Outer = deref %a.ref.loc44
-// CHECK:STDOUT:   %pi.ref.loc44_12: <unbound element of class Outer> = name_ref pi, @Outer.%.loc34_9 [template = @Outer.%.loc34_9]
-// CHECK:STDOUT:   %.loc44_12.2: ref Inner* = class_element_access %.loc44_12.1, element2
-// CHECK:STDOUT:   %.loc44_12.3: Inner* = bind_value %.loc44_12.2
-// CHECK:STDOUT:   assign %.loc44_4.2, %.loc44_12.3
-// CHECK:STDOUT:   %b.ref.loc45: Inner* = name_ref b, %b
-// CHECK:STDOUT:   %.loc45_4.1: ref Inner = deref %b.ref.loc45
-// CHECK:STDOUT:   %qi.ref: <unbound element of class Inner> = name_ref qi, @Inner.%.loc17_11 [template = @Inner.%.loc17_11]
-// CHECK:STDOUT:   %.loc45_4.2: ref Inner* = class_element_access %.loc45_4.1, element2
-// CHECK:STDOUT:   %a.ref.loc45: Outer* = name_ref a, %a
-// CHECK:STDOUT:   %.loc45_12.1: ref Outer = deref %a.ref.loc45
-// CHECK:STDOUT:   %pi.ref.loc45: <unbound element of class Outer> = name_ref pi, @Outer.%.loc34_9 [template = @Outer.%.loc34_9]
-// CHECK:STDOUT:   %.loc45_12.2: ref Inner* = class_element_access %.loc45_12.1, element2
-// CHECK:STDOUT:   %.loc45_12.3: Inner* = bind_value %.loc45_12.2
-// CHECK:STDOUT:   assign %.loc45_4.2, %.loc45_12.3
+// CHECK:STDOUT:   %.loc42_21: type = ptr_type Inner [template = constants.%.2]
+// CHECK:STDOUT:   %a.ref.loc42: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc42_26: ref Outer = deref %a.ref.loc42
+// CHECK:STDOUT:   %pi.ref.loc42: <unbound element of class Outer> = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
+// CHECK:STDOUT:   %.loc42_29.1: ref Inner* = class_element_access %.loc42_26, element2
+// CHECK:STDOUT:   %.loc42_29.2: Inner* = bind_value %.loc42_29.1
+// CHECK:STDOUT:   %b: Inner* = bind_name b, %.loc42_29.2
+// CHECK:STDOUT:   %a.ref.loc44_3: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc44_4.1: ref Outer = deref %a.ref.loc44_3
+// CHECK:STDOUT:   %po.ref.loc44: <unbound element of class Outer> = name_ref po, @Outer.%.loc36_9 [template = @Outer.%.loc36_9]
+// CHECK:STDOUT:   %.loc44_4.2: ref Outer* = class_element_access %.loc44_4.1, element0
+// CHECK:STDOUT:   %a.ref.loc44_11: Outer* = name_ref a, %a
+// CHECK:STDOUT:   assign %.loc44_4.2, %a.ref.loc44_11
+// CHECK:STDOUT:   %a.ref.loc45_3: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc45_4.1: ref Outer = deref %a.ref.loc45_3
+// CHECK:STDOUT:   %qo.ref: <unbound element of class Outer> = name_ref qo, @Outer.%.loc37_9 [template = @Outer.%.loc37_9]
+// CHECK:STDOUT:   %.loc45_4.2: ref Outer* = class_element_access %.loc45_4.1, element1
+// CHECK:STDOUT:   %a.ref.loc45_11: Outer* = name_ref a, %a
+// CHECK:STDOUT:   assign %.loc45_4.2, %a.ref.loc45_11
+// CHECK:STDOUT:   %a.ref.loc46_3: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc46_4.1: ref Outer = deref %a.ref.loc46_3
+// CHECK:STDOUT:   %pi.ref.loc46_4: <unbound element of class Outer> = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
+// CHECK:STDOUT:   %.loc46_4.2: ref Inner* = class_element_access %.loc46_4.1, element2
+// CHECK:STDOUT:   %a.ref.loc46_11: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc46_12.1: ref Outer = deref %a.ref.loc46_11
+// CHECK:STDOUT:   %pi.ref.loc46_12: <unbound element of class Outer> = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
+// CHECK:STDOUT:   %.loc46_12.2: ref Inner* = class_element_access %.loc46_12.1, element2
+// CHECK:STDOUT:   %.loc46_12.3: Inner* = bind_value %.loc46_12.2
+// CHECK:STDOUT:   assign %.loc46_4.2, %.loc46_12.3
+// CHECK:STDOUT:   %b.ref.loc47: Inner* = name_ref b, %b
+// CHECK:STDOUT:   %.loc47_4.1: ref Inner = deref %b.ref.loc47
+// CHECK:STDOUT:   %po.ref.loc47: <unbound element of class Inner> = name_ref po, @Inner.%.loc20_11 [template = @Inner.%.loc20_11]
+// CHECK:STDOUT:   %.loc47_4.2: ref Outer* = class_element_access %.loc47_4.1, element1
+// CHECK:STDOUT:   %a.ref.loc47: Outer* = name_ref a, %a
+// CHECK:STDOUT:   assign %.loc47_4.2, %a.ref.loc47
+// CHECK:STDOUT:   %b.ref.loc48: Inner* = name_ref b, %b
+// CHECK:STDOUT:   %.loc48_4.1: ref Inner = deref %b.ref.loc48
+// CHECK:STDOUT:   %pi.ref.loc48_4: <unbound element of class Inner> = name_ref pi, @Inner.%.loc19_11 [template = @Inner.%.loc19_11]
+// CHECK:STDOUT:   %.loc48_4.2: ref Inner* = class_element_access %.loc48_4.1, element0
+// CHECK:STDOUT:   %a.ref.loc48: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc48_12.1: ref Outer = deref %a.ref.loc48
+// CHECK:STDOUT:   %pi.ref.loc48_12: <unbound element of class Outer> = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
+// CHECK:STDOUT:   %.loc48_12.2: ref Inner* = class_element_access %.loc48_12.1, element2
+// CHECK:STDOUT:   %.loc48_12.3: Inner* = bind_value %.loc48_12.2
+// CHECK:STDOUT:   assign %.loc48_4.2, %.loc48_12.3
+// CHECK:STDOUT:   %b.ref.loc49: Inner* = name_ref b, %b
+// CHECK:STDOUT:   %.loc49_4.1: ref Inner = deref %b.ref.loc49
+// CHECK:STDOUT:   %qi.ref: <unbound element of class Inner> = name_ref qi, @Inner.%.loc21_11 [template = @Inner.%.loc21_11]
+// CHECK:STDOUT:   %.loc49_4.2: ref Inner* = class_element_access %.loc49_4.1, element2
+// CHECK:STDOUT:   %a.ref.loc49: Outer* = name_ref a, %a
+// CHECK:STDOUT:   %.loc49_12.1: ref Outer = deref %a.ref.loc49
+// CHECK:STDOUT:   %pi.ref.loc49: <unbound element of class Outer> = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
+// CHECK:STDOUT:   %.loc49_12.2: ref Inner* = class_element_access %.loc49_12.1, element2
+// CHECK:STDOUT:   %.loc49_12.3: Inner* = bind_value %.loc49_12.2
+// CHECK:STDOUT:   assign %.loc49_4.2, %.loc49_12.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_lookup_undefined.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_lookup_undefined.carbon
 
 interface Undefined;
 
@@ -85,12 +89,12 @@ interface BeingDefined {
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc41: <associated H in BeingDefined> = assoc_entity element0, %H.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc45: <associated H in BeingDefined> = assoc_entity element0, %H.decl [template = constants.%.6]
 // CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.2 [template = constants.%struct.4] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .H = %.loc41
+// CHECK:STDOUT:   .H = %.loc45
 // CHECK:STDOUT:   witness = (%H.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

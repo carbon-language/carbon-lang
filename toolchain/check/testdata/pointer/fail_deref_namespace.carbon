@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_namespace.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_namespace.carbon
 
 namespace A;
 
@@ -39,10 +43,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc14: <namespace> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc14: ref <error> = deref <error>
 // CHECK:STDOUT:   %A.ref.loc18: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc18: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc22: <namespace> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc22: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

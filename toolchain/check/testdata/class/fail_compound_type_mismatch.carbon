@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_compound_type_mismatch.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/fail_compound_type_mismatch.carbon
 
 class A {
   var a: i32;
@@ -52,35 +56,35 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %AccessBInA.decl: AccessBInA = fn_decl @AccessBInA [template = constants.%struct.2] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %a.loc15_15.1: A = param a
-// CHECK:STDOUT:     @AccessBInA.%a: A = bind_name a, %a.loc15_15.1
+// CHECK:STDOUT:     %a.loc19_15.1: A = param a
+// CHECK:STDOUT:     @AccessBInA.%a: A = bind_name a, %a.loc19_15.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc15_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc15_24.2: type = converted %int.make_type_32, %.loc15_24.1 [template = i32]
+// CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_24.2: type = converted %int.make_type_32, %.loc19_24.1 [template = i32]
 // CHECK:STDOUT:     @AccessBInA.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class A> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class A> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .a = %.loc8_8
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_8: <unbound element of class B> = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc16_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc16_10.2: type = converted %int.make_type_32, %.loc16_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc16_8: <unbound element of class B> = field_decl b, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .b = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc16_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -89,8 +93,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %b.ref: <unbound element of class B> = name_ref b, @B.%.loc12_8 [template = @B.%.loc12_8]
-// CHECK:STDOUT:   %.loc19: i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %b.ref: <unbound element of class B> = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
+// CHECK:STDOUT:   %.loc23: i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

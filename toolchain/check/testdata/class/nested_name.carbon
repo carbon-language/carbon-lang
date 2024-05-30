@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/nested_name.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/class/nested_name.carbon
 
 class Outer {
   class Inner {
@@ -49,19 +53,19 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %Outer.ref.loc13: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %Outer.ref.loc17: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:     %oi.loc13_6.1: Inner = param oi
-// CHECK:STDOUT:     @F.%oi: Inner = bind_name oi, %oi.loc13_6.1
+// CHECK:STDOUT:     %oi.loc17_6.1: Inner = param oi
+// CHECK:STDOUT:     @F.%oi: Inner = bind_name oi, %oi.loc17_6.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc13_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc13_26.2: type = converted %int.make_type_32, %.loc13_26.1 [template = i32]
+// CHECK:STDOUT:     %.loc17_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc17_26.2: type = converted %int.make_type_32, %.loc17_26.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
-// CHECK:STDOUT:     %Outer.ref.loc17: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %o.loc17_6.1: Outer = param o
-// CHECK:STDOUT:     @G.%o: Outer = bind_name o, %o.loc17_6.1
+// CHECK:STDOUT:     %Outer.ref.loc21: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %o.loc21_6.1: Outer = param o
+// CHECK:STDOUT:     @G.%o: Outer = bind_name o, %o.loc21_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,13 +79,13 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc9_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc9_12.2: type = converted %int.make_type_32, %.loc9_12.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_10: <unbound element of class Inner> = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc13_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32, %.loc13_12.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_10: <unbound element of class Inner> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .n = %.loc9_10
+// CHECK:STDOUT:   .n = %.loc13_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -89,10 +93,10 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @F(%oi: Inner) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %n.ref: <unbound element of class Inner> = name_ref n, @Inner.%.loc9_10 [template = @Inner.%.loc9_10]
-// CHECK:STDOUT:   %.loc14_12.1: ref i32 = class_element_access %oi.ref, element0
-// CHECK:STDOUT:   %.loc14_12.2: i32 = bind_value %.loc14_12.1
-// CHECK:STDOUT:   return %.loc14_12.2
+// CHECK:STDOUT:   %n.ref: <unbound element of class Inner> = name_ref n, @Inner.%.loc13_10 [template = @Inner.%.loc13_10]
+// CHECK:STDOUT:   %.loc18_12.1: ref i32 = class_element_access %oi.ref, element0
+// CHECK:STDOUT:   %.loc18_12.2: i32 = bind_value %.loc18_12.1
+// CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o: Outer) {

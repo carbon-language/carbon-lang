@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_member_lookup.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_member_lookup.carbon
 
 interface Interface {
   fn F();
@@ -51,14 +55,14 @@ fn F() {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc8: <associated F in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: <associated F in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc10: <associated type in Interface> = assoc_entity element1, %T [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14: <associated type in Interface> = assoc_entity element1, %T [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:   .T = %.loc10
+// CHECK:STDOUT:   .F = %.loc12
+// CHECK:STDOUT:   .T = %.loc14
 // CHECK:STDOUT:   witness = (%F.decl, %T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,10 +70,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Interface.ref.loc18: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated F in Interface> = name_ref F, @Interface.%.loc8 [template = constants.%.4]
-// CHECK:STDOUT:   %Interface.ref.loc23: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc10 [template = constants.%.6]
+// CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:   %F.ref: <associated F in Interface> = name_ref F, @Interface.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %Interface.ref.loc27: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc14 [template = constants.%.6]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT:   return

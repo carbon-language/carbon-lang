@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/assoc_const.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/interface/assoc_const.carbon
 
 interface I {
   let T:! type;
@@ -36,17 +40,17 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc8: <associated type in I> = assoc_entity element0, %T [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: <associated type in I> = assoc_entity element0, %T [template = constants.%.3]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc9_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc9_11.2: type = converted %int.make_type_32, %.loc9_11.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]
 // CHECK:STDOUT:   %N: i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc9_14: <associated i32 in I> = assoc_entity element1, %N [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_14: <associated i32 in I> = assoc_entity element1, %N [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc8
-// CHECK:STDOUT:   .N = %.loc9_14
+// CHECK:STDOUT:   .T = %.loc12
+// CHECK:STDOUT:   .N = %.loc13_14
 // CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

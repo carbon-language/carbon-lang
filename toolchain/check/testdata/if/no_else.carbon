@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/if/no_else.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/if/no_else.carbon
 
 fn F() {}
 fn G() {}
@@ -41,10 +45,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %If.decl: If = fn_decl @If [template = constants.%struct.4] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc10_10.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc10_10.2: type = converted %bool.make_type, %.loc10_10.1 [template = bool]
-// CHECK:STDOUT:     %b.loc10_7.1: bool = param b
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc10_7.1
+// CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc14_10.2: type = converted %bool.make_type, %.loc14_10.1 [template = bool]
+// CHECK:STDOUT:     %b.loc14_7.1: bool = param b
+// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc14_7.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
