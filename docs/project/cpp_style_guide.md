@@ -124,17 +124,26 @@ these.
     -   An exception is made for functions like `std::swap` that are
         intentionally called using ADL. This pattern should be written as
         `{ using std::swap; swap(thing1, thing2); }`.
--   Follow the rules for initialization outlined in
-    [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization).
-    To summarize, omitting some details from the article:
+-   For initialization:
     -   Use assignment syntax (`=`) when initializing directly with the intended
         value (or with a braced initializer directly specifying that value).
-    -   Use the traditional constructor syntax (with parentheses) when the
-        initialization is performing some active logic, rather than simply
-        composing values together.
-    -   Use `{}` initialization without the `=` only if the above options don't
+    -   Prefer braced initialization for aggregate initialization, such as
+        structs, pairs, and initializer lists.
+        -   Use designated initializers (`{.a = 1}`) when possible for structs,
+            but not for pairs or tuples. This is analogous to how structs and
+            tuples would be written in Carbon code.
+        -   Avoid braced initialization for types that define a constructor,
+            except as an initializer list
+            (`llvm::SmallVector<int> v = {0, 1};)`. Never use it with `auto`
+            (`auto a = {0, 1}`).
+    -   Prefer parenthesized initialization (`FooType foo(10);`) in most other
+        cases.
+    -   Braced initialization without `=` (`BarType bar{10}`) should be treated
+        as a fallback, preferred only when other constructor syntax doesn't
         compile.
-    -   Never mix `{}` initialization and `auto`.
+    -   Some additional commentary is in
+        [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization),
+        although these guidelines differ slightly.
 -   Always mark constructors `explicit` unless there's a specific reason to
     support implicit or `{}` initialization.
 -   Always use braces for conditional, `switch`, and loop statements, even when
