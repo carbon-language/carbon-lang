@@ -5,6 +5,7 @@
 #include "common/init_llvm.h"
 
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -32,6 +33,10 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
   if (InitializeTargets) {
     InitializeTargets();
   }
+
+  // Printing to stderr should flush stdout. This is most noticeable when stderr
+  // is piped to stdout.
+  llvm::errs().tie(&llvm::outs());
 }
 
 InitLLVM::InitializeTargetsFn* InitLLVM::InitializeTargets = nullptr;
