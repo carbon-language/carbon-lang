@@ -130,8 +130,9 @@ these.
     -   Prefer braced initialization for aggregate initialization, such as
         structs, pairs, and initializer lists.
         -   Use designated initializers (`{.a = 1}`) when possible for structs,
-            but not for pairs or tuples. This is analogous to how structs and
-            tuples would be written in Carbon code.
+            but not for pairs or tuples. Prefer to only include the typename
+            when required to compile (`WizType{.a = 1}`). This is analogous to
+            how structs and tuples would be written in Carbon code.
         -   Avoid braced initialization for types that define a constructor,
             except as an initializer list
             (`llvm::SmallVector<int> v = {0, 1};)`. Never use it with `auto`
