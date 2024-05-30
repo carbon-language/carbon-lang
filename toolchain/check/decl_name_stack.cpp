@@ -44,7 +44,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
 auto DeclNameStack::MakeUnqualifiedName(SemIR::LocId loc_id,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
-  ApplyNameQualifierTo(context, loc_id, name_id, /*is_unqualified=*/true);
+  ApplyAndLookupName(context, loc_id, name_id, /*is_unqualified=*/true);
   return context;
 }
 
@@ -59,8 +59,8 @@ auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
 
-  ApplyNameQualifierTo(decl_name_stack_.back(), name.name_loc_id, name.name_id,
-                       /*is_unqualified=*/false);
+  ApplyAndLookupName(decl_name_stack_.back(), name.name_loc_id, name.name_id,
+                     /*is_unqualified=*/false);
 
   NameContext result = decl_name_stack_.back();
   decl_name_stack_.back().state = NameContext::State::Finished;
@@ -182,31 +182,47 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   if (name.implicit_params_id.is_valid() || name.params_id.is_valid()) {
     context_->TODO(name.params_loc_id, "name qualifier with parameters");
   }
-  ApplyNameQualifierTo(decl_name_stack_.back(), name.name_loc_id, name.name_id,
-                       /*is_unqualified=*/false);
+
+  auto& name_context = decl_name_stack_.back();
+  ApplyAndLookupName(name_context, name.name_loc_id, name.name_id,
+                     /*is_unqualified=*/false);
+  name_context.has_qualifiers = true;
+  if (!CheckValidAsQualifier(name_context)) {
+    name_context.state = NameContext::State::Error;
+  }
 }
 
-auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                         SemIR::LocId loc_id,
-                                         SemIR::NameId name_id,
-                                         bool is_unqualified) -> void {
-  if (TryResolveQualifier(name_context, loc_id)) {
-    // For identifier nodes, we need to perform a lookup on the identifier.
-    auto resolved_inst_id = context_->LookupNameInDecl(
-        name_context.loc_id, name_id, name_context.enclosing_scope_id);
-    if (!resolved_inst_id.is_valid()) {
-      // Invalid indicates an unresolved name. Store it and return.
-      name_context.unresolved_name_id = name_id;
-      name_context.state = NameContext::State::Unresolved;
-      return;
-    } else {
-      // Store the resolved instruction and continue for the target scope
-      // update.
-      name_context.resolved_inst_id = resolved_inst_id;
-    }
+auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
+                                       SemIR::LocId loc_id,
+                                       SemIR::NameId name_id,
+                                       bool is_unqualified) -> void {
+  // The location of the name is the location of the last name token we've
+  // processed so far.
+  name_context.loc_id = loc_id;
 
-    UpdateScopeIfNeeded(name_context, is_unqualified);
+  // Don't perform any more lookups after we hit an error. We still track the
+  // final name, though.
+  if (name_context.state == NameContext::State::Error) {
+    name_context.unresolved_name_id = name_id;
+    return;
   }
+
+  // For identifier nodes, we need to perform a lookup on the identifier.
+  auto resolved_inst_id = context_->LookupNameInDecl(
+      name_context.loc_id, name_id, name_context.enclosing_scope_id);
+  if (!resolved_inst_id.is_valid()) {
+    // Invalid indicates an unresolved name. Store it and return.
+    name_context.unresolved_name_id = name_id;
+    name_context.state = NameContext::State::Unresolved;
+    return;
+  } else {
+    // Store the resolved instruction and continue for the target scope
+    // update.
+    name_context.resolved_inst_id = resolved_inst_id;
+  }
+
+  // Enter the scope of the existing entity.
+  UpdateScopeIfNeeded(name_context, is_unqualified);
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
@@ -293,21 +309,25 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
   }
 }
 
-auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
-                                        SemIR::LocId loc_id) -> bool {
-  // Update has_qualifiers based on the state before any possible changes. If
-  // this is the first qualifier, it may just be the name.
-  name_context.has_qualifiers = name_context.state != NameContext::State::Empty;
-
+auto DeclNameStack::CheckValidAsQualifier(const NameContext& name_context)
+    -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.
       return false;
 
+    case NameContext::State::Resolved:
+      return true;
+
+    case NameContext::State::Empty:
+      CARBON_FATAL() << "No qualifier to resolve";
+
+    case NameContext::State::Finished:
+      CARBON_FATAL() << "Added a qualifier after calling FinishName";
+
     case NameContext::State::Unresolved:
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
-      name_context.state = NameContext::State::Error;
       context_->DiagnoseNameNotFound(name_context.loc_id,
                                      name_context.unresolved_name_id);
       return false;
@@ -346,24 +366,14 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
                           "Name qualifiers are only allowed for entities that "
                           "provide a scope.");
         CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
-                          "Non-scope entity referenced here.");
+                          "Referenced non-scope entity declared here.");
         context_->emitter()
-            .Build(loc_id, QualifiedNameInNonScope)
-            .Note(name_context.loc_id, QualifiedNameNonScopeEntity)
+            .Build(name_context.loc_id, QualifiedNameInNonScope)
+            .Note(name_context.resolved_inst_id, QualifiedNameNonScopeEntity)
             .Emit();
       }
-      name_context.state = NameContext::State::Error;
       return false;
     }
-
-    case NameContext::State::Empty:
-    case NameContext::State::Resolved: {
-      name_context.loc_id = loc_id;
-      return true;
-    }
-
-    case NameContext::State::Finished:
-      CARBON_FATAL() << "Added a qualifier after calling FinishName";
   }
 }
 

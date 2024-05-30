@@ -228,14 +228,14 @@ class DeclNameStack {
   // Returns a name context corresponding to an empty name.
   auto MakeEmptyNameContext() -> NameContext;
 
-  // Applies a Name from the name stack to given name context.
-  auto ApplyNameQualifierTo(NameContext& name_context, SemIR::LocId loc_id,
-                            SemIR::NameId name_id, bool is_unqualified) -> void;
+  // Appends a name to the given name context, and performs a lookup to find
+  // what, if anything, the name refers to.
+  auto ApplyAndLookupName(NameContext& name_context, SemIR::LocId loc_id,
+                          SemIR::NameId name_id, bool is_unqualified) -> void;
 
-  // Returns true if the context is in a state where it can resolve qualifiers.
-  // Updates name_context as needed.
-  auto TryResolveQualifier(NameContext& name_context, SemIR::LocId loc_id)
-      -> bool;
+  // Checks and returns whether the given name context can be used as a
+  // qualifier. A suitable diagnostic is issued if not.
+  auto CheckValidAsQualifier(const NameContext& name_context) -> bool;
 
   // Updates the scope on name_context as needed. This is called after
   // resolution is complete, whether for Name or expression. When updating for

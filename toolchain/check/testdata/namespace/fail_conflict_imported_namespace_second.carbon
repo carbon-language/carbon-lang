@@ -28,12 +28,15 @@ import library "fn";
 // CHECK:STDERR:
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:7: ERROR: Name qualifiers are only allowed for entities that provide a scope.
-// CHECK:STDERR: fn NS.Foo();
-// CHECK:STDERR:       ^~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:4: Non-scope entity referenced here.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:4: ERROR: Name qualifiers are only allowed for entities that provide a scope.
 // CHECK:STDERR: fn NS.Foo();
 // CHECK:STDERR:    ^~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-17]]:1: In import.
+// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fn.carbon:4:1: Referenced non-scope entity declared here.
+// CHECK:STDERR: fn NS();
+// CHECK:STDERR: ^~~~~~~~
 fn NS.Foo();
 
 // CHECK:STDOUT: --- fn.carbon

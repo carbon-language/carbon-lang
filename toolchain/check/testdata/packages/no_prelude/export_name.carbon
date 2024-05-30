@@ -116,12 +116,15 @@ library "fail_export_member";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+7]]:10: ERROR: Name qualifiers are only allowed for entities that provide a scope.
-// CHECK:STDERR: export C.x;
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+4]]:8: Non-scope entity referenced here.
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+10]]:8: ERROR: Name qualifiers are only allowed for entities that provide a scope.
 // CHECK:STDERR: export C.x;
 // CHECK:STDERR:        ^
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import library "base";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: base.carbon:4:1: Referenced non-scope entity declared here.
+// CHECK:STDERR: class C {
+// CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 export C.x;
 
