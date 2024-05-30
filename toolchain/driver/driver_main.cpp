@@ -23,10 +23,6 @@ auto main(int argc, char** argv) -> int {
 
   Carbon::SetWorkingDirForBazel();
 
-  // Printing to stderr should flush stdout. This is most noticeable when stderr
-  // is piped to stdout.
-  llvm::errs().tie(&llvm::outs());
-
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   auto fs = llvm::vfs::getRealFileSystem();
 
