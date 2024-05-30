@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/sem_ir/ids.h"
@@ -157,26 +158,23 @@ class DeclNameStack {
   // state, `FinishName` and `PopScope` must be called, in that order.
   auto PushScopeAndStartName() -> void;
 
-  // Peeks the current enclosing scope of the name on top of the stack. Note
-  // that if we're still processing the name qualifiers, this can change before
-  // the name is completed. Also, if the name up to this point was already
-  // declared and is a scope, this will be that scope, rather than the scope
-  // enclosing it.
-  auto PeekEnclosingScopeId() const -> SemIR::NameScopeId {
-    return decl_name_stack_.back().enclosing_scope_id;
-  }
+  // Creates and returns a name context corresponding to declaring an
+  // unqualified name in the current context. This is suitable for adding to
+  // name lookup in situations where a qualified name is not permitted, such as
+  // a pattern binding.
+  auto MakeUnqualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id)
+      -> NameContext;
 
-  // Peeks the resolution scope index of the name on top of the stack.
-  auto PeekInitialScopeIndex() const -> ScopeIndex {
-    return decl_name_stack_.back().initial_scope_index;
-  }
+  // Applies a name component as a qualifier for the current name. This will
+  // enter the scope corresponding to the name if the name describes an existing
+  // scope, such as a namespace or a defined class.
+  auto ApplyNameQualifier(const NameComponent& name) -> void;
 
   // Finishes the current declaration name processing, returning the final
-  // context for adding the name to lookup.
-  //
-  // This also pops the final name instruction from the instruction stack,
-  // which will be applied to the declaration name if appropriate.
-  auto FinishName() -> NameContext;
+  // context for adding the name to lookup. The final name component should be
+  // popped and passed to this function, and will be added to the declaration
+  // name.
+  auto FinishName(const NameComponent& name) -> NameContext;
 
   // Finishes the current declaration name processing for an `impl`, returning
   // the final context for adding the name to lookup.
@@ -193,24 +191,26 @@ class DeclNameStack {
   // This should be called at the end of the declaration.
   auto PopScope() -> void;
 
+  // Peeks the current enclosing scope of the name on top of the stack. Note
+  // that if we're still processing the name qualifiers, this can change before
+  // the name is completed. Also, if the name up to this point was already
+  // declared and is a scope, this will be that scope, rather than the scope
+  // enclosing it.
+  auto PeekEnclosingScopeId() const -> SemIR::NameScopeId {
+    return decl_name_stack_.back().enclosing_scope_id;
+  }
+
+  // Peeks the resolution scope index of the name on top of the stack.
+  auto PeekInitialScopeIndex() const -> ScopeIndex {
+    return decl_name_stack_.back().initial_scope_index;
+  }
+
   // Temporarily remove the current declaration name and its associated scopes
   // from the stack. Can only be called once the name is finished.
   auto Suspend() -> SuspendedName;
 
   // Restore a previously suspended name.
   auto Restore(SuspendedName sus) -> void;
-
-  // Creates and returns a name context corresponding to declaring an
-  // unqualified name in the current context. This is suitable for adding to
-  // name lookup in situations where a qualified name is not permitted, such as
-  // a pattern binding.
-  auto MakeUnqualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id)
-      -> NameContext;
-
-  // Applies a Name from the name stack to the top of the declaration name
-  // stack. This will enter the scope corresponding to the name if the name
-  // describes an existing scope, such as a namespace or a defined class.
-  auto ApplyNameQualifier(SemIR::LocId loc_id, SemIR::NameId name_id) -> void;
 
   // Adds a name to name lookup. Assumes duplicates are already handled.
   auto AddName(NameContext name_context, SemIR::InstId target_id) -> void;

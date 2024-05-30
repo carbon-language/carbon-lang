@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -25,7 +26,8 @@ auto HandleAliasInitializer(Context& /*context*/,
 auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
-  auto name_context = context.decl_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName(
+      PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
 
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Alias);

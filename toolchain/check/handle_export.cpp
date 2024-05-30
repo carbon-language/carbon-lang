@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -20,7 +21,8 @@ auto HandleExportIntroducer(Context& context,
 }
 
 auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
-  auto name_context = context.decl_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName(
+      PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();
 
   LimitModifiersOnDecl(context, KeywordModifierSet::None,

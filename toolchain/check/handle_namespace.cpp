@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -18,7 +19,8 @@ auto HandleNamespaceStart(Context& context, Parse::NamespaceStartId /*node_id*/)
 }
 
 auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
-  auto name_context = context.decl_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName(
+      PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
   LimitModifiersOnDecl(context, KeywordModifierSet::None,
                        Lex::TokenKind::Namespace);
   auto namespace_inst = SemIR::Namespace{

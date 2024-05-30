@@ -11,6 +11,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -211,18 +212,12 @@ static auto BuildFunctionDecl(Context& context,
     return_slot = SemIR::Function::ReturnSlot::Absent;
   }
 
-  auto param_refs_id =
-      context.node_stack().PopIf<Parse::NodeKind::TuplePattern>();
-  if (!param_refs_id) {
+  auto name = PopNameComponent(context);
+  if (!name.params_id.is_valid()) {
     context.TODO(node_id, "function with positional parameters");
-    param_refs_id = SemIR::InstBlockId::Empty;
+    name.params_id = SemIR::InstBlockId::Empty;
   }
-  // TODO: Use Invalid rather than Empty if there was no implicit parameter
-  // list.
-  SemIR::InstBlockId implicit_param_refs_id =
-      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
-          SemIR::InstBlockId::Empty);
-  auto name_context = context.decl_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
@@ -256,8 +251,8 @@ static auto BuildFunctionDecl(Context& context,
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
       .decl_id = context.AddPlaceholderInst({node_id, function_decl}),
-      .implicit_param_refs_id = implicit_param_refs_id,
-      .param_refs_id = *param_refs_id,
+      .implicit_param_refs_id = name.implicit_params_id,
+      .param_refs_id = name.params_id,
       .return_type_id = return_type_id,
       .return_storage_id = return_storage_id,
       .is_extern = is_extern,
@@ -301,9 +296,8 @@ static auto BuildFunctionDecl(Context& context,
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (!context.inst_blocks()
-             .Get(function_info.implicit_param_refs_id)
-             .empty() ||
+    if (function_info.implicit_param_refs_id.is_valid() ||
+        !function_info.param_refs_id.is_valid() ||
         !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
         (function_info.return_type_id.is_valid() &&
          function_info.return_type_id !=
@@ -344,9 +338,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   CheckFunctionReturnType(context, function.return_storage_id, function);
 
   // Check the parameter types are complete.
-  for (auto param_id : llvm::concat<SemIR::InstId>(
-           context.inst_blocks().Get(function.implicit_param_refs_id),
-           context.inst_blocks().Get(function.param_refs_id))) {
+  for (auto param_id : llvm::concat<const SemIR::InstId>(
+           context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
+           context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
     auto param = context.insts().Get(param_id);
 
     // Find the parameter in the pattern.
@@ -464,11 +458,11 @@ static auto IsValidBuiltinDeclaration(Context& context,
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
   auto implicit_param_refs =
-      context.inst_blocks().Get(function.implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().Get(function.param_refs_id);
+      context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  auto param_refs = context.inst_blocks().GetOrEmpty(function.param_refs_id);
   param_type_ids.reserve(implicit_param_refs.size() + param_refs.size());
   for (auto param_id :
-       llvm::concat<SemIR::InstId>(implicit_param_refs, param_refs)) {
+       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());

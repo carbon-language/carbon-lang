@@ -9,9 +9,9 @@ class Class(T:! type) {
   fn F[self: Self](n: T);
 }
 
-// CHECK:STDERR: fail_todo_generic_method.carbon:[[@LINE+3]]:4: ERROR: Semantics TODO: `name qualifier with parameters`.
+// CHECK:STDERR: fail_todo_generic_method.carbon:[[@LINE+3]]:9: ERROR: Semantics TODO: `name qualifier with parameters`.
 // CHECK:STDERR: fn Class(T:! type).F[self: Self](n: T) {}
-// CHECK:STDERR:    ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~~
 fn Class(T:! type).F[self: Self](n: T) {}
 
 // CHECK:STDOUT: --- fail_todo_generic_method.carbon
@@ -26,18 +26,39 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
 // CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: T} [symbolic]
+// CHECK:STDOUT:   %.4: type = ptr_type {.a: T} [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Class.decl: Class = class_decl @Class [template = constants.%struct.1] {
+// CHECK:STDOUT:     %T.loc7_13.1: type = param T
+// CHECK:STDOUT:     %T.loc7_13.2: type = bind_symbolic_name T 0, %T.loc7_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
+// CHECK:STDOUT:     %T.loc15_10.1: type = param T
+// CHECK:STDOUT:     %T.loc15_10.2: type = bind_symbolic_name T 0, %T.loc15_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [template = constants.%Class.2]
+// CHECK:STDOUT:     %self.loc15_22.1: Class = param self
+// CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc15_22.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_10.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %n.loc15_34.1: T = param n
+// CHECK:STDOUT:     @F.%n: T = bind_name n, %n.loc15_34.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, <unexpected instref inst+3> [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, file.%T.loc7_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [template = constants.%Class.2]
 // CHECK:STDOUT:     %self.loc9_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc9_8.2: Class = bind_name self, %self.loc9_8.1
-// CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, <unexpected instref inst+3> [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, file.%T.loc7_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc9_20.1: T = param n
 // CHECK:STDOUT:     %n.loc9_20.2: T = bind_name n, %n.loc9_20.1
 // CHECK:STDOUT:   }
@@ -48,5 +69,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%self.loc9_8.2: Class](@Class.%n.loc9_20.2: T);
+// CHECK:STDOUT: fn @F[%self: Class](%n: T) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

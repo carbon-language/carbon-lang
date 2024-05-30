@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: Declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
 // CHECK:STDERR: namespace A();
 // CHECK:STDERR:            ^~
 // CHECK:STDERR:
@@ -13,13 +13,13 @@ namespace A();
 // Parameters are ignored for error recovery.
 fn A.F() {}
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: Declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
 // CHECK:STDERR: namespace B(n: i32);
 // CHECK:STDERR:            ^~~~~~~~
 // CHECK:STDERR:
 namespace B(n: i32);
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+3]]:12: ERROR: Declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+3]]:12: ERROR: `namespace` declaration cannot have parameters.
 // CHECK:STDERR: namespace C[T:! type](x: T);
 // CHECK:STDERR:            ^~~~~~~~~~
 namespace C[T:! type](x: T);
