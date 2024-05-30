@@ -135,7 +135,7 @@ these.
             how structs and tuples would be written in Carbon code.
         -   Avoid braced initialization for types that define a constructor,
             except as an initializer list
-            (`llvm::SmallVector<int> v = {0, 1};)`. Never use it with `auto`
+            (`llvm::SmallVector<int> v = {0, 1};`), `std::pair` or `std::tuple`. Never use it with `auto`
             (`auto a = {0, 1}`).
     -   Prefer parenthesized initialization (`FooType foo(10);`) in most other
         cases.
