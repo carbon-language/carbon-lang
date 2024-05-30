@@ -233,15 +233,17 @@ class Formatter {
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-    if (fn.implicit_param_refs_id != InstBlockId::Empty) {
+    if (fn.implicit_param_refs_id.is_valid()) {
       out_ << "[";
       FormatParamList(fn.implicit_param_refs_id);
       out_ << "]";
     }
 
-    out_ << "(";
-    FormatParamList(fn.param_refs_id);
-    out_ << ")";
+    if (fn.param_refs_id.is_valid()) {
+      out_ << "(";
+      FormatParamList(fn.param_refs_id);
+      out_ << ")";
+    }
 
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";

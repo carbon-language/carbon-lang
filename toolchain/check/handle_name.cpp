@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/inst.h"
@@ -125,19 +126,9 @@ auto HandleSelfValueNameExpr(Context& context,
   return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue);
 }
 
-auto HandleNameQualifier(Context& context, Parse::NameQualifierId node_id)
+auto HandleNameQualifier(Context& context, Parse::NameQualifierId /*node_id*/)
     -> bool {
-  auto params_id = context.node_stack().PopIf<Parse::NodeKind::TuplePattern>();
-  auto implicit_params_id =
-      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>();
-  if (params_id || implicit_params_id) {
-    // TODO: Pass the parameters into decl_name_stack.
-    context.TODO(node_id, "name qualifier with parameters");
-    return false;
-  }
-
-  auto [name_node_id, name_id] = context.node_stack().PopNameWithNodeId();
-  context.decl_name_stack().ApplyNameQualifier(name_node_id, name_id);
+  context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
   return true;
 }
 

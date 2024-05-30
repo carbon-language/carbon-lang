@@ -450,7 +450,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   // Returns the contents of the specified block, or an empty array if the block
   // is empty.
-  auto GetOrEmpty(InstBlockId block_id) -> llvm::ArrayRef<InstId> {
+  auto GetOrEmpty(InstBlockId block_id) const -> llvm::ArrayRef<InstId> {
     return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
   }
 };

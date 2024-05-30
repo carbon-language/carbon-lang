@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -25,14 +26,12 @@ auto HandleInterfaceIntroducer(Context& context,
 static auto BuildInterfaceDecl(Context& context,
                                Parse::AnyInterfaceDeclId node_id)
     -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
-  if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
-    context.TODO(node_id, "generic interface");
-  }
-  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
+  auto name = PopNameComponent(context);
+  if (name.params_id.is_valid() || name.implicit_params_id.is_valid()) {
     context.TODO(node_id, "generic interface");
   }
 
-  auto name_context = context.decl_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
 

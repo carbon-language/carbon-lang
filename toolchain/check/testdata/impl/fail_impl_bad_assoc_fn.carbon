@@ -61,10 +61,10 @@ class FExtraParam {
 
 class FExtraImplicitParam {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of implicit parameter count of 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of implicit parameter list.
     // CHECK:STDERR:     fn F[self: Self]();
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-60]]:15: Previously declared with implicit parameter count of 0.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-60]]:15: Previously declared without implicit parameter list.
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -103,10 +103,10 @@ class FMissingParam {
 
 class FMissingImplicitParam {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of implicit parameter count of 0.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of missing implicit parameter list.
     // CHECK:STDERR:     fn F(b: bool) -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-20]]:15: Previously declared with implicit parameter count of 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-20]]:15: Previously declared with implicit parameter list.
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:

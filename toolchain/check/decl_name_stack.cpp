@@ -55,28 +55,12 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
   context_->scope_stack().Push();
 }
 
-auto DeclNameStack::FinishName() -> NameContext {
+auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
-  auto [params_loc_id, params_id] =
-      context_->node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
-  auto [implicit_params_loc_id, implicit_params_id] =
-      context_->node_stack()
-          .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
-  auto [loc_id, name_id] = context_->node_stack().PopNameWithNodeId();
 
-  ApplyNameQualifier(loc_id, name_id);
-
-  if (params_id || implicit_params_id) {
-    // TODO: Say which kind of declaration we're parsing.
-    CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
-                      "Declaration cannot have parameters.");
-    // Point to the lexically first parameter list in the diagnostic.
-    context_->emitter().Emit(implicit_params_id
-                                 ? static_cast<SemIRLoc>(implicit_params_loc_id)
-                                 : params_loc_id,
-                             UnexpectedDeclNameParams);
-  }
+  ApplyNameQualifierTo(decl_name_stack_.back(), name.name_loc_id, name.name_id,
+                       /*is_unqualified=*/false);
 
   NameContext result = decl_name_stack_.back();
   decl_name_stack_.back().state = NameContext::State::Finished;
@@ -194,9 +178,11 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
   return SemIR::InstId::Invalid;
 }
 
-auto DeclNameStack::ApplyNameQualifier(SemIR::LocId loc_id,
-                                       SemIR::NameId name_id) -> void {
-  ApplyNameQualifierTo(decl_name_stack_.back(), loc_id, name_id,
+auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
+  if (name.implicit_params_id.is_valid() || name.params_id.is_valid()) {
+    context_->TODO(name.params_loc_id, "name qualifier with parameters");
+  }
+  ApplyNameQualifierTo(decl_name_stack_.back(), name.name_loc_id, name.name_id,
                        /*is_unqualified=*/false);
 }
 

@@ -9,6 +9,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -176,14 +177,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                            bool is_definition)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
-  auto param_refs_id =
-      context.node_stack().PopIf<Parse::NodeKind::TuplePattern>().value_or(
-          SemIR::InstBlockId::Invalid);
-  auto implicit_param_refs_id =
-      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
-          SemIR::InstBlockId::Invalid);
-
-  auto name_context = context.decl_name_stack().FinishName();
+  auto name = PopNameComponent(context);
+  auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ClassIntroducer>();
 
@@ -222,8 +217,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   SemIR::Class class_info = {
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-      .implicit_param_refs_id = implicit_param_refs_id,
-      .param_refs_id = param_refs_id,
+      .implicit_param_refs_id = name.implicit_params_id,
+      .param_refs_id = name.params_id,
       // `.self_type_id` depends on the ClassType, so is set below.
       .self_type_id = SemIR::TypeId::Invalid,
       .decl_id = class_decl_id,
