@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "common/enum_base.h"
+#include "common/ostream.h"
 #include "llvm/ADT/BitmaskEnum.h"
 #include "toolchain/lex/token_kind.h"
 
@@ -16,29 +17,49 @@ namespace Carbon::Parse {
 LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 
 // Represents a set of keyword modifiers, using a separate bit per modifier.
-//
-// We expect this to grow, so are using a bigger size than needed.
-// NOLINTNEXTLINE(performance-enum-size)
-enum class NodeCategory : uint32_t {
-  Decl = 1 << 0,
-  Expr = 1 << 1,
-  ImplAs = 1 << 2,
-  MemberExpr = 1 << 3,
-  MemberName = 1 << 4,
-  Modifier = 1 << 5,
-  Pattern = 1 << 6,
-  Statement = 1 << 7,
-  None = 0,
+class NodeCategory : public Printable<NodeCategory> {
+ public:
+  // Provide values as an enum. This doesn't expose these as NodeCategory
+  // instances just due to the duplication of declarations that would cause.
+  //
+  // We expect this to grow, so are using a bigger size than needed.
+  // NOLINTNEXTLINE(performance-enum-size)
+  enum RawEnumType : uint32_t {
+    Decl = 1 << 0,
+    Expr = 1 << 1,
+    ImplAs = 1 << 2,
+    MemberExpr = 1 << 3,
+    MemberName = 1 << 4,
+    Modifier = 1 << 5,
+    Pattern = 1 << 6,
+    Statement = 1 << 7,
+    None = 0,
 
-  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)
+  };
+
+  // Support implicit conversion so that the difference with the member enum is
+  // opaque.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr NodeCategory(RawEnumType value) : value_(value) {}
+
+  // Returns true if there's a non-empty set intersection.
+  constexpr auto HasAnyOf(NodeCategory other) -> bool {
+    return value_ & other.value_;
+  }
+
+  // Returns the set inverse.
+  constexpr auto operator~() -> NodeCategory { return ~value_; }
+
+  auto operator==(const NodeCategory& other) const -> bool {
+    return value_ == other.value_;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+ private:
+  RawEnumType value_;
 };
-
-constexpr auto operator!(NodeCategory k) -> bool {
-  return !static_cast<uint32_t>(k);
-}
-
-auto operator<<(llvm::raw_ostream& output, NodeCategory category)
-    -> llvm::raw_ostream&;
 
 CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)

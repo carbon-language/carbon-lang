@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:8: ERROR: Declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:8: ERROR: `alias` declaration cannot have parameters.
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR:

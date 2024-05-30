@@ -29,7 +29,7 @@ using CommaSeparatedList = llvm::SmallVector<ListItem<Element, Comma>>;
 
 // This class provides a shorthand for defining parse node kinds for leaf nodes.
 template <const NodeKind& KindT, typename TokenKind,
-          NodeCategory Category = NodeCategory::None>
+          NodeCategory::RawEnumType Category = NodeCategory::None>
 struct LeafNode {
   static constexpr auto Kind =
       KindT.Define({.category = Category, .child_count = 0});
@@ -356,7 +356,8 @@ struct ReturnType {
 };
 
 // A function signature: `fn F() -> i32`.
-template <const NodeKind& KindT, typename TokenKind, NodeCategory Category>
+template <const NodeKind& KindT, typename TokenKind,
+          NodeCategory::RawEnumType Category>
 struct FunctionSignature {
   static constexpr auto Kind = KindT.Define(
       {.category = Category, .bracketed_by = FunctionIntroducer::Kind});
@@ -1103,7 +1104,8 @@ using ClassIntroducer =
     LeafNode<NodeKind::ClassIntroducer, Token<Lex::TokenKind::Class>>;
 
 // A class signature `class C`
-template <const NodeKind& KindT, typename TokenKind, NodeCategory Category>
+template <const NodeKind& KindT, typename TokenKind,
+          NodeCategory::RawEnumType Category>
 struct ClassSignature {
   static constexpr auto Kind = KindT.Define(
       {.category = Category, .bracketed_by = ClassIntroducer::Kind});
@@ -1178,7 +1180,8 @@ using InterfaceIntroducer =
     LeafNode<NodeKind::InterfaceIntroducer, Token<Lex::TokenKind::Interface>>;
 
 // `interface I`
-template <const NodeKind& KindT, typename TokenKind, NodeCategory Category>
+template <const NodeKind& KindT, typename TokenKind,
+          NodeCategory::RawEnumType Category>
 struct InterfaceSignature {
   static constexpr auto Kind = KindT.Define(
       {.category = Category, .bracketed_by = InterfaceIntroducer::Kind});
@@ -1240,7 +1243,8 @@ struct TypeImplAs {
 };
 
 // `impl T as I`
-template <const NodeKind& KindT, typename TokenKind, NodeCategory Category>
+template <const NodeKind& KindT, typename TokenKind,
+          NodeCategory::RawEnumType Category>
 struct ImplSignature {
   static constexpr auto Kind = KindT.Define(
       {.category = Category, .bracketed_by = ImplIntroducer::Kind});
@@ -1281,7 +1285,8 @@ using NamedConstraintIntroducer = LeafNode<NodeKind::NamedConstraintIntroducer,
                                            Token<Lex::TokenKind::Constraint>>;
 
 // `constraint NC`
-template <const NodeKind& KindT, typename TokenKind, NodeCategory Category>
+template <const NodeKind& KindT, typename TokenKind,
+          NodeCategory::RawEnumType Category>
 struct NamedConstraintSignature {
   static constexpr auto Kind = KindT.Define(
       {.category = Category, .bracketed_by = NamedConstraintIntroducer::Kind});

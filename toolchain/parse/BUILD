@@ -25,6 +25,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//common:ostream",
         "//toolchain/base:index_base",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",

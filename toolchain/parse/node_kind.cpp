@@ -9,16 +9,15 @@
 
 namespace Carbon::Parse {
 
-auto operator<<(llvm::raw_ostream& output, NodeCategory category)
-    -> llvm::raw_ostream& {
-  if (!category) {
-    output << "<none>";
+auto NodeCategory::Print(llvm::raw_ostream& out) const -> void {
+  if (!value_) {
+    out << "<none>";
   } else {
     llvm::ListSeparator sep("|");
 
-#define CARBON_NODE_CATEGORY(Name)         \
-  if (!!(category & NodeCategory::Name)) { \
-    output << sep << #Name;                \
+#define CARBON_NODE_CATEGORY(Name)   \
+  if (value_ & NodeCategory::Name) { \
+    out << sep << #Name;             \
   }
     CARBON_NODE_CATEGORY(Decl);
     CARBON_NODE_CATEGORY(Expr);
@@ -30,7 +29,6 @@ auto operator<<(llvm::raw_ostream& output, NodeCategory category)
     CARBON_NODE_CATEGORY(Statement);
 #undef CARBON_NODE_CATEGORY
   }
-  return output;
 }
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {

@@ -51,14 +51,14 @@ const NodeKind& NodeIdForKind<K>::Kind = K;
 #include "toolchain/parse/node_kind.def"
 
 // NodeId that matches any NodeKind whose `category()` overlaps with `Category`.
-template <NodeCategory Category>
+template <NodeCategory::RawEnumType Category>
 struct NodeIdInCategory : public NodeId {
   // Support conversion from `NodeIdForKind<Kind>` if Kind's category
   // overlaps with `Category`.
   template <const NodeKind& Kind>
   // NOLINTNEXTLINE(google-explicit-constructor)
   NodeIdInCategory(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
-    CARBON_CHECK(!!(Kind.category() & Category));
+    CARBON_CHECK(Kind.category().HasAnyOf(Category));
   }
 
   constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}

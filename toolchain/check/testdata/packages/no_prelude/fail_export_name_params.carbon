@@ -19,7 +19,7 @@ import library "a";
 
 export C1;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:10: ERROR: Declaration cannot have parameters.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:10: ERROR: `export` declaration cannot have parameters.
 // CHECK:STDERR: export C2(T:! type);
 // CHECK:STDERR:          ^~~~~~~~~~
 export C2(T:! type);

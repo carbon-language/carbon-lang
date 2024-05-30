@@ -106,7 +106,7 @@ struct Extractable<NodeIdForKind<Kind>> {
 
 static auto NodeIdInCategoryAccept(NodeCategory category, ExtractState& state)
     -> bool {
-  if (state.at_end() || !(state.kind().category() & category)) {
+  if (state.at_end() || !state.kind().category().HasAnyOf(category)) {
     if (state.trace) {
       *state.trace << "NodeIdInCategory " << category << " error: ";
       if (state.at_end()) {
@@ -125,7 +125,7 @@ static auto NodeIdInCategoryAccept(NodeCategory category, ExtractState& state)
 }
 
 // Extract a `NodeIdInCategory<Category>` as a single child.
-template <NodeCategory Category>
+template <NodeCategory::RawEnumType Category>
 struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(ExtractState& state)
       -> std::optional<NodeIdInCategory<Category>> {

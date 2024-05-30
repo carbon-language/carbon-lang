@@ -139,8 +139,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   const bool has_return_slot = function.has_return_slot();
   auto implicit_param_refs =
-      sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
-  auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  // TODO: Include parameters corresponding to positional parameters.
+  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
 
   SemIR::InitRepr return_rep =
       function.return_type_id.is_valid()
@@ -245,8 +246,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
   auto implicit_param_refs =
-      sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
-  auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_storage_id,
