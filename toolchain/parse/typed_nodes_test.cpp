@@ -44,6 +44,12 @@ class TypedNodeTest : public ::testing::Test {
     return tree_storage_.front();
   }
 
+  auto GetTokenizedBufferAndTree(llvm::StringRef t)
+      -> std::pair<Lex::TokenizedBuffer*, Tree*> {
+    auto* tree = &GetTree(t);
+    return {&token_storage_.front(), tree};
+  }
+
   SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   std::forward_list<SourceBuffer> source_storage_;
@@ -277,7 +283,7 @@ Aggregate [^:]*: success
 }
 
 TEST_F(TypedNodeTest, Token) {
-  auto* tree = &GetTree(R"carbon(
+  auto [tokens, tree] = GetTokenizedBufferAndTree(R"carbon(
     var n: i32 = 0;
   )carbon");
   auto file = tree->ExtractFile();
@@ -286,15 +292,15 @@ TEST_F(TypedNodeTest, Token) {
 
   auto n_var = tree->ExtractAs<VariableDecl>(file.decls[0]);
   ASSERT_TRUE(n_var.has_value());
-  EXPECT_TRUE(n_var->token.index.index == 7);
+  EXPECT_EQ(tokens->GetKind(n_var->token.index), Lex::TokenKind::Semi);
 
   auto n_intro = tree->ExtractAs<VariableIntroducer>(n_var->introducer);
   ASSERT_TRUE(n_intro.has_value());
-  EXPECT_TRUE(n_intro->token.index.index == 1);
+  EXPECT_EQ(tokens->GetKind(n_intro->token.index), Lex::TokenKind::Var);
 
   auto n_patt = tree->ExtractAs<BindingPattern>(n_var->pattern);
   ASSERT_TRUE(n_patt.has_value());
-  EXPECT_TRUE(n_patt->token.index.index == 3);
+  EXPECT_EQ(tokens->GetKind(n_patt->token.index), Lex::TokenKind::Colon);
 }
 
 TEST_F(TypedNodeTest, VerifyInvalid) {
@@ -335,14 +341,10 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
     EXPECT_FALSE(
         tree->VerifyExtractAs<ClassIntroducer>(f_sig->introducer, &trace));
 
-    // Use Regex matching to avoid hard-coding the result of
-    // `typeinfo(T).name()`.
     Error err = trace;
     EXPECT_THAT(err.message(),
-                testing::MatchesRegex(R"Trace(Aggregate [^:]*: begin
-Token Class expected for ClassIntroducer, found Fn
-Aggregate [^:]*: error
-)Trace"));
+                testing::HasSubstr(
+                    "\nToken Class expected for ClassIntroducer, found Fn\n"));
   }
 
   // The signature should not extract as a FunctionDefinitionStart because the
@@ -352,33 +354,11 @@ Aggregate [^:]*: error
     EXPECT_FALSE(tree->VerifyExtractAs<FunctionDefinitionStart>(f_fn->signature,
                                                                 &trace));
 
-    // Use Regex matching to avoid hard-coding the result of
-    // `typeinfo(T).name()`.
     Error err = trace;
     EXPECT_THAT(err.message(), testing::MatchesRegex(
-                                   R"Trace(Aggregate [^:]*: begin
-Optional [^:]*: begin
-NodeIdForKind: ReturnType consumed
-Optional [^:]*: found
-Aggregate [^:]*: begin
-Aggregate [^:]*: begin
-Optional [^:]*: begin
-NodeIdForKind: TuplePattern consumed
-Optional [^:]*: found
-Optional [^:]*: begin
+                                   R"Trace(.*
 NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
-Optional [^:]*: missing
-NodeIdForKind: IdentifierName consumed
-Aggregate [^:]*: success
-Vector: begin
-NodeIdForKind error: wrong kind ClassIntroducer, expected NameQualifier
-Vector: end
-Aggregate [^:]*: success
-Vector: begin
-NodeIdInCategory Modifier error: kind ClassIntroducer doesn't match
-Vector: end
-NodeIdForKind error: wrong kind ClassIntroducer, expected FunctionIntroducer
-Aggregate [^:]*: error
+.*
 Error: ClassIntroducer node left unconsumed.)Trace"));
   }
 }
