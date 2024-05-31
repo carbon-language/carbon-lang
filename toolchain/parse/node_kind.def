@@ -9,7 +9,8 @@
 //
 // Supported x-macros are:
 // - CARBON_PARSE_NODE_KIND(Name)
-//   Used as a fallback, or when none of the below cases apply.
+//   Used as a fallback if other macros are missing. Also, used directly
+//   when none of the below category-oriented macros apply.
 //   - CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name)
 //     Defines a parse node for a prefix operator, with the Name as token.
 //   - CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)
