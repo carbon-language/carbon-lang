@@ -52,14 +52,15 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
       if (array_cat == SemIR::ExprCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
-        operand_inst_id = context.AddInst(
-            {node_id, SemIR::ValueAsRef{operand_type_id, operand_inst_id}});
+        operand_inst_id = context.AddInst<SemIR::ValueAsRef>(
+            node_id, {.type_id = operand_type_id, .value_id = operand_inst_id});
       }
       // Constant evaluation will perform a bounds check on this array indexing
       // if the index is constant.
-      auto elem_id = context.AddInst(
-          {node_id, SemIR::ArrayIndex{array_type.element_type_id,
-                                      operand_inst_id, cast_index_id}});
+      auto elem_id = context.AddInst<SemIR::ArrayIndex>(
+          node_id, {.type_id = array_type.element_type_id,
+                    .array_id = operand_inst_id,
+                    .index_id = cast_index_id});
       if (array_cat != SemIR::ExprCategory::DurableRef) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
@@ -97,9 +98,10 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
           index_inst_id = SemIR::InstId::BuiltinError;
         }
       }
-      context.AddInstAndPush(
-          {node_id,
-           SemIR::TupleIndex{element_type_id, operand_inst_id, index_inst_id}});
+      context.AddInstAndPush<SemIR::TupleIndex>(node_id,
+                                                {.type_id = element_type_id,
+                                                 .tuple_id = operand_inst_id,
+                                                 .index_id = index_inst_id});
       return true;
     }
     default: {

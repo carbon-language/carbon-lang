@@ -46,10 +46,11 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId node_id) -> bool {
     return true;
   }
 
-  context.AddInstAndPush(
-      {node_id, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
-                                 ExprAsType(context, element_type_node_id,
-                                            element_type_inst_id)}});
+  context.AddInstAndPush<SemIR::ArrayType>(
+      node_id, {.type_id = SemIR::TypeId::TypeType,
+                .bound_id = bound_inst_id,
+                .element_type_id = ExprAsType(context, element_type_node_id,
+                                              element_type_inst_id)});
   return true;
 }
 

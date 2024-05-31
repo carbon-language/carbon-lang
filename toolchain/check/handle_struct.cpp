@@ -44,9 +44,11 @@ auto HandleStructField(Context& context, Parse::StructFieldId node_id) -> bool {
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   // Store the name for the type.
-  context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
-      {name_node, SemIR::StructTypeField{
-                      name_id, context.insts().Get(value_inst_id).type_id()}}));
+  context.args_type_info_stack().AddInstId(
+      context.AddInstInNoBlock<SemIR::StructTypeField>(
+          name_node,
+          {.name_id = name_id,
+           .field_type_id = context.insts().Get(value_inst_id).type_id()}));
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(node_id, value_inst_id);
@@ -60,8 +62,8 @@ auto HandleStructTypeField(Context& context, Parse::StructTypeFieldId node_id)
 
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
-  auto inst_id = context.AddInst(
-      {name_node, SemIR::StructTypeField{name_id, cast_type_id}});
+  auto inst_id = context.AddInst<SemIR::StructTypeField>(
+      name_node, {.name_id = name_id, .field_type_id = cast_type_id});
   context.node_stack().Push(node_id, inst_id);
   return true;
 }
@@ -109,8 +111,8 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId node_id)
 
   auto type_id = context.GetStructType(type_block_id);
 
-  auto value_id =
-      context.AddInst({node_id, SemIR::StructLiteral{type_id, refs_id}});
+  auto value_id = context.AddInst<SemIR::StructLiteral>(
+      node_id, {.type_id = type_id, .elements_id = refs_id});
   context.node_stack().Push(node_id, value_id);
   return true;
 }
@@ -131,8 +133,8 @@ auto HandleStructTypeLiteral(Context& context,
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
-  context.AddInstAndPush(
-      {node_id, SemIR::StructType{SemIR::TypeId::TypeType, refs_id}});
+  context.AddInstAndPush<SemIR::StructType>(
+      node_id, {.type_id = SemIR::TypeId::TypeType, .fields_id = refs_id});
   return true;
 }
 

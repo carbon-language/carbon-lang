@@ -103,7 +103,8 @@ static auto AddNamespace(
   auto namespace_inst = SemIR::Namespace{
       namespace_type_id, SemIR::NameScopeId::Invalid, import_id};
   // Use the invalid node because there's no node to associate with.
-  auto namespace_id = context.AddPlaceholderInst({node_id, namespace_inst});
+  auto namespace_id =
+      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
   namespace_inst.name_scope_id =
       context.name_scopes().Add(namespace_id, name_id, enclosing_scope_id);
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
@@ -147,11 +148,10 @@ static auto CopySingleNameScopeFromImportIR(
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
     auto import_ir_inst_id = context.import_ir_insts().Add(
         {.ir_id = ir_id, .inst_id = import_inst_id});
-    return context.AddInst(
-        {import_ir_inst_id,
-         SemIR::ImportRefLoaded{.type_id = namespace_type_id,
-                                .import_ir_inst_id = import_ir_inst_id,
-                                .bind_name_id = bind_name_id}});
+    return context.AddInst<SemIR::ImportRefLoaded>(
+        import_ir_inst_id, {.type_id = namespace_type_id,
+                            .import_ir_inst_id = import_ir_inst_id,
+                            .bind_name_id = bind_name_id});
   };
   auto [namespace_scope_id, namespace_const_id, _] =
       AddNamespace(context, namespace_type_id, Parse::NodeId::Invalid, name_id,

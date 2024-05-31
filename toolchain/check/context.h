@@ -44,9 +44,21 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
+  // Convenience for AddInst on specific instruction types.
+  template <typename InstT, typename LocT>
+  auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst(loc_id, inst));
+  }
+
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
   auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for AddInstInNoBlock on specific instruction types.
+  template <typename InstT, typename LocT>
+  auto AddInstInNoBlock(LocT loc_id, InstT inst) -> SemIR::InstId {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(loc_id, inst));
+  }
 
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
@@ -64,7 +76,12 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result. Only valid if the LocId is for a NodeId.
-  auto AddInstAndPush(SemIR::LocIdAndInst loc_id_and_inst) -> void;
+  template <typename InstT, typename LocT>
+  auto AddInstAndPush(LocT loc_id, InstT inst) -> void {
+    SemIR::LocIdAndInst arg(loc_id, inst);
+    auto inst_id = AddInst(arg);
+    node_stack_.Push(arg.loc_id.node_id(), inst_id);
+  }
 
   // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
   // is required to not have been used in any constant evaluation, either

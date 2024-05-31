@@ -114,11 +114,6 @@ auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
   return const_id;
 }
 
-auto Context::AddInstAndPush(SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  auto inst_id = AddInst(loc_id_and_inst);
-  node_stack_.Push(loc_id_and_inst.loc_id.node_id(), inst_id);
-}
-
 auto Context::ReplaceLocIdAndInstBeforeConstantUse(
     SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
   sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
@@ -479,7 +474,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst({node_id, BranchNode{block_id, args...}});
+  context.AddInst<BranchNode>(node_id, {block_id, args...});
   return block_id;
 }
 
@@ -512,7 +507,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({node_id, SemIR::Branch{new_block_id}});
+      AddInst<SemIR::Branch>(node_id, {.target_id = new_block_id});
     }
     inst_block_stack().Pop();
   }
@@ -530,7 +525,8 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({node_id, SemIR::BranchWithArg{new_block_id, arg_id}});
+      AddInst<SemIR::BranchWithArg>(
+          node_id, {.target_id = new_block_id, .arg_id = arg_id});
     }
     inst_block_stack().Pop();
   }
@@ -538,7 +534,8 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst({node_id, SemIR::BlockArg{result_type_id, new_block_id}});
+  return AddInst<SemIR::BlockArg>(
+      node_id, {.type_id = result_type_id, .block_id = new_block_id});
 }
 
 auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
@@ -616,7 +613,7 @@ auto Context::is_current_position_reachable() -> bool {
 auto Context::FinalizeGlobalInit() -> void {
   inst_block_stack().PushGlobalInit();
   if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
-    AddInst({Parse::NodeId::Invalid, SemIR::Return{}});
+    AddInst<SemIR::Return>(Parse::NodeId::Invalid, {});
     // Pop the GlobalInit block here to finalize it.
     inst_block_stack().Pop();
 

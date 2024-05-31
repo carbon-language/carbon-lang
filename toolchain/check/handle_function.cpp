@@ -39,8 +39,8 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddInstAndPush(
-      {node_id, SemIR::VarStorage{type_id, SemIR::NameId::ReturnSlot}});
+  context.AddInstAndPush<SemIR::VarStorage>(
+      node_id, {.type_id = type_id, .name_id = SemIR::NameId::ReturnSlot});
   return true;
 }
 
@@ -254,7 +254,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info = SemIR::Function{
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-      .decl_id = context.AddPlaceholderInst({node_id, function_decl}),
+      .decl_id = context.AddPlaceholderInst(
+          SemIR::LocIdAndInst(node_id, function_decl)),
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       .return_type_id = return_type_id,
@@ -406,7 +407,7 @@ auto HandleFunctionDefinition(Context& context,
           "Missing `return` at end of function with declared return type.");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      context.AddInst({node_id, SemIR::Return{}});
+      context.AddInst<SemIR::Return>(node_id, {});
     }
   }
 

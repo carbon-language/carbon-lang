@@ -301,15 +301,12 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {
-  // For cases with no location.
   template <typename InstT>
-    requires(!Internal::HasNodeId<InstT>)
   static auto NoLoc(InstT inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
   }
 
-  // For the common case, support construction as:
-  //   context.AddInst({node_id, SemIR::MyInst{...}});
+  // Construction for the common case with a typed node.
   template <typename InstT>
     requires(Internal::HasNodeId<InstT>)
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
@@ -327,7 +324,6 @@ struct LocIdAndInst {
   template <typename InstT>
   LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
       : loc_id(import_ir_inst_id), inst(inst) {}
-
   LocId loc_id;
   Inst inst;
 
@@ -335,6 +331,7 @@ struct LocIdAndInst {
   // Expose the internal constructor for GetWithLocId.
   friend class InstStore;
 
+  // Note `is_untyped` serves to disambiguate from public constructors.
   explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
       : loc_id(loc_id), inst(inst) {}
 };

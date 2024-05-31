@@ -44,30 +44,30 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
        .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
        .bind_index = SemIR::CompileTimeBindIndex::Invalid});
 
-  auto alias_id = SemIR::InstId::Invalid;
+  auto alias_type_id = SemIR::TypeId::Invalid;
+  auto alias_value_id = SemIR::InstId::Invalid;
   if (expr_id.is_builtin()) {
     // Type (`bool`) and value (`false`) literals provided by the builtin
     // structure should be turned into name references.
     // TODO: Look into handling `false`, this doesn't do it right now because it
     // sees a value instruction instead of a builtin.
-    alias_id = context.AddInst(
-        {name_context.loc_id,
-         SemIR::BindAlias{context.insts().Get(expr_id).type_id(), bind_name_id,
-                          expr_id}});
+    alias_type_id = context.insts().Get(expr_id).type_id();
+    alias_value_id = expr_id;
   } else if (auto inst = context.insts().TryGetAs<SemIR::NameRef>(expr_id)) {
     // Pass through name references, albeit changing the name in use.
-    alias_id = context.AddInst(
-        {name_context.loc_id,
-         SemIR::BindAlias{inst->type_id, bind_name_id, inst->value_id}});
+    alias_type_id = inst->type_id;
+    alias_value_id = inst->value_id;
   } else {
     CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
                       "Alias initializer must be a name reference.");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
-    alias_id =
-        context.AddInst({name_context.loc_id,
-                         SemIR::BindAlias{SemIR::TypeId::Error, bind_name_id,
-                                          SemIR::InstId::BuiltinError}});
+    alias_type_id = SemIR::TypeId::Error;
+    alias_value_id = SemIR::InstId::BuiltinError;
   }
+  auto alias_id = context.AddInst<SemIR::BindAlias>(
+      name_context.loc_id, {.type_id = alias_type_id,
+                            .bind_name_id = bind_name_id,
+                            .value_id = alias_value_id});
 
   // Add the name of the binding to the current scope.
   context.decl_name_stack().PopScope();

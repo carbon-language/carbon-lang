@@ -25,9 +25,10 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
       /*return_storage_id=*/SemIR::InstId::Invalid, class_info.decl_id,
       class_info.implicit_param_refs_id, class_info.param_refs_id);
-  return context.AddInst(
-      {node_id,
-       SemIR::ClassType{SemIR::TypeId::TypeType, class_id, converted_args_id}});
+  return context.AddInst<SemIR::ClassType>(node_id,
+                                           {.type_id = SemIR::TypeId::TypeType,
+                                            .class_id = class_id,
+                                            .args_id = converted_args_id});
 }
 
 auto PerformCall(Context& context, Parse::NodeId node_id,
@@ -73,8 +74,8 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
     case SemIR::Function::ReturnSlot::Present:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
-      return_storage_id = context.AddInst(
-          {node_id, SemIR::TemporaryStorage{callable.return_type_id}});
+      return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
+          node_id, {.type_id = callable.return_type_id});
       break;
     case SemIR::Function::ReturnSlot::Absent:
       break;
@@ -91,8 +92,10 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
       ConvertCallArgs(context, node_id, callee_function.self_id, arg_ids,
                       return_storage_id, callable.decl_id,
                       callable.implicit_param_refs_id, callable.param_refs_id);
-  auto call_inst_id = context.AddInst(
-      {node_id, SemIR::Call{type_id, callee_id, converted_args_id}});
+  auto call_inst_id =
+      context.AddInst<SemIR::Call>(node_id, {.type_id = type_id,
+                                             .callee_id = callee_id,
+                                             .args_id = converted_args_id});
 
   return call_inst_id;
 }

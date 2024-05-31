@@ -57,7 +57,7 @@ static auto BuildInterfaceDecl(Context& context,
   auto interface_decl = SemIR::InterfaceDecl{
       SemIR::TypeId::TypeType, SemIR::InterfaceId::Invalid, decl_block_id};
   auto interface_decl_id =
-      context.AddPlaceholderInst({node_id, interface_decl});
+      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(

@@ -197,8 +197,10 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
       SubstType(context, assoc_type.entity_type_id, substitutions);
 
   return context.AddInst(
-      SemIR::LocIdAndInst::NoLoc(SemIR::InterfaceWitnessAccess{
-          subst_type_id, witness_id, assoc_entity->index}));
+      SemIR::LocIdAndInst::NoLoc<SemIR::InterfaceWitnessAccess>(
+          {.type_id = subst_type_id,
+           .witness_id = witness_id,
+           .index = assoc_entity->index}));
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -216,8 +218,9 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   auto inst = context.insts().Get(inst_id);
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
-  auto member_id = context.AddInst(
-      {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
+  auto member_id = context.AddInst<SemIR::NameRef>(
+      node_id,
+      {.type_id = inst.type_id(), .name_id = name_id, .value_id = inst_id});
 
   // If member name lookup finds an associated entity name, and the scope is not
   // a facet type, perform impl lookup.
@@ -256,9 +259,10 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
           << "Non-constant value " << context.insts().Get(member_id)
           << " of unbound element type";
       auto index = GetClassElementIndex(context, element_id.inst_id());
-      auto access_id = context.AddInst(
-          {node_id, SemIR::ClassElementAccess{
-                        unbound_element_type.element_type_id, base_id, index}});
+      auto access_id = context.AddInst<SemIR::ClassElementAccess>(
+          node_id, {.type_id = unbound_element_type.element_type_id,
+                    .base_id = base_id,
+                    .index = index});
       if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
               SemIR::ExprCategory::Value &&
           SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -274,11 +278,11 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
     }
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
-        return context.AddInst(
-            {node_id,
-             SemIR::BoundMethod{
-                 context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
-                 base_id, member_id}});
+        return context.AddInst<SemIR::BoundMethod>(
+            node_id, {.type_id = context.GetBuiltinType(
+                          SemIR::BuiltinKind::BoundMethodType),
+                      .object_id = base_id,
+                      .function_id = member_id});
       }
       [[fallthrough]];
     }
@@ -331,9 +335,10 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
         if (name_id == field.name_id) {
           // TODO: Model this as producing a lookup result, and do instance
           // binding separately. Perhaps a struct type should be a name scope.
-          return context.AddInst(
-              {node_id, SemIR::StructAccess{field.field_type_id, base_id,
-                                            SemIR::ElementIndex(i)}});
+          return context.AddInst<SemIR::StructAccess>(
+              node_id, {.type_id = field.field_type_id,
+                        .struct_id = base_id,
+                        .index = SemIR::ElementIndex(i)});
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
