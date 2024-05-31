@@ -329,12 +329,11 @@ auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
 }
 
 // Extract the token corresponding to a node.
-template <const Lex::TokenKind& Kind, bool RequireIfInvalid>
-struct Extractable<Token<Kind, RequireIfInvalid>> {
-  static auto Extract(NodeExtractor& extractor)
-      -> std::optional<Token<Kind, RequireIfInvalid>> {
+template <const Lex::TokenKind& Kind>
+struct Extractable<Token<Kind>> {
+  static auto Extract(NodeExtractor& extractor) -> std::optional<Token<Kind>> {
     if (extractor.MatchesTokenKind(Kind)) {
-      return Token<Kind, RequireIfInvalid>{.index = extractor.token()};
+      return Token<Kind>{.index = extractor.token()};
     } else {
       return std::nullopt;
     }

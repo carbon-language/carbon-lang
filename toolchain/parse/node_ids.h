@@ -112,16 +112,15 @@ struct NodeIdNot : public NodeId {
 };
 
 // This class holds the token corresponding to a parse node, and defines the
-// expected token kind. The specified token index will always have kind K,
-// except if RequireIfInvalid is false and the node is invalid.
-template <const Lex::TokenKind& K, bool RequireIfInvalid = true>
+// expected token kind. The specified token index will always have kind K if the
+// enclosing node doesn't have errors. Note that we never try to extract a node
+// that has errors, and there are no restrictions on the token kind in that
+// case.
+template <const Lex::TokenKind& K>
 struct Token {
   static constexpr const Lex::TokenKind& Kind = K;
   Lex::TokenIndex index;
 };
-
-template <const Lex::TokenKind& K>
-using TokenIfValid = Token<K, false>;
 
 // This class holds the token corresponding to a parse node in the case where
 // the parse node can correspond to any token. This should only be used when the
