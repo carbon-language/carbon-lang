@@ -104,7 +104,7 @@ static auto AddNamespace(
       namespace_type_id, SemIR::NameScopeId::Invalid, import_id};
   // Use the invalid node because there's no node to associate with.
   auto namespace_id =
-      context.AddPlaceholderInst({.loc_id = node_id, .inst = namespace_inst});
+      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
   namespace_inst.name_scope_id =
       context.name_scopes().Add(namespace_id, name_id, enclosing_scope_id);
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);

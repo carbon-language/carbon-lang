@@ -46,15 +46,15 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                            : SemIR::CompileTimeBindIndex::Invalid});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
-      return {.loc_id = name_node,
-              .inst = SemIR::BindSymbolicName{.type_id = type_id,
-                                              .bind_name_id = bind_name_id,
-                                              .value_id = value_id}};
+      return SemIR::LocIdAndInst(
+          name_node, SemIR::BindSymbolicName{.type_id = type_id,
+                                             .bind_name_id = bind_name_id,
+                                             .value_id = value_id});
     } else {
-      return {.loc_id = name_node,
-              .inst = SemIR::BindName{.type_id = type_id,
-                                      .bind_name_id = bind_name_id,
-                                      .value_id = value_id}};
+      return SemIR::LocIdAndInst(name_node,
+                                 SemIR::BindName{.type_id = type_id,
+                                                 .bind_name_id = bind_name_id,
+                                                 .value_id = value_id});
     }
   };
 

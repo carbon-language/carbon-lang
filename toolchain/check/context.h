@@ -45,9 +45,9 @@ class Context {
   auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Convenience for AddInst on specific instruction types.
-  template <typename InstT>
-  auto AddInst(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
-    return AddInst({.loc_id = loc_id, .inst = inst});
+  template <typename InstT, typename LocT>
+  auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst(loc_id, inst));
   }
 
   // Adds an instruction in no block, returning the produced ID. Should be used
@@ -55,9 +55,9 @@ class Context {
   auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Convenience for AddInstInNoBlock on specific instruction types.
-  template <typename InstT>
-  auto AddInstInNoBlock(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
-    return AddInstInNoBlock({.loc_id = loc_id, .inst = inst});
+  template <typename InstT, typename LocT>
+  auto AddInstInNoBlock(LocT loc_id, InstT inst) -> SemIR::InstId {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(loc_id, inst));
   }
 
   // Adds an instruction to the current block, returning the produced ID. The
@@ -76,10 +76,11 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result. Only valid if the LocId is for a NodeId.
-  template <typename InstT>
-  auto AddInstAndPush(SemIR::LocId loc_id, InstT inst) -> void {
-    auto inst_id = AddInst(loc_id, inst);
-    node_stack_.Push(loc_id.node_id(), inst_id);
+  template <typename InstT, typename LocT>
+  auto AddInstAndPush(LocT loc_id, InstT inst) -> void {
+    SemIR::LocIdAndInst arg(loc_id, inst);
+    auto inst_id = AddInst(arg);
+    node_stack_.Push(arg.loc_id.node_id(), inst_id);
   }
 
   // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction

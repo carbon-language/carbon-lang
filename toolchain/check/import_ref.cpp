@@ -59,7 +59,7 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   SemIR::ImportRefUnloaded inst = {.import_ir_inst_id = import_ir_inst_id,
                                    .bind_name_id = bind_name_id};
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
-      {.loc_id = import_ir_inst_id, .inst = inst});
+      SemIR::LocIdAndInst(import_ir_inst_id, inst));
 
   // We can't insert this instruction into whatever block we happen to be in,
   // because this function is typically called by name lookup in the middle of
@@ -759,7 +759,7 @@ class ImportRefResolver {
         SemIR::ClassDecl{SemIR::TypeId::TypeType, SemIR::ClassId::Invalid,
                          SemIR::InstBlockId::Empty};
     auto class_decl_id = context_.AddPlaceholderInstInNoBlock(
-        {.loc_id = AddImportIRInst(import_class.decl_id), .inst = class_decl});
+        SemIR::LocIdAndInst(AddImportIRInst(import_class.decl_id), class_decl));
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
     class_decl.class_id = context_.classes().Add({
@@ -966,7 +966,7 @@ class ImportRefResolver {
                                                  ? function.definition_id
                                                  : function.decl_id);
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
-        {.loc_id = import_ir_inst_id, .inst = function_decl});
+        SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
 
     auto new_return_type_id =
         return_type_const_id.is_valid()
@@ -1060,9 +1060,9 @@ class ImportRefResolver {
     auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::TypeType,
                                                SemIR::InterfaceId::Invalid,
                                                SemIR::InstBlockId::Empty};
-    auto interface_decl_id = context_.AddPlaceholderInstInNoBlock(
-        {.loc_id = AddImportIRInst(import_interface.decl_id),
-         .inst = interface_decl});
+    auto interface_decl_id =
+        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+            AddImportIRInst(import_interface.decl_id), interface_decl));
 
     // Start with an incomplete interface.
     SemIR::Interface new_interface = {

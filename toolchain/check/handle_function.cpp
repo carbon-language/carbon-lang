@@ -255,7 +255,7 @@ static auto BuildFunctionDecl(Context& context,
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
       .decl_id = context.AddPlaceholderInst(
-          {.loc_id = node_id, .inst = function_decl}),
+          SemIR::LocIdAndInst(node_id, function_decl)),
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       .return_type_id = return_type_id,
