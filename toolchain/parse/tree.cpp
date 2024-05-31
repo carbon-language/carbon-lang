@@ -170,12 +170,12 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "  ]\n";
 }
 
-static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind,
-                        ErrorBuilder* trace) -> bool {
+auto Tree::VerifyExtract(NodeId node_id, NodeKind kind,
+                         ErrorBuilder* trace) const -> bool {
   switch (kind) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   case NodeKind::Name:               \
-    return tree->VerifyExtractAs<Name>(node_id, trace).has_value();
+    return VerifyExtractAs<Name>(node_id, trace).has_value();
 #include "toolchain/parse/node_kind.def"
   }
 }
@@ -200,12 +200,12 @@ auto Tree::Verify() const -> ErrorOr<Success> {
     // Without this code, a 10 mloc test case of lex & parse takes
     // 4.129 s ± 0.041 s. With this additional verification, it takes
     // 5.768 s ± 0.036 s.
-    if (!n_impl.has_error && !TestExtract(this, n, n_impl.kind, nullptr)) {
+    if (!n_impl.has_error && !VerifyExtract(n, n_impl.kind, nullptr)) {
       ErrorBuilder trace;
       trace << llvm::formatv(
           "NodeId #{0} couldn't be extracted as a {1}. Trace:\n", n,
           n_impl.kind);
-      TestExtract(this, n, n_impl.kind, &trace);
+      VerifyExtract(n, n_impl.kind, &trace);
       return trace;
     }
 
@@ -273,10 +273,10 @@ auto Tree::Verify() const -> ErrorOr<Success> {
   }
 
   // Validate the roots, ensures Tree::ExtractFile() doesn't CHECK-fail.
-  if (!TryExtractNodeFromChildren<File>(roots(), nullptr)) {
+  if (!TryExtractNodeFromChildren<File>(NodeId::Invalid, roots(), nullptr)) {
     ErrorBuilder trace;
     trace << "Roots of tree couldn't be extracted as a `File`. Trace:\n";
-    TryExtractNodeFromChildren<File>(roots(), &trace);
+    TryExtractNodeFromChildren<File>(NodeId::Invalid, roots(), &trace);
     return trace;
   }
 

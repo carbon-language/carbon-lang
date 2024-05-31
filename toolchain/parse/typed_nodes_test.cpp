@@ -14,6 +14,25 @@
 #include "toolchain/parse/parse.h"
 
 namespace Carbon::Parse {
+
+// A test peer (see https://abseil.io/tips/135) to allow these tests to access
+// certain implementation details of Tree.
+class TypedNodesTestPeer {
+ public:
+  template <typename T>
+  static auto VerifyExtractAs(const Tree* tree, NodeId node_id,
+                              ErrorBuilder* trace) -> std::optional<T> {
+    return tree->VerifyExtractAs<T>(node_id, trace);
+  }
+
+  // Sets the kind of a node. This is intended to allow putting the tree into a
+  // state where verification can fail, in order to make the failure path of
+  // `Verify` testable.
+  static auto SetNodeKind(Tree* tree, NodeId node_id, NodeKind kind) -> void {
+    tree->SetNodeKindForTesting(node_id, kind);
+  }
+};
+
 namespace {
 
 // Check that each node kind defines a Kind member using the correct
@@ -42,6 +61,12 @@ class TypedNodeTest : public ::testing::Test {
     tree_storage_.push_front(Parse(GetTokenizedBuffer(t), consumer_,
                                    /*vlog_stream=*/nullptr));
     return tree_storage_.front();
+  }
+
+  auto GetTokenizedBufferAndTree(llvm::StringRef t)
+      -> std::pair<Lex::TokenizedBuffer*, Tree*> {
+    auto* tree = &GetTree(t);
+    return {&token_storage_.front(), tree};
   }
 
   SharedValueStores value_stores_;
@@ -144,7 +169,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto library = tree->VerifyExtractAs<LibraryDecl>(file.decls[0], &trace);
+  auto library = TypedNodesTestPeer::VerifyExtractAs<LibraryDecl>(
+      tree, file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -168,7 +194,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto var = tree->VerifyExtractAs<VariableDecl>(file.decls[0], &trace);
+  auto var = TypedNodesTestPeer::VerifyExtractAs<VariableDecl>(
+      tree, file.decls[0], &trace);
   ASSERT_TRUE(var.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -199,7 +226,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace1;
-  auto var = tree->VerifyExtractAs<VariableDecl>(file.decls[0], &trace1);
+  auto var = TypedNodesTestPeer::VerifyExtractAs<VariableDecl>(
+      tree, file.decls[0], &trace1);
   ASSERT_TRUE(var.has_value());
   Error err1 = trace1;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -224,8 +252,8 @@ Aggregate [^:]*: success
 
   ASSERT_TRUE(var->initializer.has_value());
   ErrorBuilder trace2;
-  auto value =
-      tree->VerifyExtractAs<MemberAccessExpr>(var->initializer->value, &trace2);
+  auto value = TypedNodesTestPeer::VerifyExtractAs<MemberAccessExpr>(
+      tree, var->initializer->value, &trace2);
   ASSERT_TRUE(value.has_value());
   Error err2 = trace2;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -245,7 +273,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto class_decl = tree->VerifyExtractAs<ClassDecl>(file.decls[0], &trace);
+  auto class_decl = TypedNodesTestPeer::VerifyExtractAs<ClassDecl>(
+      tree, file.decls[0], &trace);
   EXPECT_TRUE(class_decl.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -274,6 +303,88 @@ Vector: end
 NodeIdForKind: ClassIntroducer consumed
 Aggregate [^:]*: success
 )Trace"));
+}
+
+TEST_F(TypedNodeTest, Token) {
+  auto [tokens, tree] = GetTokenizedBufferAndTree(R"carbon(
+    var n: i32 = 0;
+  )carbon");
+  auto file = tree->ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+
+  auto n_var = tree->ExtractAs<VariableDecl>(file.decls[0]);
+  ASSERT_TRUE(n_var.has_value());
+  EXPECT_EQ(tokens->GetKind(n_var->token.index), Lex::TokenKind::Semi);
+
+  auto n_intro = tree->ExtractAs<VariableIntroducer>(n_var->introducer);
+  ASSERT_TRUE(n_intro.has_value());
+  EXPECT_EQ(tokens->GetKind(n_intro->token.index), Lex::TokenKind::Var);
+
+  auto n_patt = tree->ExtractAs<BindingPattern>(n_var->pattern);
+  ASSERT_TRUE(n_patt.has_value());
+  EXPECT_EQ(tokens->GetKind(n_patt->token.index), Lex::TokenKind::Colon);
+}
+
+TEST_F(TypedNodeTest, VerifyInvalid) {
+  auto* tree = &GetTree(R"carbon(
+    fn F() -> i32 { return 0; }
+  )carbon");
+
+  auto file = tree->ExtractFile();
+  ASSERT_EQ(file.decls.size(), 1);
+
+  auto f_fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
+  ASSERT_TRUE(f_fn.has_value());
+  auto f_sig = tree->ExtractAs<FunctionDefinitionStart>(f_fn->signature);
+  ASSERT_TRUE(f_sig.has_value());
+  auto f_intro = tree->ExtractAs<FunctionIntroducer>(f_sig->introducer);
+  ASSERT_TRUE(f_intro.has_value());
+
+  // Change the kind of the introducer and check we get a good trace log.
+  TypedNodesTestPeer::SetNodeKind(tree, f_sig->introducer,
+                                  NodeKind::ClassIntroducer);
+
+  // The introducer should not extract as a FunctionIntroducer any more because
+  // the kind is wrong.
+  {
+    ErrorBuilder trace;
+    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<FunctionIntroducer>(
+        tree, f_sig->introducer, &trace));
+
+    Error err = trace;
+    EXPECT_EQ(err.message(),
+              "VerifyExtractAs error: wrong kind ClassIntroducer, expected "
+              "FunctionIntroducer\n");
+  }
+
+  // The introducer should also not extract as a ClassIntroducer because the
+  // token kind is wrong.
+  {
+    ErrorBuilder trace;
+    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<ClassIntroducer>(
+        tree, f_sig->introducer, &trace));
+
+    Error err = trace;
+    EXPECT_THAT(err.message(),
+                testing::HasSubstr(
+                    "\nToken Class expected for ClassIntroducer, found Fn\n"));
+  }
+
+  // The signature should not extract as a FunctionDefinitionStart because the
+  // kind for the introducer is wrong.
+  {
+    ErrorBuilder trace;
+    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<FunctionDefinitionStart>(
+        tree, f_fn->signature, &trace));
+
+    Error err = trace;
+    EXPECT_THAT(err.message(), testing::MatchesRegex(
+                                   R"Trace((?s).*
+NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
+.*
+Error: ClassIntroducer node left unconsumed.)Trace"));
+  }
 }
 
 auto CategoryMatches(const NodeKind::Definition& def, NodeKind kind,

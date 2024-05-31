@@ -255,7 +255,8 @@ class Tree : public Printable<Tree> {
 
   // Extract a `File` object representing the parse tree for the whole file.
   // #include "toolchain/parse/typed_nodes.h" to get the definition of `File`
-  // and the types representing its children nodes.
+  // and the types representing its children nodes. This is implemented in
+  // extract.cpp.
   auto ExtractFile() const -> File;
 
   // Converts this node_id to a typed node of a specified type, if it is a valid
@@ -276,14 +277,9 @@ class Tree : public Printable<Tree> {
   // debugger.
   auto Verify() const -> ErrorOr<Success>;
 
-  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
-  // used by `Verify()`.
-  template <typename T>
-  auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
-      -> std::optional<T>;
-
  private:
   friend class Context;
+  friend class TypedNodesTestPeer;
 
   template <typename T>
   struct ConvertTo;
@@ -342,6 +338,24 @@ class Tree : public Printable<Tree> {
   static_assert(sizeof(NodeImpl) == 12,
                 "Unexpected size of node implementation!");
 
+  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
+  // used by `Verify()` or by tests.
+  template <typename T>
+  auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
+      -> std::optional<T>;
+
+  // Wrapper around `VerifyExtractAs` to dispatch based on a runtime node kind.
+  // Returns true if extraction was successful.
+  auto VerifyExtract(NodeId node_id, NodeKind kind, ErrorBuilder* trace) const
+      -> bool;
+
+  // Sets the kind of a node. This is intended to allow putting the tree into a
+  // state where verification can fail, in order to make the failure path of
+  // `Verify` testable.
+  auto SetNodeKindForTesting(NodeId node_id, NodeKind kind) -> void {
+    node_impls_[node_id.index].kind = kind;
+  }
+
   // Prints a single node for Print(). Returns true when preorder and there are
   // children.
   auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
@@ -349,16 +363,17 @@ class Tree : public Printable<Tree> {
 
   // Extract a node of type `T` from a sibling range. This is expected to
   // consume the complete sibling range. Malformed tree errors are written
-  // to `*trace`, if `trace != nullptr`.
+  // to `*trace`, if `trace != nullptr`. This is implemented in extract.cpp.
   template <typename T>
   auto TryExtractNodeFromChildren(
-      llvm::iterator_range<Tree::SiblingIterator> children,
+      NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children,
       ErrorBuilder* trace) const -> std::optional<T>;
 
   // Extract a node of type `T` from a sibling range. This is expected to
   // consume the complete sibling range. Malformed tree errors are fatal.
   template <typename T>
   auto ExtractNodeFromChildren(
+      NodeId node_id,
       llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
 
   // Depth-first postorder sequence of node implementation data.
@@ -476,12 +491,13 @@ class Tree::SiblingIterator
 
 template <typename T>
 auto Tree::ExtractNodeFromChildren(
-    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
-  auto result = TryExtractNodeFromChildren<T>(children, nullptr);
+    NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children) const
+    -> T {
+  auto result = TryExtractNodeFromChildren<T>(node_id, children, nullptr);
   if (!result.has_value()) {
     // On error try again, this time capturing a trace.
     ErrorBuilder trace;
-    TryExtractNodeFromChildren<T>(children, &trace);
+    TryExtractNodeFromChildren<T>(node_id, children, &trace);
     CARBON_FATAL() << "Malformed parse node:\n"
                    << static_cast<Error>(trace).message();
   }
@@ -495,7 +511,7 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
     return std::nullopt;
   }
 
-  return ExtractNodeFromChildren<T>(children(node_id));
+  return ExtractNodeFromChildren<T>(node_id, children(node_id));
 }
 
 template <typename T>
@@ -503,10 +519,14 @@ auto Tree::VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
     -> std::optional<T> {
   static_assert(HasKindMember<T>, "Not a parse node type");
   if (!IsValid<T>(node_id)) {
+    if (trace) {
+      *trace << "VerifyExtractAs error: wrong kind " << node_kind(node_id)
+             << ", expected " << T::Kind << "\n";
+    }
     return std::nullopt;
   }
 
-  return TryExtractNodeFromChildren<T>(children(node_id), trace);
+  return TryExtractNodeFromChildren<T>(node_id, children(node_id), trace);
 }
 
 template <typename IdT>
@@ -517,7 +537,7 @@ auto Tree::Extract(IdT id) const
   }
 
   using T = typename NodeForId<IdT>::TypedNode;
-  return ExtractNodeFromChildren<T>(children(id));
+  return ExtractNodeFromChildren<T>(id, children(id));
 }
 
 template <const NodeKind& K>
