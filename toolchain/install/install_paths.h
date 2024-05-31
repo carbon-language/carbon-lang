@@ -26,16 +26,14 @@ namespace Carbon {
 // for more details. While we don't build the toolchain with CMake, we expect
 // our installation to behave in a similar and compatible way.
 //
-// There are multiple ways of locating an install's prefix for different
-// situations. For command line tools distributed as part of the install, their
-// own executable path is used to locate the rest of the install. We also
-// support locating an install through Bazel's runfiles tree or through an
-// explicit path for other use cases. When locating an install, we verify it by
+// There are multiple ways of locating an install's prefix:
+//   - MakeExeRelative for command line tools in an install.
+//   - MakeForBazelRunfiles for locating through Bazel's runfile tree.
+//   - Make for an explicit path, for example in tests.
+//
+// When locating an install, we verify it by
 // looking for the `carbon_install.txt` marker file at a specific location
-// below. The install paths object retains any error information so that the
-// driver can diagnose errors and report them as needed, but continue to
-// function minimally. No methods will crash even in an error state, they will
-// just return based on an empty install prefix.
+// below. When errors occur, the install prefix is made empty, and error() can be used for diagnostics; InstallPaths remains minimally functional.
 //
 // Within this prefix, we expect a hierarchy on Unix-y platforms:
 //
@@ -63,7 +61,7 @@ namespace Carbon {
 class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
-  // prefix path. This requires the toolchain to be in its installed layout.
+  // prefix path. This assumes the toolchain to be in its installed layout.
   static auto MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths;
 
   // Provide the current executable's path, and use that to detect a Bazel or
@@ -79,10 +77,10 @@ class InstallPaths {
 
   // Check for an error detecting the install paths correctly.
   //
-  // An empty return means no errors encountered and the paths should work
+  // A nullopt return means no errors encountered and the paths should work
   // correctly.
   //
-  // A non-empty return means there was an error, and details of the error are
+  // A string return means there was an error, and details of the error are
   // in the `StringRef` for inclusion in any user report.
   auto error() const -> std::optional<llvm::StringRef> { return error_; };
 
