@@ -356,7 +356,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
 
     Error err = trace;
     EXPECT_THAT(err.message(), testing::MatchesRegex(
-                                   R"Trace(.*
+                                   R"Trace((?s).*
 NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
 .*
 Error: ClassIntroducer node left unconsumed.)Trace"));
