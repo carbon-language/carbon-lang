@@ -103,8 +103,6 @@ class Tree : public Printable<Tree> {
     bool is_impl;
   };
 
-  struct ExtractState;
-
   // Wires up the reference to the tokenized buffer. The `Parse` function should
   // be used to actually parse the tokens into a tree.
   explicit Tree(Lex::TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
