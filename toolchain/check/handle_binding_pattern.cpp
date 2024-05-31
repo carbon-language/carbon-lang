@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/return.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -45,10 +46,15 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                            : SemIR::CompileTimeBindIndex::Invalid});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
-      return {name_node,
-              SemIR::BindSymbolicName{type_id, bind_name_id, value_id}};
+      return {.loc_id = name_node,
+              .inst = SemIR::BindSymbolicName{.type_id = type_id,
+                                              .bind_name_id = bind_name_id,
+                                              .value_id = value_id}};
     } else {
-      return {name_node, SemIR::BindName{type_id, bind_name_id, value_id}};
+      return {.loc_id = name_node,
+              .inst = SemIR::BindName{.type_id = type_id,
+                                      .bind_name_id = bind_name_id,
+                                      .value_id = value_id}};
     }
   };
 
@@ -98,16 +104,19 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_id = context.GetUnboundElementType(
             class_info.self_type_id, cast_type_id);
-        auto field_id = context.AddInst(
-            {binding_id, SemIR::FieldDecl{
-                             field_type_id, name_id,
-                             SemIR::ElementIndex(context.args_type_info_stack()
-                                                     .PeekCurrentBlockContents()
-                                                     .size())}});
+        auto field_id = context.AddInst<SemIR::FieldDecl>(
+            binding_id,
+            {.type_id = field_type_id,
+             .name_id = name_id,
+             .index = SemIR::ElementIndex(context.args_type_info_stack()
+                                              .PeekCurrentBlockContents()
+                                              .size())});
 
         // Add a corresponding field to the object representation of the class.
-        context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
-            {binding_id, SemIR::StructTypeField{name_id, cast_type_id}}));
+        context.args_type_info_stack().AddInstId(
+            context.AddInstInNoBlock<SemIR::StructTypeField>(
+                binding_id,
+                {.name_id = name_id, .field_type_id = cast_type_id}));
         context.node_stack().Push(node_id, field_id);
         break;
       }
@@ -120,8 +129,8 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             CheckReturnedVar(context, context.node_stack().PeekNodeId(),
                              name_node, name_id, type_node, cast_type_id);
       } else {
-        value_id = context.AddInst(
-            {name_node, SemIR::VarStorage{cast_type_id, name_id}});
+        value_id = context.AddInst<SemIR::VarStorage>(
+            name_node, {.type_id = cast_type_id, .name_id = name_id});
       }
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, value_id));
       context.node_stack().Push(node_id, bind_id);
@@ -138,8 +147,8 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_id =
-          context.AddInst({name_node, SemIR::Param{cast_type_id, name_id}});
+      auto param_id = context.AddInst<SemIR::Param>(
+          name_node, {.type_id = cast_type_id, .name_id = name_id});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
@@ -192,8 +201,8 @@ auto HandleAddr(Context& context, Parse::AddrId node_id) -> bool {
           SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
-    context.AddInstAndPush(
-        {node_id, SemIR::AddrPattern{self_param->type_id, self_param_id}});
+    context.AddInstAndPush<SemIR::AddrPattern>(
+        node_id, {.type_id = self_param->type_id, .inner_id = self_param_id});
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");

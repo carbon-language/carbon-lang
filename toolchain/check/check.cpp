@@ -323,10 +323,10 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
       SemIR::NameScopeId::Invalid);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
-  auto package_inst_id = context.AddInst(
-      {Parse::NodeId::Invalid,
-       SemIR::Namespace{namespace_type_id, SemIR::NameScopeId::Package,
-                        SemIR::InstId::Invalid}});
+  auto package_inst_id = context.AddInst<SemIR::Namespace>(
+      Parse::NodeId::Invalid, {.type_id = namespace_type_id,
+                               .name_scope_id = SemIR::NameScopeId::Package,
+                               .import_id = SemIR::InstId::Invalid});
   CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
 
   // If there is an implicit `api` import, set it first so that it uses the

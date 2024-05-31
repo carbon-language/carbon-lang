@@ -84,7 +84,7 @@ auto HandleInfixOperatorEqual(Context& context,
   // TODO: Destroy the old value before reinitializing. This will require
   // building the destruction code before we build the RHS subexpression.
   rhs_id = Initialize(context, node_id, lhs_id, rhs_id);
-  context.AddInst({node_id, SemIR::Assign{lhs_id, rhs_id}});
+  context.AddInst<SemIR::Assign>(node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id});
   // We model assignment as an expression, so we need to push a value for
   // it, even though it doesn't produce a value.
   // TODO: Consider changing our parse tree to model assignment as a
@@ -226,8 +226,9 @@ auto HandlePostfixOperatorStar(Context& context,
                                Parse::PostfixOperatorStarId node_id) -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type_id = ExprAsType(context, node_id, value_id);
-  context.AddInstAndPush(
-      {node_id, SemIR::PointerType{SemIR::TypeId::TypeType, inner_type_id}});
+  context.AddInstAndPush<SemIR::PointerType>(
+      node_id,
+      {.type_id = SemIR::TypeId::TypeType, .pointee_id = inner_type_id});
   return true;
 }
 
@@ -253,8 +254,9 @@ auto HandlePrefixOperatorAmp(Context& context,
       value_id = SemIR::InstId::BuiltinError;
       break;
   }
-  context.AddInstAndPush(
-      {node_id, SemIR::AddrOf{context.GetPointerType(type_id), value_id}});
+  context.AddInstAndPush<SemIR::AddrOf>(
+      node_id, SemIR::AddrOf{.type_id = context.GetPointerType(type_id),
+                             .lvalue_id = value_id});
   return true;
 }
 
@@ -277,8 +279,8 @@ auto HandlePrefixOperatorConst(Context& context,
     context.emitter().Emit(node_id, RepeatedConst);
   }
   auto inner_type_id = ExprAsType(context, node_id, value_id);
-  context.AddInstAndPush(
-      {node_id, SemIR::ConstType{SemIR::TypeId::TypeType, inner_type_id}});
+  context.AddInstAndPush<SemIR::ConstType>(
+      node_id, {.type_id = SemIR::TypeId::TypeType, .inner_id = inner_type_id});
   return true;
 }
 
@@ -297,9 +299,9 @@ auto HandlePrefixOperatorNot(Context& context,
                              Parse::PrefixOperatorNotId node_id) -> bool {
   auto value_id = context.node_stack().PopExpr();
   value_id = ConvertToBoolValue(context, node_id, value_id);
-  context.AddInstAndPush(
-      {node_id, SemIR::UnaryOperatorNot{context.insts().Get(value_id).type_id(),
-                                        value_id}});
+  context.AddInstAndPush<SemIR::UnaryOperatorNot>(
+      node_id, {.type_id = context.insts().Get(value_id).type_id(),
+                .operand_id = value_id});
   return true;
 }
 
@@ -349,12 +351,13 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   SemIR::InstId branch_value_id =
-      is_or ? context.AddInst({node_id, SemIR::UnaryOperatorNot{bool_type_id,
-                                                                cond_value_id}})
-            : cond_value_id;
-  auto short_circuit_result_id = context.AddInst(
-      {node_id,
-       SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(is_or)}});
+      is_or
+          ? context.AddInst<SemIR::UnaryOperatorNot>(
+                node_id, {.type_id = bool_type_id, .operand_id = cond_value_id})
+          : cond_value_id;
+  auto short_circuit_result_id = context.AddInst<SemIR::BoolLiteral>(
+      node_id,
+      {.type_id = bool_type_id, .value = SemIR::BoolValue::From(is_or)});
 
   // Create a block for the right-hand side and for the continuation.
   auto rhs_block_id =
@@ -407,14 +410,15 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   // When the second operand is evaluated, the result of `and` and `or` is
   // its value.
   auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
-  context.AddInst({node_id, SemIR::BranchWithArg{resume_block_id, rhs_id}});
+  context.AddInst<SemIR::BranchWithArg>(
+      node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
   context.inst_block_stack().Pop();
   context.AddCurrentCodeBlockToFunction(node_id);
 
   // Collect the result from either the first or second operand.
-  auto result_id = context.AddInst(
-      {node_id, SemIR::BlockArg{context.insts().Get(rhs_id).type_id(),
-                                resume_block_id}});
+  auto result_id = context.AddInst<SemIR::BlockArg>(
+      node_id, {.type_id = context.insts().Get(rhs_id).type_id(),
+                .block_id = resume_block_id});
   context.SetBlockArgResultBeforeConstantUse(result_id, branch_value_id, rhs_id,
                                              short_circuit_result_id);
   context.node_stack().Push(node_id, result_id);

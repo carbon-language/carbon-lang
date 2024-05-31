@@ -211,9 +211,11 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl = SemIR::ClassDecl{SemIR::TypeId::TypeType,
-                                     SemIR::ClassId::Invalid, decl_block_id};
-  auto class_decl_id = context.AddPlaceholderInst({node_id, class_decl});
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeId::TypeType,
+                                     .class_id = SemIR::ClassId::Invalid,
+                                     .decl_block_id = decl_block_id};
+  auto class_decl_id =
+      context.AddPlaceholderInst({.loc_id = node_id, .inst = class_decl});
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
@@ -388,8 +390,8 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
   });
 
   // Build a SemIR representation for the declaration.
-  class_info.adapt_id =
-      context.AddInst({node_id, SemIR::AdaptDecl{adapted_type_id}});
+  class_info.adapt_id = context.AddInst<SemIR::AdaptDecl>(
+      node_id, {.adapted_type_id = adapted_type_id});
 
   // Extend the class scope with the adapted type's scope if requested.
   if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
@@ -520,19 +522,20 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   // binding will be performed when it's found by name lookup into an instance.
   auto field_type_id =
       context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
-  class_info.base_id = context.AddInst(
-      {node_id,
-       SemIR::BaseDecl{field_type_id, base_info.type_id,
-                       SemIR::ElementIndex(context.args_type_info_stack()
-                                               .PeekCurrentBlockContents()
-                                               .size())}});
+  class_info.base_id = context.AddInst<SemIR::BaseDecl>(
+      node_id,
+      {.type_id = field_type_id,
+       .base_type_id = base_info.type_id,
+       .index = SemIR::ElementIndex(
+           context.args_type_info_stack().PeekCurrentBlockContents().size())});
 
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
   // TODO: Should we diagnose if there are already any fields?
-  context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
-      {node_id,
-       SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}}));
+  context.args_type_info_stack().AddInstId(
+      context.AddInstInNoBlock<SemIR::StructTypeField>(
+          node_id, {.name_id = SemIR::NameId::Base,
+                    .field_type_id = base_info.type_id}));
 
   // Bind the name `base` in the class to the base field.
   context.decl_name_stack().AddNameOrDiagnoseDuplicate(

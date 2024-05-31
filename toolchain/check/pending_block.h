@@ -39,8 +39,9 @@ class PendingBlock {
     size_t size_;
   };
 
-  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-    auto inst_id = context_.AddInstInNoBlock(loc_id_and_inst);
+  template <typename InstT>
+  auto AddInst(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
+    auto inst_id = context_.AddInstInNoBlock(loc_id, inst);
     insts_.push_back(inst_id);
     return inst_id;
   }

@@ -84,7 +84,8 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
       init_id = Initialize(context, node_id, value_id, *init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddInst({node_id, SemIR::Assign{value_id, *init_id}});
+      context.AddInst<SemIR::Assign>(node_id,
+                                     {.lhs_id = value_id, .rhs_id = *init_id});
     }
     if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
       context.inst_block_stack().PopGlobalInit();

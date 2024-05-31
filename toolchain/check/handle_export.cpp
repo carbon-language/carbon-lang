@@ -67,10 +67,10 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
     return true;
   }
 
-  auto export_id = context.AddInst(
-      {node_id, SemIR::ExportDecl{.type_id = import_ref->type_id,
-                                  .bind_name_id = import_ref->bind_name_id,
-                                  .value_id = inst_id}});
+  auto export_id = context.AddInst<SemIR::ExportDecl>(
+      node_id, {.type_id = import_ref->type_id,
+                .bind_name_id = import_ref->bind_name_id,
+                .value_id = inst_id});
   context.AddExport(export_id);
 
   // Replace the ImportRef in name lookup, both for the above duplicate

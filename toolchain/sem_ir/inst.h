@@ -305,38 +305,11 @@ struct LocIdAndInst {
   template <typename InstT>
     requires(!Internal::HasNodeId<InstT>)
   static auto NoLoc(InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
+    return {.loc_id = LocId::Invalid, .inst = inst};
   }
-
-  // For the common case, support construction as:
-  //   context.AddInst({node_id, SemIR::MyInst{...}});
-  template <typename InstT>
-    requires(Internal::HasNodeId<InstT>)
-  LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      : loc_id(node_id), inst(inst) {}
-
-  // If TypedNodeId is Parse::NodeId, allow construction with a LocId.
-  // TODO: This is somewhat historical due to fetching the NodeId from insts()
-  // for things like Temporary; should we require Untyped in these cases?
-  template <typename InstT>
-    requires(std::same_as<typename decltype(InstT::Kind)::TypedNodeId,
-                          Parse::NodeId>)
-  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
-
-  // Imports can pass an ImportIRInstId instead of another location.
-  template <typename InstT>
-  LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
-      : loc_id(import_ir_inst_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
-
- private:
-  // Expose the internal constructor for GetWithLocId.
-  friend class InstStore;
-
-  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
-      : loc_id(loc_id), inst(inst) {}
 };
 
 // Provides a ValueStore wrapper for an API specific to instructions.
@@ -357,7 +330,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst(GetLocId(inst_id), Get(inst_id), /*is_untyped=*/true);
+    return {.loc_id = GetLocId(inst_id), .inst = Get(inst_id)};
   }
 
   // Returns whether the requested instruction is the specified type.

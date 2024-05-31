@@ -80,8 +80,9 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> bool {
   auto value_id = context.LookupUnqualifiedName(node_id, name_id);
   auto value = context.insts().Get(value_id);
-  context.AddInstAndPush(
-      {node_id, SemIR::NameRef{value.type_id(), name_id, value_id}});
+  context.AddInstAndPush<SemIR::NameRef>(
+      node_id,
+      {.type_id = value.type_id(), .name_id = name_id, .value_id = value_id});
   return true;
 }
 
@@ -133,11 +134,11 @@ auto HandleNameQualifier(Context& context, Parse::NameQualifierId /*node_id*/)
 }
 
 auto HandlePackageExpr(Context& context, Parse::PackageExprId node_id) -> bool {
-  context.AddInstAndPush(
-      {node_id,
-       SemIR::NameRef{context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-                      SemIR::NameId::PackageNamespace,
-                      SemIR::InstId::PackageNamespace}});
+  context.AddInstAndPush<SemIR::NameRef>(
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+       .name_id = SemIR::NameId::PackageNamespace,
+       .value_id = SemIR::InstId::PackageNamespace});
   return true;
 }
 
