@@ -147,10 +147,10 @@ auto HandleInterfaceDefinitionStart(Context& context,
         {.name_id = SemIR::NameId::SelfType,
          .enclosing_scope_id = interface_info.scope_id,
          .bind_index = context.scope_stack().AddCompileTimeBinding()});
-    interface_info.self_param_id =
-        context.AddInst({Parse::NodeId::Invalid,
-                         SemIR::BindSymbolicName{self_type_id, bind_name_id,
-                                                 SemIR::InstId::Invalid}});
+    interface_info.self_param_id = context.AddInst<SemIR::BindSymbolicName>(
+        SemIR::LocId::Invalid, {.type_id = self_type_id,
+                                .bind_name_id = bind_name_id,
+                                .value_id = SemIR::InstId::Invalid});
     context.name_scopes()
         .Get(interface_info.scope_id)
         .names.insert({SemIR::NameId::SelfType, interface_info.self_param_id});

@@ -15,8 +15,9 @@
 namespace Carbon::Parse {
 
 auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
-  return {PostorderIterator(NodeId(0)),
-          PostorderIterator(NodeId(node_impls_.size()))};
+  return llvm::iterator_range<PostorderIterator>(
+      PostorderIterator(NodeId(0)),
+      PostorderIterator(NodeId(node_impls_.size())));
 }
 
 auto Tree::postorder(NodeId n) const
@@ -26,21 +27,23 @@ auto Tree::postorder(NodeId n) const
   // its subtree.
   int end_index = n.index + 1;
   int start_index = end_index - node_impls_[n.index].subtree_size;
-  return {PostorderIterator(NodeId(start_index)),
-          PostorderIterator(NodeId(end_index))};
+  return llvm::iterator_range<PostorderIterator>(
+      PostorderIterator(NodeId(start_index)),
+      PostorderIterator(NodeId(end_index)));
 }
 
 auto Tree::children(NodeId n) const -> llvm::iterator_range<SiblingIterator> {
   CARBON_CHECK(n.is_valid());
   int end_index = n.index - node_impls_[n.index].subtree_size;
-  return {SiblingIterator(*this, NodeId(n.index - 1)),
-          SiblingIterator(*this, NodeId(end_index))};
+  return llvm::iterator_range<SiblingIterator>(
+      SiblingIterator(*this, NodeId(n.index - 1)),
+      SiblingIterator(*this, NodeId(end_index)));
 }
 
 auto Tree::roots() const -> llvm::iterator_range<SiblingIterator> {
-  return {
+  return llvm::iterator_range<SiblingIterator>(
       SiblingIterator(*this, NodeId(static_cast<int>(node_impls_.size()) - 1)),
-      SiblingIterator(*this, NodeId(-1))};
+      SiblingIterator(*this, NodeId(-1)));
 }
 
 auto Tree::node_has_error(NodeId n) const -> bool {

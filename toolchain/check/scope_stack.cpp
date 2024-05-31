@@ -26,7 +26,8 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
   if (scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back({next_scope_index_, scope_id});
+    non_lexical_scope_stack_.push_back(
+        {.scope_index = next_scope_index_, .name_scope_id = scope_id});
   }
 
   // TODO: Handle this case more gracefully.
@@ -145,7 +146,8 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
 
 auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty()) << "No scope to suspend";
-  SuspendedScope result = {scope_stack_.pop_back_val(), {}};
+  SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
+                           .suspended_lookups = {}};
   if (result.entry.scope_id.is_valid()) {
     non_lexical_scope_stack_.pop_back();
   }
@@ -167,8 +169,8 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
     lexical_lookup_.Restore(std::move(entry), scope.entry.index);
   }
   if (scope.entry.scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back(
-        {scope.entry.index, scope.entry.scope_id});
+    non_lexical_scope_stack_.push_back({.scope_index = scope.entry.index,
+                                        .name_scope_id = scope.entry.scope_id});
   }
   scope_stack_.push_back(std::move(scope.entry));
 }

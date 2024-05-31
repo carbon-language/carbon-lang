@@ -59,18 +59,24 @@ struct DeclIntroducerInfo {
 
 static constexpr auto DeclIntroducers = [] {
   DeclIntroducerInfo introducers[] = {
-#define CARBON_TOKEN(Name) \
-  {DeclIntroducerKind::Unrecognized, NodeKind::InvalidParse, State::Invalid},
+#define CARBON_TOKEN(Name)                              \
+  {.introducer_kind = DeclIntroducerKind::Unrecognized, \
+   .node_kind = NodeKind::InvalidParse,                 \
+   .state = State::Invalid},
 #include "toolchain/lex/token_kind.def"
   };
   auto set = [&](Lex::TokenKind token_kind, NodeKind node_kind, State state) {
-    introducers[token_kind.AsInt()] = {DeclIntroducerKind::NonPackagingDecl,
-                                       node_kind, state};
+    introducers[token_kind.AsInt()] = {
+        .introducer_kind = DeclIntroducerKind::NonPackagingDecl,
+        .node_kind = node_kind,
+        .state = state};
   };
   auto set_packaging = [&](Lex::TokenKind token_kind, NodeKind node_kind,
                            State state) {
-    introducers[token_kind.AsInt()] = {DeclIntroducerKind::PackagingDecl,
-                                       node_kind, state};
+    introducers[token_kind.AsInt()] = {
+        .introducer_kind = DeclIntroducerKind::PackagingDecl,
+        .node_kind = node_kind,
+        .state = state};
   };
 
   set(Lex::TokenKind::Adapt, NodeKind::AdaptIntroducer,

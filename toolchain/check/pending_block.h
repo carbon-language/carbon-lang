@@ -65,9 +65,11 @@ class PendingBlock {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
       context_.ReplaceLocIdAndInstBeforeConstantUse(
-          target_id, {value.loc_id,
-                      SemIR::SpliceBlock{value.inst.type_id(),
-                                         SemIR::InstBlockId::Empty, value_id}});
+          target_id,
+          {.loc_id = value.loc_id,
+           .inst = SemIR::SpliceBlock{.type_id = value.inst.type_id(),
+                                      .block_id = SemIR::InstBlockId::Empty,
+                                      .result_id = value_id}});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
@@ -75,10 +77,11 @@ class PendingBlock {
     } else {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
       context_.ReplaceLocIdAndInstBeforeConstantUse(
-          target_id,
-          {value.loc_id,
-           SemIR::SpliceBlock{value.inst.type_id(),
-                              context_.inst_blocks().Add(insts_), value_id}});
+          target_id, {.loc_id = value.loc_id,
+                      .inst = SemIR::SpliceBlock{
+                          .type_id = value.inst.type_id(),
+                          .block_id = context_.inst_blocks().Add(insts_),
+                          .result_id = value_id}});
     }
 
     // Prepare to stash more pending instructions.

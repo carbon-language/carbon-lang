@@ -672,7 +672,8 @@ class TypeCompleter {
   // Adds `type_id` to the work list, if it's not already complete.
   auto Push(SemIR::TypeId type_id) -> void {
     if (!context_.types().IsComplete(type_id)) {
-      work_list_.push_back({type_id, Phase::AddNestedIncompleteTypes});
+      work_list_.push_back(
+          {.type_id = type_id, .phase = Phase::AddNestedIncompleteTypes});
     }
   }
 
@@ -712,7 +713,8 @@ class TypeCompleter {
         // should never fail: the value representation shouldn't require any
         // additional nested types to be complete.
         if (!context_.types().IsComplete(value_rep.type_id)) {
-          work_list_.push_back({value_rep.type_id, Phase::BuildValueRepr});
+          work_list_.push_back(
+              {.type_id = value_rep.type_id, .phase = Phase::BuildValueRepr});
         }
         // For a pointer representation, the pointee also needs to be complete.
         if (value_rep.kind == SemIR::ValueRepr::Pointer) {
@@ -722,7 +724,8 @@ class TypeCompleter {
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
           if (!context_.types().IsComplete(pointee_type_id)) {
-            work_list_.push_back({pointee_type_id, Phase::BuildValueRepr});
+            work_list_.push_back(
+                {.type_id = pointee_type_id, .phase = Phase::BuildValueRepr});
           }
         }
         break;
@@ -1050,9 +1053,9 @@ template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
   // TODO: Remove inst_id parameter from TryEvalInst.
+  InstT inst = {SemIR::TypeId::TypeType, each_arg...};
   return context.GetTypeIdForTypeConstant(
-      TryEvalInst(context, SemIR::InstId::Invalid,
-                  InstT{SemIR::TypeId::TypeType, each_arg...}));
+      TryEvalInst(context, SemIR::InstId::Invalid, inst));
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments,

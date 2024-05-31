@@ -254,9 +254,10 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     auto& class_info = context.classes().Get(class_decl.class_id);
     if (class_info.is_generic()) {
       // TODO: Pass in the generic arguments once we can represent them.
-      class_info.self_type_id = context.GetTypeIdForTypeConstant(TryEvalInst(
-          context, SemIR::InstId::Invalid,
-          SemIR::ClassType{SemIR::TypeId::TypeType, class_decl.class_id}));
+      class_info.self_type_id = context.GetTypeIdForTypeConstant(
+          TryEvalInst(context, SemIR::InstId::Invalid,
+                      SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
+                                       .class_id = class_decl.class_id}));
     } else {
       class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
     }

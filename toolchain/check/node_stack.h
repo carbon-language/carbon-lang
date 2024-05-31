@@ -84,7 +84,7 @@ class NodeStack {
                   << " -> <none>\n";
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
-    stack_.push_back(Entry{node_id, Id()});
+    stack_.push_back({.node_id = node_id, .id = Id()});
   }
 
   // Pushes a parse tree node onto the stack with an ID.
@@ -100,7 +100,7 @@ class NodeStack {
                   << id << "\n";
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
-    stack_.push_back(Entry{node_id, Id(id)});
+    stack_.push_back({.node_id = node_id, .id = Id(id)});
   }
 
   // Returns whether there is a node of the specified kind on top of the stack.
