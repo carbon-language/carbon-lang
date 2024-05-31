@@ -80,7 +80,9 @@ static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
 static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
                            bool result) -> SemIR::ConstantId {
   return MakeConstantResult(
-      context, SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(result)},
+      context,
+      SemIR::BoolLiteral{.type_id = bool_type_id,
+                         .value = SemIR::BoolValue::From(result)},
       Phase::Template);
 }
 
@@ -88,16 +90,18 @@ static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
 static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
                           llvm::APInt value) -> SemIR::ConstantId {
   auto result = context.ints().Add(std::move(value));
-  return MakeConstantResult(context, SemIR::IntLiteral{type_id, result},
-                            Phase::Template);
+  return MakeConstantResult(
+      context, SemIR::IntLiteral{.type_id = type_id, .int_id = result},
+      Phase::Template);
 }
 
 // Converts an APFloat value into a ConstantId.
 static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
                             llvm::APFloat value) -> SemIR::ConstantId {
   auto result = context.floats().Add(std::move(value));
-  return MakeConstantResult(context, SemIR::FloatLiteral{type_id, result},
-                            Phase::Template);
+  return MakeConstantResult(
+      context, SemIR::FloatLiteral{.type_id = type_id, .float_id = result},
+      Phase::Template);
 }
 
 // `GetConstantValue` checks to see whether the provided ID describes a value
@@ -287,7 +291,7 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
                           "Array index `{0}` is past the end of type `{1}`.",
                           TypedInt, SemIR::TypeId);
         context.emitter().Emit(index_inst.index_id, ArrayIndexOutOfBounds,
-                               TypedInt{index->type_id, index_val},
+                               {.type = index->type_id, .value = index_val},
                                aggregate_type_id);
         return SemIR::ConstantId::Error;
       }
@@ -327,8 +331,9 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
        bit_width_val.isNegative())) {
     CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
                       "Integer type width of {0} is not positive.", TypedInt);
-    context.emitter().Emit(loc, IntWidthNotPositive,
-                           TypedInt{bit_width->type_id, bit_width_val});
+    context.emitter().Emit(
+        loc, IntWidthNotPositive,
+        {.type = bit_width->type_id, .value = bit_width_val});
     return false;
   }
   // TODO: Pick a maximum size and document it in the design. For now
@@ -340,7 +345,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
                       "maximum supported width of {1}.",
                       TypedInt, int);
     context.emitter().Emit(loc, IntWidthTooLarge,
-                           TypedInt{bit_width->type_id, bit_width_val},
+                           {.type = bit_width->type_id, .value = bit_width_val},
                            MaxIntWidth);
     return false;
   }
@@ -408,7 +413,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
         CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                           "Integer overflow in negation of {0}.", TypedInt);
         context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
-                               TypedInt{op.type_id, op_val});
+                               {.type = op.type_id, .value = op_val});
       }
       op_val.negate();
       break;
@@ -528,8 +533,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
             TypedInt, llvm::StringLiteral, TypedInt);
         context.emitter().Emit(loc, CompileTimeShiftOutOfRange,
                                lhs_val.getBitWidth(),
-                               TypedInt{lhs.type_id, lhs_val}, op_str,
-                               TypedInt{rhs.type_id, rhs_val});
+                               {.type = lhs.type_id, .value = lhs_val}, op_str,
+                               {.type = rhs.type_id, .value = rhs_val});
         // TODO: Is it useful to recover by returning 0 or -1?
         return SemIR::ConstantId::Error;
       }
@@ -552,8 +557,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                       "Integer overflow in calculation {0} {1} {2}.", TypedInt,
                       llvm::StringLiteral, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
-                           TypedInt{lhs.type_id, lhs_val}, op_str,
-                           TypedInt{rhs.type_id, rhs_val});
+                           {.type = lhs.type_id, .value = lhs_val}, op_str,
+                           {.type = rhs.type_id, .value = rhs_val});
   }
 
   return MakeIntResult(context, lhs.type_id, std::move(result_val));
@@ -885,15 +890,17 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                 bound_val.isNegative()) {
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                                 "Array bound of {0} is negative.", TypedInt);
-              context.emitter().Emit(bound_id, ArrayBoundNegative,
-                                     TypedInt{int_bound->type_id, bound_val});
+              context.emitter().Emit(
+                  bound_id, ArrayBoundNegative,
+                  {.type = int_bound->type_id, .value = bound_val});
               return false;
             }
             if (bound_val.getActiveBits() > 64) {
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                                 "Array bound of {0} is too large.", TypedInt);
-              context.emitter().Emit(bound_id, ArrayBoundTooLarge,
-                                     TypedInt{int_bound->type_id, bound_val});
+              context.emitter().Emit(
+                  bound_id, ArrayBoundTooLarge,
+                  {.type = int_bound->type_id, .value = bound_val});
               return false;
             }
             return true;
@@ -979,7 +986,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
       return MakeConstantResult(
           context,
-          SemIR::StructValue{fn_decl.type_id, SemIR::InstBlockId::Empty},
+          SemIR::StructValue{.type_id = fn_decl.type_id,
+                             .elements_id = SemIR::InstBlockId::Empty},
           Phase::Template);
     }
 
@@ -989,21 +997,23 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       if (context.classes().Get(class_decl.class_id).is_generic()) {
         return MakeConstantResult(
             context,
-            SemIR::StructValue{class_decl.type_id, SemIR::InstBlockId::Empty},
+            SemIR::StructValue{.type_id = class_decl.type_id,
+                               .elements_id = SemIR::InstBlockId::Empty},
             Phase::Template);
       }
       // A non-generic class declaration evaluates to the class type.
       return MakeConstantResult(
           context,
-          SemIR::ClassType{SemIR::TypeId::TypeType, class_decl.class_id},
+          SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
+                           .class_id = class_decl.class_id},
           Phase::Template);
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       // TODO: Once interfaces have generic arguments, handle them.
       return MakeConstantResult(
           context,
-          SemIR::InterfaceType{SemIR::TypeId::TypeType,
-                               interface_decl.interface_id},
+          SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
+                               .interface_id = interface_decl.interface_id},
           Phase::Template);
     }
 
