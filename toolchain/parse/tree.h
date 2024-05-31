@@ -343,6 +343,11 @@ class Tree : public Printable<Tree> {
   auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
       -> std::optional<T>;
 
+  // Wrapper around `VerifyExtractAs` to dispatch based on a runtime node kind.
+  // Returns true if extraction was successful.
+  auto VerifyExtract(NodeId node_id, NodeKind kind,
+                     ErrorBuilder* trace) const -> bool;
+
   // Sets the kind of a node. This is intended to allow putting the tree into a
   // state where verification can fail, in order to make the failure path of
   // `Verify` testable.
