@@ -37,7 +37,8 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
 };
 
 // Check that each typed node defines a `token` member.
-#define CARBON_PARSE_NODE_KIND(Name) static_assert(&Name::token != nullptr);
+#define CARBON_PARSE_NODE_KIND(Name) \
+  static_assert(requires(Name node) { node.token; });
 #include "toolchain/parse/node_kind.def"
 
 auto NodeKind::has_bracket() const -> bool {
