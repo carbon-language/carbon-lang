@@ -183,14 +183,16 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers.
+  auto [_, enclosing_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
-                             name_context.enclosing_scope_id);
+                             enclosing_scope_inst);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
                            KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
   RestrictExternModifierOnDecl(context, Lex::TokenKind::Class,
-                               name_context.enclosing_scope_id, is_definition);
+                               enclosing_scope_inst, is_definition);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {

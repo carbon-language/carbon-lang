@@ -68,6 +68,7 @@ File::File(CheckIRId check_ir_id, SharedValueStores& value_stores,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       type_blocks_(allocator_),
+      name_scopes_(&insts_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {

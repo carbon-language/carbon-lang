@@ -36,8 +36,10 @@ static auto BuildInterfaceDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
 
   // Process modifiers.
+  auto [_, enclosing_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
-                             name_context.enclosing_scope_id);
+                             enclosing_scope_inst);
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::SemIR {
 
@@ -87,6 +88,8 @@ struct NameScope : Printable<NameScope> {
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
+  explicit NameScopeStore(InstStore* insts) : insts_(insts) {}
+
   // Adds a name scope, returning an ID to reference it.
   auto Add(InstId inst_id, NameId name_id, NameScopeId enclosing_scope_id)
       -> NameScopeId {
@@ -103,14 +106,18 @@ class NameScopeStore {
     return values_.Get(scope_id);
   }
 
-  // Returns the instruction owning the requested name scope, or an invalid
-  // instruction if the scope is either invalid or has no associated
-  // instruction.
-  auto GetInstIdIfValid(NameScopeId scope_id) const -> InstId {
+  // Returns the instruction owning the requested name scope, or Invalid with
+  // nullopt if the scope is either invalid or has no associated instruction.
+  auto GetInstIfValid(NameScopeId scope_id) const
+      -> std::pair<InstId, std::optional<Inst>> {
     if (!scope_id.is_valid()) {
-      return InstId::Invalid;
+      return {InstId::Invalid, std::nullopt};
     }
-    return Get(scope_id).inst_id;
+    auto inst_id = Get(scope_id).inst_id;
+    if (!inst_id.is_valid()) {
+      return {InstId::Invalid, std::nullopt};
+    }
+    return {inst_id, insts_->Get(inst_id)};
   }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
@@ -118,6 +125,7 @@ class NameScopeStore {
   }
 
  private:
+  InstStore* insts_;
   ValueStore<NameScopeId> values_;
 };
 
