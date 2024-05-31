@@ -28,7 +28,7 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
         "Tuple element index `{0}` is past the end of type `{1}`.", TypedInt,
         SemIR::TypeId);
     context.emitter().Emit(node_id, TupleIndexOutOfBounds,
-                           TypedInt{index_inst.type_id, index_val},
+                           {.type = index_inst.type_id, .value = index_val},
                            operand_inst.type_id());
     return nullptr;
   }

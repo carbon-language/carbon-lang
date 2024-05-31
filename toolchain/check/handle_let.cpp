@@ -47,8 +47,9 @@ static auto BuildAssociatedConstantDecl(
   auto name_id =
       context.bind_names().Get(binding_pattern->bind_name_id).name_id;
   context.ReplaceLocIdAndInstBeforeConstantUse(
-      pattern_id, {node_id, SemIR::AssociatedConstantDecl{
-                                binding_pattern->type_id, name_id}});
+      pattern_id,
+      SemIR::LocIdAndInst(node_id, SemIR::AssociatedConstantDecl{
+                                       binding_pattern->type_id, name_id}));
   auto decl_id = pattern_id;
   context.inst_block_stack().AddInstId(decl_id);
 

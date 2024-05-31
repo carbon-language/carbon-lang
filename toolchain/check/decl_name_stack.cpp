@@ -86,7 +86,8 @@ auto DeclNameStack::PopScope() -> void {
 auto DeclNameStack::Suspend() -> SuspendedName {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
       << "Missing call to FinishName before Suspend";
-  SuspendedName result = {decl_name_stack_.pop_back_val(), {}};
+  SuspendedName result = {.name_context = decl_name_stack_.pop_back_val(),
+                          .scopes = {}};
   auto enclosing_index = result.name_context.initial_scope_index;
   auto& scope_stack = context_->scope_stack();
   while (scope_stack.PeekIndex() > enclosing_index) {

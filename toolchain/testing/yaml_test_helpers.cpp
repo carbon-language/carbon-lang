@@ -15,7 +15,7 @@ static auto Parse(llvm::yaml::Node* node) -> Value {
   // getType returns an unsigned int which should map to the enum.
   switch (static_cast<llvm::yaml::Node::NodeKind>(node->getType())) {
     case llvm::yaml::Node::NK_Null:
-      return Value{NullValue()};
+      return Value(NullValue());
 
     case llvm::yaml::Node::NK_Scalar: {
       llvm::SmallString<128> storage;
@@ -35,7 +35,7 @@ static auto Parse(llvm::yaml::Node* node) -> Value {
         Value value = Parse(kv.getValue());
         v.emplace_back(std::move(key), std::move(value));
       }
-      return Value{std::move(v)};
+      return Value(std::move(v));
     }
 
     case llvm::yaml::Node::NK_Sequence: {
@@ -43,11 +43,11 @@ static auto Parse(llvm::yaml::Node* node) -> Value {
       for (llvm::yaml::Node& n : llvm::cast<llvm::yaml::SequenceNode>(*node)) {
         v.push_back(Parse(&n));
       }
-      return Value{std::move(v)};
+      return Value(std::move(v));
     }
 
     case llvm::yaml::Node::NK_Alias:
-      return Value{AliasValue()};
+      return Value(AliasValue());
 
     case llvm::yaml::Node::NK_KeyValue:
       llvm_unreachable("should only exist as child of mapping");
@@ -114,7 +114,7 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
 
     std::ostream& out;
   };
-  std::visit(Printer{os}, v);
+  std::visit(Printer{.out = os}, v);
   return os;
 }
 

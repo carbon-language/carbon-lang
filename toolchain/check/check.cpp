@@ -503,7 +503,9 @@ class DeferredDefinitionWorklist {
     enclosing_scopes_.push_back(
         {.worklist_start_index = worklist_.size(),
          .scope_index = context.scope_stack().PeekIndex()});
-    worklist_.push_back(EnterDeferredDefinitionScope{std::nullopt, nested});
+    worklist_.push_back(
+        EnterDeferredDefinitionScope{.suspended_name = std::nullopt,
+                                     .in_deferred_definition_scope = nested});
     CARBON_VLOG() << VlogPrefix << "Push EnterDeferredDefinitionScope "
                   << (nested ? "(nested)" : "(non-nested)") << "\n";
   }

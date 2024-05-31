@@ -371,7 +371,9 @@ auto HandleFunctionDefinitionSuspend(Context& context,
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/true);
-  return {function_id, decl_id, context.decl_name_stack().Suspend()};
+  return {.function_id = function_id,
+          .decl_id = decl_id,
+          .saved_name_state = context.decl_name_stack().Suspend()};
 }
 
 auto HandleFunctionDefinitionResume(Context& context,

@@ -61,12 +61,14 @@ class LexicalLookup {
         << "Suspending a nonexistent result for " << name_id << ".";
     CARBON_CHECK(index <= std::numeric_limits<uint32_t>::max())
         << "Unexpectedly large index " << index << " for name ID";
-    return {static_cast<uint32_t>(index), results.pop_back_val().inst_id};
+    return {.index = static_cast<uint32_t>(index),
+            .inst_id = results.pop_back_val().inst_id};
   }
 
   // Restore a previously-suspended lookup result.
   auto Restore(SuspendedResult sus, ScopeIndex index) -> void {
-    lookup_[sus.index].push_back({sus.inst_id, index});
+    lookup_[sus.index].push_back(
+        {.inst_id = sus.inst_id, .scope_index = index});
   }
 
  private:
