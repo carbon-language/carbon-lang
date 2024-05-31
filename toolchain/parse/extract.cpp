@@ -13,33 +13,10 @@
 
 namespace Carbon::Parse {
 
-// A trait type that should be specialized by types that can be extracted
-// from a parse tree. A specialization should provide the following API:
-//
-// ```cpp
-// template<>
-// struct Extractable<T> {
-//   // Extract a value of this type from the sequence of nodes starting at
-//   // `it`, and increment `it` past this type. Returns `std::nullopt` if
-//   // the tree is malformed. If `trace != nullptr`, writes what actions
-//   // were taken to `*trace`.
-//   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
-//                       Tree::SiblingIterator end,
-//                       ErrorBuilder* trace) -> std::optional<T>;
-// };
-// ```
-//
-// Note that `Tree::SiblingIterator`s iterate in reverse order through the
-// children of a node.
-//
-// This class is only in this file.
-template <typename T>
-struct Extractable;
-
 namespace {
-// Common state maintained during the node extraction process. This includes
-// both the current position within the parse tree, as well as context
-// information about the tree and node being extracted.
+// Implementation of the process of extracting a typed node structure from the
+// parse tree. The extraction process uses the class `Extractable<T>`, defined
+// below, to extract individual fields of type `T`.
 class NodeExtractor {
  public:
   struct CheckpointState {
@@ -47,8 +24,8 @@ class NodeExtractor {
   };
 
   NodeExtractor(const Tree* tree, Lex::TokenizedBuffer* tokens,
-               ErrorBuilder* trace, NodeId node_id,
-               llvm::iterator_range<Tree::SiblingIterator> children)
+                ErrorBuilder* trace, NodeId node_id,
+                llvm::iterator_range<Tree::SiblingIterator> children)
       : tree_(tree),
         tokens_(tokens),
         trace_(trace),
@@ -60,7 +37,9 @@ class NodeExtractor {
   auto kind() const -> NodeKind { return tree_->node_kind(*it_); }
   auto has_token() const -> bool { return node_id_.is_valid(); }
   auto token() const -> Lex::TokenIndex { return tree_->node_token(node_id_); }
-  auto token_kind() const -> Lex::TokenKind { return tokens_->GetKind(token()); }
+  auto token_kind() const -> Lex::TokenKind {
+    return tokens_->GetKind(token());
+  }
   auto trace() const -> ErrorBuilder* { return trace_; }
 
   // Saves a checkpoint of our current position so we can return later if
@@ -103,20 +82,43 @@ class NodeExtractor {
 };
 }  // namespace
 
+namespace {
+// A trait type that should be specialized by types that can be extracted
+// from a parse tree. A specialization should provide the following API:
+//
+// ```cpp
+// template<>
+// struct Extractable<T> {
+//   // Extract a value of this type from the sequence of nodes starting at
+//   // `it`, and increment `it` past this type. Returns `std::nullopt` if
+//   // the tree is malformed. If `trace != nullptr`, writes what actions
+//   // were taken to `*trace`.
+//   static auto Extract(NodeExtractor* extractor) -> std::optional<T>;
+// };
+// ```
+//
+// Note that `Tree::SiblingIterator`s iterate in reverse order through the
+// children of a node.
+//
+// This class is only in this file.
+template <typename T>
+struct Extractable;
+}  // namespace
+
 // Extract a `NodeId` as a single child.
 template <>
 struct Extractable<NodeId> {
-  static auto Extract(NodeExtractor& state) -> std::optional<NodeId> {
-    if (state.at_end()) {
-      if (auto* trace = state.trace()) {
+  static auto Extract(NodeExtractor& extractor) -> std::optional<NodeId> {
+    if (extractor.at_end()) {
+      if (auto* trace = extractor.trace()) {
         *trace << "NodeId error: no more children\n";
       }
       return std::nullopt;
     }
-    if (auto* trace = state.trace()) {
-      *trace << "NodeId: " << state.kind() << " consumed\n";
+    if (auto* trace = extractor.trace()) {
+      *trace << "NodeId: " << extractor.kind() << " consumed\n";
     }
-    return state.ExtractNode();
+    return extractor.ExtractNode();
   }
 };
 
@@ -125,10 +127,10 @@ auto NodeExtractor::MatchesNodeIdForKind(NodeKind expected_kind) const -> bool {
     if (trace_) {
       if (at_end()) {
         *trace_ << "NodeIdForKind error: no more children, expected "
-               << expected_kind << "\n";
+                << expected_kind << "\n";
       } else {
         *trace_ << "NodeIdForKind error: wrong kind " << kind() << ", expected "
-               << expected_kind << "\n";
+                << expected_kind << "\n";
       }
     }
     return false;
@@ -143,10 +145,10 @@ auto NodeExtractor::MatchesNodeIdForKind(NodeKind expected_kind) const -> bool {
 // as a single required child.
 template <const NodeKind& Kind>
 struct Extractable<NodeIdForKind<Kind>> {
-  static auto Extract(NodeExtractor& state)
+  static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdForKind<Kind>> {
-    if (state.MatchesNodeIdForKind(Kind)) {
-      return NodeIdForKind<Kind>(state.ExtractNode());
+    if (extractor.MatchesNodeIdForKind(Kind)) {
+      return NodeIdForKind<Kind>(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -168,7 +170,7 @@ auto NodeExtractor::MatchesNodeIdInCategory(NodeCategory category) const
   }
   if (trace_) {
     *trace_ << "NodeIdInCategory " << category << ": kind " << kind()
-           << " consumed\n";
+            << " consumed\n";
   }
   return true;
 }
@@ -176,10 +178,10 @@ auto NodeExtractor::MatchesNodeIdInCategory(NodeCategory category) const
 // Extract a `NodeIdInCategory<Category>` as a single child.
 template <NodeCategory::RawEnumType Category>
 struct Extractable<NodeIdInCategory<Category>> {
-  static auto Extract(NodeExtractor& state)
+  static auto Extract(NodeExtractor& extractor)
       -> std::optional<NodeIdInCategory<Category>> {
-    if (state.MatchesNodeIdInCategory(Category)) {
-      return NodeIdInCategory<Category>(state.ExtractNode());
+    if (extractor.MatchesNodeIdInCategory(Category)) {
+      return NodeIdInCategory<Category>(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -204,7 +206,7 @@ auto NodeExtractor::MatchesNodeIdOneOf(
         *trace_ << "\n";
       } else {
         *trace_ << "NodeIdOneOf error: wrong kind " << node_kind
-               << ", expected ";
+                << ", expected ";
         trace_kinds();
         *trace_ << "\n";
       }
@@ -222,9 +224,10 @@ auto NodeExtractor::MatchesNodeIdOneOf(
 // Extract a `NodeIdOneOf<T...>` as a single required child.
 template <typename... T>
 struct Extractable<NodeIdOneOf<T...>> {
-  static auto Extract(NodeExtractor& state) -> std::optional<NodeIdOneOf<T...>> {
-    if (state.MatchesNodeIdOneOf({T::Kind...})) {
-      return NodeIdOneOf<T...>(state.ExtractNode());
+  static auto Extract(NodeExtractor& extractor)
+      -> std::optional<NodeIdOneOf<T...>> {
+    if (extractor.MatchesNodeIdOneOf({T::Kind...})) {
+      return NodeIdOneOf<T...>(extractor.ExtractNode());
     } else {
       return std::nullopt;
     }
@@ -235,46 +238,45 @@ struct Extractable<NodeIdOneOf<T...>> {
 // Note: this is only instantiated once, so no need to create a helper function.
 template <typename T>
 struct Extractable<NodeIdNot<T>> {
-  static auto Extract(NodeExtractor& state) -> std::optional<NodeIdNot<T>> {
-    if (state.at_end() || state.kind() == T::Kind) {
-      if (auto* trace = state.trace()) {
-        if (state.at_end()) {
-          *trace << "NodeIdNot " << T::Kind
-                       << " error: no more children\n";
+  static auto Extract(NodeExtractor& extractor) -> std::optional<NodeIdNot<T>> {
+    if (extractor.at_end() || extractor.kind() == T::Kind) {
+      if (auto* trace = extractor.trace()) {
+        if (extractor.at_end()) {
+          *trace << "NodeIdNot " << T::Kind << " error: no more children\n";
         } else {
           *trace << "NodeIdNot error: unexpected " << T::Kind << "\n";
         }
       }
       return std::nullopt;
     }
-    if (auto* trace = state.trace()) {
-      *trace << "NodeIdNot " << T::Kind << ": " << state.kind()
-                   << " consumed\n";
+    if (auto* trace = extractor.trace()) {
+      *trace << "NodeIdNot " << T::Kind << ": " << extractor.kind()
+             << " consumed\n";
     }
-    return NodeIdNot<T>(state.ExtractNode());
+    return NodeIdNot<T>(extractor.ExtractNode());
   }
 };
 
 // Extract an `llvm::SmallVector<T>` by extracting `T`s until we can't.
 template <typename T>
 struct Extractable<llvm::SmallVector<T>> {
-  static auto Extract(NodeExtractor& state)
+  static auto Extract(NodeExtractor& extractor)
       -> std::optional<llvm::SmallVector<T>> {
-    if (auto* trace = state.trace()) {
+    if (auto* trace = extractor.trace()) {
       *trace << "Vector: begin\n";
     }
     llvm::SmallVector<T> result;
-    while (!state.at_end()) {
-      auto checkpoint = state.Checkpoint();
-      auto item = Extractable<T>::Extract(state);
+    while (!extractor.at_end()) {
+      auto checkpoint = extractor.Checkpoint();
+      auto item = Extractable<T>::Extract(extractor);
       if (!item.has_value()) {
-        state.RestoreCheckpoint(checkpoint);
+        extractor.RestoreCheckpoint(checkpoint);
         break;
       }
       result.push_back(*item);
     }
     std::reverse(result.begin(), result.end());
-    if (auto* trace = state.trace()) {
+    if (auto* trace = extractor.trace()) {
       *trace << "Vector: end\n";
     }
     return result;
@@ -285,24 +287,25 @@ struct Extractable<llvm::SmallVector<T>> {
 // a `T`, and extracting nothing if that fails.
 template <typename T>
 struct Extractable<std::optional<T>> {
-  static auto Extract(NodeExtractor& state) -> std::optional<std::optional<T>> {
-    if (auto* trace = state.trace()) {
+  static auto Extract(NodeExtractor& extractor)
+      -> std::optional<std::optional<T>> {
+    if (auto* trace = extractor.trace()) {
       *trace << "Optional " << typeid(T).name() << ": begin\n";
     }
-    auto checkpoint = state.Checkpoint();
-    std::optional<T> value = Extractable<T>::Extract(state);
+    auto checkpoint = extractor.Checkpoint();
+    std::optional<T> value = Extractable<T>::Extract(extractor);
     if (value) {
-      if (auto* trace = state.trace()) {
+      if (auto* trace = extractor.trace()) {
         *trace << "Optional " << typeid(T).name() << ": found\n";
       }
       return value;
     }
-    if (auto* trace = state.trace()) {
+    if (auto* trace = extractor.trace()) {
       *trace << "Optional " << typeid(T).name() << ": missing\n";
     }
-    state.RestoreCheckpoint(checkpoint);
+    extractor.RestoreCheckpoint(checkpoint);
     return value;
-    }
+  }
 };
 
 auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
@@ -328,10 +331,10 @@ auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
 // Extract the token corresponding to a node.
 template <const Lex::TokenKind& Kind, bool RequireIfInvalid>
 struct Extractable<Token<Kind, RequireIfInvalid>> {
-  static auto Extract(NodeExtractor& state)
+  static auto Extract(NodeExtractor& extractor)
       -> std::optional<Token<Kind, RequireIfInvalid>> {
-    if (state.MatchesTokenKind(Kind)) {
-      return Token<Kind, RequireIfInvalid>{.index = state.token()};
+    if (extractor.MatchesTokenKind(Kind)) {
+      return Token<Kind, RequireIfInvalid>{.index = extractor.token()};
     } else {
       return std::nullopt;
     }
@@ -341,14 +344,14 @@ struct Extractable<Token<Kind, RequireIfInvalid>> {
 // Extract the token corresponding to a node.
 template <>
 struct Extractable<AnyToken> {
-  static auto Extract(NodeExtractor& state) -> std::optional<AnyToken> {
-    if (!state.has_token()) {
-      if (auto* trace = state.trace()) {
+  static auto Extract(NodeExtractor& extractor) -> std::optional<AnyToken> {
+    if (!extractor.has_token()) {
+      if (auto* trace = extractor.trace()) {
         *trace << "Token expected but processing root node\n";
       }
       return std::nullopt;
     }
-    return AnyToken{.index = state.token()};
+    return AnyToken{.index = extractor.token()};
   }
 };
 
@@ -380,23 +383,25 @@ auto NodeExtractor::ExtractTupleLikeType(
   return T{std::move(std::get<Index>(fields).value())...};
 }
 
+namespace {
 // Extract the fields of a simple aggregate type.
 template <typename T>
 struct Extractable {
   static_assert(std::is_aggregate_v<T>, "Unsupported child type");
-  static auto ExtractImpl(NodeExtractor& state) -> std::optional<T> {
+  static auto ExtractImpl(NodeExtractor& extractor) -> std::optional<T> {
     // Compute the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
-    return state.ExtractTupleLikeType<T>(
+    return extractor.ExtractTupleLikeType<T>(
         std::make_index_sequence<std::tuple_size_v<TupleType>>(),
         static_cast<TupleType*>(nullptr));
   }
 
-  static auto Extract(NodeExtractor& state) -> std::optional<T> {
+  static auto Extract(NodeExtractor& extractor) -> std::optional<T> {
     static_assert(!HasKindMember<T>, "Missing Id suffix");
-    return ExtractImpl(state);
+    return ExtractImpl(extractor);
   }
 };
+}  // namespace
 
 template <typename T>
 auto Tree::TryExtractNodeFromChildren(

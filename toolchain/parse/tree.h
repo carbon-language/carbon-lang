@@ -255,7 +255,8 @@ class Tree : public Printable<Tree> {
 
   // Extract a `File` object representing the parse tree for the whole file.
   // #include "toolchain/parse/typed_nodes.h" to get the definition of `File`
-  // and the types representing its children nodes.
+  // and the types representing its children nodes. This is implemented in
+  // extract.cpp.
   auto ExtractFile() const -> File;
 
   // Converts this node_id to a typed node of a specified type, if it is a valid
@@ -345,8 +346,8 @@ class Tree : public Printable<Tree> {
 
   // Wrapper around `VerifyExtractAs` to dispatch based on a runtime node kind.
   // Returns true if extraction was successful.
-  auto VerifyExtract(NodeId node_id, NodeKind kind,
-                     ErrorBuilder* trace) const -> bool;
+  auto VerifyExtract(NodeId node_id, NodeKind kind, ErrorBuilder* trace) const
+      -> bool;
 
   // Sets the kind of a node. This is intended to allow putting the tree into a
   // state where verification can fail, in order to make the failure path of
@@ -362,7 +363,7 @@ class Tree : public Printable<Tree> {
 
   // Extract a node of type `T` from a sibling range. This is expected to
   // consume the complete sibling range. Malformed tree errors are written
-  // to `*trace`, if `trace != nullptr`.
+  // to `*trace`, if `trace != nullptr`. This is implemented in extract.cpp.
   template <typename T>
   auto TryExtractNodeFromChildren(
       NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children,
