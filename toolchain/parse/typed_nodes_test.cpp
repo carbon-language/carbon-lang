@@ -315,15 +315,15 @@ TEST_F(TypedNodeTest, Token) {
 
   auto n_var = tree->ExtractAs<VariableDecl>(file.decls[0]);
   ASSERT_TRUE(n_var.has_value());
-  EXPECT_EQ(tokens->GetKind(n_var->token.index), Lex::TokenKind::Semi);
+  EXPECT_EQ(tokens->GetKind(n_var->token), Lex::TokenKind::Semi);
 
   auto n_intro = tree->ExtractAs<VariableIntroducer>(n_var->introducer);
   ASSERT_TRUE(n_intro.has_value());
-  EXPECT_EQ(tokens->GetKind(n_intro->token.index), Lex::TokenKind::Var);
+  EXPECT_EQ(tokens->GetKind(n_intro->token), Lex::TokenKind::Var);
 
   auto n_patt = tree->ExtractAs<BindingPattern>(n_var->pattern);
   ASSERT_TRUE(n_patt.has_value());
-  EXPECT_EQ(tokens->GetKind(n_patt->token.index), Lex::TokenKind::Colon);
+  EXPECT_EQ(tokens->GetKind(n_patt->token), Lex::TokenKind::Colon);
 }
 
 TEST_F(TypedNodeTest, VerifyInvalid) {

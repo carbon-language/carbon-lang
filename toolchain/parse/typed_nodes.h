@@ -7,7 +7,7 @@
 
 #include <optional>
 
-#include "toolchain/lex/token_kind.h"
+#include "toolchain/lex/token_index.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
@@ -72,6 +72,19 @@ struct LeafNode {
 // - Any provided `Aggregate` type that is a simple aggregate type such as
 // `struct Aggregate { T x; U y; }`,
 //   to match children with types `T` and `U`.
+//
+// Each parse node should also have exactly one field of type `Lex::*TokenIndex`
+// that matches the token corresponding to the parse node itself. This is not a
+// child node in the parse tree, but specifies the token kind associated with
+// the parse node. The location of the field relative to the child nodes
+// indicates the location within the corresponding grammar production where the
+// token appears.
+//
+// There should be exactly one `Lex::*TokenIndex` field in each parse node, and
+// it should always have the name `token`. In the case where a parse node can
+// correspond to any kind of token, `Lex::TokenIndex` can be used instead. This
+// should only be used when the node kind is either not used in a finished tree,
+// such as `Placeholder`, or is always invalid, such as `InvalidParse`.
 // ----------------------------------------------------------------------------
 
 // Error nodes
@@ -80,11 +93,12 @@ struct LeafNode {
 // An invalid parse. Used to balance the parse tree. This type is here only to
 // ensure we have a type for each parse node kind. This node kind always has an
 // error, so can never be extracted.
-using InvalidParse = LeafNode<NodeKind::InvalidParse, AnyToken,
+using InvalidParse = LeafNode<NodeKind::InvalidParse, Lex::TokenIndex,
                               NodeCategory::Decl | NodeCategory::Expr>;
 
 // An invalid subtree. Always has an error so can never be extracted.
-using InvalidParseStart = LeafNode<NodeKind::InvalidParseStart, AnyToken>;
+using InvalidParseStart =
+    LeafNode<NodeKind::InvalidParseStart, Lex::TokenIndex>;
 struct InvalidParseSubtree {
   static constexpr auto Kind = NodeKind::InvalidParseSubtree.Define(
       {.category = NodeCategory::Decl,
@@ -92,56 +106,55 @@ struct InvalidParseSubtree {
 
   InvalidParseStartId start;
   llvm::SmallVector<NodeIdNot<InvalidParseStart>> extra;
-  AnyToken token;
+  Lex::TokenIndex token;
 };
 
 // A placeholder node to be replaced; it will never exist in a valid parse tree.
 // Its token kind is not enforced even when valid.
-using Placeholder = LeafNode<NodeKind::Placeholder, AnyToken>;
+using Placeholder = LeafNode<NodeKind::Placeholder, Lex::TokenIndex>;
 
 // File nodes
 // ----------
 
 // The start of the file.
-using FileStart =
-    LeafNode<NodeKind::FileStart, Token<Lex::TokenKind::FileStart>>;
+using FileStart = LeafNode<NodeKind::FileStart, Lex::FileStartTokenIndex>;
 
 // The end of the file.
-using FileEnd = LeafNode<NodeKind::FileEnd, Token<Lex::TokenKind::FileEnd>>;
+using FileEnd = LeafNode<NodeKind::FileEnd, Lex::FileEndTokenIndex>;
 
 // General-purpose nodes
 // ---------------------
 
 // An empty declaration, such as `;`.
-using EmptyDecl = LeafNode<NodeKind::EmptyDecl, Token<Lex::TokenKind::Semi>,
+using EmptyDecl = LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex,
                            NodeCategory::Decl | NodeCategory::Statement>;
 
 // A name in a non-expression context, such as a declaration.
 using IdentifierName =
-    LeafNode<NodeKind::IdentifierName, Token<Lex::TokenKind::Identifier>,
+    LeafNode<NodeKind::IdentifierName, Lex::IdentifierTokenIndex,
              NodeCategory::MemberName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
-    LeafNode<NodeKind::IdentifierNameExpr, Token<Lex::TokenKind::Identifier>,
+    LeafNode<NodeKind::IdentifierNameExpr, Lex::IdentifierTokenIndex,
              NodeCategory::Expr>;
 
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`.
-using SelfValueName = LeafNode<NodeKind::SelfValueName,
-                               Token<Lex::TokenKind::SelfValueIdentifier>>;
+using SelfValueName =
+    LeafNode<NodeKind::SelfValueName, Lex::SelfValueIdentifierTokenIndex>;
 using SelfValueNameExpr =
-    LeafNode<NodeKind::SelfValueNameExpr,
-             Token<Lex::TokenKind::SelfValueIdentifier>, NodeCategory::Expr>;
+    LeafNode<NodeKind::SelfValueNameExpr, Lex::SelfValueIdentifierTokenIndex,
+             NodeCategory::Expr>;
 using SelfTypeNameExpr =
-    LeafNode<NodeKind::SelfTypeNameExpr,
-             Token<Lex::TokenKind::SelfTypeIdentifier>, NodeCategory::Expr>;
+    LeafNode<NodeKind::SelfTypeNameExpr, Lex::SelfTypeIdentifierTokenIndex,
+             NodeCategory::Expr>;
 
 // The `base` value keyword, introduced by `base: B`. Typically referenced in
 // an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
 // declared name, as in `{.base: partial B}`.
-using BaseName = LeafNode<NodeKind::BaseName, Token<Lex::TokenKind::Base>,
-                          NodeCategory::MemberName>;
+using BaseName =
+    LeafNode<NodeKind::BaseName, Lex::BaseTokenIndex, NodeCategory::MemberName>;
 
 // An unqualified name and optionally a following sequence of parameters.
 // For example, `A`, `A(n: i32)`, or `A[T:! type](n: T)`.
@@ -157,7 +170,7 @@ struct NameQualifier {
       NodeKind::NameQualifier.Define({.bracketed_by = IdentifierName::Kind});
 
   NameAndParams name_and_params;
-  Token<Lex::TokenKind::Period> token;
+  Lex::PeriodTokenIndex token;
 };
 
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
@@ -172,26 +185,24 @@ struct DeclName {
 
 // The `package` keyword in an expression.
 using PackageExpr =
-    LeafNode<NodeKind::PackageExpr, Token<Lex::TokenKind::Package>,
-             NodeCategory::Expr>;
+    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
 // The name of a package or library for `package`, `import`, and `library`.
-using PackageName =
-    LeafNode<NodeKind::PackageName, Token<Lex::TokenKind::Identifier>>;
+using PackageName = LeafNode<NodeKind::PackageName, Lex::IdentifierTokenIndex>;
 using LibraryName =
-    LeafNode<NodeKind::LibraryName, Token<Lex::TokenKind::StringLiteral>>;
+    LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =
-    LeafNode<NodeKind::DefaultLibrary, Token<Lex::TokenKind::Default>>;
+    LeafNode<NodeKind::DefaultLibrary, Lex::DefaultTokenIndex>;
 
 using PackageIntroducer =
-    LeafNode<NodeKind::PackageIntroducer, Token<Lex::TokenKind::Package>>;
+    LeafNode<NodeKind::PackageIntroducer, Lex::PackageTokenIndex>;
 
 // `library` in `package` or `import`.
 struct LibrarySpecifier {
   static constexpr auto Kind =
       NodeKind::LibrarySpecifier.Define({.child_count = 1});
 
-  Token<Lex::TokenKind::Library> token;
+  Lex::LibraryTokenIndex token;
   NodeIdOneOf<LibraryName, DefaultLibrary> name;
 };
 
@@ -206,12 +217,12 @@ struct PackageDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // `import TheirPackage library "TheirLibrary";`
 using ImportIntroducer =
-    LeafNode<NodeKind::ImportIntroducer, Token<Lex::TokenKind::Import>>;
+    LeafNode<NodeKind::ImportIntroducer, Lex::ImportTokenIndex>;
 struct ImportDecl {
   static constexpr auto Kind = NodeKind::ImportDecl.Define(
       {.category = NodeCategory::Decl, .bracketed_by = ImportIntroducer::Kind});
@@ -220,12 +231,12 @@ struct ImportDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // `library` as declaration.
 using LibraryIntroducer =
-    LeafNode<NodeKind::LibraryIntroducer, Token<Lex::TokenKind::Library>>;
+    LeafNode<NodeKind::LibraryIntroducer, Lex::LibraryTokenIndex>;
 struct LibraryDecl {
   static constexpr auto Kind =
       NodeKind::LibraryDecl.Define({.category = NodeCategory::Decl,
@@ -234,12 +245,12 @@ struct LibraryDecl {
   LibraryIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   NodeIdOneOf<LibraryName, DefaultLibrary> library_name;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // `export` as a declaration.
 using ExportIntroducer =
-    LeafNode<NodeKind::ExportIntroducer, Token<Lex::TokenKind::Export>>;
+    LeafNode<NodeKind::ExportIntroducer, Lex::ExportTokenIndex>;
 struct ExportDecl {
   static constexpr auto Kind = NodeKind::ExportDecl.Define(
       {.category = NodeCategory::Decl, .bracketed_by = ExportIntroducer::Kind});
@@ -247,14 +258,14 @@ struct ExportDecl {
   ExportIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // Namespace nodes
 // ---------------
 
 using NamespaceStart =
-    LeafNode<NodeKind::NamespaceStart, Token<Lex::TokenKind::Namespace>>;
+    LeafNode<NodeKind::NamespaceStart, Lex::NamespaceTokenIndex>;
 
 // A namespace: `namespace N;`.
 struct Namespace {
@@ -264,7 +275,7 @@ struct Namespace {
   NamespaceStartId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // Pattern nodes
@@ -276,7 +287,7 @@ struct BindingPattern {
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   NodeIdOneOf<IdentifierName, SelfValueName> name;
-  Token<Lex::TokenKind::Colon> token;
+  Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
@@ -286,7 +297,7 @@ struct CompileTimeBindingPattern {
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   NodeIdOneOf<IdentifierName, SelfValueName> name;
-  Token<Lex::TokenKind::ColonExclaim> token;
+  Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };
 
@@ -295,7 +306,7 @@ struct Addr {
   static constexpr auto Kind = NodeKind::Addr.Define(
       {.category = NodeCategory::Pattern, .child_count = 1});
 
-  Token<Lex::TokenKind::Addr> token;
+  Lex::AddrTokenIndex token;
   AnyPatternId inner;
 };
 
@@ -304,16 +315,16 @@ struct Template {
   static constexpr auto Kind = NodeKind::Template.Define(
       {.category = NodeCategory::Pattern, .child_count = 1});
 
-  Token<Lex::TokenKind::Template> token;
+  Lex::TemplateTokenIndex token;
   // This is a CompileTimeBindingPatternId in any valid program.
   // TODO: Should the parser enforce that?
   AnyPatternId inner;
 };
 
 using TuplePatternStart =
-    LeafNode<NodeKind::TuplePatternStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::TuplePatternStart, Lex::OpenParenTokenIndex>;
 using PatternListComma =
-    LeafNode<NodeKind::PatternListComma, Token<Lex::TokenKind::Comma>>;
+    LeafNode<NodeKind::PatternListComma, Lex::CommaTokenIndex>;
 
 // A parameter list or tuple pattern: `(a: i32, b: i32)`.
 struct TuplePattern {
@@ -323,12 +334,11 @@ struct TuplePattern {
 
   TuplePatternStartId left_paren;
   CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
-using ImplicitParamListStart =
-    LeafNode<NodeKind::ImplicitParamListStart,
-             Token<Lex::TokenKind::OpenSquareBracket>>;
+using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart,
+                                        Lex::OpenSquareBracketTokenIndex>;
 
 // An implicit parameter list: `[T:! type, self: Self]`.
 struct ImplicitParamList {
@@ -337,20 +347,20 @@ struct ImplicitParamList {
 
   ImplicitParamListStartId left_square;
   CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
-  Token<Lex::TokenKind::CloseSquareBracket> token;
+  Lex::CloseSquareBracketTokenIndex token;
 };
 
 // Function nodes
 // --------------
 
 using FunctionIntroducer =
-    LeafNode<NodeKind::FunctionIntroducer, Token<Lex::TokenKind::Fn>>;
+    LeafNode<NodeKind::FunctionIntroducer, Lex::FnTokenIndex>;
 
 // A return type: `-> i32`.
 struct ReturnType {
   static constexpr auto Kind = NodeKind::ReturnType.Define({.child_count = 1});
 
-  Token<Lex::TokenKind::MinusGreater> token;
+  Lex::MinusGreaterTokenIndex token;
   AnyExprId type;
 };
 
@@ -368,13 +378,11 @@ struct FunctionSignature {
   TokenKind token;
 };
 
-using FunctionDecl =
-    FunctionSignature<NodeKind::FunctionDecl, Token<Lex::TokenKind::Semi>,
-                      NodeCategory::Decl>;
+using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl,
+                                       Lex::SemiTokenIndex, NodeCategory::Decl>;
 using FunctionDefinitionStart =
     FunctionSignature<NodeKind::FunctionDefinitionStart,
-                      Token<Lex::TokenKind::OpenCurlyBrace>,
-                      NodeCategory::None>;
+                      Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -384,14 +392,14 @@ struct FunctionDefinition {
 
   FunctionDefinitionStartId signature;
   llvm::SmallVector<AnyStatementId> body;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 using BuiltinFunctionDefinitionStart =
     FunctionSignature<NodeKind::BuiltinFunctionDefinitionStart,
-                      Token<Lex::TokenKind::Equal>, NodeCategory::None>;
+                      Lex::EqualTokenIndex, NodeCategory::None>;
 using BuiltinName =
-    LeafNode<NodeKind::BuiltinName, Token<Lex::TokenKind::StringLiteral>>;
+    LeafNode<NodeKind::BuiltinName, Lex::StringLiteralTokenIndex>;
 
 // A builtin function definition: `fn F() -> i32 = "builtin name";`
 struct BuiltinFunctionDefinition {
@@ -401,16 +409,16 @@ struct BuiltinFunctionDefinition {
 
   BuiltinFunctionDefinitionStartId signature;
   BuiltinNameId builtin_name;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // `alias` nodes
 // -------------
 
 using AliasIntroducer =
-    LeafNode<NodeKind::AliasIntroducer, Token<Lex::TokenKind::Alias>>;
+    LeafNode<NodeKind::AliasIntroducer, Lex::AliasTokenIndex>;
 using AliasInitializer =
-    LeafNode<NodeKind::AliasInitializer, Token<Lex::TokenKind::Equal>>;
+    LeafNode<NodeKind::AliasInitializer, Lex::EqualTokenIndex>;
 
 // An `alias` declaration: `alias a = b;`.
 struct Alias {
@@ -423,16 +431,14 @@ struct Alias {
   DeclName name;
   AliasInitializerId equals;
   AnyExprId initializer;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // `let` nodes
 // -----------
 
-using LetIntroducer =
-    LeafNode<NodeKind::LetIntroducer, Token<Lex::TokenKind::Let>>;
-using LetInitializer =
-    LeafNode<NodeKind::LetInitializer, Token<Lex::TokenKind::Equal>>;
+using LetIntroducer = LeafNode<NodeKind::LetIntroducer, Lex::LetTokenIndex>;
+using LetInitializer = LeafNode<NodeKind::LetInitializer, Lex::EqualTokenIndex>;
 
 // A `let` declaration: `let a: i32 = 5;`.
 struct LetDecl {
@@ -449,18 +455,18 @@ struct LetDecl {
     AnyExprId initializer;
   };
   std::optional<Initializer> initializer;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // `var` nodes
 // -----------
 
 using VariableIntroducer =
-    LeafNode<NodeKind::VariableIntroducer, Token<Lex::TokenKind::Var>>;
+    LeafNode<NodeKind::VariableIntroducer, Lex::VarTokenIndex>;
 using ReturnedModifier =
-    LeafNode<NodeKind::ReturnedModifier, Token<Lex::TokenKind::Returned>>;
+    LeafNode<NodeKind::ReturnedModifier, Lex::ReturnedTokenIndex>;
 using VariableInitializer =
-    LeafNode<NodeKind::VariableInitializer, Token<Lex::TokenKind::Equal>>;
+    LeafNode<NodeKind::VariableInitializer, Lex::EqualTokenIndex>;
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
@@ -478,14 +484,14 @@ struct VariableDecl {
     AnyExprId value;
   };
   std::optional<Initializer> initializer;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // Statement nodes
 // ---------------
 
 using CodeBlockStart =
-    LeafNode<NodeKind::CodeBlockStart, Token<Lex::TokenKind::OpenCurlyBrace>>;
+    LeafNode<NodeKind::CodeBlockStart, Lex::OpenCurlyBraceTokenIndex>;
 
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
@@ -494,7 +500,7 @@ struct CodeBlock {
 
   CodeBlockStartId left_brace;
   llvm::SmallVector<AnyStatementId> statements;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // An expression statement: `F(x);`.
@@ -503,11 +509,11 @@ struct ExprStatement {
       {.category = NodeCategory::Statement, .child_count = 1});
 
   AnyExprId expr;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 using BreakStatementStart =
-    LeafNode<NodeKind::BreakStatementStart, Token<Lex::TokenKind::Break>>;
+    LeafNode<NodeKind::BreakStatementStart, Lex::BreakTokenIndex>;
 
 // A break statement: `break;`.
 struct BreakStatement {
@@ -517,11 +523,11 @@ struct BreakStatement {
        .child_count = 1});
 
   BreakStatementStartId introducer;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 using ContinueStatementStart =
-    LeafNode<NodeKind::ContinueStatementStart, Token<Lex::TokenKind::Continue>>;
+    LeafNode<NodeKind::ContinueStatementStart, Lex::ContinueTokenIndex>;
 
 // A continue statement: `continue;`.
 struct ContinueStatement {
@@ -531,13 +537,13 @@ struct ContinueStatement {
        .child_count = 1});
 
   ContinueStatementStartId introducer;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 using ReturnStatementStart =
-    LeafNode<NodeKind::ReturnStatementStart, Token<Lex::TokenKind::Return>>;
+    LeafNode<NodeKind::ReturnStatementStart, Lex::ReturnTokenIndex>;
 using ReturnVarModifier =
-    LeafNode<NodeKind::ReturnVarModifier, Token<Lex::TokenKind::Var>>;
+    LeafNode<NodeKind::ReturnVarModifier, Lex::VarTokenIndex>;
 
 // A return statement: `return;` or `return expr;` or `return var;`.
 struct ReturnStatement {
@@ -548,11 +554,11 @@ struct ReturnStatement {
   ReturnStatementStartId introducer;
   std::optional<AnyExprId> expr;
   std::optional<ReturnVarModifierId> var;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 using ForHeaderStart =
-    LeafNode<NodeKind::ForHeaderStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::ForHeaderStart, Lex::OpenParenTokenIndex>;
 
 // The `var ... in` portion of a `for` statement.
 struct ForIn {
@@ -560,7 +566,7 @@ struct ForIn {
       {.bracketed_by = VariableIntroducer::Kind, .child_count = 2});
 
   VariableIntroducerId introducer;
-  Token<Lex::TokenKind::In> token;
+  Lex::InTokenIndex token;
   AnyPatternId pattern;
 };
 
@@ -572,7 +578,7 @@ struct ForHeader {
   ForHeaderStartId introducer;
   ForInId var;
   AnyExprId range;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 // A complete `for (...) { ... }` statement.
@@ -582,13 +588,13 @@ struct ForStatement {
                                      .bracketed_by = ForHeader::Kind,
                                      .child_count = 2});
 
-  Token<Lex::TokenKind::For> token;
+  Lex::ForTokenIndex token;
   ForHeaderId header;
   CodeBlockId body;
 };
 
 using IfConditionStart =
-    LeafNode<NodeKind::IfConditionStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::IfConditionStart, Lex::OpenParenTokenIndex>;
 
 // The condition portion of an `if` statement: `(expr)`.
 struct IfCondition {
@@ -597,18 +603,18 @@ struct IfCondition {
 
   IfConditionStartId left_paren;
   AnyExprId condition;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 using IfStatementElse =
-    LeafNode<NodeKind::IfStatementElse, Token<Lex::TokenKind::Else>>;
+    LeafNode<NodeKind::IfStatementElse, Lex::ElseTokenIndex>;
 
 // An `if` statement: `if (expr) { ... } else { ... }`.
 struct IfStatement {
   static constexpr auto Kind = NodeKind::IfStatement.Define(
       {.category = NodeCategory::Statement, .bracketed_by = IfCondition::Kind});
 
-  Token<Lex::TokenKind::If> token;
+  Lex::IfTokenIndex token;
   IfConditionId head;
   CodeBlockId then;
 
@@ -620,7 +626,7 @@ struct IfStatement {
 };
 
 using WhileConditionStart =
-    LeafNode<NodeKind::WhileConditionStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::WhileConditionStart, Lex::OpenParenTokenIndex>;
 
 // The condition portion of a `while` statement: `(expr)`.
 struct WhileCondition {
@@ -629,7 +635,7 @@ struct WhileCondition {
 
   WhileConditionStartId left_paren;
   AnyExprId condition;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 // A `while` statement: `while (expr) { ... }`.
@@ -639,13 +645,13 @@ struct WhileStatement {
                                        .bracketed_by = WhileCondition::Kind,
                                        .child_count = 2});
 
-  Token<Lex::TokenKind::While> token;
+  Lex::WhileTokenIndex token;
   WhileConditionId head;
   CodeBlockId body;
 };
 
 using MatchConditionStart =
-    LeafNode<NodeKind::MatchConditionStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::MatchConditionStart, Lex::OpenParenTokenIndex>;
 
 struct MatchCondition {
   static constexpr auto Kind = NodeKind::MatchCondition.Define(
@@ -653,26 +659,26 @@ struct MatchCondition {
 
   MatchConditionStartId left_paren;
   AnyExprId condition;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 using MatchIntroducer =
-    LeafNode<NodeKind::MatchIntroducer, Token<Lex::TokenKind::Match>>;
+    LeafNode<NodeKind::MatchIntroducer, Lex::MatchTokenIndex>;
 struct MatchStatementStart {
   static constexpr auto Kind = NodeKind::MatchStatementStart.Define(
       {.bracketed_by = MatchIntroducer::Kind, .child_count = 2});
 
   MatchIntroducerId introducer;
   MatchConditionId condition;
-  Token<Lex::TokenKind::OpenCurlyBrace> token;
+  Lex::OpenCurlyBraceTokenIndex token;
 };
 
 using MatchCaseIntroducer =
-    LeafNode<NodeKind::MatchCaseIntroducer, Token<Lex::TokenKind::Case>>;
+    LeafNode<NodeKind::MatchCaseIntroducer, Lex::CaseTokenIndex>;
 using MatchCaseGuardIntroducer =
-    LeafNode<NodeKind::MatchCaseGuardIntroducer, Token<Lex::TokenKind::If>>;
+    LeafNode<NodeKind::MatchCaseGuardIntroducer, Lex::IfTokenIndex>;
 using MatchCaseGuardStart =
-    LeafNode<NodeKind::MatchCaseGuardStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::MatchCaseGuardStart, Lex::OpenParenTokenIndex>;
 
 struct MatchCaseGuard {
   static constexpr auto Kind = NodeKind::MatchCaseGuard.Define(
@@ -681,11 +687,11 @@ struct MatchCaseGuard {
   MatchCaseGuardIntroducerId introducer;
   MatchCaseGuardStartId left_paren;
   AnyExprId condition;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
-using MatchCaseEqualGreater = LeafNode<NodeKind::MatchCaseEqualGreater,
-                                       Token<Lex::TokenKind::EqualGreater>>;
+using MatchCaseEqualGreater =
+    LeafNode<NodeKind::MatchCaseEqualGreater, Lex::EqualGreaterTokenIndex>;
 
 struct MatchCaseStart {
   static constexpr auto Kind = NodeKind::MatchCaseStart.Define(
@@ -695,7 +701,7 @@ struct MatchCaseStart {
   AnyPatternId pattern;
   std::optional<MatchCaseGuardId> guard;
   MatchCaseEqualGreaterId equal_greater_token;
-  Token<Lex::TokenKind::OpenCurlyBrace> token;
+  Lex::OpenCurlyBraceTokenIndex token;
 };
 
 struct MatchCase {
@@ -704,13 +710,13 @@ struct MatchCase {
 
   MatchCaseStartId head;
   llvm::SmallVector<AnyStatementId> statements;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 using MatchDefaultIntroducer =
-    LeafNode<NodeKind::MatchDefaultIntroducer, Token<Lex::TokenKind::Default>>;
-using MatchDefaultEqualGreater = LeafNode<NodeKind::MatchDefaultEqualGreater,
-                                          Token<Lex::TokenKind::EqualGreater>>;
+    LeafNode<NodeKind::MatchDefaultIntroducer, Lex::DefaultTokenIndex>;
+using MatchDefaultEqualGreater =
+    LeafNode<NodeKind::MatchDefaultEqualGreater, Lex::EqualGreaterTokenIndex>;
 
 struct MatchDefaultStart {
   static constexpr auto Kind = NodeKind::MatchDefaultStart.Define(
@@ -718,7 +724,7 @@ struct MatchDefaultStart {
 
   MatchDefaultIntroducerId introducer;
   MatchDefaultEqualGreaterId equal_greater_token;
-  Token<Lex::TokenKind::OpenCurlyBrace> token;
+  Lex::OpenCurlyBraceTokenIndex token;
 };
 
 struct MatchDefault {
@@ -727,7 +733,7 @@ struct MatchDefault {
 
   MatchDefaultStartId introducer;
   llvm::SmallVector<AnyStatementId> statements;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // A `match` statement: `match (expr) { case (...) => {...} default => {...}}`.
@@ -740,14 +746,14 @@ struct MatchStatement {
 
   llvm::SmallVector<MatchCaseId> cases;
   std::optional<MatchDefaultId> default_case;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // Expression nodes
 // ----------------
 
-using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart,
-                                Token<Lex::TokenKind::OpenSquareBracket>>;
+using ArrayExprStart =
+    LeafNode<NodeKind::ArrayExprStart, Lex::OpenSquareBracketTokenIndex>;
 
 // The start of an array type, `[i32;`.
 //
@@ -758,7 +764,7 @@ struct ArrayExprSemi {
 
   ArrayExprStartId left_square;
   AnyExprId type;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // An array type, such as  `[i32; 3]` or `[i32;]`.
@@ -768,7 +774,7 @@ struct ArrayExpr {
 
   ArrayExprSemiId start;
   std::optional<AnyExprId> bound;
-  Token<Lex::TokenKind::CloseSquareBracket> token;
+  Lex::CloseSquareBracketTokenIndex token;
 };
 
 // The opening portion of an indexing expression: `a[`.
@@ -779,7 +785,7 @@ struct IndexExprStart {
       NodeKind::IndexExprStart.Define({.child_count = 1});
 
   AnyExprId sequence;
-  Token<Lex::TokenKind::OpenSquareBracket> token;
+  Lex::OpenSquareBracketTokenIndex token;
 };
 
 // An indexing expression, such as `a[1]`.
@@ -791,11 +797,11 @@ struct IndexExpr {
 
   IndexExprStartId start;
   AnyExprId index;
-  Token<Lex::TokenKind::CloseSquareBracket> token;
+  Lex::CloseSquareBracketTokenIndex token;
 };
 
 using ParenExprStart =
-    LeafNode<NodeKind::ParenExprStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::ParenExprStart, Lex::OpenParenTokenIndex>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
@@ -806,13 +812,13 @@ struct ParenExpr {
 
   ParenExprStartId start;
   AnyExprId expr;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 using TupleLiteralStart =
-    LeafNode<NodeKind::TupleLiteralStart, Token<Lex::TokenKind::OpenParen>>;
+    LeafNode<NodeKind::TupleLiteralStart, Lex::OpenParenTokenIndex>;
 using TupleLiteralComma =
-    LeafNode<NodeKind::TupleLiteralComma, Token<Lex::TokenKind::Comma>>;
+    LeafNode<NodeKind::TupleLiteralComma, Lex::CommaTokenIndex>;
 
 // A tuple literal: `()`, `(a, b, c)`, or `(a,)`.
 struct TupleLiteral {
@@ -822,7 +828,7 @@ struct TupleLiteral {
 
   TupleLiteralStartId start;
   CommaSeparatedList<AnyExprId, TupleLiteralCommaId> elements;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 // The opening portion of a call expression: `F(`.
@@ -833,11 +839,10 @@ struct CallExprStart {
       NodeKind::CallExprStart.Define({.child_count = 1});
 
   AnyExprId callee;
-  Token<Lex::TokenKind::OpenParen> token;
+  Lex::OpenParenTokenIndex token;
 };
 
-using CallExprComma =
-    LeafNode<NodeKind::CallExprComma, Token<Lex::TokenKind::Comma>>;
+using CallExprComma = LeafNode<NodeKind::CallExprComma, Lex::CommaTokenIndex>;
 
 // A call expression: `F(a, b, c)`.
 struct CallExpr {
@@ -846,7 +851,7 @@ struct CallExpr {
 
   CallExprStartId start;
   CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
-  Token<Lex::TokenKind::CloseParen> token;
+  Lex::CloseParenTokenIndex token;
 };
 
 // A member access expression: `a.b` or `a.(b)`.
@@ -855,7 +860,7 @@ struct MemberAccessExpr {
       {.category = NodeCategory::Expr, .child_count = 2});
 
   AnyExprId lhs;
-  Token<Lex::TokenKind::Period> token;
+  Lex::PeriodTokenIndex token;
   AnyMemberNameOrMemberExprId rhs;
 };
 
@@ -865,7 +870,7 @@ struct PointerMemberAccessExpr {
       {.category = NodeCategory::Expr, .child_count = 2});
 
   AnyExprId lhs;
-  Token<Lex::TokenKind::MinusGreater> token;
+  Lex::MinusGreaterTokenIndex token;
   AnyMemberNameOrMemberExprId rhs;
 };
 
@@ -903,23 +908,22 @@ struct PostfixOperator {
 // Literals, operators, and modifiers
 
 #define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)             \
-  using Name = LeafNode<NodeKind::Name, Token<Lex::TokenKind::LexTokenKind>, \
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)       \
+  using Name = LeafNode<NodeKind::Name, Lex::LexTokenKind##TokenIndex, \
                         NodeCategory::Expr>;
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)                   \
-  using Name##Modifier =                                              \
-      LeafNode<NodeKind::Name##Modifier, Token<Lex::TokenKind::Name>, \
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)             \
+  using Name##Modifier =                                        \
+      LeafNode<NodeKind::Name##Modifier, Lex::Name##TokenIndex, \
                NodeCategory::Modifier>;
-#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name)                          \
-  using PrefixOperator##Name = PrefixOperator<NodeKind::PrefixOperator##Name, \
-                                              Token<Lex::TokenKind::Name>>;
-#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)                        \
-  using InfixOperator##Name = InfixOperator<NodeKind::InfixOperator##Name, \
-                                            Token<Lex::TokenKind::Name>>;
-#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name)  \
-  using PostfixOperator##Name =                        \
-      PostfixOperator<NodeKind::PostfixOperator##Name, \
-                      Token<Lex::TokenKind::Name>>;
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) \
+  using PrefixOperator##Name =                       \
+      PrefixOperator<NodeKind::PrefixOperator##Name, Lex::Name##TokenIndex>;
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) \
+  using InfixOperator##Name =                       \
+      InfixOperator<NodeKind::InfixOperator##Name, Lex::Name##TokenIndex>;
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
+  using PostfixOperator##Name =                       \
+      PostfixOperator<NodeKind::PostfixOperator##Name, Lex::Name##TokenIndex>;
 #include "toolchain/parse/node_kind.def"
 
 // The first operand of a short-circuiting infix operator: `a and` or `a or`.
@@ -932,7 +936,9 @@ struct ShortCircuitOperandAnd {
       NodeKind::ShortCircuitOperandAnd.Define({.child_count = 1});
 
   AnyExprId operand;
-  VirtualToken<Lex::TokenKind::And> token;
+  // This is a virtual token. The `and` token is owned by the
+  // ShortCircuitOperatorAnd node.
+  Lex::AndTokenIndex token;
 };
 
 struct ShortCircuitOperandOr {
@@ -940,7 +946,9 @@ struct ShortCircuitOperandOr {
       NodeKind::ShortCircuitOperandOr.Define({.child_count = 1});
 
   AnyExprId operand;
-  VirtualToken<Lex::TokenKind::Or> token;
+  // This is a virtual token. The `or` token is owned by the
+  // ShortCircuitOperatorOr node.
+  Lex::OrTokenIndex token;
 };
 
 struct ShortCircuitOperatorAnd {
@@ -950,7 +958,7 @@ struct ShortCircuitOperatorAnd {
        .child_count = 2});
 
   ShortCircuitOperandAndId lhs;
-  Token<Lex::TokenKind::And> token;
+  Lex::AndTokenIndex token;
   AnyExprId rhs;
 };
 
@@ -961,7 +969,7 @@ struct ShortCircuitOperatorOr {
        .child_count = 2});
 
   ShortCircuitOperandOrId lhs;
-  Token<Lex::TokenKind::Or> token;
+  Lex::OrTokenIndex token;
   AnyExprId rhs;
 };
 
@@ -969,7 +977,7 @@ struct ShortCircuitOperatorOr {
 struct IfExprIf {
   static constexpr auto Kind = NodeKind::IfExprIf.Define({.child_count = 1});
 
-  Token<Lex::TokenKind::If> token;
+  Lex::IfTokenIndex token;
   AnyExprId condition;
 };
 
@@ -977,7 +985,7 @@ struct IfExprIf {
 struct IfExprThen {
   static constexpr auto Kind = NodeKind::IfExprThen.Define({.child_count = 1});
 
-  Token<Lex::TokenKind::Then> token;
+  Lex::ThenTokenIndex token;
   AnyExprId result;
 };
 
@@ -990,7 +998,7 @@ struct IfExprElse {
 
   IfExprIfId start;
   IfExprThenId then;
-  Token<Lex::TokenKind::Else> token;
+  Lex::ElseTokenIndex token;
   AnyExprId else_result;
 };
 
@@ -998,7 +1006,7 @@ struct IfExprElse {
 // ------------
 
 using ChoiceIntroducer =
-    LeafNode<NodeKind::ChoiceIntroducer, Token<Lex::TokenKind::Choice>>;
+    LeafNode<NodeKind::ChoiceIntroducer, Lex::ChoiceTokenIndex>;
 
 struct ChoiceSignature {
   static constexpr auto Kind = NodeKind::ChoiceDefinitionStart.Define(
@@ -1007,14 +1015,13 @@ struct ChoiceSignature {
   ChoiceIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  Token<Lex::TokenKind::OpenCurlyBrace> token;
+  Lex::OpenCurlyBraceTokenIndex token;
 };
 
 using ChoiceDefinitionStart = ChoiceSignature;
 
 using ChoiceAlternativeListComma =
-    LeafNode<NodeKind::ChoiceAlternativeListComma,
-             Token<Lex::TokenKind::Comma>>;
+    LeafNode<NodeKind::ChoiceAlternativeListComma, Lex::CommaTokenIndex>;
 
 struct ChoiceDefinition {
   static constexpr auto Kind = NodeKind::ChoiceDefinition.Define(
@@ -1027,27 +1034,26 @@ struct ChoiceDefinition {
     std::optional<TuplePatternId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // Struct type and value literals
 // ----------------------------------------
 
 // `{`
-using StructLiteralStart = LeafNode<NodeKind::StructLiteralStart,
-                                    Token<Lex::TokenKind::OpenCurlyBrace>>;
-using StructTypeLiteralStart = LeafNode<NodeKind::StructTypeLiteralStart,
-                                        Token<Lex::TokenKind::OpenCurlyBrace>>;
+using StructLiteralStart =
+    LeafNode<NodeKind::StructLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
+using StructTypeLiteralStart =
+    LeafNode<NodeKind::StructTypeLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
 // `,`
-using StructComma =
-    LeafNode<NodeKind::StructComma, Token<Lex::TokenKind::Comma>>;
+using StructComma = LeafNode<NodeKind::StructComma, Lex::CommaTokenIndex>;
 
 // `.a`
 struct StructFieldDesignator {
   static constexpr auto Kind =
       NodeKind::StructFieldDesignator.Define({.child_count = 1});
 
-  Token<Lex::TokenKind::Period> token;
+  Lex::PeriodTokenIndex token;
   NodeIdOneOf<IdentifierName, BaseName> name;
 };
 
@@ -1057,7 +1063,7 @@ struct StructField {
       {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
 
   StructFieldDesignatorId designator;
-  Token<Lex::TokenKind::Equal> token;
+  Lex::EqualTokenIndex token;
   AnyExprId expr;
 };
 
@@ -1067,7 +1073,7 @@ struct StructTypeField {
       {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
 
   StructFieldDesignatorId designator;
-  Token<Lex::TokenKind::Colon> token;
+  Lex::ColonTokenIndex token;
   AnyExprId type_expr;
 };
 
@@ -1079,7 +1085,7 @@ struct StructLiteral {
 
   StructLiteralStartId start;
   CommaSeparatedList<StructFieldId, StructCommaId> fields;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // Struct type literals, such as `{.a: i32}`.
@@ -1090,7 +1096,7 @@ struct StructTypeLiteral {
 
   StructTypeLiteralStartId start;
   CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // `class` declarations and definitions
@@ -1098,7 +1104,7 @@ struct StructTypeLiteral {
 
 // `class`
 using ClassIntroducer =
-    LeafNode<NodeKind::ClassIntroducer, Token<Lex::TokenKind::Class>>;
+    LeafNode<NodeKind::ClassIntroducer, Lex::ClassTokenIndex>;
 
 // A class signature `class C`
 template <const NodeKind& KindT, typename TokenKind,
@@ -1114,13 +1120,12 @@ struct ClassSignature {
 };
 
 // `class C;`
-using ClassDecl =
-    ClassSignature<NodeKind::ClassDecl, Token<Lex::TokenKind::Semi>,
-                   NodeCategory::Decl>;
+using ClassDecl = ClassSignature<NodeKind::ClassDecl, Lex::SemiTokenIndex,
+                                 NodeCategory::Decl>;
 // `class C {`
 using ClassDefinitionStart =
     ClassSignature<NodeKind::ClassDefinitionStart,
-                   Token<Lex::TokenKind::OpenCurlyBrace>, NodeCategory::None>;
+                   Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
 
 // `class C { ... }`
 struct ClassDefinition {
@@ -1130,7 +1135,7 @@ struct ClassDefinition {
 
   ClassDefinitionStartId signature;
   llvm::SmallVector<AnyDeclId> members;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // Adapter declaration
@@ -1138,7 +1143,7 @@ struct ClassDefinition {
 
 // `adapt`
 using AdaptIntroducer =
-    LeafNode<NodeKind::AdaptIntroducer, Token<Lex::TokenKind::Adapt>>;
+    LeafNode<NodeKind::AdaptIntroducer, Lex::AdaptTokenIndex>;
 // `adapt SomeType;`
 struct AdaptDecl {
   static constexpr auto Kind = NodeKind::AdaptDecl.Define(
@@ -1147,16 +1152,15 @@ struct AdaptDecl {
   AdaptIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   AnyExprId adapted_type;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // Base class declaration
 // ----------------------
 
 // `base`
-using BaseIntroducer =
-    LeafNode<NodeKind::BaseIntroducer, Token<Lex::TokenKind::Base>>;
-using BaseColon = LeafNode<NodeKind::BaseColon, Token<Lex::TokenKind::Colon>>;
+using BaseIntroducer = LeafNode<NodeKind::BaseIntroducer, Lex::BaseTokenIndex>;
+using BaseColon = LeafNode<NodeKind::BaseColon, Lex::ColonTokenIndex>;
 // `extend base: BaseClass;`
 struct BaseDecl {
   static constexpr auto Kind = NodeKind::BaseDecl.Define(
@@ -1166,7 +1170,7 @@ struct BaseDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   BaseColonId colon;
   AnyExprId base_class;
-  Token<Lex::TokenKind::Semi> token;
+  Lex::SemiTokenIndex token;
 };
 
 // Interface declarations and definitions
@@ -1174,7 +1178,7 @@ struct BaseDecl {
 
 // `interface`
 using InterfaceIntroducer =
-    LeafNode<NodeKind::InterfaceIntroducer, Token<Lex::TokenKind::Interface>>;
+    LeafNode<NodeKind::InterfaceIntroducer, Lex::InterfaceTokenIndex>;
 
 // `interface I`
 template <const NodeKind& KindT, typename TokenKind,
@@ -1191,13 +1195,12 @@ struct InterfaceSignature {
 
 // `interface I;`
 using InterfaceDecl =
-    InterfaceSignature<NodeKind::InterfaceDecl, Token<Lex::TokenKind::Semi>,
+    InterfaceSignature<NodeKind::InterfaceDecl, Lex::SemiTokenIndex,
                        NodeCategory::Decl>;
 // `interface I {`
 using InterfaceDefinitionStart =
     InterfaceSignature<NodeKind::InterfaceDefinitionStart,
-                       Token<Lex::TokenKind::OpenCurlyBrace>,
-                       NodeCategory::None>;
+                       Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
 
 // `interface I { ... }`
 struct InterfaceDefinition {
@@ -1207,28 +1210,26 @@ struct InterfaceDefinition {
 
   InterfaceDefinitionStartId signature;
   llvm::SmallVector<AnyDeclId> members;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // `impl`...`as` declarations and definitions
 // ------------------------------------------
 
 // `impl`
-using ImplIntroducer =
-    LeafNode<NodeKind::ImplIntroducer, Token<Lex::TokenKind::Impl>>;
+using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer, Lex::ImplTokenIndex>;
 
 // `forall [...]`
 struct ImplForall {
   static constexpr auto Kind = NodeKind::ImplForall.Define({.child_count = 1});
 
-  Token<Lex::TokenKind::Forall> token;
+  Lex::ForallTokenIndex token;
   ImplicitParamListId params;
 };
 
 // `as` with no type before it
-using DefaultSelfImplAs =
-    LeafNode<NodeKind::DefaultSelfImplAs, Token<Lex::TokenKind::As>,
-             NodeCategory::ImplAs>;
+using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs,
+                                   Lex::AsTokenIndex, NodeCategory::ImplAs>;
 
 // `<type> as`
 struct TypeImplAs {
@@ -1236,7 +1237,7 @@ struct TypeImplAs {
       {.category = NodeCategory::ImplAs, .child_count = 1});
 
   AnyExprId type_expr;
-  Token<Lex::TokenKind::As> token;
+  Lex::AsTokenIndex token;
 };
 
 // `impl T as I`
@@ -1255,12 +1256,12 @@ struct ImplSignature {
 };
 
 // `impl T as I;`
-using ImplDecl = ImplSignature<NodeKind::ImplDecl, Token<Lex::TokenKind::Semi>,
-                               NodeCategory::Decl>;
+using ImplDecl =
+    ImplSignature<NodeKind::ImplDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 // `impl T as I {`
 using ImplDefinitionStart =
-    ImplSignature<NodeKind::ImplDefinitionStart,
-                  Token<Lex::TokenKind::OpenCurlyBrace>, NodeCategory::None>;
+    ImplSignature<NodeKind::ImplDefinitionStart, Lex::OpenCurlyBraceTokenIndex,
+                  NodeCategory::None>;
 
 // `impl T as I { ... }`
 struct ImplDefinition {
@@ -1270,15 +1271,15 @@ struct ImplDefinition {
 
   ImplDefinitionStartId signature;
   llvm::SmallVector<AnyDeclId> members;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // Named constraint declarations and definitions
 // ---------------------------------------------
 
 // `constraint`
-using NamedConstraintIntroducer = LeafNode<NodeKind::NamedConstraintIntroducer,
-                                           Token<Lex::TokenKind::Constraint>>;
+using NamedConstraintIntroducer =
+    LeafNode<NodeKind::NamedConstraintIntroducer, Lex::ConstraintTokenIndex>;
 
 // `constraint NC`
 template <const NodeKind& KindT, typename TokenKind,
@@ -1295,13 +1296,12 @@ struct NamedConstraintSignature {
 
 // `constraint NC;`
 using NamedConstraintDecl =
-    NamedConstraintSignature<NodeKind::NamedConstraintDecl,
-                             Token<Lex::TokenKind::Semi>, NodeCategory::Decl>;
+    NamedConstraintSignature<NodeKind::NamedConstraintDecl, Lex::SemiTokenIndex,
+                             NodeCategory::Decl>;
 // `constraint NC {`
 using NamedConstraintDefinitionStart =
     NamedConstraintSignature<NodeKind::NamedConstraintDefinitionStart,
-                             Token<Lex::TokenKind::OpenCurlyBrace>,
-                             NodeCategory::None>;
+                             Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
 
 // `constraint NC { ... }`
 struct NamedConstraintDefinition {
@@ -1311,7 +1311,7 @@ struct NamedConstraintDefinition {
 
   NamedConstraintDefinitionStartId signature;
   llvm::SmallVector<AnyDeclId> members;
-  Token<Lex::TokenKind::CloseCurlyBrace> token;
+  Lex::CloseCurlyBraceTokenIndex token;
 };
 
 // ---------------------------------------------------------------------------
