@@ -276,21 +276,9 @@ class Tree : public Printable<Tree> {
   // debugger.
   auto Verify() const -> ErrorOr<Success>;
 
-  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
-  // used by `Verify()` or by tests.
-  template <typename T>
-  auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
-      -> std::optional<T>;
-
-  // Sets the kind of a node. This is intended to allow putting the tree into a
-  // state where verification can fail, in order to make the failure path of
-  // `Verify` testable.
-  auto SetNodeKindForVerifyTest(NodeId node_id, NodeKind kind) -> void {
-    node_impls_[node_id.index].kind = kind;
-  }
-
  private:
   friend class Context;
+  friend class TypedNodesTestPeer;
 
   template <typename T>
   struct ConvertTo;
@@ -348,6 +336,19 @@ class Tree : public Printable<Tree> {
 
   static_assert(sizeof(NodeImpl) == 12,
                 "Unexpected size of node implementation!");
+
+  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
+  // used by `Verify()` or by tests.
+  template <typename T>
+  auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
+      -> std::optional<T>;
+
+  // Sets the kind of a node. This is intended to allow putting the tree into a
+  // state where verification can fail, in order to make the failure path of
+  // `Verify` testable.
+  auto SetNodeKindForTesting(NodeId node_id, NodeKind kind) -> void {
+    node_impls_[node_id.index].kind = kind;
+  }
 
   // Prints a single node for Print(). Returns true when preorder and there are
   // children.
