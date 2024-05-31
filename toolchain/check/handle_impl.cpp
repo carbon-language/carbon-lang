@@ -208,7 +208,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // TODO: Does lookup in an impl file need to look for a prior impl declaration
   // in the api file?
   auto impl_id = context.impls().LookupOrAdd(self_type_id, constraint_type_id);
-  SemIR::ImplDecl impl_decl = {.impl_id = impl_id, .decl_block_id = decl_block_id};
+  SemIR::ImplDecl impl_decl = {.impl_id = impl_id,
+                               .decl_block_id = decl_block_id};
   auto impl_decl_id = context.AddInst(node_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
