@@ -97,6 +97,7 @@ cc_library(
     srcs = ["install_paths.cpp"],
     hdrs = ["install_paths.h"],
     deps = [
+        "//common:check",
         "//common:error",
         "@bazel_tools//tools/cpp/runfiles",
         "@llvm-project//llvm:Support",

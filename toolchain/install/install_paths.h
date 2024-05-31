@@ -33,7 +33,8 @@ namespace Carbon {
 //
 // When locating an install, we verify it by
 // looking for the `carbon_install.txt` marker file at a specific location
-// below. When errors occur, the install prefix is made empty, and error() can be used for diagnostics; InstallPaths remains minimally functional.
+// below. When errors occur, the install prefix is made empty, and error() can
+// be used for diagnostics; InstallPaths remains minimally functional.
 //
 // Within this prefix, we expect a hierarchy on Unix-y platforms:
 //
@@ -62,6 +63,9 @@ class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
   // prefix path. This assumes the toolchain to be in its installed layout.
+  //
+  // If detection fails, this reverts to using the current working directory as
+  // the install prefix, and the error detected can be checked with `errors()`.
   static auto MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths;
 
   // Provide the current executable's path, and use that to detect a Bazel or
@@ -69,6 +73,9 @@ class InstallPaths {
   // where it is reasonable to rely on this rather than a fixed install location
   // such as for internal development purposes or other Bazel users of the
   // Carbon library.
+  //
+  // This method of construction also ensures the result is valid. If detection
+  // fails for any reason, it will `CARBON_CHECK` fail with the error message.
   static auto MakeForBazelRunfiles(llvm::StringRef exe_path) -> InstallPaths;
 
   // Provide an explicit install paths prefix. This is useful for testing or for
@@ -82,7 +89,9 @@ class InstallPaths {
   //
   // A string return means there was an error, and details of the error are
   // in the `StringRef` for inclusion in any user report.
-  auto error() const -> std::optional<llvm::StringRef> { return error_; };
+  [[nodiscard]] auto error() const -> std::optional<llvm::StringRef> {
+    return error_;
+  };
 
   // The computed installation prefix. This should correspond to the
   // `prefix_root` directory in Bazel's output, or to some prefix the toolchain
@@ -98,7 +107,12 @@ class InstallPaths {
   InstallPaths() : error_("No prefix provided!") {}
   explicit InstallPaths(llvm::StringRef prefix) : prefix_(prefix) {}
 
+  // Set an error message on the install paths and reset the prefix to empty,
+  // which should use the current working directory.
   auto SetError(llvm::Twine message) -> void;
+
+  // Check that the install paths have a marker file at the expected location,
+  // and if not calls `SetError` with the relevant error message.
   auto CheckMarkerFile() -> void;
 
   llvm::SmallString<256> prefix_;

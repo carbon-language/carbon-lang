@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -47,29 +48,25 @@ auto InstallPaths::MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths {
 
 auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
     -> InstallPaths {
-  InstallPaths paths;
-
   using bazel::tools::cpp::runfiles::Runfiles;
   std::string runtimes_error;
   std::unique_ptr<Runfiles> runfiles(
       Runfiles::Create(exe_path.str(), &runtimes_error));
-  if (runfiles == nullptr) {
-    paths.SetError(llvm::Twine("Failed to find runtimes tree: ") +
-                   runtimes_error);
-    return paths;
-  }
+  CARBON_CHECK(runfiles != nullptr)
+      << "Failed to find runtimes tree: " << runtimes_error;
 
   std::string relative_marker_path = (PrefixRoot.str() + MarkerPath).str();
   std::string runtimes_marker_path = runfiles->Rlocation(relative_marker_path);
 
   // Start from the marker, remove that filename, and walk up to find the
   // install prefix.
-  paths = InstallPaths(runtimes_marker_path);
+  InstallPaths paths(runtimes_marker_path);
   llvm::sys::path::remove_filename(paths.prefix_);
   llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix,
                           "../../");
 
   paths.CheckMarkerFile();
+  CARBON_CHECK(!paths.error()) << *paths.error();
   return paths;
 }
 
