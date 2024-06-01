@@ -119,7 +119,7 @@ TYPED_TEST(SetTest, Copy) {
     ASSERT_TRUE(s.Insert(i).is_inserted());
   }
 
-  SetT other_s1{s};
+  SetT other_s1 = s;
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 24)));
 
   // Add some more elements to the original.
@@ -132,7 +132,7 @@ TYPED_TEST(SetTest, Copy) {
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 24)));
 
   // A new copy does.
-  SetT other_s2{s};
+  SetT other_s2 = s;
   ExpectSetElementsAre(other_s2, MakeElements(llvm::seq(1, 32)));
 }
 
@@ -148,7 +148,7 @@ TYPED_TEST(SetTest, Move) {
     ASSERT_TRUE(s.Insert(i).is_inserted());
   }
 
-  SetT other_s1{s};
+  SetT other_s1 = std::move(s);
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 24)));
 
   // Add some more elements.
@@ -156,6 +156,7 @@ TYPED_TEST(SetTest, Move) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(other_s1.Insert(i).is_inserted());
   }
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
 }
 
 TYPED_TEST(SetTest, Conversions) {

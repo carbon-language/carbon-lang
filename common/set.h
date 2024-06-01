@@ -5,6 +5,8 @@
 #ifndef CARBON_COMMON_SET_H_
 #define CARBON_COMMON_SET_H_
 
+#include <concepts>
+
 #include "common/check.h"
 #include "common/hashtable_key_context.h"
 #include "common/raw_hashtable.h"
@@ -38,6 +40,18 @@ class Set;
 // immutable data can always be obtained by using `SetView<const T>`, and we
 // enable conversions to more-const views. This mirrors the semantics of views
 // like `std::span`.
+//
+// A specific `KeyContextT` type can optionally be provided to configure how
+// keys will be hashed and compared. The default is `DefaultKeyContext` which is
+// stateless and will hash using `Carbon::HashValue` and compare using
+// `operator==`. Every method accepting a lookup key or operating on the keys in
+// the table will also accept an instance of this type. For stateless context
+// types, including the default, an instance will be default constructed if not
+// provided to these methods. However, stateful contexts should be constructed
+// and passed in explicitly. The context type should be small and reasonable to
+// pass by value, often a wrapper or pointer to the relevant context needed for
+// hashing and comparing keys. For more details about the key context, see
+// `hashtable_key_context.h`.
 template <typename InputKeyT, typename InputKeyContextT = DefaultKeyContext>
 class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   using ImplT = RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT>;
@@ -79,11 +93,17 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 
   // Run the provided callback for every key in the set.
   template <typename CallbackT>
-  void ForEach(CallbackT callback);
+  void ForEach(CallbackT callback)
+    requires(std::invocable<CallbackT, KeyT&>);
 
-  // Count the probed keys. This routine is purely informational and for use in
-  // benchmarking or logging of performance anomalies. Its returns have no
-  // semantic guarantee at all.
+  // This routine is relatively inefficient and only intended for use in
+  // benchmarking or logging of performance anomalies. The specific count
+  // returned has no specific guarantees beyond being informative in benchmarks.
+  // It counts how many of the keys in the hashtable have required probing
+  // beyond their initial group of slots.
+  //
+  // TODO: Replace with a more general metrics routine that covers other
+  // important aspects such as load factor, and average probe *distance*.
   auto CountProbedKeys(KeyContextT key_context = KeyContextT()) -> ssize_t {
     return ImplT::CountProbedKeys(key_context);
   }
@@ -166,7 +186,9 @@ class SetBase
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  void ForEach(CallbackT callback) {
+  void ForEach(CallbackT callback)
+    requires(std::invocable<CallbackT, KeyT&>)
+  {
     return ViewT(*this).ForEach(callback);
   }
 
@@ -227,7 +249,7 @@ class SetBase
 // This data structure optimizes heavily for small key types that are cheap to
 // move and even copy. Using types with large keys or expensive to copy keys may
 // create surprising performance bottlenecks. A `std::string` key should be fine
-// with largely small strings, but if some or many strings are large heap
+// with generally small strings, but if some or many strings are large heap
 // allocations the performance of hashtable routines may be unacceptably bad and
 // another data structure or key design is likely preferable.
 //
@@ -274,7 +296,9 @@ auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
 
 template <typename InputKeyT, typename InputKeyContextT>
 template <typename CallbackT>
-void SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) {
+void SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback)
+  requires(std::invocable<CallbackT, KeyT&>)
+{
   this->ForEachEntry([callback](EntryT& entry) { callback(entry.key()); },
                      [](auto...) {});
 }

@@ -324,8 +324,8 @@ class ViewImpl {
   // Looks up an entry in the hashtable and returns its address or null if not
   // present.
   template <typename LookupKeyT>
-  auto LookupEntry(LookupKeyT lookup_key,
-                   KeyContextT key_context = KeyContextT()) const -> EntryT*;
+  auto LookupEntry(LookupKeyT lookup_key, KeyContextT key_context) const
+      -> EntryT*;
 
   // Calls `entry_callback` for each entry in the hashtable. All the entries
   // within a specific group are visited first, and then `group_callback` is
@@ -337,8 +337,7 @@ class ViewImpl {
 
   // Counts the number of keys in the hashtable that required probing beyond the
   // initial group.
-  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) const
-      -> ssize_t;
+  auto CountProbedKeys(KeyContextT key_context) const -> ssize_t;
 
  private:
   ViewImpl(ssize_t alloc_size, Storage* storage)
@@ -415,8 +414,7 @@ class BaseImpl {
   // necessary, this will grow the hashtable to cause there to be sufficient
   // empty entries.
   template <typename LookupKeyT>
-  auto InsertImpl(LookupKeyT lookup_key,
-                  KeyContextT key_context = KeyContextT())
+  auto InsertImpl(LookupKeyT lookup_key, KeyContextT key_context)
       -> std::pair<EntryT*, bool>;
 
   // Looks up the entry in the hashtable, and if found destroys the entry and
@@ -425,8 +423,7 @@ class BaseImpl {
   // Does not release any memory, just leaves a tombstone behind so this entry
   // cannot be found and the slot can in theory be re-used.
   template <typename LookupKeyT>
-  auto EraseImpl(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
-      -> bool;
+  auto EraseImpl(LookupKeyT lookup_key, KeyContextT key_context) -> bool;
 
   // Erases all entries in the hashtable but leaves the allocated storage.
   auto ClearImpl() -> void;
@@ -1220,6 +1217,10 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
     this->storage() = BaseT::Allocate(local_size);
   }
 
+  // Preserve which slot every entry is in, including tombstones in the
+  // metadata, in order to copy into the new table's storage without rehashing
+  // all of the keys. This is especially important as we don't have an easy way
+  // to access the key context needed for rehashing here.
   uint8_t* local_metadata = this->metadata();
   EntryT* local_entries = this->entries();
   const uint8_t* local_arg_metadata = arg.metadata();
@@ -1249,7 +1250,9 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(TableImpl&& arg) noexcept
     CARBON_DCHECK(local_size == SmallSize);
     this->storage() = small_storage();
 
-    // We also have to move the entries between the tables.
+    // For small tables, we have to move the entries as we can't move the tables
+    // themselves. We do this preserving their slots and even tombstones much
+    // like copying to avoid rehashing.
     uint8_t* local_metadata = this->metadata();
     EntryT* local_entries = this->entries();
     uint8_t* local_arg_metadata = arg.metadata();

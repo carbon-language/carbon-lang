@@ -154,7 +154,7 @@ TYPED_TEST(MapTest, Copy) {
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
 
-  MapT other_m1{m};
+  MapT other_m1 = m;
   ExpectMapElementsAre(
       other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 24)));
 
@@ -169,7 +169,7 @@ TYPED_TEST(MapTest, Copy) {
       other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 24)));
 
   // A new copy does.
-  MapT other_m2{m};
+  MapT other_m2 = m;
   ExpectMapElementsAre(
       other_m2, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
 }
@@ -186,7 +186,7 @@ TYPED_TEST(MapTest, Move) {
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
 
-  MapT other_m1{std::move(m)};
+  MapT other_m1 = std::move(m);
   ExpectMapElementsAre(
       other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 24)));
 
@@ -217,9 +217,13 @@ TYPED_TEST(MapTest, Conversions) {
   MapView<KeyT, const ValueT, KeyContextT> cmv2 = m;
   MapView<const KeyT, const ValueT, KeyContextT> cmv3 = m;
   EXPECT_TRUE(mv.Contains(1));
+  EXPECT_EQ(101, *mv[1]);
   EXPECT_TRUE(cmv.Contains(2));
+  EXPECT_EQ(102, *cmv[2]);
   EXPECT_TRUE(cmv2.Contains(3));
+  EXPECT_EQ(103, *cmv2[3]);
   EXPECT_TRUE(cmv3.Contains(4));
+  EXPECT_EQ(104, *cmv3[4]);
 }
 
 // This test is largely exercising the underlying `RawHashtable` implementation
@@ -302,7 +306,7 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   EXPECT_FALSE(m.Update(2, 201).is_inserted());
   EXPECT_FALSE(m.Update(4, 401).is_inserted());
 
-  // Now fill up the first control group.
+  // Now fill up the first metadata group.
   for (int i : llvm::seq(5, 14)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100).is_inserted());
@@ -324,7 +328,7 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
           Pair(6, 602), Pair(7, 702), Pair(8, 802), Pair(9, 902),
           Pair(10, 1002), Pair(11, 1102), Pair(12, 1202), Pair(13, 1302)});
 
-  // Now fill up several more control groups.
+  // Now fill up several more groups.
   for (int i : llvm::seq(14, 100)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100).is_inserted());
@@ -481,22 +485,89 @@ TYPED_TEST(MapCollisionTest, Basic) {
 
     // Immediately do a basic check of all elements to pin down when an
     // insertion corrupts the rest of the table.
-    for (int j : llvm::seq(1, i)) {
-      SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
-      ASSERT_EQ(j * 100, *m[j]);
-    }
+    ExpectMapElementsAre(m, MakeKeyValues([](int k) { return k * 100; },
+                                          llvm::seq_inclusive(1, i)));
   }
   EXPECT_FALSE(m.Contains(257));
 
-  // Verify all the elements.
+  // Erase and re-fill from the back.
+  for (int i : llvm::seq(192, 256)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Erase(i));
+  }
   ExpectMapElementsAre(
-      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 256)));
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 192)));
+  for (int i : llvm::seq(192, 256)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Insert(i, i * 100 + 1).is_inserted());
+  }
+  ExpectMapElementsAre(m,
+                       MakeKeyValues([](int k) { return k * 100 + (k >= 192); },
+                                     llvm::seq(1, 256)));
+
+  // Erase and re-fill from the front.
+  for (int i : llvm::seq(1, 64)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Erase(i));
+  }
+  ExpectMapElementsAre(m,
+                       MakeKeyValues([](int k) { return k * 100 + (k >= 192); },
+                                     llvm::seq(64, 256)));
+  for (int i : llvm::seq(1, 64)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Insert(i, i * 100 + 1).is_inserted());
+  }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100 + (k < 64) + (k >= 192); },
+                       llvm::seq(1, 256)));
+
+  // Erase and re-fill from the middle.
+  for (int i : llvm::seq(64, 192)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Erase(i));
+  }
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) { return k * 100 + 1; },
+                                        llvm::seq(1, 64), llvm::seq(192, 256)));
+  for (int i : llvm::seq(64, 192)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(m.Insert(i, i * 100 + 1).is_inserted());
+  }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100 + 1; }, llvm::seq(1, 256)));
+
+  // Erase and re-fill from both the back and front.
+  for (auto s : {llvm::seq(192, 256), llvm::seq(1, 64)}) {
+    for (int i : s) {
+      SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+      EXPECT_TRUE(m.Erase(i));
+    }
+  }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100 + 1; }, llvm::seq(64, 192)));
+  for (auto s : {llvm::seq(192, 256), llvm::seq(1, 64)}) {
+    for (int i : s) {
+      SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+      EXPECT_TRUE(m.Insert(i, i * 100 + 2).is_inserted());
+    }
+  }
+  ExpectMapElementsAre(
+      m,
+      MakeKeyValues([](int k) { return k * 100 + 1 + (k < 64) + (k >= 192); },
+                    llvm::seq(1, 256)));
+
+  // And update the middle elements in place.
+  for (int i : llvm::seq(64, 192)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_FALSE(m.Update(i, i * 100 + 2).is_inserted());
+  }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100 + 2; }, llvm::seq(1, 256)));
 }
 
 TEST(MapContextTest, Basic) {
   llvm::SmallVector<TestData> keys;
   for (int i : llvm::seq(0, 513)) {
-    keys.push_back(i * 100);
+    keys.push_back(i * 100000);
   }
   IndexKeyContext<TestData> key_context(keys);
   Map<ssize_t, int, 0, IndexKeyContext<TestData>> m;
@@ -504,7 +575,7 @@ TEST(MapContextTest, Basic) {
   EXPECT_FALSE(m.Contains(42, key_context));
   EXPECT_TRUE(m.Insert(1, 100, key_context).is_inserted());
   ASSERT_TRUE(m.Contains(1, key_context));
-  auto result = m.Lookup(TestData(100), key_context);
+  auto result = m.Lookup(TestData(100000), key_context);
   EXPECT_TRUE(result);
   EXPECT_EQ(1, result.key());
   EXPECT_EQ(100, result.value());
@@ -532,7 +603,7 @@ TEST(MapContextTest, Basic) {
       SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
       ASSERT_EQ(j * 100 + (int)(j == 1), m.Lookup(j, key_context).value());
       ASSERT_EQ(j * 100 + (int)(j == 1),
-                m.Lookup(TestData(j * 100), key_context).value());
+                m.Lookup(TestData(j * 100000), key_context).value());
     }
   }
   for (int i : llvm::seq(1, 512)) {
