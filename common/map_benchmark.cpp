@@ -4,6 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <type_traits>
 
 #include "absl/container/flat_hash_map.h"
@@ -132,6 +133,7 @@ struct MapWrapperImpl<Map<KT, VT, MinSmallSize>> {
 enum class MapOverride : uint8_t {
   None,
   Abseil,
+  Boost,
   LLVM,
   LLVMAndCarbonHash,
 };
@@ -147,6 +149,10 @@ struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::Abseil>
     : MapWrapperImpl<absl::flat_hash_map<KeyT, ValueT>> {};
 
 template <typename KeyT, typename ValueT, int MinSmallSize>
+struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::Boost>
+    : MapWrapperImpl<boost::unordered::unordered_flat_map<KeyT, ValueT>> {};
+
+template <typename KeyT, typename ValueT, int MinSmallSize>
 struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::LLVM>
     : MapWrapperImpl<llvm::DenseMap<KeyT, ValueT>> {};
 
@@ -160,10 +166,11 @@ using MapWrapper =
     MapWrapperOverride<MapT, MapOverride::CARBON_MAP_BENCH_OVERRIDE>;
 
 // NOLINTBEGIN(bugprone-macro-parentheses): Parentheses are incorrect here.
-#define MAP_BENCHMARK_ONE_OP_SIZE(NAME, APPLY, KT, VT)        \
-  BENCHMARK(NAME<Map<KT, VT>>)->Apply(APPLY);                 \
-  BENCHMARK(NAME<absl::flat_hash_map<KT, VT>>)->Apply(APPLY); \
-  BENCHMARK(NAME<llvm::DenseMap<KT, VT>>)->Apply(APPLY);      \
+#define MAP_BENCHMARK_ONE_OP_SIZE(NAME, APPLY, KT, VT)                         \
+  BENCHMARK(NAME<Map<KT, VT>>)->Apply(APPLY);                                  \
+  BENCHMARK(NAME<absl::flat_hash_map<KT, VT>>)->Apply(APPLY);                  \
+  BENCHMARK(NAME<boost::unordered::unordered_flat_map<KT, VT>>)->Apply(APPLY); \
+  BENCHMARK(NAME<llvm::DenseMap<KT, VT>>)->Apply(APPLY);                       \
   BENCHMARK(NAME<llvm::DenseMap<KT, VT, CarbonHashDI<KT>>>)->Apply(APPLY)
 // NOLINTEND(bugprone-macro-parentheses)
 
@@ -389,6 +396,8 @@ MAP_BENCHMARK_ONE_OP(BM_MapEraseUpdateHit, HitArgs);
 #define MAP_BENCHMARK_OP_SEQ_SIZE(NAME, KT, VT)                  \
   BENCHMARK(NAME<Map<KT, VT>>)->Apply(SizeArgs);                 \
   BENCHMARK(NAME<absl::flat_hash_map<KT, VT>>)->Apply(SizeArgs); \
+  BENCHMARK(NAME<boost::unordered::unordered_flat_map<KT, VT>>)  \
+      ->Apply(SizeArgs);                                         \
   BENCHMARK(NAME<llvm::DenseMap<KT, VT>>)->Apply(APPLY);         \
   BENCHMARK(NAME<llvm::DenseMap<KT, VT, CarbonHashDI<KT>>>)->Apply(SizeArgs)
 // NOLINTEND(bugprone-macro-parentheses)
