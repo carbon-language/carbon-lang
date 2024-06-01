@@ -5,6 +5,9 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm-project//llvm:binary_alias.bzl", "binary_alias")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 load("symlink_filegroup.bzl", "symlink_filegroup")
 
 package(default_visibility = ["//visibility:public"])
@@ -138,4 +141,63 @@ cc_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+# Build rules to construct packaged versions of the toolchain's install.
+
+pkg_files(
+    name = "packaging_exe_files",
+    # We break out the driver and LLD here because we can't easily use file
+    # groups that contain symlinks, so those are manually handled below. Other
+    # file groups should be directly included.
+    srcs = [
+        "prefix_root/bin/carbon",
+        "prefix_root/lib/carbon/llvm/bin/lld",
+    ],
+    attributes = pkg_attributes(mode = "0755"),
+    strip_prefix = strip_prefix.from_pkg("prefix_root"),
+)
+
+# Currently, `rules_pkg` can't replicate symlinks from the main tree. To an
+# extent, this is reasonable because we want to be much more explicit about the
+# symlink structure in the package where as for the filegroups we're comfortable
+# with whatever "just works" for development and testing.
+[
+    pkg_mklink(
+        name = "packaging_link_lld_alias_" + bin_name,
+        link_name = "lib/carbon/llvm/bin/" + bin_name,
+        target = "lld",
+    )
+    for bin_name in lld_bin_names
+]
+
+pkg_filegroup(
+    name = "packaging_files",
+    srcs = [
+        ":packaging_exe_files",
+    ] + [
+        ":packaging_link_lld_alias_" + bin_name
+        for bin_name in lld_bin_names
+    ],
+)
+
+# TODO: We should add support for injecting a version string into both the
+# output filename and the package directory name.
+pkg_tar(
+    name = "carbon_toolchain.tar.bz2.rule",
+    srcs = [":packaging_files"],
+    out = "carbon_toolchain.tar.bz2",
+    extension = "tar.bz2",
+    package_dir = "carbon_toolchain",
+    tags = ["manual"],  # Slow, exclude from wildcard builds.
+)
+
+# TODO: We should add support for injecting a version string into both the
+# output filename and the package directory name.
+pkg_zip(
+    name = "carbon_toolchain.zip.rule",
+    srcs = [":packaging_files"],
+    out = "carbon_toolchain.zip",
+    package_dir = "carbon_toolchain",
+    tags = ["manual"],  # Slow, exclude from wildcard builds.
 )
