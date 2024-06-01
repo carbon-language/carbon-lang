@@ -71,7 +71,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   const auto install_paths = InstallPaths::Make("");
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
-  Driver d(fs, &install_paths, "", dest, error_stream);
+  Driver d(fs, &install_paths, dest, error_stream);
   if (!d.RunCommand(args).success) {
     if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";

@@ -4,8 +4,6 @@
 
 """Provides rules for building Carbon files using the toolchain."""
 
-load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
-
 def carbon_binary(name, srcs):
     """Compiles a Carbon binary.
 
@@ -27,13 +25,14 @@ def carbon_binary(name, srcs):
         # the prelude moves there.
         out = src + ".o"
         srcs_reordered = [s for s in srcs if s != src] + [src]
-        run_binary(
+        native.genrule(
             name = src + ".compile",
-            tool = "//toolchain/driver:carbon",
-            args = (["compile"] +
-                    ["$(location %s)" % s for s in srcs_reordered] +
-                    ["--output=$(location %s)" % out]),
-            srcs = srcs,
+            tools = [
+                "//toolchain/install:prefix_root/bin/carbon",
+                "//toolchain/install:install_data",
+            ],
+            cmd = "$(execpath //toolchain/install:prefix_root/bin/carbon) compile --output=$@ $(SRCS)",
+            srcs = srcs_reordered,
             outs = [out],
         )
 

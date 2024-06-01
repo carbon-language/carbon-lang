@@ -34,11 +34,10 @@ class Driver {
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
   Driver(llvm::vfs::FileSystem& fs, const InstallPaths* installation,
-         llvm::StringRef data_dir, llvm::raw_pwrite_stream& output_stream,
+         llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
       : fs_(fs),
         installation_(installation),
-        data_dir_(data_dir),
         output_stream_(output_stream),
         error_stream_(error_stream) {}
 
@@ -53,7 +52,7 @@ class Driver {
   // Finds the source files that define the prelude and returns a list of their
   // filenames. On error, writes a message to `error_stream` and returns an
   // empty list.
-  static auto FindPreludeFiles(llvm::StringRef data_dir,
+  static auto FindPreludeFiles(llvm::StringRef core_package_dir,
                                llvm::raw_ostream& error_stream)
       -> llvm::SmallVector<std::string>;
 
@@ -86,10 +85,6 @@ class Driver {
 
   // Helper to locate the toolchain installation's files.
   const InstallPaths* installation_;
-
-  // The path within fs for data files.
-  // TODO: Replace with use of `installation_` once everything is moved over.
-  std::string data_dir_;
 
   // Standard output; stdout.
   llvm::raw_pwrite_stream& output_stream_;

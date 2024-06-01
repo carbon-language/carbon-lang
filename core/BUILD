@@ -5,6 +5,6 @@
 # The prelude, and all of its dependencies.
 filegroup(
     name = "prelude",
-    data = ["prelude.carbon"] + glob(["prelude/**/*.carbon"]),
+    srcs = ["prelude.carbon"] + glob(["prelude/**/*.carbon"]),
     visibility = ["//visibility:public"],
 )

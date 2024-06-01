@@ -53,6 +53,11 @@ class InstallPathsTest : public ::testing::Test {
     EXPECT_TRUE(llvm::sys::fs::can_execute(driver_path))
         << "path: " << driver_path;
 
+    std::string core_package_path = paths.core_package();
+    ASSERT_THAT(core_package_path, StartsWith(prefix));
+    EXPECT_TRUE(llvm::sys::fs::exists(core_package_path + "/prelude.carbon"))
+        << "path: " << core_package_path;
+
     std::string llvm_bin_path = paths.llvm_install_bin();
     ASSERT_THAT(llvm_bin_path, StartsWith(prefix));
     EXPECT_TRUE(llvm::sys::fs::exists(llvm_bin_path))
