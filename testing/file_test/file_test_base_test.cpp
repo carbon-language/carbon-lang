@@ -16,7 +16,8 @@ namespace {
 
 class FileTestBaseTest : public FileTestBase {
  public:
-  using FileTestBase::FileTestBase;
+  FileTestBaseTest(llvm::StringRef /*exe_path*/, llvm::StringRef test_name)
+      : FileTestBase(test_name) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,

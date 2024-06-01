@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 
@@ -32,10 +33,11 @@ class Driver {
 
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
-  Driver(llvm::vfs::FileSystem& fs, llvm::StringRef data_dir,
-         llvm::raw_pwrite_stream& output_stream,
+  Driver(llvm::vfs::FileSystem& fs, const InstallPaths* installation,
+         llvm::StringRef data_dir, llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
       : fs_(fs),
+        installation_(installation),
         data_dir_(data_dir),
         output_stream_(output_stream),
         error_stream_(error_stream) {}
@@ -82,7 +84,11 @@ class Driver {
   // The filesystem for source code.
   llvm::vfs::FileSystem& fs_;
 
+  // Helper to locate the toolchain installation's files.
+  const InstallPaths* installation_;
+
   // The path within fs for data files.
+  // TODO: Replace with use of `installation_` once everything is moved over.
   std::string data_dir_;
 
   // Standard output; stdout.

@@ -943,6 +943,9 @@ auto Driver::Link(const LinkOptions& options,
   // We link using a C++ mode of the driver.
   clang_args.push_back("--driver-mode=g++");
 
+  // Use LLD, which we provide in our install directory, for linking.
+  clang_args.push_back("-fuse-ld=lld");
+
   // Add OS-specific flags based on the target.
   AddOSFlags(codegen_options.target, clang_args);
 
@@ -951,7 +954,7 @@ auto Driver::Link(const LinkOptions& options,
   clang_args.append(options.object_filenames.begin(),
                     options.object_filenames.end());
 
-  ClangRunner runner("FIXME", codegen_options.target, vlog_stream_);
+  ClangRunner runner(installation_, codegen_options.target, vlog_stream_);
   return {.success = runner.Run(clang_args)};
 }
 

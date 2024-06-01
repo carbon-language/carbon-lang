@@ -42,7 +42,13 @@ for dep in deps:
 
         # Other packages in the LLVM project shouldn't be accidentally used
         # in Carbon. We can expand the above list if use cases emerge.
-        if package not in ("llvm", "lld", "clang", "clang-tools-extra/clangd"):
+        if package not in (
+            "llvm",
+            "lld",
+            "clang",
+            "clang-tools-extra/clangd",
+            "libunwind",
+        ):
             sys.exit(
                 "ERROR: unexpected dependency into the LLVM project: %s" % dep
             )
@@ -67,6 +73,10 @@ for dep in deps:
     # An empty stub library added by rules_cc:
     # https://github.com/bazelbuild/rules_cc/blob/main/BUILD
     if repo_base == "@@rules_cc" and rule == ":link_extra_lib":
+        continue
+
+    # An utility library provided by Bazel that is under a compatible license.
+    if repo_base == "@@bazel_tools" and rule == "tools/cpp/runfiles:runfiles":
         continue
 
     # These are stubs wrapping system libraries for LLVM. They aren't

@@ -16,6 +16,7 @@
 #include "absl/flags/parse.h"
 #include "common/check.h"
 #include "common/error.h"
+#include "common/exe_path.h"
 #include "common/init_llvm.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -826,6 +827,8 @@ static auto Main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
+  std::string exe_path = FindExecutablePath(argv[0]);
+
   // Tests might try to read from stdin. Ensure those reads fail by closing
   // stdin and reopening it as /dev/null. Note that STDIN_FILENO doesn't exist
   // on Windows, but POSIX requires it to be 0.
@@ -854,8 +857,9 @@ static auto Main(int argc, char** argv) -> int {
     std::mutex errs_mutex;
 
     for (const auto& test_name : tests) {
-      pool.async([&test_factory, &errs_mutex, test_name] {
-        std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
+      pool.async([&test_factory, &errs_mutex, &exe_path, test_name] {
+        std::unique_ptr<FileTestBase> test(
+            test_factory.factory_fn(exe_path, test_name));
         auto result = test->Autoupdate();
 
         // Guard access to llvm::errs, which is not thread-safe.
@@ -872,7 +876,8 @@ static auto Main(int argc, char** argv) -> int {
     return EXIT_SUCCESS;
   } else if (absl::GetFlag(FLAGS_dump_output)) {
     for (const auto& test_name : tests) {
-      std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
+      std::unique_ptr<FileTestBase> test(
+          test_factory.factory_fn(exe_path, test_name));
       auto result = test->DumpOutput();
       if (!result.ok()) {
         llvm::errs() << "\n" << result.error().message() << "\n";
@@ -882,11 +887,12 @@ static auto Main(int argc, char** argv) -> int {
     return EXIT_SUCCESS;
   } else {
     for (llvm::StringRef test_name : tests) {
-      testing::RegisterTest(test_factory.name, test_name.data(), nullptr,
-                            test_name.data(), __FILE__, __LINE__,
-                            [&test_factory, test_name = test_name]() {
-                              return test_factory.factory_fn(test_name);
-                            });
+      testing::RegisterTest(
+          test_factory.name, test_name.data(), nullptr, test_name.data(),
+          __FILE__, __LINE__,
+          [&test_factory, &exe_path, test_name = test_name]() {
+            return test_factory.factory_fn(exe_path, test_name);
+          });
     }
     return RUN_ALL_TESTS();
   }

@@ -17,10 +17,14 @@ cc_library(
     name = "clang_runner",
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
+    data = [
+        "//toolchain/install:llvm_link_data",
+    ],
     deps = [
         "//common:command_line",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/install:install_paths",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
@@ -52,7 +56,10 @@ cc_library(
     name = "driver",
     srcs = ["driver.cpp"],
     hdrs = ["driver.h"],
-    data = ["//core:prelude"],
+    data = [
+        "//core:prelude",
+        "//toolchain/install:install_lib_data",
+    ],
     textual_hdrs = ["flags.def"],
     deps = [
         ":clang_runner",
@@ -63,6 +70,7 @@ cc_library(
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
+        "//toolchain/install:install_paths",
         "//toolchain/lex",
         "//toolchain/lower",
         "//toolchain/parse",
@@ -86,6 +94,7 @@ cc_test(
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/install:install_paths",
         "//toolchain/lex:tokenized_buffer_test_helpers",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
@@ -102,6 +111,7 @@ cc_fuzz_test(
     deps = [
         ":driver",
         "//testing/base:test_raw_ostream",
+        "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -116,6 +126,7 @@ cc_binary(
         "//common:bazel_working_dir",
         "//common:exe_path",
         "//common:init_llvm",
+        "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],
 )

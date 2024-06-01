@@ -33,6 +33,7 @@ cc_library(
         ":autoupdate",
         "//common:check",
         "//common:error",
+        "//common:exe_path",
         "//common:init_llvm",
         "//common:ostream",
         "@abseil-cpp//absl/flags:flag",

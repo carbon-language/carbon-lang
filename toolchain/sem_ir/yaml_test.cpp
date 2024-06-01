@@ -8,6 +8,7 @@
 #include "common/ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/base/gtest_main.h"
 #include "testing/base/test_raw_ostream.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/testing/yaml_test_helpers.h"
@@ -34,8 +35,10 @@ TEST(SemIRTest, YAML) {
   CARBON_CHECK(fs.addFile(
       "test.carbon", /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
+  const auto install_paths =
+      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
   TestRawOstream print_stream;
-  Driver d(fs, "", print_stream, llvm::errs());
+  Driver d(fs, &install_paths, "", print_stream, llvm::errs());
   auto run_result =
       d.RunCommand({"compile", "--no-prelude-import", "--phase=check",
                     "--dump-raw-sem-ir", "test.carbon"});
