@@ -22,7 +22,7 @@ using ::testing::UnorderedElementsAreArray;
 
 template <typename SetT, typename MatcherRangeT>
 void ExpectSetElementsAre(SetT&& s, MatcherRangeT element_matchers) {
-  // Now collect the elements into a container.
+  // Collect the elements into a container.
   using KeyT = typename std::remove_reference<SetT>::type::KeyT;
   std::vector<KeyT> entries;
   s.ForEach([&entries](KeyT& k) { entries.push_back(k); });

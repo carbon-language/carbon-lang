@@ -195,6 +195,8 @@ TYPED_TEST(MapTest, Move) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(other_m1.Insert(i, i * 100).is_inserted());
   }
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
 }
 
 TYPED_TEST(MapTest, Conversions) {

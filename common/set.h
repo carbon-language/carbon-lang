@@ -215,7 +215,7 @@ class SetBase
 
 // A data structure for a set of keys.
 //
-// This set also supports small size optimization (or "SSO"). The provided
+// This set supports small size optimization (or "SSO"). The provided
 // `SmallSize` type parameter indicates the size of an embedded buffer for
 // storing sets small enough to fit. The default is zero, which always allocates
 // a heap buffer on construction. When non-zero, must be a multiple of the

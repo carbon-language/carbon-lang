@@ -25,11 +25,8 @@
 #define CARBON_NEON_SIMD_SUPPORT 1
 #endif
 
-// A namespace collecting a set of low-level utilities for building hashtable
-// data structures. These should only be used as implementation details of
-// higher-level data structure APIs.
-//
-// The utilities in this file are:
+// This namespace collects low-level utilities for implementing hashtable
+// data structures. This file only one:
 //
 // - Primitives to manage "groups" of hashtable entries that have densely packed
 //   control bytes we can scan rapidly as a group, often using SIMD facilities
@@ -37,23 +34,20 @@
 namespace Carbon::RawHashtable {
 
 // We define a constant max group size. The particular group size used in
-// practice may vary, but we want to have some upper bound that can be reliably
-// used when allocating memory to ensure we don't create fractional groups and
-// memory allocation is done consistently across the architectures.
+// practice may vary, but we want to have some upper bound used to ensure
+// memory allocation is done consistently across different architectures.
 constexpr ssize_t MaxGroupSize = 16;
 
-// An index encoded as low zero bits ending in (at least) one set high bit. The
-// index can be extracted by counting the low zero bits. It's presence can be
-// tested directly however by checking for any zero bits. The underlying type to
-// be used is provided as `MaskT` which must be an unsigned integer type.
+// This takes a mask representing the results of looking for a particular tag in
+// this metadata group and determines the first position with a match. Each
+// position is represented by either a bit or a byte, depending on
+// `ByteEncoding`, with the high bit representing a match in that position.
+// This returns:
+// - `empty()`: true when there are no matches
+// - `index()`: the index of the first matching tag
+// - `index_ptr(p)`: offset a pointer `p` by `index()`
 //
-// The index can be encoded by a power-of-two multiple of zero bits (including
-// 1), which we model as a _shift_ of the count of zero bits to produce the
-// index. The encoding must be all zero bits and an exact power of two to ensure
-// this shift doesn't round the count -- we want the shift to fold with any
-// subsequent index shifts that are common for users of these indices.
-//
-// Last but not least, some bits of the underlying value may be known-zero,
+// Some bits of the underlying value may be known-zero,
 // which can optimize various operations. These can be represented as a
 // `ZeroMask`.
 template <typename MaskInputT, bool ByteEncoding, MaskInputT ZeroMask = 0>
@@ -160,6 +154,7 @@ class BitIndex
   MaskT mask_ = 0;
 };
 
+// This is like `BitIndex`, but allows iterating through all of the matches.
 template <typename BitIndexT>
 class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
  public:
@@ -232,7 +227,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
 // A group of metadata bytes that can be manipulated together.
 //
 // The metadata bytes used Carbon's hashtable implementation are designed to
-// support manipulating as groups, either using architecture specific SIMD code
+// support being manipulating as groups, either using architecture specific SIMD code
 // sequences or using portable SIMD-in-an-integer-register code sequences. These
 // operations are unusually performance sensitive and in sometimes surprising
 // ways. The implementations here are crafted specifically to optimize the
@@ -251,20 +246,13 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
 // ```cpp
 // auto Operation(...) -> ... {
 //   ... portable_result;
-//   if constexpr (!UseSIMD || DebugChecks) {
+//   if constexpr (!UseSIMD || DebugSIMD) {
 //     portable_result = PortableCode(...);
 //     if (!UseSIMD) {
 //       return portable_result;
 //     }
 //   }
-//   ... result;
-// #if CARBON_NEON_SIMD_SUPPORT
-//   result = NeonCode(...);
-// #elif CARBON_X86_SIMD_SUPPORT
-//   result = X86Code(...);
-// #else
-//   static_assert(!UseSIMD, "Unimplemented SIMD operation");
-// #endif
+//   ... result = SIMDCode(...);
 //   CARBON_DCHECK(result == portable_result) << ...;
 //   return result;
 // }
@@ -287,7 +275,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   static constexpr ssize_t Mask = Size - 1;
 
   // Each control byte can have special values. All special values have the
-  // most significant bit set to distinguish them from the seven hash bits
+  // most significant bit cleared to distinguish them from the seven hash bits
   // stored when the control byte represents a full bucket.
   //
   // Otherwise, their values are chose primarily to provide efficient SIMD
@@ -369,6 +357,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
       false;
 #endif
 
+  // Most and least significant bits set.
   static constexpr uint64_t MSBs = 0x8080'8080'8080'8080ULL;
   static constexpr uint64_t LSBs = 0x0101'0101'0101'0101ULL;
 
@@ -376,12 +365,15 @@ class MetadataGroup : public Printable<MetadataGroup> {
 
   static auto CompareEqual(MetadataGroup lhs, MetadataGroup rhs) -> bool;
 
-  // Directly verify the provided masks that will be used to build a
-  // `MatchIndex` or `MatchGroup`. These either `CHECK`-fail or return true.
+  // Functions for validating the returned matches agree with what is predicted by the `byte_match` function. These either `CHECK`-fail or return true.
+  // To pass validation, the `*_mask` argument must have `0x80` for those bytes where `byte_match` returns true, and `0` for the rest.
+
+  // `VerifyIndexMask` is for functions that return `MatchIndex`, as they only promise to return accurate information up to the first match.
   auto VerifyIndexMask(
       MatchMask index_mask,
       llvm::function_ref<auto(uint8_t mask_byte)->bool> byte_match) const
       -> bool;
+  // `VerifyRangeMask` is for functions that return `MatchRange`, and so it validates all the bytes of `range_mask`.
   auto VerifyRangeMask(
       MatchMask range_mask,
       llvm::function_ref<auto(uint8_t mask_byte)->bool> byte_match) const
@@ -573,7 +565,7 @@ inline auto MetadataGroup::VerifyIndexMask(
       if (byte_match(bytes[byte_index])) {
         CARBON_CHECK(((index_mask >> byte_index) & 1) == 1)
             << "Bit not set at matching byte index: " << byte_index;
-        // Only the first match is needed so stop scanning once found.
+        // Only the first match is needed, so stop scanning once found.
         break;
       }
 
@@ -707,14 +699,14 @@ inline auto MetadataGroup::PortableMatch(uint8_t present_byte) const
   CARBON_DCHECK(pattern == (LSBs * present_byte | MSBs))
       << "Unexpected carry from addition!";
 
-  // Xor the broadcast pattern, making matched bytes become zero bytes.
+  // Xor the broadcast pattern. This makes bytes with matches become 0, and clears the high-bits of non-matches. Note that if we are looking for a tag with the same value as `Empty` or `Deleted`, those bytes will be zero as well.
   mask = mask ^ pattern;
-  // Subtract the mask bytes from `0x80` bytes so that any non-zero mask byte
-  // clears the high bit but zero leaves it intact.
+  // Subtract the mask bytes from `0x80` bytes. After this, the high bit will be set only for those bytes that were zero.
   mask = MSBs - mask;
-  // Mask down to the high bits, but only those in the original group.
+  // Zero everything but the high bits, and also zero the high bits of any bytes for "not present" slots in the original group. This avoids false positives for `Empty` and `Deleted` bytes in the metadata.
   mask &= (byte_ints[0] & MSBs);
 
+  // At this point, `mask` has the high bit set for bytes where the original group byte equals `present_byte` plus the high bit.
   CARBON_DCHECK(VerifyRangeMask(mask, [&](uint8_t byte) {
     return byte == (present_byte | PresentMask);
   }));
@@ -735,6 +727,7 @@ inline auto MetadataGroup::PortableMatchPresent() const -> MatchRange {
     return MatchRange(mask);
   }
 
+  // Want to keep the high bit of each byte, which indicates whether that byte represents a present slot.
   uint64_t mask = byte_ints[0] & MSBs;
 
   CARBON_DCHECK(VerifyRangeMask(
@@ -755,10 +748,14 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
     return MatchIndex(0);
   }
 
-  // Materialize the group into a word.
+  // This sets the high bit of every byte unless the corresponding byte of `bytes_ints[0]` is 0. We take advantage of the fact that the bytes in `bytes_ints[0]` are non-zero only if they are either:
+  // - present: in which case the high bit of the byte in `bytes_int[0]` will already be set; or
+  // - deleted: in which case the byte in `bytes_int[0]` will be 1, and shifting it left by 7 will cause the high bit to be set.
   uint64_t mask = byte_ints[0] | (byte_ints[0] << 7);
+  // This inverts the high bits of the bytes, and clears the remaining bits.
   mask = ~mask & MSBs;
 
+  // The high bits of the bytes of `mask` are set if the corresponding byte of `bytes_ints[0]` is 0, i.e. `Empty`.
   CARBON_DCHECK(
       VerifyIndexMask(mask, [](uint8_t byte) { return byte == Empty; }));
   return MatchIndex(mask);
@@ -777,10 +774,14 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
     return MatchIndex(0);
   }
 
-  // Materialize the group into a word.
+  // This sets the high bit of every byte unless the corresponding byte of `bytes_ints[0]` is 1. We take advantage of the fact that the bytes in `bytes_ints[0]` are not 1 only if they are either:
+  // - present: in which case the high bit of the byte in `bytes_int[0]` will already be set; or
+  // - empty: in which case the byte in `bytes_int[0]` will be 0, and in that case `~byte_ints[0] << 7` will have the high bit set.
   uint64_t mask = byte_ints[0] | (~byte_ints[0] << 7);
+  // This inverts the high bits of the bytes, and clears the remaining bits.
   mask = ~mask & MSBs;
 
+  // The high bits of the bytes of `mask` are set if the corresponding byte of `bytes_ints[0]` is 1, i.e. `Deleted`.
   CARBON_DCHECK(
       VerifyIndexMask(mask, [](uint8_t byte) { return byte == Deleted; }));
   return MatchIndex(mask);

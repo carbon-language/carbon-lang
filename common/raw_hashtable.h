@@ -24,7 +24,7 @@
 // data structures. These should only be used as implementation details of
 // higher-level data-structure APIs.
 //
-// The utilities here use the `hashtable_common.h` provided `KeyContext` to
+// The utilities here use the `hashtable_key_context.h` provided `KeyContext` to
 // support the necessary hashtable operations on keys: hashing and comparison.
 // This also serves as the customization point for hashtables built on this
 // infrastructure for those operations. See that header file for details.
