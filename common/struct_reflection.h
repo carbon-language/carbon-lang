@@ -72,7 +72,7 @@ constexpr auto CanListInitialize(...) -> bool {
 // 2) Add more AnyField<T>s until we can't initialize any more.
 template <typename T, bool AnyWorkedSoFar = false, typename... Fields>
 constexpr auto CountFields() -> int {
-  if constexpr (CanListInitialize<T, Fields...>(0)) {
+  if constexpr (CanListInitialize<T, Fields...>(nullptr)) {
     return CountFields<T, true, Fields..., AnyField<T>>();
   } else if constexpr (AnyWorkedSoFar) {
     constexpr int NumFields = sizeof...(Fields) - 1;

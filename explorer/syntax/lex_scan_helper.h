@@ -24,11 +24,11 @@ class StringLexHelper {
   // EOF.
   auto Advance() -> bool;
   // Returns the last scanned char.
-  auto last_char() -> char { return str_.back(); };
+  auto last_char() -> char { return str_.back(); }
   // Returns the scanned string.
-  auto str() -> const std::string& { return str_; };
+  auto str() -> const std::string& { return str_; }
 
-  auto is_eof() -> bool { return is_eof_; };
+  auto is_eof() -> bool { return is_eof_; }
 
  private:
   std::string str_;

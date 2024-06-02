@@ -91,7 +91,7 @@ class InstallPaths {
   // in the `StringRef` for inclusion in any user report.
   [[nodiscard]] auto error() const -> std::optional<llvm::StringRef> {
     return error_;
-  };
+  }
 
   // The computed installation prefix. This should correspond to the
   // `prefix_root` directory in Bazel's output, or to some prefix the toolchain

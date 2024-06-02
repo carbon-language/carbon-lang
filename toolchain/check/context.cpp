@@ -821,7 +821,7 @@ class TypeCompleter {
     CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown)
         << "Complete type should have a value representation";
     return value_rep;
-  };
+  }
 
   auto BuildBuiltinValueRepr(SemIR::TypeId type_id,
                              SemIR::Builtin builtin) const -> SemIR::ValueRepr {

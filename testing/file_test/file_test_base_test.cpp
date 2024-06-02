@@ -162,6 +162,6 @@ class FileTestBaseTest : public FileTestBase {
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(FileTestBaseTest);
+CARBON_FILE_TEST_FACTORY(FileTestBaseTest)
 
 }  // namespace Carbon::Testing

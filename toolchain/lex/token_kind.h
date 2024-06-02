@@ -71,23 +71,23 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // Test whether this kind of token is a one-character symbol whose character
   // is not part of any other symbol.
-  auto is_one_char_symbol() const -> bool { return IsOneCharSymbol[AsInt()]; };
+  auto is_one_char_symbol() const -> bool { return IsOneCharSymbol[AsInt()]; }
 
   // Test whether this kind of token is a keyword.
-  auto is_keyword() const -> bool { return IsKeyword[AsInt()]; };
+  auto is_keyword() const -> bool { return IsKeyword[AsInt()]; }
 
   // Test whether this kind of token is a sized type literal.
   auto is_sized_type_literal() const -> bool {
     return *this == TokenKind::IntTypeLiteral ||
            *this == TokenKind::UnsignedIntTypeLiteral ||
            *this == TokenKind::FloatTypeLiteral;
-  };
+  }
 
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
   auto fixed_spelling() const -> llvm::StringLiteral {
     return FixedSpelling[AsInt()];
-  };
+  }
 
   // Get the expected number of parse tree nodes that will be created for this
   // token.

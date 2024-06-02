@@ -161,7 +161,7 @@ class ToolchainFileTest : public FileTestBase {
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(ToolchainFileTest);
+CARBON_FILE_TEST_FACTORY(ToolchainFileTest)
 
 }  // namespace Carbon::Testing
 
