@@ -143,8 +143,20 @@ def _impl(ctx):
                             "-Wctad-maybe-unsupported",
                             "-Wdelete-non-virtual-dtor",
                             # Don't warn on external code as we can't
-                            # necessarily patch it easily.
-                            "--system-header-prefix=external/",
+                            # necessarily patch it easily. Note that these have
+                            # to be initial directories in the `#include` line.
+                            "--system-header-prefix=absl/",
+                            "--system-header-prefix=benchmark/",
+                            "--system-header-prefix=clang-tools-extra/",
+                            "--system-header-prefix=clang/",
+                            "--system-header-prefix=gmock/",
+                            "--system-header-prefix=google/protobuf/",
+                            "--system-header-prefix=gtest/",
+                            "--system-header-prefix=libfuzzer/",
+                            "--system-header-prefix=llvm/",
+                            "--system-header-prefix=re2/",
+                            "--system-header-prefix=tools/cpp/",
+                            "--system-header-prefix=tree_sitter/",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ] + missing_field_init_flags,
