@@ -8,6 +8,7 @@
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"

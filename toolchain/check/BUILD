@@ -152,6 +152,7 @@ cc_fuzz_test(
     srcs = ["check_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],

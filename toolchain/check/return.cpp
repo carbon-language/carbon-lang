@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/return.h"
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 

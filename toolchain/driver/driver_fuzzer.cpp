@@ -9,6 +9,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "testing/base/test_raw_ostream.h"
+#include "testing/fuzzing/libfuzzer.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/install/install_paths.h"
 

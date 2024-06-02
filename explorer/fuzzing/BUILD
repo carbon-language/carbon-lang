@@ -110,6 +110,7 @@ cc_fuzz_test(
     name = "explorer_fuzzer",
     size = "small",
     srcs = ["explorer_fuzzer.cpp"],
+    copts = ["-Wno-missing-prototypes"],
     corpus = glob(["fuzzer_corpus/*"]),
     shard_count = 8,
     tags = [

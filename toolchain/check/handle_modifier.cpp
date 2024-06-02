@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_state.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Check {

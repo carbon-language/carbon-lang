@@ -2,18 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#ifndef CARBON_TOOLCHAIN_PARSE_HANDLE_H_
+#define CARBON_TOOLCHAIN_PARSE_HANDLE_H_
+
 #include "toolchain/parse/context.h"
-#include "toolchain/parse/handle.h"
 
 namespace Carbon::Parse {
 
-auto HandlePattern(Context& context) -> void {
-  context.PopAndDiscardState();
-  if (context.PositionKind() == Lex::TokenKind::OpenParen) {
-    context.PushState(State::PatternListAsTuple);
-  } else {
-    context.PushState(State::BindingPattern);
-  }
-}
+// Declare handlers for each parse state.
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
+#include "toolchain/parse/state.def"
 
 }  // namespace Carbon::Parse
+
+#endif  // CARBON_TOOLCHAIN_PARSE_HANDLE_H_

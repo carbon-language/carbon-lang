@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/typed_nodes.h"

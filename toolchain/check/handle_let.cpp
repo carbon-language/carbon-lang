@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"

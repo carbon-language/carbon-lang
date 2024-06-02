@@ -1042,7 +1042,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
 
 // Returns true if the two values are known to be equal and are written in the
 // same way at the top level.
-auto ValueStructurallyEqual(
+static auto ValueStructurallyEqual(
     Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     std::optional<Nonnull<const EqualityContext*>> equality_ctx) -> bool {
   if (v1 == v2) {

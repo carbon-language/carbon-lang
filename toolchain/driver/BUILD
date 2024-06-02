@@ -110,6 +110,7 @@ cc_fuzz_test(
     deps = [
         ":driver",
         "//testing/base:test_raw_ostream",
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],

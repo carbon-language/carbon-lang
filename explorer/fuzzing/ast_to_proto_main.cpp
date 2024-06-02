@@ -21,7 +21,7 @@
 
 namespace Carbon::Testing {
 
-auto Main(int argc, char** argv) -> ErrorOr<Success> {
+static auto Main(int argc, char** argv) -> ErrorOr<Success> {
   SetWorkingDirForBazel();
 
   if (argc != 2) {
