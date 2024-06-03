@@ -88,6 +88,7 @@ class FileTestAutoupdater {
     int line_number = -1;
   };
 
+  // A TIP line added by autoupdate. Not associated with any line in output.
   class TipLine : public FileTestLineBase {
    public:
     explicit TipLine(std::string line)
@@ -165,7 +166,7 @@ class FileTestAutoupdater {
   // still needs to advance the cursor when ready.
   auto AddRemappedNonCheckLine() -> void;
 
-  // Adds TIP lines.
+  // Adds TIP lines for file_test usage.
   auto AddTips() -> void;
 
   // Returns true if there's a CheckLine that should be added at
@@ -199,6 +200,7 @@ class FileTestAutoupdater {
   const llvm::SmallVector<LineNumberReplacement>& line_number_replacements_;
   std::function<void(std::string&)> do_extra_check_replacements_;
 
+  // Generated TIP lines, from AddTips.
   llvm::SmallVector<TipLine> tips_;
 
   // The constructed CheckLine list and cursor.
