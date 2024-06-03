@@ -36,10 +36,10 @@ static auto BuildInterfaceDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
 
   // Process modifiers.
-  auto [_, enclosing_scope_inst] =
-      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
+  auto [_, parent_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
-                             enclosing_scope_inst);
+                             parent_scope_inst);
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 
@@ -84,7 +84,7 @@ static auto BuildInterfaceDecl(Context& context,
     // invalid.
     interface_decl.interface_id = context.interfaces().Add(
         {.name_id = name_context.name_id_for_new_inst(),
-         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
          .decl_id = interface_decl_id});
   }
 
@@ -121,7 +121,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
     interface_info.definition_id = interface_decl_id;
     interface_info.scope_id =
         context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
-                                  interface_info.enclosing_scope_id);
+                                  interface_info.parent_scope_id);
   }
 
   // Enter the interface scope.
@@ -145,7 +145,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
     // the `value_id` on the `BindSymbolicName`.
     auto bind_name_id = context.bind_names().Add(
         {.name_id = SemIR::NameId::SelfType,
-         .enclosing_scope_id = interface_info.scope_id,
+         .parent_scope_id = interface_info.scope_id,
          .bind_index = context.scope_stack().AddCompileTimeBinding()});
     interface_info.self_param_id = context.AddInst<SemIR::BindSymbolicName>(
         SemIR::LocId::Invalid, {.type_id = self_type_id,

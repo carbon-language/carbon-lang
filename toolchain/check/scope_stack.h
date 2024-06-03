@@ -102,11 +102,11 @@ class ScopeStack {
   // lookup result, if any.
   auto LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId;
 
-  // Looks up the name `name_id` in the current scope and its enclosing scopes.
+  // Looks up the name `name_id` in the current scope and its ancestor scopes.
   // Returns the innermost lexical lookup result, if any, along with a list of
   // non-lexical scopes in which lookup should also be performed, ordered from
   // outermost to innermost.
-  auto LookupInEnclosingScopes(SemIR::NameId name_id)
+  auto LookupInAcestorScopes(SemIR::NameId name_id)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
   // Looks up the name `name_id` in the current scope. Returns the existing
@@ -159,7 +159,7 @@ class ScopeStack {
     // The next compile-time binding index to allocate in this scope.
     SemIR::CompileTimeBindIndex next_compile_time_bind_index;
 
-    // Whether lexical_lookup_ has load errors from this scope or an enclosing
+    // Whether lexical_lookup_ has load errors from this scope or an ancestor
     // scope.
     bool lexical_lookup_has_load_error;
 

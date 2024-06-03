@@ -252,10 +252,10 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                     SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
-  // Find the results from enclosing lexical scopes. These will be combined with
+  // Find the results from ancestor lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
   auto [lexical_result, non_lexical_scopes] =
-      scope_stack().LookupInEnclosingScopes(name_id);
+      scope_stack().LookupInAcestorScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scopes)) {
@@ -340,7 +340,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Add the first result found.
       auto bind_name_id = context.bind_names().Add(
           {.name_id = name_id,
-           .enclosing_scope_id = scope_id,
+           .parent_scope_id = scope_id,
            .bind_index = SemIR::CompileTimeBindIndex::Invalid});
       result_id =
           AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second},
@@ -567,7 +567,6 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   }
 }
 
-// Add the current code block to the enclosing function.
 auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
 
@@ -621,7 +620,7 @@ auto Context::FinalizeGlobalInit() -> void {
     auto name_id = sem_ir().identifiers().Add("__global_init");
     sem_ir().functions().Add(
         {.name_id = SemIR::NameId::ForIdentifier(name_id),
-         .enclosing_scope_id = SemIR::NameScopeId::Package,
+         .parent_scope_id = SemIR::NameScopeId::Package,
          .decl_id = SemIR::InstId::Invalid,
          .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
          .param_refs_id = SemIR::InstBlockId::Empty,

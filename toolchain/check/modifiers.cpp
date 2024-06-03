@@ -62,10 +62,10 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
 }
 
 auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                std::optional<SemIR::Inst> enclosing_scope_inst)
+                                std::optional<SemIR::Inst> parent_scope_inst)
     -> void {
-  if (enclosing_scope_inst) {
-    if (enclosing_scope_inst->Is<SemIR::Namespace>()) {
+  if (parent_scope_inst) {
+    if (parent_scope_inst->Is<SemIR::Namespace>()) {
       // TODO: This assumes that namespaces can only be declared at file scope.
       // If we add support for non-file-scope namespaces, we will need to check
       // the parents of the target scope to determine whether we're at file
@@ -76,7 +76,7 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
       return;
     }
 
-    if (enclosing_scope_inst->Is<SemIR::ClassDecl>()) {
+    if (parent_scope_inst->Is<SemIR::ClassDecl>()) {
       // Both `private` and `protected` allowed in a class definition.
       return;
     }
@@ -91,24 +91,22 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
 }
 
 auto CheckMethodModifiersOnFunction(
-    Context& context, SemIR::InstId enclosing_scope_inst_id,
-    std::optional<SemIR::Inst> enclosing_scope_inst) -> void {
+    Context& context, SemIR::InstId parent_scope_inst_id,
+    std::optional<SemIR::Inst> parent_scope_inst) -> void {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  if (enclosing_scope_inst) {
-    if (auto class_decl = enclosing_scope_inst->TryAs<SemIR::ClassDecl>()) {
+  if (parent_scope_inst) {
+    if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
       auto inheritance_kind =
           context.classes().Get(class_decl->class_id).inheritance_kind;
       if (inheritance_kind == SemIR::Class::Final) {
-        ForbidModifiersOnDecl(
-            context, KeywordModifierSet::Virtual, decl_kind,
-            " in a non-abstract non-base `class` definition",
-            context.insts().GetLocId(enclosing_scope_inst_id));
+        ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
+                              " in a non-abstract non-base `class` definition",
+                              context.insts().GetLocId(parent_scope_inst_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
-        ForbidModifiersOnDecl(
-            context, KeywordModifierSet::Abstract, decl_kind,
-            " in a non-abstract `class` definition",
-            context.insts().GetLocId(enclosing_scope_inst_id));
+        ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
+                              " in a non-abstract `class` definition",
+                              context.insts().GetLocId(parent_scope_inst_id));
       }
       return;
     }
@@ -118,15 +116,14 @@ auto CheckMethodModifiersOnFunction(
                         " outside of a class");
 }
 
-auto RestrictExternModifierOnDecl(
-    Context& context, Lex::TokenKind decl_kind,
-    std::optional<SemIR::Inst> enclosing_scope_inst, bool is_definition)
-    -> void {
+auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
+                                  std::optional<SemIR::Inst> parent_scope_inst,
+                                  bool is_definition) -> void {
   if (is_definition) {
     ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
                           " that provides a definition");
   }
-  if (enclosing_scope_inst && !enclosing_scope_inst->Is<SemIR::Namespace>()) {
+  if (parent_scope_inst && !parent_scope_inst->Is<SemIR::Namespace>()) {
     ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
                           " that is a member");
   }
@@ -134,9 +131,8 @@ auto RestrictExternModifierOnDecl(
 
 auto RequireDefaultFinalOnlyInInterfaces(
     Context& context, Lex::TokenKind decl_kind,
-    std::optional<SemIR::Inst> enclosing_scope_inst) -> void {
-  if (enclosing_scope_inst &&
-      enclosing_scope_inst->Is<SemIR::InterfaceDecl>()) {
+    std::optional<SemIR::Inst> parent_scope_inst) -> void {
+  if (parent_scope_inst && parent_scope_inst->Is<SemIR::InterfaceDecl>()) {
     // Both `default` and `final` allowed in an interface definition.
     return;
   }

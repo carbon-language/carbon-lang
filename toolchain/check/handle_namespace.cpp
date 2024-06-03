@@ -31,7 +31,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
   namespace_inst.name_scope_id = context.name_scopes().Add(
       namespace_id, name_context.name_id_for_new_inst(),
-      name_context.enclosing_scope_id_for_new_inst());
+      name_context.parent_scope_id_for_new_inst());
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   auto existing_inst_id =
