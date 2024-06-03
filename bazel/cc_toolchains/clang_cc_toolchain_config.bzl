@@ -141,7 +141,8 @@ def _impl(ctx):
                             "-Wself-assign",
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
-                            "-Wdelete-non-virtual-dtor",
+                            "-Wextra-semi",
+                            "-Wzero-as-null-pointer-constant",
                             # Don't warn on external code as we can't
                             # necessarily patch it easily. Note that these have
                             # to be initial directories in the `#include` line.

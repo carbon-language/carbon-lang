@@ -379,7 +379,7 @@ auto NumericLiteral::Parser::CheckDigitSeparatorPlacement(
   if (remaining_digit_separators) {
     diagnose_irregular_digit_separators();
   }
-};
+}
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto NumericLiteral::Parser::CheckLeadingZero() -> bool {

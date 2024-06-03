@@ -35,7 +35,7 @@ void LanguageServer::OnInitialize(
 
   llvm::json::Object reply{{"capabilities", std::move(capabilities)}};
   cb(reply);
-};
+}
 
 auto LanguageServer::onNotify(llvm::StringRef method, llvm::json::Value value)
     -> bool {

@@ -108,6 +108,6 @@ class ExplorerFileTest : public FileTestBase {
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(ExplorerFileTest);
+CARBON_FILE_TEST_FACTORY(ExplorerFileTest)
 
 }  // namespace Carbon::Testing

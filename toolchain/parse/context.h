@@ -56,7 +56,7 @@ class Context {
     auto Print(llvm::raw_ostream& output) const -> void {
       output << state << " @" << token << " subtree_start=" << subtree_start
              << " has_error=" << has_error;
-    };
+    }
 
     // The state.
     State state;

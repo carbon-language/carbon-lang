@@ -264,7 +264,7 @@ class VariableDefinition : public Statement {
     return expression_category_;
   }
 
-  auto is_returned() const -> bool { return def_type_ == Returned; };
+  auto is_returned() const -> bool { return def_type_ == Returned; }
 
  private:
   Nonnull<Pattern*> pattern_;

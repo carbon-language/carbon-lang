@@ -30,7 +30,7 @@ class Heap : public HeapAllocationInterface, public Printable<Heap> {
 
   // Constructs an empty Heap.
   explicit Heap(Nonnull<TraceStream*> trace_stream, Nonnull<Arena*> arena)
-      : arena_(arena), trace_stream_(trace_stream){};
+      : arena_(arena), trace_stream_(trace_stream) {}
 
   Heap(const Heap&) = delete;
   auto operator=(const Heap&) -> Heap& = delete;

@@ -88,6 +88,7 @@ cc_library(
         "-Wno-unused-but-set-variable",
         "-Wno-unused-function",
         "-Wno-writable-strings",
+        "-Wno-zero-as-null-pointer-constant",
     ],
     # Running clang-tidy is slow, and explorer is currently feature frozen, so
     # don't spend time linting it.

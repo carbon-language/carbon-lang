@@ -63,7 +63,7 @@ void Bindings::Print(llvm::raw_ostream& out) const {
     out << sep << "`" << *binding << "`: `" << *value << "`";
   }
   out << "]";
-};
+}
 
 auto Bindings::None() -> Nonnull<const Bindings*> {
   static Nonnull<const Bindings*> bindings = new Bindings;

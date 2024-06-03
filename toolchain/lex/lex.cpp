@@ -600,7 +600,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   table['\n'] = &DispatchLexVerticalWhitespace;
 
   return table;
-};
+}
 
 static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
 
