@@ -9,6 +9,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstring>
+#include <iterator>
 #include <new>
 #include <type_traits>
 #include <utility>
@@ -255,6 +256,18 @@ struct StorageEntry<KeyT, void> {
   alignas(KeyT) std::byte key_storage[sizeof(KeyT)];
 };
 
+struct Metrics {
+  ssize_t key_count = 0;
+  ssize_t deleted_count = 0;
+  ssize_t storage_bytes = 0;
+
+  ssize_t probed_key_count = 0;
+  double probe_avg_distance = 0.0;
+  ssize_t probe_max_distance = 0;
+  double probe_avg_compares = 0.0;
+  ssize_t probe_max_compares = 0;
+};
+
 // A placeholder empty type used to model pointers to the allocated buffer of
 // storage.
 //
@@ -301,6 +314,7 @@ class ViewImpl {
   using ValueT = InputValueT;
   using KeyContextT = InputKeyContextT;
   using EntryT = StorageEntry<KeyT, ValueT>;
+  using MetricsT = Metrics;
 
   friend class BaseImpl<KeyT, ValueT, KeyContextT>;
 
@@ -335,9 +349,10 @@ class ViewImpl {
   auto ForEachEntry(EntryCallbackT entry_callback,
                     GroupCallbackT group_callback) const -> void;
 
-  // Counts the number of keys in the hashtable that required probing beyond the
-  // initial group.
-  auto CountProbedKeys(KeyContextT key_context) const -> ssize_t;
+  // Returns a collection of informative metrics on the the current state of the
+  // table, useful for performance analysis. These include relatively slow to
+  // compute metrics requiring deep inspection of the table's state.
+  auto GetMetrics(KeyContextT key_context) const -> MetricsT;
 
  private:
   ViewImpl(ssize_t alloc_size, Storage* storage)
@@ -356,6 +371,11 @@ class ViewImpl {
     CARBON_DCHECK(static_cast<uint64_t>(alloc_size) ==
                   llvm::alignTo<alignof(EntryT)>(alloc_size));
     return alloc_size;
+  }
+
+  // Compute the allocated table's byte size.
+  static constexpr auto AllocByteSize(ssize_t alloc_size) -> ssize_t {
+    return EntriesOffset(alloc_size) + sizeof(EntryT) * alloc_size;
   }
 
   auto metadata() const -> uint8_t* {
@@ -388,6 +408,7 @@ class BaseImpl {
   using KeyContextT = InputKeyContextT;
   using ViewImplT = ViewImpl<KeyT, ValueT, KeyContextT>;
   using EntryT = typename ViewImplT::EntryT;
+  using MetricsT = typename ViewImplT::MetricsT;
 
   BaseImpl(int small_alloc_size, Storage* small_storage)
       : small_alloc_size_(small_alloc_size) {
@@ -447,9 +468,6 @@ class BaseImpl {
   template <>
   struct SmallStorage<0> {};
 
-  static constexpr auto AllocByteSize(ssize_t alloc_size) -> ssize_t {
-    return ViewImplT::EntriesOffset(alloc_size) + sizeof(EntryT) * alloc_size;
-  }
   static auto Allocate(ssize_t alloc_size) -> Storage*;
   static auto Deallocate(Storage* storage, ssize_t alloc_size) -> void;
 
@@ -709,26 +727,74 @@ ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ForEachEntry(
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::CountProbedKeys(
-    KeyContextT key_context) const -> ssize_t {
+auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::GetMetrics(
+    KeyContextT key_context) const -> Metrics {
   uint8_t* local_metadata = metadata();
   EntryT* local_entries = entries();
   ssize_t local_size = alloc_size_;
-  ssize_t count = 0;
+
+  Metrics metrics;
+
+  // Compute the ones we can directly.
+  metrics.deleted_count = llvm::count(
+      llvm::ArrayRef(local_metadata, local_size), MetadataGroup::Deleted);
+  metrics.storage_bytes = AllocByteSize(local_size);
+
+  // We want to process present slots specially to collect metrics on their
+  // probing behavior.
   for (ssize_t group_index = 0; group_index < local_size;
        group_index += GroupSize) {
     auto g = MetadataGroup::Load(local_metadata, group_index);
     auto present_matched_range = g.MatchPresent();
     for (ssize_t byte_index : present_matched_range) {
+      ++metrics.key_count;
       ssize_t index = group_index + byte_index;
       HashCode hash =
           key_context.HashKey(local_entries[index].key(), ComputeSeed());
-      ssize_t hash_index = hash.ExtractIndexAndTag<7>().first &
-                           ComputeProbeMaskFromSize(local_size);
-      count += static_cast<ssize_t>(hash_index != group_index);
+      auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
+      ProbeSequence s(hash_index, local_size);
+      metrics.probed_key_count +=
+          static_cast<ssize_t>(s.index() != group_index);
+
+      // For each probed key, go through the probe sequence to find both the
+      // probe distance and how many comparisons are required.
+      ssize_t distance = 0;
+      ssize_t compares = 0;
+      for (;; s.Next()) {
+        ssize_t probe_index = s.index();
+        MetadataGroup probe_g =
+            MetadataGroup::Load(local_metadata, probe_index);
+        auto metadata_matched_range = probe_g.Match(tag);
+        if (probe_index != group_index) {
+          compares += std::distance(metadata_matched_range.begin(),
+                                    metadata_matched_range.end());
+          distance += 1;
+          continue;
+        }
+
+        CARBON_CHECK(!metadata_matched_range.empty());
+        for (ssize_t match_index : metadata_matched_range) {
+          if (match_index >= byte_index) {
+            // Note we only count the compares that will *fail* as part of
+            // probing. The last successful compare isn't interesting, it is
+            // always needed.
+            break;
+          }
+          compares += 1;
+        }
+        break;
+      }
+      metrics.probe_avg_distance += distance;
+      metrics.probe_max_distance =
+          std::max(metrics.probe_max_distance, distance);
+      metrics.probe_avg_compares += compares;
+      metrics.probe_max_compares =
+          std::max(metrics.probe_max_compares, compares);
     }
   }
-  return count;
+  metrics.probe_avg_compares /= metrics.key_count;
+  metrics.probe_avg_distance /= metrics.key_count;
+  return metrics;
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -888,8 +954,8 @@ template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Allocate(
     ssize_t alloc_size) -> Storage* {
   return reinterpret_cast<Storage*>(__builtin_operator_new(
-      AllocByteSize(alloc_size), static_cast<std::align_val_t>(Alignment),
-      std::nothrow_t()));
+      ViewImplT::AllocByteSize(alloc_size),
+      static_cast<std::align_val_t>(Alignment), std::nothrow_t()));
 }
 
 // Deallocates a table's storage that was allocated with the `Allocate`
@@ -897,7 +963,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Allocate(
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Deallocate(
     Storage* storage, ssize_t alloc_size) -> void {
-  ssize_t allocated_size = AllocByteSize(alloc_size);
+  ssize_t allocated_size = ViewImplT::AllocByteSize(alloc_size);
   // We don't need the size, but make sure it always compiles.
   static_cast<void>(allocated_size);
   __builtin_operator_delete(storage,

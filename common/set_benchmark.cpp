@@ -365,10 +365,23 @@ static void BM_SetInsertSeq(benchmark::State& state) {
     // While this count is "iteration invariant" (it should be exactly the same
     // for every iteration as the set of keys is the same), we don't use that
     // because it will scale this by the number of iterations. We want to
-    // display the probe count of this benchmark *parameter*, not the probe
-    // count that resulted from the number of iterations. That means we use the
-    // normal counter API without flags.
-    state.counters["Probed"] = s.CountProbedKeys();
+    // display the metrics for this benchmark *parameter*, not what resulted
+    // from the number of iterations. That means we use the normal counter API
+    // without flags.
+    auto metrics = s.GetMetrics();
+    state.counters["P-compares"] = metrics.probe_avg_compares;
+    state.counters["P-distance"] = metrics.probe_avg_distance;
+    state.counters["P-fraction"] =
+        static_cast<double>(metrics.probed_key_count) / keys.size();
+    state.counters["Pmax-distance"] = metrics.probe_max_distance;
+    state.counters["Pmax-compares"] = metrics.probe_max_compares;
+    state.counters["Probed"] = metrics.probed_key_count;
+
+    state.counters["Storage"] = metrics.storage_bytes;
+    // Also compute how 'efficient' the storage is, 1.0 being zero bytes outside
+    // of keys.
+    state.counters["Storage eff"] =
+        static_cast<double>(keys.size() * sizeof(KT)) / metrics.storage_bytes;
 
     // Uncomment this call to print out statistics about the index-collisions
     // among these keys for debugging:
