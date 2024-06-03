@@ -38,7 +38,7 @@ class InstallPathsTest : public ::testing::Test {
   // check that the path accessors point to the right kind of file or
   // directory.
   auto TestInstallPaths(const InstallPaths& paths) -> void {
-    SCOPED_TRACE(llvm::formatv("Install prefix: '%s'", paths.prefix()));
+    SCOPED_TRACE(llvm::formatv("Install prefix: '{0}'", paths.prefix()));
 
     // Grab a the prefix into a string to make it easier to use in the test.
     std::string prefix = paths.prefix().str();
