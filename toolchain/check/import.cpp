@@ -18,49 +18,6 @@
 
 namespace Carbon::Check {
 
-// Returns name information for the entity, corresponding to IDs in the import
-// IR rather than the current IR.
-static auto GetImportName(const SemIR::File& import_sem_ir,
-                          SemIR::Inst import_inst)
-    -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
-  CARBON_KIND_SWITCH(import_inst) {
-    case SemIR::BindAlias::Kind:
-    case SemIR::BindName::Kind:
-    case SemIR::BindSymbolicName::Kind:
-    case SemIR::ExportDecl::Kind: {
-      auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
-      const auto& bind_name =
-          import_sem_ir.bind_names().Get(bind_inst.bind_name_id);
-      return {bind_name.name_id, bind_name.parent_scope_id};
-    }
-
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      const auto& class_info = import_sem_ir.classes().Get(class_decl.class_id);
-      return {class_info.name_id, class_info.parent_scope_id};
-    }
-
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      const auto& function =
-          import_sem_ir.functions().Get(function_decl.function_id);
-      return {function.name_id, function.parent_scope_id};
-    }
-
-    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      const auto& interface =
-          import_sem_ir.interfaces().Get(interface_decl.interface_id);
-      return {interface.name_id, interface.parent_scope_id};
-    }
-
-    case CARBON_KIND(SemIR::Namespace ns): {
-      const auto& scope = import_sem_ir.name_scopes().Get(ns.name_scope_id);
-      return {scope.name_id, scope.parent_scope_id};
-    }
-
-    default:
-      CARBON_FATAL() << "Unsupported export kind: " << import_inst;
-  }
-}
-
 // Translate the name to the current IR. It will usually be an identifier, but
 // could also be a builtin name ID which is equivalent cross-IR.
 static auto CopyNameFromImportIR(Context& context,
@@ -252,8 +209,14 @@ auto ImportLibrariesFromCurrentPackage(
     for (const auto import_inst_id :
          import_ir.sem_ir->inst_blocks().Get(SemIR::InstBlockId::Exports)) {
       auto import_inst = import_ir.sem_ir->insts().Get(import_inst_id);
-      auto [import_name_id, import_parent_scope_id] =
+      auto [import_name_id, import_parent_scope_id, import_access_kind] =
           GetImportName(*import_ir.sem_ir, import_inst);
+
+      // Private entities aren't imported, unless they're from the `api` file.
+      if (import_access_kind == SemIR::AccessKind::Private &&
+          ir_id != SemIR::ImportIRId::ApiForImpl) {
+        continue;
+      }
 
       llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId> copied_namespaces;
 

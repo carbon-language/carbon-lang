@@ -9,17 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_todo_modifiers.carbon
 
 class Access {
-
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
-  // CHECK:STDERR:   private fn F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
+  // TODO: Test calls to these (access control not yet implemented).
   private fn F();
-
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
-  // CHECK:STDERR:   protected fn G();
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
   protected fn G();
 
   // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
@@ -116,21 +107,21 @@ abstract class Abstract {
 // CHECK:STDOUT: class @Access {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%struct.3() [template = i32]
-// CHECK:STDOUT:   %.loc29_18.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
-// CHECK:STDOUT:   %.loc29_18.2: type = converted %int.make_type_32.loc29, %.loc29_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc29_16: <unbound element of class Access> = field_decl k, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc35: init type = call constants.%struct.3() [template = i32]
-// CHECK:STDOUT:   %.loc35_20.1: type = value_of_initializer %int.make_type_32.loc35 [template = i32]
-// CHECK:STDOUT:   %.loc35_20.2: type = converted %int.make_type_32.loc35, %.loc35_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc35_18: <unbound element of class Access> = field_decl l, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc20: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc20_18.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
+// CHECK:STDOUT:   %.loc20_18.2: type = converted %int.make_type_32.loc20, %.loc20_18.1 [template = i32]
+// CHECK:STDOUT:   %.loc20_16: <unbound element of class Access> = field_decl k, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc26: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc26_20.1: type = value_of_initializer %int.make_type_32.loc26 [template = i32]
+// CHECK:STDOUT:   %.loc26_20.2: type = converted %int.make_type_32.loc26, %.loc26_20.1 [template = i32]
+// CHECK:STDOUT:   %.loc26_18: <unbound element of class Access> = field_decl l, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   .k = %.loc29_16
-// CHECK:STDOUT:   .l = %.loc35_18
+// CHECK:STDOUT:   .k = %.loc20_16
+// CHECK:STDOUT:   .l = %.loc26_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

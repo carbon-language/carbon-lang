@@ -173,6 +173,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                        prev_import_ir_id)) {
     // When merging, use the existing entity rather than adding a new one.
     class_decl.class_id = prev_class_id;
+    // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 }
 
@@ -195,11 +196,6 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                            KeywordModifierSet::Extern);
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
-                 "access modifier");
-  }
 
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto inheritance_kind =
@@ -289,10 +285,9 @@ auto HandleClassDefinitionStart(Context& context,
   context.scope_stack().Push(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.name_scopes()
-      .Get(class_info.scope_id)
-      .names.insert({SemIR::NameId::SelfType,
-                     context.types().GetInstId(class_info.self_type_id)});
+  context.name_scopes().AddRequiredName(
+      class_info.scope_id, SemIR::NameId::SelfType,
+      context.types().GetInstId(class_info.self_type_id));
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);

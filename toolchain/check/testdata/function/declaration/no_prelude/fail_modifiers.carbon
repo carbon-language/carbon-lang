@@ -34,10 +34,6 @@ default protected fn WrongOrder();
 // CHECK:STDERR:
 virtual virtual fn DuplicateVirtual() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `access modifier`.
-// CHECK:STDERR: private protected fn TwoAccess();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR:         ^~~~~~~~~

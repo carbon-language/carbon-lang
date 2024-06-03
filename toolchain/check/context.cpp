@@ -20,6 +20,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/sem_ir/access_kind.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -321,9 +322,17 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Name doesn't exist in the import scope.
       continue;
     }
-    if (import_ir.sem_ir->insts().Is<SemIR::AnyImportRef>(it->second)) {
+    auto import_inst = import_ir.sem_ir->insts().Get(it->second);
+    if (import_inst.Is<SemIR::AnyImportRef>()) {
       // This entity was added to name lookup by using an import, and is not
       // exported.
+      continue;
+    }
+
+    auto access_kind =
+        std::get<2>(GetImportName(*import_ir.sem_ir, import_inst));
+    if (access_kind != SemIR::AccessKind::Public) {
+      // Ignore cross-package non-public names.
       continue;
     }
 

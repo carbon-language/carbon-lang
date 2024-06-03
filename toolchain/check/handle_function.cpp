@@ -228,10 +228,6 @@ static auto BuildFunctionDecl(Context& context,
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Fn>();
   DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
                     parent_scope_inst);
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
-                 "access modifier");
-  }
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
@@ -268,6 +264,8 @@ static auto BuildFunctionDecl(Context& context,
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
     function_decl.function_id = context.functions().Add(function_info);
+  } else {
+    // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
   function_decl.type_id = context.GetFunctionType(function_decl.function_id);
 
