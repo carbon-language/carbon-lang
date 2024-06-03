@@ -114,15 +114,6 @@ cc_library(
     ],
 )
 
-# Build up some trees of data to use in testing our install detection.
-symlink_filegroup(
-    name = "test_installed_data",
-    testonly = 1,
-    srcs = ["//toolchain/install:install_data"],
-    out_prefix = "test_installed_root/",
-    remove_prefix = "toolchain/install/prefix_root/",
-)
-
 cc_binary(
     name = "test_binary",
     testonly = 1,
@@ -137,7 +128,6 @@ cc_test(
     data = [
         ":install_data",
         ":test_binary",
-        ":test_installed_data",
     ],
     deps = [
         ":install_paths",
