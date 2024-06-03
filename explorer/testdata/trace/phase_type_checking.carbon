@@ -13,7 +13,7 @@ fn Main() -> i32 {
 // Place checks after code so that line numbers are stable, reducing merge
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=type_checking %s
-// AUTOUPDATE
+// NOAUTOUPDATE
 
 // CHECK:STDOUT: * * * * * * * * * *  type checking  * * * * * * * * * *
 // CHECK:STDOUT: -------------------------------------------------------

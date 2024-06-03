@@ -4,7 +4,7 @@
 //
 // TODO: This SHOULD fail but doesn't presently.
 //
-// AUTOUPDATE
+// NOAUTOUPDATE
 
 package ExplorerTest api;
 
