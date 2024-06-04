@@ -10,11 +10,12 @@
 namespace Carbon::Check {
 
 // Reports a diagnostic if access control modifiers on this are not allowed for
-// a declaration in `parent_scope_inst`, and updates the declaration state in
-// `context`.
+// a declaration in `parent_scope_inst`, and updates `introducer`.
 //
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
-auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
+auto CheckAccessModifiersOnDecl(Context& context,
+                                DeclIntroducerState& introducer,
+                                Lex::TokenKind decl_kind,
                                 std::optional<SemIR::Inst> parent_scope_inst)
     -> void;
 
@@ -24,25 +25,28 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
 //
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
 auto CheckMethodModifiersOnFunction(
-    Context& context, SemIR::InstId parent_scope_inst_id,
+    Context& context, DeclIntroducerState& introducer,
+    SemIR::InstId parent_scope_inst_id,
     std::optional<SemIR::Inst> parent_scope_inst) -> void;
 
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_loc_id`) specifying the context in
 // which those modifiers are forbidden.
 // TODO: Take another look at diagnostic phrasing for callers.
-auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
+auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
+                           KeywordModifierSet forbidden,
                            Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
                            SemIR::LocId context_loc_id = SemIR::LocId::Invalid)
     -> void;
 
 // Reports a diagnostic (using `decl_kind`) if modifiers on this declaration are
-// not in `allowed`. Updates the declaration state in
-// `context.decl_state_stack()`.
-inline auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
+// not in `allowed`. Updates `introducer`.
+inline auto LimitModifiersOnDecl(Context& context,
+                                 DeclIntroducerState& introducer,
+                                 KeywordModifierSet allowed,
                                  Lex::TokenKind decl_kind) -> void {
-  ForbidModifiersOnDecl(context, ~allowed, decl_kind, "");
+  ForbidModifiersOnDecl(context, introducer, ~allowed, decl_kind, "");
 }
 
 // Restricts the `extern` modifier to only be used on namespace-scoped
@@ -51,7 +55,9 @@ inline auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 // - `extern` on a scoped entity.
 //
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
-auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
+auto RestrictExternModifierOnDecl(Context& context,
+                                  DeclIntroducerState& introducer,
+                                  Lex::TokenKind decl_kind,
                                   std::optional<SemIR::Inst> parent_scope_inst,
                                   bool is_definition) -> void;
 
@@ -61,7 +67,7 @@ auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
 //
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
 auto RequireDefaultFinalOnlyInInterfaces(
-    Context& context, Lex::TokenKind decl_kind,
+    Context& context, DeclIntroducerState& introducer, Lex::TokenKind decl_kind,
     std::optional<SemIR::Inst> parent_scope_inst) -> void;
 
 }  // namespace Carbon::Check

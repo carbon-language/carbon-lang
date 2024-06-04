@@ -66,8 +66,8 @@ cc_library(
     hdrs = [
         "context.h",
         "convert.h",
+        "decl_introducer_state.h",
         "decl_name_stack.h",
-        "decl_state.h",
         "diagnostic_helpers.h",
         "eval.h",
         "function.h",

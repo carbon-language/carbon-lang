@@ -15,7 +15,7 @@ namespace Carbon::Check {
 
 auto HandleExportIntroducer(Context& context,
                             Parse::ExportIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::Export);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Export);
   // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
   context.decl_name_stack().PushScopeAndStartName();
   return true;
@@ -26,9 +26,10 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
       PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();
 
-  LimitModifiersOnDecl(context, KeywordModifierSet::None,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Export);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None,
                        Lex::TokenKind::Export);
-  context.decl_state_stack().Pop(DeclState::Export);
 
   if (name_context.state == DeclNameStack::NameContext::State::Error) {
     // Should already be diagnosed.

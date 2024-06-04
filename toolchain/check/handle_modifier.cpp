@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/decl_state.h"
+#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/lex/token_kind.h"
 
@@ -36,7 +36,7 @@ static auto DiagnoseNotAllowedWith(Context& context, Parse::NodeId first_node,
 
 static auto HandleModifier(Context& context, Parse::NodeId node_id,
                            KeywordModifierSet keyword) -> bool {
-  auto& s = context.decl_state_stack().innermost();
+  auto& s = context.decl_introducer_state_stack().innermost();
 
   ModifierOrder order;
   KeywordModifierSet later_modifiers;

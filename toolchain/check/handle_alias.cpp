@@ -14,7 +14,7 @@ namespace Carbon::Check {
 
 auto HandleAliasIntroducer(Context& context,
                            Parse::AliasIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::Alias);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Alias);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -30,15 +30,14 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
 
-  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Alias);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
                        Lex::TokenKind::Alias);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Alias);
 
   auto bind_name_id = context.bind_names().Add(
       {.name_id = name_context.name_id_for_new_inst(),

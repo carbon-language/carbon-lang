@@ -8,8 +8,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/decl_state.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
@@ -335,7 +335,9 @@ class Context {
 
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
-  auto decl_state_stack() -> DeclStateStack& { return decl_state_stack_; }
+  auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
+    return decl_introducer_state_stack_;
+  }
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
@@ -447,7 +449,7 @@ class Context {
   DeclNameStack decl_name_stack_;
 
   // The stack of declarations that could have modifiers.
-  DeclStateStack decl_state_stack_;
+  DeclIntroducerStateStack decl_introducer_state_stack_;
 
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;

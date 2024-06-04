@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/decl_state.h"
+#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/modifiers.h"
 
@@ -14,43 +14,48 @@ namespace Carbon::Check {
 
 auto HandleImportIntroducer(Context& context,
                             Parse::ImportIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::Import);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Import);
   return true;
 }
 
 auto HandleImportDecl(Context& context, Parse::ImportDeclId /*node_id*/)
     -> bool {
-  LimitModifiersOnDecl(context, KeywordModifierSet::Export,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Import);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Export,
                        Lex::TokenKind::Import);
-  context.decl_state_stack().Pop(DeclState::Import);
   return true;
 }
 
 auto HandleLibraryIntroducer(Context& context,
                              Parse::LibraryIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::PackageOrLibrary);
+  context.decl_introducer_state_stack().Push(
+      DeclIntroducerState::PackageOrLibrary);
   return true;
 }
 
 auto HandleLibraryDecl(Context& context, Parse::LibraryDeclId /*node_id*/)
     -> bool {
-  LimitModifiersOnDecl(context, KeywordModifierSet::Impl,
+  auto introducer = context.decl_introducer_state_stack().Pop(
+      DeclIntroducerState::PackageOrLibrary);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl,
                        Lex::TokenKind::Library);
-  context.decl_state_stack().Pop(DeclState::PackageOrLibrary);
   return true;
 }
 
 auto HandlePackageIntroducer(Context& context,
                              Parse::PackageIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::PackageOrLibrary);
+  context.decl_introducer_state_stack().Push(
+      DeclIntroducerState::PackageOrLibrary);
   return true;
 }
 
 auto HandlePackageDecl(Context& context, Parse::PackageDeclId /*node_id*/)
     -> bool {
-  LimitModifiersOnDecl(context, KeywordModifierSet::Impl,
+  auto introducer = context.decl_introducer_state_stack().Pop(
+      DeclIntroducerState::PackageOrLibrary);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl,
                        Lex::TokenKind::Package);
-  context.decl_state_stack().Pop(DeclState::PackageOrLibrary);
   return true;
 }
 
