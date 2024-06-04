@@ -189,14 +189,12 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Class);
-  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Class,
-                             parent_scope_inst);
+  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
-                           KeywordModifierSet::Extern,
-                       Lex::TokenKind::Class);
-  RestrictExternModifierOnDecl(context, introducer, Lex::TokenKind::Class,
-                               parent_scope_inst, is_definition);
+                           KeywordModifierSet::Extern);
+  RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
+                               is_definition);
 
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
@@ -368,8 +366,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
   // Process modifiers. `extend` is permitted, no others are allowed.
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Adapt);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend,
-                       Lex::TokenKind::Adapt);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
 
   auto parent_class_decl =
       GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
@@ -499,8 +496,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   // Process modifiers. `extend` is required, no others are allowed.
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Base);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend,
-                       Lex::TokenKind::Base);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
   if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");

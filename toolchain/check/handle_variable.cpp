@@ -103,10 +103,8 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
       context.scope_stack().PeekNameScopeId());
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Var);
-  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Var,
-                             parent_scope_inst);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
-                       Lex::TokenKind::Var);
+  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");

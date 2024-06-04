@@ -28,8 +28,7 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
 
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Export);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None,
-                       Lex::TokenKind::Export);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   if (name_context.state == DeclNameStack::NameContext::State::Error) {
     // Should already be diagnosed.

@@ -22,40 +22,35 @@ auto HandleImportDecl(Context& context, Parse::ImportDeclId /*node_id*/)
     -> bool {
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Import);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Export,
-                       Lex::TokenKind::Import);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Export);
   return true;
 }
 
 auto HandleLibraryIntroducer(Context& context,
                              Parse::LibraryIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(
-      DeclIntroducerState::PackageOrLibrary);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Library);
   return true;
 }
 
 auto HandleLibraryDecl(Context& context, Parse::LibraryDeclId /*node_id*/)
     -> bool {
-  auto introducer = context.decl_introducer_state_stack().Pop(
-      DeclIntroducerState::PackageOrLibrary);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl,
-                       Lex::TokenKind::Library);
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Library);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl);
   return true;
 }
 
 auto HandlePackageIntroducer(Context& context,
                              Parse::PackageIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(
-      DeclIntroducerState::PackageOrLibrary);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Package);
   return true;
 }
 
 auto HandlePackageDecl(Context& context, Parse::PackageDeclId /*node_id*/)
     -> bool {
-  auto introducer = context.decl_introducer_state_stack().Pop(
-      DeclIntroducerState::PackageOrLibrary);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl,
-                       Lex::TokenKind::Package);
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Package);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl);
   return true;
 }
 

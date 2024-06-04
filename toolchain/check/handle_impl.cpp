@@ -194,8 +194,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // TODO: Handle `final` modifier.
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Impl);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl,
-                       Lex::TokenKind::Impl);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl);
 
   // Finish processing the name, which should be empty, but might have
   // parameters.

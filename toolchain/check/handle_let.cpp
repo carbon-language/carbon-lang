@@ -84,14 +84,11 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
           context.scope_stack().PeekNameScopeId());
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Let);
-  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Let,
-                             parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, Lex::TokenKind::Let,
-                                      parent_scope_inst);
+  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(
       context, introducer,
-      KeywordModifierSet::Access | KeywordModifierSet::Interface,
-      Lex::TokenKind::Let);
+      KeywordModifierSet::Access | KeywordModifierSet::Interface);
 
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
