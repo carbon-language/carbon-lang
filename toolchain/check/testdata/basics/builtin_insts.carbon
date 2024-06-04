@@ -15,7 +15,7 @@
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}

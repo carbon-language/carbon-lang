@@ -45,21 +45,21 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
 }
 
 static auto DiagnoseModifiers(Context& context, bool is_definition,
-                              SemIR::InstId enclosing_scope_inst_id,
-                              std::optional<SemIR::Inst> enclosing_scope_inst)
+                              SemIR::InstId parent_scope_inst_id,
+                              std::optional<SemIR::Inst> parent_scope_inst)
     -> KeywordModifierSet {
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Fn, enclosing_scope_inst);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Fn, parent_scope_inst);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        Lex::TokenKind::Fn);
-  RestrictExternModifierOnDecl(context, Lex::TokenKind::Fn,
-                               enclosing_scope_inst, is_definition);
-  CheckMethodModifiersOnFunction(context, enclosing_scope_inst_id,
-                                 enclosing_scope_inst);
+  RestrictExternModifierOnDecl(context, Lex::TokenKind::Fn, parent_scope_inst,
+                               is_definition);
+  CheckMethodModifiersOnFunction(context, parent_scope_inst_id,
+                                 parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Fn,
-                                      enclosing_scope_inst);
+                                      parent_scope_inst);
 
   return context.decl_state_stack().innermost().modifier_set;
 }
@@ -130,7 +130,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
     prev_function.decl_id = new_function.decl_id;
-    ReplacePrevInstForMerge(context, prev_function.enclosing_scope_id,
+    ReplacePrevInstForMerge(context, prev_function.parent_scope_id,
                             prev_function.name_id, new_function.decl_id);
   }
   return true;
@@ -224,10 +224,10 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto [enclosing_scope_inst_id, enclosing_scope_inst] =
-      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
-  auto modifiers = DiagnoseModifiers(
-      context, is_definition, enclosing_scope_inst_id, enclosing_scope_inst);
+  auto [parent_scope_inst_id, parent_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
+  auto modifiers = DiagnoseModifiers(context, is_definition,
+                                     parent_scope_inst_id, parent_scope_inst);
   if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
@@ -253,7 +253,7 @@ static auto BuildFunctionDecl(Context& context,
       SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
   auto function_info = SemIR::Function{
       .name_id = name_context.name_id_for_new_inst(),
-      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
       .decl_id = context.AddPlaceholderInst(
           SemIR::LocIdAndInst(node_id, function_decl)),
       .implicit_param_refs_id = name.implicit_params_id,
@@ -284,9 +284,9 @@ static auto BuildFunctionDecl(Context& context,
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = function_info.decl_id;
-    if (enclosing_scope_inst && !name_context.has_qualifiers) {
+    if (parent_scope_inst && !name_context.has_qualifiers) {
       if (auto interface_scope =
-              enclosing_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
+              parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
         lookup_result_id = BuildAssociatedEntity(
             context, interface_scope->interface_id, function_info.decl_id);
       }

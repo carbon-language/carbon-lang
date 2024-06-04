@@ -27,10 +27,10 @@ fn B() {}
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block3]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -67,10 +67,10 @@ fn B() {}
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block3]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}

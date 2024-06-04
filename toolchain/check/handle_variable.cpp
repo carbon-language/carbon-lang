@@ -98,10 +98,9 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
   // Process declaration modifiers.
   // TODO: For a qualified `var` declaration, this should use the target scope
   // of the name introduced in the declaration. See #2590.
-  auto [_, enclosing_scope_inst] = context.name_scopes().GetInstIfValid(
+  auto [_, parent_scope_inst] = context.name_scopes().GetInstIfValid(
       context.scope_stack().PeekNameScopeId());
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var,
-                             enclosing_scope_inst);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var, parent_scope_inst);
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Var);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;

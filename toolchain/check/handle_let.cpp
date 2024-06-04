@@ -78,13 +78,12 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // Process declaration modifiers.
   // TODO: For a qualified `let` declaration, this should use the target scope
   // of the name introduced in the declaration. See #2590.
-  auto [enclosing_scope_inst_id, enclosing_scope_inst] =
+  auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(
           context.scope_stack().PeekNameScopeId());
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let,
-                             enclosing_scope_inst);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let, parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Let,
-                                      enclosing_scope_inst);
+                                      parent_scope_inst);
   LimitModifiersOnDecl(
       context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
       Lex::TokenKind::Let);
@@ -140,7 +139,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // Add the name of the binding to the current scope.
   auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
   context.AddNameToLookup(name_id, pattern_id);
-  if (enclosing_scope_inst_id == SemIR::InstId::PackageNamespace) {
+  if (parent_scope_inst_id == SemIR::InstId::PackageNamespace) {
     context.AddExport(pattern_id);
   }
   return true;

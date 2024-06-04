@@ -13,14 +13,14 @@ namespace Carbon::SemIR {
 
 struct BindNameInfo : public Printable<BindNameInfo> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index << "}";
   }
 
   // The name.
   NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
+  // The parent scope.
+  NameScopeId parent_scope_id;
   // The index for a compile-time binding. Invalid for a runtime binding.
   CompileTimeBindIndex bind_index;
 };
@@ -37,13 +37,13 @@ inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
 struct BindNameInfoDenseMapInfo {
   static auto getEmptyKey() -> BindNameInfo {
     return BindNameInfo{.name_id = NameId::Invalid,
-                        .enclosing_scope_id = NameScopeId::Invalid,
+                        .parent_scope_id = NameScopeId::Invalid,
                         .bind_index = CompileTimeBindIndex(
                             CompileTimeBindIndex::InvalidIndex - 1)};
   }
   static auto getTombstoneKey() -> BindNameInfo {
     return BindNameInfo{.name_id = NameId::Invalid,
-                        .enclosing_scope_id = NameScopeId::Invalid,
+                        .parent_scope_id = NameScopeId::Invalid,
                         .bind_index = CompileTimeBindIndex(
                             CompileTimeBindIndex::InvalidIndex - 2)};
   }

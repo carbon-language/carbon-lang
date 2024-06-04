@@ -470,10 +470,9 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
                                          int subtree_start, bool has_error)
     -> void {
   if (ParsingInDeferredDefinitionScope(*this)) {
-    enclosing_deferred_definition_stack_.push_back(
-        tree_->deferred_definitions_.Add(
-            {.start_id = FunctionDefinitionStartId(
-                 NodeId(tree_->node_impls_.size()))}));
+    deferred_definition_stack_.push_back(tree_->deferred_definitions_.Add(
+        {.start_id =
+             FunctionDefinitionStartId(NodeId(tree_->node_impls_.size()))}));
   }
 
   AddNode(NodeKind::FunctionDefinitionStart, token, subtree_start, has_error);
@@ -482,7 +481,7 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
 auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
                                     bool has_error) -> void {
   if (ParsingInDeferredDefinitionScope(*this)) {
-    auto definition_index = enclosing_deferred_definition_stack_.pop_back_val();
+    auto definition_index = deferred_definition_stack_.pop_back_val();
     auto& definition = tree_->deferred_definitions_.Get(definition_index);
     definition.definition_id =
         FunctionDefinitionId(NodeId(tree_->node_impls_.size()));

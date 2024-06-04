@@ -103,7 +103,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
       (prev_is_extern && !new_is_extern)) {
     prev_class.decl_id = new_class.decl_id;
     ReplacePrevInstForMerge(
-        context, prev_class.enclosing_scope_id, prev_class.name_id,
+        context, prev_class.parent_scope_id, prev_class.name_id,
         new_is_import ? new_loc.inst_id : new_class.decl_id);
   }
   return true;
@@ -184,16 +184,15 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers.
-  auto [_, enclosing_scope_inst] =
-      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
-                             enclosing_scope_inst);
+  auto [_, parent_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class, parent_scope_inst);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
                            KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
   RestrictExternModifierOnDecl(context, Lex::TokenKind::Class,
-                               enclosing_scope_inst, is_definition);
+                               parent_scope_inst, is_definition);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
@@ -221,7 +220,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
       .name_id = name_context.name_id_for_new_inst(),
-      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       // `.self_type_id` depends on the ClassType, so is set below.
@@ -282,7 +281,7 @@ auto HandleClassDefinitionStart(Context& context,
   if (!class_info.is_defined()) {
     class_info.definition_id = class_decl_id;
     class_info.scope_id = context.name_scopes().Add(
-        class_decl_id, SemIR::NameId::Invalid, class_info.enclosing_scope_id);
+        class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
   }
 
   // Enter the class scope.
@@ -321,10 +320,10 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
   context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
 }
 
-// Returns the declaration of the immediately-enclosing class scope, or
-// diagonses if there isn't one.
-static auto GetEnclosingClassOrDiagnose(Context& context, SemIRLoc loc,
-                                        Lex::TokenKind tok)
+// Returns the current scope's class declaration, or diagnoses if it isn't a
+// class.
+static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
+                                             Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
   auto class_scope = context.GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
@@ -369,13 +368,13 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   context.decl_state_stack().Pop(DeclState::Adapt);
 
-  auto enclosing_class_decl =
-      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
-  if (!enclosing_class_decl) {
+  auto parent_class_decl =
+      GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
+  if (!parent_class_decl) {
     return true;
   }
 
-  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.adapt_id.is_valid()) {
     DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
                                       Lex::TokenKind::Adapt);
@@ -505,13 +504,13 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Base);
 
-  auto enclosing_class_decl =
-      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
-  if (!enclosing_class_decl) {
+  auto parent_class_decl =
+      GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
+  if (!parent_class_decl) {
     return true;
   }
 
-  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.base_id.is_valid()) {
     DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
                                       Lex::TokenKind::Base);
