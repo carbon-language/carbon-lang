@@ -81,7 +81,7 @@ class InstallPathsTest : public ::testing::Test {
 
 TEST_F(InstallPathsTest, PrefixRootDriver) {
   std::string installed_driver_path = test_runfiles_->Rlocation(
-      "_main/toolchain/install/prefix_root/bin/carbon");
+      "carbon/toolchain/install/prefix_root/bin/carbon");
 
   auto paths = InstallPaths::MakeExeRelative(installed_driver_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
@@ -90,7 +90,7 @@ TEST_F(InstallPathsTest, PrefixRootDriver) {
 
 TEST_F(InstallPathsTest, PrefixRootExplicit) {
   std::string marker_path = test_runfiles_->Rlocation(
-      "_main/toolchain/install/prefix_root/lib/carbon/carbon_install.txt");
+      "carbon/toolchain/install/prefix_root/lib/carbon/carbon_install.txt");
 
   llvm::StringRef prefix_path = marker_path;
   CARBON_CHECK(prefix_path.consume_back("lib/carbon/carbon_install.txt"))
@@ -109,7 +109,7 @@ TEST_F(InstallPathsTest, TestRunfiles) {
 
 TEST_F(InstallPathsTest, BinaryRunfiles) {
   std::string test_binary_path =
-      test_runfiles_->Rlocation("_main/toolchain/install/test_binary");
+      test_runfiles_->Rlocation("carbon/toolchain/install/test_binary");
   CARBON_CHECK(llvm::sys::fs::can_execute(test_binary_path))
       << test_binary_path;
 
