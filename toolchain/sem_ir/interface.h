@@ -33,6 +33,10 @@ struct Interface : public Printable<Interface> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id = InstBlockId::Invalid;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id = InstBlockId::Invalid;
   // The first declaration of the interface. This is a InterfaceDecl.
   InstId decl_id;
 

@@ -833,6 +833,9 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst,
                            SemIR::ConstantId class_const_id) -> ResolveResult {
+    // TODO: The handling of interfaces repeats a lot with the handling of
+    // classes, and will likely also be repeated for named constraints and
+    // choice types. Factor out some of this functionality.
     const auto& import_class = import_ir_.classes().Get(inst.class_id);
 
     SemIR::ClassId class_id = SemIR::ClassId::Invalid;
@@ -1072,8 +1075,19 @@ class ImportRefResolver {
     // Start with an incomplete interface.
     SemIR::Interface new_interface = {
         .name_id = GetLocalNameId(import_interface.name_id),
-        // Set in the second pass once we've imported it.
+        // These are set in the second pass once we've imported them. Import
+        // enough of the parameter lists that we know whether this interface is
+        // a generic interface and can build the right constant value for it.
+        // TODO: Add a better way to represent a generic `Interface` prior to
+        // importing the parameters.
         .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+        .implicit_param_refs_id =
+            import_interface.implicit_param_refs_id.is_valid()
+                ? SemIR::InstBlockId::Empty
+                : SemIR::InstBlockId::Invalid,
+        .param_refs_id = import_interface.param_refs_id.is_valid()
+                             ? SemIR::InstBlockId::Empty
+                             : SemIR::InstBlockId::Invalid,
         .decl_id = interface_decl_id,
     };
 
@@ -1124,6 +1138,10 @@ class ImportRefResolver {
 
     auto enclosing_scope_id =
         GetLocalNameScopeId(import_interface.enclosing_scope_id);
+    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
+        GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
+    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
+        GetLocalParamConstantIds(import_interface.param_refs_id);
     auto self_param_id = GetLocalConstantId(import_interface.self_param_id);
 
     if (HasNewWork(initial_work)) {
@@ -1135,6 +1153,10 @@ class ImportRefResolver {
             .GetAs<SemIR::InterfaceType>(interface_const_id.inst_id())
             .interface_id);
     new_interface.enclosing_scope_id = enclosing_scope_id;
+    new_interface.implicit_param_refs_id = GetLocalParamRefsId(
+        import_interface.implicit_param_refs_id, implicit_param_const_ids);
+    new_interface.param_refs_id =
+        GetLocalParamRefsId(import_interface.param_refs_id, param_const_ids);
 
     if (import_interface.is_defined()) {
       AddInterfaceDefinition(import_interface, new_interface, self_param_id);

@@ -7,6 +7,8 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/merge.h"
+#include "toolchain/check/name_component.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -198,16 +200,12 @@ static auto PushNameQualifierScope(Context& context,
 }
 
 auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
-  if (name.implicit_params_id.is_valid() || name.params_id.is_valid()) {
-    context_->TODO(name.params_loc_id, "name qualifier with parameters");
-  }
-
   auto& name_context = decl_name_stack_.back();
   ApplyAndLookupName(name_context, name.name_loc_id, name.name_id);
   name_context.has_qualifiers = true;
 
   // Resolve the qualifier as a scope and enter the new scope.
-  auto scope_id = ResolveAsScope(name_context);
+  auto scope_id = ResolveAsScope(name_context, name);
   if (scope_id.is_valid()) {
     PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
                            context_->name_scopes().Get(scope_id).has_error);
@@ -246,7 +244,8 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
   }
 }
 
-auto DeclNameStack::ResolveAsScope(const NameContext& name_context) const
+auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
+                                   const NameComponent& name) const
     -> SemIR::NameScopeId {
   switch (name_context.state) {
     case NameContext::State::Empty:
@@ -270,10 +269,17 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context) const
       return SemIR::NameScopeId::Invalid;
   }
 
+  auto new_params =
+      DeclParams(name.name_loc_id, name.implicit_params_id, name.params_id);
+
   // Find the scope corresponding to the resolved instruction.
   CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       const auto& class_info = context_->classes().Get(class_decl.class_id);
+      if (!CheckRedeclParamsMatch(*context_, new_params,
+                                  DeclParams(*context_, class_info))) {
+        return SemIR::NameScopeId::Invalid;
+      }
       if (!class_info.is_defined()) {
         CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",
@@ -290,6 +296,10 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context) const
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       const auto& interface_info =
           context_->interfaces().Get(interface_decl.interface_id);
+      if (!CheckRedeclParamsMatch(*context_, new_params,
+                                  DeclParams(*context_, interface_info))) {
+        return SemIR::NameScopeId::Invalid;
+      }
       if (!interface_info.is_defined()) {
         CARBON_DIAGNOSTIC(
             QualifiedDeclInUndefinedInterfaceScope, Error,
@@ -311,6 +321,13 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context) const
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
+      if (!CheckRedeclParamsMatch(
+              *context_, new_params,
+              DeclParams(
+                  context_->insts().GetLocId(name_context.resolved_inst_id),
+                  SemIR::InstBlockId::Invalid, SemIR::InstBlockId::Invalid))) {
+        return SemIR::NameScopeId::Invalid;
+      }
       if (scope.is_closed_import) {
         CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
                           "Imported packages cannot be used for declarations.");

@@ -45,13 +45,19 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // different kinds of entity such as classes and functions.
 struct DeclParams {
   template <typename Entity>
-  explicit DeclParams(const Entity& entity)
-      : decl_id(entity.decl_id),
+  explicit DeclParams(Context& context, const Entity& entity)
+      : loc_id(context.insts().GetLocId(entity.decl_id)),
         implicit_param_refs_id(entity.implicit_param_refs_id),
         param_refs_id(entity.param_refs_id) {}
 
+  DeclParams(SemIR::LocId loc_id, SemIR::InstBlockId implicit_params_id,
+             SemIR::InstBlockId params_id)
+      : loc_id(loc_id),
+        implicit_param_refs_id(implicit_params_id),
+        param_refs_id(params_id) {}
+
   // The declaration of the entity.
-  SemIR::InstId decl_id;
+  SemIR::LocId loc_id;
   // The implicit parameters of the entity. Can be Invalid if there is no
   // implicit parameter list.
   SemIR::InstBlockId implicit_param_refs_id;
@@ -65,7 +71,7 @@ struct DeclParams {
 // returns false.
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            Substitutions substitutions) -> bool;
+                            Substitutions substitutions = Substitutions()) -> bool;
 
 }  // namespace Carbon::Check
 

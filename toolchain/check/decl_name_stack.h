@@ -230,8 +230,8 @@ class DeclNameStack {
   // Attempts to resolve the given name context as a scope, and returns the
   // corresponding scope. Issues a suitable diagnostic and returns Invalid if
   // the name doesn't resolve to a scope.
-  auto ResolveAsScope(const NameContext& name_context) const
-      -> SemIR::NameScopeId;
+  auto ResolveAsScope(const NameContext& name_context,
+                      const NameComponent& name) const -> SemIR::NameScopeId;
 
   // The linked context.
   Context* context_;
