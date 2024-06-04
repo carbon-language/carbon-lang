@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // This doesn't check trace output because it's too slow with it.
-// AUTOUPDATE
+// NOAUTOUPDATE
 
 package ExplorerTest api;
 
