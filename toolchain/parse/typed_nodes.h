@@ -73,18 +73,16 @@ struct LeafNode {
 // `struct Aggregate { T x; U y; }`,
 //   to match children with types `T` and `U`.
 //
-// Each parse node should also have exactly one field of type `Lex::*TokenIndex`
-// that matches the token corresponding to the parse node itself. This is not a
-// child node in the parse tree, but specifies the token kind associated with
-// the parse node. The location of the field relative to the child nodes
-// indicates the location within the corresponding grammar production where the
-// token appears.
-//
-// There should be exactly one `Lex::*TokenIndex` field in each parse node, and
-// it should always have the name `token`. In the case where a parse node can
-// correspond to any kind of token, `Lex::TokenIndex` can be used instead. This
-// should only be used when the node kind is either not used in a finished tree,
-// such as `Placeholder`, or is always invalid, such as `InvalidParse`.
+// In addition to the fields describing the child nodes, each parse node should
+// also have exactly one field that describes the token corresponding to the
+// parse node itself. This field should have the name `token`. The type of the
+// field should be `Lex::*TokenIndex`, describing the kind of the token, such as
+// `Lex::SemiTokenIndex` for a `;` token. If the parse node can correspond to
+// any kind of token, `Lex::TokenIndex` can be used instead, but should only be
+// used when the node kind is either not used in a finished tree, such as
+// `Placeholder`, or is always invalid, such as `InvalidParse`. The location of
+// the field relative to the child nodes indicates the location within the
+// corresponding grammar production where the token appears.
 // ----------------------------------------------------------------------------
 
 // Error nodes
