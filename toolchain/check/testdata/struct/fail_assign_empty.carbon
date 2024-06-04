@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:20: ERROR: Cannot initialize struct with 1 field(s) from struct with 0 field(s).
 // CHECK:STDERR: var x: {.a: i32} = {};
@@ -27,9 +31,9 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc10_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc10_13.2: type = converted %int.make_type_32, %.loc10_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32, %.loc14_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -38,7 +42,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc14: {} = struct_literal ()
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

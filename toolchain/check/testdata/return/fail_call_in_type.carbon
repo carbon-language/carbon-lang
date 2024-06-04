@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_call_in_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_call_in_type.carbon
 
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
@@ -39,8 +43,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.3] {
 // CHECK:STDOUT:     %ReturnType.ref: ReturnType = name_ref ReturnType, %ReturnType.decl [template = constants.%struct.1]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %ReturnType.call
-// CHECK:STDOUT:     %.loc13_24.2: type = converted %ReturnType.call, %.loc13_24.1
+// CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc17_24.2: type = converted %ReturnType.call, %.loc17_24.1
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -48,16 +52,16 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: fn @ReturnType() -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc9_37.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc9_37.2: type = converted %int.make_type_32, %.loc9_37.1 [template = i32]
-// CHECK:STDOUT:   return %.loc9_37.2
+// CHECK:STDOUT:   %.loc13_37.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc13_37.2: type = converted %int.make_type_32, %.loc13_37.1 [template = i32]
+// CHECK:STDOUT:   return %.loc13_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc17: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

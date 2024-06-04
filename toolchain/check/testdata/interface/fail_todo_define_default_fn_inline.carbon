@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/fail_todo_define_default_fn_inline.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_todo_define_default_fn_inline.carbon
 
 interface Interface {
   // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
@@ -50,29 +54,29 @@ interface Interface {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc12: <associated F in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <associated F in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
-// CHECK:STDOUT:     %int.make_type_32.loc17_19: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc17_19.1: type = value_of_initializer %int.make_type_32.loc17_19 [template = i32]
-// CHECK:STDOUT:     %.loc17_19.2: type = converted %int.make_type_32.loc17_19, %.loc17_19.1 [template = i32]
-// CHECK:STDOUT:     %a.loc17_16.1: i32 = param a
-// CHECK:STDOUT:     %a.loc17_16.2: i32 = bind_name a, %a.loc17_16.1
-// CHECK:STDOUT:     %int.make_type_32.loc17_27: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc17_27.1: type = value_of_initializer %int.make_type_32.loc17_27 [template = i32]
-// CHECK:STDOUT:     %.loc17_27.2: type = converted %int.make_type_32.loc17_27, %.loc17_27.1 [template = i32]
-// CHECK:STDOUT:     %b.loc17_24.1: i32 = param b
-// CHECK:STDOUT:     %b.loc17_24.2: i32 = bind_name b, %b.loc17_24.1
-// CHECK:STDOUT:     %int.make_type_32.loc17_35: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc17_35.1: type = value_of_initializer %int.make_type_32.loc17_35 [template = i32]
-// CHECK:STDOUT:     %.loc17_35.2: type = converted %int.make_type_32.loc17_35, %.loc17_35.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
+// CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_32.loc21_19, %.loc21_19.1 [template = i32]
+// CHECK:STDOUT:     %a.loc21_16.1: i32 = param a
+// CHECK:STDOUT:     %a.loc21_16.2: i32 = bind_name a, %a.loc21_16.1
+// CHECK:STDOUT:     %int.make_type_32.loc21_27: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_32.loc21_27 [template = i32]
+// CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_32.loc21_27, %.loc21_27.1 [template = i32]
+// CHECK:STDOUT:     %b.loc21_24.1: i32 = param b
+// CHECK:STDOUT:     %b.loc21_24.2: i32 = bind_name b, %b.loc21_24.1
+// CHECK:STDOUT:     %int.make_type_32.loc21_35: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]
+// CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_32.loc21_35, %.loc21_35.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_39: <associated G in Interface> = assoc_entity element1, %G.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21_39: <associated G in Interface> = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc12
-// CHECK:STDOUT:   .G = %.loc17_39
+// CHECK:STDOUT:   .F = %.loc16
+// CHECK:STDOUT:   .G = %.loc21_39
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,5 +87,5 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Interface.%a.loc17_16.2: i32, @Interface.%b.loc17_24.2: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @G(@Interface.%a.loc21_16.2: i32, @Interface.%b.loc21_24.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

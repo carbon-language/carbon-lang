@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_convert_to_invalid.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_convert_to_invalid.carbon
 
 class C {
   // CHECK:STDERR: fail_convert_to_invalid.carbon:[[@LINE+3]]:10: ERROR: Name `NoSuchType` not found.
@@ -42,17 +46,17 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %NoSuchType.ref: <error> = name_ref NoSuchType, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc11: <error> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc15: <error> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .a = %.loc11
+// CHECK:STDOUT:   .a = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_16: i32 = int_literal 123 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_19: {.a: i32} = struct_literal (%.loc15_16)
+// CHECK:STDOUT:   %.loc19_16: i32 = int_literal 123 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_19: {.a: i32} = struct_literal (%.loc19_16)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

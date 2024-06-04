@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/one_entry.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/one_entry.carbon
 
 var x: {.a: i32} = {.a = 4};
 var y: {.a: i32} = x;
@@ -26,17 +30,17 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc7_13.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
-// CHECK:STDOUT:   %.loc7_13.2: type = converted %int.make_type_32.loc7, %.loc7_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:   %.loc11_13.2: type = converted %int.make_type_32.loc11, %.loc11_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc11_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_32.loc8, %.loc8_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc12_13.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_13.2: type = converted %int.make_type_32.loc12, %.loc12_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %y.var: ref {.a: i32} = var y
 // CHECK:STDOUT:   %y: ref {.a: i32} = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -45,17 +49,17 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc7_27.1: {.a: i32} = struct_literal (%.loc7_26)
-// CHECK:STDOUT:   %.loc7_27.2: init {.a: i32} = struct_init (%.loc7_26) to file.%x.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc7_28: init {.a: i32} = converted %.loc7_27.1, %.loc7_27.2 [template = constants.%struct.2]
-// CHECK:STDOUT:   assign file.%x.var, %.loc7_28
+// CHECK:STDOUT:   %.loc11_26: i32 = int_literal 4 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_27.1: {.a: i32} = struct_literal (%.loc11_26)
+// CHECK:STDOUT:   %.loc11_27.2: init {.a: i32} = struct_init (%.loc11_26) to file.%x.var [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc11_28: init {.a: i32} = converted %.loc11_27.1, %.loc11_27.2 [template = constants.%struct.2]
+// CHECK:STDOUT:   assign file.%x.var, %.loc11_28
 // CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc8_20.1: ref i32 = struct_access %x.ref, element0
-// CHECK:STDOUT:   %.loc8_20.2: i32 = bind_value %.loc8_20.1
-// CHECK:STDOUT:   %.loc8_20.3: init {.a: i32} = struct_init (%.loc8_20.2) to file.%y.var
-// CHECK:STDOUT:   %.loc8_21: init {.a: i32} = converted %x.ref, %.loc8_20.3
-// CHECK:STDOUT:   assign file.%y.var, %.loc8_21
+// CHECK:STDOUT:   %.loc12_20.1: ref i32 = struct_access %x.ref, element0
+// CHECK:STDOUT:   %.loc12_20.2: i32 = bind_value %.loc12_20.1
+// CHECK:STDOUT:   %.loc12_20.3: init {.a: i32} = struct_init (%.loc12_20.2) to file.%y.var
+// CHECK:STDOUT:   %.loc12_21: init {.a: i32} = converted %x.ref, %.loc12_20.3
+// CHECK:STDOUT:   assign file.%y.var, %.loc12_21
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

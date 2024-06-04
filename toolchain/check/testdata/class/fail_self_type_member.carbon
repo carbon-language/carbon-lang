@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_self_type_member.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_self_type_member.carbon
 
 class Class {
   var b: bool;
@@ -41,13 +45,13 @@ fn F() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %bool.make_type, %.loc8_10.1 [template = bool]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class Class> = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %bool.make_type, %.loc12_10.1 [template = bool]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class Class> = field_decl b, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .b = %.loc8_8
+// CHECK:STDOUT:   .b = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

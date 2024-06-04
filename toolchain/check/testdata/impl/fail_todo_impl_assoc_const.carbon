@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_todo_impl_assoc_const.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_todo_impl_assoc_const.carbon
 
 interface I { let T:! type; }
 
@@ -33,8 +37,8 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct() [template = bool]
-// CHECK:STDOUT:     %.loc12_6.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc12_6.2: type = converted %bool.make_type, %.loc12_6.1 [template = bool]
+// CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type, %.loc16_6.1 [template = bool]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -42,11 +46,11 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc7: <associated type in I> = assoc_entity element0, %T [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11: <associated type in I> = assoc_entity element0, %T [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc7
+// CHECK:STDOUT:   .T = %.loc11
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/and.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/and.carbon
 
 fn F() -> bool { return true; }
 fn G() -> bool { return true; }
@@ -55,23 +59,23 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %bool.make_type.loc7: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7 [template = bool]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %bool.make_type.loc7, %.loc7_11.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc11: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11, %.loc11_11.1 [template = bool]
 // CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
-// CHECK:STDOUT:     %bool.make_type.loc8: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc8_11.1: type = value_of_initializer %bool.make_type.loc8 [template = bool]
-// CHECK:STDOUT:     %.loc8_11.2: type = converted %bool.make_type.loc8, %.loc8_11.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc12: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type.loc12, %.loc12_11.1 [template = bool]
 // CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %And.decl: And = fn_decl @And [template = constants.%struct.4] {
-// CHECK:STDOUT:     %bool.make_type.loc10: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc10_13.1: type = value_of_initializer %bool.make_type.loc10 [template = bool]
-// CHECK:STDOUT:     %.loc10_13.2: type = converted %bool.make_type.loc10, %.loc10_13.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc14: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %bool.make_type.loc14 [template = bool]
+// CHECK:STDOUT:     %.loc14_13.2: type = converted %bool.make_type.loc14, %.loc14_13.1 [template = bool]
 // CHECK:STDOUT:     @And.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.5] {}
@@ -81,11 +85,11 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %PartialConstant.decl: PartialConstant = fn_decl @PartialConstant [template = constants.%struct.6] {
-// CHECK:STDOUT:     %bool.make_type.loc21: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc21_23.1: type = value_of_initializer %bool.make_type.loc21 [template = bool]
-// CHECK:STDOUT:     %.loc21_23.2: type = converted %bool.make_type.loc21, %.loc21_23.1 [template = bool]
-// CHECK:STDOUT:     %x.loc21_20.1: bool = param x
-// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc21_20.1
+// CHECK:STDOUT:     %bool.make_type.loc25: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
+// CHECK:STDOUT:     %.loc25_23.2: type = converted %bool.make_type.loc25, %.loc25_23.1 [template = bool]
+// CHECK:STDOUT:     %x.loc25_20.1: bool = param x
+// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc25_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
@@ -94,197 +98,197 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT:   %.loc11: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.call: init bool = call %F.ref()
-// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc11_14.2: bool = converted %F.call, %.loc11_14.1
-// CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
+// CHECK:STDOUT:   %.loc15_14.1: bool = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc15_14.2: bool = converted %F.call, %.loc15_14.1
+// CHECK:STDOUT:   %.loc15_14.3: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc15_14.2 br !and.rhs else br !and.result(%.loc15_14.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %G.call: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc11_14.5: bool = converted %G.call, %.loc11_14.4
-// CHECK:STDOUT:   br !and.result(%.loc11_14.5)
+// CHECK:STDOUT:   %.loc15_14.4: bool = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc15_14.5: bool = converted %G.call, %.loc15_14.4
+// CHECK:STDOUT:   br !and.result(%.loc15_14.5)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc11_14.6: bool = block_arg !and.result
-// CHECK:STDOUT:   return %.loc11_14.6
+// CHECK:STDOUT:   %.loc15_14.6: bool = block_arg !and.result
+// CHECK:STDOUT:   return %.loc15_14.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_18.1: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc15_13 br !and.rhs.loc15 else br !and.result.loc15(%.loc15_18.1)
+// CHECK:STDOUT:   %.loc19_13: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_18.1: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc19_13 br !and.rhs.loc19 else br !and.result.loc19(%.loc19_18.1)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.rhs.loc15:
-// CHECK:STDOUT:   %.loc15_22: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   br !and.result.loc15(%.loc15_22)
+// CHECK:STDOUT: !and.rhs.loc19:
+// CHECK:STDOUT:   %.loc19_22: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   br !and.result.loc19(%.loc19_22)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.result.loc15:
-// CHECK:STDOUT:   %.loc15_18.2: bool = block_arg !and.result.loc15 [template = constants.%.2]
-// CHECK:STDOUT:   if %.loc15_18.2 br !if.expr.then.loc15 else br !if.expr.else.loc15
+// CHECK:STDOUT: !and.result.loc19:
+// CHECK:STDOUT:   %.loc19_18.2: bool = block_arg !and.result.loc19 [template = constants.%.2]
+// CHECK:STDOUT:   if %.loc19_18.2 br !if.expr.then.loc19 else br !if.expr.else.loc19
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc15:
-// CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:   %.loc15_32.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]
-// CHECK:STDOUT:   %.loc15_32.2: type = converted %bool.make_type.loc15, %.loc15_32.1 [template = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_32.2)
+// CHECK:STDOUT: !if.expr.then.loc19:
+// CHECK:STDOUT:   %bool.make_type.loc19: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc19_32.1: type = value_of_initializer %bool.make_type.loc19 [template = bool]
+// CHECK:STDOUT:   %.loc19_32.2: type = converted %bool.make_type.loc19, %.loc19_32.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc19(%.loc19_32.2)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc15:
-// CHECK:STDOUT:   %.loc15_43: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_37: type = converted %.loc15_43, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_37)
+// CHECK:STDOUT: !if.expr.else.loc19:
+// CHECK:STDOUT:   %.loc19_43: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc19_37: type = converted %.loc19_43, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   br !if.expr.result.loc19(%.loc19_37)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc15:
-// CHECK:STDOUT:   %.loc15_10: type = block_arg !if.expr.result.loc15 [template = bool]
+// CHECK:STDOUT: !if.expr.result.loc19:
+// CHECK:STDOUT:   %.loc19_10: type = block_arg !if.expr.result.loc19 [template = bool]
 // CHECK:STDOUT:   %a.var: ref bool = var a
 // CHECK:STDOUT:   %a: ref bool = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc15_47: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   assign %a.var, %.loc15_47
-// CHECK:STDOUT:   %.loc16_13: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   %.loc16_18.1: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc16_13 br !and.rhs.loc16 else br !and.result.loc16(%.loc16_18.1)
+// CHECK:STDOUT:   %.loc19_47: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   assign %a.var, %.loc19_47
+// CHECK:STDOUT:   %.loc20_13: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc20_18.1: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc20_13 br !and.rhs.loc20 else br !and.result.loc20(%.loc20_18.1)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.rhs.loc16:
-// CHECK:STDOUT:   %.loc16_22: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   br !and.result.loc16(%.loc16_22)
+// CHECK:STDOUT: !and.rhs.loc20:
+// CHECK:STDOUT:   %.loc20_22: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   br !and.result.loc20(%.loc20_22)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.result.loc16:
-// CHECK:STDOUT:   %.loc16_18.2: bool = block_arg !and.result.loc16 [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc16_18.2 br !if.expr.then.loc16 else br !if.expr.else.loc16
+// CHECK:STDOUT: !and.result.loc20:
+// CHECK:STDOUT:   %.loc20_18.2: bool = block_arg !and.result.loc20 [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc20_18.2 br !if.expr.then.loc20 else br !if.expr.else.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc16:
-// CHECK:STDOUT:   %bool.make_type.loc16: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:   %.loc16_33.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
-// CHECK:STDOUT:   %.loc16_33.2: type = converted %bool.make_type.loc16, %.loc16_33.1 [template = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_33.2)
+// CHECK:STDOUT: !if.expr.then.loc20:
+// CHECK:STDOUT:   %bool.make_type.loc20: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc20_33.1: type = value_of_initializer %bool.make_type.loc20 [template = bool]
+// CHECK:STDOUT:   %.loc20_33.2: type = converted %bool.make_type.loc20, %.loc20_33.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc20(%.loc20_33.2)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc16:
-// CHECK:STDOUT:   %.loc16_44: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_38: type = converted %.loc16_44, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_38)
+// CHECK:STDOUT: !if.expr.else.loc20:
+// CHECK:STDOUT:   %.loc20_44: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_38: type = converted %.loc20_44, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   br !if.expr.result.loc20(%.loc20_38)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc16:
-// CHECK:STDOUT:   %.loc16_10: type = block_arg !if.expr.result.loc16 [template = constants.%.1]
+// CHECK:STDOUT: !if.expr.result.loc20:
+// CHECK:STDOUT:   %.loc20_10: type = block_arg !if.expr.result.loc20 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc16_49.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_49.2: init () = tuple_init () to %b.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_50: init () = converted %.loc16_49.1, %.loc16_49.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %b.var, %.loc16_50
-// CHECK:STDOUT:   %.loc17_13: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17_19.1: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc17_13 br !and.rhs.loc17 else br !and.result.loc17(%.loc17_19.1)
+// CHECK:STDOUT:   %.loc20_49.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_49.2: init () = tuple_init () to %b.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc20_50: init () = converted %.loc20_49.1, %.loc20_49.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %b.var, %.loc20_50
+// CHECK:STDOUT:   %.loc21_13: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   %.loc21_19.1: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc21_13 br !and.rhs.loc21 else br !and.result.loc21(%.loc21_19.1)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.rhs.loc17:
-// CHECK:STDOUT:   %.loc17_23: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   br !and.result.loc17(%.loc17_23)
+// CHECK:STDOUT: !and.rhs.loc21:
+// CHECK:STDOUT:   %.loc21_23: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   br !and.result.loc21(%.loc21_23)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.result.loc17:
-// CHECK:STDOUT:   %.loc17_19.2: bool = block_arg !and.result.loc17 [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc17_19.2 br !if.expr.then.loc17 else br !if.expr.else.loc17
+// CHECK:STDOUT: !and.result.loc21:
+// CHECK:STDOUT:   %.loc21_19.2: bool = block_arg !and.result.loc21 [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc21_19.2 br !if.expr.then.loc21 else br !if.expr.else.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc17:
-// CHECK:STDOUT:   %bool.make_type.loc17: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:   %.loc17_33.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
-// CHECK:STDOUT:   %.loc17_33.2: type = converted %bool.make_type.loc17, %.loc17_33.1 [template = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc17(%.loc17_33.2)
+// CHECK:STDOUT: !if.expr.then.loc21:
+// CHECK:STDOUT:   %bool.make_type.loc21: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc21_33.1: type = value_of_initializer %bool.make_type.loc21 [template = bool]
+// CHECK:STDOUT:   %.loc21_33.2: type = converted %bool.make_type.loc21, %.loc21_33.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc21(%.loc21_33.2)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc17:
-// CHECK:STDOUT:   %.loc17_44: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_38: type = converted %.loc17_44, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   br !if.expr.result.loc17(%.loc17_38)
+// CHECK:STDOUT: !if.expr.else.loc21:
+// CHECK:STDOUT:   %.loc21_44: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_38: type = converted %.loc21_44, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   br !if.expr.result.loc21(%.loc21_38)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc17:
-// CHECK:STDOUT:   %.loc17_10: type = block_arg !if.expr.result.loc17 [template = constants.%.1]
+// CHECK:STDOUT: !if.expr.result.loc21:
+// CHECK:STDOUT:   %.loc21_10: type = block_arg !if.expr.result.loc21 [template = constants.%.1]
 // CHECK:STDOUT:   %c.var: ref () = var c
 // CHECK:STDOUT:   %c: ref () = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc17_49.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_49.2: init () = tuple_init () to %c.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc17_50: init () = converted %.loc17_49.1, %.loc17_49.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %c.var, %.loc17_50
-// CHECK:STDOUT:   %.loc18_13: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   %.loc18_19.1: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc18_13 br !and.rhs.loc18 else br !and.result.loc18(%.loc18_19.1)
+// CHECK:STDOUT:   %.loc21_49.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_49.2: init () = tuple_init () to %c.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc21_50: init () = converted %.loc21_49.1, %.loc21_49.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %c.var, %.loc21_50
+// CHECK:STDOUT:   %.loc22_13: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   %.loc22_19.1: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc22_13 br !and.rhs.loc22 else br !and.result.loc22(%.loc22_19.1)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.rhs.loc18:
-// CHECK:STDOUT:   %.loc18_23: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   br !and.result.loc18(%.loc18_23)
+// CHECK:STDOUT: !and.rhs.loc22:
+// CHECK:STDOUT:   %.loc22_23: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   br !and.result.loc22(%.loc22_23)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.result.loc18:
-// CHECK:STDOUT:   %.loc18_19.2: bool = block_arg !and.result.loc18 [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc18_19.2 br !if.expr.then.loc18 else br !if.expr.else.loc18
+// CHECK:STDOUT: !and.result.loc22:
+// CHECK:STDOUT:   %.loc22_19.2: bool = block_arg !and.result.loc22 [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc22_19.2 br !if.expr.then.loc22 else br !if.expr.else.loc22
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc18:
-// CHECK:STDOUT:   %bool.make_type.loc18: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:   %.loc18_34.1: type = value_of_initializer %bool.make_type.loc18 [template = bool]
-// CHECK:STDOUT:   %.loc18_34.2: type = converted %bool.make_type.loc18, %.loc18_34.1 [template = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc18(%.loc18_34.2)
+// CHECK:STDOUT: !if.expr.then.loc22:
+// CHECK:STDOUT:   %bool.make_type.loc22: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc22_34.1: type = value_of_initializer %bool.make_type.loc22 [template = bool]
+// CHECK:STDOUT:   %.loc22_34.2: type = converted %bool.make_type.loc22, %.loc22_34.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc22(%.loc22_34.2)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc18:
-// CHECK:STDOUT:   %.loc18_45: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc18_39: type = converted %.loc18_45, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   br !if.expr.result.loc18(%.loc18_39)
+// CHECK:STDOUT: !if.expr.else.loc22:
+// CHECK:STDOUT:   %.loc22_45: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc22_39: type = converted %.loc22_45, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   br !if.expr.result.loc22(%.loc22_39)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc18:
-// CHECK:STDOUT:   %.loc18_10: type = block_arg !if.expr.result.loc18 [template = constants.%.1]
+// CHECK:STDOUT: !if.expr.result.loc22:
+// CHECK:STDOUT:   %.loc22_10: type = block_arg !if.expr.result.loc22 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc18_50.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc18_50.2: init () = tuple_init () to %d.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc18_51: init () = converted %.loc18_50.1, %.loc18_50.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %d.var, %.loc18_51
+// CHECK:STDOUT:   %.loc22_50.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc22_50.2: init () = tuple_init () to %d.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc22_51: init () = converted %.loc22_50.1, %.loc22_50.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %d.var, %.loc22_51
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_13: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   %.loc22_19.1: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc22_13 br !and.rhs else br !and.result(%.loc22_19.1)
+// CHECK:STDOUT:   %.loc26_13: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   %.loc26_19.1: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc26_13 br !and.rhs else br !and.result(%.loc26_19.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %x.ref: bool = name_ref x, %x
 // CHECK:STDOUT:   br !and.result(%x.ref)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc22_19.2: bool = block_arg !and.result [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc22_19.2 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %.loc26_19.2: bool = block_arg !and.result [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc26_19.2 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:   %.loc22_30.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc22_30.2: type = converted %bool.make_type, %.loc22_30.1 [template = bool]
-// CHECK:STDOUT:   br !if.expr.result(%.loc22_30.2)
+// CHECK:STDOUT:   %.loc26_30.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc26_30.2: type = converted %bool.make_type, %.loc26_30.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result(%.loc26_30.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc22_41: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_35: type = converted %.loc22_41, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   br !if.expr.result(%.loc22_35)
+// CHECK:STDOUT:   %.loc26_41: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc26_35: type = converted %.loc26_41, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   br !if.expr.result(%.loc26_35)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc22_10: type = block_arg !if.expr.result [template = constants.%.1]
+// CHECK:STDOUT:   %.loc26_10: type = block_arg !if.expr.result [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc22_46.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_46.2: init () = tuple_init () to %a.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc22_47: init () = converted %.loc22_46.1, %.loc22_46.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc22_47
+// CHECK:STDOUT:   %.loc26_46.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc26_46.2: init () = tuple_init () to %a.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc26_47: init () = converted %.loc26_46.1, %.loc26_46.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc26_47
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

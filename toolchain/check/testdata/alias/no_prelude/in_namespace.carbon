@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/no_prelude/in_namespace.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/no_prelude/in_namespace.carbon
 
 class C { var v: (); }
 
@@ -41,45 +45,45 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:   %a.ref.loc12: type = name_ref a, %a [template = constants.%C]
-// CHECK:STDOUT:   %.loc12_22.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_23.1: {.v: ()} = struct_literal (%.loc12_22.1)
-// CHECK:STDOUT:   %.loc12_23.2: ref C = temporary_storage
-// CHECK:STDOUT:   %.loc12_23.3: ref () = class_element_access %.loc12_23.2, element0
-// CHECK:STDOUT:   %.loc12_22.2: init () = tuple_init () to %.loc12_23.3 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc12_23.4: init () = converted %.loc12_22.1, %.loc12_22.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc12_23.5: init C = class_init (%.loc12_23.4), %.loc12_23.2 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc12_23.6: ref C = temporary %.loc12_23.2, %.loc12_23.5
-// CHECK:STDOUT:   %.loc12_24.1: ref C = converted %.loc12_23.1, %.loc12_23.6
-// CHECK:STDOUT:   %.loc12_24.2: C = bind_value %.loc12_24.1
-// CHECK:STDOUT:   %b: C = bind_name b, %.loc12_24.2
+// CHECK:STDOUT:   %NS.ref.loc16: <namespace> = name_ref NS, %NS [template = %NS]
+// CHECK:STDOUT:   %a.ref.loc16: type = name_ref a, %a [template = constants.%C]
+// CHECK:STDOUT:   %.loc16_22.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_23.1: {.v: ()} = struct_literal (%.loc16_22.1)
+// CHECK:STDOUT:   %.loc16_23.2: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc16_23.3: ref () = class_element_access %.loc16_23.2, element0
+// CHECK:STDOUT:   %.loc16_22.2: init () = tuple_init () to %.loc16_23.3 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_23.4: init () = converted %.loc16_22.1, %.loc16_22.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_23.5: init C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc16_23.6: ref C = temporary %.loc16_23.2, %.loc16_23.5
+// CHECK:STDOUT:   %.loc16_24.1: ref C = converted %.loc16_23.1, %.loc16_23.6
+// CHECK:STDOUT:   %.loc16_24.2: C = bind_value %.loc16_24.1
+// CHECK:STDOUT:   %b: C = bind_name b, %.loc16_24.2
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %NS.ref.loc14: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:     %a.ref.loc14: type = name_ref a, %a [template = constants.%C]
+// CHECK:STDOUT:     %NS.ref.loc18: <namespace> = name_ref NS, %NS [template = %NS]
+// CHECK:STDOUT:     %a.ref.loc18: type = name_ref a, %a [template = constants.%C]
 // CHECK:STDOUT:     @F.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc7_19.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_19.2: type = converted %.loc7_19.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc7_16: <unbound element of class C> = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc11_19.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_16: <unbound element of class C> = field_decl v, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .v = %.loc7_16
+// CHECK:STDOUT:   .v = %.loc11_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_18.1: {.v: ()} = struct_literal (%.loc15_17.1)
-// CHECK:STDOUT:   %.loc15_18.2: ref () = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc15_17.2: init () = tuple_init () to %.loc15_18.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_18.3: init () = converted %.loc15_17.1, %.loc15_17.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_18.4: init C = class_init (%.loc15_18.3), %return [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc15_19: init C = converted %.loc15_18.1, %.loc15_18.4 [template = constants.%struct.1]
-// CHECK:STDOUT:   return %.loc15_19 to %return
+// CHECK:STDOUT:   %.loc19_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc19_18.1: {.v: ()} = struct_literal (%.loc19_17.1)
+// CHECK:STDOUT:   %.loc19_18.2: ref () = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc19_17.2: init () = tuple_init () to %.loc19_18.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc19_18.3: init () = converted %.loc19_17.1, %.loc19_17.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc19_18.4: init C = class_init (%.loc19_18.3), %return [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc19_19: init C = converted %.loc19_18.1, %.loc19_18.4 [template = constants.%struct.1]
+// CHECK:STDOUT:   return %.loc19_19 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

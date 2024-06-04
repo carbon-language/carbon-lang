@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/inc.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/overloaded/inc.carbon
 
 // This file was generated from unary_stmt.carbon.tmpl. Run make_tests.sh to regenerate.
 
@@ -74,10 +78,10 @@ fn TestOp() {
 // CHECK:STDOUT: impl @impl: C as Inc {
 // CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc14_21: type = ptr_type C [template = constants.%.3]
-// CHECK:STDOUT:     %self.loc14_14.1: C* = param self
-// CHECK:STDOUT:     %self.loc14_14.3: C* = bind_name self, %self.loc14_14.1
-// CHECK:STDOUT:     %.loc14_9: C* = addr_pattern %self.loc14_14.3
+// CHECK:STDOUT:     %.loc18_21: type = ptr_type C [template = constants.%.3]
+// CHECK:STDOUT:     %self.loc18_14.1: C* = param self
+// CHECK:STDOUT:     %self.loc18_14.3: C* = bind_name self, %self.loc18_14.1
+// CHECK:STDOUT:     %.loc18_9: C* = addr_pattern %self.loc18_14.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -91,7 +95,7 @@ fn TestOp() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[addr @impl.%self.loc14_14.3: C*]();
+// CHECK:STDOUT: fn @Op.1[addr @impl.%self.loc18_14.3: C*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[addr %self: Self*]();
 // CHECK:STDOUT:
@@ -100,15 +104,15 @@ fn TestOp() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc18_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc18_15.2: init C = class_init (), %c.var [template = constants.%struct.4]
-// CHECK:STDOUT:   %.loc18_16: init C = converted %.loc18_15.1, %.loc18_15.2 [template = constants.%struct.4]
-// CHECK:STDOUT:   assign %c.var, %.loc18_16
+// CHECK:STDOUT:   %.loc22_15.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc22_15.2: init C = class_init (), %c.var [template = constants.%struct.4]
+// CHECK:STDOUT:   %.loc22_16: init C = converted %.loc22_15.1, %.loc22_15.2 [template = constants.%struct.4]
+// CHECK:STDOUT:   assign %c.var, %.loc22_16
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc19_3: <bound method> = bound_method %c.ref, %.1
-// CHECK:STDOUT:   %.loc19_5: C* = addr_of %c.ref
-// CHECK:STDOUT:   %Op.call: init () = call %.loc19_3(%.loc19_5)
+// CHECK:STDOUT:   %.loc23_3: <bound method> = bound_method %c.ref, %.1
+// CHECK:STDOUT:   %.loc23_5: C* = addr_of %c.ref
+// CHECK:STDOUT:   %Op.call: init () = call %.loc23_3(%.loc23_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

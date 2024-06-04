@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/impl/impl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/impl/impl.carbon
 
 interface I {
   fn F[self: Self]() -> i32;
@@ -27,9 +31,9 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_16.1.n = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc17_16.2 = load i32, ptr %.loc17_16.1.n, align 4
-// CHECK:STDOUT:   ret i32 %.loc17_16.2
+// CHECK:STDOUT:   %.loc21_16.1.n = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc21_16.2 = load i32, ptr %.loc21_16.1.n, align 4
+// CHECK:STDOUT:   ret i32 %.loc21_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Call(ptr %a) {

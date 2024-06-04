@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/struct/one_entry.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/struct/one_entry.carbon
 
 fn Run() -> i32 {
   var x: {.a: i32} = {.a = 4};
@@ -18,9 +22,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8
 // CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x.var, align 4
 // CHECK:STDOUT:   %y.var = alloca { i32 }, align 8
-// CHECK:STDOUT:   %.loc9_22.1.a = getelementptr inbounds { i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc9_22.2 = load i32, ptr %.loc9_22.1.a, align 4
-// CHECK:STDOUT:   %.loc9_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc9_22.2, 0
-// CHECK:STDOUT:   store { i32 } %.loc9_22.3.struct.init, ptr %y.var, align 4
+// CHECK:STDOUT:   %.loc13_22.1.a = getelementptr inbounds { i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_22.2 = load i32, ptr %.loc13_22.1.a, align 4
+// CHECK:STDOUT:   %.loc13_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc13_22.2, 0
+// CHECK:STDOUT:   store { i32 } %.loc13_22.3.struct.init, ptr %y.var, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

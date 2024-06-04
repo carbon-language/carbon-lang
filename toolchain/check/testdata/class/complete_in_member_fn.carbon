@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/complete_in_member_fn.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/complete_in_member_fn.carbon
 
 class C {
   fn F(c: C) -> i32 { return c.a; }
@@ -38,32 +42,32 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc8_8.1: C = param c
-// CHECK:STDOUT:     %c.loc8_8.2: C = bind_name c, %c.loc8_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc8: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc8_17.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:     %.loc8_17.2: type = converted %int.make_type_32.loc8, %.loc8_17.1 [template = i32]
+// CHECK:STDOUT:     %c.loc12_8.1: C = param c
+// CHECK:STDOUT:     %c.loc12_8.2: C = bind_name c, %c.loc12_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32.loc12, %.loc12_17.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
-// CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_32.loc10, %.loc10_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_8: <unbound element of class C> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
+// CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_32.loc14, %.loc14_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_8: <unbound element of class C> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .a = %.loc10_8
+// CHECK:STDOUT:   .a = %.loc14_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@C.%c.loc8_8.2: C) -> i32 {
+// CHECK:STDOUT: fn @F(@C.%c.loc12_8.2: C) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: C = name_ref c, @C.%c.loc8_8.2
-// CHECK:STDOUT:   %a.ref: <unbound element of class C> = name_ref a, @C.%.loc10_8 [template = @C.%.loc10_8]
-// CHECK:STDOUT:   %.loc8_31.1: ref i32 = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc8_31.2: i32 = bind_value %.loc8_31.1
-// CHECK:STDOUT:   return %.loc8_31.2
+// CHECK:STDOUT:   %c.ref: C = name_ref c, @C.%c.loc12_8.2
+// CHECK:STDOUT:   %a.ref: <unbound element of class C> = name_ref a, @C.%.loc14_8 [template = @C.%.loc14_8]
+// CHECK:STDOUT:   %.loc12_31.1: ref i32 = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc12_31.2: i32 = bind_value %.loc12_31.1
+// CHECK:STDOUT:   return %.loc12_31.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

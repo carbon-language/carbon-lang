@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/fail_todo_param_in_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/fail_todo_param_in_type.carbon
 
 // CHECK:STDERR: fail_todo_param_in_type.carbon:[[@LINE+3]]:24: ERROR: Semantics TODO: `symbolic array bound`.
 // CHECK:STDERR: fn F(N:! i32, a: [i32; N]*);
@@ -29,19 +33,19 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc10_10: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc10_10.1: type = value_of_initializer %int.make_type_32.loc10_10 [template = i32]
-// CHECK:STDOUT:     %.loc10_10.2: type = converted %int.make_type_32.loc10_10, %.loc10_10.1 [template = i32]
-// CHECK:STDOUT:     %N.loc10_6.1: i32 = param N
-// CHECK:STDOUT:     @F.%N: i32 = bind_symbolic_name N 0, %N.loc10_6.1 [symbolic = constants.%N]
-// CHECK:STDOUT:     %int.make_type_32.loc10_19: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc14_10: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
+// CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32.loc14_10, %.loc14_10.1 [template = i32]
+// CHECK:STDOUT:     %N.loc14_6.1: i32 = param N
+// CHECK:STDOUT:     @F.%N: i32 = bind_symbolic_name N 0, %N.loc14_6.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, @F.%N [symbolic = constants.%N]
-// CHECK:STDOUT:     %.loc10_19.1: type = value_of_initializer %int.make_type_32.loc10_19 [template = i32]
-// CHECK:STDOUT:     %.loc10_19.2: type = converted %int.make_type_32.loc10_19, %.loc10_19.1 [template = i32]
-// CHECK:STDOUT:     %.loc10_25: type = array_type %N.ref, i32 [template = <error>]
-// CHECK:STDOUT:     %.loc10_26: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %a.loc10_15.1: <error> = param a
-// CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc10_15.1
+// CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]
+// CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
+// CHECK:STDOUT:     %.loc14_25: type = array_type %N.ref, i32 [template = <error>]
+// CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %a.loc14_15.1: <error> = param a
+// CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc14_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

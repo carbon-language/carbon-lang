@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/packages/import/fail_omit_library_keyword.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_omit_library_keyword.carbon
 
 // CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+3]]:17: ERROR: Missing `library` keyword.
 // CHECK:STDERR: import Geometry "Shapes";

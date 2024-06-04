@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/builtin/fail_unknown.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/builtin/fail_unknown.carbon
 
 // CHECK:STDERR: fail_unknown.carbon:[[@LINE+3]]:23: ERROR: Unknown builtin function name "unknown.builtin.name".
 // CHECK:STDERR: fn UnknownBuiltin() = "unknown.builtin.name";

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/as_type_of_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/as_type_of_type.carbon
 
 interface Empty {}
 
@@ -29,8 +33,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.loc9_6.1: Empty = param T
-// CHECK:STDOUT:     @F.%T: Empty = bind_symbolic_name T 0, %T.loc9_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc13_6.1: Empty = param T
+// CHECK:STDOUT:     @F.%T: Empty = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,8 +49,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: fn @F(%T: Empty) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: Empty = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc10_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc10_10.2: type = converted %T.ref, %.loc10_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   %x.var: ref T = var x
 // CHECK:STDOUT:   %x: ref T = bind_name x, %x.var
 // CHECK:STDOUT:   return

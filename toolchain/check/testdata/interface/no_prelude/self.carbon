@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/self.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/self.carbon
 
 interface UseSelf {
   fn F[self: Self]() -> Self;
@@ -30,23 +34,23 @@ interface UseSelf {
 // CHECK:STDOUT: interface @UseSelf {
 // CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %Self.ref.loc8_14: UseSelf = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref.loc8_14 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref.loc8_14, %.loc8_14.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc8_8.1: Self = param self
-// CHECK:STDOUT:     %self.loc8_8.2: Self = bind_name self, %self.loc8_8.1
-// CHECK:STDOUT:     %Self.ref.loc8_25: UseSelf = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_25.1: type = facet_type_access %Self.ref.loc8_25 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc8_25.2: type = converted %Self.ref.loc8_25, %.loc8_25.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %Self.ref.loc12_14: UseSelf = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc12_8.1: Self = param self
+// CHECK:STDOUT:     %self.loc12_8.2: Self = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %Self.ref.loc12_25: UseSelf = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_25.1: type = facet_type_access %Self.ref.loc12_25 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc12_25.2: type = converted %Self.ref.loc12_25, %.loc12_25.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_29: <associated F in UseSelf> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_29: <associated F in UseSelf> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8_29
+// CHECK:STDOUT:   .F = %.loc12_29
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@UseSelf.%self.loc8_8.2: Self]() -> Self;
+// CHECK:STDOUT: fn @F[@UseSelf.%self.loc12_8.2: Self]() -> Self;
 // CHECK:STDOUT:

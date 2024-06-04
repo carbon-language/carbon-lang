@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/default_fn.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/default_fn.carbon
 
 class C {
   interface I {
@@ -48,11 +52,11 @@ class C {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc10: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc10
+// CHECK:STDOUT:   .F = %.loc14
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,13 +86,13 @@ class C {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc12_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc12_19.2: init C = class_init (), %c.var [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc12_20: init C = converted %.loc12_19.1, %.loc12_19.2 [template = constants.%struct.3]
-// CHECK:STDOUT:   assign %c.var, %.loc12_20
+// CHECK:STDOUT:   %.loc16_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc16_19.2: init C = class_init (), %c.var [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc16_20: init C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%struct.3]
+// CHECK:STDOUT:   assign %c.var, %.loc16_20
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc10 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc14 [template = constants.%.4]
 // CHECK:STDOUT:   %.1: F = interface_witness_access @impl.%.1, element0 [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.call: init () = call %.1()
 // CHECK:STDOUT:   return

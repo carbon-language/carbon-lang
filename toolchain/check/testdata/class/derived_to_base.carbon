@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/derived_to_base.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/derived_to_base.carbon
 
 base class A {
   var a: i32;
@@ -104,44 +108,44 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %ConvertCToB.decl: ConvertCToB = fn_decl @ConvertCToB [template = constants.%struct.2] {
-// CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc21_20: type = ptr_type C [template = constants.%.14]
-// CHECK:STDOUT:     %p.loc21_16.1: C* = param p
-// CHECK:STDOUT:     @ConvertCToB.%p: C* = bind_name p, %p.loc21_16.1
-// CHECK:STDOUT:     %B.ref.loc21: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:     %.loc21_27: type = ptr_type B [template = constants.%.15]
+// CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc25_20: type = ptr_type C [template = constants.%.14]
+// CHECK:STDOUT:     %p.loc25_16.1: C* = param p
+// CHECK:STDOUT:     @ConvertCToB.%p: C* = bind_name p, %p.loc25_16.1
+// CHECK:STDOUT:     %B.ref.loc25: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %.loc25_27: type = ptr_type B [template = constants.%.15]
 // CHECK:STDOUT:     @ConvertCToB.%return: ref B* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: ConvertBToA = fn_decl @ConvertBToA [template = constants.%struct.3] {
-// CHECK:STDOUT:     %B.ref.loc22: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:     %.loc22_20: type = ptr_type B [template = constants.%.15]
-// CHECK:STDOUT:     %p.loc22_16.1: B* = param p
-// CHECK:STDOUT:     @ConvertBToA.%p: B* = bind_name p, %p.loc22_16.1
-// CHECK:STDOUT:     %A.ref.loc22: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc22_27: type = ptr_type A [template = constants.%.19]
+// CHECK:STDOUT:     %B.ref.loc26: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %.loc26_20: type = ptr_type B [template = constants.%.15]
+// CHECK:STDOUT:     %p.loc26_16.1: B* = param p
+// CHECK:STDOUT:     @ConvertBToA.%p: B* = bind_name p, %p.loc26_16.1
+// CHECK:STDOUT:     %A.ref.loc26: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc26_27: type = ptr_type A [template = constants.%.19]
 // CHECK:STDOUT:     @ConvertBToA.%return: ref A* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: ConvertCToA = fn_decl @ConvertCToA [template = constants.%struct.4] {
-// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc23_20: type = ptr_type C [template = constants.%.14]
-// CHECK:STDOUT:     %p.loc23_16.1: C* = param p
-// CHECK:STDOUT:     @ConvertCToA.%p: C* = bind_name p, %p.loc23_16.1
-// CHECK:STDOUT:     %A.ref.loc23: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc23_27: type = ptr_type A [template = constants.%.19]
+// CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc27_20: type = ptr_type C [template = constants.%.14]
+// CHECK:STDOUT:     %p.loc27_16.1: C* = param p
+// CHECK:STDOUT:     @ConvertCToA.%p: C* = bind_name p, %p.loc27_16.1
+// CHECK:STDOUT:     %A.ref.loc27: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc27_27: type = ptr_type A [template = constants.%.19]
 // CHECK:STDOUT:     @ConvertCToA.%return: ref A* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: ConvertValue = fn_decl @ConvertValue [template = constants.%struct.5] {
-// CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc25_17.1: C = param c
-// CHECK:STDOUT:     @ConvertValue.%c: C = bind_name c, %c.loc25_17.1
+// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %c.loc29_17.1: C = param c
+// CHECK:STDOUT:     @ConvertValue.%c: C = bind_name c, %c.loc29_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: ConvertRef = fn_decl @ConvertRef [template = constants.%struct.6] {
-// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc29_19: type = ptr_type C [template = constants.%.14]
-// CHECK:STDOUT:     %c.loc29_15.1: C* = param c
-// CHECK:STDOUT:     @ConvertRef.%c: C* = bind_name c, %c.loc29_15.1
-// CHECK:STDOUT:     %A.ref.loc29: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc29_26: type = ptr_type A [template = constants.%.19]
+// CHECK:STDOUT:     %C.ref.loc33: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc33_19: type = ptr_type C [template = constants.%.14]
+// CHECK:STDOUT:     %c.loc33_15.1: C* = param c
+// CHECK:STDOUT:     @ConvertRef.%c: C* = bind_name c, %c.loc33_15.1
+// CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc33_26: type = ptr_type A [template = constants.%.19]
 // CHECK:STDOUT:     @ConvertRef.%return: ref A* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertInit.decl: ConvertInit = fn_decl @ConvertInit [template = constants.%struct.7] {}
@@ -149,42 +153,42 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class A> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class A> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .a = %.loc8_8
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc12: <unbound element of class B> = base_decl A, element0 [template]
+// CHECK:STDOUT:   %.loc16: <unbound element of class B> = base_decl A, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32, %.loc13_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_8: <unbound element of class B> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32, %.loc17_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc17_8: <unbound element of class B> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .base = %.loc12
-// CHECK:STDOUT:   .b = %.loc13_8
+// CHECK:STDOUT:   .base = %.loc16
+// CHECK:STDOUT:   .b = %.loc17_8
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc17: <unbound element of class C> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc21: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32, %.loc18_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc18_8: <unbound element of class C> = field_decl c, element1 [template]
+// CHECK:STDOUT:   %.loc22_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc22_10.2: type = converted %int.make_type_32, %.loc22_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc22_8: <unbound element of class C> = field_decl c, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .base = %.loc17
-// CHECK:STDOUT:   .c = %.loc18_8
+// CHECK:STDOUT:   .base = %.loc21
+// CHECK:STDOUT:   .c = %.loc22_8
 // CHECK:STDOUT:   extend name_scope3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,89 +197,89 @@ fn ConvertInit() {
 // CHECK:STDOUT: fn @ConvertCToB(%p: C*) -> B* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: C* = name_ref p, %p
-// CHECK:STDOUT:   %.loc21_39.1: ref C = deref %p.ref
-// CHECK:STDOUT:   %.loc21_39.2: ref B = class_element_access %.loc21_39.1, element0
-// CHECK:STDOUT:   %.loc21_39.3: B* = addr_of %.loc21_39.2
-// CHECK:STDOUT:   %.loc21_39.4: B* = converted %p.ref, %.loc21_39.3
-// CHECK:STDOUT:   return %.loc21_39.4
+// CHECK:STDOUT:   %.loc25_39.1: ref C = deref %p.ref
+// CHECK:STDOUT:   %.loc25_39.2: ref B = class_element_access %.loc25_39.1, element0
+// CHECK:STDOUT:   %.loc25_39.3: B* = addr_of %.loc25_39.2
+// CHECK:STDOUT:   %.loc25_39.4: B* = converted %p.ref, %.loc25_39.3
+// CHECK:STDOUT:   return %.loc25_39.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p: B*) -> A* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: B* = name_ref p, %p
-// CHECK:STDOUT:   %.loc22_39.1: ref B = deref %p.ref
-// CHECK:STDOUT:   %.loc22_39.2: ref A = class_element_access %.loc22_39.1, element0
-// CHECK:STDOUT:   %.loc22_39.3: A* = addr_of %.loc22_39.2
-// CHECK:STDOUT:   %.loc22_39.4: A* = converted %p.ref, %.loc22_39.3
-// CHECK:STDOUT:   return %.loc22_39.4
+// CHECK:STDOUT:   %.loc26_39.1: ref B = deref %p.ref
+// CHECK:STDOUT:   %.loc26_39.2: ref A = class_element_access %.loc26_39.1, element0
+// CHECK:STDOUT:   %.loc26_39.3: A* = addr_of %.loc26_39.2
+// CHECK:STDOUT:   %.loc26_39.4: A* = converted %p.ref, %.loc26_39.3
+// CHECK:STDOUT:   return %.loc26_39.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p: C*) -> A* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: C* = name_ref p, %p
-// CHECK:STDOUT:   %.loc23_39.1: ref C = deref %p.ref
-// CHECK:STDOUT:   %.loc23_39.2: ref B = class_element_access %.loc23_39.1, element0
-// CHECK:STDOUT:   %.loc23_39.3: ref A = class_element_access %.loc23_39.2, element0
-// CHECK:STDOUT:   %.loc23_39.4: A* = addr_of %.loc23_39.3
-// CHECK:STDOUT:   %.loc23_39.5: A* = converted %p.ref, %.loc23_39.4
-// CHECK:STDOUT:   return %.loc23_39.5
+// CHECK:STDOUT:   %.loc27_39.1: ref C = deref %p.ref
+// CHECK:STDOUT:   %.loc27_39.2: ref B = class_element_access %.loc27_39.1, element0
+// CHECK:STDOUT:   %.loc27_39.3: ref A = class_element_access %.loc27_39.2, element0
+// CHECK:STDOUT:   %.loc27_39.4: A* = addr_of %.loc27_39.3
+// CHECK:STDOUT:   %.loc27_39.5: A* = converted %p.ref, %.loc27_39.4
+// CHECK:STDOUT:   return %.loc27_39.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
-// CHECK:STDOUT:   %.loc26_15.1: ref B = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc26_15.2: ref A = class_element_access %.loc26_15.1, element0
-// CHECK:STDOUT:   %.loc26_15.3: ref A = converted %c.ref, %.loc26_15.2
-// CHECK:STDOUT:   %.loc26_15.4: A = bind_value %.loc26_15.3
-// CHECK:STDOUT:   %a: A = bind_name a, %.loc26_15.4
+// CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc30_15.2: ref A = class_element_access %.loc30_15.1, element0
+// CHECK:STDOUT:   %.loc30_15.3: ref A = converted %c.ref, %.loc30_15.2
+// CHECK:STDOUT:   %.loc30_15.4: A = bind_value %.loc30_15.3
+// CHECK:STDOUT:   %a: A = bind_name a, %.loc30_15.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertRef(%c: C*) -> A* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: C* = name_ref c, %c
-// CHECK:STDOUT:   %.loc30_12: ref C = deref %c.ref
+// CHECK:STDOUT:   %.loc34_12: ref C = deref %c.ref
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12, element0
-// CHECK:STDOUT:   %.loc30_15.2: ref A = class_element_access %.loc30_15.1, element0
-// CHECK:STDOUT:   %.loc30_15.3: ref A = converted %.loc30_12, %.loc30_15.2
-// CHECK:STDOUT:   %.loc30_10: A* = addr_of %.loc30_15.3
-// CHECK:STDOUT:   return %.loc30_10
+// CHECK:STDOUT:   %.loc34_15.1: ref B = class_element_access %.loc34_12, element0
+// CHECK:STDOUT:   %.loc34_15.2: ref A = class_element_access %.loc34_15.1, element0
+// CHECK:STDOUT:   %.loc34_15.3: ref A = converted %.loc34_12, %.loc34_15.2
+// CHECK:STDOUT:   %.loc34_10: A* = addr_of %.loc34_15.3
+// CHECK:STDOUT:   return %.loc34_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc34_38: i32 = int_literal 1 [template = constants.%.20]
-// CHECK:STDOUT:   %.loc34_39.1: {.a: i32} = struct_literal (%.loc34_38)
-// CHECK:STDOUT:   %.loc34_47: i32 = int_literal 2 [template = constants.%.21]
-// CHECK:STDOUT:   %.loc34_48.1: {.base: {.a: i32}, .b: i32} = struct_literal (%.loc34_39.1, %.loc34_47)
-// CHECK:STDOUT:   %.loc34_56: i32 = int_literal 3 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc34_57.1: {.base: {.base: {.a: i32}, .b: i32}, .c: i32} = struct_literal (%.loc34_48.1, %.loc34_56)
+// CHECK:STDOUT:   %.loc38_38: i32 = int_literal 1 [template = constants.%.20]
+// CHECK:STDOUT:   %.loc38_39.1: {.a: i32} = struct_literal (%.loc38_38)
+// CHECK:STDOUT:   %.loc38_47: i32 = int_literal 2 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc38_48.1: {.base: {.a: i32}, .b: i32} = struct_literal (%.loc38_39.1, %.loc38_47)
+// CHECK:STDOUT:   %.loc38_56: i32 = int_literal 3 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc38_57.1: {.base: {.base: {.a: i32}, .b: i32}, .c: i32} = struct_literal (%.loc38_48.1, %.loc38_56)
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc34_57.2: ref C = temporary_storage
-// CHECK:STDOUT:   %.loc34_57.3: ref B = class_element_access %.loc34_57.2, element0
-// CHECK:STDOUT:   %.loc34_48.2: ref A = class_element_access %.loc34_57.3, element0
-// CHECK:STDOUT:   %.loc34_39.2: ref i32 = class_element_access %.loc34_48.2, element0
-// CHECK:STDOUT:   %.loc34_39.3: init i32 = initialize_from %.loc34_38 to %.loc34_39.2 [template = constants.%.20]
-// CHECK:STDOUT:   %.loc34_39.4: init A = class_init (%.loc34_39.3), %.loc34_48.2 [template = constants.%struct.8]
-// CHECK:STDOUT:   %.loc34_48.3: init A = converted %.loc34_39.1, %.loc34_39.4 [template = constants.%struct.8]
-// CHECK:STDOUT:   %.loc34_48.4: ref i32 = class_element_access %.loc34_57.3, element1
-// CHECK:STDOUT:   %.loc34_48.5: init i32 = initialize_from %.loc34_47 to %.loc34_48.4 [template = constants.%.21]
-// CHECK:STDOUT:   %.loc34_48.6: init B = class_init (%.loc34_48.3, %.loc34_48.5), %.loc34_57.3 [template = constants.%struct.9]
-// CHECK:STDOUT:   %.loc34_57.4: init B = converted %.loc34_48.1, %.loc34_48.6 [template = constants.%struct.9]
-// CHECK:STDOUT:   %.loc34_57.5: ref i32 = class_element_access %.loc34_57.2, element1
-// CHECK:STDOUT:   %.loc34_57.6: init i32 = initialize_from %.loc34_56 to %.loc34_57.5 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc34_57.7: init C = class_init (%.loc34_57.4, %.loc34_57.6), %.loc34_57.2 [template = constants.%struct.10]
-// CHECK:STDOUT:   %.loc34_57.8: ref C = temporary %.loc34_57.2, %.loc34_57.7
-// CHECK:STDOUT:   %.loc34_59: ref C = converted %.loc34_57.1, %.loc34_57.8
-// CHECK:STDOUT:   %.loc34_63.1: ref B = class_element_access %.loc34_59, element0
-// CHECK:STDOUT:   %.loc34_63.2: ref A = class_element_access %.loc34_63.1, element0
-// CHECK:STDOUT:   %.loc34_63.3: ref A = converted %.loc34_59, %.loc34_63.2
-// CHECK:STDOUT:   %.loc34_63.4: A = bind_value %.loc34_63.3
-// CHECK:STDOUT:   %a: A = bind_name a, %.loc34_63.4
+// CHECK:STDOUT:   %.loc38_57.2: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc38_57.3: ref B = class_element_access %.loc38_57.2, element0
+// CHECK:STDOUT:   %.loc38_48.2: ref A = class_element_access %.loc38_57.3, element0
+// CHECK:STDOUT:   %.loc38_39.2: ref i32 = class_element_access %.loc38_48.2, element0
+// CHECK:STDOUT:   %.loc38_39.3: init i32 = initialize_from %.loc38_38 to %.loc38_39.2 [template = constants.%.20]
+// CHECK:STDOUT:   %.loc38_39.4: init A = class_init (%.loc38_39.3), %.loc38_48.2 [template = constants.%struct.8]
+// CHECK:STDOUT:   %.loc38_48.3: init A = converted %.loc38_39.1, %.loc38_39.4 [template = constants.%struct.8]
+// CHECK:STDOUT:   %.loc38_48.4: ref i32 = class_element_access %.loc38_57.3, element1
+// CHECK:STDOUT:   %.loc38_48.5: init i32 = initialize_from %.loc38_47 to %.loc38_48.4 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc38_48.6: init B = class_init (%.loc38_48.3, %.loc38_48.5), %.loc38_57.3 [template = constants.%struct.9]
+// CHECK:STDOUT:   %.loc38_57.4: init B = converted %.loc38_48.1, %.loc38_48.6 [template = constants.%struct.9]
+// CHECK:STDOUT:   %.loc38_57.5: ref i32 = class_element_access %.loc38_57.2, element1
+// CHECK:STDOUT:   %.loc38_57.6: init i32 = initialize_from %.loc38_56 to %.loc38_57.5 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc38_57.7: init C = class_init (%.loc38_57.4, %.loc38_57.6), %.loc38_57.2 [template = constants.%struct.10]
+// CHECK:STDOUT:   %.loc38_57.8: ref C = temporary %.loc38_57.2, %.loc38_57.7
+// CHECK:STDOUT:   %.loc38_59: ref C = converted %.loc38_57.1, %.loc38_57.8
+// CHECK:STDOUT:   %.loc38_63.1: ref B = class_element_access %.loc38_59, element0
+// CHECK:STDOUT:   %.loc38_63.2: ref A = class_element_access %.loc38_63.1, element0
+// CHECK:STDOUT:   %.loc38_63.3: ref A = converted %.loc38_59, %.loc38_63.2
+// CHECK:STDOUT:   %.loc38_63.4: A = bind_value %.loc38_63.3
+// CHECK:STDOUT:   %a: A = bind_name a, %.loc38_63.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

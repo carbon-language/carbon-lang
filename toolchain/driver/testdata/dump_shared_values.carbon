@@ -5,6 +5,10 @@
 // ARGS: compile --phase=lex --dump-shared-values %s
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/dump_shared_values.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/dump_shared_values.carbon
 
 // The value 8 is significant because it can show as negative due to APInt.
 var int1: i32 = 1;

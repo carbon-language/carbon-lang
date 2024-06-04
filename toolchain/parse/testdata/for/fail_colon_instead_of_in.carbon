@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/for/fail_colon_instead_of_in.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_colon_instead_of_in.carbon
 
 fn foo() {
   // CHECK:STDERR: fail_colon_instead_of_in.carbon:[[@LINE+3]]:19: ERROR: `:` should be replaced by `in`.

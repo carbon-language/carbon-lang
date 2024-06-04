@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_modifiers.carbon
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected var b: ();
@@ -54,20 +58,20 @@ abstract var e: ();
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_19.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_19.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_19.2: type = converted %.loc15_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc24_27.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc24_27.2: type = converted %.loc24_27.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc28_27.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc28_27.2: type = converted %.loc28_27.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %c.var: ref () = var c
 // CHECK:STDOUT:   %c: ref () = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc37_29.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc37_29.2: type = converted %.loc37_29.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc41_29.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc41_29.2: type = converted %.loc41_29.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc42_18.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc42_18.2: type = converted %.loc42_18.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc46_18.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc46_18.2: type = converted %.loc46_18.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT: }

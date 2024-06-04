@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/no_prelude/fail_not_constant.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/no_prelude/fail_not_constant.carbon
 
 fn F() {
   var a: () = ();
@@ -32,25 +36,25 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_11.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_11.2: type = converted %.loc8_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc8_16.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_16.2: init () = tuple_init () to %a.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_17: init () = converted %.loc8_16.1, %.loc8_16.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc8_17
-// CHECK:STDOUT:   %.loc9_11: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_12.1: type = converted %.loc9_11, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_12.2: type = ptr_type () [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_16.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_16.2: init () = tuple_init () to %a.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_17: init () = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc12_17
+// CHECK:STDOUT:   %.loc13_11: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc13_12.1: type = converted %.loc13_11, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13_12.2: type = ptr_type () [template = constants.%.2]
 // CHECK:STDOUT:   %b.var: ref ()* = var b
 // CHECK:STDOUT:   %b: ref ()* = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref () = name_ref a, %a
-// CHECK:STDOUT:   %.loc9_16: ()* = addr_of %a.ref
-// CHECK:STDOUT:   assign %b.var, %.loc9_16
+// CHECK:STDOUT:   %.loc13_16: ()* = addr_of %a.ref
+// CHECK:STDOUT:   assign %b.var, %.loc13_16
 // CHECK:STDOUT:   %b.ref: ref ()* = name_ref b, %b
-// CHECK:STDOUT:   %.loc13_14: ()* = bind_value %b.ref
-// CHECK:STDOUT:   %.loc13_13: ref () = deref %.loc13_14
+// CHECK:STDOUT:   %.loc17_14: ()* = bind_value %b.ref
+// CHECK:STDOUT:   %.loc17_13: ref () = deref %.loc17_14
 // CHECK:STDOUT:   %c: <error> = bind_alias c, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

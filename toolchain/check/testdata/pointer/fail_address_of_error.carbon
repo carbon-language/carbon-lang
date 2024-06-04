@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
 
 fn Test() {
   // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: ERROR: Name `undeclared` not found.
@@ -39,11 +43,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc12: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc12: <error> = addr_of %undeclared.ref.loc12 [template = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc20_5: <error> = addr_of %undeclared.ref.loc20 [template = <error>]
-// CHECK:STDOUT:   %.loc20_3: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc16: <error> = addr_of %undeclared.ref.loc16 [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc24: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc24_5: <error> = addr_of %undeclared.ref.loc24 [template = <error>]
+// CHECK:STDOUT:   %.loc24_3: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

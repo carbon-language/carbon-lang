@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
@@ -32,13 +36,13 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_18: i32 = int_literal 42 [template = constants.%.2]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc11_20: <associated type in I> = assoc_entity element0, %T [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15_20: <associated type in I> = assoc_entity element0, %T [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc11_20
+// CHECK:STDOUT:   .T = %.loc15_20
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

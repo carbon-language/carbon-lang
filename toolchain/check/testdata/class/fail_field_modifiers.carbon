@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_field_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_field_modifiers.carbon
 
 class Class {
 
@@ -57,29 +61,29 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc13_18.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
-// CHECK:STDOUT:   %.loc13_18.2: type = converted %int.make_type_32.loc13, %.loc13_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_16: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc19_16.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:   %.loc19_16.2: type = converted %int.make_type_32.loc19, %.loc19_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_14: <unbound element of class Class> = field_decl k, element1 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc25: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc25_18.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
-// CHECK:STDOUT:   %.loc25_18.2: type = converted %int.make_type_32.loc25, %.loc25_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc25_24: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc25_24
-// CHECK:STDOUT:   %int.make_type_32.loc30: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc30_16.1: type = value_of_initializer %int.make_type_32.loc30 [template = i32]
-// CHECK:STDOUT:   %.loc30_16.2: type = converted %int.make_type_32.loc30, %.loc30_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc30_22: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc30_22
+// CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc17_18.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
+// CHECK:STDOUT:   %.loc17_18.2: type = converted %int.make_type_32.loc17, %.loc17_18.1 [template = i32]
+// CHECK:STDOUT:   %.loc17_16: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc23_16.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
+// CHECK:STDOUT:   %.loc23_16.2: type = converted %int.make_type_32.loc23, %.loc23_16.1 [template = i32]
+// CHECK:STDOUT:   %.loc23_14: <unbound element of class Class> = field_decl k, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc29_18.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
+// CHECK:STDOUT:   %.loc29_18.2: type = converted %int.make_type_32.loc29, %.loc29_18.1 [template = i32]
+// CHECK:STDOUT:   %.loc29_24: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc29_24
+// CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc34_16.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
+// CHECK:STDOUT:   %.loc34_16.2: type = converted %int.make_type_32.loc34, %.loc34_16.1 [template = i32]
+// CHECK:STDOUT:   %.loc34_22: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .j = %.loc13_16
-// CHECK:STDOUT:   .k = %.loc19_14
+// CHECK:STDOUT:   .j = %.loc17_16
+// CHECK:STDOUT:   .k = %.loc23_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

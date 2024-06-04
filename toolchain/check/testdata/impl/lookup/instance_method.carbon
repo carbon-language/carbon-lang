@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/instance_method.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/instance_method.carbon
 
 class C;
 
@@ -45,24 +49,24 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc7
+// CHECK:STDOUT:     .C = %C.decl.loc11
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl.loc7: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %C.decl.loc13: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.3 [template = constants.%struct.4] {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc7 [template = constants.%C]
-// CHECK:STDOUT:     %c.loc19_6.1: C = param c
-// CHECK:STDOUT:     @F.3.%c: C = bind_name c, %c.loc19_6.1
+// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
+// CHECK:STDOUT:     %c.loc23_6.1: C = param c
+// CHECK:STDOUT:     @F.3.%c: C = bind_name c, %c.loc23_6.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc19_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc19_15.2: type = converted %int.make_type_32, %.loc19_15.1 [template = i32]
+// CHECK:STDOUT:     %.loc23_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc23_15.2: type = converted %int.make_type_32, %.loc23_15.1 [template = i32]
 // CHECK:STDOUT:     @F.3.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -71,31 +75,31 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref: I = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc10_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc10_14.2: type = converted %Self.ref, %.loc10_14.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc10_8.1: Self = param self
-// CHECK:STDOUT:     %self.loc10_8.2: Self = bind_name self, %self.loc10_8.1
+// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc14_8.1: Self = param self
+// CHECK:STDOUT:     %self.loc14_8.2: Self = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc10_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc10_25.2: type = converted %int.make_type_32, %.loc10_25.1 [template = i32]
+// CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_28: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_28: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc10_28
+// CHECK:STDOUT:   .F = %.loc14_28
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as I {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc15_10.1: C = param self
-// CHECK:STDOUT:     %self.loc15_10.2: C = bind_name self, %self.loc15_10.1
+// CHECK:STDOUT:     %self.loc19_10.1: C = param self
+// CHECK:STDOUT:     %self.loc19_10.2: C = bind_name self, %self.loc19_10.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc15_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc15_27.2: type = converted %int.make_type_32, %.loc15_27.1 [template = i32]
+// CHECK:STDOUT:     %.loc19_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_27.2: type = converted %int.make_type_32, %.loc19_27.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
@@ -117,19 +121,19 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc10_8.2: Self]() -> i32;
+// CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: Self]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@impl.%self.loc15_10.2: C]() -> i32;
+// CHECK:STDOUT: fn @F.2[@impl.%self.loc19_10.2: C]() -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc10_28 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc14_28 [template = constants.%.4]
 // CHECK:STDOUT:   %.1: F = interface_witness_access @impl.%.1, element0 [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc20_11: <bound method> = bound_method %c.ref, %.1
-// CHECK:STDOUT:   %F.call: init i32 = call %.loc20_11(%c.ref)
-// CHECK:STDOUT:   %.loc20_15.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc20_15.2: i32 = converted %F.call, %.loc20_15.1
-// CHECK:STDOUT:   return %.loc20_15.2
+// CHECK:STDOUT:   %.loc24_11: <bound method> = bound_method %c.ref, %.1
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc24_11(%c.ref)
+// CHECK:STDOUT:   %.loc24_15.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc24_15.2: i32 = converted %F.call, %.loc24_15.1
+// CHECK:STDOUT:   return %.loc24_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
