@@ -497,10 +497,10 @@ class DeferredDefinitionWorklist {
   // Push a task to re-enter a function scope, so that functions defined within
   // it are type-checked in the right context.
   auto PushEnterDeferredDefinitionScope(Context& context) -> void {
-    bool nested = !ancestor_scopes_.empty() &&
-                  ancestor_scopes_.back().scope_index ==
+    bool nested = !entered_scopes_.empty() &&
+                  entered_scopes_.back().scope_index ==
                       context.decl_name_stack().PeekInitialScopeIndex();
-    ancestor_scopes_.push_back(
+    entered_scopes_.push_back(
         {.worklist_start_index = worklist_.size(),
          .scope_index = context.scope_stack().PeekIndex()});
     worklist_.push_back(
@@ -543,7 +543,7 @@ class DeferredDefinitionWorklist {
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
-    CARBON_CHECK(worklist_.empty() && ancestor_scopes_.empty())
+    CARBON_CHECK(worklist_.empty() && entered_scopes_.empty())
         << "Tasks left behind on worklist.";
   }
 
@@ -558,7 +558,7 @@ class DeferredDefinitionWorklist {
   llvm::SmallVector<Task, 0> worklist_;
 
   // A deferred definition scope that is currently still open.
-  struct AncestorScope {
+  struct EnteredScope {
     // The index in worklist_ of the EnterDeferredDefinitionScope task.
     size_t worklist_start_index;
     // The corresponding lexical scope index.
@@ -566,13 +566,13 @@ class DeferredDefinitionWorklist {
   };
 
   // The deferred definition scopes for the current checking actions.
-  llvm::SmallVector<AncestorScope> ancestor_scopes_;
+  llvm::SmallVector<EnteredScope> entered_scopes_;
 };
 }  // namespace
 
 auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     -> bool {
-  auto start_index = ancestor_scopes_.pop_back_val().worklist_start_index;
+  auto start_index = entered_scopes_.pop_back_val().worklist_start_index;
 
   // If we've not found any deferred definitions in this scope, clean up the
   // stack.

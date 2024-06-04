@@ -88,14 +88,14 @@ auto DeclNameStack::Suspend() -> SuspendedName {
       << "Missing call to FinishName before Suspend";
   SuspendedName result = {.name_context = decl_name_stack_.pop_back_val(),
                           .scopes = {}};
-  auto parent_index = result.name_context.initial_scope_index;
+  auto scope_index = result.name_context.initial_scope_index;
   auto& scope_stack = context_->scope_stack();
-  while (scope_stack.PeekIndex() > parent_index) {
+  while (scope_stack.PeekIndex() > scope_index) {
     result.scopes.push_back(scope_stack.Suspend());
   }
-  CARBON_CHECK(scope_stack.PeekIndex() == parent_index)
-      << "Scope index " << parent_index
-      << " does not enclose the current scope " << scope_stack.PeekIndex();
+  CARBON_CHECK(scope_stack.PeekIndex() == scope_index)
+      << "Scope index " << scope_index << " does not enclose the current scope "
+      << scope_stack.PeekIndex();
   return result;
 }
 

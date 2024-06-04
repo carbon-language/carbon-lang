@@ -106,7 +106,7 @@ class ScopeStack {
   // Returns the innermost lexical lookup result, if any, along with a list of
   // non-lexical scopes in which lookup should also be performed, ordered from
   // outermost to innermost.
-  auto LookupInAcestorScopes(SemIR::NameId name_id)
+  auto LookupInAncestorScopes(SemIR::NameId name_id)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
   // Looks up the name `name_id` in the current scope. Returns the existing

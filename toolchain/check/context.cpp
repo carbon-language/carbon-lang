@@ -255,7 +255,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   // Find the results from ancestor lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
   auto [lexical_result, non_lexical_scopes] =
-      scope_stack().LookupInAcestorScopes(name_id);
+      scope_stack().LookupInAncestorScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scopes)) {
