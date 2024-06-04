@@ -44,7 +44,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
 auto DeclNameStack::MakeUnqualifiedName(SemIR::LocId loc_id,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
-  ApplyAndLookupName(context, loc_id, name_id, /*is_unqualified=*/true);
+  ApplyAndLookupName(context, loc_id, name_id);
   return context;
 }
 
@@ -59,8 +59,7 @@ auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
 
-  ApplyAndLookupName(decl_name_stack_.back(), name.name_loc_id, name.name_id,
-                     /*is_unqualified=*/false);
+  ApplyAndLookupName(decl_name_stack_.back(), name.name_loc_id, name.name_id);
 
   NameContext result = decl_name_stack_.back();
   decl_name_stack_.back().state = NameContext::State::Finished;
@@ -185,9 +184,13 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   }
 
   auto& name_context = decl_name_stack_.back();
-  ApplyAndLookupName(name_context, name.name_loc_id, name.name_id,
-                     /*is_unqualified=*/false);
+  ApplyAndLookupName(name_context, name.name_loc_id, name.name_id);
   name_context.has_qualifiers = true;
+
+  // Enter the scope of the existing entity.
+  if (name_context.state == NameContext::State::Resolved) {
+    UpdateScopeIfNeeded(name_context);
+  }
   if (!CheckValidAsQualifier(name_context)) {
     name_context.state = NameContext::State::Error;
   }
@@ -195,8 +198,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
 
 auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
                                        SemIR::LocId loc_id,
-                                       SemIR::NameId name_id,
-                                       bool is_unqualified) -> void {
+                                       SemIR::NameId name_id) -> void {
   // The location of the name is the location of the last name token we've
   // processed so far.
   name_context.loc_id = loc_id;
@@ -215,15 +217,12 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
     // Invalid indicates an unresolved name. Store it and return.
     name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Unresolved;
-    return;
   } else {
     // Store the resolved instruction and continue for the target scope
     // update.
     name_context.resolved_inst_id = resolved_inst_id;
+    name_context.state = NameContext::State::Resolved;
   }
-
-  // Enter the scope of the existing entity.
-  UpdateScopeIfNeeded(name_context, is_unqualified);
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
@@ -246,8 +245,7 @@ static auto PushNameQualifierScope(Context& context,
   context.scope_stack().Push();
 }
 
-auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
-                                        bool is_unqualified) -> void {
+auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
   // This will only be reached for resolved instructions. We update the target
   // scope based on the resolved type.
   CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
@@ -256,10 +254,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.enclosing_scope_id = class_info.scope_id;
-        if (!is_unqualified) {
-          PushNameQualifierScope(*context_, name_context.resolved_inst_id,
-                                 class_info.scope_id);
-        }
+        PushNameQualifierScope(*context_, name_context.resolved_inst_id,
+                               class_info.scope_id);
       } else {
         name_context.state = NameContext::State::ResolvedNonScope;
       }
@@ -271,10 +267,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       if (interface_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.enclosing_scope_id = interface_info.scope_id;
-        if (!is_unqualified) {
-          PushNameQualifierScope(*context_, name_context.resolved_inst_id,
-                                 interface_info.scope_id);
-        }
+        PushNameQualifierScope(*context_, name_context.resolved_inst_id,
+                               interface_info.scope_id);
       } else {
         name_context.state = NameContext::State::ResolvedNonScope;
       }
@@ -297,11 +291,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
         // Only error once per package.
         scope.is_closed_import = false;
       }
-      if (!is_unqualified) {
-        PushNameQualifierScope(*context_, name_context.resolved_inst_id,
-                               scope_id,
-                               context_->name_scopes().Get(scope_id).has_error);
-      }
+      PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
+                             context_->name_scopes().Get(scope_id).has_error);
       break;
     }
     default:

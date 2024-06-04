@@ -158,10 +158,10 @@ library "reopen_other";
 
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:11: ERROR: Imported packages cannot be used for declarations.
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: namespace Other;
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: Package imported here.
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -169,6 +169,24 @@ namespace Other;
 
 // This is not diagnosed after the diagnostic on `namespace Other;`.
 fn Other.G() {}
+
+// --- fail_main_reopen_other_nested.carbon
+
+library "reopen_other_nested";
+
+import Other library "fn";
+
+// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+7]]:11: ERROR: Imported packages cannot be used for declarations.
+// CHECK:STDERR: namespace Other.Nested;
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: Package imported here.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
+namespace Other.Nested;
+
+// This is not diagnosed after the diagnostic on `namespace Other;`.
+fn Other.Nested.F() {}
 
 // --- fail_main_add_to_other.carbon
 
@@ -467,6 +485,32 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_main_reopen_other_nested.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Nested = %Nested
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Nested: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

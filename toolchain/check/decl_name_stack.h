@@ -231,7 +231,7 @@ class DeclNameStack {
   // Appends a name to the given name context, and performs a lookup to find
   // what, if anything, the name refers to.
   auto ApplyAndLookupName(NameContext& name_context, SemIR::LocId loc_id,
-                          SemIR::NameId name_id, bool is_unqualified) -> void;
+                          SemIR::NameId name_id) -> void;
 
   // Checks and returns whether the given name context can be used as a
   // qualifier. A suitable diagnostic is issued if not.
@@ -241,8 +241,7 @@ class DeclNameStack {
   // resolution is complete, whether for Name or expression. When updating for
   // an unqualified name, the resolution is noted without pushing scopes; it's
   // instead expected this will become a name conflict.
-  auto UpdateScopeIfNeeded(NameContext& name_context, bool is_unqualified)
-      -> void;
+  auto UpdateScopeIfNeeded(NameContext& name_context) -> void;
 
   // The linked context.
   Context* context_;

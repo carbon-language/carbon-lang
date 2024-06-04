@@ -41,10 +41,18 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
     // previous declaration. Otherwise, diagnose the issue.
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
-      // When the name conflict is an imported namespace, fill the location ID
-      // so that future diagnostics point at this declaration.
-      if (existing->import_id.is_valid() &&
-          !context.insts().GetLocId(existing_inst_id).is_valid()) {
+      if (context.name_scopes().Get(existing->name_scope_id).is_closed_import) {
+        // The existing name is a package name, so this is a name conflict.
+        context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
+
+        // Treat this as a local namespace name from now on to avoid further
+        // diagnostics.
+        context.name_scopes().Get(existing->name_scope_id).is_closed_import =
+            false;
+      } else if (existing->import_id.is_valid() &&
+                 !context.insts().GetLocId(existing_inst_id).is_valid()) {
+        // When the name conflict is an imported namespace, fill the location ID
+        // so that future diagnostics point at this declaration.
         context.SetNamespaceNodeId(existing_inst_id, node_id);
       }
     } else {
