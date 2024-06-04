@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/decl_state.h"
+#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -15,7 +15,7 @@ namespace Carbon::Check {
 auto HandleNamespaceStart(Context& context, Parse::NamespaceStartId /*node_id*/)
     -> bool {
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Namespace);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Namespace);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -23,8 +23,12 @@ auto HandleNamespaceStart(Context& context, Parse::NamespaceStartId /*node_id*/)
 auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
-  LimitModifiersOnDecl(context, KeywordModifierSet::None,
+
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Namespace);
+  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::None,
                        Lex::TokenKind::Namespace);
+
   auto namespace_inst = SemIR::Namespace{
       context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
       SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
@@ -54,7 +58,6 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
   }
 
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Namespace);
   return true;
 }
 

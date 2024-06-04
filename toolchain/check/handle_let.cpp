@@ -15,7 +15,7 @@ namespace Carbon::Check {
 
 auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId node_id)
     -> bool {
-  context.decl_state_stack().Push(DeclState::Let);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Let);
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(node_id);
   return true;
@@ -82,25 +82,25 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(
           context.scope_stack().PeekNameScopeId());
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let, parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Let,
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Let);
+  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Let,
+                             parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_state, Lex::TokenKind::Let,
                                       parent_scope_inst);
   LimitModifiersOnDecl(
-      context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
+      context, decl_state,
+      KeywordModifierSet::Access | KeywordModifierSet::Interface,
       Lex::TokenKind::Let);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  if (modifiers.HasAnyOf(KeywordModifierSet::Interface)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Decl),
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Let);
 
   auto pattern = context.insts().GetWithLocId(pattern_id);
   auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();

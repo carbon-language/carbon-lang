@@ -36,7 +36,7 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Class);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Class);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -187,28 +187,30 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   // Process modifiers.
   auto [_, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class, parent_scope_inst);
-  LimitModifiersOnDecl(context,
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Class);
+  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Class,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, decl_state,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
                            KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
-  RestrictExternModifierOnDecl(context, Lex::TokenKind::Class,
+  RestrictExternModifierOnDecl(context, decl_state, Lex::TokenKind::Class,
                                parent_scope_inst, is_definition);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
 
-  bool is_extern = modifiers.HasAnyOf(KeywordModifierSet::Extern);
+  bool is_extern = decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto inheritance_kind =
-      modifiers.HasAnyOf(KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
-      : modifiers.HasAnyOf(KeywordModifierSet::Base)   ? SemIR::Class::Base
-                                                       : SemIR::Class::Final;
+      decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)
+          ? SemIR::Class::Abstract
+      : decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Base)
+          ? SemIR::Class::Base
+          : SemIR::Class::Final;
 
-  context.decl_state_stack().Pop(DeclState::Class);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
@@ -355,7 +357,7 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
 
 auto HandleAdaptIntroducer(Context& context,
                            Parse::AdaptIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::Adapt);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Adapt);
   return true;
 }
 
@@ -364,10 +366,10 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is permitted, no others are allowed.
-  LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Adapt);
+  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Extend,
                        Lex::TokenKind::Adapt);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  context.decl_state_stack().Pop(DeclState::Adapt);
 
   auto parent_class_decl =
       GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
@@ -396,7 +398,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       node_id, {.adapted_type_id = adapted_type_id});
 
   // Extend the class scope with the adapted type's scope if requested.
-  if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extended_scope_id = SemIR::NameScopeId::Invalid;
     if (adapted_type_id == SemIR::TypeId::Error) {
       // Recover by not extending any scope. We instead set has_error to true
@@ -423,7 +425,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
 auto HandleBaseIntroducer(Context& context, Parse::BaseIntroducerId /*node_id*/)
     -> bool {
-  context.decl_state_stack().Push(DeclState::Base);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Base);
   return true;
 }
 
@@ -495,15 +497,15 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is required, no others are allowed.
-  LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Base);
+  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Extend,
                        Lex::TokenKind::Base);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (!decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");
     context.emitter().Emit(node_id, BaseMissingExtend);
   }
-  context.decl_state_stack().Pop(DeclState::Base);
 
   auto parent_class_decl =
       GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
@@ -546,7 +548,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       class_info.base_id);
 
   // Extend the class scope with the base class.
-  if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
       class_scope.extended_scopes.push_back(base_info.scope_id);

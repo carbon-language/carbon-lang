@@ -13,7 +13,7 @@ auto HandleVariableIntroducer(Context& context,
                               Parse::VariableIntroducerId node_id) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(node_id);
-  context.decl_state_stack().Push(DeclState::Var);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Var);
   return true;
 }
 
@@ -101,17 +101,16 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
   // of the name introduced in the declaration. See #2590.
   auto [_, parent_scope_inst] = context.name_scopes().GetInstIfValid(
       context.scope_stack().PeekNameScopeId());
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var, parent_scope_inst);
-  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Var);
+  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Var,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Access,
                        Lex::TokenKind::Var);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-
-  context.decl_state_stack().Pop(DeclState::Var);
 
   return true;
 }

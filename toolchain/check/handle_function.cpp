@@ -5,8 +5,8 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/decl_state.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
@@ -30,7 +30,7 @@ auto HandleFunctionIntroducer(Context& context,
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Fn);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Fn);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -45,24 +45,24 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context, bool is_definition,
+static auto DiagnoseModifiers(Context& context, DeclIntroducerState& decl_state,
+                              bool is_definition,
                               SemIR::InstId parent_scope_inst_id,
                               std::optional<SemIR::Inst> parent_scope_inst)
-    -> KeywordModifierSet {
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Fn, parent_scope_inst);
-  LimitModifiersOnDecl(context,
+    -> void {
+  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Fn,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, decl_state,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        Lex::TokenKind::Fn);
-  RestrictExternModifierOnDecl(context, Lex::TokenKind::Fn, parent_scope_inst,
-                               is_definition);
-  CheckMethodModifiersOnFunction(context, parent_scope_inst_id,
+  RestrictExternModifierOnDecl(context, decl_state, Lex::TokenKind::Fn,
+                               parent_scope_inst, is_definition);
+  CheckMethodModifiersOnFunction(context, decl_state, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Fn,
+  RequireDefaultFinalOnlyInInterfaces(context, decl_state, Lex::TokenKind::Fn,
                                       parent_scope_inst);
-
-  return context.decl_state_stack().innermost().modifier_set;
 }
 
 // Returns the return slot usage for a function given the computed usage for two
@@ -227,27 +227,25 @@ static auto BuildFunctionDecl(Context& context,
   // Process modifiers.
   auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
-  auto modifiers = DiagnoseModifiers(context, is_definition,
-                                     parent_scope_inst_id, parent_scope_inst);
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Fn);
+  DiagnoseModifiers(context, decl_state, is_definition, parent_scope_inst_id,
+                    parent_scope_inst);
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  bool is_extern = modifiers.HasAnyOf(KeywordModifierSet::Extern);
-  if (modifiers.HasAnyOf(KeywordModifierSet::Method)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Decl),
+  bool is_extern = decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Decl),
                  "method modifier");
   }
-  if (modifiers.HasAnyOf(KeywordModifierSet::Interface)) {
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Decl),
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Fn);
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{

@@ -19,7 +19,7 @@ auto HandleInterfaceIntroducer(Context& context,
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Interface);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Interface);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -39,18 +39,17 @@ static auto BuildInterfaceDecl(Context& context,
   // Process modifiers.
   auto [_, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
+  auto decl_state =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Interface);
+  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Interface,
                              parent_scope_inst);
-  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Interface);
 
   auto decl_block_id = context.inst_block_stack().Pop();
 
