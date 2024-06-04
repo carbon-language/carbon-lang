@@ -26,9 +26,9 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
       PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();
 
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Export);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::None,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None,
                        Lex::TokenKind::Export);
 
   if (name_context.state == DeclNameStack::NameContext::State::Error) {

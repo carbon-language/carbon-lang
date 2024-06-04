@@ -30,12 +30,12 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
 
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Alias);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Access,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
                        Lex::TokenKind::Alias);
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
 

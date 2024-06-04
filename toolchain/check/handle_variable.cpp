@@ -101,14 +101,14 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
   // of the name introduced in the declaration. See #2590.
   auto [_, parent_scope_inst] = context.name_scopes().GetInstIfValid(
       context.scope_stack().PeekNameScopeId());
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Var);
-  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Var,
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Var,
                              parent_scope_inst);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Access,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
                        Lex::TokenKind::Var);
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
 

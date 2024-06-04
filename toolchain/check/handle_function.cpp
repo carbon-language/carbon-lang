@@ -45,23 +45,23 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context, DeclIntroducerState& decl_state,
+static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
                               bool is_definition,
                               SemIR::InstId parent_scope_inst_id,
                               std::optional<SemIR::Inst> parent_scope_inst)
     -> void {
-  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Fn,
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Fn,
                              parent_scope_inst);
-  LimitModifiersOnDecl(context, decl_state,
+  LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        Lex::TokenKind::Fn);
-  RestrictExternModifierOnDecl(context, decl_state, Lex::TokenKind::Fn,
+  RestrictExternModifierOnDecl(context, introducer, Lex::TokenKind::Fn,
                                parent_scope_inst, is_definition);
-  CheckMethodModifiersOnFunction(context, decl_state, parent_scope_inst_id,
+  CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, decl_state, Lex::TokenKind::Fn,
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, Lex::TokenKind::Fn,
                                       parent_scope_inst);
 }
 
@@ -227,23 +227,23 @@ static auto BuildFunctionDecl(Context& context,
   // Process modifiers.
   auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Fn);
-  DiagnoseModifiers(context, decl_state, is_definition, parent_scope_inst_id,
+  DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
                     parent_scope_inst);
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  bool is_extern = decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Decl),
+  bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "method modifier");
   }
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Decl),
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
 

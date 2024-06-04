@@ -20,9 +20,9 @@ auto HandleImportIntroducer(Context& context,
 
 auto HandleImportDecl(Context& context, Parse::ImportDeclId /*node_id*/)
     -> bool {
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Import);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Export,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Export,
                        Lex::TokenKind::Import);
   return true;
 }
@@ -36,9 +36,9 @@ auto HandleLibraryIntroducer(Context& context,
 
 auto HandleLibraryDecl(Context& context, Parse::LibraryDeclId /*node_id*/)
     -> bool {
-  auto decl_state = context.decl_introducer_state_stack().Pop(
+  auto introducer = context.decl_introducer_state_stack().Pop(
       DeclIntroducerState::PackageOrLibrary);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Impl,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl,
                        Lex::TokenKind::Library);
   return true;
 }
@@ -52,9 +52,9 @@ auto HandlePackageIntroducer(Context& context,
 
 auto HandlePackageDecl(Context& context, Parse::PackageDeclId /*node_id*/)
     -> bool {
-  auto decl_state = context.decl_introducer_state_stack().Pop(
+  auto introducer = context.decl_introducer_state_stack().Pop(
       DeclIntroducerState::PackageOrLibrary);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Impl,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl,
                        Lex::TokenKind::Package);
   return true;
 }

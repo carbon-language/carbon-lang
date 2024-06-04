@@ -187,27 +187,27 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   // Process modifiers.
   auto [_, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Class);
-  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Class,
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Class,
                              parent_scope_inst);
-  LimitModifiersOnDecl(context, decl_state,
+  LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
                            KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
-  RestrictExternModifierOnDecl(context, decl_state, Lex::TokenKind::Class,
+  RestrictExternModifierOnDecl(context, introducer, Lex::TokenKind::Class,
                                parent_scope_inst, is_definition);
 
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
 
-  bool is_extern = decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
+  bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto inheritance_kind =
-      decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)
           ? SemIR::Class::Abstract
-      : decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Base)
+      : introducer.modifier_set.HasAnyOf(KeywordModifierSet::Base)
           ? SemIR::Class::Base
           : SemIR::Class::Final;
 
@@ -366,9 +366,9 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is permitted, no others are allowed.
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Adapt);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Extend,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend,
                        Lex::TokenKind::Adapt);
 
   auto parent_class_decl =
@@ -398,7 +398,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       node_id, {.adapted_type_id = adapted_type_id});
 
   // Extend the class scope with the adapted type's scope if requested.
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extended_scope_id = SemIR::NameScopeId::Invalid;
     if (adapted_type_id == SemIR::TypeId::Error) {
       // Recover by not extending any scope. We instead set has_error to true
@@ -497,11 +497,11 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is required, no others are allowed.
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Base);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Extend,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend,
                        Lex::TokenKind::Base);
-  if (!decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");
     context.emitter().Emit(node_id, BaseMissingExtend);
@@ -548,7 +548,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       class_info.base_id);
 
   // Extend the class scope with the base class.
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
       class_scope.extended_scopes.push_back(base_info.scope_id);

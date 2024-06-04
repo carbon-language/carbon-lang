@@ -192,9 +192,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
   // TODO: Handle `final` modifier.
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Impl);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::ImplDecl,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl,
                        Lex::TokenKind::Impl);
 
   // Finish processing the name, which should be empty, but might have
@@ -216,8 +216,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   auto impl_decl_id = context.AddInst(node_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extend_node = decl_state.modifier_node_id(ModifierOrder::Decl);
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
                params_node, constraint_type_id);
   }

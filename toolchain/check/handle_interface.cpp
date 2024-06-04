@@ -39,15 +39,15 @@ static auto BuildInterfaceDecl(Context& context,
   // Process modifiers.
   auto [_, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Interface);
-  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Interface,
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Interface,
                              parent_scope_inst);
-  LimitModifiersOnDecl(context, decl_state, KeywordModifierSet::Access,
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
 

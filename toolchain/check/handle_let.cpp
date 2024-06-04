@@ -82,23 +82,23 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(
           context.scope_stack().PeekNameScopeId());
-  auto decl_state =
+  auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Let);
-  CheckAccessModifiersOnDecl(context, decl_state, Lex::TokenKind::Let,
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Let,
                              parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, decl_state, Lex::TokenKind::Let,
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, Lex::TokenKind::Let,
                                       parent_scope_inst);
   LimitModifiersOnDecl(
-      context, decl_state,
+      context, introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Interface,
       Lex::TokenKind::Let);
 
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  if (decl_state.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
-    context.TODO(decl_state.modifier_node_id(ModifierOrder::Decl),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
 
