@@ -379,10 +379,10 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 
 auto HandleFunctionDefinitionResume(Context& context,
                                     Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction sus_fn) -> void {
-  context.decl_name_stack().Restore(sus_fn.saved_name_state);
-  HandleFunctionDefinitionAfterSignature(context, node_id, sus_fn.function_id,
-                                         sus_fn.decl_id);
+                                    SuspendedFunction suspended_fn) -> void {
+  context.decl_name_stack().Restore(suspended_fn.saved_name_state);
+  HandleFunctionDefinitionAfterSignature(
+      context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
 }
 
 auto HandleFunctionDefinitionStart(Context& context,
