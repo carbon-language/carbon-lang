@@ -70,14 +70,8 @@ class DeclNameStack {
       // A context that has not processed any parts of the qualifier.
       Empty,
 
-      // An instruction ID has been resolved, whether through an identifier or
-      // expression. This provided a new scope, such as a type.
+      // The name has been resolved to an instruction ID.
       Resolved,
-
-      // An instruction ID has been resolved, whether through an identifier or
-      // expression. It did not provide a new scope, so must be the final part,
-      // such as an out-of-line function definition.
-      ResolvedNonScope,
 
       // An identifier didn't resolve.
       Unresolved,
@@ -233,15 +227,11 @@ class DeclNameStack {
   auto ApplyAndLookupName(NameContext& name_context, SemIR::LocId loc_id,
                           SemIR::NameId name_id) -> void;
 
-  // Checks and returns whether the given name context can be used as a
-  // qualifier. A suitable diagnostic is issued if not.
-  auto CheckValidAsQualifier(const NameContext& name_context) -> bool;
-
-  // Updates the scope on name_context as needed. This is called after
-  // resolution is complete, whether for Name or expression. When updating for
-  // an unqualified name, the resolution is noted without pushing scopes; it's
-  // instead expected this will become a name conflict.
-  auto UpdateScopeIfNeeded(NameContext& name_context) -> void;
+  // Attempts to resolve the given name context as a scope, and returns the
+  // corresponding scope. Issues a suitable diagnostic and returns Invalid if
+  // the name doesn't resolve to a scope.
+  auto ResolveAsScope(const NameContext& name_context) const
+      -> SemIR::NameScopeId;
 
   // The linked context.
   Context* context_;
