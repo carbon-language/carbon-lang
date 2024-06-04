@@ -330,10 +330,11 @@ auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
 
 // Extract the token corresponding to a node.
 template <const Lex::TokenKind& Kind>
-struct Extractable<Token<Kind>> {
-  static auto Extract(NodeExtractor& extractor) -> std::optional<Token<Kind>> {
+struct Extractable<Lex::TokenIndexForKind<Kind>> {
+  static auto Extract(NodeExtractor& extractor)
+      -> std::optional<Lex::TokenIndexForKind<Kind>> {
     if (extractor.MatchesTokenKind(Kind)) {
-      return Token<Kind>{.index = extractor.token()};
+      return static_cast<Lex::TokenIndexForKind<Kind>>(extractor.token());
     } else {
       return std::nullopt;
     }
@@ -342,15 +343,16 @@ struct Extractable<Token<Kind>> {
 
 // Extract the token corresponding to a node.
 template <>
-struct Extractable<AnyToken> {
-  static auto Extract(NodeExtractor& extractor) -> std::optional<AnyToken> {
+struct Extractable<Lex::TokenIndex> {
+  static auto Extract(NodeExtractor& extractor)
+      -> std::optional<Lex::TokenIndex> {
     if (!extractor.has_token()) {
       if (auto* trace = extractor.trace()) {
         *trace << "Token expected but processing root node\n";
       }
       return std::nullopt;
     }
-    return AnyToken{.index = extractor.token()};
+    return extractor.token();
   }
 };
 

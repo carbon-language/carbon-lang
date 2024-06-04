@@ -199,7 +199,10 @@ cc_library(
 cc_library(
     name = "token_index",
     hdrs = ["token_index.h"],
-    deps = ["//toolchain/base:index_base"],
+    deps = [
+        ":token_kind",
+        "//toolchain/base:index_base",
+    ],
 )
 
 cc_library(
