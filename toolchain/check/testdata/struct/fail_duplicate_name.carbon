@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_duplicate_name.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/struct/fail_duplicate_name.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_duplicate_name.carbon
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:42: ERROR: Duplicated field name `abc` in struct type literal.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};

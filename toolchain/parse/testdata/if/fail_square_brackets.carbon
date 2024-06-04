@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/if/fail_square_brackets.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/if/fail_square_brackets.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_square_brackets.carbon
 
 fn F() {
   // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+11]]:6: ERROR: Expected `(` after `if`.

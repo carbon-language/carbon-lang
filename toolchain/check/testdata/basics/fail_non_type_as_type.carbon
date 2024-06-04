@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/fail_non_type_as_type.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/basics/fail_non_type_as_type.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_non_type_as_type.carbon
 
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var x: type = 42;

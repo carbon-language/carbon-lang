@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/empty.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/empty.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/empty.carbon
 
 // CHECK:STDOUT: --- empty.carbon
 // CHECK:STDOUT:

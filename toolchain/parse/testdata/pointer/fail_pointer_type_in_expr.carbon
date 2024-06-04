@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/pointer/fail_pointer_type_in_expr.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/pointer/fail_pointer_type_in_expr.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/fail_pointer_type_in_expr.carbon
 
 fn F() -> i32 {
   // TODO: Indicate the locations of both operators involved in the precedence

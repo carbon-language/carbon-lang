@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/fail_qualifier_unsupported.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/basics/fail_qualifier_unsupported.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_qualifier_unsupported.carbon
 
 var x: i32;
 // CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:14: ERROR: Type `i32` does not support qualified expressions.

@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/const/fail_collapse.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/const/fail_collapse.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/const/fail_collapse.carbon
 
 // CHECK:STDERR: fail_collapse.carbon:[[@LINE+4]]:9: WARNING: `const` applied repeatedly to the same type has no additional effect.
 // CHECK:STDERR: fn G(p: const (const i32)**) -> i32** {

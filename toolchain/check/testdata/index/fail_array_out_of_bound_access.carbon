@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_array_out_of_bound_access.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/index/fail_array_out_of_bound_access.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_array_out_of_bound_access.carbon
 
 var a: [i32; 1] = (12,);
 // CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+3]]:16: ERROR: Array index `1` is past the end of type `[i32; 1]`.

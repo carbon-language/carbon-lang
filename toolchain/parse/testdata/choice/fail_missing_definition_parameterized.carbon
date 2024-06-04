@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/choice/fail_missing_definition_parameterized.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/choice/fail_missing_definition_parameterized.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_missing_definition_parameterized.carbon
 
 // CHECK:STDERR: fail_missing_definition_parameterized.carbon:[[@LINE+3]]:35: ERROR: Choice definition expected.
 // CHECK:STDERR: choice MissingDefinition(T:! type);

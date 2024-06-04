@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/array/fail_require_semi.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/array/fail_require_semi.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/array/fail_require_semi.carbon
 
 // CHECK:STDERR: fail_require_semi.carbon:[[@LINE+3]]:12: ERROR: Expected `;` in array type.
 // CHECK:STDERR: var x: [i32];

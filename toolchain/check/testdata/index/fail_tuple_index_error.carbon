@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_tuple_index_error.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/index/fail_tuple_index_error.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_tuple_index_error.carbon
 
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_tuple_index_error.carbon:[[@LINE+3]]:16: ERROR: Name `oops` not found.

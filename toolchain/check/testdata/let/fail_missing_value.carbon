@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
 
 // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: ERROR: Expected `=`; `let` declaration must have an initializer.
 // CHECK:STDERR: let n: i32;

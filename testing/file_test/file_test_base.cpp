@@ -91,9 +91,9 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
 
 // Modes for GetBazelCommand.
 enum class BazelMode {
-  Test,
-  Dump,
   Autoupdate,
+  Dump,
+  Test,
 };
 
 // Returns the requested bazel command string for the given execution mode.
@@ -107,16 +107,16 @@ static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
        << (target ? target : "<target>") << " ";
 
   switch (mode) {
+    case BazelMode::Autoupdate:
+      args << "-- --autoupdate ";
+      break;
+
     case BazelMode::Dump:
-      args << "--test_arg=--dump_output ";
-      [[fallthrough]];
+      args << "-- --dump_output ";
+      break;
 
     case BazelMode::Test:
       args << "--test_arg=";
-      break;
-
-    case BazelMode::Autoupdate:
-      args << "-- --autoupdate ";
       break;
   }
 

@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/array/fail_out_of_bound_non_literal.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/array/fail_out_of_bound_non_literal.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_out_of_bound_non_literal.carbon
 
 var a: [i32; 3] = (1, 2, 3);
 // CHECK:STDERR: fail_out_of_bound_non_literal.carbon:[[@LINE+3]]:16: ERROR: Array index `3` is past the end of type `[i32; 3]`.

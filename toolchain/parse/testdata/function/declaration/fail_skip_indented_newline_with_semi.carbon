@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/function/declaration/fail_skip_indented_newline_with_semi.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/function/declaration/fail_skip_indented_newline_with_semi.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_skip_indented_newline_with_semi.carbon
 
 // CHECK:STDERR: fail_skip_indented_newline_with_semi.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
 // CHECK:STDERR: fn (x,

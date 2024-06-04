@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:20: ERROR: Cannot initialize struct with 1 field(s) from struct with 0 field(s).
 // CHECK:STDERR: var x: {.a: i32} = {};

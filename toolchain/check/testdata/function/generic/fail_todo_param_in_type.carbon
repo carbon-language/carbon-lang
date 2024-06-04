@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/fail_todo_param_in_type.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/check/testdata/function/generic/fail_todo_param_in_type.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/fail_todo_param_in_type.carbon
 
 // CHECK:STDERR: fail_todo_param_in_type.carbon:[[@LINE+3]]:24: ERROR: Semantics TODO: `symbolic array bound`.
 // CHECK:STDERR: fn F(N:! i32, a: [i32; N]*);

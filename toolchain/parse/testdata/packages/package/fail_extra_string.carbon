@@ -6,7 +6,7 @@
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/packages/package/fail_extra_string.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test --test_arg=--dump_output --test_arg=--file_tests=toolchain/parse/testdata/packages/package/fail_extra_string.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_extra_string.carbon
 
 // CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: ERROR: `package` declarations must end with a `;`.
 // CHECK:STDERR: package Foo library "bar" "baz";
