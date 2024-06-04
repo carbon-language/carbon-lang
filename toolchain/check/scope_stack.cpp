@@ -81,10 +81,10 @@ auto ScopeStack::LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId {
   return result.inst_id;
 }
 
-auto ScopeStack::LookupInAncestorScopes(SemIR::NameId name_id)
+auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
     -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>> {
-  // Find the results from parent lexical scopes. These will be combined with
-  // results from non-lexical scopes such as namespaces and classes.
+  // Find the results from lexical scopes. These will be combined with results
+  // from non-lexical scopes such as namespaces and classes.
   llvm::ArrayRef<LexicalLookup::Result> lexical_results =
       lexical_lookup_.Get(name_id);
 
