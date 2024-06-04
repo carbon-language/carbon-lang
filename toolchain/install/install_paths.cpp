@@ -16,7 +16,7 @@ namespace Carbon {
 
 // The location within our Bazel output tree of the prefix_root.
 static constexpr llvm::StringLiteral PrefixRoot =
-    "_main/toolchain/install/prefix_root/";
+    "carbon/toolchain/install/prefix_root/";
 
 // Path within an install prefix for our marker of a valid install.
 static constexpr llvm::StringLiteral MarkerPath =
