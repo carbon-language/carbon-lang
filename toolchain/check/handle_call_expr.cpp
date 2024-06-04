@@ -4,6 +4,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {

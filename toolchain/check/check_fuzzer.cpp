@@ -5,6 +5,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/fuzzing/libfuzzer.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {

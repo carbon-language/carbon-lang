@@ -4,14 +4,15 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/return.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
-auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
-                             bool is_generic) -> bool {
+static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
+                                    bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 

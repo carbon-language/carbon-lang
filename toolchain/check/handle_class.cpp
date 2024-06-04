@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"

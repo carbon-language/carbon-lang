@@ -142,6 +142,7 @@ def _impl(ctx):
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
                             "-Wextra-semi",
+                            "-Wmissing-prototypes",
                             "-Wzero-as-null-pointer-constant",
                             # Don't warn on external code as we can't
                             # necessarily patch it easily. Note that these have

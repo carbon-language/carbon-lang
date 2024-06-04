@@ -317,8 +317,8 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
 }
 
 // Enforces that an integer type has a valid bit width.
-auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
-    -> bool {
+static auto ValidateIntType(Context& context, SemIRLoc loc,
+                            SemIR::IntType result) -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntLiteral>(result.bit_width_id);
   if (!bit_width) {
@@ -381,8 +381,8 @@ static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
 }
 
 // Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
-    -> bool {
+static auto ValidateFloatType(Context& context, SemIRLoc loc,
+                              SemIR::FloatType result) -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntLiteral>(result.bit_width_id);
   if (!bit_width) {

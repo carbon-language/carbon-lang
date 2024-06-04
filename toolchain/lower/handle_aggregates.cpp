@@ -167,8 +167,9 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
-auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
-                            SemIR::InstBlockId refs_id) -> llvm::Value* {
+static auto EmitAggregateValueRepr(FunctionContext& context,
+                                   SemIR::TypeId type_id,
+                                   SemIR::InstBlockId refs_id) -> llvm::Value* {
   auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:

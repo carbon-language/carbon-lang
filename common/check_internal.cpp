@@ -10,7 +10,7 @@
 namespace Carbon::Internal {
 
 // Prints the buffered message.
-auto PrintAfterStackTrace(void* str) -> void {
+static auto PrintAfterStackTrace(void* str) -> void {
   llvm::errs() << reinterpret_cast<char*>(str);
 }
 

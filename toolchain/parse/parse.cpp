@@ -2,16 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/parse/parse.h"
+
 #include "common/check.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/parse/context.h"
+#include "toolchain/parse/handle.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
-
-// Declare handlers for each parse state.
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
-#include "toolchain/parse/state.def"
 
 auto HandleInvalid(Context& context) -> void {
   CARBON_FATAL() << "The Invalid state shouldn't be on the stack: "

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/pointer_dereference.h"

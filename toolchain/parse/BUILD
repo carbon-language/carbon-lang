@@ -75,7 +75,10 @@ cc_library(
     glob([
         "handle_*.cpp",
     ]),
-    hdrs = ["parse.h"],
+    hdrs = [
+        "handle.h",
+        "parse.h",
+    ],
     deps = [
         ":context",
         ":node_kind",
@@ -147,6 +150,7 @@ cc_fuzz_test(
     deps = [
         ":parse",
         "//common:check",
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
