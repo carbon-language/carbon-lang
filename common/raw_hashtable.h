@@ -1251,7 +1251,8 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(TableImpl&& arg) noexcept
     this->storage() = small_storage();
 
     // For small tables, we have to move the entries as we can't move the tables
-    // themselves. We do this preserving their slots and even tombstones to avoid rehashing.
+    // themselves. We do this preserving their slots and even tombstones to
+    // avoid rehashing.
     uint8_t* local_metadata = this->metadata();
     EntryT* local_entries = this->entries();
     uint8_t* local_arg_metadata = arg.metadata();

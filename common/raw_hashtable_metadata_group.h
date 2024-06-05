@@ -189,7 +189,8 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
       CARBON_DCHECK(mask_ != 0) << "Cannot get an index from a zero mask!";
       __builtin_assume(mask_ != 0);
       index_ = BitIndexT(mask_).index();
-      // Note that we store the index in a member so we can return a reference to it here as required.
+      // Note that we store the index in a member so we can return a reference
+      // to it here as required.
       return index_;
     }
 
