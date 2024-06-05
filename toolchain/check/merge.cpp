@@ -210,9 +210,9 @@ static auto CheckRedeclParam(Context& context,
 }
 
 // Returns false if the param refs differ for a redeclaration.
-static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
+static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIR::InstBlockId new_param_refs_id,
-                              SemIR::InstId prev_decl_id,
+                              SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_refs_id,
                               llvm::StringLiteral param_diag_label,
                               Substitutions substitutions) -> bool {
@@ -231,9 +231,9 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
                       llvm::StringLiteral, llvm::StringLiteral);
     context.emitter()
         .Build(
-            new_decl_id, RedeclParamListDiffers, param_diag_label,
+            new_decl_loc, RedeclParamListDiffers, param_diag_label,
             new_param_refs_id.is_valid() ? llvm::StringLiteral("") : "missing ")
-        .Note(prev_decl_id, RedeclParamListPrevious, param_diag_label,
+        .Note(prev_decl_loc, RedeclParamListPrevious, param_diag_label,
               prev_param_refs_id.is_valid() ? llvm::StringLiteral("") : "out")
         .Emit();
     return false;
@@ -251,9 +251,9 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
                       "Previously declared with {0}parameter count of {1}.",
                       llvm::StringLiteral, int32_t);
     context.emitter()
-        .Build(new_decl_id, RedeclParamCountDiffers, param_diag_label,
+        .Build(new_decl_loc, RedeclParamCountDiffers, param_diag_label,
                new_param_ref_ids.size())
-        .Note(prev_decl_id, RedeclParamCountPrevious, param_diag_label,
+        .Note(prev_decl_loc, RedeclParamCountPrevious, param_diag_label,
               prev_param_ref_ids.size())
         .Emit();
     return false;
@@ -275,12 +275,12 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
       EntityHasParamError(context, prev_entity)) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_entity.decl_id,
-                         new_entity.implicit_param_refs_id, prev_entity.decl_id,
+  if (!CheckRedeclParams(context, new_entity.loc,
+                         new_entity.implicit_param_refs_id, prev_entity.loc,
                          prev_entity.implicit_param_refs_id, "implicit ",
                          substitutions) ||
-      !CheckRedeclParams(context, new_entity.decl_id, new_entity.param_refs_id,
-                         prev_entity.decl_id, prev_entity.param_refs_id, "",
+      !CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
+                         prev_entity.loc, prev_entity.param_refs_id, "",
                          substitutions)) {
     return false;
   }

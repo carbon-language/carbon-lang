@@ -32,6 +32,10 @@ struct Interface : public Printable<Interface> {
   NameId name_id;
   // The parent scope.
   NameScopeId parent_scope_id;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
   // The first declaration of the interface. This is a InterfaceDecl.
   InstId decl_id;
 

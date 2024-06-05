@@ -58,7 +58,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
-                              DeclParams(prev_class), {})) {
+                              DeclParams(prev_class))) {
     return false;
   }
 

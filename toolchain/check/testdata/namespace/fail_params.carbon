@@ -23,10 +23,20 @@ fn A.F() {}
 // CHECK:STDERR:
 namespace B(n: i32);
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+3]]:12: ERROR: `namespace` declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
 // CHECK:STDERR: namespace C[T:! type](x: T);
 // CHECK:STDERR:            ^~~~~~~~~~
+// CHECK:STDERR:
 namespace C[T:! type](x: T);
+
+namespace D;
+// CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: ERROR: Redeclaration differs because of parameter list.
+// CHECK:STDERR: fn D(T:! type).F() {}
+// CHECK:STDERR:    ^
+// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
+// CHECK:STDERR: namespace D;
+// CHECK:STDERR: ^~~~~~~~~~~~
+fn D(T:! type).F() {}
 
 // CHECK:STDOUT: --- fail_params.carbon
 // CHECK:STDOUT:
@@ -37,6 +47,8 @@ namespace C[T:! type](x: T);
 // CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %struct.3: <invalid> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,6 +57,7 @@ namespace C[T:! type](x: T);
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <namespace> = namespace [template] {
@@ -58,12 +71,17 @@ namespace C[T:! type](x: T);
 // CHECK:STDOUT:   %n.loc24_13.1: i32 = param n
 // CHECK:STDOUT:   %n.loc24_13.2: i32 = bind_name n, %n.loc24_13.1
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %T.loc29_13.1: type = param T
-// CHECK:STDOUT:   %T.loc29_13.2: type = bind_symbolic_name T 0, %T.loc29_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc29_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.loc29_23.1: T = param x
-// CHECK:STDOUT:   %x.loc29_23.2: T = bind_name x, %x.loc29_23.1
+// CHECK:STDOUT:   %T.loc30_13.1: type = param T
+// CHECK:STDOUT:   %T.loc30_13.2: type = bind_symbolic_name T 0, %T.loc30_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc30_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %x.loc30_23.1: T = param x
+// CHECK:STDOUT:   %x.loc30_23.2: T = bind_name x, %x.loc30_23.1
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.3] {
+// CHECK:STDOUT:     %T.loc39_6.1: type = param T
+// CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -72,4 +90,9 @@ namespace C[T:! type](x: T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

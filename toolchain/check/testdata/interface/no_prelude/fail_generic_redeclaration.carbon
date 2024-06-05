@@ -1,0 +1,114 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
+
+interface NotGeneric;
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
+// CHECK:STDERR: interface NotGeneric(T:! type) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
+// CHECK:STDERR: interface NotGeneric;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+interface NotGeneric(T:! type) {}
+
+interface Generic(T:! type);
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of missing parameter list.
+// CHECK:STDERR: interface Generic {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: Previously declared with parameter list.
+// CHECK:STDERR: interface Generic(T:! type);
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+interface Generic {}
+
+interface DifferentParams(T:! type);
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: interface DifferentParams(T:! ()) {}
+// CHECK:STDERR:                           ^
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: interface DifferentParams(T:! type);
+// CHECK:STDERR:                           ^
+interface DifferentParams(T:! ()) {}
+
+// CHECK:STDOUT: --- fail_generic_redeclaration.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @NotGeneric [template]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
+// CHECK:STDOUT:   %Self.1: <invalid> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @Generic [template]
+// CHECK:STDOUT:   %.4: type = interface_type @.2 [template]
+// CHECK:STDOUT:   %Self.2: <invalid> = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.5: type = interface_type @DifferentParams [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %T.2: () = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %.7: type = interface_type @.3 [template]
+// CHECK:STDOUT:   %Self.3: <invalid> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .NotGeneric = %NotGeneric.decl
+// CHECK:STDOUT:     .Generic = %Generic.decl
+// CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {}
+// CHECK:STDOUT:   %.decl.loc19: type = interface_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:     %T.loc19_22.1: type = param T
+// CHECK:STDOUT:     %T.loc19_22.2: type = bind_symbolic_name T 0, %T.loc19_22.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Generic.decl: type = interface_decl @Generic [template = constants.%.3] {
+// CHECK:STDOUT:     %T.loc21_19.1: type = param T
+// CHECK:STDOUT:     %T.loc21_19.2: type = bind_symbolic_name T 0, %T.loc21_19.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.4] {}
+// CHECK:STDOUT:   %DifferentParams.decl: type = interface_decl @DifferentParams [template = constants.%.5] {
+// CHECK:STDOUT:     %T.loc31_27.1: type = param T
+// CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.decl.loc38: type = interface_decl @.3 [template = constants.%.7] {
+// CHECK:STDOUT:     %.loc38_32.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %T.loc38_27.1: () = param T
+// CHECK:STDOUT:     %T.loc38_27.2: () = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @NotGeneric;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @.1 {
+// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Generic;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @.2 {
+// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @DifferentParams;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @.3 {
+// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

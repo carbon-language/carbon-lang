@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -28,10 +29,6 @@ static auto BuildInterfaceDecl(Context& context,
                                Parse::AnyInterfaceDeclId node_id)
     -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
   auto name = PopNameComponent(context);
-  if (name.params_id.is_valid() || name.implicit_params_id.is_valid()) {
-    context.TODO(node_id, "generic interface");
-  }
-
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
@@ -63,11 +60,20 @@ static auto BuildInterfaceDecl(Context& context,
   if (existing_id.is_valid()) {
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
-      // This is a redeclaration of an existing interface.
-      interface_decl.interface_id = existing_interface_decl->interface_id;
-
-      // TODO: Check that the generic parameter list agrees with the prior
-      // declaration.
+      // TODO: Implement full redeclaration checking. See `MergeClassDecl`. For
+      // now we just check the generic parameters match.
+      if (CheckRedeclParamsMatch(
+              context,
+              DeclParams(interface_decl_id, name.implicit_params_id,
+                         name.params_id),
+              DeclParams(context.interfaces().Get(
+                  existing_interface_decl->interface_id)))) {
+        // This is a redeclaration of an existing interface.
+        interface_decl.interface_id = existing_interface_decl->interface_id;
+        // TODO: If the new declaration is a definition, keep its parameter
+        // and implicit parameter lists rather than the ones from the
+        // previous declaration.
+      }
     } else {
       // This is a redeclaration of something other than a interface.
       context.DiagnoseDuplicateName(interface_decl_id, existing_id);
@@ -83,8 +89,13 @@ static auto BuildInterfaceDecl(Context& context,
     interface_decl.interface_id = context.interfaces().Add(
         {.name_id = name_context.name_id_for_new_inst(),
          .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+         .implicit_param_refs_id = name.implicit_params_id,
+         .param_refs_id = name.params_id,
          .decl_id = interface_decl_id});
   }
+
+  // TODO: For a generic interface declaration, set the `type_id` to a suitable
+  // generic interface type rather than `type`.
 
   // Write the interface ID into the InterfaceDecl.
   context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
