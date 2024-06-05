@@ -242,29 +242,97 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
   }
 }
 
+// Checks and returns whether name_context, which is used as a name qualifier,
+// was successfully resolved. Issues a suitable diagnostic if not.
+static auto CheckQualifierIsResolved(
+    Context& context, const DeclNameStack::NameContext& name_context) -> bool {
+  switch (name_context.state) {
+    case DeclNameStack::NameContext::State::Empty:
+      CARBON_FATAL() << "No qualifier to resolve";
+
+    case DeclNameStack::NameContext::State::Resolved:
+      return true;
+
+    case DeclNameStack::NameContext::State::Unresolved:
+      // Because more qualifiers were found, we diagnose that the earlier
+      // qualifier failed to resolve.
+      context.DiagnoseNameNotFound(name_context.loc_id,
+                                   name_context.unresolved_name_id);
+      return false;
+
+    case DeclNameStack::NameContext::State::Finished:
+      CARBON_FATAL() << "Added a qualifier after calling FinishName";
+
+    case DeclNameStack::NameContext::State::Error:
+      // Already in an error state, so return without examining.
+      return false;
+  }
+}
+
+// Diagnose that a qualified declaration name specifies an incomplete class as
+// its scope.
+static auto DiagnoseQualifiedDeclInIncompleteClassScope(
+    Context& context, SemIRLoc loc, SemIR::ClassId class_id) -> void {
+  CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
+                    "Cannot declare a member of incomplete class `{0}`.",
+                    SemIR::TypeId);
+  auto builder =
+      context.emitter().Build(loc, QualifiedDeclInIncompleteClassScope,
+                              context.classes().Get(class_id).self_type_id);
+  context.NoteIncompleteClass(class_id, builder);
+  builder.Emit();
+}
+
+// Diagnose that a qualified declaration name specifies an undefined interface as
+// its scope.
+static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
+    Context& context, SemIRLoc loc, SemIR::InterfaceId interface_id,
+    SemIR::InstId interface_inst_id) -> void {
+  CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
+                    "Cannot declare a member of undefined interface `{0}`.",
+                    std::string);
+  auto builder = context.emitter().Build(
+      loc, QualifiedDeclInUndefinedInterfaceScope,
+      context.sem_ir().StringifyTypeExpr(
+          context.sem_ir().constant_values().Get(interface_inst_id).inst_id()));
+  context.NoteUndefinedInterface(interface_id, builder);
+  builder.Emit();
+}
+
+// Diagnose that a qualified declaration name specifies a different package as
+// its scope.
+static auto DiagnoseQualifiedDeclInImportedPackage(
+    Context& context, SemIRLoc use_loc, SemIRLoc import_loc) -> void {
+  CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
+                    "Imported packages cannot be used for declarations.");
+  CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
+                    "Package imported here.");
+  context.emitter()
+      .Build(use_loc, QualifiedDeclOutsidePackage)
+      .Note(import_loc, QualifiedDeclOutsidePackageSource)
+      .Emit();
+}
+
+// Diagnose that a qualified declaration name specifies a non-scope entity as
+// its scope.
+static auto DiagnoseQualifiedDeclInNonScope(
+    Context& context, SemIRLoc use_loc, SemIRLoc non_scope_entity_loc) -> void {
+  CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
+                    "Name qualifiers are only allowed for entities that "
+                    "provide a scope.");
+  CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
+                    "Referenced non-scope entity declared here.");
+  context.emitter()
+      .Build(use_loc, QualifiedNameInNonScope)
+      .Note(non_scope_entity_loc, QualifiedNameNonScopeEntity)
+      .Emit();
+}
+
 auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                    const NameComponent& name) const
     -> SemIR::NameScopeId {
-  switch (name_context.state) {
-    case NameContext::State::Empty:
-      CARBON_FATAL() << "No qualifier to resolve";
-
-    case NameContext::State::Resolved:
-      break;
-
-    case NameContext::State::Unresolved:
-      // Because more qualifiers were found, we diagnose that the earlier
-      // qualifier failed to resolve.
-      context_->DiagnoseNameNotFound(name_context.loc_id,
-                                     name_context.unresolved_name_id);
-      return SemIR::NameScopeId::Invalid;
-
-    case NameContext::State::Finished:
-      CARBON_FATAL() << "Added a qualifier after calling FinishName";
-
-    case NameContext::State::Error:
-      // Already in an error state, so return without examining.
-      return SemIR::NameScopeId::Invalid;
+  if (!CheckQualifierIsResolved(*context_, name_context)) {
+    return SemIR::NameScopeId::Invalid;
   }
 
   auto new_params =
@@ -279,14 +347,8 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         return SemIR::NameScopeId::Invalid;
       }
       if (!class_info.is_defined()) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
-                          "Cannot declare a member of incomplete class `{0}`.",
-                          SemIR::TypeId);
-        auto builder = context_->emitter().Build(
-            name_context.loc_id, QualifiedDeclInIncompleteClassScope,
-            context_->classes().Get(class_decl.class_id).self_type_id);
-        context_->NoteIncompleteClass(class_decl.class_id, builder);
-        builder.Emit();
+        DiagnoseQualifiedDeclInIncompleteClassScope(
+            *context_, name_context.loc_id, class_decl.class_id);
         return SemIR::NameScopeId::Invalid;
       }
       return class_info.scope_id;
@@ -299,19 +361,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         return SemIR::NameScopeId::Invalid;
       }
       if (!interface_info.is_defined()) {
-        CARBON_DIAGNOSTIC(
-            QualifiedDeclInUndefinedInterfaceScope, Error,
-            "Cannot declare a member of undefined interface `{0}`.",
-            std::string);
-        auto builder = context_->emitter().Build(
-            name_context.loc_id, QualifiedDeclInUndefinedInterfaceScope,
-            context_->sem_ir().StringifyTypeExpr(
-                context_->sem_ir()
-                    .constant_values()
-                    .Get(name_context.resolved_inst_id)
-                    .inst_id()));
-        context_->NoteUndefinedInterface(interface_decl.interface_id, builder);
-        builder.Emit();
+        DiagnoseQualifiedDeclInUndefinedInterfaceScope(
+            *context_, name_context.loc_id, interface_decl.interface_id,
+            name_context.resolved_inst_id);
         return SemIR::NameScopeId::Invalid;
       }
       return interface_info.scope_id;
@@ -327,14 +379,8 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         return SemIR::NameScopeId::Invalid;
       }
       if (scope.is_closed_import) {
-        CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
-                          "Imported packages cannot be used for declarations.");
-        CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
-                          "Package imported here.");
-        context_->emitter()
-            .Build(name_context.loc_id, QualifiedDeclOutsidePackage)
-            .Note(scope.inst_id, QualifiedDeclOutsidePackageSource)
-            .Emit();
+        DiagnoseQualifiedDeclInImportedPackage(*context_, name_context.loc_id,
+                                               scope.inst_id);
         // Only error once per package. Recover by allowing this package name to
         // be used as a name qualifier.
         scope.is_closed_import = false;
@@ -342,15 +388,8 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       return scope_id;
     }
     default: {
-      CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
-                        "Name qualifiers are only allowed for entities that "
-                        "provide a scope.");
-      CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
-                        "Referenced non-scope entity declared here.");
-      context_->emitter()
-          .Build(name_context.loc_id, QualifiedNameInNonScope)
-          .Note(name_context.resolved_inst_id, QualifiedNameNonScopeEntity)
-          .Emit();
+      DiagnoseQualifiedDeclInNonScope(*context_, name_context.loc_id,
+                                      name_context.resolved_inst_id);
       return SemIR::NameScopeId::Invalid;
     }
   }
