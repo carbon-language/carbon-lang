@@ -20,10 +20,10 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Echo: type = fn_type @Echo [template]
-// CHECK:STDOUT:   %struct.1: Echo = struct_value () [template]
-// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
-// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
+// CHECK:STDOUT:   %Echo.type: type = fn_type @Echo [template]
+// CHECK:STDOUT:   %Echo: <type of Echo> = struct_value () [template]
+// CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
+// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,7 +32,7 @@ fn Main() {
 // CHECK:STDOUT:     .Echo = %Echo.decl
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Echo.decl: Echo = fn_decl @Echo [template = constants.%struct.1] {
+// CHECK:STDOUT:   %Echo.decl: <type of Echo> = fn_decl @Echo [template = constants.%Echo] {
 // CHECK:STDOUT:     %.loc11_13.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc11_9.1: () = param a
@@ -41,7 +41,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @Echo.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
@@ -52,7 +52,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Echo.ref: Echo = name_ref Echo, file.%Echo.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Echo.ref: <type of Echo> = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
 // CHECK:STDOUT:   %.loc16_9: () = tuple_literal ()
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc16_7: () = converted %.loc16_9, %tuple [template = constants.%tuple]

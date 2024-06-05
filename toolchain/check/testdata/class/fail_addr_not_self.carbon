@@ -26,11 +26,11 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type Class [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,13 +44,13 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc16_13.1: Class* = param a
 // CHECK:STDOUT:     %a.loc16_13.2: Class* = bind_name a, %a.loc16_13.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %b.loc21_13.1: Class* = param b

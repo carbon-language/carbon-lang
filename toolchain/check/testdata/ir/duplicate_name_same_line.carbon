@@ -13,12 +13,12 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: --- duplicate_name_same_line.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
@@ -29,9 +29,9 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -40,7 +40,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
-// CHECK:STDOUT:   %int.make_type_32.loc11_29: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc11_29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc11_29.1: type = value_of_initializer %int.make_type_32.loc11_29 [template = i32]
 // CHECK:STDOUT:   %.loc11_29.2: type = converted %int.make_type_32.loc11_29, %.loc11_29.1 [template = i32]
 // CHECK:STDOUT:   %n.var.loc11_26: ref i32 = var n
@@ -54,7 +54,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
-// CHECK:STDOUT:   %int.make_type_32.loc11_59: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc11_59: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc11_59.1: type = value_of_initializer %int.make_type_32.loc11_59 [template = i32]
 // CHECK:STDOUT:   %.loc11_59.2: type = converted %int.make_type_32.loc11_59, %.loc11_59.1 [template = i32]
 // CHECK:STDOUT:   %n.var.loc11_56: ref i32 = var n

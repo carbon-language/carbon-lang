@@ -34,13 +34,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type Class, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {.a: i32, .b: i32} [template]
@@ -58,17 +58,17 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_8: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_8: <unbound element of class Class> = field_decl b, element1 [template]

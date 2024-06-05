@@ -433,11 +433,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
-        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
+        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id,
+                         ".type");
         continue;
       }
       case CARBON_KIND(GenericClassType inst): {
-        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
+        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".type");
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {
@@ -480,8 +481,17 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(scope_id, inst.block_id);
         break;
       }
-      case StructValue::Kind: {
-        add_inst_name("struct");
+      case CARBON_KIND(StructValue inst): {
+        if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(inst.type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id);
+        } else if (auto generic_class_ty =
+                       sem_ir_.types().TryGetAs<GenericClassType>(
+                           inst.type_id)) {
+          add_inst_name_id(
+              sem_ir_.classes().Get(generic_class_ty->class_id).name_id);
+        } else {
+          add_inst_name("struct");
+        }
         continue;
       }
       case CARBON_KIND(TupleValue inst): {

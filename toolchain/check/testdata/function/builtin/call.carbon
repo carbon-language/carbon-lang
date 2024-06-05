@@ -15,11 +15,11 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT: --- call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %Add: type = fn_type @Add [template]
-// CHECK:STDOUT:   %struct.2: Add = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
+// CHECK:STDOUT:   %Add: <type of Add> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
@@ -34,28 +34,28 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %Add.decl: Add = fn_decl @Add [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Add.decl: <type of Add> = fn_decl @Add [template = constants.%Add] {
+// CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc11_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
 // CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc11_16.1
-// CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %int.make_type_32.loc11_27 [template = i32]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %int.make_type_32.loc11_27, %.loc11_27.1 [template = i32]
 // CHECK:STDOUT:     @Add.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %Add.ref: Add = name_ref Add, %Add.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %Add.ref: <type of Add> = name_ref Add, %Add.decl [template = constants.%Add]
 // CHECK:STDOUT:   %.loc13_20: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_23: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc13_20, %.loc13_23) [template = constants.%.4]

@@ -18,11 +18,11 @@ fn Main() {
 // CHECK:STDOUT: --- return_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MakeImplicitEmptyTuple: type = fn_type @MakeImplicitEmptyTuple [template]
+// CHECK:STDOUT:   %MakeImplicitEmptyTuple.type: type = fn_type @MakeImplicitEmptyTuple [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: MakeImplicitEmptyTuple = struct_value () [template]
-// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
-// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
+// CHECK:STDOUT:   %MakeImplicitEmptyTuple: <type of MakeImplicitEmptyTuple> = struct_value () [template]
+// CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
+// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT:     .MakeImplicitEmptyTuple = %MakeImplicitEmptyTuple.decl
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MakeImplicitEmptyTuple.decl: MakeImplicitEmptyTuple = fn_decl @MakeImplicitEmptyTuple [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %MakeImplicitEmptyTuple.decl: <type of MakeImplicitEmptyTuple> = fn_decl @MakeImplicitEmptyTuple [template = constants.%MakeImplicitEmptyTuple] {}
+// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
@@ -45,7 +45,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: MakeImplicitEmptyTuple = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <type of MakeImplicitEmptyTuple> = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [template = constants.%MakeImplicitEmptyTuple]
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.call: init () = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple.call
 // CHECK:STDOUT:   return

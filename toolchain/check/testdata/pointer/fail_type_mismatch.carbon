@@ -23,9 +23,9 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %.3: type = ptr_type const {} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: type = const_type {}* [template]
-// CHECK:STDOUT:   %ConstMismatch: type = fn_type @ConstMismatch [template]
+// CHECK:STDOUT:   %ConstMismatch.type: type = fn_type @ConstMismatch [template]
 // CHECK:STDOUT:   %.6: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: ConstMismatch = struct_value () [template]
+// CHECK:STDOUT:   %ConstMismatch: <type of ConstMismatch> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,7 +34,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     .ConstMismatch = %ConstMismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ConstMismatch.decl: ConstMismatch = fn_decl @ConstMismatch [template = constants.%struct] {
+// CHECK:STDOUT:   %ConstMismatch.decl: <type of ConstMismatch> = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
 // CHECK:STDOUT:     %.loc11_28: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_21.2: type = const_type {} [template = constants.%.2]

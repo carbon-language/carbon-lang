@@ -46,9 +46,9 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %NS: type = fn_type @NS [template]
+// CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: NS = struct_value () [template]
+// CHECK:STDOUT:   %NS: <type of NS> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -57,7 +57,7 @@ fn NS.Foo();
 // CHECK:STDOUT:     .NS = %NS.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %NS.decl: NS = fn_decl @NS [template = constants.%struct] {}
+// CHECK:STDOUT:   %NS.decl: <type of NS> = fn_decl @NS [template = constants.%NS] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();
@@ -65,11 +65,11 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %NS: type = fn_type @NS [template]
+// CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: NS = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %NS: <type of NS> = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.2: <type of <invalid>> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,10 +77,10 @@ fn NS.Foo();
 // CHECK:STDOUT:     .NS = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: NS = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref: <type of NS> = import_ref ir1, inst+2, loaded [template = constants.%NS]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc16: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %.decl: <type of <invalid>> = fn_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();

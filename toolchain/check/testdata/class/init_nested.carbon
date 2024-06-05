@@ -28,19 +28,19 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type Inner, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %MakeInner: type = fn_type @MakeInner [template]
-// CHECK:STDOUT:   %struct.2: MakeInner = struct_value () [template]
+// CHECK:STDOUT:   %MakeInner.type: type = fn_type @MakeInner [template]
+// CHECK:STDOUT:   %MakeInner: <type of MakeInner> = struct_value () [template]
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type Outer, Inner [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.c: Inner, .d: Inner} [template]
-// CHECK:STDOUT:   %MakeOuter: type = fn_type @MakeOuter [template]
-// CHECK:STDOUT:   %struct.3: MakeOuter = struct_value () [template]
+// CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [template]
+// CHECK:STDOUT:   %MakeOuter: <type of MakeOuter> = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
 // CHECK:STDOUT:   %.8: type = ptr_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type {.c: Inner, .d: Inner} [template]
@@ -56,25 +56,25 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %MakeInner.decl: MakeInner = fn_decl @MakeInner [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %MakeInner.decl: <type of MakeInner> = fn_decl @MakeInner [template = constants.%MakeInner] {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:     @MakeInner.%return: ref Inner = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
-// CHECK:STDOUT:   %MakeOuter.decl: MakeOuter = fn_decl @MakeOuter [template = constants.%struct.3] {
+// CHECK:STDOUT:   %MakeOuter.decl: <type of MakeOuter> = fn_decl @MakeOuter [template = constants.%MakeOuter] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     @MakeOuter.%return: ref Outer = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_8: <unbound element of class Inner> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_8: <unbound element of class Inner> = field_decl b, element1 [template]
@@ -103,10 +103,10 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeOuter() -> %return: Outer {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %MakeInner.ref.loc24_16: MakeInner = name_ref MakeInner, file.%MakeInner.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %MakeInner.ref.loc24_16: <type of MakeInner> = name_ref MakeInner, file.%MakeInner.decl [template = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc24_45.1: ref Inner = class_element_access %return, element0
 // CHECK:STDOUT:   %MakeInner.call.loc24_25: init Inner = call %MakeInner.ref.loc24_16() to %.loc24_45.1
-// CHECK:STDOUT:   %MakeInner.ref.loc24_34: MakeInner = name_ref MakeInner, file.%MakeInner.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %MakeInner.ref.loc24_34: <type of MakeInner> = name_ref MakeInner, file.%MakeInner.decl [template = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc24_45.2: ref Inner = class_element_access %return, element1
 // CHECK:STDOUT:   %MakeInner.call.loc24_43: init Inner = call %MakeInner.ref.loc24_34() to %.loc24_45.2
 // CHECK:STDOUT:   %.loc24_45.3: {.c: Inner, .d: Inner} = struct_literal (%MakeInner.call.loc24_25, %MakeInner.call.loc24_43)

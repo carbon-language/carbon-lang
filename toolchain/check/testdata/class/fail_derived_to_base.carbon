@@ -38,9 +38,9 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A1: type = class_type @A1 [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type A1, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %A2: type = class_type @A2 [template]
@@ -52,16 +52,16 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %.8: type = struct_type {.base: A2, .b: i32} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type B2 [template]
 // CHECK:STDOUT:   %.10: type = ptr_type A1 [template]
-// CHECK:STDOUT:   %ConvertUnrelated: type = fn_type @ConvertUnrelated [template]
-// CHECK:STDOUT:   %struct.2: ConvertUnrelated = struct_value () [template]
+// CHECK:STDOUT:   %ConvertUnrelated.type: type = fn_type @ConvertUnrelated [template]
+// CHECK:STDOUT:   %ConvertUnrelated: <type of ConvertUnrelated> = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = struct_type {.base: {.a: i32}*, .b: i32} [template]
 // CHECK:STDOUT:   %.12: type = ptr_type {.base: {.a: i32}*, .b: i32} [template]
 // CHECK:STDOUT:   %.13: type = ptr_type {.base: A2, .b: i32} [template]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT:   %.14: type = ptr_type Incomplete [template]
 // CHECK:STDOUT:   %.15: type = ptr_type A2 [template]
-// CHECK:STDOUT:   %ConvertIncomplete: type = fn_type @ConvertIncomplete [template]
-// CHECK:STDOUT:   %struct.3: ConvertIncomplete = struct_value () [template]
+// CHECK:STDOUT:   %ConvertIncomplete.type: type = fn_type @ConvertIncomplete [template]
+// CHECK:STDOUT:   %ConvertIncomplete: <type of ConvertIncomplete> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -76,12 +76,12 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A1.decl: type = class_decl @A1 [template = constants.%A1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [template = constants.%A2] {}
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %ConvertUnrelated.decl: ConvertUnrelated = fn_decl @ConvertUnrelated [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %ConvertUnrelated.decl: <type of ConvertUnrelated> = fn_decl @ConvertUnrelated [template = constants.%ConvertUnrelated] {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, %B2.decl [template = constants.%B2]
 // CHECK:STDOUT:     %.loc28_26: type = ptr_type B2 [template = constants.%.9]
 // CHECK:STDOUT:     %p.loc28_21.1: B2* = param p
@@ -91,7 +91,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     @ConvertUnrelated.%return: ref A1* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
-// CHECK:STDOUT:   %ConvertIncomplete.decl: ConvertIncomplete = fn_decl @ConvertIncomplete [template = constants.%struct.3] {
+// CHECK:STDOUT:   %ConvertIncomplete.decl: <type of ConvertIncomplete> = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %.loc35_35: type = ptr_type Incomplete [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc35_22.1: Incomplete* = param p
@@ -103,7 +103,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_8: <unbound element of class A1> = field_decl a, element0 [template]
@@ -114,7 +114,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc16_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc16_10.2: type = converted %int.make_type_32, %.loc16_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_8: <unbound element of class A2> = field_decl a, element0 [template]
@@ -127,7 +127,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
 // CHECK:STDOUT:   %.loc20: <unbound element of class B2> = base_decl A2, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_32, %.loc21_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc21_8: <unbound element of class B2> = field_decl b, element1 [template]

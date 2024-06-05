@@ -20,9 +20,9 @@ fn Run() -> String {}
 // CHECK:STDOUT: --- fail_bad_run.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
+// CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Run = struct_value () [template]
+// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = ptr_type String [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,7 +32,7 @@ fn Run() -> String {}
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct] {
+// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {
 // CHECK:STDOUT:     @Run.%return: ref String = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -25,9 +25,9 @@ var b: Bool() = false;
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,7 +36,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Bool = %Bool.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Bool.decl: Bool = fn_decl @Bool [template = constants.%struct] {
+// CHECK:STDOUT:   %Bool.decl: <type of Bool> = fn_decl @Bool [template = constants.%Bool] {
 // CHECK:STDOUT:     @Bool.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -46,9 +46,9 @@ var b: Bool() = false;
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,9 +58,9 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir1, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: <type of Bool> = import_ref ir1, inst+3, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Bool.ref: Bool = name_ref Bool, %import_ref [template = constants.%struct]
+// CHECK:STDOUT:   %Bool.ref: <type of Bool> = name_ref Bool, %import_ref [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]

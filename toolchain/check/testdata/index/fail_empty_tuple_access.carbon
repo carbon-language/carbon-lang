@@ -20,11 +20,11 @@ fn Run() {
 // CHECK:STDOUT: --- fail_empty_tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
-// CHECK:STDOUT:   %struct.2: Run = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
+// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,8 +35,8 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -46,7 +46,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   %.loc17_7: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc17_4.1: ref () = temporary_storage

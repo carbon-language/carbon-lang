@@ -17,11 +17,11 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: --- fail_var_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %Six: type = fn_type @Six [template]
-// CHECK:STDOUT:   %struct.2: Six = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
+// CHECK:STDOUT:   %Six: <type of Six> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -34,8 +34,8 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Six.decl: <type of Six> = fn_decl @Six [template = constants.%Six] {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
 // CHECK:STDOUT:     %.loc15: type = bind_value %x.ref
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
@@ -52,7 +52,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   assign file.%x.var, %int.make_type_32
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

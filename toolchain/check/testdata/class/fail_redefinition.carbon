@@ -46,23 +46,23 @@ fn Class.I() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %H.1: type = fn_type @H.1 [template]
-// CHECK:STDOUT:   %struct.2: H = struct_value () [template]
-// CHECK:STDOUT:   %I.1: type = fn_type @I.1 [template]
-// CHECK:STDOUT:   %struct.3: I = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %H.type.1: type = fn_type @H.1 [template]
+// CHECK:STDOUT:   %H.1: <type of H> = struct_value () [template]
+// CHECK:STDOUT:   %I.type.1: type = fn_type @I.1 [template]
+// CHECK:STDOUT:   %I.1: <type of I> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = class_type @.1 [template]
-// CHECK:STDOUT:   %G.1: type = fn_type @G.1 [template]
-// CHECK:STDOUT:   %struct.4: G = struct_value () [template]
-// CHECK:STDOUT:   %H.2: type = fn_type @H.2 [template]
-// CHECK:STDOUT:   %struct.5: H = struct_value () [template]
-// CHECK:STDOUT:   %I.2: type = fn_type @I.2 [template]
-// CHECK:STDOUT:   %struct.6: I = struct_value () [template]
-// CHECK:STDOUT:   %G.2: type = fn_type @G.2 [template]
-// CHECK:STDOUT:   %struct.7: G = struct_value () [template]
+// CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
+// CHECK:STDOUT:   %G.1: <type of G> = struct_value () [template]
+// CHECK:STDOUT:   %H.type.2: type = fn_type @H.2 [template]
+// CHECK:STDOUT:   %H.2: <type of H> = struct_value () [template]
+// CHECK:STDOUT:   %I.type.2: type = fn_type @I.2 [template]
+// CHECK:STDOUT:   %I.2: <type of I> = struct_value () [template]
+// CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
+// CHECK:STDOUT:   %G.2: <type of G> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,16 +73,16 @@ fn Class.I() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.3] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G.2 [template = constants.%struct.7] {}
-// CHECK:STDOUT:   %H.decl: H = fn_decl @H.1 [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %I.decl: I = fn_decl @I.1 [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G.2 [template = constants.%G.2] {}
+// CHECK:STDOUT:   %H.decl: <type of H> = fn_decl @H.1 [template = constants.%H.1] {}
+// CHECK:STDOUT:   %I.decl: <type of I> = fn_decl @I.1 [template = constants.%I.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %H.decl: H = fn_decl @H.1 [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %I.decl: I = fn_decl @I.1 [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %H.decl: <type of H> = fn_decl @H.1 [template = constants.%H.1] {}
+// CHECK:STDOUT:   %I.decl: <type of I> = fn_decl @I.1 [template = constants.%I.1] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -93,9 +93,9 @@ fn Class.I() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G.1 [template = constants.%struct.4] {}
-// CHECK:STDOUT:   %H.decl: H = fn_decl @H.2 [template = constants.%struct.5] {}
-// CHECK:STDOUT:   %I.decl: I = fn_decl @I.2 [template = constants.%struct.6] {}
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G.1 [template = constants.%G.1] {}
+// CHECK:STDOUT:   %H.decl: <type of H> = fn_decl @H.2 [template = constants.%H.2] {}
+// CHECK:STDOUT:   %I.decl: <type of I> = fn_decl @I.2 [template = constants.%I.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3

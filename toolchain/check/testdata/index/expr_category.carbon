@@ -31,15 +31,15 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT: --- expr_category.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.3: G = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type [i32; 3] [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
@@ -48,8 +48,8 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %array: [i32; 3] = tuple_value (%.5, %.6, %.2) [template]
 // CHECK:STDOUT:   %.9: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.10: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %ValueBinding: type = fn_type @ValueBinding [template]
-// CHECK:STDOUT:   %struct.4: ValueBinding = struct_value () [template]
+// CHECK:STDOUT:   %ValueBinding.type: type = fn_type @ValueBinding [template]
+// CHECK:STDOUT:   %ValueBinding: <type of ValueBinding> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,18 +60,18 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     .ValueBinding = %ValueBinding.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_18: type = array_type %.loc11_17, i32 [template = constants.%.3]
 // CHECK:STDOUT:     @F.%return: ref [i32; 3] = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
-// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_15: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
@@ -79,11 +79,11 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %b.loc13_6.1: [i32; 3] = param b
 // CHECK:STDOUT:     @G.%b: [i32; 3] = bind_name b, %b.loc13_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %ValueBinding.decl: ValueBinding = fn_decl @ValueBinding [template = constants.%struct.4] {
-// CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %ValueBinding.decl: <type of ValueBinding> = fn_decl @ValueBinding [template = constants.%ValueBinding] {
+// CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_26: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
@@ -91,7 +91,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %b.loc21_17.1: [i32; 3] = param b
 // CHECK:STDOUT:     @ValueBinding.%b: [i32; 3] = bind_name b, %b.loc21_17.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -100,7 +100,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b: [i32; 3]) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_11.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:   %.loc14_11.2: type = converted %int.make_type_32.loc14, %.loc14_11.1 [template = i32]
@@ -123,7 +123,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc14_29.11: init [i32; 3] = array_init (%.loc14_29.4, %.loc14_29.7, %.loc14_29.10) to %a.var [template = constants.%array]
 // CHECK:STDOUT:   %.loc14_30: init [i32; 3] = converted %.loc14_29.1, %.loc14_29.11 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc14_30
-// CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc17_14.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:   %.loc17_14.2: type = converted %int.make_type_32.loc17, %.loc17_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc17_14.3: type = ptr_type i32 [template = constants.%.9]
@@ -144,7 +144,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ValueBinding(%b: [i32; 3]) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc22_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc22_11.2: type = converted %int.make_type_32, %.loc22_11.1 [template = i32]
@@ -175,7 +175,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc27_6.1: ref [i32; 3] = value_as_ref %b.ref
 // CHECK:STDOUT:   %.loc27_6.2: ref i32 = array_index %.loc27_6.1, %.loc27_5
 // CHECK:STDOUT:   %.loc27_6.3: i32 = bind_value %.loc27_6.2
-// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc28_4.1: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %F.call: init [i32; 3] = call %F.ref() to %.loc28_4.1
 // CHECK:STDOUT:   %.loc28_7: i32 = int_literal 0 [template = constants.%.8]

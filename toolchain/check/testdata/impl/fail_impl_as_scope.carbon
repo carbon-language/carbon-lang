@@ -24,14 +24,14 @@ impl as Simple {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
 // CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Simple, F [template]
-// CHECK:STDOUT:   %.4: <associated F in Simple> = assoc_entity element0, @Simple.%F.decl [template]
-// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%struct.2) [template]
+// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @Simple, <type of F> [template]
+// CHECK:STDOUT:   %.4: <associated <type of F> in Simple> = assoc_entity element0, @Simple.%F.decl [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,8 +48,8 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc12: <associated F in Simple> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc12: <associated <type of F> in Simple> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -58,7 +58,7 @@ impl as Simple {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: <error> as Simple {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {}
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

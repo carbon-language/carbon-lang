@@ -25,9 +25,9 @@ var i: Int() = 0;
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Int = struct_value () [template]
+// CHECK:STDOUT:   %Int: <type of Int> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,7 +36,7 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Int = %Int.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Int.decl: Int = fn_decl @Int [template = constants.%struct] {
+// CHECK:STDOUT:   %Int.decl: <type of Int> = fn_decl @Int [template = constants.%Int] {
 // CHECK:STDOUT:     @Int.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -46,9 +46,9 @@ var i: Int() = 0;
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Int = struct_value () [template]
+// CHECK:STDOUT:   %Int: <type of Int> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,9 +58,9 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Int = import_ref ir1, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: <type of Int> = import_ref ir1, inst+3, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Int.ref: Int = name_ref Int, %import_ref [template = constants.%struct]
+// CHECK:STDOUT:   %Int.ref: <type of Int> = name_ref Int, %import_ref [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_32: init type = call %Int.ref() [template = i32]
 // CHECK:STDOUT:   %.loc6_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc6_12.2: type = converted %int.make_type_32, %.loc6_12.1 [template = i32]

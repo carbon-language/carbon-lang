@@ -18,7 +18,7 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'address_of_field.carbon'
 // CHECK:STDOUT: source_filename = "address_of_field.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.4.loc14_47 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @struct.loc14_47 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @G(ptr)
 // CHECK:STDOUT:
@@ -27,7 +27,7 @@ fn F() {
 // CHECK:STDOUT:   %s.var = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %.loc14_46.2.a = getelementptr inbounds { i32, i32 }, ptr %s.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc14_46.4.b = getelementptr inbounds { i32, i32 }, ptr %s.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.4.loc14_47, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.loc14_47, i64 8, i1 false)
 // CHECK:STDOUT:   %.loc15_7.b = getelementptr inbounds { i32, i32 }, ptr %s.var, i32 0, i32 1
 // CHECK:STDOUT:   call void @G(ptr %.loc15_7.b)
 // CHECK:STDOUT:   ret void

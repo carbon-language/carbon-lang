@@ -42,16 +42,16 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: --- fail_returned_var_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %SameScope: type = fn_type @SameScope [template]
-// CHECK:STDOUT:   %struct.2: SameScope = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %SameScope.type: type = fn_type @SameScope [template]
+// CHECK:STDOUT:   %SameScope: <type of SameScope> = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %DifferentScopes: type = fn_type @DifferentScopes [template]
-// CHECK:STDOUT:   %struct.3: DifferentScopes = struct_value () [template]
+// CHECK:STDOUT:   %DifferentScopes.type: type = fn_type @DifferentScopes [template]
+// CHECK:STDOUT:   %DifferentScopes: <type of DifferentScopes> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,24 +61,24 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     .DifferentScopes = %DifferentScopes.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %SameScope.decl: SameScope = fn_decl @SameScope [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %SameScope.decl: <type of SameScope> = fn_decl @SameScope [template = constants.%SameScope] {
+// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     @SameScope.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %DifferentScopes.decl: DifferentScopes = fn_decl @DifferentScopes [template = constants.%struct.3] {
-// CHECK:STDOUT:     %int.make_type_32.loc26: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %DifferentScopes.decl: <type of DifferentScopes> = fn_decl @DifferentScopes [template = constants.%DifferentScopes] {
+// CHECK:STDOUT:     %int.make_type_32.loc26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc26_25.1: type = value_of_initializer %int.make_type_32.loc26 [template = i32]
 // CHECK:STDOUT:     %.loc26_25.2: type = converted %int.make_type_32.loc26, %.loc26_25.1 [template = i32]
 // CHECK:STDOUT:     @DifferentScopes.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.6: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -89,14 +89,14 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %.loc12 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc13_27: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc13_27
-// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
@@ -116,7 +116,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %.loc27 br !if.then.loc27 else br !if.else.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc27:
-// CHECK:STDOUT:   %int.make_type_32.loc28: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc28_21.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:   %.loc28_21.2: type = converted %int.make_type_32.loc28, %.loc28_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
@@ -127,7 +127,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %.loc29 br !if.then.loc29 else br !if.else.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc29:
-// CHECK:STDOUT:   %int.make_type_32.loc36: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc36_23.1: type = value_of_initializer %int.make_type_32.loc36 [template = i32]
 // CHECK:STDOUT:   %.loc36_23.2: type = converted %int.make_type_32.loc36, %.loc36_23.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w

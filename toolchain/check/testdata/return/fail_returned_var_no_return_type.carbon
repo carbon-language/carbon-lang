@@ -22,9 +22,9 @@ fn Procedure() {
 // CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Procedure: type = fn_type @Procedure [template]
+// CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Procedure = struct_value () [template]
+// CHECK:STDOUT:   %Procedure: <type of Procedure> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -33,7 +33,7 @@ fn Procedure() {
 // CHECK:STDOUT:     .Procedure = %Procedure.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Procedure.decl: Procedure = fn_decl @Procedure [template = constants.%struct] {}
+// CHECK:STDOUT:   %Procedure.decl: <type of Procedure> = fn_decl @Procedure [template = constants.%Procedure] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {

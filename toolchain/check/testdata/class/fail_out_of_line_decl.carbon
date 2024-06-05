@@ -20,9 +20,9 @@ fn C.F() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -32,7 +32,7 @@ fn C.F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

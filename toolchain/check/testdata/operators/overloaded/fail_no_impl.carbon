@@ -46,41 +46,41 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %TestUnary: type = fn_type @TestUnary [template]
+// CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: TestUnary = struct_value () [template]
+// CHECK:STDOUT:   %TestUnary: <type of TestUnary> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Negate [template]
 // CHECK:STDOUT:   %Self.1: Negate = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Op.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %struct.2: Op = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @Negate, Op [template]
-// CHECK:STDOUT:   %.6: <associated Op in Negate> = assoc_entity element0, file.%import_ref.5 [template]
-// CHECK:STDOUT:   %TestBinary: type = fn_type @TestBinary [template]
-// CHECK:STDOUT:   %struct.3: TestBinary = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.1: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type @Negate, <type of Op> [template]
+// CHECK:STDOUT:   %.6: <associated <type of Op> in Negate> = assoc_entity element0, file.%import_ref.5 [template]
+// CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [template]
+// CHECK:STDOUT:   %TestBinary: <type of TestBinary> = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @Add [template]
 // CHECK:STDOUT:   %Self.2: Add = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Op.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %struct.4: Op = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type @Add, Op [template]
-// CHECK:STDOUT:   %.9: <associated Op in Add> = assoc_entity element0, file.%import_ref.10 [template]
-// CHECK:STDOUT:   %TestRef: type = fn_type @TestRef [template]
-// CHECK:STDOUT:   %struct.5: TestRef = struct_value () [template]
-// CHECK:STDOUT:   %struct.6: C = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %Op.2: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type @Add, <type of Op> [template]
+// CHECK:STDOUT:   %.9: <associated <type of Op> in Add> = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %TestRef.type: type = fn_type @TestRef [template]
+// CHECK:STDOUT:   %TestRef: <type of TestRef> = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = interface_type @AddAssign [template]
 // CHECK:STDOUT:   %Self.3: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.11: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %Op.3: type = fn_type @Op.3 [template]
-// CHECK:STDOUT:   %struct.7: Op = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, Op [template]
-// CHECK:STDOUT:   %.13: <associated Op in AddAssign> = assoc_entity element0, file.%import_ref.15 [template]
+// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
+// CHECK:STDOUT:   %Op.3: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, <type of Op> [template]
+// CHECK:STDOUT:   %.13: <associated <type of Op> in AddAssign> = assoc_entity element0, file.%import_ref.15 [template]
 // CHECK:STDOUT:   %.14: type = interface_type @Inc [template]
 // CHECK:STDOUT:   %Self.4: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.15: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %Op.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %struct.8: Op = struct_value () [template]
-// CHECK:STDOUT:   %.16: type = assoc_entity_type @Inc, Op [template]
-// CHECK:STDOUT:   %.17: <associated Op in Inc> = assoc_entity element0, file.%import_ref.20 [template]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %Op.4: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.16: type = assoc_entity_type @Inc, <type of Op> [template]
+// CHECK:STDOUT:   %.17: <associated <type of Op> in Inc> = assoc_entity element0, file.%import_ref.20 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,7 +93,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %TestUnary.decl: TestUnary = fn_decl @TestUnary [template = constants.%struct.1] {
+// CHECK:STDOUT:   %TestUnary.decl: <type of TestUnary> = fn_decl @TestUnary [template = constants.%TestUnary] {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_14.1: C = param a
 // CHECK:STDOUT:     @TestUnary.%a: C = bind_name a, %a.loc15_14.1
@@ -102,10 +102,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Op in Negate> = import_ref ir4, inst+84, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3: <associated <type of Op> in Negate> = import_ref ir4, inst+84, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+80, unloaded
-// CHECK:STDOUT:   %TestBinary.decl: TestBinary = fn_decl @TestBinary [template = constants.%struct.3] {
+// CHECK:STDOUT:   %TestBinary.decl: <type of TestBinary> = fn_decl @TestBinary [template = constants.%TestBinary] {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_15.1: C = param a
 // CHECK:STDOUT:     @TestBinary.%a: C = bind_name a, %a.loc23_15.1
@@ -117,22 +117,22 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.6: type = import_ref ir4, inst+1, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir4, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8: <associated Op in Add> = import_ref ir4, inst+24, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.8: <associated <type of Op> in Add> = import_ref ir4, inst+24, loaded [template = constants.%.9]
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir4, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+19, unloaded
-// CHECK:STDOUT:   %TestRef.decl: TestRef = fn_decl @TestRef [template = constants.%struct.5] {
+// CHECK:STDOUT:   %TestRef.decl: <type of TestRef> = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc31_12.1: C = param b
 // CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc31_12.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+26, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.13: <associated Op in AddAssign> = import_ref ir4, inst+47, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.13: <associated <type of Op> in AddAssign> = import_ref ir4, inst+47, loaded [template = constants.%.13]
 // CHECK:STDOUT:   %import_ref.14 = import_ref ir4, inst+43, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref ir4, inst+43, unloaded
 // CHECK:STDOUT:   %import_ref.16: type = import_ref ir4, inst+49, loaded [template = constants.%.14]
 // CHECK:STDOUT:   %import_ref.17 = import_ref ir4, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.18: <associated Op in Inc> = import_ref ir4, inst+65, loaded [template = constants.%.17]
+// CHECK:STDOUT:   %import_ref.18: <associated <type of Op> in Inc> = import_ref ir4, inst+65, loaded [template = constants.%.17]
 // CHECK:STDOUT:   %import_ref.19 = import_ref ir4, inst+61, unloaded
 // CHECK:STDOUT:   %import_ref.20 = import_ref ir4, inst+61, unloaded
 // CHECK:STDOUT: }
@@ -193,8 +193,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %a.var: ref C = var a
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc32_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc32_15.2: init C = class_init (), %a.var [template = constants.%struct.6]
-// CHECK:STDOUT:   %.loc32_16: init C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%struct.6]
+// CHECK:STDOUT:   %.loc32_15.2: init C = class_init (), %a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc32_16: init C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b

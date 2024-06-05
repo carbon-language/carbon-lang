@@ -16,9 +16,9 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT: --- fail_assign_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type ((type, type), (type, type)) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type (i32, i32) [template]
@@ -42,15 +42,15 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc14_10: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc14_15: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_10: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_18: (type, type) = tuple_literal (%int.make_type_32.loc14_10, %int.make_type_32.loc14_15)
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc14_22: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc14_27: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_22: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_30: (type, type) = tuple_literal (%int.make_type_32.loc14_22, %int.make_type_32.loc14_27)
 // CHECK:STDOUT:   %.loc14_31.1: ((type, type), (type, type)) = tuple_literal (%.loc14_18, %.loc14_30)
 // CHECK:STDOUT:   %.loc14_31.2: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]

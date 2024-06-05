@@ -32,11 +32,11 @@ fn F() {
 // CHECK:STDOUT: --- numeric_literals.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type [i32; 6] [template]
@@ -52,8 +52,8 @@ fn F() {
 // CHECK:STDOUT:   %.14: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %array.1: [i32; 6] = tuple_value (%.5, %.6, %.5, %.5, %.7, %.7) [template]
 // CHECK:STDOUT:   %.15: i32 = int_literal 64 [template]
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
-// CHECK:STDOUT:   %struct.3: Float = struct_value () [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
 // CHECK:STDOUT:   %.16: type = array_type %.2, f64 [template]
 // CHECK:STDOUT:   %.17: type = ptr_type [f64; 6] [template]
 // CHECK:STDOUT:   %.18: f64 = float_literal 0.90000000000000002 [template]
@@ -72,14 +72,14 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_19: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_14.2: type = converted %int.make_type_32, %.loc14_14.1 [template = i32]
@@ -115,7 +115,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_4: init [i32; 6] = converted %.loc21_3.1, %.loc21_3.20 [template = constants.%array.1]
 // CHECK:STDOUT:   assign %ints.var, %.loc21_4
 // CHECK:STDOUT:   %.loc22_16.1: i32 = int_literal 64 [template = constants.%.15]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.3(%.loc22_16.1) [template = f64]
+// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc22_16.1) [template = f64]
 // CHECK:STDOUT:   %.loc22_21: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc22_16.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc22_16.3: type = converted %float.make_type, %.loc22_16.2 [template = f64]

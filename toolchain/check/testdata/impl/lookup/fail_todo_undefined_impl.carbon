@@ -33,20 +33,20 @@ impl C as I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, F [template]
-// CHECK:STDOUT:   %.4: <associated F in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, <type of F> [template]
+// CHECK:STDOUT:   %.4: <associated <type of F> in I> = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
-// CHECK:STDOUT:   %F.3: type = fn_type @F.3 [template]
-// CHECK:STDOUT:   %struct.4: F = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%struct.4) [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
+// CHECK:STDOUT:   %F.3: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,9 +59,9 @@ impl C as I {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.3] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
 // CHECK:STDOUT:     @F.2.%return: ref i32 = var <return slot>
@@ -74,8 +74,8 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc12: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc12: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -84,7 +84,7 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as I {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.3 [template = constants.%struct.4] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.3 [template = constants.%F.3] {}
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -109,7 +109,7 @@ impl C as I {
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated <type of F> in I> = name_ref F, @I.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

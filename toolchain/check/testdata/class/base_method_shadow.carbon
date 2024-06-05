@@ -38,30 +38,30 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %.1: type = ptr_type A [template]
-// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type B, A [template]
 // CHECK:STDOUT:   %.6: type = ptr_type B [template]
-// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.base: A} [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.base: {}*} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type {.base: A} [template]
 // CHECK:STDOUT:   %.10: type = unbound_element_type C, B [template]
 // CHECK:STDOUT:   %.11: type = ptr_type C [template]
-// CHECK:STDOUT:   %F.3: type = fn_type @F.3 [template]
-// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
+// CHECK:STDOUT:   %F.3: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.12: type = struct_type {.base: B} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.13: type = unbound_element_type D, B [template]
 // CHECK:STDOUT:   %.14: type = ptr_type D [template]
-// CHECK:STDOUT:   %Call: type = fn_type @Call [template]
-// CHECK:STDOUT:   %struct.4: Call = struct_value () [template]
+// CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
+// CHECK:STDOUT:   %Call: <type of Call> = struct_value () [template]
 // CHECK:STDOUT:   %.15: type = struct_type {.base: {.base: A}*} [template]
 // CHECK:STDOUT:   %.16: type = ptr_type {.base: B} [template]
 // CHECK:STDOUT: }
@@ -80,7 +80,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %Call.decl: Call = fn_decl @Call [template = constants.%struct.4] {
+// CHECK:STDOUT:   %Call.decl: <type of Call> = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc29_13: type = ptr_type A [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc29_9.1: A* = param a
@@ -101,7 +101,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type A [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: A* = param self
@@ -117,7 +117,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc16: <unbound element of class B> = base_decl A, element0 [template]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %.loc17_23: type = ptr_type B [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc17_13.1: B* = param self
@@ -135,7 +135,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc21: <unbound element of class C> = base_decl B, element0 [template]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.3 [template = constants.%struct.3] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc22_23: type = ptr_type C [template = constants.%.11]
 // CHECK:STDOUT:     %self.loc22_13.1: C* = param self
@@ -170,25 +170,25 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: A* = name_ref a, %a
 // CHECK:STDOUT:   %.loc30_4.1: ref A = deref %a.ref
-// CHECK:STDOUT:   %F.ref.loc30: F = name_ref F, @A.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %F.ref.loc30: <type of F> = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc30_7: <bound method> = bound_method %.loc30_4.1, %F.ref.loc30
 // CHECK:STDOUT:   %.loc30_4.2: A* = addr_of %.loc30_4.1
 // CHECK:STDOUT:   %F.call.loc30: init () = call %.loc30_7(%.loc30_4.2)
 // CHECK:STDOUT:   %b.ref: B* = name_ref b, %b
 // CHECK:STDOUT:   %.loc31_4.1: ref B = deref %b.ref
-// CHECK:STDOUT:   %F.ref.loc31: F = name_ref F, @B.%F.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %F.ref.loc31: <type of F> = name_ref F, @B.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc31_7: <bound method> = bound_method %.loc31_4.1, %F.ref.loc31
 // CHECK:STDOUT:   %.loc31_4.2: B* = addr_of %.loc31_4.1
 // CHECK:STDOUT:   %F.call.loc31: init () = call %.loc31_7(%.loc31_4.2)
 // CHECK:STDOUT:   %c.ref: C* = name_ref c, %c
 // CHECK:STDOUT:   %.loc32_4.1: ref C = deref %c.ref
-// CHECK:STDOUT:   %F.ref.loc32: F = name_ref F, @C.%F.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %F.ref.loc32: <type of F> = name_ref F, @C.%F.decl [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc32_7: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
 // CHECK:STDOUT:   %.loc32_4.2: C* = addr_of %.loc32_4.1
 // CHECK:STDOUT:   %F.call.loc32: init () = call %.loc32_7(%.loc32_4.2)
 // CHECK:STDOUT:   %d.ref: D* = name_ref d, %d
 // CHECK:STDOUT:   %.loc33_4.1: ref D = deref %d.ref
-// CHECK:STDOUT:   %F.ref.loc33: F = name_ref F, @B.%F.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %F.ref.loc33: <type of F> = name_ref F, @B.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc33_7: <bound method> = bound_method %.loc33_4.1, %F.ref.loc33
 // CHECK:STDOUT:   %.loc33_4.2: D* = addr_of %.loc33_4.1
 // CHECK:STDOUT:   %.loc33_9.1: ref D = deref %.loc33_4.2

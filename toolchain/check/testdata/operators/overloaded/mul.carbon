@@ -38,31 +38,31 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Mul [template]
 // CHECK:STDOUT:   %Self.1: Mul = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Op.1: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Op = struct_value () [template]
-// CHECK:STDOUT:   %Op.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %struct.2: Op = struct_value () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (%struct.1) [template]
+// CHECK:STDOUT:   %Op.1: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %Op.2: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
-// CHECK:STDOUT:   %struct.3: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = interface_type @MulAssign [template]
 // CHECK:STDOUT:   %Self.2: MulAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.7: type = ptr_type C [template]
-// CHECK:STDOUT:   %Op.3: type = fn_type @Op.3 [template]
-// CHECK:STDOUT:   %struct.4: Op = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
+// CHECK:STDOUT:   %Op.3: <type of Op> = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %Op.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %struct.5: Op = struct_value () [template]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (%struct.4) [template]
-// CHECK:STDOUT:   %TestOp: type = fn_type @TestOp [template]
-// CHECK:STDOUT:   %struct.6: TestOp = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type @Mul, Op [template]
-// CHECK:STDOUT:   %.11: <associated Op in Mul> = assoc_entity element0, file.%import_ref.10 [template]
-// CHECK:STDOUT:   %TestAssign: type = fn_type @TestAssign [template]
-// CHECK:STDOUT:   %struct.7: TestAssign = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type @MulAssign, Op [template]
-// CHECK:STDOUT:   %.13: <associated Op in MulAssign> = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %Op.4: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.9: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
+// CHECK:STDOUT:   %TestOp: <type of TestOp> = struct_value () [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type @Mul, <type of Op> [template]
+// CHECK:STDOUT:   %.11: <associated <type of Op> in Mul> = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
+// CHECK:STDOUT:   %TestAssign: <type of TestAssign> = struct_value () [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type @MulAssign, <type of Op> [template]
+// CHECK:STDOUT:   %.13: <associated <type of Op> in MulAssign> = assoc_entity element0, file.%import_ref.12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -76,8 +76,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+151, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+153, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Op in Mul> = import_ref ir4, inst+173, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir4, inst+169, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: <associated <type of Op> in Mul> = import_ref ir4, inst+173, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.4: <type of Op> = import_ref ir4, inst+169, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc17: <namespace> = name_ref Core, %Core [template = %Core]
@@ -85,14 +85,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+175, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+177, unloaded
-// CHECK:STDOUT:   %import_ref.7: <associated Op in MulAssign> = import_ref ir4, inst+196, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: Op = import_ref ir4, inst+192, loaded [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.7: <associated <type of Op> in MulAssign> = import_ref ir4, inst+196, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.8: <type of Op> = import_ref ir4, inst+192, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %MulAssign.ref: type = name_ref MulAssign, %import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %TestOp.decl: TestOp = fn_decl @TestOp [template = constants.%struct.6] {
+// CHECK:STDOUT:   %TestOp.decl: <type of TestOp> = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc26_11.1: C = param a
 // CHECK:STDOUT:     @TestOp.%a: C = bind_name a, %a.loc26_11.1
@@ -104,7 +104,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir4, inst+151, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+169, unloaded
-// CHECK:STDOUT:   %TestAssign.decl: TestAssign = fn_decl @TestAssign [template = constants.%struct.7] {
+// CHECK:STDOUT:   %TestAssign.decl: <type of TestAssign> = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc30: type = ptr_type C [template = constants.%.7]
 // CHECK:STDOUT:     %a.loc30_15.1: C* = param a
@@ -132,7 +132,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: C as Mul {
-// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.1] {
+// CHECK:STDOUT:   %Op.decl: <type of Op> = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc18_9.1: C = param self
 // CHECK:STDOUT:     %self.loc18_9.2: C = bind_name self, %self.loc18_9.1
@@ -150,7 +150,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: C as MulAssign {
-// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.3 [template = constants.%struct.4] {
+// CHECK:STDOUT:   %Op.decl: <type of Op> = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc23_21: type = ptr_type C [template = constants.%.7]
 // CHECK:STDOUT:     %self.loc23_14.1: C* = param self
@@ -175,8 +175,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc18_9.2: C](@impl.1.%other.loc18_18.2: C) -> @impl.1.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc19_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc19_14: init C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc19_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_14: init C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc19_14 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,7 +193,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.1.%.1, element0 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.1: <type of Op> = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc27: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc26: ref C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init C = call %.loc27(%a.ref, %b.ref) to %.loc26
@@ -205,7 +205,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: C* = name_ref a, %a
 // CHECK:STDOUT:   %.loc31_3.1: ref C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.2.%.1, element0 [template = constants.%struct.4]
+// CHECK:STDOUT:   %.1: <type of Op> = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc31_6: <bound method> = bound_method %.loc31_3.1, %.1
 // CHECK:STDOUT:   %.loc31_3.2: C* = addr_of %.loc31_3.1
 // CHECK:STDOUT:   %Op.call: init () = call %.loc31_6(%.loc31_3.2, %b.ref)

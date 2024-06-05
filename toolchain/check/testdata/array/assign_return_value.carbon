@@ -17,17 +17,17 @@ fn Run() {
 // CHECK:STDOUT: --- assign_return_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
-// CHECK:STDOUT:   %struct.3: Run = struct_value () [template]
+// CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
+// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, i32 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type [i32; 1] [template]
@@ -40,17 +40,17 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_16.1: (type,) = tuple_literal (%int.make_type_32)
 // CHECK:STDOUT:     %.loc11_16.2: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_16.3: type = converted %int.make_type_32, %.loc11_16.2 [template = i32]
 // CHECK:STDOUT:     %.loc11_16.4: type = converted %.loc11_16.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:     @F.%return: ref (i32,) = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.3] {}
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -66,14 +66,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_16: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_11.2: type = converted %int.make_type_32, %.loc14_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_17: type = array_type %.loc14_16, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %t.var: ref [i32; 1] = var t
 // CHECK:STDOUT:   %t: ref [i32; 1] = bind_name t, %t.var
-// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init (i32,) = call %F.ref()
 // CHECK:STDOUT:   %.loc14_22.1: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc14_22.2: ref (i32,) = temporary %.loc14_22.1, %F.call

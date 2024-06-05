@@ -59,11 +59,11 @@ fn NS();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: <invalid> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: <type of <invalid>> = struct_value () [template]
+// CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.3: <type of <invalid>> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,9 +75,9 @@ fn NS();
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc17: <invalid> = fn_decl @.1 [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %.decl.loc17: <type of <invalid>> = fn_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT:   %.loc21: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc29: <invalid> = fn_decl @.2 [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %.decl.loc29: <type of <invalid>> = fn_decl @.2 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

@@ -28,9 +28,9 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.3: type = struct_type {.v: ()} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {.v: ()} [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct.1: C = struct_value (%tuple) [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -53,12 +53,12 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc16_23.3: ref () = class_element_access %.loc16_23.2, element0
 // CHECK:STDOUT:   %.loc16_22.2: init () = tuple_init () to %.loc16_23.3 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc16_23.4: init () = converted %.loc16_22.1, %.loc16_22.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_23.5: init C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc16_23.5: init C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc16_23.6: ref C = temporary %.loc16_23.2, %.loc16_23.5
 // CHECK:STDOUT:   %.loc16_24.1: ref C = converted %.loc16_23.1, %.loc16_23.6
 // CHECK:STDOUT:   %.loc16_24.2: C = bind_value %.loc16_24.1
 // CHECK:STDOUT:   %b: C = bind_name b, %.loc16_24.2
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %NS.ref.loc18: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:     %a.ref.loc18: type = name_ref a, %a [template = constants.%C]
 // CHECK:STDOUT:     @F.%return: ref C = var <return slot>
@@ -82,8 +82,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc19_18.2: ref () = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc19_17.2: init () = tuple_init () to %.loc19_18.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc19_18.3: init () = converted %.loc19_17.1, %.loc19_17.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc19_18.4: init C = class_init (%.loc19_18.3), %return [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc19_19: init C = converted %.loc19_18.1, %.loc19_18.4 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc19_18.4: init C = class_init (%.loc19_18.3), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_19: init C = converted %.loc19_18.1, %.loc19_18.4 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc19_19 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

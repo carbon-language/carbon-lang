@@ -230,16 +230,16 @@ alias C = Other.C;
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = fn_type @C [template]
+// CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %C: <type of C> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct] {}
+// CHECK:STDOUT:   %C.decl: <type of C> = fn_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {
@@ -682,9 +682,9 @@ alias C = Other.C;
 // CHECK:STDOUT: --- fail_conflict_on_export_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = fn_type @C [template]
+// CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %C: <type of C> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -694,10 +694,10 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: C = import_ref ir2, inst+1, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.1: <type of C> = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+1, unloaded
-// CHECK:STDOUT:   %C.ref: C = name_ref C, %import_ref.1 [template = constants.%struct]
-// CHECK:STDOUT:   %C: C = bind_alias C, %import_ref.1 [template = constants.%struct]
+// CHECK:STDOUT:   %C.ref: <type of C> = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C: <type of C> = bind_alias C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();

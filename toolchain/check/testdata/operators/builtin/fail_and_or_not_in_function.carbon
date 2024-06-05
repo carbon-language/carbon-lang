@@ -44,16 +44,16 @@ var or_: F(true or true);
 // CHECK:STDOUT: --- fail_and_or_not_in_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Bool = struct_value () [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.3: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
-// CHECK:STDOUT:   %struct.4: Float = struct_value () [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.4: bool = bool_literal false [template]
 // CHECK:STDOUT: }
@@ -75,14 +75,14 @@ var or_: F(true or true);
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc13_20.2: type = converted %int.make_type_32, %.loc13_20.1 [template = i32]
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_20.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc13_29: i32 = int_literal 64 [template = constants.%.2]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.4(%.loc13_29) [template = f64]
+// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc13_29) [template = f64]
 // CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc13_24.2: type = converted %float.make_type, %.loc13_24.1 [template = f64]
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_24.2)

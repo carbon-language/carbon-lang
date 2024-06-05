@@ -28,12 +28,12 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
-// CHECK:STDOUT:   %struct.1: A = struct_value () [template]
-// CHECK:STDOUT:   %B: type = fn_type @B [template]
-// CHECK:STDOUT:   %struct.2: B = struct_value () [template]
-// CHECK:STDOUT:   %C: type = fn_type @C [template]
-// CHECK:STDOUT:   %struct.3: C = struct_value () [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %B.type: type = fn_type @B [template]
+// CHECK:STDOUT:   %B: <type of B> = struct_value () [template]
+// CHECK:STDOUT:   %C.type: type = fn_type @C [template]
+// CHECK:STDOUT:   %C: <type of C> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -42,7 +42,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.1] {
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %.loc15_10.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc15_6.1: () = param n
@@ -51,7 +51,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %.loc15_17.2: type = converted %.loc15_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @A.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.2] {
+// CHECK:STDOUT:   %B.decl: <type of B> = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %.loc19_12.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_12.2: type = converted %.loc19_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc19_6.1: () = param n
@@ -60,7 +60,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %.loc19_19.2: type = converted %.loc19_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @B.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.3] {
+// CHECK:STDOUT:   %C.decl: <type of C> = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %.loc23_13.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_13.2: type = converted %.loc23_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %if.loc23_6.1: () = param r#if
