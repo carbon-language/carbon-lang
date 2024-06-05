@@ -271,8 +271,10 @@ static auto CheckQualifierIsResolved(
 
 // Diagnose that a qualified declaration name specifies an incomplete class as
 // its scope.
-static auto DiagnoseQualifiedDeclInIncompleteClassScope(
-    Context& context, SemIRLoc loc, SemIR::ClassId class_id) -> void {
+static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
+                                                        SemIRLoc loc,
+                                                        SemIR::ClassId class_id)
+    -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
                     "Cannot declare a member of incomplete class `{0}`.",
                     SemIR::TypeId);
@@ -283,8 +285,8 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(
   builder.Emit();
 }
 
-// Diagnose that a qualified declaration name specifies an undefined interface as
-// its scope.
+// Diagnose that a qualified declaration name specifies an undefined interface
+// as its scope.
 static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     Context& context, SemIRLoc loc, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
@@ -301,8 +303,10 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
 
 // Diagnose that a qualified declaration name specifies a different package as
 // its scope.
-static auto DiagnoseQualifiedDeclInImportedPackage(
-    Context& context, SemIRLoc use_loc, SemIRLoc import_loc) -> void {
+static auto DiagnoseQualifiedDeclInImportedPackage(Context& context,
+                                                   SemIRLoc use_loc,
+                                                   SemIRLoc import_loc)
+    -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
                     "Imported packages cannot be used for declarations.");
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
@@ -315,8 +319,9 @@ static auto DiagnoseQualifiedDeclInImportedPackage(
 
 // Diagnose that a qualified declaration name specifies a non-scope entity as
 // its scope.
-static auto DiagnoseQualifiedDeclInNonScope(
-    Context& context, SemIRLoc use_loc, SemIRLoc non_scope_entity_loc) -> void {
+static auto DiagnoseQualifiedDeclInNonScope(Context& context, SemIRLoc use_loc,
+                                            SemIRLoc non_scope_entity_loc)
+    -> void {
   CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
                     "Name qualifiers are only allowed for entities that "
                     "provide a scope.");
