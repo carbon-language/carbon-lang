@@ -41,11 +41,25 @@ struct DeclIntroducerState {
 // introducers we are currently nested within. Commonly size 0 or 1, as nested
 // introducers are rare.
 class DeclIntroducerStateStack {
+ private:
+  // Supports Push/Pop `requires` by only existing for introducers.
+  template <Lex::TokenKind::RawEnumType Kind>
+  static constexpr auto IsDeclIntroducer() -> bool {
+    switch (Kind) {
+#define CARBON_TOKEN(...)
+#define CARBON_DECL_INTRODUCER_TOKEN(Name, ...) case Lex::TokenKind::Name:
+#include "toolchain/lex/token_kind.def"
+      return true;
+      default:
+        return false;
+    }
+  }
+
  public:
   // Begins a declaration introducer `Kind`.
   template <Lex::TokenKind::RawEnumType Kind>
+    requires(IsDeclIntroducer<Kind>())
   auto Push() -> void {
-    static_assert(IsDeclIntroducer(Kind));
     stack_.push_back({.kind = Lex::TokenKind::Make(Kind)});
   }
 
@@ -55,8 +69,8 @@ class DeclIntroducerStateStack {
 
   // Finishes a declaration introducer `Kind` and returns the produced state.
   template <Lex::TokenKind::RawEnumType Kind>
+    requires(IsDeclIntroducer<Kind>())
   auto Pop() -> DeclIntroducerState {
-    static_assert(IsDeclIntroducer(Kind));
     CARBON_CHECK(stack_.back().kind == Kind)
         << "Found: " << stack_.back().kind
         << " expected: " << Lex::TokenKind::Make(Kind);
@@ -64,21 +78,6 @@ class DeclIntroducerStateStack {
   }
 
  private:
-  // Returns true if the token is a declaration introducer. Supports restricting
-  // Push/Pop to only work with introducers.
-  static constexpr auto IsDeclIntroducer(Lex::TokenKind::RawEnumType kind)
-      -> bool {
-    switch (kind) {
-#define CARBON_TOKEN(...)
-#define CARBON_DECL_INTRODUCER_TOKEN(Name, ...) \
-  case Lex::TokenKind::Name:                    \
-    return true;
-#include "toolchain/lex/token_kind.def"
-      default:
-        return false;
-    }
-  }
-
   llvm::SmallVector<DeclIntroducerState> stack_;
 };
 
