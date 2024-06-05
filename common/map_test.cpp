@@ -108,13 +108,14 @@ TYPED_TEST(MapTest, Basic) {
     // Immediately do a basic check of all elements to pin down when an
     // insertion corrupts the rest of the table.
     ExpectMapElementsAre(
-        m, MakeKeyValues([](int k) { return k * 100 + (int)(k == 1); },
-                         llvm::seq_inclusive(1, i)));
+        m,
+        MakeKeyValues([](int k) { return k * 100 + static_cast<int>(k == 1); },
+                      llvm::seq_inclusive(1, i)));
   }
   for (int i : llvm::seq(1, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_FALSE(m.Insert(i, i * 100 + 1).is_inserted());
-    EXPECT_EQ(i * 100 + (int)(i == 1), *m[i]);
+    EXPECT_EQ(i * 100 + static_cast<int>(i == 1), *m[i]);
     EXPECT_FALSE(m.Update(i, i * 100 + 1).is_inserted());
     EXPECT_EQ(i * 100 + 1, *m[i]);
   }
@@ -262,9 +263,9 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   for (int i : llvm::seq(1, 5)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Contains(i));
-    EXPECT_EQ(i * 100 + (int)(i == 1), *m[i]);
+    EXPECT_EQ(i * 100 + static_cast<int>(i == 1), *m[i]);
     EXPECT_FALSE(m.Insert(i, i * 100 + 1).is_inserted());
-    EXPECT_EQ(i * 100 + (int)(i == 1), *m[i]);
+    EXPECT_EQ(i * 100 + static_cast<int>(i == 1), *m[i]);
     EXPECT_FALSE(m.Update(i, i * 100 + 1).is_inserted());
     EXPECT_EQ(i * 100 + 1, *m[i]);
   }
@@ -313,9 +314,9 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   for (int i : llvm::seq(1, 14)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Contains(i));
-    EXPECT_EQ(i * 100 + (int)(i < 5), *m[i]);
+    EXPECT_EQ(i * 100 + static_cast<int>(i < 5), *m[i]);
     EXPECT_FALSE(m.Insert(i, i * 100 + 2).is_inserted());
-    EXPECT_EQ(i * 100 + (int)(i < 5), *m[i]);
+    EXPECT_EQ(i * 100 + static_cast<int>(i < 5), *m[i]);
     EXPECT_FALSE(m.Update(i, i * 100 + 2).is_inserted());
     EXPECT_EQ(i * 100 + 2, *m[i]);
   }
@@ -335,9 +336,9 @@ TYPED_TEST(MapTest, ComplexOpSequence) {
   for (int i : llvm::seq(1, 100)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Contains(i));
-    EXPECT_EQ(i * 100 + 2 * (int)(i < 14), *m[i]);
+    EXPECT_EQ(i * 100 + 2 * static_cast<int>(i < 14), *m[i]);
     EXPECT_FALSE(m.Insert(i, i * 100 + 1).is_inserted());
-    EXPECT_EQ(i * 100 + 2 * (int)(i < 14), *m[i]);
+    EXPECT_EQ(i * 100 + 2 * static_cast<int>(i < 14), *m[i]);
     EXPECT_FALSE(m.Update(i, i * 100 + 3).is_inserted());
     EXPECT_EQ(i * 100 + 3, *m[i]);
   }
@@ -600,15 +601,17 @@ TEST(MapContextTest, Basic) {
     // insertion corrupts the rest of the table.
     for (int j : llvm::seq(1, i)) {
       SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
-      ASSERT_EQ(j * 100 + (int)(j == 1), m.Lookup(j, key_context).value());
-      ASSERT_EQ(j * 100 + (int)(j == 1),
+      ASSERT_EQ(j * 100 + static_cast<int>(j == 1),
+                m.Lookup(j, key_context).value());
+      ASSERT_EQ(j * 100 + static_cast<int>(j == 1),
                 m.Lookup(TestData(j * 100000), key_context).value());
     }
   }
   for (int i : llvm::seq(1, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_FALSE(m.Insert(i, i * 100 + 1, key_context).is_inserted());
-    EXPECT_EQ(i * 100 + (int)(i == 1), m.Lookup(i, key_context).value());
+    EXPECT_EQ(i * 100 + static_cast<int>(i == 1),
+              m.Lookup(i, key_context).value());
     EXPECT_FALSE(m.Update(i, i * 100 + 1, key_context).is_inserted());
     EXPECT_EQ(i * 100 + 1, m.Lookup(i, key_context).value());
   }
