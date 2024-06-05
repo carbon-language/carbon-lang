@@ -82,9 +82,6 @@ class InstallPaths {
   // using Carbon in an environment with an unusual path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
 
-  // Constructor only used in errors or globals prior to initialization.
-  InstallPaths() { SetError("No prefix provided!"); }
-
   // Check for an error detecting the install paths correctly.
   //
   // A nullopt return means no errors encountered and the paths should work
@@ -108,6 +105,7 @@ class InstallPaths {
   auto llvm_install_bin() const -> std::string;
 
  private:
+  InstallPaths() { SetError("No prefix provided!"); }
   explicit InstallPaths(llvm::StringRef prefix) : prefix_(prefix) {}
 
   // Set an error message on the install paths and reset the prefix to empty,

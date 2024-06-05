@@ -16,15 +16,13 @@
 
 namespace Carbon::Testing {
 
-static InstallPaths install_paths;
+static const InstallPaths* install_paths = nullptr;
 
 // NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
 extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
-  std::string exe_path;
-  if (*argc >= 1) {
-    exe_path = FindExecutablePath((*argv)[0]);
-    install_paths = InstallPaths::MakeForBazelRunfiles(exe_path);
-  }
+  CARBON_CHECK(*argc >= 1) << "Need the `argv[0]` value to initialize!";
+  install_paths = new InstallPaths(
+      InstallPaths::MakeForBazelRunfiles(FindExecutablePath((*argv)[0])));
   return 0;
 }
 
@@ -83,7 +81,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::vfs::InMemoryFileSystem fs;
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
-  Driver d(fs, &install_paths, dest, error_stream);
+  Driver d(fs, install_paths, dest, error_stream);
   if (!d.RunCommand(args).success) {
     if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";

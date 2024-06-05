@@ -11,15 +11,13 @@
 
 namespace Carbon::Testing {
 
-static InstallPaths install_paths;
+static const InstallPaths* install_paths = nullptr;
 
 // NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
 extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
-  std::string exe_path;
-  if (*argc >= 1) {
-    exe_path = FindExecutablePath((*argv)[0]);
-    install_paths = InstallPaths::MakeForBazelRunfiles(exe_path);
-  }
+  CARBON_CHECK(*argc >= 1) << "Need the `argv[0]` value to initialize!";
+  install_paths = new InstallPaths(
+      InstallPaths::MakeForBazelRunfiles(FindExecutablePath((*argv)[0])));
   return 0;
 }
 
@@ -41,7 +39,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                        /*RequiresNullTerminator=*/false)));
 
   llvm::raw_null_ostream null_ostream;
-  Driver driver(fs, &install_paths, null_ostream, null_ostream);
+  Driver driver(fs, install_paths, null_ostream, null_ostream);
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.
