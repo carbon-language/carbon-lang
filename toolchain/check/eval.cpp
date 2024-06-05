@@ -128,6 +128,9 @@ static auto GetConstantValue(Context& context, SemIR::TypeId type_id,
 // corresponding block of those values.
 static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
                              Phase* phase) -> SemIR::InstBlockId {
+  if (!inst_block_id.is_valid()) {
+    return SemIR::InstBlockId::Invalid;
+  }
   auto insts = context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
@@ -154,6 +157,9 @@ static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
 // extract its phase.
 static auto GetConstantValue(Context& context, SemIR::TypeBlockId type_block_id,
                              Phase* phase) -> SemIR::TypeBlockId {
+  if (!type_block_id.is_valid()) {
+    return SemIR::TypeBlockId::Invalid;
+  }
   auto types = context.type_blocks().Get(type_block_id);
   for (auto type_id : types) {
     GetConstantValue(context, type_id, phase);
@@ -169,7 +175,7 @@ static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
                                           FieldIdT InstT::*field, Phase* phase)
     -> bool {
   auto unwrapped = GetConstantValue(context, inst->*field, phase);
-  if (!unwrapped.is_valid()) {
+  if (!unwrapped.is_valid() && (inst->*field).is_valid()) {
     return false;
   }
   inst->*field = unwrapped;
@@ -915,11 +921,11 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
     case SemIR::ClassType::Kind:
-      // TODO: Look at generic arguments once they're modeled.
-      return MakeConstantResult(context, inst, Phase::Template);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::ClassType::args_id);
     case SemIR::InterfaceType::Kind:
-      // TODO: Look at generic arguments once they're modeled.
-      return MakeConstantResult(context, inst, Phase::Template);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::InterfaceType::args_id);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::InterfaceWitness::elements_id);
@@ -980,6 +986,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::Builtin::Kind:
     case SemIR::FunctionType::Kind:
     case SemIR::GenericClassType::Kind:
+    case SemIR::GenericInterfaceType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(context, inst, Phase::Template);
 
@@ -1009,7 +1016,16 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           Phase::Template);
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      // TODO: Once interfaces have generic arguments, handle them.
+      // If the interface has generic arguments, we don't produce an interface
+      // type, but a callable whose return value is an interface type.
+      if (context.interfaces().Get(interface_decl.interface_id).is_generic()) {
+        return MakeConstantResult(
+            context,
+            SemIR::StructValue{.type_id = interface_decl.type_id,
+                               .elements_id = SemIR::InstBlockId::Empty},
+            Phase::Template);
+      }
+      // A non-generic interface declaration evaluates to the interface type.
       return MakeConstantResult(
           context,
           SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,

@@ -264,6 +264,12 @@ class Context {
   // type will be complete.
   auto GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
 
+  // Gets a generic interface type, which is the type of a name of a generic
+  // interface, such as the type of `AddWith` given
+  // `interface AddWith(T:! type)`. The returned type will be complete.
+  auto GetGenericInterfaceType(SemIR::InterfaceId interface_id)
+      -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 

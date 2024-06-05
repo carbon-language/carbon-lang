@@ -65,12 +65,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: --- foo.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+11> [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+12> [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Class: <type of Class> = struct_value () [template]
-// CHECK:STDOUT:   %struct: type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type <cannot stringify inst+9>, T [symbolic]
+// CHECK:STDOUT:   %Class.1: <type of Class> = struct_value () [template]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type Class, T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: T} [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,9 +79,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of Class> = import_ref ir0, inst+5, loaded [template = constants.%Class]
+// CHECK:STDOUT:   %import_ref: <type of Class> = import_ref ir0, inst+5, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%struct] {
+// CHECK:STDOUT:   %Class.decl: <type of Class> = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
@@ -89,10 +89,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc4_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc5: <unbound element of class <cannot stringify inst+9>> = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5: <unbound element of class Class> = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Class
+// CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT:   .x = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -102,8 +102,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Class: <type of Class> = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+12> [symbolic]
+// CHECK:STDOUT:   %Class.1: <type of Class> = struct_value () [template]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class [template]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+13> [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: <type of <invalid>> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = class_type @.1 [template]
@@ -114,7 +115,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Class = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of Class> = import_ref ir0, inst+5, loaded [template = constants.%Class]
+// CHECK:STDOUT:   %import_ref: <type of Class> = import_ref ir0, inst+5, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: <type of <invalid>> = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.loc9_13.1: type = param U

@@ -15,14 +15,16 @@ interface I[T:! type](N:! T);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %N: T = bind_symbolic_name N 1 [symbolic]
-// CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = generic_interface_type @I [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %I: <type of I> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {
+// CHECK:STDOUT:   %I.decl: <type of I> = interface_decl @I [template = constants.%I] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.2 [symbolic = constants.%T]

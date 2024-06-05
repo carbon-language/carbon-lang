@@ -127,7 +127,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
   auto prev_class_id = SemIR::ClassId::Invalid;
   auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
-  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+  auto prev = context.insts().Get(prev_id);
+  CARBON_KIND_SWITCH(prev) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       prev_class_id = class_decl.class_id;
       break;
@@ -174,6 +175,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                        prev_import_ir_id)) {
     // When merging, use the existing entity rather than adding a new one.
     class_decl.class_id = prev_class_id;
+    class_decl.type_id = prev.type_id();
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 }

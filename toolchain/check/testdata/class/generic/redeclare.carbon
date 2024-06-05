@@ -94,7 +94,6 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic.1: <type of Generic> = struct_value () [template]
 // CHECK:STDOUT:   %Generic.2: type = class_type @Generic [template]
-// CHECK:STDOUT:   %struct: type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,7 +107,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
 // CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.decl.loc6: type = class_decl @Generic [template = constants.%struct] {
+// CHECK:STDOUT:   %Generic.decl.loc6: <type of Generic> = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc6_15.1: type = param T
 // CHECK:STDOUT:     %T.loc6_15.2: type = bind_symbolic_name T 0, %T.loc6_15.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }

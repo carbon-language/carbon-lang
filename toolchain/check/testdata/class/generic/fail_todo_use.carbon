@@ -55,7 +55,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, (@Run.%.loc25_15.2) [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, (i32) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.k: i32} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Class [template]

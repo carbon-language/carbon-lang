@@ -42,16 +42,20 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @NotGeneric [template]
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
-// CHECK:STDOUT:   %Self.1: <invalid> = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %.3: type = interface_type @Generic [template]
+// CHECK:STDOUT:   %.type.1: type = generic_interface_type @.1 [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: <type of <invalid>> = struct_value () [template]
+// CHECK:STDOUT:   %Self.1: <cannot stringify inst+9> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Generic.type: type = generic_interface_type @Generic [template]
+// CHECK:STDOUT:   %Generic: <type of Generic> = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = interface_type @.2 [template]
 // CHECK:STDOUT:   %Self.2: <invalid> = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.5: type = interface_type @DifferentParams [template]
-// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %DifferentParams.type: type = generic_interface_type @DifferentParams [template]
+// CHECK:STDOUT:   %DifferentParams: <type of DifferentParams> = struct_value () [template]
 // CHECK:STDOUT:   %T.2: () = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %.7: type = interface_type @.3 [template]
-// CHECK:STDOUT:   %Self.3: <invalid> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %.type.2: type = generic_interface_type @.3 [template]
+// CHECK:STDOUT:   %.5: <type of <invalid>> = struct_value () [template]
+// CHECK:STDOUT:   %Self.3: <cannot stringify inst+33> = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,22 +65,22 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {}
-// CHECK:STDOUT:   %.decl.loc19: type = interface_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl.loc19: <type of <invalid>> = interface_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.loc19_22.1: type = param T
 // CHECK:STDOUT:     %T.loc19_22.2: type = bind_symbolic_name T 0, %T.loc19_22.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.decl: type = interface_decl @Generic [template = constants.%.3] {
+// CHECK:STDOUT:   %Generic.decl: <type of Generic> = interface_decl @Generic [template = constants.%Generic] {
 // CHECK:STDOUT:     %T.loc21_19.1: type = param T
 // CHECK:STDOUT:     %T.loc21_19.2: type = bind_symbolic_name T 0, %T.loc21_19.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.4] {}
-// CHECK:STDOUT:   %DifferentParams.decl: type = interface_decl @DifferentParams [template = constants.%.5] {
+// CHECK:STDOUT:   %DifferentParams.decl: <type of DifferentParams> = interface_decl @DifferentParams [template = constants.%DifferentParams] {
 // CHECK:STDOUT:     %T.loc31_27.1: type = param T
 // CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc38: type = interface_decl @.3 [template = constants.%.7] {
+// CHECK:STDOUT:   %.decl.loc38: <type of <invalid>> = interface_decl @.3 [template = constants.%.5] {
 // CHECK:STDOUT:     %.loc38_32.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %T.loc38_27.1: () = param T
 // CHECK:STDOUT:     %T.loc38_27.2: () = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = constants.%T.2]
 // CHECK:STDOUT:   }
@@ -85,7 +89,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: interface @NotGeneric;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1 {
-// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: <cannot stringify inst+9> = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -105,7 +109,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: interface @DifferentParams;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.3 {
-// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   %Self: <cannot stringify inst+33> = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

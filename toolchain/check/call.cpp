@@ -31,6 +31,25 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
                                             .args_id = converted_args_id});
 }
 
+// Performs a call where the callee is the name of a generic interface, such as
+// `AddWith(i32)`.
+// TODO: Refactor with PerformCallToGenericClass.
+static auto PerformCallToGenericInterface(
+    Context& context, Parse::NodeId node_id, SemIR::InterfaceId interface_id,
+    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+  auto& interface_info = context.interfaces().Get(interface_id);
+
+  // Convert the arguments to match the parameters.
+  auto converted_args_id = ConvertCallArgs(
+      context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
+      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info.decl_id,
+      interface_info.implicit_param_refs_id, interface_info.param_refs_id);
+  return context.AddInst<SemIR::InterfaceType>(
+      node_id, {.type_id = SemIR::TypeId::TypeType,
+                .interface_id = interface_id,
+                .args_id = converted_args_id});
+}
+
 auto PerformCall(Context& context, Parse::NodeId node_id,
                  SemIR::InstId callee_id, llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
@@ -41,6 +60,12 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
             context.insts().Get(callee_id).type_id())) {
       return PerformCallToGenericClass(context, node_id,
                                        generic_class->class_id, arg_ids);
+    }
+    if (auto generic_interface =
+            context.types().TryGetAs<SemIR::GenericInterfaceType>(
+                context.insts().Get(callee_id).type_id())) {
+      return PerformCallToGenericInterface(
+          context, node_id, generic_interface->interface_id, arg_ids);
     }
     if (!callee_function.is_error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,

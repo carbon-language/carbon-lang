@@ -982,6 +982,7 @@ class TypeCompleter {
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::FunctionType::Kind:
       case SemIR::GenericClassType::Kind:
+      case SemIR::GenericInterfaceType::Kind:
       case SemIR::InterfaceType::Kind:
       case SemIR::UnboundElementType::Kind: {
         // These types have no runtime operations, so we use an empty value
@@ -1108,6 +1109,11 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
 
 auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id);
+}
+
+auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(*this, interface_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
