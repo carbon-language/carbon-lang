@@ -315,6 +315,12 @@ to the Nth scrutinee value.
 
 ## Typechecking
 
+Packs, tuples, segments, shape
+Typechecking within pack expansions
+- Expressions/patterns have pack types
+Pattern match type checking
+
+
 ## Background
 
 Compile-time expression evaluation consists of applying reduction rules to
@@ -1400,6 +1406,307 @@ is to treat the offset as context, e.g. if we're unifying
 unifying `<P1; X; 1>` with `<S1; X; 0>` and `<P2; X; 1>` with
 `<S2; X; 0>`. That naturally bottoms out in a piecewise definition of the
 pattern parameters.
+
+## Appendix
+
+`<X; S>` is a _shape coercion_. `S` must be a shape, the shape of `X` must
+be 1, and `X` cannot contain pack expansions.
+
+A _name pack_ is a pack literal whose segments are names.
+
+A pack expansion within a pattern has _fixed shape_ if it contains a usage of at least one
+each-name that is not a parameter of the pattern; otherwise
+it has _deduced shape_. Every pack expansion with deduced shape is
+associated with a hidden _deduced shape binding_, which
+symbolically represents the number of elements in the pack expansion, and
+acts as a deduced parameter of the pattern. A shape
+binding is usually written `|each P|`, where `each P` is an arbitrarily chosen
+each-name that's bound by the pattern.
+
+The values of shape bindings are _shapes_. A shape template constant is a
+tuple of literal `1`s (i.e. a unary representation of the number of
+elements), but we will normally be working with shape symbolic constants, which
+are tuples of `1`s, the names of deduced shape bindings, and other shapes,
+such as `((1, |each P|), |each Q|, 1)`.
+
+Tuple and pack literals consist of _segments_ (the syntactic units separated by
+commas).
+
+Every expression, pattern, and statement has a shape, just like every expression
+and pattern has a type. The shapes of expressions and statements are determined
+as follows:
+- The shape of a pack expansion is 1.
+- The shape of a shape coercion is the value of the expression after the `;`.
+- The shape of a pack literal is the concatenation of the shapes of its
+  segments.
+- The shape of a binding pattern that declares an each-name is deduced as
+  described below.
+- The shape of an each-name expression is the shape of the binding pattern that declared
+  it.
+- Any other AST node is _well shaped_ if there is some shape `S` such that all
+  of the node's children have shape either 1 or `S`. When that condition holds,
+  the shape of the node is `S` (or 1 if all children have shape 1).
+
+Note that an AST's shape can only be variadic if it contains a pack literal,
+shape coercion, or each-name.
+
+The _shaped type_ of an expression `E` that has type `T` and shape `S` is
+defined as follows:
+- If the shape of `T` is `S`, the shaped type of `E` is `T`.
+- Otherwise, the shaped type of `E` is `<T; S>`.
+
+The type of an expression or pattern can be computed as follows:
+- The type of a binding pattern with declared type `auto` is deduced as
+  described below. The type of any other binding pattern is the expression
+  following the `:`.
+- The type of an each-name expression is the type of the binding pattern that
+  declared it.
+- The type of a shape coercion `<E; S>` is `<T; S>`, where `T` is the type of `E`.
+- The type of a pack literal is a pack literal consisting of the shaped types of its
+  segments.
+- The type of a pack expansion expression or pattern is `...B`, where `B` is the
+  shaped type of its body.
+- The type of a tuple literal is a tuple literal consisting of the types
+  of its segments.
+- If an expression `E` contains a pack literal or shape coercion that is not nested
+  inside a pack expansion, the type of `E` is found by repeatedly applying
+  pack or coercion lifting (see below) until neither reduction is applicable,
+  and then computing the type of the result.
+
+> **TODO:** address `...expand`, `...and` and `...or`.
+
+### Reduction rules
+
+Unless otherwise specified, all expressions in these rules
+must be free of side effects. Note that every reduction rule is also an
+equivalence: the expression before the reduction is equivalent to the
+expression after.
+
+Expressions that are reduced by these rules must be well-shaped (and the reduced
+form will likewise be well-shaped), but need not be well-typed.
+
+*Empty pack removal:* `...{}` reduces to the empty string.
+
+*Singular expansion removal:* `...E` reduces to `E`, if `E` contains no
+pack literals, shape coercions, or each-names.
+
+*Pack expansion splitting:* If `E` is a segment and `S` is a sequence of
+segments, `...{E, S}` reduces to `...E, ...{S}`.
+
+*Pack lifting:* If `F` is a function, and `X` is an expression that does not contain
+pack literals, then
+`F({A1, A2}, X, {B1, B2}, <Y; S>)` reduces to `{F(A1, X, B1, Y), F(A2, X, B2, Y)}`.
+This rule generalizes in several dimensions:
+- `F` can have any number of non-pack-literal arguments, and any positive number of
+  pack literal arguments, and they can be in any order.
+- The pack literal arguments can have any number of segments, so long as they
+  all have the same number of segments.
+- `F()` can be any expression syntax other than `...`, not just a function call. For example,
+  this rule implies that `{X1, X2} * {Y1, Y2}`
+  reduces to `{X1 * Y1, X2 * Y2}`, where the `*` operator
+  plays the role of `F`.
+
+*Coercion lifting:* If `F` is a function, `S` is a shape, and `Y` is an
+expression that does not contain pack literals or shape coercions,
+`F(<X; S>, Y, <Z; S>)`
+reduces to `<F(X, Y, Z); S>`. As with pack lifting, this rule generalizes:
+- `F` can have any number of non-shape-coercion arguments, and any positive
+  number of shape coercion arguments, and they can be in any order.
+- `F()` can be any expression syntax other than `...` or pack literal formation,
+  not just a function call.
+
+*Coercion removal:* `<E; 1>` reduces to `E`.
+
+Claim: as a corollary of these rules, in a symbolic value (which by definition
+is fully reduced), a pack literal can only occur as the direct child of a
+pack expansion, and a shape coercion can only occur as the direct child of
+a pack expansion or a segment of a pack literal.
+
+### Other equivalences
+
+Unless otherwise specified, all expressions in these rules
+must be free of side effects.
+
+*Coercion merging:*
+- `<E; M>, <E; N>` is equivalent to `<E; M, N>`.
+- `<E; N>, E` is equivalent to `<E; N, 1>`.
+- `E, <E; N>` is equivalent to `<E; 1, N>`.
+
+*Coercion shape commutativty:* `<E; S1>` is equivalent to
+`<E; S2>` if `S1` is a permutation of `S2`.
+
+### Convertibility and deduction rules
+
+Formalism: we are checking if some scrutinee type is convertible to some pattern
+type, by applying a set of deduction rules for the "convertible to" and "deducible from"
+relations. For example:
+
+- `T` is convertible to `U` if `T` implements `ImplicitAs(U)`.
+- `T` is convertible to `U` if `U` is deducible from `T`.
+- Let `P` be a parameterized type. `P(A, B)` is deducible from `P(C, D)` if `A`
+  is deducible from `C` and `B` is deducible from `D`.
+- For any `X`, `X` is deducible from `X`.
+
+Formally, these rules all implicitly propagate a set of bindings for deduced
+parameters of the pattern (such as "`X` is bound to the value `Y`"). For
+example, the third rule above can be stated more precisely as
+
+- Let `P` be a parameterized type. If `A` is deducible from `C` given a set of
+  bindings `S1`, and `B` is deducible from `D` given a set of bindings
+  `S2`, then `P(A, B)` is deducible from `P(C, D)` given a set of bindings
+  `S1` ∪ `S2`.
+
+In almost all cases, the set of bindings in the conclusion is the union of the
+sets of bindings in the premises, and in those cases we will usually leave
+the bindings implicit (as in the original formulation of the above rule).
+One major exception is the following rule:
+
+*Binding introduction:* Let `X` be a deduced parameter with type `T`. If the
+type of `E` is convertible to `T` given a set of bindings `B`, then `X` is
+deducible from `E` given a set of bindings `B` ∪ "`X` is bound to `E`".
+
+A set of bindings must be _consistent_, which in particular means that all
+bindings for a given variable must bind it to the same value.
+
+Variadic extensions:
+
+A _synthetic deduced parameter_ is a pack literal whose segments are all
+deduced parameters of the enclosing pattern, and whose type can be written with
+a single segment. A synthetic deduced parameter behaves like an ordinary
+deduced parameter when applying the binding introduction rule, and
+consequently it can be bound to a value. However, a binding set is inconsistent
+if it contains bindings for both a synthetic deduced parameter and one of its
+constituent names.
+
+`...T` is convertible to `...U` if `T` is convertible to `U`.
+
+`<T; S1>` is convertible to `<U; S2>` if `T` is convertible to `U` and
+`S2` is deducible from `S1`.
+
+Let `T` and `U` be tuple segments, and let `Ts` and `Us` be sequences of tuple
+segments. `(T, Ts)` is convertible to `(U, Us)` if `T` is convertible to `U` and
+`Ts` is convertible to `Us`. Note that `(T, Ts)` and `(U, Us)` are not required
+to be symbolic values, and in particular `T` and `U` can contain pack literals,
+so there may be many equivalent ways to write a given tuple, which will be
+decomposed differently by this rule.
+
+The _inner value_ of a pack literal segment is the result of replacing
+every shape coercion `<E; S>` with `E`.
+
+Let `T` be a pack literal segment and `Us` be a sequence of pack literal
+segments. `{T}` is convertible to `{Us}` if the shape of `{Us}` is deducible from the
+shape of `{T}`, and the inner value of `T` is convertible to the inner value
+of each segment of `Us`.
+
+Let `Ts` be a sequence of pack literal segments and `U` be a pack literal
+segment. `{Ts}` is convertible to `{U}` if the shape of `{U}` is deducible from
+the shape of `{Ts}`, and the inner value of each segment of `Ts` is convertible
+to the inner value of `U`.
+
+Let `X` be a deduced shape binding, and let `S` be a shape expression.
+`X` is deducible from `S` given a set of bindings that consists of the
+single element "`X` is bound to `S`".
+
+Let `(S1)`, `(S2)`, `(S3)`, and `(S4)` be shapes. `(S1, S2)` is deducible from
+`(S3, S4)` if `(S1)` is deducible from `(S3)` and `(S2)` is deducible from
+`(S4)`.
+
+### Deduction algorithm
+
+A _full pattern_ consists of an optional deduced parameter list, followed by
+a pattern, optionally followed by a return type expression.
+
+A function type (or other pattern type) is in _deducing form_ if 
+- The only pack literals are uniform name packs, where:
+  - All names in a name pack are deduced parameters of the pattern, exactly one is an each-name,
+    and no name repeats in the pack.
+  - A name in a name pack never appears in the full-pattern outside a name pack
+  - All name packs in the full-pattern containing a given name are equal.
+- Every shape coercions is the direct child of a pack expansion.
+
+Notice that the type of any user-written function can be trivially expressed
+in deducing form, because it contains no pack literals.
+
+The _canonical form_ of a function type (or other pattern type) is the unique
+deducing form that is "maximally merged", meaning that if `C` is the canonical
+form, and `D` is any other deducing form of the function type, then either
+`D` has more pack expansions than `C`, or
+- `D` has the same number of pack expansions as `C`,
+- the shape of every pack expansion in `D` is a prefix or suffix of the shape
+  of the corresponding pack expansion in `C`, and
+- in at least one case, it is a _strict_ prefix or suffix.
+
+> **TODO:** specify algorithm for converting a function type to canonical form,
+> or establishing that there is no such form. See next section for a start.
+
+> **TODO:** specify algorithm for finding a valid deduction from the argument
+> type to the canonical form of the function type.
+
+> **Future work:** Extend this approach to support merging the argument list
+> as well as the parameter list.
+
+#### Canonicalization algorithm
+
+The canonical form can be found by starting with a deducing form,
+and incrementally merging an adjacent singular parameter type into the variadic
+parameter type.
+
+For example, consider the following function:
+```carbon
+fn F[First:! type, Second:! type, ... each Next:! type]
+    (first: Vector(First), second: Vector(Second),
+     ... each next: Vector(each Next)) -> (First, Second, ... each Next);
+```
+
+The function type derived from that signature is:
+
+```carbon
+(Vector(First), Vector(Second), ... Vector(each Next))
+    -> (First, Second, ... each Next)
+```
+
+We wrap `each Next` in a pack literal to express it in deducing form:
+
+```carbon
+(Vector(First), Vector(Second), ... Vector({each Next})) -> (First, Second, ... {each Next})
+```
+
+Then we attempt to merge `Vector(Second)` into the pack expansion:
+
+```carbon
+// Pack lifting
+(Vector(First), Vector(Second), ... {Vector(each Next)}) -> (First, Second, ...{each Next})
+// Pack expansion splitting (in reverse)
+(Vector(First), ... {Vector(Second), Vector(each Next)}) -> (First, ...{Second, each Next})
+// Pack lifting (in reverse)
+(Vector(First), ... Vector({Second, each Next})) -> (First, ...{Second, each Next})
+```
+
+Then we must verify that the type of the name pack `{Second, each Next}` is
+uniform, to show that this is a deducing form. By the typing rules given
+earlier, the type of that pack is `{type, <type; |Next|>}`, and we can transform
+that type to `{<type; 1, |Next|>}` by coercion merging. This shows that we have
+reached a deducing form. We can then repeat that process to merge the remaining
+parameter type:
+
+```carbon
+(Vector(First), ... Vector({Second, each Next})) -> (First, ...{Second, each Next})
+// Pack lifting
+(Vector(First), ...{Vector(Second), Vector(each Next)}) -> (First, ...{Second, each Next})
+// Pack expansion splitting (in reverse)
+(...{Vector(First), Vector(Second), Vector(each Next)}) -> (...{First, Second, each Next})
+// Pack lifting (in reverse)
+(...Vector({First, Second, each Next})) -> (...{First, Second, each Next})
+```
+
+The type of `{First, Second, each Next}` is `{type, type, <type; |Next|>}`,
+which we can rewrite to `{<type; 1, 1, |Next|>}` using coercion merging, as
+before. We have thus expressed the type of `F` in normal form with only one parameter
+segment, so this must be the canonical form.
+
+> **TODO:** define the algorithm in more general terms, and discuss ways that merging
+> can fail.
+
 
 ## Alternatives considered
 
