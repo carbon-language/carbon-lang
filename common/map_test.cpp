@@ -107,10 +107,9 @@ TYPED_TEST(MapTest, Basic) {
 
     // Immediately do a basic check of all elements to pin down when an
     // insertion corrupts the rest of the table.
-    for (int j : llvm::seq(1, i)) {
-      SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
-      ASSERT_EQ(j * 100 + (int)(j == 1), *m[j]);
-    }
+    ExpectMapElementsAre(
+        m, MakeKeyValues([](int k) { return k * 100 + (int)(k == 1); },
+                         llvm::seq_inclusive(1, i)));
   }
   for (int i : llvm::seq(1, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
