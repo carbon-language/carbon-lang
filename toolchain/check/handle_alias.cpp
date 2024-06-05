@@ -32,8 +32,7 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Alias);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
-                       Lex::TokenKind::Alias);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");

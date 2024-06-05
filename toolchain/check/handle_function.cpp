@@ -50,19 +50,16 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
                               SemIR::InstId parent_scope_inst_id,
                               std::optional<SemIR::Inst> parent_scope_inst)
     -> void {
-  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Fn,
-                             parent_scope_inst);
+  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
-                           KeywordModifierSet::Interface,
-                       Lex::TokenKind::Fn);
-  RestrictExternModifierOnDecl(context, introducer, Lex::TokenKind::Fn,
-                               parent_scope_inst, is_definition);
+                           KeywordModifierSet::Interface);
+  RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
+                               is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, Lex::TokenKind::Fn,
-                                      parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
 }
 
 // Returns the return slot usage for a function given the computed usage for two

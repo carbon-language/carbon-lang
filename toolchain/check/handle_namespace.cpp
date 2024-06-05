@@ -26,8 +26,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
 
   auto introducer =
       context.decl_introducer_state_stack().Pop(DeclIntroducerState::Namespace);
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None,
-                       Lex::TokenKind::Namespace);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
       context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),

@@ -15,7 +15,6 @@ namespace Carbon::Check {
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
 auto CheckAccessModifiersOnDecl(Context& context,
                                 DeclIntroducerState& introducer,
-                                Lex::TokenKind decl_kind,
                                 std::optional<SemIR::Inst> parent_scope_inst)
     -> void;
 
@@ -35,7 +34,6 @@ auto CheckMethodModifiersOnFunction(
 // TODO: Take another look at diagnostic phrasing for callers.
 auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
                            KeywordModifierSet forbidden,
-                           Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
                            SemIR::LocId context_loc_id = SemIR::LocId::Invalid)
     -> void;
@@ -44,9 +42,8 @@ auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
 // not in `allowed`. Updates `introducer`.
 inline auto LimitModifiersOnDecl(Context& context,
                                  DeclIntroducerState& introducer,
-                                 KeywordModifierSet allowed,
-                                 Lex::TokenKind decl_kind) -> void {
-  ForbidModifiersOnDecl(context, introducer, ~allowed, decl_kind, "");
+                                 KeywordModifierSet allowed) -> void {
+  ForbidModifiersOnDecl(context, introducer, ~allowed, "");
 }
 
 // Restricts the `extern` modifier to only be used on namespace-scoped
@@ -57,7 +54,6 @@ inline auto LimitModifiersOnDecl(Context& context,
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
 auto RestrictExternModifierOnDecl(Context& context,
                                   DeclIntroducerState& introducer,
-                                  Lex::TokenKind decl_kind,
                                   std::optional<SemIR::Inst> parent_scope_inst,
                                   bool is_definition) -> void;
 
@@ -67,7 +63,7 @@ auto RestrictExternModifierOnDecl(Context& context,
 //
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.
 auto RequireDefaultFinalOnlyInInterfaces(
-    Context& context, DeclIntroducerState& introducer, Lex::TokenKind decl_kind,
+    Context& context, DeclIntroducerState& introducer,
     std::optional<SemIR::Inst> parent_scope_inst) -> void;
 
 }  // namespace Carbon::Check

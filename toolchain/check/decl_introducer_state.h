@@ -27,8 +27,9 @@ struct DeclIntroducerState {
     Import,
     Interface,
     Let,
+    Library,
     Namespace,
-    PackageOrLibrary,
+    Package,
     Var
   };
 
