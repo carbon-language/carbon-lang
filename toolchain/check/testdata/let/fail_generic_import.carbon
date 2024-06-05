@@ -36,16 +36,22 @@ let a: T = 0;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .T = @__global_init.%T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc4_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc4_19.2: type = converted %int.make_type_32, %.loc4_19.1 [template = i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc4_19.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
@@ -58,11 +64,17 @@ let a: T = 0;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .T = %import_ref
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .a = @__global_init.%a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+2, loaded [symbolic = constants.%T]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = constants.%T]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %a: %T = bind_name a, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

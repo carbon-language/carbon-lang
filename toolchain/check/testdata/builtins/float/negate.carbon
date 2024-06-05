@@ -91,6 +91,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Negate = %Negate.decl
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
+// CHECK:STDOUT:     .a = @__global_init.%a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
@@ -135,12 +136,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %float.make_type.loc8: init type = call constants.%Float(%.loc8_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc8_8.2: type = value_of_initializer %float.make_type.loc8 [template = f64]
 // CHECK:STDOUT:   %.loc8_8.3: type = converted %float.make_type.loc8, %.loc8_8.2 [template = f64]
-// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc8_21: f64 = float_literal 1.5 [template = constants.%.3]
-// CHECK:STDOUT:   %float.negate: init f64 = call %Negate.ref(%.loc8_21) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_25.1: f64 = value_of_initializer %float.negate [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_25.2: f64 = converted %float.negate, %.loc8_25.1 [template = constants.%.4]
-// CHECK:STDOUT:   %a.loc8: f64 = bind_name a, %.loc8_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
@@ -155,6 +150,17 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc5_19.1: f64 = value_of_initializer %float.negate
 // CHECK:STDOUT:   %.loc5_19.2: f64 = converted %float.negate, %.loc5_19.1
 // CHECK:STDOUT:   return %.loc5_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %.loc8_21: f64 = float_literal 1.5 [template = constants.%.3]
+// CHECK:STDOUT:   %float.negate: init f64 = call %Negate.ref(%.loc8_21) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_25.1: f64 = value_of_initializer %float.negate [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_25.2: f64 = converted %float.negate, %.loc8_25.1 [template = constants.%.4]
+// CHECK:STDOUT:   %a: f64 = bind_name a, %.loc8_25.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon

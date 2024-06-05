@@ -28,6 +28,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .n = @__global_init.%n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -40,10 +41,16 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc14_17.4: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
 // CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_35.1: %.2 = tuple_literal (%int.make_type_32.loc14_27, %int.make_type_32.loc14_32)
 // CHECK:STDOUT:   %.loc14_35.2: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
@@ -52,7 +59,6 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc14_35.5: type = converted %int.make_type_32.loc14_32, %.loc14_35.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_35.6: type = converted %.loc14_35.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %n: %.3 = bind_name n, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

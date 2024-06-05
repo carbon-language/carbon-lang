@@ -36,14 +36,12 @@ let b: B = C.base;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %base.ref: %.4 = name_ref base, @C.%.loc14 [template = @C.%.loc14]
-// CHECK:STDOUT:   %b: %B = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -59,5 +57,13 @@ let b: B = C.base;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %base.ref: %.4 = name_ref base, @C.%.loc14 [template = @C.%.loc14]
+// CHECK:STDOUT:   %b: %B = bind_name b, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

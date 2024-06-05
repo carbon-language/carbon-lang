@@ -46,6 +46,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     .Complement = %Complement.decl
 // CHECK:STDOUT:     .And = %And.decl
 // CHECK:STDOUT:     .arr = %arr
+// CHECK:STDOUT:     .arr_p = @__global_init.%arr_p
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -103,9 +104,6 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %int.make_type_32.loc6, %.loc6_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_26: type = array_type %.loc6_18, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc6_27: type = ptr_type %.6 [template = constants.%.7]
-// CHECK:STDOUT:   %arr.ref: ref %.6 = name_ref arr, %arr
-// CHECK:STDOUT:   %.loc6_31: %.7 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.7 = bind_name arr_p, %.loc6_31
 // CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
@@ -135,5 +133,13 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc9_23.1: i32 = value_of_initializer %int.complement
 // CHECK:STDOUT:   %.loc9_23.2: i32 = converted %int.complement, %.loc9_23.1
 // CHECK:STDOUT:   return %.loc9_23.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %arr.ref: ref %.6 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %.loc6: %.7 = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %.7 = bind_name arr_p, %.loc6
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

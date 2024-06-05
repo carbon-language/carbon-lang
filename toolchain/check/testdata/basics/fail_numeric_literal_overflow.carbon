@@ -51,38 +51,48 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .a = @__global_init.%a
+// CHECK:STDOUT:     .b = @__global_init.%b
+// CHECK:STDOUT:     .c = @__global_init.%c
+// CHECK:STDOUT:     .d = @__global_init.%d
+// CHECK:STDOUT:     .e = @__global_init.%e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
-// CHECK:STDOUT:   %a: i32 = bind_name a, <error>
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_8.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_8.2: type = converted %int.make_type_32.loc21, %.loc21_8.1 [template = i32]
-// CHECK:STDOUT:   %b: i32 = bind_name b, <error>
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc27_8.1: type = value_of_initializer %int.make_type_32.loc27 [template = i32]
 // CHECK:STDOUT:   %.loc27_8.2: type = converted %int.make_type_32.loc27, %.loc27_8.1 [template = i32]
-// CHECK:STDOUT:   %c: i32 = bind_name c, <error>
 // CHECK:STDOUT:   %.loc33_8.1: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.4: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %float.make_type.loc33: init type = call constants.%Float(%.loc33_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc33_8.2: type = value_of_initializer %float.make_type.loc33 [template = f64]
 // CHECK:STDOUT:   %.loc33_8.3: type = converted %float.make_type.loc33, %.loc33_8.2 [template = f64]
-// CHECK:STDOUT:   %d: f64 = bind_name d, <error>
 // CHECK:STDOUT:   %.loc38_8.1: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.5: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %float.make_type.loc38: init type = call constants.%Float(%.loc38_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc38_8.2: type = value_of_initializer %float.make_type.loc38 [template = f64]
 // CHECK:STDOUT:   %.loc38_8.3: type = converted %float.make_type.loc38, %.loc38_8.2 [template = f64]
-// CHECK:STDOUT:   %e: f64 = bind_name e, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a: i32 = bind_name a, <error>
+// CHECK:STDOUT:   %b: i32 = bind_name b, <error>
+// CHECK:STDOUT:   %c: i32 = bind_name c, <error>
+// CHECK:STDOUT:   %d: f64 = bind_name d, <error>
+// CHECK:STDOUT:   %e: f64 = bind_name e, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -33,6 +33,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .test_i32 = %test_i32
 // CHECK:STDOUT:     .test_f64 = %test_f64
+// CHECK:STDOUT:     .test_str = @__global_init.%test_str
 // CHECK:STDOUT:     .test_type = %test_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -49,8 +50,6 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %.loc12_15.3: type = converted %float.make_type, %.loc12_15.2 [template = f64]
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var test_f64
 // CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var
-// CHECK:STDOUT:   %.loc13: String = string_literal "Test" [template = constants.%.6]
-// CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc13
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -66,6 +65,8 @@ var test_type: type = i32;
 // CHECK:STDOUT:   assign file.%test_i32.var, %.loc11
 // CHECK:STDOUT:   %.loc12: f64 = float_literal 0.10000000000000001 [template = constants.%.4]
 // CHECK:STDOUT:   assign file.%test_f64.var, %.loc12
+// CHECK:STDOUT:   %.loc13: String = string_literal "Test" [template = constants.%.6]
+// CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc13
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   assign file.%test_type.var, %int.make_type_32
 // CHECK:STDOUT:   return

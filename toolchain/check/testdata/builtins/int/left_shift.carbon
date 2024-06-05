@@ -85,6 +85,7 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .LeftShift = %LeftShift.decl
 // CHECK:STDOUT:     .arr = %arr
+// CHECK:STDOUT:     .arr_p = @__global_init.%arr_p
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -125,9 +126,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_20: type = array_type %.loc5_18, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc5_21: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, %arr
-// CHECK:STDOUT:   %.loc5_25: %.6 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc5_25
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -164,6 +162,14 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   return %.loc8_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %.loc5: %.6 = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_shift.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -189,6 +195,14 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .LeftShift = %LeftShift.decl
 // CHECK:STDOUT:     .Negate = %Negate.decl
+// CHECK:STDOUT:     .size_1 = @__global_init.%size_1
+// CHECK:STDOUT:     .size_2 = @__global_init.%size_2
+// CHECK:STDOUT:     .size_3 = @__global_init.%size_3
+// CHECK:STDOUT:     .overflow_1 = @__global_init.%overflow_1
+// CHECK:STDOUT:     .overflow_2 = @__global_init.%overflow_2
+// CHECK:STDOUT:     .no_overflow_1 = @__global_init.%no_overflow_1
+// CHECK:STDOUT:     .no_overflow_2 = @__global_init.%no_overflow_2
+// CHECK:STDOUT:     .negative = @__global_init.%negative
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -227,86 +241,96 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_32.loc8, %.loc8_13.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc8: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_13.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_13.2: type = converted %int.make_type_32.loc13, %.loc13_13.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc18_13.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
+// CHECK:STDOUT:   %.loc18_13.2: type = converted %int.make_type_32.loc18, %.loc18_13.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc21_17.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
+// CHECK:STDOUT:   %.loc21_17.2: type = converted %int.make_type_32.loc21, %.loc21_17.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc26: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc26_17.1: type = value_of_initializer %int.make_type_32.loc26 [template = i32]
+// CHECK:STDOUT:   %.loc26_17.2: type = converted %int.make_type_32.loc26, %.loc26_17.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc29_20.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
+// CHECK:STDOUT:   %.loc29_20.2: type = converted %int.make_type_32.loc29, %.loc29_20.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.12: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc34_20.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
+// CHECK:STDOUT:   %.loc34_20.2: type = converted %int.make_type_32.loc34, %.loc34_20.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.13: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc40: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc40_15.1: type = value_of_initializer %int.make_type_32.loc40 [template = i32]
+// CHECK:STDOUT:   %.loc40_15.2: type = converted %int.make_type_32.loc40, %.loc40_15.1 [template = i32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.left_shift";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %LeftShift.ref.loc8: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_32: i32 = int_literal 31 [template = constants.%.3]
 // CHECK:STDOUT:   %int.left_shift.loc8: init i32 = call %LeftShift.ref.loc8(%.loc8_29, %.loc8_32) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_35.1: i32 = value_of_initializer %int.left_shift.loc8 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_35.2: i32 = converted %int.left_shift.loc8, %.loc8_35.1 [template = constants.%.4]
 // CHECK:STDOUT:   %size_1: i32 = bind_name size_1, %.loc8_35.2
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc13_13.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
-// CHECK:STDOUT:   %.loc13_13.2: type = converted %int.make_type_32.loc13, %.loc13_13.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc13: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc13: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc13_29: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_32: i32 = int_literal 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.left_shift.loc13: init i32 = call %LeftShift.ref.loc13(%.loc13_29, %.loc13_32) [template = <error>]
 // CHECK:STDOUT:   %.loc13_35.1: i32 = value_of_initializer %int.left_shift.loc13 [template = <error>]
 // CHECK:STDOUT:   %.loc13_35.2: i32 = converted %int.left_shift.loc13, %.loc13_35.1 [template = <error>]
 // CHECK:STDOUT:   %size_2: i32 = bind_name size_2, %.loc13_35.2
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc18_13.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
-// CHECK:STDOUT:   %.loc18_13.2: type = converted %int.make_type_32.loc18, %.loc18_13.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc18: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc18: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc18_29: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc18_32: i32 = int_literal 33 [template = constants.%.6]
 // CHECK:STDOUT:   %int.left_shift.loc18: init i32 = call %LeftShift.ref.loc18(%.loc18_29, %.loc18_32) [template = <error>]
 // CHECK:STDOUT:   %.loc18_35.1: i32 = value_of_initializer %int.left_shift.loc18 [template = <error>]
 // CHECK:STDOUT:   %.loc18_35.2: i32 = converted %int.left_shift.loc18, %.loc18_35.1 [template = <error>]
 // CHECK:STDOUT:   %size_3: i32 = bind_name size_3, %.loc18_35.2
-// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc21_17.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
-// CHECK:STDOUT:   %.loc21_17.2: type = converted %int.make_type_32.loc21, %.loc21_17.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc21: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc21: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc21_33: i32 = int_literal 1000 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc21_39: i32 = int_literal 31 [template = constants.%.3]
 // CHECK:STDOUT:   %int.left_shift.loc21: init i32 = call %LeftShift.ref.loc21(%.loc21_33, %.loc21_39) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc21_42.1: i32 = value_of_initializer %int.left_shift.loc21 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc21_42.2: i32 = converted %int.left_shift.loc21, %.loc21_42.1 [template = constants.%.8]
 // CHECK:STDOUT:   %overflow_1: i32 = bind_name overflow_1, %.loc21_42.2
-// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc26: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc26_17.1: type = value_of_initializer %int.make_type_32.loc26 [template = i32]
-// CHECK:STDOUT:   %.loc26_17.2: type = converted %int.make_type_32.loc26, %.loc26_17.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc26: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc26: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc26_33: i32 = int_literal 1000 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc26_39: i32 = int_literal 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.left_shift.loc26: init i32 = call %LeftShift.ref.loc26(%.loc26_33, %.loc26_39) [template = <error>]
 // CHECK:STDOUT:   %.loc26_42.1: i32 = value_of_initializer %int.left_shift.loc26 [template = <error>]
 // CHECK:STDOUT:   %.loc26_42.2: i32 = converted %int.left_shift.loc26, %.loc26_42.1 [template = <error>]
 // CHECK:STDOUT:   %overflow_2: i32 = bind_name overflow_2, %.loc26_42.2
-// CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc29_20.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
-// CHECK:STDOUT:   %.loc29_20.2: type = converted %int.make_type_32.loc29, %.loc29_20.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc29: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc29: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc29_36: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc29_39: i32 = int_literal 31 [template = constants.%.3]
 // CHECK:STDOUT:   %int.left_shift.loc29: init i32 = call %LeftShift.ref.loc29(%.loc29_36, %.loc29_39) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc29_42.1: i32 = value_of_initializer %int.left_shift.loc29 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc29_42.2: i32 = converted %int.left_shift.loc29, %.loc29_42.1 [template = constants.%.8]
 // CHECK:STDOUT:   %no_overflow_1: i32 = bind_name no_overflow_1, %.loc29_42.2
-// CHECK:STDOUT:   %import_ref.12: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc34_20.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
-// CHECK:STDOUT:   %.loc34_20.2: type = converted %int.make_type_32.loc34, %.loc34_20.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc34: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc34: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc34_36: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc34_39: i32 = int_literal 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.left_shift.loc34: init i32 = call %LeftShift.ref.loc34(%.loc34_36, %.loc34_39) [template = <error>]
 // CHECK:STDOUT:   %.loc34_42.1: i32 = value_of_initializer %int.left_shift.loc34 [template = <error>]
 // CHECK:STDOUT:   %.loc34_42.2: i32 = converted %int.left_shift.loc34, %.loc34_42.1 [template = <error>]
 // CHECK:STDOUT:   %no_overflow_2: i32 = bind_name no_overflow_2, %.loc34_42.2
-// CHECK:STDOUT:   %import_ref.13: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc40: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc40_15.1: type = value_of_initializer %int.make_type_32.loc40 [template = i32]
-// CHECK:STDOUT:   %.loc40_15.2: type = converted %int.make_type_32.loc40, %.loc40_15.1 [template = i32]
-// CHECK:STDOUT:   %LeftShift.ref.loc40: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref.loc40: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %.loc40_31: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc40_41: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc40_41) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc40_30.1: i32 = value_of_initializer %int.snegate [template = constants.%.9]
@@ -315,11 +339,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc40_44.1: i32 = value_of_initializer %int.left_shift.loc40 [template = <error>]
 // CHECK:STDOUT:   %.loc40_44.2: i32 = converted %int.left_shift.loc40, %.loc40_44.1 [template = <error>]
 // CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc40_44.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.left_shift";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
