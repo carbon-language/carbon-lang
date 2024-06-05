@@ -133,6 +133,7 @@ cc_library(
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
