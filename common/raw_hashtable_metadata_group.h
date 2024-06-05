@@ -189,6 +189,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
       CARBON_DCHECK(mask_ != 0) << "Cannot get an index from a zero mask!";
       __builtin_assume(mask_ != 0);
       index_ = BitIndexT(mask_).index();
+      // Note that we store the index in a member so we can return a reference to it here as required.
       return index_;
     }
 
@@ -296,6 +297,18 @@ class MetadataGroup : public Printable<MetadataGroup> {
 
   static constexpr uint8_t PresentMask = 0b1000'0000;
 
+  // Some architectures make it much more efficient to build the match indices
+  // in a byte-encoded form rather than a bit-encoded form. This encoding
+  // changes verification and other aspects of our algorithms.
+  static constexpr bool ByteEncoding =
+#if CARBON_X86_SIMD_SUPPORT
+      false;
+#else
+      true;
+#endif
+  static_assert(!ByteEncoding || Size == 8,
+                "We can only support byte encoding with a group size of 8.");
+
   // We need to indicate to users of the metadata group when they can hold a
   // group value in a "register" (local variable) across clearing of individual
   // bytes in the group efficiently. If the entire group can fit in an integer
@@ -307,13 +320,8 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // the larger metadata array.
   static constexpr bool FastByteClear = Size == 8;
 
-  using MatchIndex =
-#if CARBON_X86_SIMD_SUPPORT
-      BitIndex<uint32_t, /*ByteEncoding=*/false, /*ZeroMask=*/0xFFFF0000>;
-#else
-      BitIndex<uint64_t, /*ByteEncoding=*/true>;
-#endif
-
+  using MatchIndex = BitIndex<uint32_t, ByteEncoding,
+                              /*ZeroMask=*/ByteEncoding ? 0 : (~0U << Size)>;
   using MatchRange = BitIndexRange<MatchIndex>;
 
   union {
@@ -624,7 +632,7 @@ inline auto MetadataGroup::VerifyIndexMask(
     MatchMask index_mask,
     llvm::function_ref<auto(uint8_t byte)->bool> byte_match) const -> bool {
   for (ssize_t byte_index : llvm::seq<ssize_t>(0, Size)) {
-    if constexpr (Size > 8) {
+    if constexpr (!ByteEncoding) {
       if (byte_match(bytes[byte_index])) {
         CARBON_CHECK(((index_mask >> byte_index) & 1) == 1)
             << "Bit not set at matching byte index: " << byte_index;
@@ -657,7 +665,7 @@ inline auto MetadataGroup::VerifyRangeMask(
     MatchMask range_mask,
     llvm::function_ref<auto(uint8_t byte)->bool> byte_match) const -> bool {
   for (ssize_t byte_index : llvm::seq<ssize_t>(0, Size)) {
-    if constexpr (Size > 8) {
+    if constexpr (!ByteEncoding) {
       if (byte_match(bytes[byte_index])) {
         CARBON_CHECK(((range_mask >> byte_index) & 1) == 1)
             << "Bit not set at matching byte index: " << byte_index;
