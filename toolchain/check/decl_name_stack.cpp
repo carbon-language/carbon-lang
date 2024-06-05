@@ -180,11 +180,9 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
-//
-//   fn Class(T:! type).F(n: i32)
-//
-// we will push the scope for `Class(T:! type)` between the scope containing the
-// declaration of `T` and the scope containing the declaration of `n`.
+// `fn Class(T:! type).F(n: i32)` we will push the scope for `Class(T:! type)`
+// between the scope containing the declaration of `T` and the scope
+// containing the declaration of `n`.
 static auto PushNameQualifierScope(Context& context,
                                    SemIR::InstId scope_inst_id,
                                    SemIR::NameScopeId scope_id,
