@@ -38,52 +38,52 @@ namespace Carbon::RawHashtable {
 // memory allocation is done consistently across different architectures.
 constexpr ssize_t MaxGroupSize = 16;
 
-// This takes a mask representing the results of looking for a particular tag in
-// this metadata group and determines the first position with a match. The
-// position is represented by either the least significant set bit or the least
-// significant non-zero byte, depending on `ByteEncoding`. When represented with
-// a non-zero byte, that byte must have at least its most significant bit set,
-// but may have other bits set to any value. Bits more significant than the
-// match may have any value provided there is at least one match. Zero matches
-// must be represented by a zero input.
+// This takes a collection of bits representing the results of looking for a
+// particular tag in this metadata group and determines the first position with
+// a match. The position is represented by either the least significant set bit
+// or the least significant non-zero byte, depending on `ByteEncoding`. When
+// represented with a non-zero byte, that byte must have at least its most
+// significant bit set, but may have other bits set to any value. Bits more
+// significant than the match may have any value provided there is at least one
+// match. Zero matches must be represented by a zero input.
 //
 // Some bits of the underlying value may be known-zero, which can optimize
 // various operations. These can be represented as a `ZeroMask`.
-template <typename MaskInputT, bool ByteEncoding, MaskInputT ZeroMask = 0>
+template <typename BitsInputT, bool ByteEncoding, BitsInputT ZeroMask = 0>
 class BitIndex
-    : public Printable<BitIndex<MaskInputT, ByteEncoding, ZeroMask>> {
+    : public Printable<BitIndex<BitsInputT, ByteEncoding, ZeroMask>> {
  public:
-  using MaskT = MaskInputT;
+  using BitsT = BitsInputT;
 
   BitIndex() = default;
-  explicit BitIndex(MaskT mask) : mask_(mask) {}
+  explicit BitIndex(BitsT bits) : bits_(bits) {}
 
   friend auto operator==(BitIndex lhs, BitIndex rhs) -> bool {
     if (lhs.empty() || rhs.empty()) {
       return lhs.empty() == rhs.empty();
     }
     // For non-empty bit indices, compare the indices directly to ignore other
-    // (extraneous) parts of the mask.
+    // (extraneous) parts of the incoming bits.
     return lhs.index() == rhs.index();
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << llvm::formatv("{0:x}", mask_);
+    out << llvm::formatv("{0:x}", bits_);
   }
 
   explicit operator bool() const { return !empty(); }
 
   // Returns true when there are no matches for the tag.
   auto empty() const -> bool {
-    CARBON_DCHECK((mask_ & ZeroMask) == 0) << "Unexpected non-zero bits!";
-    __builtin_assume((mask_ & ZeroMask) == 0);
-    return mask_ == 0;
+    CARBON_DCHECK((bits_ & ZeroMask) == 0) << "Unexpected non-zero bits!";
+    __builtin_assume((bits_ & ZeroMask) == 0);
+    return bits_ == 0;
   }
 
   // Returns the index of the first matched tag.
   auto index() -> ssize_t {
-    CARBON_DCHECK(mask_ != 0) << "Cannot get an index from a zero mask!";
-    __builtin_assume(mask_ != 0);
+    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from a zero mask!";
+    __builtin_assume(bits_ != 0);
     ssize_t index = unscaled_index();
 
     if constexpr (ByteEncoding) {
@@ -97,8 +97,8 @@ class BitIndex
   // Optimized tool to index a pointer `p` by `index()`.
   template <typename T>
   auto index_ptr(T* pointer) -> T* {
-    CARBON_DCHECK(mask_ != 0) << "Cannot get an index from a zero mask!";
-    __builtin_assume(mask_ != 0);
+    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from a zero mask!";
+    __builtin_assume(bits_ != 0);
     if constexpr (!ByteEncoding) {
       return &pointer[unscaled_index()];
     }
@@ -136,13 +136,13 @@ class BitIndex
   auto unscaled_index() -> ssize_t {
     if constexpr (!ByteEncoding) {
       // Note the cast to `size_t` to force zero extending the result.
-      return static_cast<size_t>(llvm::countr_zero(mask_));
+      return static_cast<size_t>(llvm::countr_zero(bits_));
     } else {
       // The index is encoded in the high bit of each byte. We compute the index
       // by counting the number of low zero bytes there are before the first
       // byte with its high bit set. Rather that shifting the high bit to be the
       // low bit and counting the trailing (least significant) zero bits
-      // directly, we instead byte-reverse the mask and count the *leading*
+      // directly, we instead byte-reverse the bits and count the *leading*
       // (most significant) zero bits. While this may be a wash on CPUs with
       // direct support for counting the trailing zero bits, AArch64 only
       // supports counting the leading zero bits and requires a bit-reverse to
@@ -155,11 +155,11 @@ class BitIndex
       // latency.
       //
       // We also cast to `size_t` to clearly zero-extend the result.
-      return static_cast<size_t>(llvm::countl_zero(llvm::byteswap(mask_)));
+      return static_cast<size_t>(llvm::countl_zero(llvm::byteswap(bits_)));
     }
   }
 
-  MaskT mask_ = 0;
+  BitsT bits_ = 0;
 };
 
 // This is like `BitIndex`, but allows iterating through all of the matches.
@@ -172,23 +172,23 @@ class BitIndex
 template <typename BitIndexT>
 class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
  public:
-  using MaskT = BitIndexT::MaskT;
+  using BitsT = BitIndexT::BitsT;
 
   class Iterator
       : public llvm::iterator_facade_base<Iterator, std::forward_iterator_tag,
                                           ssize_t, ssize_t> {
    public:
     Iterator() = default;
-    explicit Iterator(MaskT mask) : mask_(mask) {}
+    explicit Iterator(BitsT bits) : bits_(bits) {}
 
     auto operator==(const Iterator& rhs) const -> bool {
-      return mask_ == rhs.mask_;
+      return bits_ == rhs.bits_;
     }
 
     auto operator*() -> ssize_t& {
-      CARBON_DCHECK(mask_ != 0) << "Cannot get an index from a zero mask!";
-      __builtin_assume(mask_ != 0);
-      index_ = BitIndexT(mask_).index();
+      CARBON_DCHECK(bits_ != 0) << "Cannot get an index from a zero mask!";
+      __builtin_assume(bits_ != 0);
+      index_ = BitIndexT(bits_).index();
       // Note that we store the index in a member so we can return a reference
       // to it here as required.
       return index_;
@@ -196,45 +196,45 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
 
     template <typename T>
     auto index_ptr(T* pointer) -> T* {
-      return BitIndexT(mask_).index_ptr(pointer);
+      return BitIndexT(bits_).index_ptr(pointer);
     }
 
     auto operator++() -> Iterator& {
-      CARBON_DCHECK(mask_ != 0) << "Must not increment past the end!";
-      __builtin_assume(mask_ != 0);
+      CARBON_DCHECK(bits_ != 0) << "Must not increment past the end!";
+      __builtin_assume(bits_ != 0);
       // Clears the least significant set bit, effectively stepping to the next
       // match.
-      mask_ &= (mask_ - 1);
+      bits_ &= (bits_ - 1);
       return *this;
     }
 
    private:
     ssize_t index_;
-    MaskT mask_ = 0;
+    BitsT bits_ = 0;
   };
 
   BitIndexRange() = default;
-  explicit BitIndexRange(MaskT mask) : mask_(mask) {}
+  explicit BitIndexRange(BitsT bits) : bits_(bits) {}
 
   explicit operator bool() const { return !empty(); }
-  auto empty() const -> bool { return BitIndexT(mask_).empty(); }
+  auto empty() const -> bool { return BitIndexT(bits_).empty(); }
 
-  auto begin() const -> Iterator { return Iterator(mask_); }
+  auto begin() const -> Iterator { return Iterator(bits_); }
   auto end() const -> Iterator { return Iterator(); }
 
   friend auto operator==(BitIndexRange lhs, BitIndexRange rhs) -> bool {
-    return lhs.mask_ == rhs.mask_;
+    return lhs.bits_ == rhs.bits_;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << llvm::formatv("{0:x}", mask_);
+    out << llvm::formatv("{0:x}", bits_);
   }
 
-  explicit operator MaskT() const { return mask_; }
-  explicit operator BitIndexT() const { return BitIndexT(mask_); }
+  explicit operator BitsT() const { return bits_; }
+  explicit operator BitIndexT() const { return BitIndexT(bits_); }
 
  private:
-  MaskT mask_ = 0;
+  BitsT bits_ = 0;
 };
 
 // A group of metadata bytes that can be manipulated together.
@@ -326,14 +326,14 @@ class MetadataGroup : public Printable<MetadataGroup> {
   using MatchRange = BitIndexRange<MatchIndex>;
 
   union {
-    uint8_t bytes[Size];
-    uint64_t byte_ints[Size / 8];
+    uint8_t metadata_bytes[Size];
+    uint64_t metadata_ints[Size / 8];
 #if CARBON_NEON_SIMD_SUPPORT
-    uint8x8_t byte_vec = {};
-    static_assert(sizeof(byte_vec) == Size);
+    uint8x8_t metadata_vec = {};
+    static_assert(sizeof(metadata_vec) == Size);
 #elif CARBON_X86_SIMD_SUPPORT
-    __m128i byte_vec = {};
-    static_assert(sizeof(byte_vec) == Size);
+    __m128i metadata_vec = {};
+    static_assert(sizeof(metadata_vec) == Size);
 #endif
   };
 
@@ -424,7 +424,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
   static constexpr uint64_t MSBs = 0x8080'8080'8080'8080ULL;
   static constexpr uint64_t LSBs = 0x0101'0101'0101'0101ULL;
 
-  using MatchMask = MatchIndex::MaskT;
+  using MatchBitsT = MatchIndex::BitsT;
 
   static auto CompareEqual(MetadataGroup lhs, MetadataGroup rhs) -> bool;
 
@@ -433,18 +433,16 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // pass validation, the `*_mask` argument must have `0x80` for those bytes
   // where `byte_match` returns true, and `0` for the rest.
 
-  // `VerifyIndexMask` is for functions that return `MatchIndex`, as they only
+  // `VerifyIndexBits` is for functions that return `MatchIndex`, as they only
   // promise to return accurate information up to the first match.
-  auto VerifyIndexMask(
-      MatchMask index_mask,
-      llvm::function_ref<auto(uint8_t mask_byte)->bool> byte_match) const
-      -> bool;
-  // `VerifyRangeMask` is for functions that return `MatchRange`, and so it
-  // validates all the bytes of `range_mask`.
-  auto VerifyRangeMask(
-      MatchMask range_mask,
-      llvm::function_ref<auto(uint8_t mask_byte)->bool> byte_match) const
-      -> bool;
+  auto VerifyIndexBits(
+      MatchBitsT index_bits,
+      llvm::function_ref<auto(uint8_t byte)->bool> byte_match) const -> bool;
+  // `VerifyRangeBits` is for functions that return `MatchRange`, and so it
+  // validates all the bytes of `range_bits`.
+  auto VerifyRangeBits(
+      MatchBitsT range_bits,
+      llvm::function_ref<auto(uint8_t byte)->bool> byte_match) const -> bool;
 
   // Portable implementations of each operation. These are used on platforms
   // without SIMD support or where the portable implementation is faster than
@@ -520,11 +518,11 @@ inline auto MetadataGroup::Load(const uint8_t* metadata, ssize_t index)
 inline auto MetadataGroup::Store(uint8_t* metadata, ssize_t index) const
     -> void {
   if constexpr (!UseSIMD) {
-    std::memcpy(metadata + index, &bytes, Size);
+    std::memcpy(metadata + index, &metadata_bytes, Size);
   } else {
     SIMDStore(metadata, index);
   }
-  CARBON_DCHECK(0 == std::memcmp(metadata + index, &bytes, Size));
+  CARBON_DCHECK(0 == std::memcmp(metadata + index, &metadata_bytes, Size));
 }
 
 inline auto MetadataGroup::ClearByte(ssize_t byte_index) -> void {
@@ -532,7 +530,7 @@ inline auto MetadataGroup::ClearByte(ssize_t byte_index) -> void {
   CARBON_DCHECK(Size == 8)
       << "The clear implementation assumes an 8-byte group.";
 
-  byte_ints[0] &= ~(static_cast<uint64_t>(0xff) << (byte_index * 8));
+  metadata_ints[0] &= ~(static_cast<uint64_t>(0xff) << (byte_index * 8));
 }
 
 inline auto MetadataGroup::ClearDeleted() -> void {
@@ -629,62 +627,62 @@ inline auto MetadataGroup::CompareEqual(MetadataGroup lhs, MetadataGroup rhs)
   return UseSIMD ? simd_result : portable_result;
 }
 
-inline auto MetadataGroup::VerifyIndexMask(
-    MatchMask index_mask,
+inline auto MetadataGroup::VerifyIndexBits(
+    MatchBitsT index_bits,
     llvm::function_ref<auto(uint8_t byte)->bool> byte_match) const -> bool {
   for (ssize_t byte_index : llvm::seq<ssize_t>(0, Size)) {
     if constexpr (!ByteEncoding) {
-      if (byte_match(bytes[byte_index])) {
-        CARBON_CHECK(((index_mask >> byte_index) & 1) == 1)
+      if (byte_match(metadata_bytes[byte_index])) {
+        CARBON_CHECK(((index_bits >> byte_index) & 1) == 1)
             << "Bit not set at matching byte index: " << byte_index;
         // Only the first match is needed, so stop scanning once found.
         break;
       }
 
-      CARBON_CHECK(((index_mask >> byte_index) & 1) == 0)
+      CARBON_CHECK(((index_bits >> byte_index) & 1) == 0)
           << "Bit set at non-matching byte index: " << byte_index;
     } else {
       // The mask is byte-encoded rather than bit encoded, so extract a byte.
-      uint8_t mask_byte = (index_mask >> (byte_index * 8)) & 0xFF;
-      if (byte_match(bytes[byte_index])) {
-        CARBON_CHECK((mask_byte & 0x80) == 0x80)
+      uint8_t index_byte = (index_bits >> (byte_index * 8)) & 0xFF;
+      if (byte_match(metadata_bytes[byte_index])) {
+        CARBON_CHECK((index_byte & 0x80) == 0x80)
             << "Should have the high bit set for a matching byte, found: "
-            << llvm::formatv("{0:x}", mask_byte);
+            << llvm::formatv("{0:x}", index_byte);
         // Only the first match is needed so stop scanning once found.
         break;
       }
 
-      CARBON_CHECK(mask_byte == 0)
+      CARBON_CHECK(index_byte == 0)
           << "Should have no bits set for an unmatched byte, found: "
-          << llvm::formatv("{0:x}", mask_byte);
+          << llvm::formatv("{0:x}", index_byte);
     }
   }
   return true;
 }
 
-inline auto MetadataGroup::VerifyRangeMask(
-    MatchMask range_mask,
+inline auto MetadataGroup::VerifyRangeBits(
+    MatchBitsT range_bits,
     llvm::function_ref<auto(uint8_t byte)->bool> byte_match) const -> bool {
   for (ssize_t byte_index : llvm::seq<ssize_t>(0, Size)) {
     if constexpr (!ByteEncoding) {
-      if (byte_match(bytes[byte_index])) {
-        CARBON_CHECK(((range_mask >> byte_index) & 1) == 1)
+      if (byte_match(metadata_bytes[byte_index])) {
+        CARBON_CHECK(((range_bits >> byte_index) & 1) == 1)
             << "Bit not set at matching byte index: " << byte_index;
       } else {
-        CARBON_CHECK(((range_mask >> byte_index) & 1) == 0)
+        CARBON_CHECK(((range_bits >> byte_index) & 1) == 0)
             << "Bit set at non-matching byte index: " << byte_index;
       }
     } else {
       // The mask is byte-encoded rather than bit encoded, so extract a byte.
-      uint8_t mask_byte = (range_mask >> (byte_index * 8)) & 0xFF;
-      if (byte_match(bytes[byte_index])) {
-        CARBON_CHECK(mask_byte == 0x80)
+      uint8_t range_byte = (range_bits >> (byte_index * 8)) & 0xFF;
+      if (byte_match(metadata_bytes[byte_index])) {
+        CARBON_CHECK(range_byte == 0x80)
             << "Should just have the high bit set for a matching byte, found: "
-            << llvm::formatv("{0:x}", mask_byte);
+            << llvm::formatv("{0:x}", range_byte);
       } else {
-        CARBON_CHECK(mask_byte == 0)
+        CARBON_CHECK(range_byte == 0)
             << "Should have no bits set for an unmatched byte, found: "
-            << llvm::formatv("{0:x}", mask_byte);
+            << llvm::formatv("{0:x}", range_byte);
       }
     }
   }
@@ -695,27 +693,27 @@ inline auto MetadataGroup::PortableLoad(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup g;
   static_assert(sizeof(g) == Size);
-  std::memcpy(&g.bytes, metadata + index, Size);
+  std::memcpy(&g.metadata_bytes, metadata + index, Size);
   return g;
 }
 
 inline auto MetadataGroup::PortableStore(uint8_t* metadata, ssize_t index) const
     -> void {
-  std::memcpy(metadata + index, &bytes, Size);
+  std::memcpy(metadata + index, &metadata_bytes, Size);
 }
 
 inline auto MetadataGroup::PortableClearDeleted() -> void {
-  for (uint64_t& byte_int : byte_ints) {
+  for (uint64_t& metadata_int : metadata_ints) {
     // Deleted bytes have only the least significant bits set, so to clear them
     // we only need to clear the least significant bit. And empty bytes already
     // have a clear least significant bit, so the only least significant bits we
     // need to preserve are those of present bytes. The most significant bit of
     // every present byte is set, so we take the most significant bit of each
     // byte, shift it into the least significant bit position, and bit-or it
-    // with the inverse of the least-significant-bits mask. This will have ones
-    // for every bit but the least significant bits, and ones for the least
-    // significant bits of every present byte.
-    byte_int &= (~LSBs | byte_int >> 7);
+    // with the compliment of `LSBs`. This will have ones for every bit but the
+    // least significant bits, and ones for the least significant bits of every
+    // present byte.
+    metadata_int &= (~LSBs | metadata_int >> 7);
   }
 }
 
@@ -735,7 +733,7 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
     uint32_t bit = 1;
     uint8_t present_byte = tag | PresentMask;
     for (ssize_t i : llvm::seq<ssize_t>(0, Size)) {
-      if (bytes[i] == present_byte) {
+      if (metadata_bytes[i] == present_byte) {
         mask |= bit;
       }
       bit <<= 1;
@@ -770,7 +768,7 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // and so always has this bit set as well, which means the xor below, in
   // addition to zeroing the low 7 bits of any byte that matches the tag, also
   // clears the high bit of every byte.
-  uint64_t mask = byte_ints[0] | MSBs;
+  uint64_t match_bits = metadata_ints[0] | MSBs;
   // Broadcast the match byte to all bytes, and mask in the present bits in the
   // MSBs of each byte. We structure this as a multiply and an add because we
   // know that the add cannot carry, and this way it can be lowered using
@@ -783,20 +781,20 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // clears the high-bits of non-matches. Note that if we are looking for a tag
   // with the same value as `Empty` or `Deleted`, those bytes will be zero as
   // well.
-  mask = mask ^ broadcast;
+  match_bits = match_bits ^ broadcast;
   // Subtract the mask bytes from `0x80` bytes. After this, the high bit will be
   // set only for those bytes that were zero.
-  mask = MSBs - mask;
+  match_bits = MSBs - match_bits;
   // Zero everything but the high bits, and also zero the high bits of any bytes
   // for "not present" slots in the original group. This avoids false positives
   // for `Empty` and `Deleted` bytes in the metadata.
-  mask &= (byte_ints[0] & MSBs);
+  match_bits &= (metadata_ints[0] & MSBs);
 
   // At this point, `mask` has the high bit set for bytes where the original
   // group byte equals `tag` plus the high bit.
-  CARBON_DCHECK(VerifyRangeMask(
-      mask, [&](uint8_t byte) { return byte == (tag | PresentMask); }));
-  return MatchRange(mask);
+  CARBON_DCHECK(VerifyRangeBits(
+      match_bits, [&](uint8_t byte) { return byte == (tag | PresentMask); }));
+  return MatchRange(match_bits);
 }
 
 inline auto MetadataGroup::PortableMatchPresent() const -> MatchRange {
@@ -806,24 +804,24 @@ inline auto MetadataGroup::PortableMatchPresent() const -> MatchRange {
   // more platforms.
   if constexpr (Size > 8) {
     static_assert(Size <= 32, "Sizes larger than 32 not yet supported!");
-    uint32_t mask = 0;
+    uint32_t match_bits = 0;
     uint32_t bit = 1;
     for (ssize_t i : llvm::seq<ssize_t>(0, Size)) {
-      if (bytes[i] & PresentMask) {
-        mask |= bit;
+      if (metadata_bytes[i] & PresentMask) {
+        match_bits |= bit;
       }
       bit <<= 1;
     }
-    return MatchRange(mask);
+    return MatchRange(match_bits);
   }
 
   // Want to keep the high bit of each byte, which indicates whether that byte
   // represents a present slot.
-  uint64_t mask = byte_ints[0] & MSBs;
+  uint64_t match_bits = metadata_ints[0] & MSBs;
 
-  CARBON_DCHECK(VerifyRangeMask(
-      mask, [&](uint8_t byte) { return (byte & PresentMask) != 0; }));
-  return MatchRange(mask);
+  CARBON_DCHECK(VerifyRangeBits(
+      match_bits, [&](uint8_t byte) { return (byte & PresentMask) != 0; }));
+  return MatchRange(match_bits);
 }
 
 inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
@@ -835,7 +833,7 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
     static_assert(Size <= 32, "Sizes larger than 32 not yet supported!");
     uint32_t bit = 1;
     for (ssize_t i : llvm::seq<ssize_t>(0, Size)) {
-      if (bytes[i] == Empty) {
+      if (metadata_bytes[i] == Empty) {
         return MatchIndex(bit);
       }
       bit <<= 1;
@@ -849,15 +847,15 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
   // - present: in which case the high bit of the byte will already be set; or
   // - deleted: in which case the byte will be 1, and shifting it left by 7 will
   //   cause the high bit to be set.
-  uint64_t mask = byte_ints[0] | (byte_ints[0] << 7);
+  uint64_t match_bits = metadata_ints[0] | (metadata_ints[0] << 7);
   // This inverts the high bits of the bytes, and clears the remaining bits.
-  mask = ~mask & MSBs;
+  match_bits = ~match_bits & MSBs;
 
   // The high bits of the bytes of `mask` are set if the corresponding metadata
   // byte is `Empty`.
   CARBON_DCHECK(
-      VerifyIndexMask(mask, [](uint8_t byte) { return byte == Empty; }));
-  return MatchIndex(mask);
+      VerifyIndexBits(match_bits, [](uint8_t byte) { return byte == Empty; }));
+  return MatchIndex(match_bits);
 }
 
 inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
@@ -869,7 +867,7 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
     static_assert(Size <= 32, "Sizes larger than 32 not yet supported!");
     uint32_t bit = 1;
     for (ssize_t i : llvm::seq<ssize_t>(0, Size)) {
-      if (bytes[i] == Deleted) {
+      if (metadata_bytes[i] == Deleted) {
         return MatchIndex(bit);
       }
       bit <<= 1;
@@ -883,29 +881,29 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
   // - present: in which case the high bit of the byte will already be set; or
   // - empty: in which case the byte will be 0, and in that case inverting and
   //   shifting left by 7 will have the high bit set.
-  uint64_t mask = byte_ints[0] | (~byte_ints[0] << 7);
+  uint64_t match_bits = metadata_ints[0] | (~metadata_ints[0] << 7);
   // This inverts the high bits of the bytes, and clears the remaining bits.
-  mask = ~mask & MSBs;
+  match_bits = ~match_bits & MSBs;
 
   // The high bits of the bytes of `mask` are set if the corresponding metadata
   // byte is `Deleted`.
-  CARBON_DCHECK(
-      VerifyIndexMask(mask, [](uint8_t byte) { return byte == Deleted; }));
-  return MatchIndex(mask);
+  CARBON_DCHECK(VerifyIndexBits(match_bits,
+                                [](uint8_t byte) { return byte == Deleted; }));
+  return MatchIndex(match_bits);
 }
 
 inline auto MetadataGroup::PortableCompareEqual(MetadataGroup lhs,
                                                 MetadataGroup rhs) -> bool {
-  return llvm::equal(lhs.bytes, rhs.bytes);
+  return llvm::equal(lhs.metadata_bytes, rhs.metadata_bytes);
 }
 
 inline auto MetadataGroup::SIMDLoad(const uint8_t* metadata, ssize_t index)
     -> MetadataGroup {
   MetadataGroup g;
 #if CARBON_NEON_SIMD_SUPPORT
-  g.byte_vec = vld1_u8(metadata + index);
+  g.metadata_vec = vld1_u8(metadata + index);
 #elif CARBON_X86_SIMD_SUPPORT
-  g.byte_vec =
+  g.metadata_vec =
       _mm_load_si128(reinterpret_cast<const __m128i*>(metadata + index));
 #else
   static_assert(!UseSIMD, "Unimplemented SIMD operation");
@@ -918,9 +916,9 @@ inline auto MetadataGroup::SIMDLoad(const uint8_t* metadata, ssize_t index)
 inline auto MetadataGroup::SIMDStore(uint8_t* metadata, ssize_t index) const
     -> void {
 #if CARBON_NEON_SIMD_SUPPORT
-  vst1_u8(metadata + index, byte_vec);
+  vst1_u8(metadata + index, metadata_vec);
 #elif CARBON_X86_SIMD_SUPPORT
-  _mm_store_si128(reinterpret_cast<__m128i*>(metadata + index), byte_vec);
+  _mm_store_si128(reinterpret_cast<__m128i*>(metadata + index), metadata_vec);
 #else
   static_assert(!UseSIMD, "Unimplemented SIMD operation");
   static_cast<void>(metadata);
@@ -936,7 +934,8 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
   // high latency.
   byte_ints[0] &= (~LSBs | byte_ints[0] >> 7);
 #elif CARBON_X86_SIMD_SUPPORT
-  byte_vec = _mm_blendv_epi8(_mm_setzero_si128(), byte_vec, byte_vec);
+  metadata_vec =
+      _mm_blendv_epi8(_mm_setzero_si128(), metadata_vec, metadata_vec);
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
 #endif
@@ -946,13 +945,13 @@ inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> MatchRange {
   MatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
   auto match_byte_vec = vdup_n_u8(tag | PresentMask);
-  auto match_byte_cmp_vec = vceq_u8(byte_vec, match_byte_vec);
-  uint64_t mask = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
+  auto match_byte_cmp_vec = vceq_u8(metadata_vec, match_byte_vec);
+  uint64_t match_bits = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
   // The mask in the range is likely to be tested for zero right after this
   // routine, and that test can often be folded into an integer constant mask,
   // so rather than doing the mask in SIMD before we extract the mask, we do it
   // here to allow that combination.
-  result = MatchRange(mask & MSBs);
+  result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   result = X86SIMDMatch(tag | PresentMask);
 #else
@@ -966,7 +965,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   MatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
   // Just extract directly.
-  uint64_t mask = vreinterpret_u64_u8(byte_vec)[0];
+  uint64_t mask = vreinterpret_u64_u8(metadata_vec)[0];
   // The mask in the range is likely to be tested for zero right after this
   // routine, and that test can often be folded into an integer constant mask,
   // so rather than doing the mask in SIMD before we extract the mask, we do it
@@ -975,7 +974,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
 #elif CARBON_X86_SIMD_SUPPORT
   // We arrange the byte vector for present bytes so that we can directly
   // extract it as a mask.
-  result = MatchRange(_mm_movemask_epi8(byte_vec));
+  result = MatchRange(_mm_movemask_epi8(metadata_vec));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
 #endif
@@ -985,7 +984,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
 inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
-  auto cmp_vec = vceqz_u8(byte_vec);
+  auto cmp_vec = vceqz_u8(metadata_vec);
   uint64_t mask = vreinterpret_u64_u8(cmp_vec)[0];
   // The mask in the range is likely to be tested for zero right after this
   // routine, and that test can often be folded into an integer constant mask,
@@ -1003,7 +1002,7 @@ inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
 inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
-  auto cmp_vec = vceq_u8(byte_vec, vdup_n_u8(Deleted));
+  auto cmp_vec = vceq_u8(metadata_vec, vdup_n_u8(Deleted));
   uint64_t mask = vreinterpret_u64_u8(cmp_vec)[0];
   // The mask in the range is likely to be tested for zero right after this
   // routine, and that test can often be folded into an integer constant mask,
@@ -1021,16 +1020,16 @@ inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
 inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
                                             MetadataGroup rhs) -> bool {
 #if CARBON_NEON_SIMD_SUPPORT
-  return vreinterpret_u64_u8(vceq_u8(lhs.byte_vec, rhs.byte_vec))[0] ==
+  return vreinterpret_u64_u8(vceq_u8(lhs.metadata_vec, rhs.metadata_vec))[0] ==
          static_cast<uint64_t>(-1LL);
 #elif CARBON_X86_SIMD_SUPPORT
   // Different x86 SIMD extensions provide different comparison functionality.
 #if __SSE4_2__
-  return _mm_testc_si128(_mm_cmpeq_epi8(lhs.byte_vec, rhs.byte_vec),
+  return _mm_testc_si128(_mm_cmpeq_epi8(lhs.metadata_vec, rhs.metadata_vec),
                          _mm_set1_epi8(0xff)) == 1;
 #else
-  return _mm_movemask_epi8(_mm_cmpeq_epi8(lhs.byte_vec, rhs.byte_vec)) ==
-         0x0000'ffffU;
+  return _mm_movemask_epi8(_mm_cmpeq_epi8(lhs.metadata_vec,
+                                          rhs.metadata_vec)) == 0x0000'ffffU;
 #endif
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
@@ -1044,9 +1043,9 @@ inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
 inline auto MetadataGroup::X86SIMDMatch(uint8_t match_byte) const
     -> MatchRange {
   auto match_byte_vec = _mm_set1_epi8(match_byte);
-  auto match_byte_cmp_vec = _mm_cmpeq_epi8(byte_vec, match_byte_vec);
-  uint32_t mask = _mm_movemask_epi8(match_byte_cmp_vec);
-  return MatchRange(mask);
+  auto match_byte_cmp_vec = _mm_cmpeq_epi8(metadata_vec, match_byte_vec);
+  uint32_t match_bits = _mm_movemask_epi8(match_byte_cmp_vec);
+  return MatchRange(match_bits);
 }
 #endif
 

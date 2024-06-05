@@ -11,7 +11,7 @@ namespace Carbon::RawHashtable {
 auto MetadataGroup::Print(llvm::raw_ostream& out) const -> void {
   out << "[";
   llvm::ListSeparator sep;
-  for (uint8_t byte : bytes) {
+  for (uint8_t byte : metadata_bytes) {
     out << sep << llvm::formatv("{0:x2}", byte);
   }
   out << "]";
