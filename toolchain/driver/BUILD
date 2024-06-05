@@ -109,6 +109,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":driver",
+        "//common:exe_path",
         "//testing/base:test_raw_ostream",
         "//testing/fuzzing:libfuzzer_header",
         "//toolchain/install:install_paths",

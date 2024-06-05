@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 
+#include "common/exe_path.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
@@ -14,6 +15,18 @@
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon::Testing {
+
+static InstallPaths install_paths;
+
+// NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
+extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
+  std::string exe_path;
+  if (*argc >= 1) {
+    exe_path = FindExecutablePath((*argv)[0]);
+    install_paths = InstallPaths::MakeForBazelRunfiles(exe_path);
+  }
+  return 0;
+}
 
 static auto Read(const unsigned char*& data, size_t& size, int& output)
     -> bool {
@@ -68,8 +81,6 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   }
 
   llvm::vfs::InMemoryFileSystem fs;
-  // TODO: We should try to thread the executable path into here.
-  const auto install_paths = InstallPaths::Make("");
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
   Driver d(fs, &install_paths, dest, error_stream);
