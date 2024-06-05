@@ -548,13 +548,30 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return context_.interfaces().Get(inst.interface_id).scope_id;
       }
-      default:
+      case SemIR::StructValue::Kind: {
+        auto type_inst = context_.types().GetAsInst(name_scope_inst.type_id());
+        CARBON_KIND_SWITCH(type_inst) {
+          case CARBON_KIND(SemIR::GenericClassType inst): {
+            return context_.classes().Get(inst.class_id).scope_id;
+          }
+          case CARBON_KIND(SemIR::GenericInterfaceType inst): {
+            return context_.interfaces().Get(inst.interface_id).scope_id;
+          }
+          default: {
+            break;
+          }
+        }
+        break;
+      }
+      default: {
         if (const_id == SemIR::ConstantId::Error) {
           return SemIR::NameScopeId::Invalid;
         }
-        CARBON_FATAL() << "Unexpected instruction kind for name scope: "
-                       << name_scope_inst;
+        break;
+      }
     }
+    CARBON_FATAL() << "Unexpected instruction kind for name scope: "
+                   << name_scope_inst;
   }
 
   // Adds ImportRefUnloaded entries for members of the imported scope, for name

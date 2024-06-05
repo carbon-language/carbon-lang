@@ -9,6 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_todo_generic_default_fn.carbon
 
 interface I(T:! type) {
+  // TODO: Declare `Self` as having type `I(T)` instead of `I`.
   // TODO: Use `default` here.
   // CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE+8]]:14: ERROR: Cannot implicitly convert from `<cannot stringify inst+7>` to `type`.
   // CHECK:STDERR:   fn F[self: Self]() -> Self;
@@ -62,12 +63,12 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: <type of <invalid>> = fn_decl @.1 [template = constants.%.4] {
-// CHECK:STDOUT:     %T.loc38_6.1: type = param T
-// CHECK:STDOUT:     %T.loc38_6.2: type = bind_symbolic_name T 0, %T.loc38_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %Self.ref.loc38_24: <cannot stringify inst+7> = name_ref Self, @I.%Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc38_18.1: <error> = param self
-// CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc38_18.1
-// CHECK:STDOUT:     %Self.ref.loc38_35: <cannot stringify inst+7> = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %T.loc39_6.1: type = param T
+// CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %Self.ref.loc39_24: <cannot stringify inst+7> = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc39_18.1: <error> = param self
+// CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc39_18.1
+// CHECK:STDOUT:     %Self.ref.loc39_35: <cannot stringify inst+7> = name_ref Self, @I.%Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     @.1.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -75,21 +76,21 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: <cannot stringify inst+7> = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref.loc21_14: <cannot stringify inst+7> = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc21_8.1: <error> = param self
-// CHECK:STDOUT:     %self.loc21_8.2: <error> = bind_name self, %self.loc21_8.1
-// CHECK:STDOUT:     %Self.ref.loc21_25: <cannot stringify inst+7> = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %Self.ref.loc22_14: <cannot stringify inst+7> = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc22_8.1: <error> = param self
+// CHECK:STDOUT:     %self.loc22_8.2: <error> = bind_name self, %self.loc22_8.1
+// CHECK:STDOUT:     %Self.ref.loc22_25: <cannot stringify inst+7> = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc22: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc21
+// CHECK:STDOUT:   .F = %.loc22
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@I.%self.loc21_8.2: <error>]() -> <error>;
+// CHECK:STDOUT: fn @F[@I.%self.loc22_8.2: <error>]() -> <error>;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[%self: <error>]() -> <error> {
 // CHECK:STDOUT: !entry:
