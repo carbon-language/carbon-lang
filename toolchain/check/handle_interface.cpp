@@ -66,11 +66,10 @@ static auto BuildInterfaceDecl(Context& context,
       // now we just check the generic parameters match.
       if (CheckRedeclParamsMatch(
               context,
-              DeclParams(context.insts().GetLocId(interface_decl_id),
-                         name.implicit_params_id, name.params_id),
-              DeclParams(context,
-                         context.interfaces().Get(
-                             existing_interface_decl->interface_id)))) {
+              DeclParams(interface_decl_id, name.implicit_params_id,
+                         name.params_id),
+              DeclParams(context.interfaces().Get(
+                  existing_interface_decl->interface_id)))) {
         // This is a redeclaration of an existing interface.
         interface_decl.interface_id = existing_interface_decl->interface_id;
         // TODO: If the new declaration is a definition, keep its parameter

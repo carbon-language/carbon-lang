@@ -14,9 +14,8 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
                               Substitutions substitutions) -> bool {
-  if (!CheckRedeclParamsMatch(context, DeclParams(context, new_function),
-                              DeclParams(context, prev_function),
-                              substitutions)) {
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
+                              DeclParams(prev_function), substitutions)) {
     return false;
   }
 

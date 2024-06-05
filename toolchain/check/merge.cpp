@@ -210,9 +210,9 @@ static auto CheckRedeclParam(Context& context,
 }
 
 // Returns false if the param refs differ for a redeclaration.
-static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc,
+static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIR::InstBlockId new_param_refs_id,
-                              SemIR::LocId prev_decl_loc,
+                              SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_refs_id,
                               llvm::StringLiteral param_diag_label,
                               Substitutions substitutions) -> bool {
@@ -275,12 +275,12 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
       EntityHasParamError(context, prev_entity)) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_entity.loc_id,
-                         new_entity.implicit_param_refs_id, prev_entity.loc_id,
+  if (!CheckRedeclParams(context, new_entity.loc,
+                         new_entity.implicit_param_refs_id, prev_entity.loc,
                          prev_entity.implicit_param_refs_id, "implicit ",
                          substitutions) ||
-      !CheckRedeclParams(context, new_entity.loc_id, new_entity.param_refs_id,
-                         prev_entity.loc_id, prev_entity.param_refs_id, "",
+      !CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
+                         prev_entity.loc, prev_entity.param_refs_id, "",
                          substitutions)) {
     return false;
   }

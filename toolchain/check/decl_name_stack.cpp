@@ -343,7 +343,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       const auto& class_info = context_->classes().Get(class_decl.class_id);
       if (!CheckRedeclParamsMatch(*context_, new_params,
-                                  DeclParams(*context_, class_info))) {
+                                  DeclParams(class_info))) {
         return SemIR::NameScopeId::Invalid;
       }
       if (!class_info.is_defined()) {
@@ -357,7 +357,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       const auto& interface_info =
           context_->interfaces().Get(interface_decl.interface_id);
       if (!CheckRedeclParamsMatch(*context_, new_params,
-                                  DeclParams(*context_, interface_info))) {
+                                  DeclParams(interface_info))) {
         return SemIR::NameScopeId::Invalid;
       }
       if (!interface_info.is_defined()) {
@@ -371,11 +371,10 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
-      if (!CheckRedeclParamsMatch(
-              *context_, new_params,
-              DeclParams(
-                  context_->insts().GetLocId(name_context.resolved_inst_id),
-                  SemIR::InstBlockId::Invalid, SemIR::InstBlockId::Invalid))) {
+      if (!CheckRedeclParamsMatch(*context_, new_params,
+                                  DeclParams(name_context.resolved_inst_id,
+                                             SemIR::InstBlockId::Invalid,
+                                             SemIR::InstBlockId::Invalid))) {
         return SemIR::NameScopeId::Invalid;
       }
       if (scope.is_closed_import) {
