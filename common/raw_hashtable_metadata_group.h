@@ -321,8 +321,10 @@ class MetadataGroup : public Printable<MetadataGroup> {
   // the larger metadata array.
   static constexpr bool FastByteClear = Size == 8;
 
-  using MatchIndex = BitIndex<uint32_t, ByteEncoding,
-                              /*ZeroMask=*/ByteEncoding ? 0 : (~0U << Size)>;
+  using MatchIndex =
+      BitIndex<std::conditional_t<ByteEncoding, uint64_t, uint32_t>,
+               ByteEncoding,
+               /*ZeroMask=*/ByteEncoding ? 0 : (~0U << Size)>;
   using MatchRange = BitIndexRange<MatchIndex>;
 
   union {
@@ -729,16 +731,16 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // more platforms.
   if constexpr (Size > 8) {
     static_assert(Size <= 32, "Sizes larger than 32 not yet supported!");
-    uint32_t mask = 0;
+    uint32_t match_bits = 0;
     uint32_t bit = 1;
     uint8_t present_byte = tag | PresentMask;
     for (ssize_t i : llvm::seq<ssize_t>(0, Size)) {
       if (metadata_bytes[i] == present_byte) {
-        mask |= bit;
+        match_bits |= bit;
       }
       bit <<= 1;
     }
-    return MatchRange(mask);
+    return MatchRange(match_bits);
   }
 
   // This algorithm only works for matching *present* bytes. We leverage the
@@ -746,13 +748,13 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // algorithm has a critical path height of 4 operations, and does 6
   // operations total on AArch64. The operation dependency graph is:
   //
-  //          group | MSBs    LSBs * match_byte + MSBs
-  //                 \            /
-  //                 mask ^ broadcast
-  //                      |
-  // group & MSBs    MSBs - mask
-  //        \            /
-  //    group_MSBs & mask
+  //          group | MSBs        LSBs * match_byte + MSBs
+  //                 \                /
+  //                 match_bits ^ broadcast
+  //                            |
+  //   group & MSBs        MSBs - match_bits
+  //          \                /
+  //        group_MSBs & match_bits
   //
   // This diagram and the operation count are specific to AArch64 where we have
   // a fused *integer* multiply-add operation.
@@ -932,7 +934,7 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
   // code. This is reasonably fast, but unfortunate because it forces the group
   // out of a SIMD register and into a general purpose register, which can have
   // high latency.
-  byte_ints[0] &= (~LSBs | byte_ints[0] >> 7);
+  metadata_ints[0] &= (~LSBs | metadata_ints[0] >> 7);
 #elif CARBON_X86_SIMD_SUPPORT
   metadata_vec =
       _mm_blendv_epi8(_mm_setzero_si128(), metadata_vec, metadata_vec);
@@ -947,10 +949,10 @@ inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> MatchRange {
   auto match_byte_vec = vdup_n_u8(tag | PresentMask);
   auto match_byte_cmp_vec = vceq_u8(metadata_vec, match_byte_vec);
   uint64_t match_bits = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
-  // The mask in the range is likely to be tested for zero right after this
-  // routine, and that test can often be folded into an integer constant mask,
-  // so rather than doing the mask in SIMD before we extract the mask, we do it
-  // here to allow that combination.
+  // The matched range is likely to be tested for zero by the caller, and that
+  // test can often be folded into masking the bits with `MSBs` when we do that
+  // mask in the scalar domain rather than the SIMD domain. So we do the mask
+  // here rather than above prior to extracting the match bits.
   result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   result = X86SIMDMatch(tag | PresentMask);
@@ -965,12 +967,12 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   MatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
   // Just extract directly.
-  uint64_t mask = vreinterpret_u64_u8(metadata_vec)[0];
-  // The mask in the range is likely to be tested for zero right after this
-  // routine, and that test can often be folded into an integer constant mask,
-  // so rather than doing the mask in SIMD before we extract the mask, we do it
-  // here to allow that combination.
-  result = MatchRange(mask & MSBs);
+  uint64_t match_bits = vreinterpret_u64_u8(metadata_vec)[0];
+  // The matched range is likely to be tested for zero by the caller, and that
+  // test can often be folded into masking the bits with `MSBs` when we do that
+  // mask in the scalar domain rather than the SIMD domain. So we do the mask
+  // here rather than above prior to extracting the match bits.
+  result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   // We arrange the byte vector for present bytes so that we can directly
   // extract it as a mask.
@@ -985,12 +987,12 @@ inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
   auto cmp_vec = vceqz_u8(metadata_vec);
-  uint64_t mask = vreinterpret_u64_u8(cmp_vec)[0];
-  // The mask in the range is likely to be tested for zero right after this
-  // routine, and that test can often be folded into an integer constant mask,
-  // so rather than doing the mask in SIMD before we extract the mask, we do it
-  // here to allow that combination.
-  result = MatchIndex(mask & MSBs);
+  uint64_t metadata_bits = vreinterpret_u64_u8(cmp_vec)[0];
+  // The matched range is likely to be tested for zero by the caller, and that
+  // test can often be folded into masking the bits with `MSBs` when we do that
+  // mask in the scalar domain rather than the SIMD domain. So we do the mask
+  // here rather than above prior to extracting the match bits.
+  result = MatchIndex(metadata_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   result = static_cast<MatchIndex>(X86SIMDMatch(Empty));
 #else
@@ -1003,12 +1005,12 @@ inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
   auto cmp_vec = vceq_u8(metadata_vec, vdup_n_u8(Deleted));
-  uint64_t mask = vreinterpret_u64_u8(cmp_vec)[0];
-  // The mask in the range is likely to be tested for zero right after this
-  // routine, and that test can often be folded into an integer constant mask,
-  // so rather than doing the mask in SIMD before we extract the mask, we do it
-  // here to allow that combination.
-  result = MatchIndex(mask & MSBs);
+  uint64_t match_bits = vreinterpret_u64_u8(cmp_vec)[0];
+  // The matched range is likely to be tested for zero by the caller, and that
+  // test can often be folded into masking the bits with `MSBs` when we do that
+  // mask in the scalar domain rather than the SIMD domain. So we do the mask
+  // here rather than above prior to extracting the match bits.
+  result = MatchIndex(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   result = static_cast<MatchIndex>(X86SIMDMatch(Deleted));
 #else
