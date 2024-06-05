@@ -56,7 +56,7 @@ struct DeclParams {
         implicit_param_refs_id(implicit_params_id),
         param_refs_id(params_id) {}
 
-  // The declaration of the entity.
+  // The location of the declaration of the entity.
   SemIR::LocId loc_id;
   // The implicit parameters of the entity. Can be Invalid if there is no
   // implicit parameter list.
