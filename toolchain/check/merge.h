@@ -71,7 +71,8 @@ struct DeclParams {
 // returns false.
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            Substitutions substitutions = Substitutions()) -> bool;
+                            Substitutions substitutions = Substitutions())
+    -> bool;
 
 }  // namespace Carbon::Check
 
