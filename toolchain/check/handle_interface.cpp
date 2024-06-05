@@ -20,7 +20,7 @@ auto HandleInterfaceIntroducer(Context& context,
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Interface);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Interface>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -37,7 +37,7 @@ static auto BuildInterfaceDecl(Context& context,
   auto [_, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Interface);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Interface>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
 

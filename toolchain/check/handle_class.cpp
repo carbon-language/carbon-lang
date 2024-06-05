@@ -36,7 +36,7 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Class);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -188,7 +188,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto [_, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Class);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Class>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
@@ -355,7 +355,7 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
 
 auto HandleAdaptIntroducer(Context& context,
                            Parse::AdaptIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Adapt);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Adapt>();
   return true;
 }
 
@@ -365,7 +365,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   // Process modifiers. `extend` is permitted, no others are allowed.
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Adapt);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Adapt>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
 
   auto parent_class_decl =
@@ -422,7 +422,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
 auto HandleBaseIntroducer(Context& context, Parse::BaseIntroducerId /*node_id*/)
     -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Base);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Base>();
   return true;
 }
 
@@ -495,7 +495,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   // Process modifiers. `extend` is required, no others are allowed.
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Base);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Base>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
   if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,

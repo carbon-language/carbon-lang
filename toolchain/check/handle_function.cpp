@@ -30,7 +30,7 @@ auto HandleFunctionIntroducer(Context& context,
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Fn);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Fn>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -225,7 +225,7 @@ static auto BuildFunctionDecl(Context& context,
   auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Fn);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Fn>();
   DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
                     parent_scope_inst);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {

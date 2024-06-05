@@ -14,42 +14,42 @@ namespace Carbon::Check {
 
 auto HandleImportIntroducer(Context& context,
                             Parse::ImportIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Import);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Import>();
   return true;
 }
 
 auto HandleImportDecl(Context& context, Parse::ImportDeclId /*node_id*/)
     -> bool {
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Import);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Import>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Export);
   return true;
 }
 
 auto HandleLibraryIntroducer(Context& context,
                              Parse::LibraryIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Library);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Library>();
   return true;
 }
 
 auto HandleLibraryDecl(Context& context, Parse::LibraryDeclId /*node_id*/)
     -> bool {
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Library);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Library>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl);
   return true;
 }
 
 auto HandlePackageIntroducer(Context& context,
                              Parse::PackageIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Package);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Package>();
   return true;
 }
 
 auto HandlePackageDecl(Context& context, Parse::PackageDeclId /*node_id*/)
     -> bool {
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Package);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Package>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl);
   return true;
 }

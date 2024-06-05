@@ -13,7 +13,7 @@ auto HandleVariableIntroducer(Context& context,
                               Parse::VariableIntroducerId node_id) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(node_id);
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Var);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
   return true;
 }
 
@@ -102,7 +102,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
   auto [_, parent_scope_inst] = context.name_scopes().GetInstIfValid(
       context.scope_stack().PeekNameScopeId());
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Var);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {

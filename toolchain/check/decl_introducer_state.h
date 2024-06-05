@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_DECL_INTRODUCER_STATE_H_
 
 #include "toolchain/check/keyword_modifier_set.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
@@ -14,27 +15,6 @@ namespace Carbon::Check {
 // declaration and the keyword modifiers that apply to that declaration
 // introducer.
 struct DeclIntroducerState {
-  // The kind of declaration.
-  enum DeclKind : int8_t {
-    Adapt,
-    Alias,
-    Base,
-    Class,
-    Constraint,
-    Export,
-    Fn,
-    Impl,
-    Import,
-    Interface,
-    Let,
-    Library,
-    Namespace,
-    Package,
-    Var
-  };
-
-  explicit DeclIntroducerState(DeclKind decl_kind) : kind(decl_kind) {}
-
   auto modifier_node_id(ModifierOrder order) -> Parse::NodeId {
     return ordered_modifier_node_ids[static_cast<int8_t>(order)];
   }
@@ -43,7 +23,8 @@ struct DeclIntroducerState {
     ordered_modifier_node_ids[static_cast<int8_t>(order)] = node_id;
   }
 
-  DeclKind kind;
+  // The token kind of the introducer.
+  Lex::TokenKind kind;
 
   // Nodes of modifiers on this declaration, in expected order. `Invalid` if no
   // modifier of that kind is present.
@@ -53,7 +34,7 @@ struct DeclIntroducerState {
            Parse::NodeId::Invalid};
 
   // Invariant: contains just the modifiers represented by `saw_*_modifier`.
-  KeywordModifierSet modifier_set;
+  KeywordModifierSet modifier_set = KeywordModifierSet();
 };
 
 // Stack of `DeclIntroducerState` values, representing all the declaration
@@ -61,22 +42,43 @@ struct DeclIntroducerState {
 // introducers are rare.
 class DeclIntroducerStateStack {
  public:
-  // Begins introducing a declaration of kind `k`.
-  auto Push(DeclIntroducerState::DeclKind k) -> void { stack_.emplace_back(k); }
+  // Begins a declaration introducer `Kind`.
+  template <Lex::TokenKind::RawEnumType Kind>
+  auto Push() -> void {
+    static_assert(IsDeclIntroducer(Kind));
+    stack_.push_back({.kind = Lex::TokenKind::Make(Kind)});
+  }
 
   // Gets the state of declaration at the top of the stack -- the innermost
   // declaration currently being processed.
   auto innermost() -> DeclIntroducerState& { return stack_.back(); }
 
-  // Finishes introducing a declaration of kind `k` and returns the
-  // produced state.
-  auto Pop(DeclIntroducerState::DeclKind k) -> DeclIntroducerState {
-    CARBON_CHECK(stack_.back().kind == k)
-        << "Found: " << stack_.back().kind << " expected: " << k;
+  // Finishes a declaration introducer `Kind` and returns the produced state.
+  template <Lex::TokenKind::RawEnumType Kind>
+  auto Pop() -> DeclIntroducerState {
+    static_assert(IsDeclIntroducer(Kind));
+    CARBON_CHECK(stack_.back().kind == Kind)
+        << "Found: " << stack_.back().kind
+        << " expected: " << Lex::TokenKind::Make(Kind);
     return stack_.pop_back_val();
   }
 
  private:
+  // Returns true if the token is a declaration introducer. Supports restricting
+  // Push/Pop to only work with introducers.
+  static constexpr auto IsDeclIntroducer(Lex::TokenKind::RawEnumType kind)
+      -> bool {
+    switch (kind) {
+#define CARBON_TOKEN(...)
+#define CARBON_DECL_INTRODUCER_TOKEN(Name, ...) \
+  case Lex::TokenKind::Name:                    \
+    return true;
+#include "toolchain/lex/token_kind.def"
+      default:
+        return false;
+    }
+  }
+
   llvm::SmallVector<DeclIntroducerState> stack_;
 };
 

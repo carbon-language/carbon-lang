@@ -24,7 +24,7 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId node_id)
   context.node_stack().Push(node_id);
 
   // Optional modifiers follow.
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Impl);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Impl>();
 
   // An impl doesn't have a name per se, but it makes the processing more
   // consistent to imagine that it does. This also gives us a scope for implicit
@@ -193,7 +193,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // TODO: Should we somehow permit access specifiers on `impl`s?
   // TODO: Handle `final` modifier.
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Impl);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Impl>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl);
 
   // Finish processing the name, which should be empty, but might have

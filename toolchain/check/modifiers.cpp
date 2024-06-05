@@ -8,43 +8,6 @@
 
 namespace Carbon::Check {
 
-// Returns the TokenKind for a DeclKind.
-static auto DeclKindToken(DeclIntroducerState::DeclKind decl_kind)
-    -> Lex::TokenKind {
-  switch (decl_kind) {
-    case DeclIntroducerState::Adapt:
-      return Lex::TokenKind::Adapt;
-    case DeclIntroducerState::Alias:
-      return Lex::TokenKind::Alias;
-    case DeclIntroducerState::Base:
-      return Lex::TokenKind::Base;
-    case DeclIntroducerState::Class:
-      return Lex::TokenKind::Class;
-    case DeclIntroducerState::Constraint:
-      return Lex::TokenKind::Constraint;
-    case DeclIntroducerState::Export:
-      return Lex::TokenKind::Export;
-    case DeclIntroducerState::Fn:
-      return Lex::TokenKind::Fn;
-    case DeclIntroducerState::Import:
-      return Lex::TokenKind::Import;
-    case DeclIntroducerState::Impl:
-      return Lex::TokenKind::Impl;
-    case DeclIntroducerState::Interface:
-      return Lex::TokenKind::Interface;
-    case DeclIntroducerState::Let:
-      return Lex::TokenKind::Let;
-    case DeclIntroducerState::Library:
-      return Lex::TokenKind::Library;
-    case DeclIntroducerState::Namespace:
-      return Lex::TokenKind::Namespace;
-    case DeclIntroducerState::Package:
-      return Lex::TokenKind::Package;
-    case DeclIntroducerState::Var:
-      return Lex::TokenKind::Var;
-  }
-}
-
 static auto DiagnoseNotAllowed(Context& context, Parse::NodeId modifier_node,
                                Lex::TokenKind decl_kind,
                                llvm::StringRef context_string,
@@ -89,8 +52,7 @@ auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
     auto order = static_cast<ModifierOrder>(order_index);
     if (not_allowed.HasAnyOf(ModifierOrderAsSet(order))) {
       DiagnoseNotAllowed(context, introducer.modifier_node_id(order),
-                         DeclKindToken(introducer.kind), context_string,
-                         context_loc_id);
+                         introducer.kind, context_string, context_loc_id);
       introducer.set_modifier_node_id(order, Parse::NodeId::Invalid);
     }
   }

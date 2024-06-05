@@ -15,7 +15,7 @@ namespace Carbon::Check {
 
 auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId node_id)
     -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Let);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(node_id);
   return true;
@@ -83,7 +83,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
       context.name_scopes().GetInstIfValid(
           context.scope_stack().PeekNameScopeId());
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Let);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(
