@@ -14,7 +14,7 @@ namespace Carbon::Check {
 
 auto HandleAliasIntroducer(Context& context,
                            Parse::AliasIntroducerId /*node_id*/) -> bool {
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Alias);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -31,7 +31,7 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
       PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
 
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Alias);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Alias>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Access),

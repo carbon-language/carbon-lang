@@ -30,6 +30,9 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   using EnumBase::EnumBase;
 
+  // Permit creation from RawEnumType for templates.
+  using EnumBase::Make;
+
   // Permit conversion to integer for use as an array index.
   using EnumBase::AsInt;
 

@@ -77,7 +77,7 @@ auto HandleForHeaderStart(Context& context, Parse::ForHeaderStartId node_id)
 }
 
 auto HandleForIn(Context& context, Parse::ForInId node_id) -> bool {
-  context.decl_introducer_state_stack().Pop(DeclIntroducerState::Var);
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
   return context.TODO(node_id, "HandleForIn");
 }
 

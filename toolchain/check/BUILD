@@ -90,6 +90,7 @@ cc_library(
         "//toolchain/base:kind_switch",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",

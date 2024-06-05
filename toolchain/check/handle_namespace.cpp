@@ -15,7 +15,7 @@ namespace Carbon::Check {
 auto HandleNamespaceStart(Context& context, Parse::NamespaceStartId /*node_id*/)
     -> bool {
   // Optional modifiers and the name follow.
-  context.decl_introducer_state_stack().Push(DeclIntroducerState::Namespace);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -25,7 +25,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
 
   auto introducer =
-      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Namespace);
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Namespace>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
