@@ -42,7 +42,7 @@ struct DeclIntroducerState {
 // introducers are rare.
 class DeclIntroducerStateStack {
  private:
-  // Supports Push/Pop `requires` by only existing for introducers.
+  // Returns true for introducer tokens. Supports Push/Pop `requires`.
   template <Lex::TokenKind::RawEnumType Kind>
   static constexpr auto IsDeclIntroducer() -> bool {
     switch (Kind) {
