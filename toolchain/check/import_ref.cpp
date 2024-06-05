@@ -19,50 +19,6 @@
 
 namespace Carbon::Check {
 
-auto GetImportName(const SemIR::File& import_sem_ir, SemIR::Inst import_inst)
-    -> std::tuple<SemIR::NameId, SemIR::NameScopeId, SemIR::AccessKind> {
-  CARBON_KIND_SWITCH(import_inst) {
-    case SemIR::BindAlias::Kind:
-    case SemIR::BindName::Kind:
-    case SemIR::BindSymbolicName::Kind:
-    case SemIR::ExportDecl::Kind: {
-      auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
-      const auto& bind_name =
-          import_sem_ir.bind_names().Get(bind_inst.bind_name_id);
-      // TODO: Figure out access kind handling for bound names.
-      return {bind_name.name_id, bind_name.parent_scope_id,
-              SemIR::AccessKind::Public};
-    }
-
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      const auto& class_info = import_sem_ir.classes().Get(class_decl.class_id);
-      return {class_info.name_id, class_info.parent_scope_id,
-              class_info.access_kind};
-    }
-
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      const auto& function =
-          import_sem_ir.functions().Get(function_decl.function_id);
-      return {function.name_id, function.parent_scope_id, function.access_kind};
-    }
-
-    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      const auto& interface =
-          import_sem_ir.interfaces().Get(interface_decl.interface_id);
-      return {interface.name_id, interface.parent_scope_id,
-              interface.access_kind};
-    }
-
-    case CARBON_KIND(SemIR::Namespace ns): {
-      const auto& scope = import_sem_ir.name_scopes().Get(ns.name_scope_id);
-      return {scope.name_id, scope.parent_scope_id, SemIR::AccessKind::Public};
-    }
-
-    default:
-      CARBON_FATAL() << "Unsupported export kind: " << import_inst;
-  }
-}
-
 // Adds the ImportIR, excluding the update to the check_ir_map.
 static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
@@ -580,12 +536,14 @@ class ImportRefResolver {
   // lookup.
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
                               SemIR::NameScope& new_scope) -> void {
-    for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
+    for (auto [entry_name_id, entry] : import_scope.names) {
       auto ref_id = AddImportRef(
-          context_, {.ir_id = import_ir_id_, .inst_id = entry_inst_id},
+          context_, {.ir_id = import_ir_id_, .inst_id = entry.inst_id},
           SemIR::BindNameId::Invalid);
       CARBON_CHECK(
-          new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
+          new_scope.names
+              .insert({GetLocalNameId(entry_name_id),
+                       {.inst_id = ref_id, .access_kind = entry.access_kind}})
               .second);
     }
   }

@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -333,19 +334,30 @@ class Formatter {
 
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<InstId, NameId>> entries;
-    for (auto [name_id, inst_id] : scope.names) {
-      entries.push_back({inst_id, name_id});
+    llvm::SmallVector<std::pair<NameScope::Entry, NameId>> entries;
+    for (auto [name_id, entry] : scope.names) {
+      entries.push_back({entry, name_id});
     }
-    llvm::sort(entries,
-               [](auto a, auto b) { return a.first.index < b.first.index; });
+    llvm::sort(entries, [](auto a, auto b) {
+      return a.first.inst_id.index < b.first.inst_id.index;
+    });
 
-    for (auto [inst_id, name_id] : entries) {
+    for (auto [entry, name_id] : entries) {
       Indent();
       out_ << ".";
       FormatName(name_id);
+      switch (entry.access_kind) {
+        case SemIR::AccessKind::Public:
+          break;
+        case SemIR::AccessKind::Protected:
+          out_ << " [protected]";
+          break;
+        case SemIR::AccessKind::Private:
+          out_ << " [private]";
+          break;
+      }
       out_ << " = ";
-      FormatInstName(inst_id);
+      FormatInstName(entry.inst_id);
       out_ << "\n";
     }
 

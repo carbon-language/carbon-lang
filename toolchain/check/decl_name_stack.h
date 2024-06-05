@@ -207,16 +207,18 @@ class DeclNameStack {
   auto Restore(SuspendedName sus) -> void;
 
   // Adds a name to name lookup. Assumes duplicates are already handled.
-  auto AddName(NameContext name_context, SemIR::InstId target_id) -> void;
+  auto AddName(NameContext name_context, SemIR::InstId target_id,
+               SemIR::AccessKind access_kind) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameOrDiagnoseDuplicate(NameContext name_context,
-                                  SemIR::InstId target_id) -> void;
+                                  SemIR::InstId target_id,
+                                  SemIR::AccessKind access_kind) -> void;
 
   // Adds a name to name lookup, or returns the existing instruction if this
   // name has already been declared in this scope.
-  auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id)
-      -> SemIR::InstId;
+  auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
+                       SemIR::AccessKind access_kind) -> SemIR::InstId;
 
  private:
   // Returns a name context corresponding to an empty name.

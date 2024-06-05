@@ -9,6 +9,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -38,8 +39,8 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
       name_context.parent_scope_id_for_new_inst());
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
-  auto existing_inst_id =
-      context.decl_name_stack().LookupOrAddName(name_context, namespace_id);
+  auto existing_inst_id = context.decl_name_stack().LookupOrAddName(
+      name_context, namespace_id, SemIR::AccessKind::Public);
   if (existing_inst_id.is_valid()) {
     // If there's a name conflict with a namespace, "merge" by using the
     // previous declaration. Otherwise, diagnose the issue.

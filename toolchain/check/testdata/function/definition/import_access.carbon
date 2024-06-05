@@ -36,10 +36,14 @@ private fn Forward();
 // Test files
 // ============================================================================
 
-// --- def.impl.carbon
+// --- fail_todo_def.impl.carbon
 
 impl package Test library "def";
 
+// CHECK:STDERR: fail_todo_def.impl.carbon:[[@LINE+4]]:13: ERROR: Name `Def` not found.
+// CHECK:STDERR: var f: () = Def();
+// CHECK:STDERR:             ^~~
+// CHECK:STDERR:
 var f: () = Def();
 
 // --- fail_local_def.carbon
@@ -66,10 +70,14 @@ import Test library "def";
 // CHECK:STDERR:
 var f: () = Test.Def();
 
-// --- forward_with_def.impl.carbon
+// --- fail_todo_forward_with_def.impl.carbon
 
 impl package Test library "forward_with_def";
 
+// CHECK:STDERR: fail_todo_forward_with_def.impl.carbon:[[@LINE+4]]:13: ERROR: Name `ForwardWithDef` not found.
+// CHECK:STDERR: var f: () = ForwardWithDef();
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 var f: () = ForwardWithDef();
 
 // --- fail_local_forward_with_def.carbon
@@ -96,10 +104,14 @@ import Test library "forward_with_def";
 // CHECK:STDERR:
 var f: () = Test.ForwardWithDef();
 
-// --- forward.impl.carbon
+// --- fail_todo_forward.impl.carbon
 
 impl package Test library "forward";
 
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:13: ERROR: Name `Forward` not found.
+// CHECK:STDERR: var f: () = Forward();
+// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:
 var f: () = Forward();
 
 fn Forward() {}
@@ -146,7 +158,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Def = %Def.decl
+// CHECK:STDOUT:     .Def [private] = %Def.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Def.decl: Def = fn_decl @Def [template = constants.%struct] {}
@@ -168,7 +180,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .ForwardWithDef = %ForwardWithDef.decl.loc4
+// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %ForwardWithDef.decl.loc4: ForwardWithDef = fn_decl @ForwardWithDef [template = constants.%struct] {}
@@ -191,7 +203,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Forward = %Forward.decl
+// CHECK:STDOUT:     .Forward [private] = %Forward.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Forward.decl: Forward = fn_decl @Forward [template = constants.%struct] {}
@@ -199,35 +211,28 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- fail_todo_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Def: type = fn_type @Def [template]
-// CHECK:STDOUT:   %struct: Def = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Def = import_ref ir0, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref () = var f
 // CHECK:STDOUT:   %f: ref () = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Def();
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Def.ref: Def = name_ref Def, file.%import_ref [template = constants.%struct]
-// CHECK:STDOUT:   %Def.call: init () = call %Def.ref()
-// CHECK:STDOUT:   assign file.%f.var, %Def.call
+// CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%f.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,35 +289,28 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_with_def.impl.carbon
+// CHECK:STDOUT: --- fail_todo_forward_with_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %ForwardWithDef: type = fn_type @ForwardWithDef [template]
-// CHECK:STDOUT:   %struct: ForwardWithDef = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: ForwardWithDef = import_ref ir0, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref () = var f
 // CHECK:STDOUT:   %f: ref () = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardWithDef();
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ForwardWithDef.ref: ForwardWithDef = name_ref ForwardWithDef, file.%import_ref [template = constants.%struct]
-// CHECK:STDOUT:   %ForwardWithDef.call: init () = call %ForwardWithDef.ref()
-// CHECK:STDOUT:   assign file.%f.var, %ForwardWithDef.call
+// CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%f.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -369,7 +367,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward.impl.carbon
+// CHECK:STDOUT: --- fail_todo_forward.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -383,10 +381,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .Forward = %Forward.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Forward = import_ref ir0, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref () = var f
 // CHECK:STDOUT:   %f: ref () = bind_name f, %f.var
 // CHECK:STDOUT:   %Forward.decl: Forward = fn_decl @Forward [template = constants.%struct] {}
@@ -399,9 +396,8 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Forward.ref: Forward = name_ref Forward, file.%import_ref [template = constants.%struct]
-// CHECK:STDOUT:   %Forward.call: init () = call %Forward.ref()
-// CHECK:STDOUT:   assign file.%f.var, %Forward.call
+// CHECK:STDOUT:   %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%f.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -469,7 +465,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Redecl = %Redecl.decl.loc4
+// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Redecl.decl.loc4: Redecl = fn_decl @Redecl [template = constants.%struct] {}

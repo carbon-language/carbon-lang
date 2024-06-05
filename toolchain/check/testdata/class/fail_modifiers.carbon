@@ -91,8 +91,8 @@ extern class ExternDefined {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .DuplicatePrivate = %DuplicatePrivate.decl
-// CHECK:STDOUT:     .TwoAccess = %TwoAccess.decl
+// CHECK:STDOUT:     .DuplicatePrivate [private] = %DuplicatePrivate.decl
+// CHECK:STDOUT:     .TwoAccess [private] = %TwoAccess.decl
 // CHECK:STDOUT:     .TwoAbstract = %TwoAbstract.decl
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl

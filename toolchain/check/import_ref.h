@@ -11,11 +11,6 @@
 
 namespace Carbon::Check {
 
-// Returns name information for the entity, corresponding to IDs in the import
-// IR rather than the current IR.
-auto GetImportName(const SemIR::File& import_sem_ir, SemIR::Inst import_inst)
-    -> std::tuple<SemIR::NameId, SemIR::NameScopeId, SemIR::AccessKind>;
-
 // Sets the IR for ImportIRId::ApiForImpl. Should be called before AddImportIR
 // in order to ensure the correct ID is assigned.
 auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void;

@@ -118,7 +118,7 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
 // CHECK:STDOUT:     .DuplicateVirtual = %DuplicateVirtual.decl
-// CHECK:STDOUT:     .TwoAccess = %TwoAccess.decl
+// CHECK:STDOUT:     .TwoAccess [private] = %TwoAccess.decl
 // CHECK:STDOUT:     .ModifiersConflict = %ModifiersConflict.decl
 // CHECK:STDOUT:     .InvalidModifier = %InvalidModifier.decl
 // CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2.decl

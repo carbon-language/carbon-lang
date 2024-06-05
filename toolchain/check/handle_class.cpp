@@ -117,9 +117,10 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::InstId class_decl_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
-                           bool is_extern) -> void {
-  auto prev_id =
-      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
+                           bool is_extern, SemIR::AccessKind access_kind)
+    -> void {
+  auto prev_id = context.decl_name_stack().LookupOrAddName(
+      name_context, class_decl_id, access_kind);
   if (!prev_id.is_valid()) {
     return;
   }
@@ -226,7 +227,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .inheritance_kind = inheritance_kind};
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
-                 class_info, is_definition, is_extern);
+                 class_info, is_definition, is_extern,
+                 introducer.modifier_set.GetAccessKind());
 
   // Create a new class if this isn't a valid redeclaration.
   bool is_new_class = !class_decl.class_id.is_valid();
@@ -536,7 +538,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   context.decl_name_stack().AddNameOrDiagnoseDuplicate(
       context.decl_name_stack().MakeUnqualifiedName(node_id,
                                                     SemIR::NameId::Base),
-      class_info.base_id);
+      class_info.base_id, introducer.modifier_set.GetAccessKind());
 
   // Extend the class scope with the base class.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {

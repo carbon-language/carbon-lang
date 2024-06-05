@@ -51,7 +51,7 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(
-      name_context, interface_decl_id);
+      name_context, interface_decl_id, introducer.modifier_set.GetAccessKind());
   if (existing_id.is_valid()) {
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {

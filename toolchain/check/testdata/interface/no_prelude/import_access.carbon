@@ -37,10 +37,14 @@ package Test library "forward";
 // Test files
 // ============================================================================
 
-// --- def.impl.carbon
+// --- fail_todo_def.impl.carbon
 
 impl package Test library "def";
 
+// CHECK:STDERR: fail_todo_def.impl.carbon:[[@LINE+4]]:9: ERROR: Name `Def` not found.
+// CHECK:STDERR: fn F(i: Def) {}
+// CHECK:STDERR:         ^~~
+// CHECK:STDERR:
 fn F(i: Def) {}
 
 // --- fail_local_def.carbon
@@ -67,10 +71,14 @@ import Test library "def";
 // CHECK:STDERR:
 fn F(i: Test.Def) {}
 
-// --- forward_with_def.impl.carbon
+// --- fail_todo_forward_with_def.impl.carbon
 
 impl package Test library "forward_with_def";
 
+// CHECK:STDERR: fail_todo_forward_with_def.impl.carbon:[[@LINE+4]]:9: ERROR: Name `ForwardWithDef` not found.
+// CHECK:STDERR: fn F(i: ForwardWithDef) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(i: ForwardWithDef) {}
 
 // --- fail_local_forward_with_def.carbon
@@ -149,7 +157,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def = %Def.decl
+// CHECK:STDOUT:     .Def [private] = %Def.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Def.decl: type = interface_decl @Def [template = constants.%.1] {}
 // CHECK:STDOUT: }
@@ -171,7 +179,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef = %ForwardWithDef.decl.loc4
+// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardWithDef.decl.loc4: type = interface_decl @ForwardWithDef [template = constants.%.1] {}
 // CHECK:STDOUT:   %ForwardWithDef.decl.loc6: type = interface_decl @ForwardWithDef [template = constants.%.1] {}
@@ -191,37 +199,26 @@ private interface Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- fail_todo_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @Def [template]
-// CHECK:STDOUT:   %Self: Def = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def = %import_ref.1
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+3, unloaded
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %Def.ref: type = name_ref Def, %import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %i.loc4_6.1: Def = param i
-// CHECK:STDOUT:     @F.%i: Def = bind_name i, %i.loc4_6.1
+// CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
+// CHECK:STDOUT:     %i.loc8_6.1: <error> = param i
+// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc8_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Def {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i: Def) {
+// CHECK:STDOUT: fn @F(%i: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -277,37 +274,26 @@ private interface Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_with_def.impl.carbon
+// CHECK:STDOUT: --- fail_todo_forward_with_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @ForwardWithDef [template]
-// CHECK:STDOUT:   %Self: ForwardWithDef = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef = %import_ref.1
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+4, unloaded
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, %import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %i.loc4_6.1: ForwardWithDef = param i
-// CHECK:STDOUT:     @F.%i: ForwardWithDef = bind_name i, %i.loc4_6.1
+// CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
+// CHECK:STDOUT:     %i.loc8_6.1: <error> = param i
+// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc8_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @ForwardWithDef {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i: ForwardWithDef) {
+// CHECK:STDOUT: fn @F(%i: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -461,7 +447,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Redecl = %Redecl.decl.loc4
+// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Redecl.decl.loc4: type = interface_decl @Redecl [template = constants.%.1] {}
 // CHECK:STDOUT:   %Redecl.decl.loc6: type = interface_decl @Redecl [template = constants.%.1] {}

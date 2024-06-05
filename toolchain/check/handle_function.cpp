@@ -286,7 +286,8 @@ static auto BuildFunctionDecl(Context& context,
       }
     }
 
-    context.decl_name_stack().AddName(name_context, lookup_result_id);
+    context.decl_name_stack().AddName(name_context, lookup_result_id,
+                                      introducer.modifier_set.GetAccessKind());
   }
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
