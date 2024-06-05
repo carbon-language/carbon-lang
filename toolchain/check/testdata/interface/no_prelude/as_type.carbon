@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/as_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/as_type.carbon
 
 interface Empty {}
 
@@ -26,8 +30,8 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %e.loc9_6.1: Empty = param e
-// CHECK:STDOUT:     @F.%e: Empty = bind_name e, %e.loc9_6.1
+// CHECK:STDOUT:     %e.loc13_6.1: Empty = param e
+// CHECK:STDOUT:     @F.%e: Empty = bind_name e, %e.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

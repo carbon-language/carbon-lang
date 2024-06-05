@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/pointer/pointer_value.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/pointer_value.carbon
 
 fn F() -> i32 {
   var n: i32 = 0;

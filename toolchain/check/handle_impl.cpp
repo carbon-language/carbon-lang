@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -23,7 +24,7 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId node_id)
   context.node_stack().Push(node_id);
 
   // Optional modifiers follow.
-  context.decl_state_stack().Push(DeclState::Impl);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Impl);
 
   // An impl doesn't have a name per se, but it makes the processing more
   // consistent to imagine that it does. This also gives us a scope for implicit
@@ -69,9 +70,9 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
-  auto enclosing_scope_id = context.decl_name_stack().PeekEnclosingScopeId();
+  auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
 
-  if (auto class_decl = TryAsClassScope(context, enclosing_scope_id)) {
+  if (auto class_decl = TryAsClassScope(context, parent_scope_id)) {
     return context.classes().Get(class_decl->class_id).self_type_id;
   }
 
@@ -91,7 +92,7 @@ auto HandleDefaultSelfImplAs(Context& context,
   }
 
   // There's no need to push `Self` into scope here, because we can find it in
-  // the enclosing class scope.
+  // the parent class scope.
   context.node_stack().Push(node_id, self_type_id);
   return true;
 }
@@ -103,11 +104,11 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node, SemIR::TypeId constraint_id)
     -> void {
-  auto enclosing_scope_id = context.decl_name_stack().PeekEnclosingScopeId();
-  auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
+  auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
   // TODO: This is also valid in a mixin.
-  if (!TryAsClassScope(context, enclosing_scope_id)) {
+  if (!TryAsClassScope(context, parent_scope_id)) {
     CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
                       "`extend impl` can only be used in a class.");
     context.emitter().Emit(node_id, ExtendImplOutsideClass);
@@ -118,7 +119,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "Cannot `extend` a parameterized `impl`.");
     context.emitter().Emit(extend_node, ExtendImplForall);
-    enclosing_scope.has_error = true;
+    parent_scope.has_error = true;
     return;
   }
 
@@ -131,7 +132,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // If the explicit self type is not the default, just bail out.
     if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
-      enclosing_scope.has_error = true;
+      parent_scope.has_error = true;
       return;
     }
 
@@ -150,7 +151,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
       context.types().TryGetAs<SemIR::InterfaceType>(constraint_id);
   if (!interface_type) {
     context.TODO(node_id, "extending non-interface constraint");
-    enclosing_scope.has_error = true;
+    parent_scope.has_error = true;
     return;
   }
 
@@ -164,11 +165,11 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                                         constraint_id);
     context.NoteUndefinedInterface(interface_type->interface_id, diag);
     diag.Emit();
-    enclosing_scope.has_error = true;
+    parent_scope.has_error = true;
     return;
   }
 
-  enclosing_scope.extended_scopes.push_back(interface.scope_id);
+  parent_scope.extended_scopes.push_back(interface.scope_id);
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
@@ -191,7 +192,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
   // TODO: Handle `final` modifier.
-  LimitModifiersOnDecl(context, KeywordModifierSet::ImplDecl,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Impl);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl,
                        Lex::TokenKind::Impl);
 
   // Finish processing the name, which should be empty, but might have
@@ -213,15 +216,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   auto impl_decl_id = context.AddInst(node_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (context.decl_state_stack().innermost().modifier_set.HasAnyOf(
-          KeywordModifierSet::Extend)) {
-    auto extend_node = context.decl_state_stack().innermost().modifier_node_id(
-        ModifierOrder::Decl);
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
                params_node, constraint_type_id);
   }
-
-  context.decl_state_stack().Pop(DeclState::Impl);
 
   return {impl_decl.impl_id, impl_decl_id};
 }
@@ -252,7 +251,7 @@ auto HandleImplDefinitionStart(Context& context,
     impl_info.definition_id = impl_decl_id;
     impl_info.scope_id = context.name_scopes().Add(
         impl_decl_id, SemIR::NameId::Invalid,
-        context.decl_name_stack().PeekEnclosingScopeId());
+        context.decl_name_stack().PeekParentScopeId());
   }
 
   context.scope_stack().Push(impl_decl_id, impl_info.scope_id);

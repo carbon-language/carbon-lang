@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_let_in_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_let_in_type.carbon
 
 let x: type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: ERROR: Cannot evaluate type expression.
@@ -46,13 +50,13 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> y {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

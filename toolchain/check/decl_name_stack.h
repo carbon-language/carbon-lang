@@ -39,9 +39,9 @@ class Context;
 // fn ClassA.ClassB(T:! U).Fn() { var x: V; }
 // ```
 //
-// the lookup for `U` looks in `ClassA`, and the lookup for `V` looks in
-// `ClassA.ClassB` then in its enclosing scope `ClassA`. Scopes entered as part
-// of processing the name are exited when the name is popped from the stack.
+// the lookup for `U` looks in `ClassA`; the lookup for `V` looks first in
+// `ClassA.ClassB`, then its parent scope `ClassA`. Scopes entered as part of
+// processing the name are exited when the name is popped from the stack.
 //
 // Example state transitions:
 //
@@ -96,10 +96,10 @@ class DeclNameStack {
                                         : SemIR::NameId::Invalid;
     }
 
-    // Returns the enclosing_scope_id for a new instruction. This is invalid
+    // Returns the parent_scope_id for a new instruction. This is invalid
     // when the name resolved.
-    auto enclosing_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return state == State::Unresolved ? enclosing_scope_id
+    auto parent_scope_id_for_new_inst() -> SemIR::NameScopeId {
+      return state == State::Unresolved ? parent_scope_id
                                         : SemIR::NameScopeId::Invalid;
     }
 
@@ -115,7 +115,7 @@ class DeclNameStack {
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
     // should be used.
-    SemIR::NameScopeId enclosing_scope_id;
+    SemIR::NameScopeId parent_scope_id;
 
     // The last location ID used.
     SemIR::LocId loc_id = SemIR::LocId::Invalid;
@@ -185,13 +185,13 @@ class DeclNameStack {
   // This should be called at the end of the declaration.
   auto PopScope() -> void;
 
-  // Peeks the current enclosing scope of the name on top of the stack. Note
+  // Peeks the current parent scope of the name on top of the stack. Note
   // that if we're still processing the name qualifiers, this can change before
   // the name is completed. Also, if the name up to this point was already
   // declared and is a scope, this will be that scope, rather than the scope
-  // enclosing it.
-  auto PeekEnclosingScopeId() const -> SemIR::NameScopeId {
-    return decl_name_stack_.back().enclosing_scope_id;
+  // containing it.
+  auto PeekParentScopeId() const -> SemIR::NameScopeId {
+    return decl_name_stack_.back().parent_scope_id;
   }
 
   // Peeks the resolution scope index of the name on top of the stack.

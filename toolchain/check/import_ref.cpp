@@ -445,7 +445,7 @@ class ImportRefResolver {
           case SemIR::BindName::Kind: {
             auto bind_name_id = context_.bind_names().Add(
                 {.name_id = name_id,
-                 .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+                 .parent_scope_id = SemIR::NameScopeId::Invalid,
                  .bind_index = SemIR::CompileTimeBindIndex::Invalid});
             new_param_id = context_.AddInstInNoBlock<SemIR::BindName>(
                 AddImportIRInst(bind_id), {.type_id = type_id,
@@ -742,7 +742,7 @@ class ImportRefResolver {
     auto name_id = GetLocalNameId(import_bind_info.name_id);
     auto bind_name_id = context_.bind_names().Add(
         {.name_id = name_id,
-         .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+         .parent_scope_id = SemIR::NameScopeId::Invalid,
          .bind_index = import_bind_info.bind_index});
     auto new_bind_id = context_.AddInstInNoBlock<SemIR::BindSymbolicName>(
         AddImportIRInst(import_inst_id),
@@ -771,7 +771,7 @@ class ImportRefResolver {
         // generic class and can build the right constant value for it.
         // TODO: Add a better way to represent a generic `Class` prior to
         // importing the parameters.
-        .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+        .parent_scope_id = SemIR::NameScopeId::Invalid,
         .implicit_param_refs_id = import_class.implicit_param_refs_id.is_valid()
                                       ? SemIR::InstBlockId::Empty
                                       : SemIR::InstBlockId::Invalid,
@@ -804,9 +804,8 @@ class ImportRefResolver {
     new_class.object_repr_id =
         context_.GetTypeIdForTypeConstant(object_repr_const_id);
 
-    new_class.scope_id =
-        context_.name_scopes().Add(new_class.decl_id, SemIR::NameId::Invalid,
-                                   new_class.enclosing_scope_id);
+    new_class.scope_id = context_.name_scopes().Add(
+        new_class.decl_id, SemIR::NameId::Invalid, new_class.parent_scope_id);
     auto& new_scope = context_.name_scopes().Get(new_class.scope_id);
     const auto& import_scope =
         import_ir_.name_scopes().Get(import_class.scope_id);
@@ -860,8 +859,7 @@ class ImportRefResolver {
     // Load constants for the definition.
     auto initial_work = work_stack_.size();
 
-    auto enclosing_scope_id =
-        GetLocalNameScopeId(import_class.enclosing_scope_id);
+    auto parent_scope_id = GetLocalNameScopeId(import_class.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
@@ -880,7 +878,7 @@ class ImportRefResolver {
     }
 
     auto& new_class = context_.classes().Get(class_id);
-    new_class.enclosing_scope_id = enclosing_scope_id;
+    new_class.parent_scope_id = parent_scope_id;
     new_class.implicit_param_refs_id = GetLocalParamRefsId(
         import_class.implicit_param_refs_id, implicit_param_const_ids);
     new_class.param_refs_id =
@@ -953,7 +951,7 @@ class ImportRefResolver {
     if (function.return_type_id.is_valid()) {
       return_type_const_id = GetLocalConstantId(function.return_type_id);
     }
-    auto enclosing_scope_id = GetLocalNameScopeId(function.enclosing_scope_id);
+    auto parent_scope_id = GetLocalNameScopeId(function.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
         GetLocalParamConstantIds(function.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
@@ -991,7 +989,7 @@ class ImportRefResolver {
     }
     function_decl.function_id = context_.functions().Add(
         {.name_id = GetLocalNameId(function.name_id),
-         .enclosing_scope_id = enclosing_scope_id,
+         .parent_scope_id = parent_scope_id,
          .decl_id = function_decl_id,
          .implicit_param_refs_id = GetLocalParamRefsId(
              function.implicit_param_refs_id, implicit_param_const_ids),
@@ -1080,7 +1078,7 @@ class ImportRefResolver {
         // a generic interface and can build the right constant value for it.
         // TODO: Add a better way to represent a generic `Interface` prior to
         // importing the parameters.
-        .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+        .parent_scope_id = SemIR::NameScopeId::Invalid,
         .implicit_param_refs_id =
             import_interface.implicit_param_refs_id.is_valid()
                 ? SemIR::InstBlockId::Empty
@@ -1106,7 +1104,7 @@ class ImportRefResolver {
                               SemIR::ConstantId self_param_id) -> void {
     new_interface.scope_id = context_.name_scopes().Add(
         new_interface.decl_id, SemIR::NameId::Invalid,
-        new_interface.enclosing_scope_id);
+        new_interface.parent_scope_id);
     auto& new_scope = context_.name_scopes().Get(new_interface.scope_id);
     const auto& import_scope =
         import_ir_.name_scopes().Get(import_interface.scope_id);
@@ -1136,8 +1134,8 @@ class ImportRefResolver {
 
     auto initial_work = work_stack_.size();
 
-    auto enclosing_scope_id =
-        GetLocalNameScopeId(import_interface.enclosing_scope_id);
+    auto parent_scope_id =
+        GetLocalNameScopeId(import_interface.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
@@ -1152,7 +1150,7 @@ class ImportRefResolver {
         context_.insts()
             .GetAs<SemIR::InterfaceType>(interface_const_id.inst_id())
             .interface_id);
-    new_interface.enclosing_scope_id = enclosing_scope_id;
+    new_interface.parent_scope_id = parent_scope_id;
     new_interface.implicit_param_refs_id = GetLocalParamRefsId(
         import_interface.implicit_param_refs_id, implicit_param_const_ids);
     new_interface.param_refs_id =

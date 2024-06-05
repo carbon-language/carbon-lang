@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/struct/member_access.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/struct/member_access.carbon
 
 fn Run() -> i32 {
   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
@@ -14,21 +18,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.4.loc8_49 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
+// CHECK:STDOUT: @struct.4.loc12_49 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8
-// CHECK:STDOUT:   %.loc8_48.2.a = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc8_48.4.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.4.loc8_49, i64 16, i1 false)
+// CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_48.4.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.4.loc12_49, i64 16, i1 false)
 // CHECK:STDOUT:   %y.var = alloca i32, align 4
-// CHECK:STDOUT:   %.loc9_17.1.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
-// CHECK:STDOUT:   %.loc9_17.2 = load i32, ptr %.loc9_17.1.b, align 4
-// CHECK:STDOUT:   store i32 %.loc9_17.2, ptr %y.var, align 4
+// CHECK:STDOUT:   %.loc13_17.1.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.b, align 4
+// CHECK:STDOUT:   store i32 %.loc13_17.2, ptr %y.var, align 4
 // CHECK:STDOUT:   %z.var = alloca i32, align 4
-// CHECK:STDOUT:   %.loc10_16 = load i32, ptr %y.var, align 4
-// CHECK:STDOUT:   store i32 %.loc10_16, ptr %z.var, align 4
+// CHECK:STDOUT:   %.loc14_16 = load i32, ptr %y.var, align 4
+// CHECK:STDOUT:   store i32 %.loc14_16, ptr %z.var, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

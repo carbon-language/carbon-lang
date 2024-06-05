@@ -4,6 +4,7 @@
 
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
+#include "toolchain/parse/handle.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {

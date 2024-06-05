@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_error.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_error.carbon
 
 // CHECK:STDERR: fail_deref_error.carbon:[[@LINE+4]]:15: ERROR: Name `undeclared` not found.
 // CHECK:STDERR: let n: i32 = *undeclared;
@@ -28,18 +32,18 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
-// CHECK:STDOUT:   %undeclared.ref.loc11: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc11_14: ref <error> = deref <error>
+// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
+// CHECK:STDOUT:   %undeclared.ref.loc15: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_14: ref <error> = deref <error>
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc15_9.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:   %.loc15_9.2: type = converted %int.make_type_32.loc15, %.loc15_9.1 [template = i32]
-// CHECK:STDOUT:   %undeclared.ref.loc15: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_25: ref <error> = deref <error>
+// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc19_9.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
+// CHECK:STDOUT:   %.loc19_9.2: type = converted %int.make_type_32.loc19, %.loc19_9.1 [template = i32]
+// CHECK:STDOUT:   %undeclared.ref.loc19: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_25: ref <error> = deref <error>
 // CHECK:STDOUT:   %n2: i32 = bind_name n2, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

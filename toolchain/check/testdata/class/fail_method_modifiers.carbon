@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_method_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_method_modifiers.carbon
 
 class FinalClass {
 
@@ -86,14 +90,14 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {
 // CHECK:STDOUT:   %Abstract.decl: Abstract = fn_decl @Abstract.1 [template = constants.%struct.1] {
-// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
-// CHECK:STDOUT:     %self.loc16_24.1: FinalClass = param self
-// CHECK:STDOUT:     %self.loc16_24.2: FinalClass = bind_name self, %self.loc16_24.1
+// CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
+// CHECK:STDOUT:     %self.loc20_24.1: FinalClass = param self
+// CHECK:STDOUT:     %self.loc20_24.2: FinalClass = bind_name self, %self.loc20_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Virtual.decl: Virtual = fn_decl @Virtual [template = constants.%struct.2] {
-// CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
-// CHECK:STDOUT:     %self.loc25_22.1: FinalClass = param self
-// CHECK:STDOUT:     %self.loc25_22.2: FinalClass = bind_name self, %self.loc25_22.1
+// CHECK:STDOUT:     %Self.ref.loc29: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
+// CHECK:STDOUT:     %self.loc29_22.1: FinalClass = param self
+// CHECK:STDOUT:     %self.loc29_22.2: FinalClass = bind_name self, %self.loc29_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -104,14 +108,14 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractClass {
 // CHECK:STDOUT:   %Default.decl: Default = fn_decl @Default [template = constants.%struct.3] {
-// CHECK:STDOUT:     %Self.ref.loc34: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
-// CHECK:STDOUT:     %self.loc34_22.1: AbstractClass = param self
-// CHECK:STDOUT:     %self.loc34_22.2: AbstractClass = bind_name self, %self.loc34_22.1
+// CHECK:STDOUT:     %Self.ref.loc38: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
+// CHECK:STDOUT:     %self.loc38_22.1: AbstractClass = param self
+// CHECK:STDOUT:     %self.loc38_22.2: AbstractClass = bind_name self, %self.loc38_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Final.decl: Final = fn_decl @Final [template = constants.%struct.4] {
-// CHECK:STDOUT:     %Self.ref.loc40: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
-// CHECK:STDOUT:     %self.loc40_18.1: AbstractClass = param self
-// CHECK:STDOUT:     %self.loc40_18.2: AbstractClass = bind_name self, %self.loc40_18.1
+// CHECK:STDOUT:     %Self.ref.loc44: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
+// CHECK:STDOUT:     %self.loc44_18.1: AbstractClass = param self
+// CHECK:STDOUT:     %self.loc44_18.2: AbstractClass = bind_name self, %self.loc44_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -123,8 +127,8 @@ base class BaseClass {
 // CHECK:STDOUT: class @BaseClass {
 // CHECK:STDOUT:   %Abstract.decl: Abstract = fn_decl @Abstract.2 [template = constants.%struct.5] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
-// CHECK:STDOUT:     %self.loc51_24.1: BaseClass = param self
-// CHECK:STDOUT:     %self.loc51_24.2: BaseClass = bind_name self, %self.loc51_24.1
+// CHECK:STDOUT:     %self.loc55_24.1: BaseClass = param self
+// CHECK:STDOUT:     %self.loc55_24.2: BaseClass = bind_name self, %self.loc55_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -132,13 +136,13 @@ base class BaseClass {
 // CHECK:STDOUT:   .Abstract = %Abstract.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Abstract.1[@FinalClass.%self.loc16_24.2: FinalClass]();
+// CHECK:STDOUT: fn @Abstract.1[@FinalClass.%self.loc20_24.2: FinalClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Virtual[@FinalClass.%self.loc25_22.2: FinalClass]();
+// CHECK:STDOUT: fn @Virtual[@FinalClass.%self.loc29_22.2: FinalClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Default[@AbstractClass.%self.loc34_22.2: AbstractClass]();
+// CHECK:STDOUT: fn @Default[@AbstractClass.%self.loc38_22.2: AbstractClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Final[@AbstractClass.%self.loc40_18.2: AbstractClass]();
+// CHECK:STDOUT: fn @Final[@AbstractClass.%self.loc44_18.2: AbstractClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Abstract.2[@BaseClass.%self.loc51_24.2: BaseClass]();
+// CHECK:STDOUT: fn @Abstract.2[@BaseClass.%self.loc55_24.2: BaseClass]();
 // CHECK:STDOUT:

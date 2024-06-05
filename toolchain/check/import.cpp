@@ -31,29 +31,29 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
       auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
       const auto& bind_name =
           import_sem_ir.bind_names().Get(bind_inst.bind_name_id);
-      return {bind_name.name_id, bind_name.enclosing_scope_id};
+      return {bind_name.name_id, bind_name.parent_scope_id};
     }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       const auto& class_info = import_sem_ir.classes().Get(class_decl.class_id);
-      return {class_info.name_id, class_info.enclosing_scope_id};
+      return {class_info.name_id, class_info.parent_scope_id};
     }
 
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       const auto& function =
           import_sem_ir.functions().Get(function_decl.function_id);
-      return {function.name_id, function.enclosing_scope_id};
+      return {function.name_id, function.parent_scope_id};
     }
 
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       const auto& interface =
           import_sem_ir.interfaces().Get(interface_decl.interface_id);
-      return {interface.name_id, interface.enclosing_scope_id};
+      return {interface.name_id, interface.parent_scope_id};
     }
 
     case CARBON_KIND(SemIR::Namespace ns): {
       const auto& scope = import_sem_ir.name_scopes().Get(ns.name_scope_id);
-      return {scope.name_id, scope.enclosing_scope_id};
+      return {scope.name_id, scope.parent_scope_id};
     }
 
     default:
@@ -81,12 +81,12 @@ static auto CopyNameFromImportIR(Context& context,
 static auto AddNamespace(
     Context& context, SemIR::TypeId namespace_type_id,
     Parse::ImportDeclId node_id, SemIR::NameId name_id,
-    SemIR::NameScopeId enclosing_scope_id, bool diagnose_duplicate_namespace,
+    SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
     std::optional<llvm::function_ref<SemIR::InstId()>> make_import_id)
     -> std::tuple<SemIR::NameScopeId, SemIR::ConstantId, bool> {
-  auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
   auto [it, success] =
-      enclosing_scope.names.insert({name_id, SemIR::InstId::Invalid});
+      parent_scope.names.insert({name_id, SemIR::InstId::Invalid});
   if (!success) {
     if (auto namespace_inst =
             context.insts().TryGetAs<SemIR::Namespace>(it->second)) {
@@ -106,7 +106,7 @@ static auto AddNamespace(
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
   namespace_inst.name_scope_id =
-      context.name_scopes().Add(namespace_id, name_id, enclosing_scope_id);
+      context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   // Diagnose if there's a name conflict, but still produce the namespace to
@@ -138,13 +138,13 @@ static auto CopySingleNameScopeFromImportIR(
     Context& context, SemIR::TypeId namespace_type_id,
     llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces,
     SemIR::ImportIRId ir_id, SemIR::InstId import_inst_id,
-    SemIR::NameScopeId import_scope_id, SemIR::NameScopeId enclosing_scope_id,
+    SemIR::NameScopeId import_scope_id, SemIR::NameScopeId parent_scope_id,
     SemIR::NameId name_id) -> SemIR::NameScopeId {
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
-         .enclosing_scope_id = enclosing_scope_id,
+         .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
     auto import_ir_inst_id = context.import_ir_insts().Add(
         {.ir_id = ir_id, .inst_id = import_inst_id});
@@ -153,10 +153,9 @@ static auto CopySingleNameScopeFromImportIR(
                             .import_ir_inst_id = import_ir_inst_id,
                             .bind_name_id = bind_name_id});
   };
-  auto [namespace_scope_id, namespace_const_id, _] =
-      AddNamespace(context, namespace_type_id, Parse::NodeId::Invalid, name_id,
-                   enclosing_scope_id, /*diagnose_duplicate_namespace=*/false,
-                   make_import_id);
+  auto [namespace_scope_id, namespace_const_id, _] = AddNamespace(
+      context, namespace_type_id, Parse::NodeId::Invalid, name_id,
+      parent_scope_id, /*diagnose_duplicate_namespace=*/false, make_import_id);
 
   context.import_ir_constant_values()[ir_id.index].Set(import_inst_id,
                                                        namespace_const_id);
@@ -165,29 +164,28 @@ static auto CopySingleNameScopeFromImportIR(
   return namespace_scope_id;
 }
 
-// Copies enclosing name scopes from the import IR. Handles the parent
-// traversal. Returns the NameScope corresponding to the copied
-// import_enclosing_scope_id.
-static auto CopyEnclosingNameScopesFromImportIR(
+// Copies ancestor name scopes from the import IR. Handles the parent traversal.
+// Returns the NameScope corresponding to the copied import_parent_scope_id.
+static auto CopyAncestorNameScopesFromImportIR(
     Context& context, SemIR::TypeId namespace_type_id,
     const SemIR::File& import_sem_ir, SemIR::ImportIRId ir_id,
-    SemIR::NameScopeId import_enclosing_scope_id,
+    SemIR::NameScopeId import_parent_scope_id,
     llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces)
     -> SemIR::NameScopeId {
   // Package-level names don't need work.
-  if (import_enclosing_scope_id == SemIR::NameScopeId::Package) {
-    return import_enclosing_scope_id;
+  if (import_parent_scope_id == SemIR::NameScopeId::Package) {
+    return import_parent_scope_id;
   }
 
   // The scope to add namespaces to. Note this may change while looking at
-  // enclosing scopes, if we encounter a namespace that's already added.
+  // parent scopes, if we encounter a namespace that's already added.
   auto scope_cursor = SemIR::NameScopeId::Package;
 
-  // Build a stack of enclosing namespace names, with innermost first.
+  // Build a stack of ancestor namespace names, with the immediate parent first.
   llvm::SmallVector<SemIR::NameScopeId> new_namespaces;
-  while (import_enclosing_scope_id != SemIR::NameScopeId::Package) {
+  while (import_parent_scope_id != SemIR::NameScopeId::Package) {
     // If the namespace was already copied, reuse the results.
-    if (auto it = copied_namespaces.find(import_enclosing_scope_id);
+    if (auto it = copied_namespaces.find(import_parent_scope_id);
         it != copied_namespaces.end()) {
       // We inject names at the provided scope, and don't need to keep
       // traversing parents.
@@ -196,15 +194,14 @@ static auto CopyEnclosingNameScopesFromImportIR(
     }
 
     // The namespace hasn't been copied yet, so add it to our list.
-    const auto& scope =
-        import_sem_ir.name_scopes().Get(import_enclosing_scope_id);
+    const auto& scope = import_sem_ir.name_scopes().Get(import_parent_scope_id);
     auto scope_inst =
         import_sem_ir.insts().GetAs<SemIR::Namespace>(scope.inst_id);
     new_namespaces.push_back(scope_inst.name_scope_id);
-    import_enclosing_scope_id = scope.enclosing_scope_id;
+    import_parent_scope_id = scope.parent_scope_id;
   }
 
-  // Add enclosing namespace names, starting with the outermost.
+  // Add ancestor namespace names, starting with the outermost.
   for (auto import_scope_id : llvm::reverse(new_namespaces)) {
     auto import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
     auto name_id =
@@ -221,15 +218,15 @@ static auto CopyEnclosingNameScopesFromImportIR(
 static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
                                 const SemIR::File& import_sem_ir,
                                 SemIR::InstId import_inst_id,
-                                SemIR::NameScopeId enclosing_scope_id,
+                                SemIR::NameScopeId parent_scope_id,
                                 SemIR::NameId name_id) -> void {
   // Leave a placeholder that the inst comes from the other IR.
-  auto& names = context.name_scopes().Get(enclosing_scope_id).names;
+  auto& names = context.name_scopes().Get(parent_scope_id).names;
   auto [it, success] = names.insert({name_id, SemIR::InstId::Invalid});
   if (success) {
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
-         .enclosing_scope_id = enclosing_scope_id,
+         .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
     it->second = AddImportRef(
         context, {.ir_id = ir_id, .inst_id = import_inst_id}, bind_name_id);
@@ -255,17 +252,16 @@ auto ImportLibrariesFromCurrentPackage(
     for (const auto import_inst_id :
          import_ir.sem_ir->inst_blocks().Get(SemIR::InstBlockId::Exports)) {
       auto import_inst = import_ir.sem_ir->insts().Get(import_inst_id);
-      auto [import_name_id, import_enclosing_scope_id] =
+      auto [import_name_id, import_parent_scope_id] =
           GetImportName(*import_ir.sem_ir, import_inst);
 
       llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId> copied_namespaces;
 
       auto name_id =
           CopyNameFromImportIR(context, *import_ir.sem_ir, import_name_id);
-      SemIR::NameScopeId enclosing_scope_id =
-          CopyEnclosingNameScopesFromImportIR(
-              context, namespace_type_id, *import_ir.sem_ir, ir_id,
-              import_enclosing_scope_id, copied_namespaces);
+      SemIR::NameScopeId parent_scope_id = CopyAncestorNameScopesFromImportIR(
+          context, namespace_type_id, *import_ir.sem_ir, ir_id,
+          import_parent_scope_id, copied_namespaces);
 
       if (auto import_namespace_inst = import_inst.TryAs<SemIR::Namespace>()) {
         // Namespaces are always imported because they're essential for
@@ -273,10 +269,10 @@ auto ImportLibrariesFromCurrentPackage(
         CopySingleNameScopeFromImportIR(
             context, namespace_type_id, copied_namespaces, ir_id,
             import_inst_id, import_namespace_inst->name_scope_id,
-            enclosing_scope_id, name_id);
+            parent_scope_id, name_id);
       } else {
         AddImportRefOrMerge(context, ir_id, *import_ir.sem_ir, import_inst_id,
-                            enclosing_scope_id, name_id);
+                            parent_scope_id, name_id);
       }
     }
 

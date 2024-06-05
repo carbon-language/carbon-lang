@@ -2,20 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_DECL_STATE_H_
-#define CARBON_TOOLCHAIN_CHECK_DECL_STATE_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_DECL_INTRODUCER_STATE_H_
+#define CARBON_TOOLCHAIN_CHECK_DECL_INTRODUCER_STATE_H_
 
 #include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
 
-// State stored for each declaration we are currently in: the kind of
-// declaration and the keyword modifiers that apply to that declaration.
-struct DeclState {
+// State stored for each declaration we are introducing: the kind of
+// declaration and the keyword modifiers that apply to that declaration
+// introducer.
+struct DeclIntroducerState {
   // The kind of declaration.
   enum DeclKind : int8_t {
-    FileScope,
     Adapt,
     Alias,
     Base,
@@ -32,7 +32,7 @@ struct DeclState {
     Var
   };
 
-  explicit DeclState(DeclKind decl_kind) : kind(decl_kind) {}
+  explicit DeclIntroducerState(DeclKind decl_kind) : kind(decl_kind) {}
 
   auto modifier_node_id(ModifierOrder order) -> Parse::NodeId {
     return ordered_modifier_node_ids[static_cast<int8_t>(order)];
@@ -55,32 +55,30 @@ struct DeclState {
   KeywordModifierSet modifier_set;
 };
 
-// Stack of `DeclState` values, representing all the declarations we are
-// currently nested within.
-// Invariant: Bottom of the stack always has a "DeclState::FileScope" entry.
-class DeclStateStack {
+// Stack of `DeclIntroducerState` values, representing all the declaration
+// introducers we are currently nested within. Commonly size 0 or 1, as nested
+// introducers are rare.
+class DeclIntroducerStateStack {
  public:
-  DeclStateStack() { stack_.emplace_back(DeclState::FileScope); }
-
-  // Enters a declaration of kind `k`.
-  auto Push(DeclState::DeclKind k) -> void { stack_.emplace_back(k); }
+  // Begins introducing a declaration of kind `k`.
+  auto Push(DeclIntroducerState::DeclKind k) -> void { stack_.emplace_back(k); }
 
   // Gets the state of declaration at the top of the stack -- the innermost
   // declaration currently being processed.
-  auto innermost() -> DeclState& { return stack_.back(); }
+  auto innermost() -> DeclIntroducerState& { return stack_.back(); }
 
-  // Exits a declaration of kind `k`.
-  auto Pop(DeclState::DeclKind k) -> void {
+  // Finishes introducing a declaration of kind `k` and returns the
+  // produced state.
+  auto Pop(DeclIntroducerState::DeclKind k) -> DeclIntroducerState {
     CARBON_CHECK(stack_.back().kind == k)
         << "Found: " << stack_.back().kind << " expected: " << k;
-    stack_.pop_back();
-    CARBON_CHECK(!stack_.empty());
+    return stack_.pop_back_val();
   }
 
  private:
-  llvm::SmallVector<DeclState> stack_;
+  llvm::SmallVector<DeclIntroducerState> stack_;
 };
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_DECL_STATE_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_DECL_INTRODUCER_STATE_H_

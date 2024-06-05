@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_generic.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_generic.carbon
 
 fn Main() {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:11: ERROR: `var` declaration cannot declare a compile-time binding.
@@ -30,14 +34,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_12.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_12.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: () = bind_symbolic_name x 0, %x.var [symbolic = constants.%x]
-// CHECK:STDOUT:   %.loc11_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_17.2: init () = tuple_init () to %x.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_18: init () = converted %.loc11_17.1, %.loc11_17.2 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %x.var, %.loc11_18
+// CHECK:STDOUT:   %.loc15_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_17.2: init () = tuple_init () to %x.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc15_18: init () = converted %.loc15_17.1, %.loc15_17.2 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %x.var, %.loc15_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

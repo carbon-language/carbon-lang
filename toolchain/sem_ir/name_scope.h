@@ -12,7 +12,7 @@ namespace Carbon::SemIR {
 
 struct NameScope : Printable<NameScope> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{inst: " << inst_id << ", enclosing_scope: " << enclosing_scope_id
+    out << "{inst: " << inst_id << ", parent_scope: " << parent_scope_id
         << ", has_error: " << (has_error ? "true" : "false");
 
     out << ", extended_scopes: [";
@@ -66,8 +66,8 @@ struct NameScope : Printable<NameScope> {
   // When the scope is a namespace, the name. Otherwise, invalid.
   NameId name_id;
 
-  // The scope enclosing this one.
-  NameScopeId enclosing_scope_id;
+  // The parent scope.
+  NameScopeId parent_scope_id;
 
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or
@@ -91,11 +91,11 @@ class NameScopeStore {
   explicit NameScopeStore(InstStore* insts) : insts_(insts) {}
 
   // Adds a name scope, returning an ID to reference it.
-  auto Add(InstId inst_id, NameId name_id, NameScopeId enclosing_scope_id)
+  auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
       -> NameScopeId {
     return values_.Add({.inst_id = inst_id,
                         .name_id = name_id,
-                        .enclosing_scope_id = enclosing_scope_id});
+                        .parent_scope_id = parent_scope_id});
   }
 
   // Returns the requested name scope.

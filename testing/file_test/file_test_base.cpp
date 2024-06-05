@@ -49,10 +49,16 @@ using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
 // Reads a file to string.
-static auto ReadFile(std::string_view path) -> std::string {
+static auto ReadFile(std::string_view path) -> ErrorOr<std::string> {
   std::ifstream proto_file{std::string(path)};
+  if (proto_file.fail()) {
+    return Error(llvm::formatv("Error opening file: {0}", path));
+  }
   std::stringstream buffer;
   buffer << proto_file.rdbuf();
+  if (proto_file.fail()) {
+    return Error(llvm::formatv("Error reading file: {0}", path));
+  }
   proto_file.close();
   return buffer.str();
 }
@@ -83,29 +89,50 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
   }
 }
 
+// Modes for GetBazelCommand.
+enum class BazelMode {
+  Autoupdate,
+  Dump,
+  Test,
+};
+
+// Returns the requested bazel command string for the given execution mode.
+static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
+    -> std::string {
+  std::string args_str;
+  llvm::raw_string_ostream args(args_str);
+
+  const char* target = getenv("TEST_TARGET");
+  args << "bazel " << ((mode == BazelMode::Test) ? "test" : "run") << " "
+       << (target ? target : "<target>") << " ";
+
+  switch (mode) {
+    case BazelMode::Autoupdate:
+      args << "-- --autoupdate ";
+      break;
+
+    case BazelMode::Dump:
+      args << "-- --dump_output ";
+      break;
+
+    case BazelMode::Test:
+      args << "--test_arg=";
+      break;
+  }
+
+  args << "--file_tests=";
+  args << test_name;
+  return args_str;
+}
+
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
-  std::string test_command;
-  std::optional<llvm::PrettyStackTraceString> stack_trace_entry;
-
-  // If we're being run from bazel, provide some assistance for understanding
-  // and reproducing failures.
-  const char* target = getenv("TEST_TARGET");
-  if (target) {
-    constexpr const char* CommandFormat =
-        "bazel {0} {1} --test_arg=--file_tests={2}";
-    test_command = llvm::formatv(CommandFormat, "test", target, test_name_);
-    // Add a crash trace entry with the run command.
-    stack_trace_entry.emplace(test_command.c_str());
-
-    // This advice overrides the --file_tests flag provided by the file_test
-    // rule.
-    llvm::errs() << "\nTo test this file alone, run:\n  " << test_command
-                 << "\n\nTo view output, run:\n  "
-                 << llvm::formatv(CommandFormat, "run", target, test_name_)
-                 << " --test_arg=--dump_output\n\n";
-  }
+  // Add a crash trace entry with the single-file test command.
+  std::string test_command = GetBazelCommand(BazelMode::Test, test_name_);
+  llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
+  llvm::errs() << "\nTo test this file alone, run:\n  " << test_command
+               << "\n\n";
 
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
@@ -140,11 +167,10 @@ auto FileTestBase::TestBody() -> void {
   // Check results. Include a reminder of the autoupdate command for any
   // stdout/stderr differences.
   std::string update_message;
-  if (target && context.autoupdate_line_number) {
+  if (context.autoupdate_line_number) {
     update_message = llvm::formatv(
-        "If these differences are expected, try the autoupdater:\n"
-        "\tbazel run {0} -- --autoupdate --file_tests={1}",
-        target, test_name_);
+        "If these differences are expected, try the autoupdater:\n  {0}",
+        GetBazelCommand(BazelMode::Autoupdate, test_name_));
   } else {
     update_message =
         "If these differences are expected, content must be updated manually.";
@@ -193,8 +219,10 @@ auto FileTestBase::RunAutoupdater(const TestContext& context, bool dry_run)
   }
 
   return FileTestAutoupdater(
-             std::filesystem::absolute(test_name_.str()), context.input_content,
-             filenames, *context.autoupdate_line_number,
+             std::filesystem::absolute(test_name_.str()),
+             GetBazelCommand(BazelMode::Test, test_name_),
+             GetBazelCommand(BazelMode::Dump, test_name_),
+             context.input_content, filenames, *context.autoupdate_line_number,
              context.non_check_lines, context.stdout, context.stderr,
              GetDefaultFileRE(expected_filenames),
              GetLineNumberReplacements(expected_filenames),
@@ -247,7 +275,7 @@ auto FileTestBase::GetLineNumberReplacements(
 auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     -> ErrorOr<Success> {
   // Store the file so that test_files can use references to content.
-  context.input_content = ReadFile(test_name_);
+  CARBON_ASSIGN_OR_RETURN(context.input_content, ReadFile(test_name_));
 
   // Load expected output.
   CARBON_RETURN_IF_ERROR(ProcessTestFile(context));
@@ -370,9 +398,10 @@ static auto TryConsumeConflictMarker(llvm::StringRef line,
       return true;
     }
 
-    // Look for CHECK lines, which can be discarded.
+    // Look for CHECK and TIP lines, which can be discarded.
     if (line_trimmed.starts_with("// CHECK:STDOUT:") ||
-        line_trimmed.starts_with("// CHECK:STDERR:")) {
+        line_trimmed.starts_with("// CHECK:STDERR:") ||
+        line_trimmed.starts_with("// TIP:")) {
       return true;
     }
 
@@ -738,6 +767,11 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 
     ++line_index;
 
+    // TIP lines have no impact on validation.
+    if (line_trimmed.starts_with("// TIP:")) {
+      continue;
+    }
+
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
         TryConsumeCheck(line_index, line, line_trimmed,
@@ -801,8 +835,9 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
   CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty())
       << "Missing --test_targets_file.";
   auto content = ReadFile(absl::GetFlag(FLAGS_test_targets_file));
+  CARBON_CHECK(content.ok()) << content.error();
   llvm::SmallVector<std::string> all_tests;
-  for (llvm::StringRef file_ref : llvm::split(content, "\n")) {
+  for (llvm::StringRef file_ref : llvm::split(*content, "\n")) {
     if (file_ref.empty()) {
       continue;
     }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/parse/context.h"
+#include "toolchain/parse/handle.h"
 
 namespace Carbon::Parse {
 

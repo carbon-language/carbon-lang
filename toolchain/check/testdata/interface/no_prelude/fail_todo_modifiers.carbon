@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_todo_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_todo_modifiers.carbon
 
 interface Modifiers {
   // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
@@ -53,14 +57,14 @@ private interface Private {
 // CHECK:STDOUT: interface @Modifiers {
 // CHECK:STDOUT:   %Self: Modifiers = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Final.decl: Final = fn_decl @Final [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc12: <associated Final in Modifiers> = assoc_entity element0, %Final.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <associated Final in Modifiers> = assoc_entity element0, %Final.decl [template = constants.%.4]
 // CHECK:STDOUT:   %Default.decl: Default = fn_decl @Default [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %.loc17: <associated Default in Modifiers> = assoc_entity element1, %Default.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21: <associated Default in Modifiers> = assoc_entity element1, %Default.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Final = %.loc12
-// CHECK:STDOUT:   .Default = %.loc17
+// CHECK:STDOUT:   .Final = %.loc16
+// CHECK:STDOUT:   .Default = %.loc21
 // CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

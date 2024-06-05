@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/forward_declared.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/forward_declared.carbon
 
 class Class;
 
@@ -27,12 +31,12 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %Class.ref.loc9_9: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc9_14: type = ptr_type Class [template = constants.%.1]
-// CHECK:STDOUT:     %p.loc9_6.1: Class* = param p
-// CHECK:STDOUT:     @F.%p: Class* = bind_name p, %p.loc9_6.1
-// CHECK:STDOUT:     %Class.ref.loc9_20: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc9_25: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %Class.ref.loc13_9: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc13_14: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %p.loc13_6.1: Class* = param p
+// CHECK:STDOUT:     @F.%p: Class* = bind_name p, %p.loc13_6.1
+// CHECK:STDOUT:     %Class.ref.loc13_20: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc13_25: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     @F.%return: ref Class* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -28,6 +28,21 @@ build --experimental_guard_against_concurrent_changes
 build --per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 build --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 
+# The `rules_treesitter` synthesized libraries don't allow us to inject flags,
+# and compile generated code where we can't fix warnings.
+build --per_file_copt=utils/treesitter/_treesitter.tree_sitter/.*\.c$@-w
+build --host_per_file_copt=utils/treesitter/_treesitter.tree_sitter/.*\.c$@-w
+
+# The `cc_proto_library` rule doesn't allow providing `copts`:
+# https://github.com/bazelbuild/bazel/issues/22610
+#
+# We unfortunately need to work around issues with `-Wmissing-prototypes` in
+# generated protobuf code, so pass the `copt` manually here. The warning issue
+# is likely part of:
+# https://github.com/llvm/llvm-project/issues/94138
+build --per_file_copt=.*\.pb\.cc$@-Wno-missing-prototypes
+build --host_per_file_copt=.*\.pb\.cc$@-Wno-missing-prototypes
+
 # Default dynamic linking to off. While this can help build performance in some
 # edge cases with very large linked executables and a slow linker, between using
 # fast linkers on all platforms (LLD and the Apple linker), as well as having

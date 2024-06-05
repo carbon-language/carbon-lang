@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/if_expr/fail_not_in_function.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/if_expr/fail_not_in_function.carbon
 
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
@@ -51,16 +55,16 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc19: i32 = block_arg <unexpected instblockref block8> [template = constants.%.3]
-// CHECK:STDOUT:   %x: i32 = bind_name x, %.loc19
+// CHECK:STDOUT:   %.loc23: i32 = block_arg <unexpected instblockref block8> [template = constants.%.3]
+// CHECK:STDOUT:   %x: i32 = bind_name x, %.loc23
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc33: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %.loc37: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   if %.loc37 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

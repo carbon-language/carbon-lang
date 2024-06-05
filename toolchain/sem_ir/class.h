@@ -21,8 +21,7 @@ struct Class : public Printable<Class> {
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << "}";
+    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
   }
 
   // Determines whether this class has been fully defined. This is false until
@@ -39,8 +38,8 @@ struct Class : public Printable<Class> {
 
   // The class name.
   NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
+  // The parent scope.
+  NameScopeId parent_scope_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.

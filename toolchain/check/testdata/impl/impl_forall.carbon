@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/impl_forall.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/impl_forall.carbon
 
 interface Simple {
   fn F();
@@ -36,9 +40,9 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %T.loc11_14.1: type = param T
-// CHECK:STDOUT:     %T.loc11_14.2: type = bind_symbolic_name T 0, %T.loc11_14.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_14.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc15_14.1: type = param T
+// CHECK:STDOUT:     %T.loc15_14.2: type = bind_symbolic_name T 0, %T.loc15_14.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -46,11 +50,11 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc8: <associated F in Simple> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: <associated F in Simple> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8
+// CHECK:STDOUT:   .F = %.loc12
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

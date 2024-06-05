@@ -17,7 +17,7 @@
 
 namespace Carbon {
 
-auto Main(int argc, char** argv) -> ErrorOr<Success> {
+static auto Main(int argc, char** argv) -> ErrorOr<Success> {
   Carbon::SetWorkingDirForBazel();
 
   if (argc != 2) {

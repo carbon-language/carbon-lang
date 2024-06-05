@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/no_prelude/fail_local_in_namespace.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/no_prelude/fail_local_in_namespace.carbon
 
 namespace NS;
 
@@ -38,16 +42,16 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
-// CHECK:STDOUT:     %.loc9_12.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc9_12.2: type = converted %.loc9_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc13_12.1: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @F.%return: ref {} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> {} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_17: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc18_12: <error> = bind_alias <invalid>, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22_17: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc22_12: <error> = bind_alias <invalid>, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>

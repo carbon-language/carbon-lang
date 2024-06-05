@@ -18,6 +18,14 @@ cc_proto_library(
     deps = [":carbon_proto"],
 )
 
+# Header for LibFuzzer, does not provide the implementation which should come
+# from some other source such as a fuzz test target.
+cc_library(
+    name = "libfuzzer_header",
+    testonly = 1,
+    hdrs = ["libfuzzer.h"],
+)
+
 cc_library(
     name = "proto_to_carbon_lib",
     testonly = 1,

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/bit_complement.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/overloaded/bit_complement.carbon
 
 // This file was generated from unary_op.carbon.tmpl. Run make_tests.sh to regenerate.
 
@@ -54,15 +58,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %import_ref.3: <associated Op in BitComplement> = import_ref ir5, inst+19, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.4: Op = import_ref ir5, inst+14, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: TestOp = fn_decl @TestOp [template = constants.%struct.4] {
-// CHECK:STDOUT:     %C.ref.loc19_14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc19_11.1: C = param a
-// CHECK:STDOUT:     @TestOp.%a: C = bind_name a, %a.loc19_11.1
-// CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc23_11.1: C = param a
+// CHECK:STDOUT:     @TestOp.%a: C = bind_name a, %a.loc23_11.1
+// CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir5, inst+1, loaded [template = constants.%.2]
@@ -78,10 +82,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as BitComplement {
 // CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.1] {
-// CHECK:STDOUT:     %C.ref.loc14_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.loc14_9.1: C = param self
-// CHECK:STDOUT:     %self.loc14_9.2: C = bind_name self, %self.loc14_9.1
-// CHECK:STDOUT:     %C.ref.loc14_23: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %self.loc18_9.1: C = param self
+// CHECK:STDOUT:     %self.loc18_9.2: C = bind_name self, %self.loc18_9.1
+// CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
@@ -96,12 +100,12 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.%self.loc14_9.2: C]() -> @impl.%return.var: C {
+// CHECK:STDOUT: fn @Op.1[@impl.%self.loc18_9.2: C]() -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc15_13.2: init C = class_init (), @impl.%return.var [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc15_14: init C = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct.3]
-// CHECK:STDOUT:   return %.loc15_14 to @impl.%return.var
+// CHECK:STDOUT:   %.loc19_13.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc19_13.2: init C = class_init (), @impl.%return.var [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc19_14: init C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct.3]
+// CHECK:STDOUT:   return %.loc19_14 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self]() -> Self;
@@ -110,9 +114,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc20: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc19: ref C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init C = call %.loc20(%a.ref) to %.loc19
+// CHECK:STDOUT:   %.loc24: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc23: ref C = splice_block %return {}
+// CHECK:STDOUT:   %Op.call: init C = call %.loc24(%a.ref) to %.loc23
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_duplicate.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_duplicate.carbon
 
 interface Interface { }
 
@@ -56,16 +60,16 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Interface = %Interface.decl.loc7
+// CHECK:STDOUT:     .Interface = %Interface.decl.loc11
 // CHECK:STDOUT:     .Function = %Function.decl
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl.loc7: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %Interface.decl.loc16: type = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl.loc11: type = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl.loc20: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %Function.decl: Function = fn_decl @Function [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.1 [template = constants.%.3] {}
+// CHECK:STDOUT:   %.decl.loc33: type = interface_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl.loc39: type = interface_decl @.2 [template = constants.%.4] {}
+// CHECK:STDOUT:   %.decl.loc43: type = interface_decl @.2 [template = constants.%.4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {

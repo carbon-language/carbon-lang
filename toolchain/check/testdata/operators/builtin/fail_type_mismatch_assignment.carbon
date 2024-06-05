@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch_assignment.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch_assignment.carbon
 
 fn Main() {
   var a: i32 = 3;
@@ -37,14 +41,14 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3 [template = constants.%.2]
-// CHECK:STDOUT:   assign %a.var, %.loc8_16
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.2]
+// CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc12: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

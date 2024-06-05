@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_todo_generic_default_fn.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_todo_generic_default_fn.carbon
 
 interface I(T:! type) {
   // TODO: Use `default` here.
@@ -37,20 +41,20 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {
-// CHECK:STDOUT:     %T.loc7_13.1: type = param T
-// CHECK:STDOUT:     %T.loc7_13.2: type = bind_symbolic_name T 0, %T.loc7_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_13.1: type = param T
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.2] {
-// CHECK:STDOUT:     %T.loc18_6.1: type = param T
-// CHECK:STDOUT:     %T.loc18_6.2: type = bind_symbolic_name T 0, %T.loc18_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %Self.ref.loc18_24: I = name_ref Self, @I.%Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc18_24.1: type = facet_type_access %Self.ref.loc18_24 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc18_24.2: type = converted %Self.ref.loc18_24, %.loc18_24.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc18_18.1: Self = param self
-// CHECK:STDOUT:     @.1.%self: Self = bind_name self, %self.loc18_18.1
-// CHECK:STDOUT:     %Self.ref.loc18_35: I = name_ref Self, @I.%Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc18_35.1: type = facet_type_access %Self.ref.loc18_35 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc18_35.2: type = converted %Self.ref.loc18_35, %.loc18_35.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %T.loc22_6.1: type = param T
+// CHECK:STDOUT:     %T.loc22_6.2: type = bind_symbolic_name T 0, %T.loc22_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %Self.ref.loc22_24: I = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc22_24.1: type = facet_type_access %Self.ref.loc22_24 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc22_24.2: type = converted %Self.ref.loc22_24, %.loc22_24.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc22_18.1: Self = param self
+// CHECK:STDOUT:     @.1.%self: Self = bind_name self, %self.loc22_18.1
+// CHECK:STDOUT:     %Self.ref.loc22_35: I = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc22_35.1: type = facet_type_access %Self.ref.loc22_35 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc22_35.2: type = converted %Self.ref.loc22_35, %.loc22_35.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     @.1.%return: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -58,25 +62,25 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
-// CHECK:STDOUT:     %Self.ref.loc9_14: I = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc9_14.1: type = facet_type_access %Self.ref.loc9_14 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc9_14.2: type = converted %Self.ref.loc9_14, %.loc9_14.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc9_8.1: Self = param self
-// CHECK:STDOUT:     %self.loc9_8.2: Self = bind_name self, %self.loc9_8.1
-// CHECK:STDOUT:     %Self.ref.loc9_25: I = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc9_25.1: type = facet_type_access %Self.ref.loc9_25 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc9_25.2: type = converted %Self.ref.loc9_25, %.loc9_25.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %Self.ref.loc13_14: I = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref.loc13_14 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref.loc13_14, %.loc13_14.1 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %self.loc13_8.1: Self = param self
+// CHECK:STDOUT:     %self.loc13_8.2: Self = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %Self.ref.loc13_25: I = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc13_25.1: type = facet_type_access %Self.ref.loc13_25 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc13_25.2: type = converted %Self.ref.loc13_25, %.loc13_25.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_29: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_29: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc9_29
+// CHECK:STDOUT:   .F = %.loc13_29
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@I.%self.loc9_8.2: Self]() -> Self;
+// CHECK:STDOUT: fn @F[@I.%self.loc13_8.2: Self]() -> Self;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[%self: Self]() -> Self {
 // CHECK:STDOUT: !entry:

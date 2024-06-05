@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_return_var_no_returned_var.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_return_var_no_returned_var.carbon
 
 fn Procedure() -> i32 {
   // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:3: ERROR: `return var;` with no `returned var` in scope.
@@ -30,8 +34,8 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Procedure.decl: Procedure = fn_decl @Procedure [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32, %.loc7_19.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     @Procedure.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

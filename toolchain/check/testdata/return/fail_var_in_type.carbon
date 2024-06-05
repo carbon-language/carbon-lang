@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_var_in_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_var_in_type.carbon
 
 var x: type = i32;
 // CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
@@ -33,7 +37,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.2] {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
-// CHECK:STDOUT:     %.loc11: type = bind_value %x.ref
+// CHECK:STDOUT:     %.loc15: type = bind_value %x.ref
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -42,7 +46,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

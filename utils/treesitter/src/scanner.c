@@ -10,6 +10,12 @@ enum TokenType {
   STRING,
 };
 
+// This is part of a special rule that doesn't allow `copts` in Bazel, so we
+// disable warnings using `#pragma`s here.
+#pragma clang diagnostic push
+// The tree_sitter build uses C functions without prototypes.
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
 // our scanner is stateless
 void* tree_sitter_carbon_external_scanner_create(void) { return NULL; }
 

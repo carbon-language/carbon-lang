@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -35,7 +36,7 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Class);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Class);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -103,7 +104,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
       (prev_is_extern && !new_is_extern)) {
     prev_class.decl_id = new_class.decl_id;
     ReplacePrevInstForMerge(
-        context, prev_class.enclosing_scope_id, prev_class.name_id,
+        context, prev_class.parent_scope_id, prev_class.name_id,
         new_is_import ? new_loc.inst_id : new_class.decl_id);
   }
   return true;
@@ -184,31 +185,32 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers.
-  auto [_, enclosing_scope_inst] =
-      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
-                             enclosing_scope_inst);
-  LimitModifiersOnDecl(context,
+  auto [_, parent_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Class);
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Class,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
                            KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
-  RestrictExternModifierOnDecl(context, Lex::TokenKind::Class,
-                               enclosing_scope_inst, is_definition);
+  RestrictExternModifierOnDecl(context, introducer, Lex::TokenKind::Class,
+                               parent_scope_inst, is_definition);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
 
-  bool is_extern = modifiers.HasAnyOf(KeywordModifierSet::Extern);
+  bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto inheritance_kind =
-      modifiers.HasAnyOf(KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
-      : modifiers.HasAnyOf(KeywordModifierSet::Base)   ? SemIR::Class::Base
-                                                       : SemIR::Class::Final;
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)
+          ? SemIR::Class::Abstract
+      : introducer.modifier_set.HasAnyOf(KeywordModifierSet::Base)
+          ? SemIR::Class::Base
+          : SemIR::Class::Final;
 
-  context.decl_state_stack().Pop(DeclState::Class);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
@@ -221,7 +223,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
       .name_id = name_context.name_id_for_new_inst(),
-      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       // `.self_type_id` depends on the ClassType, so is set below.
@@ -282,7 +284,7 @@ auto HandleClassDefinitionStart(Context& context,
   if (!class_info.is_defined()) {
     class_info.definition_id = class_decl_id;
     class_info.scope_id = context.name_scopes().Add(
-        class_decl_id, SemIR::NameId::Invalid, class_info.enclosing_scope_id);
+        class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
   }
 
   // Enter the class scope.
@@ -321,10 +323,10 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
   context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
 }
 
-// Returns the declaration of the immediately-enclosing class scope, or
-// diagonses if there isn't one.
-static auto GetEnclosingClassOrDiagnose(Context& context, SemIRLoc loc,
-                                        Lex::TokenKind tok)
+// Returns the current scope's class declaration, or diagnoses if it isn't a
+// class.
+static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
+                                             Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
   auto class_scope = context.GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
@@ -355,7 +357,7 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
 
 auto HandleAdaptIntroducer(Context& context,
                            Parse::AdaptIntroducerId /*node_id*/) -> bool {
-  context.decl_state_stack().Push(DeclState::Adapt);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Adapt);
   return true;
 }
 
@@ -364,18 +366,18 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is permitted, no others are allowed.
-  LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Adapt);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend,
                        Lex::TokenKind::Adapt);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  context.decl_state_stack().Pop(DeclState::Adapt);
 
-  auto enclosing_class_decl =
-      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
-  if (!enclosing_class_decl) {
+  auto parent_class_decl =
+      GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
+  if (!parent_class_decl) {
     return true;
   }
 
-  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.adapt_id.is_valid()) {
     DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
                                       Lex::TokenKind::Adapt);
@@ -396,7 +398,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
       node_id, {.adapted_type_id = adapted_type_id});
 
   // Extend the class scope with the adapted type's scope if requested.
-  if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extended_scope_id = SemIR::NameScopeId::Invalid;
     if (adapted_type_id == SemIR::TypeId::Error) {
       // Recover by not extending any scope. We instead set has_error to true
@@ -423,7 +425,7 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
 auto HandleBaseIntroducer(Context& context, Parse::BaseIntroducerId /*node_id*/)
     -> bool {
-  context.decl_state_stack().Push(DeclState::Base);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Base);
   return true;
 }
 
@@ -495,23 +497,23 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is required, no others are allowed.
-  LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Base);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend,
                        Lex::TokenKind::Base);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");
     context.emitter().Emit(node_id, BaseMissingExtend);
   }
-  context.decl_state_stack().Pop(DeclState::Base);
 
-  auto enclosing_class_decl =
-      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
-  if (!enclosing_class_decl) {
+  auto parent_class_decl =
+      GetCurrentScopeAsClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
+  if (!parent_class_decl) {
     return true;
   }
 
-  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.base_id.is_valid()) {
     DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
                                       Lex::TokenKind::Base);
@@ -546,7 +548,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
       class_info.base_id);
 
   // Extend the class scope with the base class.
-  if (modifiers.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
       class_scope.extended_scopes.push_back(base_info.scope_id);

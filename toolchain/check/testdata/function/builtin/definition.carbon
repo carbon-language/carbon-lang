@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/builtin/definition.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/builtin/definition.carbon
 
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
@@ -26,19 +30,19 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Add.decl: Add = fn_decl @Add [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc7_11: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %int.make_type_32.loc7_11 [template = i32]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %int.make_type_32.loc7_11, %.loc7_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
-// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc7_8.1
-// CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
-// CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
-// CHECK:STDOUT:     %b.loc7_16.1: i32 = param b
-// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc7_16.1
-// CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
-// CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
+// CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
+// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc11_8.1
+// CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
+// CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
+// CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
+// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc11_16.1
+// CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %int.make_type_32.loc11_27 [template = i32]
+// CHECK:STDOUT:     %.loc11_27.2: type = converted %int.make_type_32.loc11_27, %.loc11_27.1 [template = i32]
 // CHECK:STDOUT:     @Add.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

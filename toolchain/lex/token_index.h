@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_LEX_TOKEN_INDEX_H_
 
 #include "toolchain/base/index_base.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Lex {
 
@@ -31,6 +32,21 @@ struct TokenIndex : public IndexBase {
 
 constexpr TokenIndex TokenIndex::Invalid(TokenIndex::InvalidIndex);
 constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
+
+// A lightweight handle to a lexed token in a `TokenizedBuffer` whose kind is
+// known to be `Kind`.
+template <const TokenKind& K>
+struct TokenIndexForKind : public TokenIndex {
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const TokenKind& Kind;
+  constexpr explicit TokenIndexForKind(TokenIndex index) : TokenIndex(index) {}
+};
+template <const TokenKind& K>
+const TokenKind& TokenIndexForKind<K>::Kind = K;
+
+#define CARBON_TOKEN(TokenName) \
+  using TokenName##TokenIndex = TokenIndexForKind<TokenKind::TokenName>;
+#include "toolchain/lex/token_kind.def"
 
 }  // namespace Carbon::Lex
 

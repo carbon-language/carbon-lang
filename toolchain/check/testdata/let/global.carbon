@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/global.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/global.carbon
 
 let n: i32 = 1;
 
@@ -26,16 +30,16 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
-// CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7_14
+// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
+// CHECK:STDOUT:   %.loc11_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc11_14
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc9: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc9_11.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:     %.loc9_11.2: type = converted %int.make_type_32.loc9, %.loc9_11.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc13_11.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:     %.loc13_11.2: type = converted %int.make_type_32.loc13, %.loc13_11.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

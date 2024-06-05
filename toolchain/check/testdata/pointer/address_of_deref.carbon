@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/address_of_deref.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/address_of_deref.carbon
 
 fn F() -> i32 {
   var n: i32 = 0;
@@ -30,8 +34,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %int.make_type_32, %.loc7_11.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
@@ -42,18 +46,18 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   assign %n.var, %.loc8_16
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   assign %n.var, %.loc12_16
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc9_13: i32* = addr_of %n.ref
-// CHECK:STDOUT:   %.loc9_12: ref i32 = deref %.loc9_13
-// CHECK:STDOUT:   %.loc9_11: i32* = addr_of %.loc9_12
-// CHECK:STDOUT:   %.loc9_10.1: ref i32 = deref %.loc9_11
-// CHECK:STDOUT:   %.loc9_10.2: i32 = bind_value %.loc9_10.1
-// CHECK:STDOUT:   return %.loc9_10.2
+// CHECK:STDOUT:   %.loc13_13: i32* = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_12: ref i32 = deref %.loc13_13
+// CHECK:STDOUT:   %.loc13_11: i32* = addr_of %.loc13_12
+// CHECK:STDOUT:   %.loc13_10.1: ref i32 = deref %.loc13_11
+// CHECK:STDOUT:   %.loc13_10.2: i32 = bind_value %.loc13_10.1
+// CHECK:STDOUT:   return %.loc13_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

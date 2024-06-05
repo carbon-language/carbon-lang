@@ -110,6 +110,9 @@ cc_fuzz_test(
     name = "explorer_fuzzer",
     size = "small",
     srcs = ["explorer_fuzzer.cpp"],
+    # Uses a macro-based fuzzing library that triggers this warning. And
+    # explorer is currently feature frozen, so just disable the warning.
+    copts = ["-Wno-missing-prototypes"],
     corpus = glob(["fuzzer_corpus/*"]),
     shard_count = 8,
     tags = [

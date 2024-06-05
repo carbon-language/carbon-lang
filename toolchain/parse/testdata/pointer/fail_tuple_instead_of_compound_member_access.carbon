@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/pointer/fail_tuple_instead_of_compound_member_access.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/fail_tuple_instead_of_compound_member_access.carbon
 
 fn F() {
   // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:6: ERROR: Expected expression.

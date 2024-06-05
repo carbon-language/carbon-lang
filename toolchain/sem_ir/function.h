@@ -28,7 +28,7 @@ struct Function : public Printable<Function> {
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", param_refs: " << param_refs_id;
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
@@ -79,8 +79,8 @@ struct Function : public Printable<Function> {
 
   // The function name.
   NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
+  // The parent scope.
+  NameScopeId parent_scope_id;
   // The first declaration of the function. This is a FunctionDecl.
   InstId decl_id;
   // A block containing a single reference instruction per implicit parameter.

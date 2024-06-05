@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/alias/no_prelude/fail_aliased_name_in_diag.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/no_prelude/fail_aliased_name_in_diag.carbon
 
 class C {}
 class D {}
@@ -57,10 +61,10 @@ let c_var: c = d;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc11_13.2: init D = class_init (), file.%d.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_14: init D = converted %.loc11_13.1, %.loc11_13.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%d.var, %.loc11_14
+// CHECK:STDOUT:   %.loc15_13.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc15_13.2: init D = class_init (), file.%d.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_14: init D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%d.var, %.loc15_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

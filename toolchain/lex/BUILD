@@ -115,6 +115,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/numeric_literal/*"]),
     deps = [
         ":numeric_literal",
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
@@ -170,6 +171,7 @@ cc_fuzz_test(
     deps = [
         ":string_literal",
         "//common:check",
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
@@ -199,7 +201,10 @@ cc_library(
 cc_library(
     name = "token_index",
     hdrs = ["token_index.h"],
-    deps = ["//toolchain/base:index_base"],
+    deps = [
+        ":token_kind",
+        "//toolchain/base:index_base",
+    ],
 )
 
 cc_library(
@@ -266,6 +271,7 @@ cc_fuzz_test(
     deps = [
         ":lex",
         "//common:check",
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",

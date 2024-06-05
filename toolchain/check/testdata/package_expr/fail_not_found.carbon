@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/package_expr/fail_not_found.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/package_expr/fail_not_found.carbon
 
 fn Main() {
   // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:16: ERROR: Name `x` not found.
@@ -34,8 +38,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc11_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc11_10.2: type = converted %int.make_type_32, %.loc11_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_32, %.loc15_10.1 [template = i32]
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]

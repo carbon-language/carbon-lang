@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// NOAUTOUPDATE
 // CHECK:STDERR: RUNTIME ERROR: prelude.carbon:{{\d+}}: Rand inputs must be ordered for a non-empty range: 1 must be less than -1
 
 package ExplorerTest api;

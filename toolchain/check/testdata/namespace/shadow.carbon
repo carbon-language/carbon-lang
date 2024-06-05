@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/namespace/shadow.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/shadow.carbon
 
 fn A();
 
@@ -42,24 +46,24 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .A = %A.decl.loc11
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A.decl.loc7: A = fn_decl @A.1 [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %A.decl.loc11: A = fn_decl @A.1 [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.decl.loc10
+// CHECK:STDOUT:     .A = %A.decl.loc14
 // CHECK:STDOUT:     .M = %M
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc10: A = fn_decl @A.2 [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %A.decl.loc14: A = fn_decl @A.2 [template = constants.%struct.2] {}
 // CHECK:STDOUT:   %M: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.4] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.3() [template = i32]
-// CHECK:STDOUT:     %.loc14_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc14_15.2: type = converted %int.make_type_32, %.loc14_15.1 [template = i32]
+// CHECK:STDOUT:     %.loc18_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc18_15.2: type = converted %int.make_type_32, %.loc18_15.1 [template = i32]
 // CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
@@ -73,25 +77,25 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc16: A = name_ref A, file.%A.decl.loc10 [template = constants.%struct.2]
-// CHECK:STDOUT:   %A.call: init () = call %A.ref.loc16()
-// CHECK:STDOUT:   %.loc17: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
+// CHECK:STDOUT:   %A.ref.loc20: A = name_ref A, file.%A.decl.loc14 [template = constants.%struct.2]
+// CHECK:STDOUT:   %A.call: init () = call %A.ref.loc20()
+// CHECK:STDOUT:   %.loc21: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   if %.loc21 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.3() [template = i32]
-// CHECK:STDOUT:   %.loc18_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc18_12.2: type = converted %int.make_type_32, %.loc18_12.1 [template = i32]
+// CHECK:STDOUT:   %.loc22_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc22_12.2: type = converted %int.make_type_32, %.loc22_12.1 [template = i32]
 // CHECK:STDOUT:   %A.var: ref i32 = var A
 // CHECK:STDOUT:   %A: ref i32 = bind_name A, %A.var
-// CHECK:STDOUT:   %.loc18_18: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   assign %A.var, %.loc18_18
-// CHECK:STDOUT:   %A.ref.loc21: ref i32 = name_ref A, %A
-// CHECK:STDOUT:   %.loc21: i32 = bind_value %A.ref.loc21
-// CHECK:STDOUT:   return %.loc21
+// CHECK:STDOUT:   %.loc22_18: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   assign %A.var, %.loc22_18
+// CHECK:STDOUT:   %A.ref.loc25: ref i32 = name_ref A, %A
+// CHECK:STDOUT:   %.loc25: i32 = bind_value %A.ref.loc25
+// CHECK:STDOUT:   return %.loc25
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc23
+// CHECK:STDOUT:   %.loc27: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

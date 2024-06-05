@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_base_no_extend.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_base_no_extend.carbon
 
 base class B {}
 
@@ -43,10 +47,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc13: <unbound element of class C> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc17: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .base = %.loc13
+// CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

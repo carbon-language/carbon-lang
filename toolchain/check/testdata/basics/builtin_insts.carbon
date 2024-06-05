@@ -5,13 +5,17 @@
 // ARGS: compile --no-prelude-import --phase=check --dump-raw-sem-ir --builtin-sem-ir %s
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/builtin_insts.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/builtin_insts.carbon
 
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        builtin_insts.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}

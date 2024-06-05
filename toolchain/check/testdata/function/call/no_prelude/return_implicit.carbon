@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/no_prelude/return_implicit.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/no_prelude/return_implicit.carbon
 
 fn MakeImplicitEmptyTuple() {
 }
@@ -37,8 +41,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_11.2: type = converted %.loc11_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: MakeImplicitEmptyTuple = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [template = constants.%struct.1]

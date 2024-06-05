@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/fail_numeric_literal_overflow.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_numeric_literal_overflow.carbon
 
 // CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: ERROR: Integer literal with value 39999999999999999993 does not fit in i32.
 // CHECK:STDERR: let a: i32 = 39999999999999999993;
@@ -50,31 +54,31 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
 // CHECK:STDOUT:   %a: i32 = bind_name a, <error>
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc17_8.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
-// CHECK:STDOUT:   %.loc17_8.2: type = converted %int.make_type_32.loc17, %.loc17_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc21_8.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
+// CHECK:STDOUT:   %.loc21_8.2: type = converted %int.make_type_32.loc21, %.loc21_8.1 [template = i32]
 // CHECK:STDOUT:   %b: i32 = bind_name b, <error>
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
-// CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32.loc23, %.loc23_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc27: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc27_8.1: type = value_of_initializer %int.make_type_32.loc27 [template = i32]
+// CHECK:STDOUT:   %.loc27_8.2: type = converted %int.make_type_32.loc27, %.loc27_8.1 [template = i32]
 // CHECK:STDOUT:   %c: i32 = bind_name c, <error>
-// CHECK:STDOUT:   %.loc29_8.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc33_8.1: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %float.make_type.loc29: init type = call constants.%struct.2(%.loc29_8.1) [template = f64]
-// CHECK:STDOUT:   %.loc29_8.2: type = value_of_initializer %float.make_type.loc29 [template = f64]
-// CHECK:STDOUT:   %.loc29_8.3: type = converted %float.make_type.loc29, %.loc29_8.2 [template = f64]
+// CHECK:STDOUT:   %float.make_type.loc33: init type = call constants.%struct.2(%.loc33_8.1) [template = f64]
+// CHECK:STDOUT:   %.loc33_8.2: type = value_of_initializer %float.make_type.loc33 [template = f64]
+// CHECK:STDOUT:   %.loc33_8.3: type = converted %float.make_type.loc33, %.loc33_8.2 [template = f64]
 // CHECK:STDOUT:   %d: f64 = bind_name d, <error>
-// CHECK:STDOUT:   %.loc34_8.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc38_8.1: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.5: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %float.make_type.loc34: init type = call constants.%struct.2(%.loc34_8.1) [template = f64]
-// CHECK:STDOUT:   %.loc34_8.2: type = value_of_initializer %float.make_type.loc34 [template = f64]
-// CHECK:STDOUT:   %.loc34_8.3: type = converted %float.make_type.loc34, %.loc34_8.2 [template = f64]
+// CHECK:STDOUT:   %float.make_type.loc38: init type = call constants.%struct.2(%.loc38_8.1) [template = f64]
+// CHECK:STDOUT:   %.loc38_8.2: type = value_of_initializer %float.make_type.loc38 [template = f64]
+// CHECK:STDOUT:   %.loc38_8.3: type = converted %float.make_type.loc38, %.loc38_8.2 [template = f64]
 // CHECK:STDOUT:   %e: f64 = bind_name e, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -376,8 +376,7 @@ class Context {
 
   // The deferred definition indexes of functions whose definitions have begun
   // but not yet finished.
-  llvm::SmallVector<DeferredDefinitionIndex>
-      enclosing_deferred_definition_stack_;
+  llvm::SmallVector<DeferredDefinitionIndex> deferred_definition_stack_;
 
   // The current packaging state, whether `import`/`package` are allowed.
   PackagingState packaging_state_ = PackagingState::FileStart;

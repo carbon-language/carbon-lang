@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_base_method_define.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_base_method_define.carbon
 
 base class B {
   fn F();
@@ -81,11 +85,11 @@ fn D.C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc16: <unbound element of class D> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %.loc20: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   .base = %.loc16
+// CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .F = file.%F.decl
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/fail_todo_undefined_impl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/fail_todo_undefined_impl.carbon
 
 interface I {
   fn F();
@@ -58,8 +62,8 @@ impl C as I {
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc15_11.2: type = converted %int.make_type_32, %.loc15_11.1 [template = i32]
+// CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
 // CHECK:STDOUT:     @F.2.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl {
@@ -71,11 +75,11 @@ impl C as I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc8: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8
+// CHECK:STDOUT:   .F = %.loc12
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,7 +109,7 @@ impl C as I {
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc8 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

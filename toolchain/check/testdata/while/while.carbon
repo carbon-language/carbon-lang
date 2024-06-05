@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/while/while.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/while.carbon
 
 fn Cond() -> bool;
 
@@ -49,8 +53,8 @@ fn While() {
 // CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Cond.decl: Cond = fn_decl @Cond [template = constants.%struct.2] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.1() [template = bool]
-// CHECK:STDOUT:     %.loc7_14.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc7_14.2: type = converted %bool.make_type, %.loc7_14.1 [template = bool]
+// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc11_14.2: type = converted %bool.make_type, %.loc11_14.1 [template = bool]
 // CHECK:STDOUT:     @Cond.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {}
@@ -78,9 +82,9 @@ fn While() {
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %Cond.ref: Cond = name_ref Cond, file.%Cond.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %Cond.call: init bool = call %Cond.ref()
-// CHECK:STDOUT:   %.loc15_16.1: bool = value_of_initializer %Cond.call
-// CHECK:STDOUT:   %.loc15_16.2: bool = converted %Cond.call, %.loc15_16.1
-// CHECK:STDOUT:   if %.loc15_16.2 br !while.body else br !while.done
+// CHECK:STDOUT:   %.loc19_16.1: bool = value_of_initializer %Cond.call
+// CHECK:STDOUT:   %.loc19_16.2: bool = converted %Cond.call, %.loc19_16.1
+// CHECK:STDOUT:   if %.loc19_16.2 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
 // CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.4]

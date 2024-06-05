@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
 
 fn Mismatch() -> i32 {
   // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: ERROR: Type `f64` of `returned var` does not match return type of enclosing function.
@@ -38,8 +42,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Mismatch.decl: Mismatch = fn_decl @Mismatch [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc7_18.2: type = converted %int.make_type_32, %.loc7_18.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_32, %.loc11_18.1 [template = i32]
 // CHECK:STDOUT:     @Mismatch.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.3]
@@ -49,12 +53,12 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_19.1: i32 = int_literal 64 [template = constants.%.2]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.3(%.loc14_19.1) [template = f64]
-// CHECK:STDOUT:   %.loc14_19.2: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:   %.loc14_19.3: type = converted %float.make_type, %.loc14_19.2 [template = f64]
+// CHECK:STDOUT:   %.loc18_19.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.3(%.loc18_19.1) [template = f64]
+// CHECK:STDOUT:   %.loc18_19.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:   %.loc18_19.3: type = converted %float.make_type, %.loc18_19.2 [template = f64]
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
-// CHECK:STDOUT:   %.loc14_25: f64 = float_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_25: f64 = float_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

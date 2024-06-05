@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_type_assign.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_type_assign.carbon
 
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `type` to `{.a: i32}`.
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
@@ -26,9 +30,9 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc10_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc10_13.2: type = converted %int.make_type_32, %.loc10_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32, %.loc14_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
@@ -39,9 +43,9 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc10_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc10_25.2: type = converted %int.make_type_32, %.loc10_25.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_28: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_28: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

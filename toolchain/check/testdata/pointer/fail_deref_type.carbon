@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_type.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_type.carbon
 
 // CHECK:STDERR: fail_deref_type.carbon:[[@LINE+7]]:8: ERROR: Cannot dereference operand of non-pointer type `type`.
 // CHECK:STDERR: var p: *i32;
@@ -33,17 +37,17 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:   %.loc14_9.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
-// CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_32.loc14, %.loc14_9.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_8: ref <error> = deref %.loc14_9.2
-// CHECK:STDOUT:   %p.var: ref <error> = var p
-// CHECK:STDOUT:   %p: ref <error> = bind_name p, %p.var
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%struct() [template = i32]
 // CHECK:STDOUT:   %.loc18_9.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
 // CHECK:STDOUT:   %.loc18_9.2: type = converted %int.make_type_32.loc18, %.loc18_9.1 [template = i32]
-// CHECK:STDOUT:   %.loc18_12: ref <error> = deref %.loc18_9.2
+// CHECK:STDOUT:   %.loc18_8: ref <error> = deref %.loc18_9.2
+// CHECK:STDOUT:   %p.var: ref <error> = var p
+// CHECK:STDOUT:   %p: ref <error> = bind_name p, %p.var
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %int.make_type_32.loc22: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc22_9.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
+// CHECK:STDOUT:   %.loc22_9.2: type = converted %int.make_type_32.loc22, %.loc22_9.1 [template = i32]
+// CHECK:STDOUT:   %.loc22_12: ref <error> = deref %.loc22_9.2
 // CHECK:STDOUT:   %p2.var: ref <error> = var p2
 // CHECK:STDOUT:   %p2: ref <error> = bind_name p2, %p2.var
 // CHECK:STDOUT: }

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// NOAUTOUPDATE
 // CHECK:STDERR: RUNTIME ERROR: <Main()>:0: attempt to call function `Main` that has not been defined
 
 package ExplorerTest api;

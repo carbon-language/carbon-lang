@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/global/class_obj.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/global/class_obj.carbon
 class A {}
 
 var a: A = {};
@@ -37,10 +41,10 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc8_13.2: init A = class_init (), file.%a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc8_14: init A = converted %.loc8_13.1, %.loc8_13.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%a.var, %.loc8_14
+// CHECK:STDOUT:   %.loc12_13.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc12_13.2: init A = class_init (), file.%a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_14: init A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%a.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

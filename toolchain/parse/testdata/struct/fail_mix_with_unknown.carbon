@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/struct/fail_mix_with_unknown.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_mix_with_unknown.carbon
 
 // CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+8]]:25: ERROR: Expected `.field = value`.
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};

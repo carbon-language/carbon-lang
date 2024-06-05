@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_extend_impl_scope.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_impl_scope.carbon
 
 interface I {}
 
@@ -32,8 +36,8 @@ extend impl i32 as I {}
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct() [template = i32]
-// CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32, %.loc12_13.1 [template = i32]
+// CHECK:STDOUT:     %.loc16_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc16_13.2: type = converted %int.make_type_32, %.loc16_13.1 [template = i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

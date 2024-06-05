@@ -217,6 +217,22 @@ auto FileTestAutoupdater::AddRemappedNonCheckLine() -> void {
                    .second);
 }
 
+auto FileTestAutoupdater::AddTips() -> void {
+  CARBON_CHECK(tips_.empty()) << "Should only add tips once";
+
+  tips_.reserve(4);
+  // This puts commands on a single line so that they can be easily copied.
+  tips_.emplace_back("// TIP: To test this file alone, run:");
+  tips_.emplace_back("// TIP:   " + test_command_);
+  tips_.emplace_back("// TIP: To dump output, run:");
+  tips_.emplace_back("// TIP:   " + dump_command_);
+
+  for (const auto& tip : tips_) {
+    new_lines_.push_back(&tip);
+    ++output_line_number_;
+  }
+}
+
 auto FileTestAutoupdater::ShouldAddCheckLine(const CheckLines& check_lines,
                                              bool to_file_end) const -> bool {
   return check_lines.cursor != check_lines.lines.end() &&
@@ -295,6 +311,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // we don't insert a blank line before the STDERR checks if there are no more
   // lines after AUTOUPDATE.
   AddRemappedNonCheckLine();
+  AddTips();
   AddCheckLines(stderr_, /*to_file_end=*/false);
   if (any_attached_stdout_lines_) {
     AddCheckLines(stdout_, /*to_file_end=*/false);

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -14,7 +15,7 @@ namespace Carbon::Check {
 
 auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId node_id)
     -> bool {
-  context.decl_state_stack().Push(DeclState::Let);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Let);
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(node_id);
   return true;
@@ -78,29 +79,28 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // Process declaration modifiers.
   // TODO: For a qualified `let` declaration, this should use the target scope
   // of the name introduced in the declaration. See #2590.
-  auto [enclosing_scope_inst_id, enclosing_scope_inst] =
+  auto [parent_scope_inst_id, parent_scope_inst] =
       context.name_scopes().GetInstIfValid(
           context.scope_stack().PeekNameScopeId());
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let,
-                             enclosing_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Let,
-                                      enclosing_scope_inst);
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Let);
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Let,
+                             parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, Lex::TokenKind::Let,
+                                      parent_scope_inst);
   LimitModifiersOnDecl(
-      context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
+      context, introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Interface,
       Lex::TokenKind::Let);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  if (modifiers.HasAnyOf(KeywordModifierSet::Interface)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Decl),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Let);
 
   auto pattern = context.insts().GetWithLocId(pattern_id);
   auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
@@ -140,7 +140,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // Add the name of the binding to the current scope.
   auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
   context.AddNameToLookup(name_id, pattern_id);
-  if (enclosing_scope_inst_id == SemIR::InstId::PackageNamespace) {
+  if (parent_scope_inst_id == SemIR::InstId::PackageNamespace) {
     context.AddExport(pattern_id);
   }
   return true;

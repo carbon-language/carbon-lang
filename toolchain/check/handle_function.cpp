@@ -5,9 +5,10 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/decl_state.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -29,7 +30,7 @@ auto HandleFunctionIntroducer(Context& context,
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Fn);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Fn);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -44,24 +45,24 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context, bool is_definition,
-                              SemIR::InstId enclosing_scope_inst_id,
-                              std::optional<SemIR::Inst> enclosing_scope_inst)
-    -> KeywordModifierSet {
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Fn, enclosing_scope_inst);
-  LimitModifiersOnDecl(context,
+static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
+                              bool is_definition,
+                              SemIR::InstId parent_scope_inst_id,
+                              std::optional<SemIR::Inst> parent_scope_inst)
+    -> void {
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Fn,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        Lex::TokenKind::Fn);
-  RestrictExternModifierOnDecl(context, Lex::TokenKind::Fn,
-                               enclosing_scope_inst, is_definition);
-  CheckMethodModifiersOnFunction(context, enclosing_scope_inst_id,
-                                 enclosing_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Fn,
-                                      enclosing_scope_inst);
-
-  return context.decl_state_stack().innermost().modifier_set;
+  RestrictExternModifierOnDecl(context, introducer, Lex::TokenKind::Fn,
+                               parent_scope_inst, is_definition);
+  CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
+                                 parent_scope_inst);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, Lex::TokenKind::Fn,
+                                      parent_scope_inst);
 }
 
 // Returns the return slot usage for a function given the computed usage for two
@@ -130,7 +131,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
     prev_function.decl_id = new_function.decl_id;
-    ReplacePrevInstForMerge(context, prev_function.enclosing_scope_id,
+    ReplacePrevInstForMerge(context, prev_function.parent_scope_id,
                             prev_function.name_id, new_function.decl_id);
   }
   return true;
@@ -224,36 +225,34 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto [enclosing_scope_inst_id, enclosing_scope_inst] =
-      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
-  auto modifiers = DiagnoseModifiers(
-      context, is_definition, enclosing_scope_inst_id, enclosing_scope_inst);
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  auto [parent_scope_inst_id, parent_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Fn);
+  DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
+                    parent_scope_inst);
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  bool is_extern = modifiers.HasAnyOf(KeywordModifierSet::Extern);
-  if (modifiers.HasAnyOf(KeywordModifierSet::Method)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Decl),
+  bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "method modifier");
   }
-  if (modifiers.HasAnyOf(KeywordModifierSet::Interface)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Decl),
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Fn);
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
   auto function_info = SemIR::Function{
       .name_id = name_context.name_id_for_new_inst(),
-      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
       .decl_id = context.AddPlaceholderInst(
           SemIR::LocIdAndInst(node_id, function_decl)),
       .implicit_param_refs_id = name.implicit_params_id,
@@ -284,9 +283,9 @@ static auto BuildFunctionDecl(Context& context,
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = function_info.decl_id;
-    if (enclosing_scope_inst && !name_context.has_qualifiers) {
+    if (parent_scope_inst && !name_context.has_qualifiers) {
       if (auto interface_scope =
-              enclosing_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
+              parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
         lookup_result_id = BuildAssociatedEntity(
             context, interface_scope->interface_id, function_info.decl_id);
       }
@@ -378,10 +377,10 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 
 auto HandleFunctionDefinitionResume(Context& context,
                                     Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction sus_fn) -> void {
-  context.decl_name_stack().Restore(sus_fn.saved_name_state);
-  HandleFunctionDefinitionAfterSignature(context, node_id, sus_fn.function_id,
-                                         sus_fn.decl_id);
+                                    SuspendedFunction suspended_fn) -> void {
+  context.decl_name_stack().Restore(suspended_fn.saved_name_state);
+  HandleFunctionDefinitionAfterSignature(
+      context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
 }
 
 auto HandleFunctionDefinitionStart(Context& context,

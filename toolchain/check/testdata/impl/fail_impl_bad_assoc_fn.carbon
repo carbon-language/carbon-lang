@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_impl_bad_assoc_fn.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_assoc_fn.carbon
 
 interface I { fn F(); }
 
@@ -368,70 +372,70 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc7: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc7
+// CHECK:STDOUT:   .F = %.loc11
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: J = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.5 [template = constants.%struct.7] {
-// CHECK:STDOUT:     %bool.make_type.loc89_26: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc89_26.1: type = value_of_initializer %bool.make_type.loc89_26 [template = bool]
-// CHECK:STDOUT:     %.loc89_26.2: type = converted %bool.make_type.loc89_26, %.loc89_26.1 [template = bool]
-// CHECK:STDOUT:     %self.loc89_20.1: bool = param self
-// CHECK:STDOUT:     %self.loc89_20.2: bool = bind_name self, %self.loc89_20.1
-// CHECK:STDOUT:     %bool.make_type.loc89_35: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc89_35.1: type = value_of_initializer %bool.make_type.loc89_35 [template = bool]
-// CHECK:STDOUT:     %.loc89_35.2: type = converted %bool.make_type.loc89_35, %.loc89_35.1 [template = bool]
-// CHECK:STDOUT:     %b.loc89_32.1: bool = param b
-// CHECK:STDOUT:     %b.loc89_32.2: bool = bind_name b, %b.loc89_32.1
-// CHECK:STDOUT:     %bool.make_type.loc89_44: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc89_44.1: type = value_of_initializer %bool.make_type.loc89_44 [template = bool]
-// CHECK:STDOUT:     %.loc89_44.2: type = converted %bool.make_type.loc89_44, %.loc89_44.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc93_26: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc93_26.1: type = value_of_initializer %bool.make_type.loc93_26 [template = bool]
+// CHECK:STDOUT:     %.loc93_26.2: type = converted %bool.make_type.loc93_26, %.loc93_26.1 [template = bool]
+// CHECK:STDOUT:     %self.loc93_20.1: bool = param self
+// CHECK:STDOUT:     %self.loc93_20.2: bool = bind_name self, %self.loc93_20.1
+// CHECK:STDOUT:     %bool.make_type.loc93_35: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc93_35.1: type = value_of_initializer %bool.make_type.loc93_35 [template = bool]
+// CHECK:STDOUT:     %.loc93_35.2: type = converted %bool.make_type.loc93_35, %.loc93_35.1 [template = bool]
+// CHECK:STDOUT:     %b.loc93_32.1: bool = param b
+// CHECK:STDOUT:     %b.loc93_32.2: bool = bind_name b, %b.loc93_32.1
+// CHECK:STDOUT:     %bool.make_type.loc93_44: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc93_44.1: type = value_of_initializer %bool.make_type.loc93_44 [template = bool]
+// CHECK:STDOUT:     %.loc93_44.2: type = converted %bool.make_type.loc93_44, %.loc93_44.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc89_48: <associated F in J> = assoc_entity element0, %F.decl [template = constants.%.8]
+// CHECK:STDOUT:   %.loc93_48: <associated F in J> = assoc_entity element0, %F.decl [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc89_48
+// CHECK:STDOUT:   .F = %.loc93_48
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @SelfNested {
 // CHECK:STDOUT:   %Self: SelfNested = bind_symbolic_name Self 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.13 [template = constants.%struct.16] {
-// CHECK:STDOUT:     %Self.ref.loc184_12: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_16.1: type = facet_type_access %Self.ref.loc184_12 [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_16.2: type = converted %Self.ref.loc184_12, %.loc184_16.1 [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_16.3: type = ptr_type Self [symbolic = constants.%.10]
-// CHECK:STDOUT:     %Self.ref.loc184_24: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_24.1: type = facet_type_access %Self.ref.loc184_24 [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_24.2: type = converted %Self.ref.loc184_24, %.loc184_24.1 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %Self.ref.loc188_12: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_16.1: type = facet_type_access %Self.ref.loc188_12 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_16.2: type = converted %Self.ref.loc188_12, %.loc188_16.1 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_16.3: type = ptr_type Self [symbolic = constants.%.10]
+// CHECK:STDOUT:     %Self.ref.loc188_24: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_24.1: type = facet_type_access %Self.ref.loc188_24 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_24.2: type = converted %Self.ref.loc188_24, %.loc188_24.1 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.15() [template = i32]
-// CHECK:STDOUT:     %.loc184_34.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc184_34.2: type = converted %int.make_type_32, %.loc184_34.1 [template = i32]
-// CHECK:STDOUT:     %.loc184_37: type = struct_type {.x: Self, .y: i32} [symbolic = constants.%.11]
-// CHECK:STDOUT:     %.loc184_38.1: (type, type) = tuple_literal (%.loc184_16.3, %.loc184_37)
-// CHECK:STDOUT:     %.loc184_38.2: type = converted %.loc184_38.1, constants.%.13 [symbolic = constants.%.13]
-// CHECK:STDOUT:     %x.loc184_8.1: (Self*, {.x: Self, .y: i32}) = param x
-// CHECK:STDOUT:     %x.loc184_8.2: (Self*, {.x: Self, .y: i32}) = bind_name x, %x.loc184_8.1
-// CHECK:STDOUT:     %Self.ref.loc184_45: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_51: i32 = int_literal 4 [template = constants.%.14]
-// CHECK:STDOUT:     %.loc184_45.1: type = facet_type_access %Self.ref.loc184_45 [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_45.2: type = converted %Self.ref.loc184_45, %.loc184_45.1 [symbolic = constants.%Self.3]
-// CHECK:STDOUT:     %.loc184_52: type = array_type %.loc184_51, Self [symbolic = constants.%.15]
+// CHECK:STDOUT:     %.loc188_34.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc188_34.2: type = converted %int.make_type_32, %.loc188_34.1 [template = i32]
+// CHECK:STDOUT:     %.loc188_37: type = struct_type {.x: Self, .y: i32} [symbolic = constants.%.11]
+// CHECK:STDOUT:     %.loc188_38.1: (type, type) = tuple_literal (%.loc188_16.3, %.loc188_37)
+// CHECK:STDOUT:     %.loc188_38.2: type = converted %.loc188_38.1, constants.%.13 [symbolic = constants.%.13]
+// CHECK:STDOUT:     %x.loc188_8.1: (Self*, {.x: Self, .y: i32}) = param x
+// CHECK:STDOUT:     %x.loc188_8.2: (Self*, {.x: Self, .y: i32}) = bind_name x, %x.loc188_8.1
+// CHECK:STDOUT:     %Self.ref.loc188_45: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_51: i32 = int_literal 4 [template = constants.%.14]
+// CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:     %.loc188_52: type = array_type %.loc188_51, Self [symbolic = constants.%.15]
 // CHECK:STDOUT:     %return.var: ref [Self; 4] = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc184_53: <associated F in SelfNested> = assoc_entity element0, %F.decl [template = constants.%.17]
+// CHECK:STDOUT:   %.loc188_53: <associated F in SelfNested> = assoc_entity element0, %F.decl [template = constants.%.17]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc184_53
+// CHECK:STDOUT:   .F = %.loc188_53
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -464,10 +468,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: impl @impl.4: FExtraParam as I {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc58_13.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc58_13.2: type = converted %bool.make_type, %.loc58_13.1 [template = bool]
-// CHECK:STDOUT:     %b.loc58_10.1: bool = param b
-// CHECK:STDOUT:     %b.loc58_10.2: bool = bind_name b, %b.loc58_10.1
+// CHECK:STDOUT:     %.loc62_13.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc62_13.2: type = converted %bool.make_type, %.loc62_13.1 [template = bool]
+// CHECK:STDOUT:     %b.loc62_10.1: bool = param b
+// CHECK:STDOUT:     %b.loc62_10.2: bool = bind_name b, %b.loc62_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -479,8 +483,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: impl @impl.5: FExtraImplicitParam as I {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.3 [template = constants.%struct.5] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FExtraImplicitParam [template = constants.%FExtraImplicitParam]
-// CHECK:STDOUT:     %self.loc71_10.1: FExtraImplicitParam = param self
-// CHECK:STDOUT:     %self.loc71_10.2: FExtraImplicitParam = bind_name self, %self.loc71_10.1
+// CHECK:STDOUT:     %self.loc75_10.1: FExtraImplicitParam = param self
+// CHECK:STDOUT:     %self.loc75_10.2: FExtraImplicitParam = bind_name self, %self.loc75_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -492,8 +496,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: impl @impl.6: FExtraReturnType as I {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.4 [template = constants.%struct.6] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc85_15.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc85_15.2: type = converted %bool.make_type, %.loc85_15.1 [template = bool]
+// CHECK:STDOUT:     %.loc89_15.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc89_15.2: type = converted %bool.make_type, %.loc89_15.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -505,14 +509,14 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.7: FMissingParam as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.6 [template = constants.%struct.8] {
-// CHECK:STDOUT:     %bool.make_type.loc100_16: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc100_16.1: type = value_of_initializer %bool.make_type.loc100_16 [template = bool]
-// CHECK:STDOUT:     %.loc100_16.2: type = converted %bool.make_type.loc100_16, %.loc100_16.1 [template = bool]
-// CHECK:STDOUT:     %self.loc100_10.1: bool = param self
-// CHECK:STDOUT:     %self.loc100_10.2: bool = bind_name self, %self.loc100_10.1
-// CHECK:STDOUT:     %bool.make_type.loc100_27: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc100_27.1: type = value_of_initializer %bool.make_type.loc100_27 [template = bool]
-// CHECK:STDOUT:     %.loc100_27.2: type = converted %bool.make_type.loc100_27, %.loc100_27.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc104_16: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc104_16.1: type = value_of_initializer %bool.make_type.loc104_16 [template = bool]
+// CHECK:STDOUT:     %.loc104_16.2: type = converted %bool.make_type.loc104_16, %.loc104_16.1 [template = bool]
+// CHECK:STDOUT:     %self.loc104_10.1: bool = param self
+// CHECK:STDOUT:     %self.loc104_10.2: bool = bind_name self, %self.loc104_10.1
+// CHECK:STDOUT:     %bool.make_type.loc104_27: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc104_27.1: type = value_of_initializer %bool.make_type.loc104_27 [template = bool]
+// CHECK:STDOUT:     %.loc104_27.2: type = converted %bool.make_type.loc104_27, %.loc104_27.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -524,14 +528,14 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.8: FMissingImplicitParam as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.7 [template = constants.%struct.9] {
-// CHECK:STDOUT:     %bool.make_type.loc113_13: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc113_13.1: type = value_of_initializer %bool.make_type.loc113_13 [template = bool]
-// CHECK:STDOUT:     %.loc113_13.2: type = converted %bool.make_type.loc113_13, %.loc113_13.1 [template = bool]
-// CHECK:STDOUT:     %b.loc113_10.1: bool = param b
-// CHECK:STDOUT:     %b.loc113_10.2: bool = bind_name b, %b.loc113_10.1
-// CHECK:STDOUT:     %bool.make_type.loc113_22: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc113_22.1: type = value_of_initializer %bool.make_type.loc113_22 [template = bool]
-// CHECK:STDOUT:     %.loc113_22.2: type = converted %bool.make_type.loc113_22, %.loc113_22.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc117_13: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc117_13.1: type = value_of_initializer %bool.make_type.loc117_13 [template = bool]
+// CHECK:STDOUT:     %.loc117_13.2: type = converted %bool.make_type.loc117_13, %.loc117_13.1 [template = bool]
+// CHECK:STDOUT:     %b.loc117_10.1: bool = param b
+// CHECK:STDOUT:     %b.loc117_10.2: bool = bind_name b, %b.loc117_10.1
+// CHECK:STDOUT:     %bool.make_type.loc117_22: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc117_22.1: type = value_of_initializer %bool.make_type.loc117_22 [template = bool]
+// CHECK:STDOUT:     %.loc117_22.2: type = converted %bool.make_type.loc117_22, %.loc117_22.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -543,16 +547,16 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.9: FMissingReturnType as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.8 [template = constants.%struct.10] {
-// CHECK:STDOUT:     %bool.make_type.loc126_16: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc126_16.1: type = value_of_initializer %bool.make_type.loc126_16 [template = bool]
-// CHECK:STDOUT:     %.loc126_16.2: type = converted %bool.make_type.loc126_16, %.loc126_16.1 [template = bool]
-// CHECK:STDOUT:     %self.loc126_10.1: bool = param self
-// CHECK:STDOUT:     %self.loc126_10.2: bool = bind_name self, %self.loc126_10.1
-// CHECK:STDOUT:     %bool.make_type.loc126_25: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc126_25.1: type = value_of_initializer %bool.make_type.loc126_25 [template = bool]
-// CHECK:STDOUT:     %.loc126_25.2: type = converted %bool.make_type.loc126_25, %.loc126_25.1 [template = bool]
-// CHECK:STDOUT:     %b.loc126_22.1: bool = param b
-// CHECK:STDOUT:     %b.loc126_22.2: bool = bind_name b, %b.loc126_22.1
+// CHECK:STDOUT:     %bool.make_type.loc130_16: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc130_16.1: type = value_of_initializer %bool.make_type.loc130_16 [template = bool]
+// CHECK:STDOUT:     %.loc130_16.2: type = converted %bool.make_type.loc130_16, %.loc130_16.1 [template = bool]
+// CHECK:STDOUT:     %self.loc130_10.1: bool = param self
+// CHECK:STDOUT:     %self.loc130_10.2: bool = bind_name self, %self.loc130_10.1
+// CHECK:STDOUT:     %bool.make_type.loc130_25: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc130_25.1: type = value_of_initializer %bool.make_type.loc130_25 [template = bool]
+// CHECK:STDOUT:     %.loc130_25.2: type = converted %bool.make_type.loc130_25, %.loc130_25.1 [template = bool]
+// CHECK:STDOUT:     %b.loc130_22.1: bool = param b
+// CHECK:STDOUT:     %b.loc130_22.2: bool = bind_name b, %b.loc130_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -563,17 +567,17 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.10: FDifferentParamType as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.9 [template = constants.%struct.11] {
-// CHECK:STDOUT:     %bool.make_type.loc139_16: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc139_16.1: type = value_of_initializer %bool.make_type.loc139_16 [template = bool]
-// CHECK:STDOUT:     %.loc139_16.2: type = converted %bool.make_type.loc139_16, %.loc139_16.1 [template = bool]
-// CHECK:STDOUT:     %self.loc139_10.1: bool = param self
-// CHECK:STDOUT:     %self.loc139_10.2: bool = bind_name self, %self.loc139_10.1
+// CHECK:STDOUT:     %bool.make_type.loc143_16: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc143_16.1: type = value_of_initializer %bool.make_type.loc143_16 [template = bool]
+// CHECK:STDOUT:     %.loc143_16.2: type = converted %bool.make_type.loc143_16, %.loc143_16.1 [template = bool]
+// CHECK:STDOUT:     %self.loc143_10.1: bool = param self
+// CHECK:STDOUT:     %self.loc143_10.2: bool = bind_name self, %self.loc143_10.1
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentParamType [template = constants.%FDifferentParamType]
-// CHECK:STDOUT:     %b.loc139_22.1: FDifferentParamType = param b
-// CHECK:STDOUT:     %b.loc139_22.2: FDifferentParamType = bind_name b, %b.loc139_22.1
-// CHECK:STDOUT:     %bool.make_type.loc139_34: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc139_34.1: type = value_of_initializer %bool.make_type.loc139_34 [template = bool]
-// CHECK:STDOUT:     %.loc139_34.2: type = converted %bool.make_type.loc139_34, %.loc139_34.1 [template = bool]
+// CHECK:STDOUT:     %b.loc143_22.1: FDifferentParamType = param b
+// CHECK:STDOUT:     %b.loc143_22.2: FDifferentParamType = bind_name b, %b.loc143_22.1
+// CHECK:STDOUT:     %bool.make_type.loc143_34: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc143_34.1: type = value_of_initializer %bool.make_type.loc143_34 [template = bool]
+// CHECK:STDOUT:     %.loc143_34.2: type = converted %bool.make_type.loc143_34, %.loc143_34.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -586,16 +590,16 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: impl @impl.11: FDifferentImplicitParamType as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.10 [template = constants.%struct.12] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentImplicitParamType [template = constants.%FDifferentImplicitParamType]
-// CHECK:STDOUT:     %self.loc152_10.1: FDifferentImplicitParamType = param self
-// CHECK:STDOUT:     %self.loc152_10.2: FDifferentImplicitParamType = bind_name self, %self.loc152_10.1
-// CHECK:STDOUT:     %bool.make_type.loc152_25: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc152_25.1: type = value_of_initializer %bool.make_type.loc152_25 [template = bool]
-// CHECK:STDOUT:     %.loc152_25.2: type = converted %bool.make_type.loc152_25, %.loc152_25.1 [template = bool]
-// CHECK:STDOUT:     %b.loc152_22.1: bool = param b
-// CHECK:STDOUT:     %b.loc152_22.2: bool = bind_name b, %b.loc152_22.1
-// CHECK:STDOUT:     %bool.make_type.loc152_34: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc152_34.1: type = value_of_initializer %bool.make_type.loc152_34 [template = bool]
-// CHECK:STDOUT:     %.loc152_34.2: type = converted %bool.make_type.loc152_34, %.loc152_34.1 [template = bool]
+// CHECK:STDOUT:     %self.loc156_10.1: FDifferentImplicitParamType = param self
+// CHECK:STDOUT:     %self.loc156_10.2: FDifferentImplicitParamType = bind_name self, %self.loc156_10.1
+// CHECK:STDOUT:     %bool.make_type.loc156_25: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc156_25.1: type = value_of_initializer %bool.make_type.loc156_25 [template = bool]
+// CHECK:STDOUT:     %.loc156_25.2: type = converted %bool.make_type.loc156_25, %.loc156_25.1 [template = bool]
+// CHECK:STDOUT:     %b.loc156_22.1: bool = param b
+// CHECK:STDOUT:     %b.loc156_22.2: bool = bind_name b, %b.loc156_22.1
+// CHECK:STDOUT:     %bool.make_type.loc156_34: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc156_34.1: type = value_of_initializer %bool.make_type.loc156_34 [template = bool]
+// CHECK:STDOUT:     %.loc156_34.2: type = converted %bool.make_type.loc156_34, %.loc156_34.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -607,16 +611,16 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.12: FDifferentReturnType as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.11 [template = constants.%struct.13] {
-// CHECK:STDOUT:     %bool.make_type.loc165_16: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc165_16.1: type = value_of_initializer %bool.make_type.loc165_16 [template = bool]
-// CHECK:STDOUT:     %.loc165_16.2: type = converted %bool.make_type.loc165_16, %.loc165_16.1 [template = bool]
-// CHECK:STDOUT:     %self.loc165_10.1: bool = param self
-// CHECK:STDOUT:     %self.loc165_10.2: bool = bind_name self, %self.loc165_10.1
-// CHECK:STDOUT:     %bool.make_type.loc165_25: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc165_25.1: type = value_of_initializer %bool.make_type.loc165_25 [template = bool]
-// CHECK:STDOUT:     %.loc165_25.2: type = converted %bool.make_type.loc165_25, %.loc165_25.1 [template = bool]
-// CHECK:STDOUT:     %b.loc165_22.1: bool = param b
-// CHECK:STDOUT:     %b.loc165_22.2: bool = bind_name b, %b.loc165_22.1
+// CHECK:STDOUT:     %bool.make_type.loc169_16: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc169_16.1: type = value_of_initializer %bool.make_type.loc169_16 [template = bool]
+// CHECK:STDOUT:     %.loc169_16.2: type = converted %bool.make_type.loc169_16, %.loc169_16.1 [template = bool]
+// CHECK:STDOUT:     %self.loc169_10.1: bool = param self
+// CHECK:STDOUT:     %self.loc169_10.2: bool = bind_name self, %self.loc169_10.1
+// CHECK:STDOUT:     %bool.make_type.loc169_25: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc169_25.1: type = value_of_initializer %bool.make_type.loc169_25 [template = bool]
+// CHECK:STDOUT:     %.loc169_25.2: type = converted %bool.make_type.loc169_25, %.loc169_25.1 [template = bool]
+// CHECK:STDOUT:     %b.loc169_22.1: bool = param b
+// CHECK:STDOUT:     %b.loc169_22.2: bool = bind_name b, %b.loc169_22.1
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentReturnType [template = constants.%FDifferentReturnType]
 // CHECK:STDOUT:     %return.var: ref FDifferentReturnType = var <return slot>
 // CHECK:STDOUT:   }
@@ -629,19 +633,19 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.13: FDifferentParamName as J {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.12 [template = constants.%struct.14] {
-// CHECK:STDOUT:     %bool.make_type.loc179_16: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc179_16.1: type = value_of_initializer %bool.make_type.loc179_16 [template = bool]
-// CHECK:STDOUT:     %.loc179_16.2: type = converted %bool.make_type.loc179_16, %.loc179_16.1 [template = bool]
-// CHECK:STDOUT:     %self.loc179_10.1: bool = param self
-// CHECK:STDOUT:     %self.loc179_10.2: bool = bind_name self, %self.loc179_10.1
-// CHECK:STDOUT:     %bool.make_type.loc179_29: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc179_29.1: type = value_of_initializer %bool.make_type.loc179_29 [template = bool]
-// CHECK:STDOUT:     %.loc179_29.2: type = converted %bool.make_type.loc179_29, %.loc179_29.1 [template = bool]
-// CHECK:STDOUT:     %not_b.loc179_22.1: bool = param not_b
-// CHECK:STDOUT:     %not_b.loc179_22.2: bool = bind_name not_b, %not_b.loc179_22.1
-// CHECK:STDOUT:     %bool.make_type.loc179_38: init type = call constants.%struct.3() [template = bool]
-// CHECK:STDOUT:     %.loc179_38.1: type = value_of_initializer %bool.make_type.loc179_38 [template = bool]
-// CHECK:STDOUT:     %.loc179_38.2: type = converted %bool.make_type.loc179_38, %.loc179_38.1 [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc183_16: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc183_16.1: type = value_of_initializer %bool.make_type.loc183_16 [template = bool]
+// CHECK:STDOUT:     %.loc183_16.2: type = converted %bool.make_type.loc183_16, %.loc183_16.1 [template = bool]
+// CHECK:STDOUT:     %self.loc183_10.1: bool = param self
+// CHECK:STDOUT:     %self.loc183_10.2: bool = bind_name self, %self.loc183_10.1
+// CHECK:STDOUT:     %bool.make_type.loc183_29: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc183_29.1: type = value_of_initializer %bool.make_type.loc183_29 [template = bool]
+// CHECK:STDOUT:     %.loc183_29.2: type = converted %bool.make_type.loc183_29, %.loc183_29.1 [template = bool]
+// CHECK:STDOUT:     %not_b.loc183_22.1: bool = param not_b
+// CHECK:STDOUT:     %not_b.loc183_22.2: bool = bind_name not_b, %not_b.loc183_22.1
+// CHECK:STDOUT:     %bool.make_type.loc183_38: init type = call constants.%struct.3() [template = bool]
+// CHECK:STDOUT:     %.loc183_38.1: type = value_of_initializer %bool.make_type.loc183_38 [template = bool]
+// CHECK:STDOUT:     %.loc183_38.2: type = converted %bool.make_type.loc183_38, %.loc183_38.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -653,22 +657,22 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.14: SelfNestedBadParam as SelfNested {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.14 [template = constants.%struct.17] {
-// CHECK:STDOUT:     %SelfNestedBadParam.ref.loc196_14: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
-// CHECK:STDOUT:     %.loc196_32: type = ptr_type SelfNestedBadParam [template = constants.%.18]
-// CHECK:STDOUT:     %int.make_type_32.loc196_40: init type = call constants.%struct.15() [template = i32]
-// CHECK:STDOUT:     %.loc196_40.1: type = value_of_initializer %int.make_type_32.loc196_40 [template = i32]
-// CHECK:STDOUT:     %.loc196_40.2: type = converted %int.make_type_32.loc196_40, %.loc196_40.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc196_49: init type = call constants.%struct.15() [template = i32]
-// CHECK:STDOUT:     %.loc196_49.1: type = value_of_initializer %int.make_type_32.loc196_49 [template = i32]
-// CHECK:STDOUT:     %.loc196_49.2: type = converted %int.make_type_32.loc196_49, %.loc196_49.1 [template = i32]
-// CHECK:STDOUT:     %.loc196_52: type = struct_type {.x: i32, .y: i32} [template = constants.%.19]
-// CHECK:STDOUT:     %.loc196_53.1: (type, type) = tuple_literal (%.loc196_32, %.loc196_52)
-// CHECK:STDOUT:     %.loc196_53.2: type = converted %.loc196_53.1, constants.%.20 [template = constants.%.20]
-// CHECK:STDOUT:     %x.loc196_10.1: (SelfNestedBadParam*, {.x: i32, .y: i32}) = param x
-// CHECK:STDOUT:     %x.loc196_10.2: (SelfNestedBadParam*, {.x: i32, .y: i32}) = bind_name x, %x.loc196_10.1
-// CHECK:STDOUT:     %SelfNestedBadParam.ref.loc196_60: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
-// CHECK:STDOUT:     %.loc196_80: i32 = int_literal 4 [template = constants.%.14]
-// CHECK:STDOUT:     %.loc196_81: type = array_type %.loc196_80, SelfNestedBadParam [template = constants.%.21]
+// CHECK:STDOUT:     %SelfNestedBadParam.ref.loc200_14: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
+// CHECK:STDOUT:     %.loc200_32: type = ptr_type SelfNestedBadParam [template = constants.%.18]
+// CHECK:STDOUT:     %int.make_type_32.loc200_40: init type = call constants.%struct.15() [template = i32]
+// CHECK:STDOUT:     %.loc200_40.1: type = value_of_initializer %int.make_type_32.loc200_40 [template = i32]
+// CHECK:STDOUT:     %.loc200_40.2: type = converted %int.make_type_32.loc200_40, %.loc200_40.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc200_49: init type = call constants.%struct.15() [template = i32]
+// CHECK:STDOUT:     %.loc200_49.1: type = value_of_initializer %int.make_type_32.loc200_49 [template = i32]
+// CHECK:STDOUT:     %.loc200_49.2: type = converted %int.make_type_32.loc200_49, %.loc200_49.1 [template = i32]
+// CHECK:STDOUT:     %.loc200_52: type = struct_type {.x: i32, .y: i32} [template = constants.%.19]
+// CHECK:STDOUT:     %.loc200_53.1: (type, type) = tuple_literal (%.loc200_32, %.loc200_52)
+// CHECK:STDOUT:     %.loc200_53.2: type = converted %.loc200_53.1, constants.%.20 [template = constants.%.20]
+// CHECK:STDOUT:     %x.loc200_10.1: (SelfNestedBadParam*, {.x: i32, .y: i32}) = param x
+// CHECK:STDOUT:     %x.loc200_10.2: (SelfNestedBadParam*, {.x: i32, .y: i32}) = bind_name x, %x.loc200_10.1
+// CHECK:STDOUT:     %SelfNestedBadParam.ref.loc200_60: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
+// CHECK:STDOUT:     %.loc200_80: i32 = int_literal 4 [template = constants.%.14]
+// CHECK:STDOUT:     %.loc200_81: type = array_type %.loc200_80, SelfNestedBadParam [template = constants.%.21]
 // CHECK:STDOUT:     %return.var: ref [SelfNestedBadParam; 4] = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -680,20 +684,20 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.15: SelfNestedBadReturnType as SelfNested {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.15 [template = constants.%struct.18] {
-// CHECK:STDOUT:     %SelfNestedBadReturnType.ref.loc208_14: type = name_ref SelfNestedBadReturnType, file.%SelfNestedBadReturnType.decl [template = constants.%SelfNestedBadReturnType]
-// CHECK:STDOUT:     %.loc208_37: type = ptr_type SelfNestedBadReturnType [template = constants.%.24]
-// CHECK:STDOUT:     %SelfNestedBadReturnType.ref.loc208_45: type = name_ref SelfNestedBadReturnType, file.%SelfNestedBadReturnType.decl [template = constants.%SelfNestedBadReturnType]
+// CHECK:STDOUT:     %SelfNestedBadReturnType.ref.loc212_14: type = name_ref SelfNestedBadReturnType, file.%SelfNestedBadReturnType.decl [template = constants.%SelfNestedBadReturnType]
+// CHECK:STDOUT:     %.loc212_37: type = ptr_type SelfNestedBadReturnType [template = constants.%.24]
+// CHECK:STDOUT:     %SelfNestedBadReturnType.ref.loc212_45: type = name_ref SelfNestedBadReturnType, file.%SelfNestedBadReturnType.decl [template = constants.%SelfNestedBadReturnType]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.15() [template = i32]
-// CHECK:STDOUT:     %.loc208_74.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc208_74.2: type = converted %int.make_type_32, %.loc208_74.1 [template = i32]
-// CHECK:STDOUT:     %.loc208_77: type = struct_type {.x: SelfNestedBadReturnType, .y: i32} [template = constants.%.25]
-// CHECK:STDOUT:     %.loc208_78.1: (type, type) = tuple_literal (%.loc208_37, %.loc208_77)
-// CHECK:STDOUT:     %.loc208_78.2: type = converted %.loc208_78.1, constants.%.26 [template = constants.%.26]
-// CHECK:STDOUT:     %x.loc208_10.1: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32}) = param x
-// CHECK:STDOUT:     %x.loc208_10.2: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32}) = bind_name x, %x.loc208_10.1
+// CHECK:STDOUT:     %.loc212_74.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc212_74.2: type = converted %int.make_type_32, %.loc212_74.1 [template = i32]
+// CHECK:STDOUT:     %.loc212_77: type = struct_type {.x: SelfNestedBadReturnType, .y: i32} [template = constants.%.25]
+// CHECK:STDOUT:     %.loc212_78.1: (type, type) = tuple_literal (%.loc212_37, %.loc212_77)
+// CHECK:STDOUT:     %.loc212_78.2: type = converted %.loc212_78.1, constants.%.26 [template = constants.%.26]
+// CHECK:STDOUT:     %x.loc212_10.1: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32}) = param x
+// CHECK:STDOUT:     %x.loc212_10.2: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32}) = bind_name x, %x.loc212_10.1
 // CHECK:STDOUT:     %SelfNestedBadParam.ref: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
-// CHECK:STDOUT:     %.loc208_105: i32 = int_literal 4 [template = constants.%.14]
-// CHECK:STDOUT:     %.loc208_106: type = array_type %.loc208_105, SelfNestedBadParam [template = constants.%.21]
+// CHECK:STDOUT:     %.loc212_105: i32 = int_literal 4 [template = constants.%.14]
+// CHECK:STDOUT:     %.loc212_106: type = array_type %.loc212_105, SelfNestedBadParam [template = constants.%.21]
 // CHECK:STDOUT:     %return.var: ref [SelfNestedBadParam; 4] = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
@@ -846,33 +850,33 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(@impl.4.%b.loc58_10.2: bool);
+// CHECK:STDOUT: fn @F.2(@impl.4.%b.loc62_10.2: bool);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[@impl.5.%self.loc71_10.2: FExtraImplicitParam]();
+// CHECK:STDOUT: fn @F.3[@impl.5.%self.loc75_10.2: FExtraImplicitParam]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.5[@J.%self.loc89_20.2: bool](@J.%b.loc89_32.2: bool) -> bool;
+// CHECK:STDOUT: fn @F.5[@J.%self.loc93_20.2: bool](@J.%b.loc93_32.2: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.6[@impl.7.%self.loc100_10.2: bool]() -> bool;
+// CHECK:STDOUT: fn @F.6[@impl.7.%self.loc104_10.2: bool]() -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.7(@impl.8.%b.loc113_10.2: bool) -> bool;
+// CHECK:STDOUT: fn @F.7(@impl.8.%b.loc117_10.2: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.8[@impl.9.%self.loc126_10.2: bool](@impl.9.%b.loc126_22.2: bool);
+// CHECK:STDOUT: fn @F.8[@impl.9.%self.loc130_10.2: bool](@impl.9.%b.loc130_22.2: bool);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.9[@impl.10.%self.loc139_10.2: bool](@impl.10.%b.loc139_22.2: FDifferentParamType) -> bool;
+// CHECK:STDOUT: fn @F.9[@impl.10.%self.loc143_10.2: bool](@impl.10.%b.loc143_22.2: FDifferentParamType) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.10[@impl.11.%self.loc152_10.2: FDifferentImplicitParamType](@impl.11.%b.loc152_22.2: bool) -> bool;
+// CHECK:STDOUT: fn @F.10[@impl.11.%self.loc156_10.2: FDifferentImplicitParamType](@impl.11.%b.loc156_22.2: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.11[@impl.12.%self.loc165_10.2: bool](@impl.12.%b.loc165_22.2: bool) -> FDifferentReturnType;
+// CHECK:STDOUT: fn @F.11[@impl.12.%self.loc169_10.2: bool](@impl.12.%b.loc169_22.2: bool) -> FDifferentReturnType;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.12[@impl.13.%self.loc179_10.2: bool](@impl.13.%not_b.loc179_22.2: bool) -> bool;
+// CHECK:STDOUT: fn @F.12[@impl.13.%self.loc183_10.2: bool](@impl.13.%not_b.loc183_22.2: bool) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc184_8.2: (Self*, {.x: Self, .y: i32})) -> [Self; 4];
+// CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc188_8.2: (Self*, {.x: Self, .y: i32})) -> [Self; 4];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.14(@impl.14.%x.loc196_10.2: (SelfNestedBadParam*, {.x: i32, .y: i32})) -> [SelfNestedBadParam; 4];
+// CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: (SelfNestedBadParam*, {.x: i32, .y: i32})) -> [SelfNestedBadParam; 4];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.15(@impl.15.%x.loc208_10.2: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32})) -> [SelfNestedBadParam; 4];
+// CHECK:STDOUT: fn @F.15(@impl.15.%x.loc212_10.2: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32})) -> [SelfNestedBadParam; 4];
 // CHECK:STDOUT:

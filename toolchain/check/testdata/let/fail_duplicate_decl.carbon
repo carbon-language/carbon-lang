@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/fail_duplicate_decl.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_duplicate_decl.carbon
 
 fn F() {
   let a: i32 = 1;
@@ -40,16 +44,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %a.loc8: i32 = bind_name a, %.loc8_16
-// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_32.loc15, %.loc15_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_16: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %a.loc15: i32 = bind_name a, %.loc15_16
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %a.loc12: i32 = bind_name a, %.loc12_16
+// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc19_10.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
+// CHECK:STDOUT:   %.loc19_10.2: type = converted %int.make_type_32.loc19, %.loc19_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc19_16: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %a.loc19: i32 = bind_name a, %.loc19_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/namespace/fail_params.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_params.carbon
 
 // CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
 // CHECK:STDERR: namespace A();
@@ -62,21 +66,21 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
-// CHECK:STDOUT:   %.loc20_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc20_16.2: type = converted %int.make_type_32, %.loc20_16.1 [template = i32]
-// CHECK:STDOUT:   %n.loc20_13.1: i32 = param n
-// CHECK:STDOUT:   %n.loc20_13.2: i32 = bind_name n, %n.loc20_13.1
+// CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
+// CHECK:STDOUT:   %n.loc24_13.1: i32 = param n
+// CHECK:STDOUT:   %n.loc24_13.2: i32 = bind_name n, %n.loc24_13.1
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %T.loc26_13.1: type = param T
-// CHECK:STDOUT:   %T.loc26_13.2: type = bind_symbolic_name T 0, %T.loc26_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc26_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.loc26_23.1: T = param x
-// CHECK:STDOUT:   %x.loc26_23.2: T = bind_name x, %x.loc26_23.1
+// CHECK:STDOUT:   %T.loc30_13.1: type = param T
+// CHECK:STDOUT:   %T.loc30_13.2: type = bind_symbolic_name T 0, %T.loc30_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc30_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %x.loc30_23.1: T = param x
+// CHECK:STDOUT:   %x.loc30_23.2: T = bind_name x, %x.loc30_23.1
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.3] {
-// CHECK:STDOUT:     %T.loc35_6.1: type = param T
-// CHECK:STDOUT:     %T.loc35_6.2: type = bind_symbolic_name T 0, %T.loc35_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc39_6.1: type = param T
+// CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

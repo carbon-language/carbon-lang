@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/array/fail_bound_negative.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_bound_negative.carbon
 
 fn Negate(n: i32) -> i32 = "int.snegate";
 
@@ -33,24 +37,24 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_14.1: type = value_of_initializer %int.make_type_32.loc7_14 [template = i32]
-// CHECK:STDOUT:     %.loc7_14.2: type = converted %int.make_type_32.loc7_14, %.loc7_14.1 [template = i32]
-// CHECK:STDOUT:     %n.loc7_11.1: i32 = param n
-// CHECK:STDOUT:     @Negate.%n: i32 = bind_name n, %n.loc7_11.1
-// CHECK:STDOUT:     %int.make_type_32.loc7_22: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc7_22.1: type = value_of_initializer %int.make_type_32.loc7_22 [template = i32]
-// CHECK:STDOUT:     %.loc7_22.2: type = converted %int.make_type_32.loc7_22, %.loc7_22.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc11_14: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_14 [template = i32]
+// CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32.loc11_14, %.loc11_14.1 [template = i32]
+// CHECK:STDOUT:     %n.loc11_11.1: i32 = param n
+// CHECK:STDOUT:     @Negate.%n: i32 = bind_name n, %n.loc11_11.1
+// CHECK:STDOUT:     %int.make_type_32.loc11_22: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc11_22.1: type = value_of_initializer %int.make_type_32.loc11_22 [template = i32]
+// CHECK:STDOUT:     %.loc11_22.2: type = converted %int.make_type_32.loc11_22, %.loc11_22.1 [template = i32]
 // CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc16: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %Negate.ref: Negate = name_ref Negate, %Negate.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc12_21) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_9.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %int.make_type_32.loc12, %.loc12_9.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_23: type = array_type %int.snegate, i32 [template = <error>]
+// CHECK:STDOUT:   %.loc16_21: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc16_21) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16_9.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
+// CHECK:STDOUT:   %.loc16_9.2: type = converted %int.make_type_32.loc16, %.loc16_9.1 [template = i32]
+// CHECK:STDOUT:   %.loc16_23: type = array_type %int.snegate, i32 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/fail_alias_impl_not_found.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/fail_alias_impl_not_found.carbon
 
 interface I {
   fn F();
@@ -53,26 +57,26 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc15_6.1: C = param c
-// CHECK:STDOUT:     @F.2.%c: C = bind_name c, %c.loc15_6.1
+// CHECK:STDOUT:     %c.loc19_6.1: C = param c
+// CHECK:STDOUT:     @F.2.%c: C = bind_name c, %c.loc19_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc8: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc8
+// CHECK:STDOUT:   .F = %.loc12
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc8 [template = constants.%.4]
-// CHECK:STDOUT:   %F: <associated F in I> = bind_alias F, @I.%.loc8 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %F: <associated F in I> = bind_alias F, @I.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -84,9 +88,9 @@ fn F(c: C) {
 // CHECK:STDOUT: fn @F.2(%c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc20: <associated F in I> = name_ref F, @C.%F [template = constants.%.4]
-// CHECK:STDOUT:   %c.ref: C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc24: <associated F in I> = name_ref F, @C.%F [template = constants.%.4]
+// CHECK:STDOUT:   %c.ref: C = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc28: <associated F in I> = name_ref F, @C.%F [template = constants.%.4]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

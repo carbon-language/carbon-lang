@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
 
 interface NotGeneric;
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
@@ -57,24 +61,24 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {}
-// CHECK:STDOUT:   %.decl.loc15: type = interface_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.loc15_22.1: type = param T
-// CHECK:STDOUT:     %T.loc15_22.2: type = bind_symbolic_name T 0, %T.loc15_22.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:   %.decl.loc19: type = interface_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:     %T.loc19_22.1: type = param T
+// CHECK:STDOUT:     %T.loc19_22.2: type = bind_symbolic_name T 0, %T.loc19_22.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: type = interface_decl @Generic [template = constants.%.3] {
-// CHECK:STDOUT:     %T.loc17_19.1: type = param T
-// CHECK:STDOUT:     %T.loc17_19.2: type = bind_symbolic_name T 0, %T.loc17_19.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     %T.loc21_19.1: type = param T
+// CHECK:STDOUT:     %T.loc21_19.2: type = bind_symbolic_name T 0, %T.loc21_19.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc25: type = interface_decl @.2 [template = constants.%.4] {}
+// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.4] {}
 // CHECK:STDOUT:   %DifferentParams.decl: type = interface_decl @DifferentParams [template = constants.%.5] {
-// CHECK:STDOUT:     %T.loc27_27.1: type = param T
-// CHECK:STDOUT:     %T.loc27_27.2: type = bind_symbolic_name T 0, %T.loc27_27.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     %T.loc31_27.1: type = param T
+// CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc34: type = interface_decl @.3 [template = constants.%.7] {
-// CHECK:STDOUT:     %.loc34_32.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc34_32.2: type = converted %.loc34_32.1, constants.%.6 [template = constants.%.6]
-// CHECK:STDOUT:     %T.loc34_27.1: () = param T
-// CHECK:STDOUT:     %T.loc34_27.2: () = bind_symbolic_name T 0, %T.loc34_27.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:   %.decl.loc38: type = interface_decl @.3 [template = constants.%.7] {
+// CHECK:STDOUT:     %.loc38_32.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %T.loc38_27.1: () = param T
+// CHECK:STDOUT:     %T.loc38_27.2: () = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = constants.%T.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/field_access_in_value.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/field_access_in_value.carbon
 
 class Class {
   var j: i32;
@@ -50,62 +54,62 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_32.loc9, %.loc9_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_8: <unbound element of class Class> = field_decl k, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_8: <unbound element of class Class> = field_decl k, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .j = %.loc8_8
-// CHECK:STDOUT:   .k = %.loc9_8
+// CHECK:STDOUT:   .j = %.loc12_8
+// CHECK:STDOUT:   .k = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc13: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc17: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %cv.var: ref Class = var cv
 // CHECK:STDOUT:   %cv: ref Class = bind_name cv, %cv.var
-// CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_ref cv, %cv
-// CHECK:STDOUT:   %j.ref.loc14: <unbound element of class Class> = name_ref j, @Class.%.loc8_8 [template = @Class.%.loc8_8]
-// CHECK:STDOUT:   %.loc14_5: ref i32 = class_element_access %cv.ref.loc14, element0
-// CHECK:STDOUT:   %.loc14_10: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   assign %.loc14_5, %.loc14_10
-// CHECK:STDOUT:   %cv.ref.loc15: ref Class = name_ref cv, %cv
-// CHECK:STDOUT:   %k.ref.loc15: <unbound element of class Class> = name_ref k, @Class.%.loc9_8 [template = @Class.%.loc9_8]
-// CHECK:STDOUT:   %.loc15_5: ref i32 = class_element_access %cv.ref.loc15, element1
-// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   assign %.loc15_5, %.loc15_10
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %cv.ref.loc16: ref Class = name_ref cv, %cv
-// CHECK:STDOUT:   %.loc16: Class = bind_value %cv.ref.loc16
-// CHECK:STDOUT:   %c: Class = bind_name c, %.loc16
-// CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc17_11.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
-// CHECK:STDOUT:   %.loc17_11.2: type = converted %int.make_type_32.loc17, %.loc17_11.1 [template = i32]
+// CHECK:STDOUT:   %cv.ref.loc18: ref Class = name_ref cv, %cv
+// CHECK:STDOUT:   %j.ref.loc18: <unbound element of class Class> = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %.loc18_5: ref i32 = class_element_access %cv.ref.loc18, element0
+// CHECK:STDOUT:   %.loc18_10: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   assign %.loc18_5, %.loc18_10
+// CHECK:STDOUT:   %cv.ref.loc19: ref Class = name_ref cv, %cv
+// CHECK:STDOUT:   %k.ref.loc19: <unbound element of class Class> = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
+// CHECK:STDOUT:   %.loc19_5: ref i32 = class_element_access %cv.ref.loc19, element1
+// CHECK:STDOUT:   %.loc19_10: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   assign %.loc19_5, %.loc19_10
+// CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %cv.ref.loc20: ref Class = name_ref cv, %cv
+// CHECK:STDOUT:   %.loc20: Class = bind_value %cv.ref.loc20
+// CHECK:STDOUT:   %c: Class = bind_name c, %.loc20
+// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc21_11.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
+// CHECK:STDOUT:   %.loc21_11.2: type = converted %int.make_type_32.loc21, %.loc21_11.1 [template = i32]
 // CHECK:STDOUT:   %cj.var: ref i32 = var cj
 // CHECK:STDOUT:   %cj: ref i32 = bind_name cj, %cj.var
-// CHECK:STDOUT:   %c.ref.loc17: Class = name_ref c, %c
-// CHECK:STDOUT:   %j.ref.loc17: <unbound element of class Class> = name_ref j, @Class.%.loc8_8 [template = @Class.%.loc8_8]
-// CHECK:STDOUT:   %.loc17_18.1: ref i32 = class_element_access %c.ref.loc17, element0
-// CHECK:STDOUT:   %.loc17_18.2: i32 = bind_value %.loc17_18.1
-// CHECK:STDOUT:   assign %cj.var, %.loc17_18.2
-// CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc18_11.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
-// CHECK:STDOUT:   %.loc18_11.2: type = converted %int.make_type_32.loc18, %.loc18_11.1 [template = i32]
+// CHECK:STDOUT:   %c.ref.loc21: Class = name_ref c, %c
+// CHECK:STDOUT:   %j.ref.loc21: <unbound element of class Class> = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %.loc21_18.1: ref i32 = class_element_access %c.ref.loc21, element0
+// CHECK:STDOUT:   %.loc21_18.2: i32 = bind_value %.loc21_18.1
+// CHECK:STDOUT:   assign %cj.var, %.loc21_18.2
+// CHECK:STDOUT:   %int.make_type_32.loc22: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc22_11.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
+// CHECK:STDOUT:   %.loc22_11.2: type = converted %int.make_type_32.loc22, %.loc22_11.1 [template = i32]
 // CHECK:STDOUT:   %ck.var: ref i32 = var ck
 // CHECK:STDOUT:   %ck: ref i32 = bind_name ck, %ck.var
-// CHECK:STDOUT:   %c.ref.loc18: Class = name_ref c, %c
-// CHECK:STDOUT:   %k.ref.loc18: <unbound element of class Class> = name_ref k, @Class.%.loc9_8 [template = @Class.%.loc9_8]
-// CHECK:STDOUT:   %.loc18_18.1: ref i32 = class_element_access %c.ref.loc18, element1
-// CHECK:STDOUT:   %.loc18_18.2: i32 = bind_value %.loc18_18.1
-// CHECK:STDOUT:   assign %ck.var, %.loc18_18.2
+// CHECK:STDOUT:   %c.ref.loc22: Class = name_ref c, %c
+// CHECK:STDOUT:   %k.ref.loc22: <unbound element of class Class> = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
+// CHECK:STDOUT:   %.loc22_18.1: ref i32 = class_element_access %c.ref.loc22, element1
+// CHECK:STDOUT:   %.loc22_18.2: i32 = bind_value %.loc22_18.1
+// CHECK:STDOUT:   assign %ck.var, %.loc22_18.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

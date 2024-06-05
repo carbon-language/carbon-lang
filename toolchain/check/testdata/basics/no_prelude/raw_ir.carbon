@@ -7,6 +7,10 @@
 // Check that raw IR dumping works as expected.
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/raw_ir.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/raw_ir.carbon
 
 fn Foo(n: ()) -> ((), ()) {
   return (n, ());
@@ -17,11 +21,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}
 // CHECK:STDOUT:   bind_names:
-// CHECK:STDOUT:     bindName0:       {name: name1, enclosing_scope: name_scope<invalid>, index: compTimeBind<invalid>}
+// CHECK:STDOUT:     bindName0:       {name: name1, parent_scope: name_scope<invalid>, index: compTimeBind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block3, return_type: type2, return_storage: inst+13, return_slot: present, body: [block6]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block3, return_type: type2, return_storage: inst+13, return_slot: present, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}

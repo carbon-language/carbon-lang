@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_memaccess_category.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_memaccess_category.carbon
 
 class A {
   fn F[addr self: A*]();
@@ -65,22 +69,22 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc15: type = struct_type {.a: A} [template = constants.%.6]
-// CHECK:STDOUT:     %s.loc15_6.1: {.a: A} = param s
-// CHECK:STDOUT:     @F.2.%s: {.a: A} = bind_name s, %s.loc15_6.1
+// CHECK:STDOUT:     %.loc19: type = struct_type {.a: A} [template = constants.%.6]
+// CHECK:STDOUT:     %s.loc19_6.1: {.a: A} = param s
+// CHECK:STDOUT:     @F.2.%s: {.a: A} = bind_name s, %s.loc19_6.1
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:     %b.loc15_18.1: B = param b
-// CHECK:STDOUT:     @F.2.%b: B = bind_name b, %b.loc15_18.1
+// CHECK:STDOUT:     %b.loc19_18.1: B = param b
+// CHECK:STDOUT:     @F.2.%b: B = bind_name b, %b.loc19_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc8_20: type = ptr_type A [template = constants.%.1]
-// CHECK:STDOUT:     %self.loc8_13.1: A* = param self
-// CHECK:STDOUT:     %self.loc8_13.3: A* = bind_name self, %self.loc8_13.1
-// CHECK:STDOUT:     %.loc8_8: A* = addr_pattern %self.loc8_13.3
+// CHECK:STDOUT:     %.loc12_20: type = ptr_type A [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc12_13.1: A* = param self
+// CHECK:STDOUT:     %self.loc12_13.3: A* = bind_name self, %self.loc12_13.1
+// CHECK:STDOUT:     %.loc12_8: A* = addr_pattern %self.loc12_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -90,29 +94,29 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc12: <unbound element of class B> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc16: <unbound element of class B> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @A.%self.loc8_13.3: A*]();
+// CHECK:STDOUT: fn @F.1[addr @A.%self.loc12_13.3: A*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: {.a: A} = name_ref s, %s
-// CHECK:STDOUT:   %.loc24_4: A = struct_access %s.ref, element0
-// CHECK:STDOUT:   %F.ref.loc24: F = name_ref F, @A.%F.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc24_6: <bound method> = bound_method %.loc24_4, %F.ref.loc24
-// CHECK:STDOUT:   %F.call.loc24: init () = call %.loc24_6(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc28_4: A = struct_access %s.ref, element0
+// CHECK:STDOUT:   %F.ref.loc28: F = name_ref F, @A.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4, %F.ref.loc28
+// CHECK:STDOUT:   %F.call.loc28: init () = call %.loc28_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %b.ref: B = name_ref b, %b
-// CHECK:STDOUT:   %a.ref: <unbound element of class B> = name_ref a, @B.%.loc12 [template = @B.%.loc12]
-// CHECK:STDOUT:   %.loc34_4.1: ref A = class_element_access %b.ref, element0
-// CHECK:STDOUT:   %.loc34_4.2: A = bind_value %.loc34_4.1
-// CHECK:STDOUT:   %F.ref.loc34: F = name_ref F, @A.%F.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc34_6: <bound method> = bound_method %.loc34_4.2, %F.ref.loc34
-// CHECK:STDOUT:   %F.call.loc34: init () = call %.loc34_6(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %a.ref: <unbound element of class B> = name_ref a, @B.%.loc16 [template = @B.%.loc16]
+// CHECK:STDOUT:   %.loc38_4.1: ref A = class_element_access %b.ref, element0
+// CHECK:STDOUT:   %.loc38_4.2: A = bind_value %.loc38_4.1
+// CHECK:STDOUT:   %F.ref.loc38: F = name_ref F, @A.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc38_6: <bound method> = bound_method %.loc38_4.2, %F.ref.loc38
+// CHECK:STDOUT:   %F.call.loc38: init () = call %.loc38_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

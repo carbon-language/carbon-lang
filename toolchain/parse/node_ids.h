@@ -111,32 +111,6 @@ struct NodeIdNot : public NodeId {
       : NodeId(NodeId::InvalidIndex) {}
 };
 
-// This class holds the token corresponding to a parse node, and defines the
-// expected token kind. The specified token index will always have kind K if the
-// enclosing node doesn't have errors. Note that we never try to extract a node
-// that has errors, and there are no restrictions on the token kind in that
-// case.
-template <const Lex::TokenKind& K>
-struct Token {
-  static constexpr const Lex::TokenKind& Kind = K;
-  Lex::TokenIndex index;
-};
-
-// This class holds the token corresponding to a parse node in the case where
-// the parse node can correspond to any token. This should only be used when the
-// node kind is either not used in a finished tree, such as `Placeholder`, or is
-// always invalid, such as `InvalidParse`.
-struct AnyToken {
-  Lex::TokenIndex index;
-};
-
-// This class holds the token corresponding to a parse node in the case of a
-// virtual token. The parse node doesn't actually own the token in this case.
-template <const Lex::TokenKind& K>
-struct VirtualToken {
-  Token<K> token;
-};
-
 // Note that the support for extracting these types using the `Tree::Extract*`
 // functions is defined in `extract.cpp`.
 

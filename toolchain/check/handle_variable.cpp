@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/modifiers.h"
 
 namespace Carbon::Check {
@@ -12,7 +13,7 @@ auto HandleVariableIntroducer(Context& context,
                               Parse::VariableIntroducerId node_id) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(node_id);
-  context.decl_state_stack().Push(DeclState::Var);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Var);
   return true;
 }
 
@@ -98,20 +99,18 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
   // Process declaration modifiers.
   // TODO: For a qualified `var` declaration, this should use the target scope
   // of the name introduced in the declaration. See #2590.
-  auto [_, enclosing_scope_inst] = context.name_scopes().GetInstIfValid(
+  auto [_, parent_scope_inst] = context.name_scopes().GetInstIfValid(
       context.scope_stack().PeekNameScopeId());
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var,
-                             enclosing_scope_inst);
-  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Var);
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Var,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
                        Lex::TokenKind::Var);
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-
-  context.decl_state_stack().Pop(DeclState::Var);
 
   return true;
 }

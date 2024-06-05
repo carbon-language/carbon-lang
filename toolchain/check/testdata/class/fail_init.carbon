@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_init.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_init.carbon
 
 class Class {
   var a: i32;
@@ -60,48 +64,48 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_32.loc9, %.loc9_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_8: <unbound element of class Class> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: <unbound element of class Class> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_8: <unbound element of class Class> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .a = %.loc8_8
-// CHECK:STDOUT:   .b = %.loc9_8
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_10.1: {.a: i32} = struct_literal (%.loc17_9)
-// CHECK:STDOUT:   %Class.ref.loc17: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc17_10.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc17_10.3: ref Class = temporary %.loc17_10.2, <error>
-// CHECK:STDOUT:   %.loc17_12: ref Class = converted %.loc17_10.1, %.loc17_10.3
-// CHECK:STDOUT:   %.loc22_9: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc22_17: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc22_18.1: {.a: i32, .c: i32} = struct_literal (%.loc22_9, %.loc22_17)
-// CHECK:STDOUT:   %Class.ref.loc22: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc22_18.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc22_18.3: ref i32 = class_element_access %.loc22_18.2, element0
-// CHECK:STDOUT:   %.loc22_18.4: init i32 = initialize_from %.loc22_9 to %.loc22_18.3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc22_18.5: ref Class = temporary %.loc22_18.2, <error>
-// CHECK:STDOUT:   %.loc22_20: ref Class = converted %.loc22_18.1, %.loc22_18.5
+// CHECK:STDOUT:   %.loc21_9: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc21_10.1: {.a: i32} = struct_literal (%.loc21_9)
+// CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %.loc21_10.2: ref Class = temporary_storage
+// CHECK:STDOUT:   %.loc21_10.3: ref Class = temporary %.loc21_10.2, <error>
+// CHECK:STDOUT:   %.loc21_12: ref Class = converted %.loc21_10.1, %.loc21_10.3
 // CHECK:STDOUT:   %.loc26_9: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc26_17: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc26_25: i32 = int_literal 3 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc26_26.1: {.a: i32, .b: i32, .c: i32} = struct_literal (%.loc26_9, %.loc26_17, %.loc26_25)
+// CHECK:STDOUT:   %.loc26_18.1: {.a: i32, .c: i32} = struct_literal (%.loc26_9, %.loc26_17)
 // CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc26_26.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc26_26.3: ref Class = temporary %.loc26_26.2, <error>
-// CHECK:STDOUT:   %.loc26_28: ref Class = converted %.loc26_26.1, %.loc26_26.3
+// CHECK:STDOUT:   %.loc26_18.2: ref Class = temporary_storage
+// CHECK:STDOUT:   %.loc26_18.3: ref i32 = class_element_access %.loc26_18.2, element0
+// CHECK:STDOUT:   %.loc26_18.4: init i32 = initialize_from %.loc26_9 to %.loc26_18.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc26_18.5: ref Class = temporary %.loc26_18.2, <error>
+// CHECK:STDOUT:   %.loc26_20: ref Class = converted %.loc26_18.1, %.loc26_18.5
+// CHECK:STDOUT:   %.loc30_9: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc30_17: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc30_25: i32 = int_literal 3 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc30_26.1: {.a: i32, .b: i32, .c: i32} = struct_literal (%.loc30_9, %.loc30_17, %.loc30_25)
+// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %.loc30_26.2: ref Class = temporary_storage
+// CHECK:STDOUT:   %.loc30_26.3: ref Class = temporary %.loc30_26.2, <error>
+// CHECK:STDOUT:   %.loc30_28: ref Class = converted %.loc30_26.1, %.loc30_26.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

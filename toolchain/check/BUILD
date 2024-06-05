@@ -66,8 +66,8 @@ cc_library(
     hdrs = [
         "context.h",
         "convert.h",
+        "decl_introducer_state.h",
         "decl_name_stack.h",
-        "decl_state.h",
         "diagnostic_helpers.h",
         "eval.h",
         "function.h",
@@ -152,6 +152,7 @@ cc_fuzz_test(
     srcs = ["check_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
+        "//testing/fuzzing:libfuzzer_header",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],

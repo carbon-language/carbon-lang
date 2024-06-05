@@ -4,14 +4,15 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/return.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
-auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
-                             bool is_generic) -> bool {
+static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
+                                    bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 
@@ -38,7 +39,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // scopes, but right now we don't support qualified names here.
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
-         .enclosing_scope_id = context.scope_stack().PeekNameScopeId(),
+         .parent_scope_id = context.scope_stack().PeekNameScopeId(),
          // TODO: Don't allocate a compile-time binding index for an associated
          // constant declaration.
          .bind_index = is_generic && !is_associated_constant
@@ -86,22 +87,21 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               : context.parse_tree().As<Parse::BindingPatternId>(node_id);
 
       // A `var` declaration at class scope introduces a field.
-      auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+      auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                           "{0} has incomplete type `{1}`.", llvm::StringLiteral,
                           SemIR::TypeId);
         return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
-                                       enclosing_class_decl
+                                       parent_class_decl
                                            ? llvm::StringLiteral("Field")
                                            : llvm::StringLiteral("Variable"),
                                        cast_type_id);
       });
-      if (enclosing_class_decl) {
+      if (parent_class_decl) {
         CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer)
             << "`returned var` at class scope";
-        auto& class_info =
-            context.classes().Get(enclosing_class_decl->class_id);
+        auto& class_info = context.classes().Get(parent_class_decl->class_id);
         auto field_type_id = context.GetUnboundElementType(
             class_info.self_type_id, cast_type_id);
         auto field_id = context.AddInst<SemIR::FieldDecl>(

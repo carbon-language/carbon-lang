@@ -170,8 +170,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
   }
 }
 
-auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
-                        Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
+static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
+                               Nonnull<Declaration*> declaration)
+    -> ErrorOr<Success> {
   switch (declaration->kind()) {
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {

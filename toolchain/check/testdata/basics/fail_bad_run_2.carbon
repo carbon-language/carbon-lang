@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/fail_bad_run_2.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_bad_run_2.carbon
 
 // CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for `Main.Run` function. Expected `fn ()` or `fn () -> i32`.
 // CHECK:STDERR: fn Run(n: i32) {}
@@ -28,10 +32,10 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:     %.loc10_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc10_11.2: type = converted %int.make_type_32, %.loc10_11.1 [template = i32]
-// CHECK:STDOUT:     %n.loc10_8.1: i32 = param n
-// CHECK:STDOUT:     @Run.%n: i32 = bind_name n, %n.loc10_8.1
+// CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32, %.loc14_11.1 [template = i32]
+// CHECK:STDOUT:     %n.loc14_8.1: i32 = param n
+// CHECK:STDOUT:     @Run.%n: i32 = bind_name n, %n.loc14_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

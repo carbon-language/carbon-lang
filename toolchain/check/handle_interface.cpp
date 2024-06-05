@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -19,7 +20,7 @@ auto HandleInterfaceIntroducer(Context& context,
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Interface);
+  context.decl_introducer_state_stack().Push(DeclIntroducerState::Interface);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -33,20 +34,19 @@ static auto BuildInterfaceDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
 
   // Process modifiers.
-  auto [_, enclosing_scope_inst] =
-      context.name_scopes().GetInstIfValid(name_context.enclosing_scope_id);
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
-                             enclosing_scope_inst);
-  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+  auto [_, parent_scope_inst] =
+      context.name_scopes().GetInstIfValid(name_context.parent_scope_id);
+  auto introducer =
+      context.decl_introducer_state_stack().Pop(DeclIntroducerState::Interface);
+  CheckAccessModifiersOnDecl(context, introducer, Lex::TokenKind::Interface,
+                             parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (modifiers.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Access),
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
+    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
                  "access modifier");
   }
-  context.decl_state_stack().Pop(DeclState::Interface);
 
   auto decl_block_id = context.inst_block_stack().Pop();
 
@@ -91,7 +91,7 @@ static auto BuildInterfaceDecl(Context& context,
     // invalid.
     interface_decl.interface_id = context.interfaces().Add(
         {.name_id = name_context.name_id_for_new_inst(),
-         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
          .implicit_param_refs_id = name.implicit_params_id,
          .param_refs_id = name.params_id,
          .decl_id = interface_decl_id});
@@ -133,7 +133,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
     interface_info.definition_id = interface_decl_id;
     interface_info.scope_id =
         context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
-                                  interface_info.enclosing_scope_id);
+                                  interface_info.parent_scope_id);
   }
 
   // Enter the interface scope.
@@ -157,7 +157,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
     // the `value_id` on the `BindSymbolicName`.
     auto bind_name_id = context.bind_names().Add(
         {.name_id = SemIR::NameId::SelfType,
-         .enclosing_scope_id = interface_info.scope_id,
+         .parent_scope_id = interface_info.scope_id,
          .bind_index = context.scope_stack().AddCompileTimeBinding()});
     interface_info.self_param_id = context.AddInst<SemIR::BindSymbolicName>(
         SemIR::LocId::Invalid, {.type_id = self_type_id,
