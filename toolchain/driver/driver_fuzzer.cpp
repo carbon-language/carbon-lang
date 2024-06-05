@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 
+#include "common/exe_path.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
@@ -14,6 +15,16 @@
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon::Testing {
+
+static const InstallPaths* install_paths = nullptr;
+
+// NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
+extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
+  CARBON_CHECK(*argc >= 1) << "Need the `argv[0]` value to initialize!";
+  install_paths = new InstallPaths(
+      InstallPaths::MakeForBazelRunfiles(FindExecutablePath((*argv)[0])));
+  return 0;
+}
 
 static auto Read(const unsigned char*& data, size_t& size, int& output)
     -> bool {
@@ -68,11 +79,9 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   }
 
   llvm::vfs::InMemoryFileSystem fs;
-  // TODO: We should try to thread the executable path into here.
-  const auto install_paths = InstallPaths::Make("");
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
-  Driver d(fs, &install_paths, dest, error_stream);
+  Driver d(fs, install_paths, dest, error_stream);
   if (!d.RunCommand(args).success) {
     if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";

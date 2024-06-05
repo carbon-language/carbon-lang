@@ -105,7 +105,7 @@ class InstallPaths {
   auto llvm_install_bin() const -> std::string;
 
  private:
-  InstallPaths() : error_("No prefix provided!") {}
+  InstallPaths() { SetError("No prefix provided!"); }
   explicit InstallPaths(llvm::StringRef prefix) : prefix_(prefix) {}
 
   // Set an error message on the install paths and reset the prefix to empty,

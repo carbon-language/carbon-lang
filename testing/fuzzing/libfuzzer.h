@@ -17,6 +17,11 @@ namespace Carbon::Testing {
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size);
 
+// Optional API that can be implemented but isn't required. This allows fuzzers
+// to observe the `argv` during initialization.
+// NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+
 }  // namespace Carbon::Testing
 
 #endif  // CARBON_TESTING_FUZZING_LIBFUZZER_H_

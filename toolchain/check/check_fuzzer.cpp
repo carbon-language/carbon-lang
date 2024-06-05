@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "common/exe_path.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
@@ -9,6 +10,16 @@
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
+
+static const InstallPaths* install_paths = nullptr;
+
+// NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
+extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
+  CARBON_CHECK(*argc >= 1) << "Need the `argv[0]` value to initialize!";
+  install_paths = new InstallPaths(
+      InstallPaths::MakeForBazelRunfiles(FindExecutablePath((*argv)[0])));
+  return 0;
+}
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
@@ -27,10 +38,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
 
-  // TODO: We should try to thread the executable path into here.
-  const auto install_paths = InstallPaths::Make("");
   llvm::raw_null_ostream null_ostream;
-  Driver driver(fs, &install_paths, null_ostream, null_ostream);
+  Driver driver(fs, install_paths, null_ostream, null_ostream);
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.
