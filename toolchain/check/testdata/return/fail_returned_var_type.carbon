@@ -24,12 +24,12 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mismatch.type: type = fn_type @Mismatch [template]
-// CHECK:STDOUT:   %Mismatch: <type of Mismatch> = struct_value () [template]
+// CHECK:STDOUT:   %Mismatch: %Mismatch.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,14 +39,14 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     .Mismatch = %Mismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Mismatch.decl: <type of Mismatch> = fn_decl @Mismatch [template = constants.%Mismatch] {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Mismatch.decl: %Mismatch.type = fn_decl @Mismatch [template = constants.%Mismatch] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_32, %.loc11_18.1 [template = i32]
 // CHECK:STDOUT:     @Mismatch.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

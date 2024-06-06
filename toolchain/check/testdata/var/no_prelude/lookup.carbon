@@ -18,28 +18,28 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref () = var x
-// CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc12_16.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_16.2: init () = tuple_init () to %x.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc12_17: init () = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %x.var: ref %.1 = var x
+// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc12_16.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_16.2: init %.1 = tuple_init () to %x.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_17: init %.1 = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %x.var, %.loc12_17
-// CHECK:STDOUT:   %x.ref: ref () = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: ref %.1 = name_ref x, %x
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

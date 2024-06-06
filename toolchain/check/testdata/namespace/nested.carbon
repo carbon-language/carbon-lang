@@ -23,9 +23,9 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Wiz.type: type = fn_type @Wiz [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Wiz: <type of Wiz> = struct_value () [template]
+// CHECK:STDOUT:   %Wiz: %Wiz.type = struct_value () [template]
 // CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [template]
-// CHECK:STDOUT:   %Baz: <type of Baz> = struct_value () [template]
+// CHECK:STDOUT:   %Baz: %Baz.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -41,8 +41,8 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:     .Wiz = %Wiz.decl
 // CHECK:STDOUT:     .Baz = %Baz.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Wiz.decl: <type of Wiz> = fn_decl @Wiz [template = constants.%Wiz] {}
-// CHECK:STDOUT:   %Baz.decl: <type of Baz> = fn_decl @Baz [template = constants.%Baz] {}
+// CHECK:STDOUT:   %Wiz.decl: %Wiz.type = fn_decl @Wiz [template = constants.%Wiz] {}
+// CHECK:STDOUT:   %Baz.decl: %Baz.type = fn_decl @Baz [template = constants.%Baz] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
@@ -54,8 +54,8 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%Bar [template = file.%Bar]
-// CHECK:STDOUT:   %Wiz.ref: <type of Wiz> = name_ref Wiz, file.%Wiz.decl [template = constants.%Wiz]
-// CHECK:STDOUT:   %Wiz.call: init () = call %Wiz.ref()
+// CHECK:STDOUT:   %Wiz.ref: %Wiz.type = name_ref Wiz, file.%Wiz.decl [template = constants.%Wiz]
+// CHECK:STDOUT:   %Wiz.call: init %.1 = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

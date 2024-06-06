@@ -32,17 +32,17 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, <type of F> [template]
-// CHECK:STDOUT:   %.4: <associated <type of F> in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, %F.type.1 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {} [template]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -55,17 +55,17 @@ fn F(c: C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc19_6.1: C = param c
-// CHECK:STDOUT:     @F.2.%c: C = bind_name c, %c.loc19_6.1
+// CHECK:STDOUT:     %c.loc19_6.1: %C = param c
+// CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %c.loc19_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.loc12: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -75,8 +75,8 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated <type of F> in I> = name_ref F, @I.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %F: <associated <type of F> in I> = bind_alias F, @I.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %F: %.3 = bind_alias F, @I.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -85,12 +85,12 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c: C) {
+// CHECK:STDOUT: fn @F.2(%c: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc24: <associated <type of F> in I> = name_ref F, @C.%F [template = constants.%.4]
-// CHECK:STDOUT:   %c.ref: C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc28: <associated <type of F> in I> = name_ref F, @C.%F [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref.loc24: %.3 = name_ref F, @C.%F [template = constants.%.4]
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc28: %.3 = name_ref F, @C.%F [template = constants.%.4]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -35,10 +35,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
-// CHECK:STDOUT:   %.1: type = ptr_type Cycle [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.b: Cycle*} [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type Cycle, {.b: Cycle*} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.c: {.b: Cycle*}} [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.b: %.1} [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %Cycle, %.2 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.c: %.2} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,18 +50,18 @@ fn Run() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [template = constants.%Cycle]
-// CHECK:STDOUT:   %.loc6_18: type = ptr_type Cycle [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_19: type = struct_type {.b: Cycle*} [template = constants.%.2]
-// CHECK:STDOUT:   %a.var: ref {.b: Cycle*} = var a
-// CHECK:STDOUT:   %a: ref {.b: Cycle*} = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc6_18: type = ptr_type %Cycle [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_19: type = struct_type {.b: %.1} [template = constants.%.2]
+// CHECK:STDOUT:   %a.var: ref %.2 = var a
+// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl.loc4 [template = constants.%Cycle]
-// CHECK:STDOUT:   %.loc10_20: type = ptr_type Cycle [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_21: type = struct_type {.b: Cycle*} [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_8: <unbound element of class Cycle> = field_decl c, element0 [template]
+// CHECK:STDOUT:   %.loc10_20: type = ptr_type %Cycle [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_21: type = struct_type {.b: %.1} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_8: %.3 = field_decl c, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
@@ -73,13 +73,13 @@ fn Run() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
+// CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
-// CHECK:STDOUT:   %.2: type = ptr_type Cycle [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.b: Cycle*} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.c: {.b: Cycle*}} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.c: {.b: Cycle*}} [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type Cycle, {.b: Cycle*} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %Cycle [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.b: %.2} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.c: %.3} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %Cycle, %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -90,11 +90,11 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir1, inst+12, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %.3 = import_ref ir1, inst+12, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <unbound element of class Cycle> = import_ref ir1, inst+19, loaded [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref ir1, inst+19, loaded [template = imports.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
@@ -105,16 +105,16 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref.loc7_3: ref {.b: Cycle*} = name_ref a, file.%import_ref.2
-// CHECK:STDOUT:   %.loc7_4: ref Cycle* = struct_access %a.ref.loc7_3, element0
-// CHECK:STDOUT:   %a.ref.loc7_11: ref {.b: Cycle*} = name_ref a, file.%import_ref.2
-// CHECK:STDOUT:   %.loc7_12.1: ref Cycle* = struct_access %a.ref.loc7_11, element0
-// CHECK:STDOUT:   %.loc7_12.2: Cycle* = bind_value %.loc7_12.1
-// CHECK:STDOUT:   %.loc7_10: ref Cycle = deref %.loc7_12.2
-// CHECK:STDOUT:   %c.ref: <unbound element of class Cycle> = name_ref c, file.%import_ref.4 [template = imports.%.1]
-// CHECK:STDOUT:   %.loc7_15: ref {.b: Cycle*} = class_element_access %.loc7_10, element0
-// CHECK:STDOUT:   %.loc7_17.1: ref Cycle* = struct_access %.loc7_15, element0
-// CHECK:STDOUT:   %.loc7_17.2: Cycle* = bind_value %.loc7_17.1
+// CHECK:STDOUT:   %a.ref.loc7_3: ref %.3 = name_ref a, file.%import_ref.2
+// CHECK:STDOUT:   %.loc7_4: ref %.2 = struct_access %a.ref.loc7_3, element0
+// CHECK:STDOUT:   %a.ref.loc7_11: ref %.3 = name_ref a, file.%import_ref.2
+// CHECK:STDOUT:   %.loc7_12.1: ref %.2 = struct_access %a.ref.loc7_11, element0
+// CHECK:STDOUT:   %.loc7_12.2: %.2 = bind_value %.loc7_12.1
+// CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
+// CHECK:STDOUT:   %c.ref: %.6 = name_ref c, file.%import_ref.4 [template = imports.%.1]
+// CHECK:STDOUT:   %.loc7_15: ref %.3 = class_element_access %.loc7_10, element0
+// CHECK:STDOUT:   %.loc7_17.1: ref %.2 = struct_access %.loc7_15, element0
+// CHECK:STDOUT:   %.loc7_17.2: %.2 = bind_value %.loc7_17.1
 // CHECK:STDOUT:   assign %.loc7_4, %.loc7_17.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

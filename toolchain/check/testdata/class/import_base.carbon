@@ -42,17 +42,17 @@ fn Run() {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Unused.type: type = fn_type @Unused [template]
-// CHECK:STDOUT:   %Unused: <type of Unused> = struct_value () [template]
+// CHECK:STDOUT:   %Unused: %Unused.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Base, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32, .unused: i32} [template]
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {.x: i32, .unused: i32} [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type Child, Base [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: Base} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Child, %Base [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -63,30 +63,30 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Child.decl: type = class_decl @Child [template = constants.%Child] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc5_8.1: Base = param self
-// CHECK:STDOUT:     %self.loc5_8.2: Base = bind_name self, %self.loc5_8.1
+// CHECK:STDOUT:     %self.loc5_8.1: %Base = param self
+// CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_name self, %self.loc5_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Unused.decl: <type of Unused> = fn_decl @Unused [template = constants.%Unused] {
+// CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc6_13.1: Base = param self
-// CHECK:STDOUT:     %self.loc6_13.2: Base = bind_name self, %self.loc6_13.1
+// CHECK:STDOUT:     %self.loc6_13.1: %Base = param self
+// CHECK:STDOUT:     %self.loc6_13.2: %Base = bind_name self, %self.loc6_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: <unbound element of class Base> = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc8_8: %.2 = field_decl x, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_15.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
 // CHECK:STDOUT:   %.loc9_15.2: type = converted %int.make_type_32.loc9, %.loc9_15.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_13: <unbound element of class Base> = field_decl unused, element1 [template]
+// CHECK:STDOUT:   %.loc9_13: %.2 = field_decl unused, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -98,7 +98,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc13: <unbound element of class Child> = base_decl Base, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.5 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Child
@@ -106,9 +106,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Base.%self.loc5_8.2: Base]();
+// CHECK:STDOUT: fn @F[@Base.%self.loc5_8.2: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[@Base.%self.loc6_13.2: Base]();
+// CHECK:STDOUT: fn @Unused[@Base.%self.loc6_13.2: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -117,24 +117,24 @@ fn Run() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
+// CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: i32, .unused: i32} [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type Child, Base [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: Base} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.x: i32, .unused: i32} [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: {.x: i32, .unused: i32}*} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type {.base: Base} [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %Child, %Base [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %.5} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.10: type = struct_type {.base: {.x: i32, .unused: i32}} [template]
-// CHECK:STDOUT:   %struct.1: Base = struct_value (%.8, %.9) [template]
-// CHECK:STDOUT:   %struct.2: Child = struct_value (%struct.1) [template]
-// CHECK:STDOUT:   %.11: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.10: type = struct_type {.base: %.2} [template]
+// CHECK:STDOUT:   %struct.1: %Base = struct_value (%.8, %.9) [template]
+// CHECK:STDOUT:   %struct.2: %Child = struct_value (%struct.1) [template]
+// CHECK:STDOUT:   %.11: type = unbound_element_type %Base, i32 [template]
 // CHECK:STDOUT:   %.12: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,10 +147,10 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+37, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {}
-// CHECK:STDOUT:   %import_ref.3: <type of F> = import_ref ir1, inst+7, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+7, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir1, inst+26, loaded [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.5: %.11 = import_ref ir1, inst+26, loaded [template = imports.%.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+33, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+38, unloaded
@@ -176,38 +176,38 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, file.%import_ref.2 [template = constants.%Child]
-// CHECK:STDOUT:   %a.var: ref Child = var a
-// CHECK:STDOUT:   %a: ref Child = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %Child = var a
+// CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_33: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc7_46: i32 = int_literal 1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc7_47.1: {.x: i32, .unused: i32} = struct_literal (%.loc7_33, %.loc7_46)
-// CHECK:STDOUT:   %.loc7_48.1: {.base: {.x: i32, .unused: i32}} = struct_literal (%.loc7_47.1)
-// CHECK:STDOUT:   %.loc7_48.2: ref Base = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc7_47.1: %.2 = struct_literal (%.loc7_33, %.loc7_46)
+// CHECK:STDOUT:   %.loc7_48.1: %.10 = struct_literal (%.loc7_47.1)
+// CHECK:STDOUT:   %.loc7_48.2: ref %Base = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_47.2: ref i32 = class_element_access %.loc7_48.2, element0
 // CHECK:STDOUT:   %.loc7_47.3: init i32 = initialize_from %.loc7_33 to %.loc7_47.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc7_47.4: ref i32 = class_element_access %.loc7_48.2, element1
 // CHECK:STDOUT:   %.loc7_47.5: init i32 = initialize_from %.loc7_46 to %.loc7_47.4 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc7_47.6: init Base = class_init (%.loc7_47.3, %.loc7_47.5), %.loc7_48.2 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc7_48.3: init Base = converted %.loc7_47.1, %.loc7_47.6 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc7_48.4: init Child = class_init (%.loc7_48.3), %a.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc7_49: init Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc7_47.6: init %Base = class_init (%.loc7_47.3, %.loc7_47.5), %.loc7_48.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc7_48.3: init %Base = converted %.loc7_47.1, %.loc7_47.6 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc7_48.4: init %Child = class_init (%.loc7_48.3), %a.var [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc7_49: init %Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign %a.var, %.loc7_49
-// CHECK:STDOUT:   %a.ref.loc8: ref Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: <unbound element of class Base> = name_ref x, file.%import_ref.5 [template = imports.%.1]
-// CHECK:STDOUT:   %.loc8_4.1: ref Base = class_element_access %a.ref.loc8, element0
-// CHECK:STDOUT:   %.loc8_4.2: ref Base = converted %a.ref.loc8, %.loc8_4.1
+// CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
+// CHECK:STDOUT:   %x.ref: %.11 = name_ref x, file.%import_ref.5 [template = imports.%.1]
+// CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
+// CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref i32 = class_element_access %.loc8_4.2, element0
 // CHECK:STDOUT:   %.loc8_9: i32 = int_literal 2 [template = constants.%.12]
 // CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_9
-// CHECK:STDOUT:   %a.ref.loc9: ref Child = name_ref a, %a
-// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%import_ref.3 [template = constants.%F]
+// CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.3 [template = constants.%F]
 // CHECK:STDOUT:   %.loc9_4: <bound method> = bound_method %a.ref.loc9, %F.ref
-// CHECK:STDOUT:   %.loc9_6.1: ref Base = class_element_access %a.ref.loc9, element0
-// CHECK:STDOUT:   %.loc9_6.2: ref Base = converted %a.ref.loc9, %.loc9_6.1
-// CHECK:STDOUT:   %.loc9_6.3: Base = bind_value %.loc9_6.2
-// CHECK:STDOUT:   %F.call: init () = call %.loc9_4(%.loc9_6.3)
+// CHECK:STDOUT:   %.loc9_6.1: ref %Base = class_element_access %a.ref.loc9, element0
+// CHECK:STDOUT:   %.loc9_6.2: ref %Base = converted %a.ref.loc9, %.loc9_6.1
+// CHECK:STDOUT:   %.loc9_6.3: %Base = bind_value %.loc9_6.2
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc9_4(%.loc9_6.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: Base]();
+// CHECK:STDOUT: fn @F[%self: %Base]();
 // CHECK:STDOUT:

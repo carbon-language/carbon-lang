@@ -22,9 +22,9 @@ fn Run() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
-// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
+// CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,8 +35,8 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -46,11 +46,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init () = call %F.ref()
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
 // CHECK:STDOUT:   %.loc17_7: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_4.1: ref () = temporary_storage
-// CHECK:STDOUT:   %.loc17_4.2: ref () = temporary %.loc17_4.1, %F.call
+// CHECK:STDOUT:   %.loc17_4.1: ref %.1 = temporary_storage
+// CHECK:STDOUT:   %.loc17_4.2: ref %.1 = temporary %.loc17_4.1, %F.call
 // CHECK:STDOUT:   %.loc17_8: ref <error> = tuple_index %.loc17_4.2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

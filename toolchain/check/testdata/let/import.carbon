@@ -25,7 +25,7 @@ let b:! bool = a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %a: bool = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT: }
@@ -35,7 +35,7 @@ let b:! bool = a;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc4_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %bool.make_type, %.loc4_9.1 [template = bool]
@@ -50,7 +50,7 @@ let b:! bool = a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %a: bool = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %b: bool = bind_symbolic_name b 0 [symbolic]
 // CHECK:STDOUT: }
@@ -62,7 +62,7 @@ let b:! bool = a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: bool = import_ref ir0, inst+11, loaded [symbolic = constants.%a]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.2: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc4_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %bool.make_type, %.loc4_9.1 [template = bool]

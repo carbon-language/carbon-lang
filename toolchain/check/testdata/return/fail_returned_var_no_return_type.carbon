@@ -24,7 +24,7 @@ fn Procedure() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Procedure: <type of Procedure> = struct_value () [template]
+// CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -33,15 +33,15 @@ fn Procedure() {
 // CHECK:STDOUT:     .Procedure = %Procedure.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Procedure.decl: <type of Procedure> = fn_decl @Procedure [template = constants.%Procedure] {}
+// CHECK:STDOUT:   %Procedure.decl: %Procedure.type = fn_decl @Procedure [template = constants.%Procedure] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_20.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc18_20.2: type = converted %.loc18_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %v: () = bind_name v, <error>
-// CHECK:STDOUT:   %.loc18_25: () = tuple_literal ()
+// CHECK:STDOUT:   %v: %.1 = bind_name v, <error>
+// CHECK:STDOUT:   %.loc18_25: %.1 = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

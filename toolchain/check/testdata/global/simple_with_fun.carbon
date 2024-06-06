@@ -19,9 +19,9 @@ var a: i32 = test_a();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %test_a.type: type = fn_type @test_a [template]
-// CHECK:STDOUT:   %test_a: <type of test_a> = struct_value () [template]
+// CHECK:STDOUT:   %test_a: %test_a.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,14 +32,14 @@ var a: i32 = test_a();
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %test_a.decl: <type of test_a> = fn_decl @test_a [template = constants.%test_a] {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %test_a.decl: %test_a.type = fn_decl @test_a [template = constants.%test_a] {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %int.make_type_32.loc11, %.loc11_16.1 [template = i32]
 // CHECK:STDOUT:     @test_a.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
@@ -57,7 +57,7 @@ var a: i32 = test_a();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %test_a.ref: <type of test_a> = name_ref test_a, file.%test_a.decl [template = constants.%test_a]
+// CHECK:STDOUT:   %test_a.ref: %test_a.type = name_ref test_a, file.%test_a.decl [template = constants.%test_a]
 // CHECK:STDOUT:   %test_a.call: init i32 = call %test_a.ref()
 // CHECK:STDOUT:   assign file.%a.var, %test_a.call
 // CHECK:STDOUT:   return

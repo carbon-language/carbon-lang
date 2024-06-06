@@ -48,9 +48,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %PartialConstant.type: type = fn_type @PartialConstant [template]
-// CHECK:STDOUT:   %PartialConstant: <type of PartialConstant> = struct_value () [template]
+// CHECK:STDOUT:   %PartialConstant: %PartialConstant.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT: }
@@ -61,16 +61,16 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     .PartialConstant = %PartialConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %PartialConstant.decl: <type of PartialConstant> = fn_decl @PartialConstant [template = constants.%PartialConstant] {
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type, %.loc4_23.1 [template = bool]
 // CHECK:STDOUT:     %x.loc4_20.1: bool = param x
 // CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc4_20.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.3: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
@@ -96,7 +96,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_29.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   %.loc9_40: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_40: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_34: type = converted %.loc9_40, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_34)
 // CHECK:STDOUT:
@@ -124,7 +124,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_29.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:
-// CHECK:STDOUT:   %.loc14_40: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc14_40: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc14_34: type = converted %.loc14_40, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_34)
 // CHECK:STDOUT:
@@ -140,9 +140,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.type: type = fn_type @KnownValueButNonConstantCondition [template]
-// CHECK:STDOUT:   %KnownValueButNonConstantCondition: <type of KnownValueButNonConstantCondition> = struct_value () [template]
+// CHECK:STDOUT:   %KnownValueButNonConstantCondition: %KnownValueButNonConstantCondition.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal true [template]
 // CHECK:STDOUT: }
@@ -153,16 +153,16 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     .KnownValueButNonConstantCondition = %KnownValueButNonConstantCondition.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: <type of KnownValueButNonConstantCondition> = fn_decl @KnownValueButNonConstantCondition [template = constants.%KnownValueButNonConstantCondition] {
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [template = constants.%KnownValueButNonConstantCondition] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type, %.loc4_41.1 [template = bool]
 // CHECK:STDOUT:     %x.loc4_38.1: bool = param x
 // CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_name x, %x.loc4_38.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.3: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
@@ -188,7 +188,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_30.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc11:
-// CHECK:STDOUT:   %.loc11_41: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_41: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_35: type = converted %.loc11_41, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_35)
 // CHECK:STDOUT:
@@ -216,7 +216,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc15:
-// CHECK:STDOUT:   %.loc15_39: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_39: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_33: type = converted %.loc15_39, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_33)
 // CHECK:STDOUT:

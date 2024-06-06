@@ -74,9 +74,9 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
-// CHECK:STDOUT:   %UInt: <type of UInt> = struct_value () [template]
+// CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -85,8 +85,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .UInt = %UInt.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %UInt.decl: <type of UInt> = fn_decl @UInt [template = constants.%UInt] {
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %UInt.decl: %UInt.type = fn_decl @UInt [template = constants.%UInt] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_12.2: type = converted %int.make_type_32, %.loc4_12.1 [template = i32]
@@ -105,21 +105,21 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %UInt: <type of UInt> = struct_value () [template]
+// CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
 // CHECK:STDOUT:   %.3: type = int_type unsigned, %.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 13 [template]
 // CHECK:STDOUT:   %.5: type = int_type unsigned, %.4 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
 // CHECK:STDOUT:   %.6: type = int_type unsigned, %N [symbolic]
 // CHECK:STDOUT:   %Symbolic.type: type = fn_type @Symbolic [template]
-// CHECK:STDOUT:   %Symbolic: <type of Symbolic> = struct_value () [template]
+// CHECK:STDOUT:   %Symbolic: %Symbolic.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -130,80 +130,80 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .Symbolic = %Symbolic.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <type of UInt> = import_ref ir1, inst+14, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir1, inst+14, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %UInt.ref.loc6_9: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %UInt.ref.loc6_9: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_14: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc6_13: init type = call %UInt.ref.loc6_9(%.loc6_14) [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_16.1: type = value_of_initializer %int.make_type_unsigned.loc6_13 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_16.2: type = converted %int.make_type_unsigned.loc6_13, %.loc6_16.1 [template = constants.%.3]
-// CHECK:STDOUT:     %n.loc6_6.1: u64 = param n
-// CHECK:STDOUT:     @F.%n: u64 = bind_name n, %n.loc6_6.1
-// CHECK:STDOUT:     %UInt.ref.loc6_22: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:     %n.loc6_6.1: %.3 = param n
+// CHECK:STDOUT:     @F.%n: %.3 = bind_name n, %n.loc6_6.1
+// CHECK:STDOUT:     %UInt.ref.loc6_22: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_27: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc6_26: init type = call %UInt.ref.loc6_22(%.loc6_27) [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_29.1: type = value_of_initializer %int.make_type_unsigned.loc6_26 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_29.2: type = converted %int.make_type_unsigned.loc6_26, %.loc6_29.1 [template = constants.%.3]
-// CHECK:STDOUT:     @F.%return: ref u64 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %UInt.ref.loc10_9: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %UInt.ref.loc10_9: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_14: i32 = int_literal 13 [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc10_13: init type = call %UInt.ref.loc10_9(%.loc10_14) [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_16.1: type = value_of_initializer %int.make_type_unsigned.loc10_13 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %int.make_type_unsigned.loc10_13, %.loc10_16.1 [template = constants.%.5]
-// CHECK:STDOUT:     %n.loc10_6.1: u13 = param n
-// CHECK:STDOUT:     @G.%n: u13 = bind_name n, %n.loc10_6.1
-// CHECK:STDOUT:     %UInt.ref.loc10_22: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:     %n.loc10_6.1: %.5 = param n
+// CHECK:STDOUT:     @G.%n: %.5 = bind_name n, %n.loc10_6.1
+// CHECK:STDOUT:     %UInt.ref.loc10_22: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_27: i32 = int_literal 13 [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc10_26: init type = call %UInt.ref.loc10_22(%.loc10_27) [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_unsigned.loc10_26 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_unsigned.loc10_26, %.loc10_29.1 [template = constants.%.5]
-// CHECK:STDOUT:     @G.%return: ref u13 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref %.5 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir4, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Symbolic.decl: <type of Symbolic> = fn_decl @Symbolic [template = constants.%Symbolic] {
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir4, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %int.make_type_32, %.loc14_17.1 [template = i32]
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
 // CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = constants.%N]
-// CHECK:STDOUT:     %UInt.ref.loc14_25: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:     %UInt.ref.loc14_25: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N [symbolic = constants.%N]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = constants.%.6]
 // CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = constants.%.6]
 // CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = constants.%.6]
-// CHECK:STDOUT:     %x.loc14_22.1: Core.UInt(N) = param x
-// CHECK:STDOUT:     @Symbolic.%x: Core.UInt(N) = bind_name x, %x.loc14_22.1
-// CHECK:STDOUT:     %UInt.ref.loc14_37: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:     %x.loc14_22.1: %.6 = param x
+// CHECK:STDOUT:     @Symbolic.%x: %.6 = bind_name x, %x.loc14_22.1
+// CHECK:STDOUT:     %UInt.ref.loc14_37: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, @Symbolic.%N [symbolic = constants.%N]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = constants.%.6]
 // CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = constants.%.6]
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = constants.%.6]
-// CHECK:STDOUT:     @Symbolic.%return: ref Core.UInt(N) = var <return slot>
+// CHECK:STDOUT:     @Symbolic.%return: ref %.6 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UInt(%n: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: u64) -> u64 {
+// CHECK:STDOUT: fn @F(%n: %.3) -> %.3 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: u64 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %.3 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n: u13) -> u13 {
+// CHECK:STDOUT: fn @G(%n: %.5) -> %.5 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: u13 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %.5 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: Core.UInt(N)) -> Core.UInt(N) {
+// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: %.6) -> %.6 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: Core.UInt(N) = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %.6 = name_ref x, %x
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,7 +212,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %UInt: <type of UInt> = struct_value () [template]
+// CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -222,9 +222,9 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of UInt> = import_ref ir1, inst+14, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref ir1, inst+14, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %UInt.ref: <type of UInt> = name_ref UInt, %import_ref [template = constants.%UInt]
+// CHECK:STDOUT:   %UInt.ref: %UInt.type = name_ref UInt, %import_ref [template = constants.%UInt]
 // CHECK:STDOUT:   %.loc10_13: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %int.make_type_unsigned: init type = call %UInt.ref(%.loc10_13) [template = <error>]
 // CHECK:STDOUT:   %.loc10_14.1: type = value_of_initializer %int.make_type_unsigned [template = <error>]
@@ -240,11 +240,11 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [template]
-// CHECK:STDOUT:   %Negate: <type of Negate> = struct_value () [template]
+// CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
-// CHECK:STDOUT:   %UInt: <type of UInt> = struct_value () [template]
+// CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal -1 [template]
 // CHECK:STDOUT: }
@@ -256,11 +256,11 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .Negate = %Negate.decl
 // CHECK:STDOUT:     .n = %n.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <type of UInt> = import_ref ir1, inst+14, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir1, inst+14, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir4, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir4, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Negate.decl: <type of Negate> = fn_decl @Negate [template = constants.%Negate] {
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir4, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir4, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.2: type = converted %int.make_type_32.loc6_14, %.loc6_14.1 [template = i32]
@@ -271,8 +271,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc6_22.2: type = converted %int.make_type_32.loc6_22, %.loc6_22.1 [template = i32]
 // CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %UInt.ref: <type of UInt> = name_ref UInt, %import_ref.1 [template = constants.%UInt]
-// CHECK:STDOUT:   %Negate.ref: <type of Negate> = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %UInt.ref: %UInt.type = name_ref UInt, %import_ref.1 [template = constants.%UInt]
+// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc12_20: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc12_20) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_12.1: i32 = value_of_initializer %int.snegate [template = constants.%.3]
@@ -295,7 +295,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %UInt: <type of UInt> = struct_value () [template]
+// CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,9 +305,9 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .m = %m
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of UInt> = import_ref ir1, inst+14, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref ir1, inst+14, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %UInt.ref: <type of UInt> = name_ref UInt, %import_ref [template = constants.%UInt]
+// CHECK:STDOUT:   %UInt.ref: %UInt.type = name_ref UInt, %import_ref [template = constants.%UInt]
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 1000000000 [template = constants.%.2]
 // CHECK:STDOUT:   %int.make_type_unsigned: init type = call %UInt.ref(%.loc9_13) [template = <error>]
 // CHECK:STDOUT:   %.loc9_23.1: type = value_of_initializer %int.make_type_unsigned [template = <error>]

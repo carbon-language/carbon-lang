@@ -42,13 +42,13 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
-// CHECK:STDOUT:   %B: <type of B> = struct_value () [template]
+// CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
-// CHECK:STDOUT:   %C: <type of C> = struct_value () [template]
+// CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,10 +59,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     .C = %C.decl.loc31
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %A.decl.loc11: <type of A> = fn_decl @A [template = constants.%A] {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %A.decl.loc11: %A.type = fn_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %int.make_type_32.loc11_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11_9 [template = i32]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32.loc11_9, %.loc11_9.1 [template = i32]
@@ -78,10 +78,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32.loc11_25, %.loc11_25.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.6: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %A.decl.loc19: <type of A> = fn_decl @A [template = constants.%A] {
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %A.decl.loc19: %A.type = fn_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %int.make_type_32.loc19_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_9.1: type = value_of_initializer %int.make_type_32.loc19_9 [template = i32]
 // CHECK:STDOUT:     %.loc19_9.2: type = converted %int.make_type_32.loc19_9, %.loc19_9.1 [template = i32]
@@ -97,10 +97,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %.loc19_25.2: type = converted %int.make_type_32.loc19_25, %.loc19_25.1 [template = i32]
 // CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.8: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.9: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %B.decl.loc21: <type of B> = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %B.decl.loc21: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %int.make_type_32.loc21_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_9.1: type = value_of_initializer %int.make_type_32.loc21_9 [template = i32]
 // CHECK:STDOUT:     %.loc21_9.2: type = converted %int.make_type_32.loc21_9, %.loc21_9.1 [template = i32]
@@ -116,10 +116,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %.loc21_25.2: type = converted %int.make_type_32.loc21_25, %.loc21_25.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc21: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.10: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.11: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.12: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %B.decl.loc29: <type of B> = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.12: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %B.decl.loc29: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %int.make_type_32.loc29_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_9.1: type = value_of_initializer %int.make_type_32.loc29_9 [template = i32]
 // CHECK:STDOUT:     %.loc29_9.2: type = converted %int.make_type_32.loc29_9, %.loc29_9.1 [template = i32]
@@ -135,10 +135,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %.loc29_25.2: type = converted %int.make_type_32.loc29_25, %.loc29_25.1 [template = i32]
 // CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.13: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.14: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.15: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %C.decl.loc31: <type of C> = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:   %import_ref.13: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.14: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.15: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %C.decl.loc31: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %int.make_type_32.loc31_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc31_9.1: type = value_of_initializer %int.make_type_32.loc31_9 [template = i32]
 // CHECK:STDOUT:     %.loc31_9.2: type = converted %int.make_type_32.loc31_9, %.loc31_9.1 [template = i32]
@@ -154,10 +154,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %.loc31_25.2: type = converted %int.make_type_32.loc31_25, %.loc31_25.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc31: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.16: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.17: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.18: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %C.decl.loc38: <type of C> = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:   %import_ref.16: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.17: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.18: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %C.decl.loc38: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %int.make_type_32.loc38_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc38_9.1: type = value_of_initializer %int.make_type_32.loc38_9 [template = i32]
 // CHECK:STDOUT:     %.loc38_9.2: type = converted %int.make_type_32.loc38_9, %.loc38_9.1 [template = i32]

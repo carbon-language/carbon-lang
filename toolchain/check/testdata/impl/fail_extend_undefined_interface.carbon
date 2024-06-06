@@ -41,7 +41,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: C as I;
+// CHECK:STDOUT: impl @impl: %C as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl {

@@ -34,16 +34,16 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @HasF [template]
-// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @HasF, <type of F> [template]
-// CHECK:STDOUT:   %.4: <associated <type of F> in HasF> = assoc_entity element0, @HasF.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @HasF, %F.type.1 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,9 +63,9 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
-// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.loc5: <associated <type of F> in HasF> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -73,8 +73,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: C as HasF {
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {}
+// CHECK:STDOUT: impl @impl: %C as %.1 {
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -100,17 +100,17 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @HasF [template]
-// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @HasF, <type of F> [template]
-// CHECK:STDOUT:   %.6: <associated <type of F> in HasF> = assoc_entity element0, file.%import_ref.8 [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type @HasF, %F.type.1 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, file.%import_ref.8 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,16 +123,16 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir8, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.2: <associated <type of F> in HasF> = import_ref ir8, inst+11, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.2: %.5 = import_ref ir8, inst+11, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir8, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir8, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir8, inst+22, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.6: type = import_ref ir8, inst+13, loaded [template = constants.%C]
-// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %import_ref.6 [template = constants.%C]
-// CHECK:STDOUT:     %c.loc4_6.1: C = param c
-// CHECK:STDOUT:     @G.%c: C = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     %c.loc4_6.1: %C = param c
+// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir8, inst+2, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir8, inst+6, unloaded
@@ -145,21 +145,21 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: C as HasF;
+// CHECK:STDOUT: impl @impl: %C as %.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = file.%import_ref.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c: C) {
+// CHECK:STDOUT: fn @G(%c: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: C = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref: <namespace> = name_ref Impl, file.%Impl [template = file.%Impl]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%import_ref.7 [template = constants.%.2]
-// CHECK:STDOUT:   %F.ref: <associated <type of F> in HasF> = name_ref F, file.%import_ref.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.1: <type of F> = interface_witness_access file.%import_ref.5, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init () = call %.1()
+// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, file.%import_ref.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access file.%import_ref.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %.3 = call %.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

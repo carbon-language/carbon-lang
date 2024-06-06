@@ -41,14 +41,14 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type [i32; 3] [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 4 [template]
@@ -61,51 +61,51 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_18: type = array_type %.loc11_17, i32 [template = constants.%.3]
-// CHECK:STDOUT:     @F.%return: ref [i32; 3] = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_15: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %b.loc13_6.1: [i32; 3] = param b
-// CHECK:STDOUT:     @G.%b: [i32; 3] = bind_name b, %b.loc13_6.1
+// CHECK:STDOUT:     %b.loc13_6.1: %.3 = param b
+// CHECK:STDOUT:     @G.%b: %.3 = bind_name b, %b.loc13_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> [i32; 3];
+// CHECK:STDOUT: fn @F() -> %.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b: [i32; 3]) {
+// CHECK:STDOUT: fn @G(%b: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_14.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
 // CHECK:STDOUT:   %.loc19_14.2: type = converted %int.make_type_32.loc19, %.loc19_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc19_14.3: type = ptr_type i32 [template = constants.%.5]
-// CHECK:STDOUT:   %pb.var: ref i32* = var pb
-// CHECK:STDOUT:   %pb: ref i32* = bind_name pb, %pb.var
-// CHECK:STDOUT:   %b.ref.loc19: [i32; 3] = name_ref b, %b
+// CHECK:STDOUT:   %pb.var: ref %.5 = var pb
+// CHECK:STDOUT:   %pb: ref %.5 = bind_name pb, %pb.var
+// CHECK:STDOUT:   %b.ref.loc19: %.3 = name_ref b, %b
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 0 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc19_22.1: ref [i32; 3] = value_as_ref %b.ref.loc19
+// CHECK:STDOUT:   %.loc19_22.1: ref %.3 = value_as_ref %b.ref.loc19
 // CHECK:STDOUT:   %.loc19_22.2: ref i32 = array_index %.loc19_22.1, %.loc19_21
 // CHECK:STDOUT:   %.loc19_22.3: i32 = bind_value %.loc19_22.2
-// CHECK:STDOUT:   %.loc19_18: i32* = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_18: %.5 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %pb.var, %.loc19_18
-// CHECK:STDOUT:   %b.ref.loc24: [i32; 3] = name_ref b, %b
+// CHECK:STDOUT:   %b.ref.loc24: %.3 = name_ref b, %b
 // CHECK:STDOUT:   %.loc24_5: i32 = int_literal 0 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc24_6.1: ref [i32; 3] = value_as_ref %b.ref.loc24
+// CHECK:STDOUT:   %.loc24_6.1: ref %.3 = value_as_ref %b.ref.loc24
 // CHECK:STDOUT:   %.loc24_6.2: ref i32 = array_index %.loc24_6.1, %.loc24_5
 // CHECK:STDOUT:   %.loc24_6.3: i32 = bind_value %.loc24_6.2
 // CHECK:STDOUT:   %.loc24_10: i32 = int_literal 4 [template = constants.%.7]
@@ -114,22 +114,22 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc32_14.1: type = value_of_initializer %int.make_type_32.loc32 [template = i32]
 // CHECK:STDOUT:   %.loc32_14.2: type = converted %int.make_type_32.loc32, %.loc32_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc32_14.3: type = ptr_type i32 [template = constants.%.5]
-// CHECK:STDOUT:   %pf.var: ref i32* = var pf
-// CHECK:STDOUT:   %pf: ref i32* = bind_name pf, %pf.var
-// CHECK:STDOUT:   %F.ref.loc32: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc32_20.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %F.call.loc32: init [i32; 3] = call %F.ref.loc32() to %.loc32_20.1
+// CHECK:STDOUT:   %pf.var: ref %.5 = var pf
+// CHECK:STDOUT:   %pf: ref %.5 = bind_name pf, %pf.var
+// CHECK:STDOUT:   %F.ref.loc32: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %.loc32_20.1: ref %.3 = temporary_storage
+// CHECK:STDOUT:   %F.call.loc32: init %.3 = call %F.ref.loc32() to %.loc32_20.1
 // CHECK:STDOUT:   %.loc32_23: i32 = int_literal 0 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc32_20.2: ref [i32; 3] = temporary %.loc32_20.1, %F.call.loc32
+// CHECK:STDOUT:   %.loc32_20.2: ref %.3 = temporary %.loc32_20.1, %F.call.loc32
 // CHECK:STDOUT:   %.loc32_24.1: ref i32 = array_index %.loc32_20.2, %.loc32_23
 // CHECK:STDOUT:   %.loc32_24.2: i32 = bind_value %.loc32_24.1
-// CHECK:STDOUT:   %.loc32_18: i32* = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc32_18: %.5 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %pf.var, %.loc32_18
-// CHECK:STDOUT:   %F.ref.loc36: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc36_4.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %F.call.loc36: init [i32; 3] = call %F.ref.loc36() to %.loc36_4.1
+// CHECK:STDOUT:   %F.ref.loc36: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %.loc36_4.1: ref %.3 = temporary_storage
+// CHECK:STDOUT:   %F.call.loc36: init %.3 = call %F.ref.loc36() to %.loc36_4.1
 // CHECK:STDOUT:   %.loc36_7: i32 = int_literal 0 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc36_4.2: ref [i32; 3] = temporary %.loc36_4.1, %F.call.loc36
+// CHECK:STDOUT:   %.loc36_4.2: ref %.3 = temporary %.loc36_4.1, %F.call.loc36
 // CHECK:STDOUT:   %.loc36_8.1: ref i32 = array_index %.loc36_4.2, %.loc36_7
 // CHECK:STDOUT:   %.loc36_8.2: i32 = bind_value %.loc36_8.1
 // CHECK:STDOUT:   %.loc36_12: i32 = int_literal 4 [template = constants.%.7]

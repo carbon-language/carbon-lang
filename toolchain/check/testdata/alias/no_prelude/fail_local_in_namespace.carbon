@@ -32,7 +32,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -41,16 +41,16 @@ fn F() -> {} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc13_12.1: {} = struct_literal ()
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc13_12.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @F.%return: ref {} = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> {} {
+// CHECK:STDOUT: fn @F() -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_17: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc22_17: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc22_12: <error> = bind_alias <invalid>, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]

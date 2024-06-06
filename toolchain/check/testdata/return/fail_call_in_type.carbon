@@ -21,11 +21,11 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %ReturnType: <type of ReturnType> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
-// CHECK:STDOUT:   %Six: <type of Six> = struct_value () [template]
+// CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,12 +36,12 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ReturnType.decl: <type of ReturnType> = fn_decl @ReturnType [template = constants.%ReturnType] {
+// CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [template = constants.%ReturnType] {
 // CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Six.decl: <type of Six> = fn_decl @Six [template = constants.%Six] {
-// CHECK:STDOUT:     %ReturnType.ref: <type of ReturnType> = name_ref ReturnType, %ReturnType.decl [template = constants.%ReturnType]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
+// CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, %ReturnType.decl [template = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc17_24.2: type = converted %ReturnType.call, %.loc17_24.1

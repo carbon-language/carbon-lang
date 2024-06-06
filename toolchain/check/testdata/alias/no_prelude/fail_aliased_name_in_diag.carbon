@@ -26,8 +26,8 @@ let c_var: c = d;
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %struct: D = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %struct: %D = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -42,11 +42,11 @@ let c_var: c = d;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:   %d.var: ref D = var d
-// CHECK:STDOUT:   %d: ref D = bind_name d, %d.var
+// CHECK:STDOUT:   %d.var: ref %D = var d
+// CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
-// CHECK:STDOUT:   %d.ref: ref D = name_ref d, %d
-// CHECK:STDOUT:   %c_var: C = bind_name c_var, <error>
+// CHECK:STDOUT:   %d.ref: ref %D = name_ref d, %d
+// CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -61,9 +61,9 @@ let c_var: c = d;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc15_13.2: init D = class_init (), file.%d.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_14: init D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc15_13.2: init %D = class_init (), file.%d.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
