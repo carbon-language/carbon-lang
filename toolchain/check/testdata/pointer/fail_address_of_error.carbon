@@ -29,7 +29,7 @@ fn Test() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Test: <type of Test> = struct_value () [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -38,7 +38,7 @@ fn Test() {
 // CHECK:STDOUT:     .Test = %Test.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Test.decl: <type of Test> = fn_decl @Test [template = constants.%Test] {}
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {

@@ -59,24 +59,24 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v [private] = %v
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %v.var: ref () = var v
-// CHECK:STDOUT:   %v: ref () = bind_name v, %v.var
+// CHECK:STDOUT:   %v.var: ref %.1 = var v
+// CHECK:STDOUT:   %v: ref %.1 = bind_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_22.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_22.2: init () = tuple_init () to file.%v.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc4_23: init () = converted %.loc4_22.1, %.loc4_22.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_22.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_22.2: init %.1 = tuple_init () to file.%v.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_23: init %.1 = converted %.loc4_22.1, %.loc4_22.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%v.var, %.loc4_23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -91,10 +91,10 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %v2.var: ref () = var v2
-// CHECK:STDOUT:   %v2: ref () = bind_name v2, %v2.var
+// CHECK:STDOUT:   %v2.var: ref %.1 = var v2
+// CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -114,10 +114,10 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_10.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %v2.var: ref () = var v2
-// CHECK:STDOUT:   %v2: ref () = bind_name v2, %v2.var
+// CHECK:STDOUT:   %v2.var: ref %.1 = var v2
+// CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -139,10 +139,10 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc9_10.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %v2.var: ref () = var v2
-// CHECK:STDOUT:   %v2: ref () = bind_name v2, %v2.var
+// CHECK:STDOUT:   %v2.var: ref %.1 = var v2
+// CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

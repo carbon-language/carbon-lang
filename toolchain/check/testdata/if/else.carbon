@@ -26,15 +26,15 @@ fn If(b: bool) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
-// CHECK:STDOUT:   %H: <type of H> = struct_value () [template]
+// CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [template]
-// CHECK:STDOUT:   %If: <type of If> = struct_value () [template]
+// CHECK:STDOUT:   %If: %If.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,11 +46,11 @@ fn If(b: bool) {
 // CHECK:STDOUT:     .If = %If.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {}
-// CHECK:STDOUT:   %H.decl: <type of H> = fn_decl @H [template = constants.%H] {}
-// CHECK:STDOUT:   %import_ref: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %If.decl: <type of If> = fn_decl @If [template = constants.%If] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {}
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [template = constants.%If] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc15_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %bool.make_type, %.loc15_10.1 [template = bool]
@@ -82,18 +82,18 @@ fn If(b: bool) {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init () = call %F.ref()
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %G.ref: <type of G> = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %G.call: init () = call %G.ref()
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
+// CHECK:STDOUT:   %G.call: init %.1 = call %G.ref()
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %H.ref: <type of H> = name_ref H, file.%H.decl [template = constants.%H]
-// CHECK:STDOUT:   %H.call: init () = call %H.ref()
+// CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [template = constants.%H]
+// CHECK:STDOUT:   %H.call: init %.1 = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

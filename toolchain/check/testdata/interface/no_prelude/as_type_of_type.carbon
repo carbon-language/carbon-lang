@@ -18,11 +18,11 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
-// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %T: Empty = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -31,28 +31,28 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.loc13_6.1: Empty = param T
-// CHECK:STDOUT:     @F.%T: Empty = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc13_6.1: %.1 = param T
+// CHECK:STDOUT:     @F.%T: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: Empty) {
+// CHECK:STDOUT: fn @F(%T: %.1) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: Empty = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.var: ref T = var x
-// CHECK:STDOUT:   %x: ref T = bind_name x, %x.var
+// CHECK:STDOUT:   %x.var: ref %T = var x
+// CHECK:STDOUT:   %x: ref %T = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

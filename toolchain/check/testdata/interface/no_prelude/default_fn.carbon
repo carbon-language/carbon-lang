@@ -28,18 +28,18 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, <type of F> [template]
-// CHECK:STDOUT:   %.4: <associated <type of F> in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, %F.type.1 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %.6: type = struct_type {} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type {} [template]
-// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,9 +50,9 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.loc14: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc14: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -60,8 +60,8 @@ class C {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: C as I {
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {}
+// CHECK:STDOUT: impl @impl: %C as %.1 {
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -84,17 +84,17 @@ class C {
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc16_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc16_19.2: init C = class_init (), %c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc16_20: init C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%struct]
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc16_19.1: %.6 = struct_literal ()
+// CHECK:STDOUT:   %.loc16_19.2: init %C = class_init (), %c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_20: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %c.var, %.loc16_20
-// CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated <type of F> in I> = name_ref F, @I.%.loc14 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: <type of F> = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init () = call %.1()
+// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc14 [template = constants.%.4]
+// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %.2 = call %.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

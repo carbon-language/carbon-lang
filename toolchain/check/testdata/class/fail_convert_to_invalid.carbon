@@ -25,7 +25,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Make: <type of Make> = struct_value () [template]
+// CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 123 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT: }
@@ -38,9 +38,9 @@ fn Make() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %Make.decl: <type of Make> = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @Make.%return: ref C = var <return slot>
+// CHECK:STDOUT:     @Make.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -53,10 +53,10 @@ fn Make() -> C {
 // CHECK:STDOUT:   .a = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: C {
+// CHECK:STDOUT: fn @Make() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_16: i32 = int_literal 123 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc19_19: {.a: i32} = struct_literal (%.loc19_16)
+// CHECK:STDOUT:   %.loc19_19: %.3 = struct_literal (%.loc19_16)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

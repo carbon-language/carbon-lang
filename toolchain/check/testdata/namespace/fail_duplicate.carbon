@@ -27,7 +27,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Baz: <type of Baz> = struct_value () [template]
+// CHECK:STDOUT:   %Baz: %Baz.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,8 +39,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc13: <type of Baz> = fn_decl @Baz [template = constants.%Baz] {}
-// CHECK:STDOUT:   %Baz.decl.loc22: <type of Baz> = fn_decl @Baz [template = constants.%Baz] {}
+// CHECK:STDOUT:   %Baz.decl.loc13: %Baz.type = fn_decl @Baz [template = constants.%Baz] {}
+// CHECK:STDOUT:   %Baz.decl.loc22: %Baz.type = fn_decl @Baz [template = constants.%Baz] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

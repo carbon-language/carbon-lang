@@ -19,13 +19,13 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = const_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type const {} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.5: type = const_type {}* [template]
+// CHECK:STDOUT:   %.2: type = const_type %.1 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: type = const_type %.4 [template]
 // CHECK:STDOUT:   %ConstMismatch.type: type = fn_type @ConstMismatch [template]
 // CHECK:STDOUT:   %.6: type = tuple_type () [template]
-// CHECK:STDOUT:   %ConstMismatch: <type of ConstMismatch> = struct_value () [template]
+// CHECK:STDOUT:   %ConstMismatch: %ConstMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,24 +34,24 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     .ConstMismatch = %ConstMismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ConstMismatch.decl: <type of ConstMismatch> = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
-// CHECK:STDOUT:     %.loc11_28: {} = struct_literal ()
+// CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
+// CHECK:STDOUT:     %.loc11_28: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_21.2: type = const_type {} [template = constants.%.2]
-// CHECK:STDOUT:     %.loc11_29: type = ptr_type const {} [template = constants.%.3]
-// CHECK:STDOUT:     %p.loc11_18.1: const {}* = param p
-// CHECK:STDOUT:     @ConstMismatch.%p: const {}* = bind_name p, %p.loc11_18.1
-// CHECK:STDOUT:     %.loc11_43: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc11_21.2: type = const_type %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc11_29: type = ptr_type %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %p.loc11_18.1: %.3 = param p
+// CHECK:STDOUT:     @ConstMismatch.%p: %.3 = bind_name p, %p.loc11_18.1
+// CHECK:STDOUT:     %.loc11_43: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_44.1: type = converted %.loc11_43, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_44.2: type = ptr_type {} [template = constants.%.4]
-// CHECK:STDOUT:     %.loc11_35: type = const_type {}* [template = constants.%.5]
-// CHECK:STDOUT:     @ConstMismatch.%return: ref const ({}*) = var <return slot>
+// CHECK:STDOUT:     %.loc11_44.2: type = ptr_type %.1 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc11_35: type = const_type %.4 [template = constants.%.5]
+// CHECK:STDOUT:     @ConstMismatch.%return: ref %.5 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
+// CHECK:STDOUT: fn @ConstMismatch(%p: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: const {}* = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

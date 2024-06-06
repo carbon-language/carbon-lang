@@ -22,9 +22,9 @@ var a: A = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %ret_a.type: type = fn_type @ret_a [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %ret_a: <type of ret_a> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %ret_a: %ret_a.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %struct: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,13 +36,13 @@ var a: A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %ret_a.decl: <type of ret_a> = fn_decl @ret_a [template = constants.%ret_a] {
+// CHECK:STDOUT:   %ret_a.decl: %ret_a.type = fn_decl @ret_a [template = constants.%ret_a] {
 // CHECK:STDOUT:     %A.ref.loc12: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     @ret_a.%return: ref A = var <return slot>
+// CHECK:STDOUT:     @ret_a.%return: ref %A = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:   %a.var: ref A = var a
-// CHECK:STDOUT:   %a: ref A = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %A = var a
+// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -50,19 +50,19 @@ var a: A = {};
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ret_a() -> %return: A {
+// CHECK:STDOUT: fn @ret_a() -> %return: %A {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_11.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc13_11.2: init A = class_init (), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_12: init A = converted %.loc13_11.1, %.loc13_11.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_11.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc13_11.2: init %A = class_init (), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_12: init %A = converted %.loc13_11.1, %.loc13_11.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc13_12 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc16_13.2: init A = class_init (), file.%a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc16_14: init A = converted %.loc16_13.1, %.loc16_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc16_13.2: init %A = class_init (), file.%a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_14: init %A = converted %.loc16_13.1, %.loc16_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc16_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

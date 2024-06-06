@@ -43,15 +43,15 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %.1: type = interface_type @NotGeneric [template]
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
-// CHECK:STDOUT:   %Self.1: <invalid> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @Generic [template]
 // CHECK:STDOUT:   %.4: type = interface_type @.2 [template]
-// CHECK:STDOUT:   %Self.2: <invalid> = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = interface_type @DifferentParams [template]
 // CHECK:STDOUT:   %.6: type = tuple_type () [template]
-// CHECK:STDOUT:   %T.2: () = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T.2: %.6 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.7: type = interface_type @.3 [template]
-// CHECK:STDOUT:   %Self.3: <invalid> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.3: %.7 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,17 +75,17 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc38: type = interface_decl @.3 [template = constants.%.7] {
-// CHECK:STDOUT:     %.loc38_32.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc38_32.1: %.6 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.6 [template = constants.%.6]
-// CHECK:STDOUT:     %T.loc38_27.1: () = param T
-// CHECK:STDOUT:     %T.loc38_27.2: () = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:     %T.loc38_27.1: %.6 = param T
+// CHECK:STDOUT:     %T.loc38_27.2: %.6 = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = constants.%T.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGeneric;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1 {
-// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -95,7 +95,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: interface @Generic;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
-// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -105,7 +105,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: interface @DifferentParams;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.3 {
-// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

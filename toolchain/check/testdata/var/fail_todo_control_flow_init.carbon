@@ -60,10 +60,10 @@ var y2: bool = false or true;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,21 +75,21 @@ var y2: bool = false or true;
 // CHECK:STDOUT:     .y2 = %y2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc23_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc23_9.2: type = converted %.loc23_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref () = var x
-// CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc37_10.1: () = tuple_literal ()
+// CHECK:STDOUT:   %x.var: ref %.1 = var x
+// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc37_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc37_10.2: type = converted %.loc37_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x2.var: ref () = var x2
-// CHECK:STDOUT:   %x2: ref () = bind_name x2, %x2.var
-// CHECK:STDOUT:   %import_ref.1: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %x2.var: ref %.1 = var x2
+// CHECK:STDOUT:   %x2: ref %.1 = bind_name x2, %x2.var
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type.loc47: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc47_8.1: type = value_of_initializer %bool.make_type.loc47 [template = bool]
 // CHECK:STDOUT:   %.loc47_8.2: type = converted %bool.make_type.loc47, %.loc47_8.1 [template = bool]
 // CHECK:STDOUT:   %y.var: ref bool = var y
 // CHECK:STDOUT:   %y: ref bool = bind_name y, %y.var
-// CHECK:STDOUT:   %import_ref.2: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type.loc56: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc56_9.1: type = value_of_initializer %bool.make_type.loc56 [template = bool]
 // CHECK:STDOUT:   %.loc56_9.2: type = converted %bool.make_type.loc56, %.loc56_9.1 [template = bool]

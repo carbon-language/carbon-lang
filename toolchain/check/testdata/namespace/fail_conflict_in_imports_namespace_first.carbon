@@ -47,7 +47,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Foo: <type of Foo> = struct_value () [template]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,7 +59,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl: <type of Foo> = fn_decl @Foo [template = constants.%Foo] {}
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
@@ -72,7 +72,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %NS: <type of NS> = struct_value () [template]
+// CHECK:STDOUT:   %NS: %NS.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,7 +81,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .NS = %NS.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %NS.decl: <type of NS> = fn_decl @NS [template = constants.%NS] {}
+// CHECK:STDOUT:   %NS.decl: %NS.type = fn_decl @NS [template = constants.%NS] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS() {
@@ -94,7 +94,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Bar: <type of Bar> = struct_value () [template]
+// CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -110,7 +110,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Bar.decl: <type of Bar> = fn_decl @Bar [template = constants.%Bar] {}
+// CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {

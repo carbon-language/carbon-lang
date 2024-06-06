@@ -39,7 +39,7 @@ fn While() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %While.type: type = fn_type @While [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %While: <type of While> = struct_value () [template]
+// CHECK:STDOUT:   %While: %While.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -49,7 +49,7 @@ fn While() {
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %While.decl: <type of While> = fn_decl @While [template = constants.%While] {}
+// CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {

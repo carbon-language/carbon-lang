@@ -206,8 +206,8 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type C, () [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -218,9 +218,9 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc5_8: <unbound element of class C> = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %.2 = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -232,14 +232,14 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %C: <type of C> = struct_value () [template]
+// CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: <type of C> = fn_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {
@@ -279,7 +279,7 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -303,7 +303,7 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -327,7 +327,7 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -351,10 +351,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -368,8 +368,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -380,13 +380,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_26.1: {.x: ()} = struct_literal (%.loc6_25.1)
-// CHECK:STDOUT:   %.loc6_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc6_25.2: init () = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.3: init () = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_27: init C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_26.1: %.2 = struct_literal (%.loc6_25.1)
+// CHECK:STDOUT:   %.loc6_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc6_25.2: init %.1 = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.3: init %.1 = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -396,10 +396,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -413,8 +413,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -425,13 +425,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_26.1: {.x: ()} = struct_literal (%.loc7_25.1)
-// CHECK:STDOUT:   %.loc7_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc7_25.2: init () = tuple_init () to %.loc7_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_26.3: init () = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_26.4: init C = class_init (%.loc7_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_27: init C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_26.1: %.2 = struct_literal (%.loc7_25.1)
+// CHECK:STDOUT:   %.loc7_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc7_25.2: init %.1 = tuple_init () to %.loc7_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_26.3: init %.1 = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_27: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -441,10 +441,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -458,8 +458,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -470,13 +470,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_26.1: {.x: ()} = struct_literal (%.loc6_25.1)
-// CHECK:STDOUT:   %.loc6_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc6_25.2: init () = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.3: init () = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_27: init C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_26.1: %.2 = struct_literal (%.loc6_25.1)
+// CHECK:STDOUT:   %.loc6_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc6_25.2: init %.1 = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.3: init %.1 = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -486,10 +486,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -503,8 +503,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -515,13 +515,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_26.1: {.x: ()} = struct_literal (%.loc6_25.1)
-// CHECK:STDOUT:   %.loc6_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc6_25.2: init () = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.3: init () = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_27: init C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_26.1: %.2 = struct_literal (%.loc6_25.1)
+// CHECK:STDOUT:   %.loc6_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc6_25.2: init %.1 = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.3: init %.1 = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -531,10 +531,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -548,8 +548,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -560,13 +560,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_26.1: {.x: ()} = struct_literal (%.loc7_25.1)
-// CHECK:STDOUT:   %.loc7_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc7_25.2: init () = tuple_init () to %.loc7_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_26.3: init () = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_26.4: init C = class_init (%.loc7_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_27: init C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_26.1: %.2 = struct_literal (%.loc7_25.1)
+// CHECK:STDOUT:   %.loc7_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc7_25.2: init %.1 = tuple_init () to %.loc7_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_26.3: init %.1 = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_27: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -576,10 +576,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -593,8 +593,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -605,13 +605,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_26.1: {.x: ()} = struct_literal (%.loc6_25.1)
-// CHECK:STDOUT:   %.loc6_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc6_25.2: init () = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.3: init () = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_27: init C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_26.1: %.2 = struct_literal (%.loc6_25.1)
+// CHECK:STDOUT:   %.loc6_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc6_25.2: init %.1 = tuple_init () to %.loc6_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.3: init %.1 = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -621,10 +621,10 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -638,8 +638,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+9, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref C = var c
-// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -650,13 +650,13 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_25.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_26.1: {.x: ()} = struct_literal (%.loc11_25.1)
-// CHECK:STDOUT:   %.loc11_26.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc11_25.2: init () = tuple_init () to %.loc11_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_26.3: init () = converted %.loc11_25.1, %.loc11_25.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_26.4: init C = class_init (%.loc11_26.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_27: init C = converted %.loc11_26.1, %.loc11_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_25.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_26.1: %.2 = struct_literal (%.loc11_25.1)
+// CHECK:STDOUT:   %.loc11_26.2: ref %.1 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc11_25.2: init %.1 = tuple_init () to %.loc11_26.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_26.3: init %.1 = converted %.loc11_25.1, %.loc11_25.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_26.4: init %C = class_init (%.loc11_26.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_27: init %C = converted %.loc11_26.1, %.loc11_26.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -684,7 +684,7 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %C: <type of C> = struct_value () [template]
+// CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -694,10 +694,10 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: <type of C> = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+1, unloaded
-// CHECK:STDOUT:   %C.ref: <type of C> = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %C: <type of C> = bind_alias C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C: %C.type = bind_alias C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();
@@ -707,7 +707,7 @@ alias C = Other.C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -97,7 +97,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -121,7 +121,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -146,7 +146,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc9: %.1 = struct_literal ()
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

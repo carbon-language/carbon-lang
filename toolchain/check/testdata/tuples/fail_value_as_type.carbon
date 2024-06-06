@@ -27,7 +27,7 @@ var x: (1, );
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc14_9: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_12: (i32,) = tuple_literal (%.loc14_9)
+// CHECK:STDOUT:   %.loc14_12: %.2 = tuple_literal (%.loc14_9)
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }

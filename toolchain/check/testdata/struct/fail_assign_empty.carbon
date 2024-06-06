@@ -18,7 +18,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT: }
@@ -29,20 +29,20 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32, %.loc14_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_16: type = struct_type {.a: i32} [template = constants.%.2]
-// CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
-// CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
+// CHECK:STDOUT:   %x.var: ref %.2 = var x
+// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc14: %.3 = struct_literal ()
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
