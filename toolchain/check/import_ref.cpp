@@ -953,12 +953,10 @@ class ImportRefResolver {
     // Find the corresponding class type. For a non-generic class, this is the
     // type of the class declaration. For a generic class, build a class type
     // referencing this specialization of the generic class.
-    auto class_const_inst =
-        context_.insts().Get(class_const_id.inst_id());
+    auto class_const_inst = context_.insts().Get(class_const_id.inst_id());
     if (!class_const_inst.Is<SemIR::ClassType>()) {
-      auto generic_class_type =
-          context_.types().GetAs<SemIR::GenericClassType>(
-              class_const_inst.type_id());
+      auto generic_class_type = context_.types().GetAs<SemIR::GenericClassType>(
+          class_const_inst.type_id());
       class_const_id =
           TryEvalInst(context_, SemIR::InstId::Invalid,
                       SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
@@ -1110,9 +1108,10 @@ class ImportRefResolver {
       return ResolveResult::Retry();
     }
     auto interface_val = context_.insts().Get(interface_const_id.inst_id());
-    CARBON_CHECK(
-        context_.types().Is<SemIR::GenericInterfaceType>(interface_val.type_id()));
-    return {.const_id = context_.types().GetConstantId(interface_val.type_id())};
+    CARBON_CHECK(context_.types().Is<SemIR::GenericInterfaceType>(
+        interface_val.type_id()));
+    return {.const_id =
+                context_.types().GetConstantId(interface_val.type_id())};
   }
 
   auto TryResolveTypedInst(SemIR::ImportRefLoaded /*inst*/,

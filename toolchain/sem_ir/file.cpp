@@ -329,8 +329,10 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         break;
       }
       case CARBON_KIND(GenericInterfaceType inst): {
-        auto interface_name_id = sem_ir.interfaces().Get(inst.interface_id).name_id;
-        out << "<type of " << sem_ir.names().GetFormatted(interface_name_id) << ">";
+        auto interface_name_id =
+            sem_ir.interfaces().Get(inst.interface_id).name_id;
+        out << "<type of " << sem_ir.names().GetFormatted(interface_name_id)
+            << ">";
         break;
       }
       case CARBON_KIND(InterfaceType inst): {

@@ -34,9 +34,11 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
 // Performs a call where the callee is the name of a generic interface, such as
 // `AddWith(i32)`.
 // TODO: Refactor with PerformCallToGenericClass.
-static auto PerformCallToGenericInterface(
-    Context& context, Parse::NodeId node_id, SemIR::InterfaceId interface_id,
-    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+static auto PerformCallToGenericInterface(Context& context,
+                                          Parse::NodeId node_id,
+                                          SemIR::InterfaceId interface_id,
+                                          llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Convert the arguments to match the parameters.
