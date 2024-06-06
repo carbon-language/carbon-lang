@@ -1,18 +1,12 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
 {
   "comments": {
     "lineComment": "//"
   },
-  // Symbols used as brackets.
   "brackets": [
     ["{", "}"],
     ["[", "]"],
     ["(", ")"]
   ],
-  // Symbols that are auto closed when typing.
   "autoClosingPairs": [
     ["{", "}"],
     ["[", "]"],
@@ -20,7 +14,6 @@
     ["\"", "\""],
     ["'", "'"]
   ],
-  // Symbols that can be used to surround a selection.
   "surroundingPairs": [
     ["{", "}"],
     ["[", "]"],

@@ -1,15 +1,16 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "carbon",
+  "scopeName": "source.carbon",
   "foldingStartMarker": "\\{\\s*$",
   "foldingStopMarker": "^\\s*\\}",
   "fileTypes": ["carbon"],
   "patterns": [
     {
       "include": "#comments"
+    },
+    {
+      "include": "#strings"
     },
     {
       "include": "#operators"
@@ -21,70 +22,39 @@
       "include": "#numbers"
     },
     {
-      "include": "#reserved-words"
+      "include": "#introducer-keywords"
     },
     {
-      "include": "#operator-dedicated-keywords-statements"
+      "include": "#modifier-keywords"
     },
     {
-      "include": "#ctrl-statements"
+      "include": "#misc-keywords"
+    },
+    {
+      "include": "#self-keywords"
+    },
+    {
+      "include": "#underscore"
     },
     {
       "include": "#true-false"
     },
     {
+      "include": "#type-literals"
+    },
+    {
       "include": "#functions"
-    },
-    {
-      "name": "string.quoted.triple.carbon",
-      "begin": "'''([^\\s'#]*\\n)?",
-      "end": "'''",
-      "beginCaptures": {
-        "1": {
-          "name": "constant.character.escape.carbon"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#string_escapes"
-        }
-      ]
-    },
-    {
-      "name": "string.quoted.double.carbon",
-      "begin": "\"",
-      "end": "\"",
-      "patterns": [
-        {
-          "include": "#string_escapes"
-        }
-      ]
     },
     {
       "include": "#customs"
     }
   ],
   "repository": {
-    "operators": {
-      "patterns": [
-        {
-          "name": "keyword.operator.carbon",
-          "match": "\\b(\\+|-|\\*|/|!)\\b"
-        }
-      ]
-    },
     "comments": {
       "patterns": [
         {
-          "begin": "(^[ \\t]+)?(?=//)",
-          "end": "(?!\\G)",
-          "patterns": [
-            {
-              "name": "comment.line.carbon",
-              "begin": "//",
-              "end": "$"
-            }
-          ]
+          "name": "comment.line.carbon",
+          "match": "^\\s*(?=//\\s).*$"
         }
       ]
     },
@@ -96,6 +66,47 @@
         }
       ]
     },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.triple.carbon",
+          "begin": "'''([^\\s'#]*\\n)?",
+          "end": "'''",
+          "beginCaptures": {
+            "1": {
+              "name": "constant.character.escape.carbon"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#string_escapes"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.carbon",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "include": "#string_escapes"
+            }
+          ]
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.carbon",
+          "match": "\\b(>>=|<=>|<<=|\\&=|==|!=|>=|>>|<=|<<|-=|->|--|%=|\\|=|\\+=|\\+\\+|/=|\\*=|\\&|\\^|=|>|<|-|%|.|\\||\\+|/|\\*)\\b"
+        },
+        {
+          "name": "keyword.operator.carbon",
+          "match": "\\b(addr|and|as|impls|in|like|not|or|partial|template|where)\\b"
+        }
+      ]
+    },
     "special-keywords": {
       "patterns": [
         {
@@ -104,19 +115,75 @@
         }
       ]
     },
-    "operator-dedicated-keywords-statements": {
+    "introducer-keywords": {
       "patterns": [
         {
-          "name": "keyword.other.carbon",
-          "match": "\\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\\b"
+          "name": "storage.type.carbon",
+          "match": "\\b(adapt|alias|choice|class|constraint|fn|import|interface|let|library|namespace|var)\\b"
+        },
+        {
+          "name": "storage.type.carbon",
+          "match": "\\b(base)\\b(?!\\s*class\\b)"
+        },
+        {
+          "name": "storage.type.carbon",
+          "match": "\\b(export)\\b(?!\\s*import\\b)"
+        },
+        {
+          "name": "storage.type.carbon",
+          "match": "\\b(impl)\\b(?!\\s*(fn|library|package)\\b)"
+        },
+        {
+          "name": "storage.type.carbon",
+          "match": "\\b(package)\\b(?!\\.)"
         }
       ]
     },
-    "reserved-words": {
+    "modifier-keywords": {
       "patterns": [
         {
-          "name": "support.type.carbon",
-          "match": "\\b(As|bool|Carbon\\.Int|Carbon\\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|type|u8|u16|u32|u64|u128|u256)\\b"
+          "name": "storage.modifier.carbon",
+          "match": "\\b(abstract|default|extend|extern|final|private|protected|virtual)\\b"
+        },
+        {
+          "name": "storage.modifier.carbon",
+          "match": "\\b(base)\\b(?=\\s*class\\b)"
+        },
+        {
+          "name": "storage.modifier.carbon",
+          "match": "\\b(export)\\b(?=\\s*import\\b)"
+        },
+        {
+          "name": "storage.modifier.carbon",
+          "match": "\\b(impl)\\b(?=\\s*(fn|library|package)\\b)"
+        }
+      ]
+    },
+    "misc-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.other.carbon",
+          "match": "\\b(auto|destructor|forall|friend|observe|override|require)\\b"
+        },
+        {
+          "name": "keyword.other.carbon",
+          "match": "(?<=\\.)\\b(base)\\b"
+        }
+      ]
+    },
+    "self-keywords": {
+      "patterns": [
+        {
+          "name": "variable.language.carbon",
+          "match": "\\b(self|Self)\\b"
+        }
+      ]
+    },
+    "underscore": {
+      "patterns": [
+        {
+          "name": "variable.language.carbon",
+          "match": "\\b(_)\\b"
         }
       ]
     },
@@ -125,6 +192,14 @@
         {
           "name": "constant.language.carbon",
           "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "type-literals": {
+      "patterns": [
+        {
+          "name": "constant.language.carbon",
+          "match": "\\b(bool|[iuf][1-9][0-9]*|type)\\b"
         }
       ]
     },
@@ -196,6 +271,5 @@
         }
       ]
     }
-  },
-  "scopeName": "source.carbon"
+  }
 }
