@@ -111,7 +111,11 @@
       "patterns": [
         {
           "name": "keyword.control.carbon",
-          "match": "\\b(break|case|continue|default|else|if|for|match|return|returned|then|while)\\b"
+          "match": "\\b(break|case|continue|else|if|for|match|return|returned|then|while)\\b"
+        },
+        {
+          "name": "keyword.control.carbon",
+          "match": "\\b(default)\\b(?=\\s*=>)"
         }
       ]
     },
@@ -143,11 +147,15 @@
       "patterns": [
         {
           "name": "storage.modifier.carbon",
-          "match": "\\b(abstract|default|extend|extern|final|private|protected|virtual)\\b"
+          "match": "\\b(abstract|extend|extern|final|private|protected|virtual)\\b"
         },
         {
           "name": "storage.modifier.carbon",
           "match": "\\b(base)\\b(?=\\s*class\\b)"
+        },
+        {
+          "name": "storage.modifier.carbon",
+          "match": "\\b(default)\\b(?!\\s*=>)"
         },
         {
           "name": "storage.modifier.carbon",
