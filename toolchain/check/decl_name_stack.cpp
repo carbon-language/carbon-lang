@@ -11,6 +11,7 @@
 #include "toolchain/check/name_component.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -114,8 +115,8 @@ auto DeclNameStack::Restore(SuspendedName sus) -> void {
   }
 }
 
-auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
-    -> void {
+auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
+                            SemIR::AccessKind access_kind) -> void {
   switch (name_context.state) {
     case NameContext::State::Error:
       return;
@@ -141,12 +142,14 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
 
         // Exports are only tracked when the declaration is at the file-level
         // scope. Otherwise, it's in some other entity, such as a class.
-        if (name_context.initial_scope_index == ScopeIndex::Package) {
+        if (access_kind == SemIR::AccessKind::Public &&
+            name_context.initial_scope_index == ScopeIndex::Package) {
           context_->AddExport(target_id);
         }
 
         auto [_, success] = name_scope.names.insert(
-            {name_context.unresolved_name_id, target_id});
+            {name_context.unresolved_name_id,
+             {.inst_id = target_id, .access_kind = access_kind}});
         CARBON_CHECK(success)
             << "Duplicate names should have been resolved previously: "
             << name_context.unresolved_name_id << " in "
@@ -161,21 +164,24 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
 }
 
 auto DeclNameStack::AddNameOrDiagnoseDuplicate(NameContext name_context,
-                                               SemIR::InstId target_id)
+                                               SemIR::InstId target_id,
+                                               SemIR::AccessKind access_kind)
     -> void {
   if (auto id = name_context.prev_inst_id(); id.is_valid()) {
     context_->DiagnoseDuplicateName(target_id, id);
   } else {
-    AddName(name_context, target_id);
+    AddName(name_context, target_id, access_kind);
   }
 }
 
 auto DeclNameStack::LookupOrAddName(NameContext name_context,
-                                    SemIR::InstId target_id) -> SemIR::InstId {
+                                    SemIR::InstId target_id,
+                                    SemIR::AccessKind access_kind)
+    -> SemIR::InstId {
   if (auto id = name_context.prev_inst_id(); id.is_valid()) {
     return id;
   }
-  AddName(name_context, target_id);
+  AddName(name_context, target_id, access_kind);
   return SemIR::InstId::Invalid;
 }
 

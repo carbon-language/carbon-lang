@@ -10,7 +10,19 @@
 
 namespace Carbon::SemIR {
 
+// Access control for an entity.
+enum class AccessKind : int8_t {
+  Public,
+  Protected,
+  Private,
+};
+
 struct NameScope : Printable<NameScope> {
+  struct Entry {
+    InstId inst_id;
+    AccessKind access_kind;
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", parent_scope: " << parent_scope_id
         << ", has_error: " << (has_error ? "true" : "false");
@@ -32,7 +44,7 @@ struct NameScope : Printable<NameScope> {
                [](NameId lhs, NameId rhs) { return lhs.index < rhs.index; });
     llvm::ListSeparator key_sep;
     for (auto key : keys) {
-      out << key_sep << key << ": " << names.find(key)->second;
+      out << key_sep << key << ": " << names.find(key)->second.inst_id;
     }
     out << "}";
 
@@ -40,7 +52,7 @@ struct NameScope : Printable<NameScope> {
   }
 
   // Names in the scope.
-  llvm::DenseMap<NameId, InstId> names = llvm::DenseMap<NameId, InstId>();
+  llvm::DenseMap<NameId, Entry> names = llvm::DenseMap<NameId, Entry>();
 
   // Scopes extended by this scope.
   //
@@ -96,6 +108,16 @@ class NameScopeStore {
     return values_.Add({.inst_id = inst_id,
                         .name_id = name_id,
                         .parent_scope_id = parent_scope_id});
+  }
+
+  // Adds a name that is required to exist in a name scope, such as `Self`.
+  // These must never conflict.
+  auto AddRequiredName(NameScopeId scope_id, NameId name_id, InstId inst_id)
+      -> void {
+    NameScope::Entry entry = {.inst_id = inst_id,
+                              .access_kind = AccessKind::Public};
+    auto success = Get(scope_id).names.insert({name_id, entry}).second;
+    CARBON_CHECK(success) << "Failed to add required name: " << name_id;
   }
 
   // Returns the requested name scope.

@@ -41,11 +41,6 @@ static auto BuildInterfaceDecl(Context& context,
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
 
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
-                 "access modifier");
-  }
-
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the interface declaration.
@@ -56,7 +51,7 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(
-      name_context, interface_decl_id);
+      name_context, interface_decl_id, introducer.modifier_set.GetAccessKind());
   if (existing_id.is_valid()) {
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
@@ -160,9 +155,9 @@ auto HandleInterfaceDefinitionStart(Context& context,
         SemIR::LocId::Invalid, {.type_id = self_type_id,
                                 .bind_name_id = bind_name_id,
                                 .value_id = SemIR::InstId::Invalid});
-    context.name_scopes()
-        .Get(interface_info.scope_id)
-        .names.insert({SemIR::NameId::SelfType, interface_info.self_param_id});
+    context.name_scopes().AddRequiredName(interface_info.scope_id,
+                                          SemIR::NameId::SelfType,
+                                          interface_info.self_param_id);
   }
 
   // TODO: Handle the case where there's control flow in the interface body. For
