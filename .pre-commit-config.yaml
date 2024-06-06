@@ -221,24 +221,6 @@ repos:
               .*/fuzzer_corpus/.*|
               .*/testdata/.*\.golden
           )$
-      # The copyright header we use for JSON can't be represented as
-      # a custom format, so use a separate rule for it.
-      - id: check-copyright
-        name: Check for copyright in JSON files
-        args:
-          - --copyright
-          - |+
-            {
-              "_license": [
-                "Part of the Carbon Language project, under the Apache License v2.0 with LLVM",
-                "Exceptions. See /LICENSE for license information.",
-                "SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception"
-              ]
-        files: .json$
-        exclude: |
-          (?x)^(
-              utils/vscode/package-lock.json
-          )$
       - id: check-links
 
 # This excludes third-party code, and patches to third-party code.
