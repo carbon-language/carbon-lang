@@ -409,6 +409,9 @@ class ImportRefResolver {
         param_refs_id == SemIR::InstBlockId::Empty) {
       return param_refs_id;
     }
+
+    auto initial_work = work_stack_.size();
+
     const auto& param_refs = import_ir_.inst_blocks().Get(param_refs_id);
     llvm::SmallVector<SemIR::InstId> new_param_refs;
     for (auto [ref_id, const_id] : llvm::zip(param_refs, const_ids)) {
@@ -479,6 +482,11 @@ class ImportRefResolver {
             {.type_id = type_id, .inner_id = new_param_id});
       }
       new_param_refs.push_back(new_param_id);
+    }
+
+    // Only store the block if it's complete.
+    if (HasNewWork(initial_work)) {
+      return SemIR::InstBlockId::Invalid;
     }
     return context_.inst_blocks().Add(new_param_refs);
   }
@@ -555,6 +563,9 @@ class ImportRefResolver {
     if (associated_entities_id == SemIR::InstBlockId::Empty) {
       return SemIR::InstBlockId::Empty;
     }
+
+    auto initial_work = work_stack_.size();
+
     auto associated_entities =
         import_ir_.inst_blocks().Get(associated_entities_id);
     llvm::SmallVector<SemIR::InstId> new_associated_entities;
@@ -563,6 +574,10 @@ class ImportRefResolver {
       new_associated_entities.push_back(
           AddImportRef(context_, {.ir_id = import_ir_id_, .inst_id = inst_id},
                        SemIR::BindNameId::Invalid));
+    }
+    // Only store the block if it's complete.
+    if (HasNewWork(initial_work)) {
+      return SemIR::InstBlockId::Invalid;
     }
     return context_.inst_blocks().Add(new_associated_entities);
   }
