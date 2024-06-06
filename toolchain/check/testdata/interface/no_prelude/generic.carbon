@@ -115,25 +115,25 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %WithImplicitArgs.decl: <type of WithImplicitArgs> = interface_decl @WithImplicitArgs [template = constants.%WithImplicitArgs] {
-// CHECK:STDOUT:     %T.loc26_28.1: type = param T
-// CHECK:STDOUT:     %T.loc26_28.2: type = bind_symbolic_name T 0, %T.loc26_28.1 [symbolic = constants.%T.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc26_28.2 [symbolic = constants.%T.1]
-// CHECK:STDOUT:     %N.loc26_38.1: T = param N
-// CHECK:STDOUT:     %N.loc26_38.2: T = bind_symbolic_name N 1, %N.loc26_38.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %T.loc22_28.1: type = param T
+// CHECK:STDOUT:     %T.loc22_28.2: type = bind_symbolic_name T 0, %T.loc22_28.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc22_28.2 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     %N.loc22_38.1: T = param N
+// CHECK:STDOUT:     %N.loc22_38.2: T = bind_symbolic_name N 1, %N.loc22_38.1 [symbolic = constants.%N]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Receive.decl: <type of Receive> = fn_decl @Receive [template = constants.%Receive] {
-// CHECK:STDOUT:     %Simple.ref.loc28: <type of Simple> = name_ref Simple, %Simple.decl [template = constants.%Simple]
-// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc28: type = interface_type @Simple, (%C.ref.loc28) [template = constants.%.5]
-// CHECK:STDOUT:     %T.loc28_12.1: Simple = param T
-// CHECK:STDOUT:     @Receive.%T: Simple = bind_symbolic_name T 0, %T.loc28_12.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:     %Simple.ref.loc24: <type of Simple> = name_ref Simple, %Simple.decl [template = constants.%Simple]
+// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc24: type = interface_type @Simple, (%C.ref.loc24) [template = constants.%.5]
+// CHECK:STDOUT:     %T.loc24_12.1: Simple = param T
+// CHECK:STDOUT:     @Receive.%T: Simple = bind_symbolic_name T 0, %T.loc24_12.1 [symbolic = constants.%T.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Pass.decl: <type of Pass> = fn_decl @Pass [template = constants.%Pass] {
-// CHECK:STDOUT:     %Simple.ref.loc29: <type of Simple> = name_ref Simple, %Simple.decl [template = constants.%Simple]
-// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc29: type = interface_type @Simple, (%C.ref.loc29) [template = constants.%.5]
-// CHECK:STDOUT:     %T.loc29_9.1: Simple = param T
-// CHECK:STDOUT:     @Pass.%T: Simple = bind_symbolic_name T 0, %T.loc29_9.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:     %Simple.ref.loc25: <type of Simple> = name_ref Simple, %Simple.decl [template = constants.%Simple]
+// CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc25: type = interface_type @Simple, (%C.ref.loc25) [template = constants.%.5]
+// CHECK:STDOUT:     %T.loc25_9.1: Simple = param T
+// CHECK:STDOUT:     @Pass.%T: Simple = bind_symbolic_name T 0, %T.loc25_9.1 [symbolic = constants.%T.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,8 +193,8 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %WithAssocFn.ref: <type of WithAssocFn> = name_ref WithAssocFn, file.%WithAssocFn.decl [template = constants.%WithAssocFn]
-// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc19: type = interface_type @WithAssocFn, (%C.ref.loc19) [template = constants.%.7]
+// CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc15: type = interface_type @WithAssocFn, (%C.ref.loc15) [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -205,10 +205,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> @impl.2.%return.var: X {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc21_15.2: init X = class_init (), @impl.2.%return.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc21_16: init X = converted %.loc21_15.1, %.loc21_15.2 [template = constants.%struct]
-// CHECK:STDOUT:   return %.loc21_16 to @impl.2.%return.var
+// CHECK:STDOUT:   %.loc17_15.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc17_15.2: init X = class_init (), @impl.2.%return.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_16: init X = converted %.loc17_15.1, %.loc17_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   return %.loc17_16 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Receive(%T: Simple);
