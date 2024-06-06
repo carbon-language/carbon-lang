@@ -36,14 +36,14 @@ fn F() {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.a: i32, .c: i32} [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
@@ -58,20 +58,20 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_8: <unbound element of class Class> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_8: <unbound element of class Class> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc13_8: %.2 = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -84,28 +84,28 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_9: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc21_10.1: {.a: i32} = struct_literal (%.loc21_9)
+// CHECK:STDOUT:   %.loc21_10.1: %.5 = struct_literal (%.loc21_9)
 // CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc21_10.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc21_10.3: ref Class = temporary %.loc21_10.2, <error>
-// CHECK:STDOUT:   %.loc21_12: ref Class = converted %.loc21_10.1, %.loc21_10.3
+// CHECK:STDOUT:   %.loc21_10.2: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc21_10.3: ref %Class = temporary %.loc21_10.2, <error>
+// CHECK:STDOUT:   %.loc21_12: ref %Class = converted %.loc21_10.1, %.loc21_10.3
 // CHECK:STDOUT:   %.loc26_9: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc26_17: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc26_18.1: {.a: i32, .c: i32} = struct_literal (%.loc26_9, %.loc26_17)
+// CHECK:STDOUT:   %.loc26_18.1: %.8 = struct_literal (%.loc26_9, %.loc26_17)
 // CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc26_18.2: ref Class = temporary_storage
+// CHECK:STDOUT:   %.loc26_18.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc26_18.3: ref i32 = class_element_access %.loc26_18.2, element0
 // CHECK:STDOUT:   %.loc26_18.4: init i32 = initialize_from %.loc26_9 to %.loc26_18.3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc26_18.5: ref Class = temporary %.loc26_18.2, <error>
-// CHECK:STDOUT:   %.loc26_20: ref Class = converted %.loc26_18.1, %.loc26_18.5
+// CHECK:STDOUT:   %.loc26_18.5: ref %Class = temporary %.loc26_18.2, <error>
+// CHECK:STDOUT:   %.loc26_20: ref %Class = converted %.loc26_18.1, %.loc26_18.5
 // CHECK:STDOUT:   %.loc30_9: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc30_17: i32 = int_literal 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc30_25: i32 = int_literal 3 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc30_26.1: {.a: i32, .b: i32, .c: i32} = struct_literal (%.loc30_9, %.loc30_17, %.loc30_25)
+// CHECK:STDOUT:   %.loc30_26.1: %.10 = struct_literal (%.loc30_9, %.loc30_17, %.loc30_25)
 // CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc30_26.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc30_26.3: ref Class = temporary %.loc30_26.2, <error>
-// CHECK:STDOUT:   %.loc30_28: ref Class = converted %.loc30_26.1, %.loc30_26.3
+// CHECK:STDOUT:   %.loc30_26.2: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc30_26.3: ref %Class = temporary %.loc30_26.2, <error>
+// CHECK:STDOUT:   %.loc30_28: ref %Class = converted %.loc30_26.1, %.loc30_26.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

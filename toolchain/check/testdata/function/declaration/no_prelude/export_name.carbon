@@ -43,14 +43,14 @@ var f: () = F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -60,15 +60,15 @@ var f: () = F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of F> = import_ref ir1, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %F: <type of F> = export F, %import_ref [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref ir1, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %F: %F.type = export F, %import_ref [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -78,7 +78,7 @@ var f: () = F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -86,19 +86,19 @@ var f: () = F();
 // CHECK:STDOUT:     .F = %import_ref
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of F> = import_ref ir1, inst+6, loaded [template = constants.%F]
-// CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref ir1, inst+6, loaded [template = constants.%F]
+// CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref () = var f
-// CHECK:STDOUT:   %f: ref () = bind_name f, %f.var
+// CHECK:STDOUT:   %f.var: ref %.1 = var f
+// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, file.%import_ref [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init () = call %F.ref()
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
 // CHECK:STDOUT:   assign file.%f.var, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

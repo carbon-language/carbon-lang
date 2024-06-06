@@ -73,7 +73,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type C [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -86,9 +86,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c_alias: type = bind_alias c_alias, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type C [template = constants.%.2]
-// CHECK:STDOUT:   %a.var: ref C* = var a
-// CHECK:STDOUT:   %a: ref C* = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:   %a.var: ref %.2 = var a
+// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -101,7 +101,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type C [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,9 +119,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias.ref.loc8: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type C [template = constants.%.2]
-// CHECK:STDOUT:   %b.var: ref C* = var b
-// CHECK:STDOUT:   %b: ref C* = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:   %b.var: ref %.2 = var b
+// CHECK:STDOUT:   %b: ref %.2 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -134,7 +134,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type C [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,9 +147,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %c_alias_alias.ref: type = name_ref c_alias_alias, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %.loc6: type = ptr_type C [template = constants.%.2]
-// CHECK:STDOUT:   %c.var: ref C* = var c
-// CHECK:STDOUT:   %c: ref C* = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc6: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:   %c.var: ref %.2 = var c
+// CHECK:STDOUT:   %c: ref %.2 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -161,7 +161,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -169,19 +169,19 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_alias = %a_alias
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref () = var a
-// CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %a.ref: ref () = name_ref a, %a
-// CHECK:STDOUT:   %a_alias: ref () = bind_alias a_alias, %a
+// CHECK:STDOUT:   %a.var: ref %.1 = var a
+// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.ref: ref %.1 = name_ref a, %a
+// CHECK:STDOUT:   %a_alias: ref %.1 = bind_alias a_alias, %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_14.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_14.2: init () = tuple_init () to file.%a.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc4_15: init () = converted %.loc4_14.1, %.loc4_14.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_14.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_14.2: init %.1 = tuple_init () to file.%a.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_15: init %.1 = converted %.loc4_14.1, %.loc4_14.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -190,7 +190,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -201,20 +201,20 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref () = import_ref ir1, inst+12, loaded
-// CHECK:STDOUT:   %a_alias.ref: ref () = name_ref a_alias, %import_ref.2
-// CHECK:STDOUT:   %a_alias_alias: ref () = bind_alias a_alias_alias, %import_ref.2
-// CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %import_ref.2: ref %.1 = import_ref ir1, inst+12, loaded
+// CHECK:STDOUT:   %a_alias.ref: ref %.1 = name_ref a_alias, %import_ref.2
+// CHECK:STDOUT:   %a_alias_alias: ref %.1 = bind_alias a_alias_alias, %import_ref.2
+// CHECK:STDOUT:   %.loc8_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %b.var: ref () = var b
-// CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
+// CHECK:STDOUT:   %b.var: ref %.1 = var b
+// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_alias.ref: ref () = name_ref a_alias, file.%import_ref.2
-// CHECK:STDOUT:   %.loc8_13: init () = tuple_init () to file.%b.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_20: init () = converted %a_alias.ref, %.loc8_13 [template = constants.%tuple]
+// CHECK:STDOUT:   %a_alias.ref: ref %.1 = name_ref a_alias, file.%import_ref.2
+// CHECK:STDOUT:   %.loc8_13: init %.1 = tuple_init () to file.%b.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc8_20: init %.1 = converted %a_alias.ref, %.loc8_13 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -223,7 +223,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -232,19 +232,19 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref () = import_ref ir1, inst+5, loaded [template = <error>]
+// CHECK:STDOUT:   %import_ref.1: ref %.1 = import_ref ir1, inst+5, loaded [template = <error>]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %c.var: ref () = var c
-// CHECK:STDOUT:   %c: ref () = bind_name c, %c.var
+// CHECK:STDOUT:   %c.var: ref %.1 = var c
+// CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_alias_alias.ref: ref () = name_ref a_alias_alias, file.%import_ref.1 [template = <error>]
-// CHECK:STDOUT:   %.loc12_13: init () = tuple_init () to file.%c.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc12_26: init () = converted %a_alias_alias.ref, %.loc12_13 [template = constants.%tuple]
+// CHECK:STDOUT:   %a_alias_alias.ref: ref %.1 = name_ref a_alias_alias, file.%import_ref.1 [template = <error>]
+// CHECK:STDOUT:   %.loc12_13: init %.1 = tuple_init () to file.%c.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_26: init %.1 = converted %a_alias_alias.ref, %.loc12_13 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%c.var, %.loc12_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -43,7 +43,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -52,7 +52,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -62,7 +62,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,28 +72,28 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .package_a = %package_a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+2, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+2, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref () = var a
-// CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc6_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %a.var: ref %.1 = var a
+// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc6_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %.loc6_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %package_a.var: ref () = var package_a
-// CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
+// CHECK:STDOUT:   %package_a.var: ref %.1 = var package_a
+// CHECK:STDOUT:   %package_a: ref %.1 = bind_name package_a, %package_a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc4: <type of A> = name_ref A, file.%import_ref [template = constants.%A]
-// CHECK:STDOUT:   %A.call.loc4: init () = call %A.ref.loc4()
+// CHECK:STDOUT:   %A.ref.loc4: %A.type = name_ref A, file.%import_ref [template = constants.%A]
+// CHECK:STDOUT:   %A.call.loc4: init %.1 = call %A.ref.loc4()
 // CHECK:STDOUT:   assign file.%a.var, %A.call.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %A.ref.loc6: <type of A> = name_ref A, file.%import_ref [template = constants.%A]
-// CHECK:STDOUT:   %A.call.loc6: init () = call %A.ref.loc6()
+// CHECK:STDOUT:   %A.ref.loc6: %A.type = name_ref A, file.%import_ref [template = constants.%A]
+// CHECK:STDOUT:   %A.call.loc6: init %.1 = call %A.ref.loc6()
 // CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -103,7 +103,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %B: <type of B> = struct_value () [template]
+// CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -112,7 +112,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %B.decl: <type of B> = fn_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
@@ -122,7 +122,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
-// CHECK:STDOUT:   %B: <type of B> = struct_value () [template]
+// CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -132,28 +132,28 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .package_b = %package_b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of B> = import_ref ir1, inst+2, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref: %B.type = import_ref ir1, inst+2, loaded [template = constants.%B]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %b.var: ref () = var b
-// CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc8_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %b.var: ref %.1 = var b
+// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc8_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %package_b.var: ref () = var package_b
-// CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
+// CHECK:STDOUT:   %package_b.var: ref %.1 = var package_b
+// CHECK:STDOUT:   %package_b: ref %.1 = bind_name package_b, %package_b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %B.ref.loc6: <type of B> = name_ref B, file.%import_ref [template = constants.%B]
-// CHECK:STDOUT:   %B.call.loc6: init () = call %B.ref.loc6()
+// CHECK:STDOUT:   %B.ref.loc6: %B.type = name_ref B, file.%import_ref [template = constants.%B]
+// CHECK:STDOUT:   %B.call.loc6: init %.1 = call %B.ref.loc6()
 // CHECK:STDOUT:   assign file.%b.var, %B.call.loc6
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %B.ref.loc8: <type of B> = name_ref B, file.%import_ref [template = constants.%B]
-// CHECK:STDOUT:   %B.call.loc8: init () = call %B.ref.loc8()
+// CHECK:STDOUT:   %B.ref.loc8: %B.type = name_ref B, file.%import_ref [template = constants.%B]
+// CHECK:STDOUT:   %B.call.loc8: init %.1 = call %B.ref.loc8()
 // CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

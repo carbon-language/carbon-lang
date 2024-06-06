@@ -837,7 +837,10 @@ class Formatter {
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {
-      out_ << sem_ir_.StringifyType(id);
+      // Types are formatted in the `constants` scope because they only refer to
+      // constants.
+      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
+      FormatInstName(sem_ir_.types().GetInstId(id));
     }
   }
 

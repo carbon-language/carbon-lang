@@ -38,11 +38,11 @@ base class A {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type B, A [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: A} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %.6: type = class_type @.1 [template]
-// CHECK:STDOUT:   %.7: type = unbound_element_type <invalid>, A [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type %.6, %A [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -64,7 +64,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: <unbound element of class B> = base_decl A, element0 [template]
+// CHECK:STDOUT:   %.loc16: %.4 = base_decl %A, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -74,7 +74,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc27: <unbound element of class <invalid>> = base_decl A, element0 [template]
+// CHECK:STDOUT:   %.loc27: %.7 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc31: <error> = field_decl c, element1 [template]
 // CHECK:STDOUT:

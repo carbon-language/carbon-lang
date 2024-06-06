@@ -20,19 +20,19 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, <type of F> [template]
-// CHECK:STDOUT:   %.4: <associated <type of F> in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, %F.type [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @I, type [template]
-// CHECK:STDOUT:   %.6: <associated type in I> = assoc_entity element1, @I.%U [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @I.%U [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type @I, <type of G> [template]
-// CHECK:STDOUT:   %.8: <associated <type of G> in I> = assoc_entity element2, @I.%G.decl [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type @I, %G.type [template]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element2, @I.%G.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -43,19 +43,19 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc12_8.1: type = param T
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
-// CHECK:STDOUT:   %.loc13: <associated type in I> = assoc_entity element1, %U [template = constants.%.6]
-// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %.loc13: %.5 = assoc_entity element1, %U [template = constants.%.6]
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc16_8.1: type = param T
 // CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T 1, %T.loc16_8.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: <associated <type of G> in I> = assoc_entity element2, %G.decl [template = constants.%.8]
+// CHECK:STDOUT:   %.loc16: %.7 = assoc_entity element2, %G.decl [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

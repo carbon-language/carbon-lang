@@ -14,17 +14,17 @@ var x: {.v: ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.v: ()} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.v: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_14.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %.loc11_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: ()} [template = constants.%.2]
-// CHECK:STDOUT:   %x.var: ref {.v: ()} = var x
-// CHECK:STDOUT:   %x: ref {.v: ()} = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: %.1} [template = constants.%.2]
+// CHECK:STDOUT:   %x.var: ref %.2 = var x
+// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

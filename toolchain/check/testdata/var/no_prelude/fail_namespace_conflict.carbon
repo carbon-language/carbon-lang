@@ -31,7 +31,7 @@ var A: () = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,21 +39,21 @@ var A: () = ();
 // CHECK:STDOUT:     .A = %A.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.loc11: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc20_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc20_9.2: type = converted %.loc20_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %A.var.loc20: ref () = var A
-// CHECK:STDOUT:   %A.loc20: ref () = bind_name A, %A.var.loc20
-// CHECK:STDOUT:   %.loc28_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %A.var.loc20: ref %.1 = var A
+// CHECK:STDOUT:   %A.loc20: ref %.1 = bind_name A, %A.var.loc20
+// CHECK:STDOUT:   %.loc28_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc28_9.2: type = converted %.loc28_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %A.var.loc28: ref () = var A
-// CHECK:STDOUT:   %A.loc28: ref () = bind_name A, %A.var.loc28
+// CHECK:STDOUT:   %A.var.loc28: ref %.1 = var A
+// CHECK:STDOUT:   %A.loc28: ref %.1 = bind_name A, %A.var.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc28_14.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc28_14.2: init () = tuple_init () to file.%A.var.loc28 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc28_15: init () = converted %.loc28_14.1, %.loc28_14.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc28_14.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc28_14.2: init %.1 = tuple_init () to file.%A.var.loc28 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc28_15: init %.1 = converted %.loc28_14.1, %.loc28_14.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%A.var.loc28, %.loc28_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

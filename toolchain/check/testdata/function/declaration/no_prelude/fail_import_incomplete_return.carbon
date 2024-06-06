@@ -82,15 +82,15 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %ReturnCUnused.type: type = fn_type @ReturnCUnused [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %ReturnCUnused: <type of ReturnCUnused> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnCUnused: %ReturnCUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %ReturnCUsed.type: type = fn_type @ReturnCUsed [template]
-// CHECK:STDOUT:   %ReturnCUsed: <type of ReturnCUsed> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnCUsed: %ReturnCUsed.type = struct_value () [template]
 // CHECK:STDOUT:   %ReturnDUnused.type: type = fn_type @ReturnDUnused [template]
-// CHECK:STDOUT:   %ReturnDUnused: <type of ReturnDUnused> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
-// CHECK:STDOUT:   %ReturnDUsed: <type of ReturnDUsed> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
-// CHECK:STDOUT:   %Call: <type of Call> = struct_value () [template]
+// CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,23 +106,23 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %ReturnCUnused.decl: <type of ReturnCUnused> = fn_decl @ReturnCUnused [template = constants.%ReturnCUnused] {
+// CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [template = constants.%ReturnCUnused] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @ReturnCUnused.%return: ref C = var <return slot>
+// CHECK:STDOUT:     @ReturnCUnused.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnCUsed.decl: <type of ReturnCUsed> = fn_decl @ReturnCUsed [template = constants.%ReturnCUsed] {
+// CHECK:STDOUT:   %ReturnCUsed.decl: %ReturnCUsed.type = fn_decl @ReturnCUsed [template = constants.%ReturnCUsed] {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @ReturnCUsed.%return: ref C = var <return slot>
+// CHECK:STDOUT:     @ReturnCUsed.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnDUnused.decl: <type of ReturnDUnused> = fn_decl @ReturnDUnused [template = constants.%ReturnDUnused] {
+// CHECK:STDOUT:   %ReturnDUnused.decl: %ReturnDUnused.type = fn_decl @ReturnDUnused [template = constants.%ReturnDUnused] {
 // CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, %D.decl.loc5 [template = constants.%D]
-// CHECK:STDOUT:     @ReturnDUnused.%return: ref D = var <return slot>
+// CHECK:STDOUT:     @ReturnDUnused.%return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnDUsed.decl: <type of ReturnDUsed> = fn_decl @ReturnDUsed [template = constants.%ReturnDUsed] {
+// CHECK:STDOUT:   %ReturnDUsed.decl: %ReturnDUsed.type = fn_decl @ReturnDUsed [template = constants.%ReturnDUsed] {
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, %D.decl.loc5 [template = constants.%D]
-// CHECK:STDOUT:     @ReturnDUsed.%return: ref D = var <return slot>
+// CHECK:STDOUT:     @ReturnDUsed.%return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Call.decl: <type of Call> = fn_decl @Call [template = constants.%Call] {}
+// CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {}
 // CHECK:STDOUT:   %D.decl.loc37: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,19 +133,19 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUnused() -> C;
+// CHECK:STDOUT: fn @ReturnCUnused() -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUsed() -> C;
+// CHECK:STDOUT: fn @ReturnCUsed() -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUnused() -> D;
+// CHECK:STDOUT: fn @ReturnDUnused() -> %D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUsed() -> D;
+// CHECK:STDOUT: fn @ReturnDUsed() -> %D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnCUsed.ref: <type of ReturnCUsed> = name_ref ReturnCUsed, file.%ReturnCUsed.decl [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, file.%ReturnCUsed.decl [template = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
-// CHECK:STDOUT:   %ReturnDUsed.ref: <type of ReturnDUsed> = name_ref ReturnDUsed, file.%ReturnDUsed.decl [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, file.%ReturnDUsed.decl [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %ReturnDUsed.call: init <error> = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -155,19 +155,19 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %CallFAndGIncomplete.type: type = fn_type @CallFAndGIncomplete [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %CallFAndGIncomplete: <type of CallFAndGIncomplete> = struct_value () [template]
+// CHECK:STDOUT:   %CallFAndGIncomplete: %CallFAndGIncomplete.type = struct_value () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %ReturnCUnused.type: type = fn_type @ReturnCUnused [template]
-// CHECK:STDOUT:   %ReturnCUnused: <type of ReturnCUnused> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnCUnused: %ReturnCUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %ReturnCUsed.type: type = fn_type @ReturnCUsed [template]
-// CHECK:STDOUT:   %ReturnCUsed: <type of ReturnCUsed> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnCUsed: %ReturnCUsed.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %ReturnDUnused.type: type = fn_type @ReturnDUnused [template]
-// CHECK:STDOUT:   %ReturnDUnused: <type of ReturnDUnused> = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
-// CHECK:STDOUT:   %ReturnDUsed: <type of ReturnDUsed> = struct_value () [template]
+// CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -183,12 +183,12 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <type of ReturnCUnused> = import_ref ir1, inst+7, loaded [template = constants.%ReturnCUnused]
-// CHECK:STDOUT:   %import_ref.4: <type of ReturnCUsed> = import_ref ir1, inst+13, loaded [template = constants.%ReturnCUsed]
-// CHECK:STDOUT:   %import_ref.5: <type of ReturnDUnused> = import_ref ir1, inst+18, loaded [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %import_ref.6: <type of ReturnDUsed> = import_ref ir1, inst+23, loaded [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %import_ref.3: %ReturnCUnused.type = import_ref ir1, inst+7, loaded [template = constants.%ReturnCUnused]
+// CHECK:STDOUT:   %import_ref.4: %ReturnCUsed.type = import_ref ir1, inst+13, loaded [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref ir1, inst+18, loaded [template = constants.%ReturnDUnused]
+// CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref ir1, inst+23, loaded [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+26, unloaded
-// CHECK:STDOUT:   %CallFAndGIncomplete.decl: <type of CallFAndGIncomplete> = fn_decl @CallFAndGIncomplete [template = constants.%CallFAndGIncomplete] {}
+// CHECK:STDOUT:   %CallFAndGIncomplete.decl: %CallFAndGIncomplete.type = fn_decl @CallFAndGIncomplete [template = constants.%CallFAndGIncomplete] {}
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -201,24 +201,24 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnCUnused.ref: <type of ReturnCUnused> = name_ref ReturnCUnused, file.%import_ref.3 [template = constants.%ReturnCUnused]
+// CHECK:STDOUT:   %ReturnCUnused.ref: %ReturnCUnused.type = name_ref ReturnCUnused, file.%import_ref.3 [template = constants.%ReturnCUnused]
 // CHECK:STDOUT:   %ReturnCUnused.call: init <error> = call %ReturnCUnused.ref()
-// CHECK:STDOUT:   %ReturnCUsed.ref: <type of ReturnCUsed> = name_ref ReturnCUsed, file.%import_ref.4 [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, file.%import_ref.4 [template = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
-// CHECK:STDOUT:   %ReturnDUnused.ref: <type of ReturnDUnused> = name_ref ReturnDUnused, file.%import_ref.5 [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %.loc24_16.1: ref D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUnused.call: init D = call %ReturnDUnused.ref() to %.loc24_16.1
-// CHECK:STDOUT:   %.loc24_16.2: ref D = temporary %.loc24_16.1, %ReturnDUnused.call
-// CHECK:STDOUT:   %ReturnDUsed.ref: <type of ReturnDUsed> = name_ref ReturnDUsed, file.%import_ref.6 [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, file.%import_ref.5 [template = constants.%ReturnDUnused]
+// CHECK:STDOUT:   %.loc24_16.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc24_16.1
+// CHECK:STDOUT:   %.loc24_16.2: ref %D = temporary %.loc24_16.1, %ReturnDUnused.call
+// CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, file.%import_ref.6 [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %ReturnDUsed.call: init <error> = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUnused() -> C;
+// CHECK:STDOUT: fn @ReturnCUnused() -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUsed() -> C;
+// CHECK:STDOUT: fn @ReturnCUsed() -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUnused() -> D;
+// CHECK:STDOUT: fn @ReturnDUnused() -> %D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUsed() -> D;
+// CHECK:STDOUT: fn @ReturnDUsed() -> %D;
 // CHECK:STDOUT:

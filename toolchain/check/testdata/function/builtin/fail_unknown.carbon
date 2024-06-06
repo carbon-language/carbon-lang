@@ -18,7 +18,7 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %UnknownBuiltin.type: type = fn_type @UnknownBuiltin [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %UnknownBuiltin: <type of UnknownBuiltin> = struct_value () [template]
+// CHECK:STDOUT:   %UnknownBuiltin: %UnknownBuiltin.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,7 +27,7 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT:     .UnknownBuiltin = %UnknownBuiltin.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %UnknownBuiltin.decl: <type of UnknownBuiltin> = fn_decl @UnknownBuiltin [template = constants.%UnknownBuiltin] {}
+// CHECK:STDOUT:   %UnknownBuiltin.decl: %UnknownBuiltin.type = fn_decl @UnknownBuiltin [template = constants.%UnknownBuiltin] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UnknownBuiltin();

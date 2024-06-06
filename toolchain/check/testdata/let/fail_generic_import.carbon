@@ -29,7 +29,7 @@ let a: T = 0;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -38,7 +38,7 @@ let a: T = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc4_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc4_19.2: type = converted %int.make_type_32, %.loc4_19.1 [template = i32]
@@ -63,6 +63,6 @@ let a: T = 0;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %a: T = bind_name a, <error>
+// CHECK:STDOUT:   %a: %T = bind_name a, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

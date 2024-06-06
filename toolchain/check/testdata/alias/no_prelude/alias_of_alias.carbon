@@ -20,8 +20,8 @@ let d: c = {};
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,13 +39,13 @@ let d: c = {};
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [template = constants.%C]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
-// CHECK:STDOUT:   %.loc15_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc15_13.2: ref C = temporary_storage
-// CHECK:STDOUT:   %.loc15_13.3: init C = class_init (), %.loc15_13.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_13.4: ref C = temporary %.loc15_13.2, %.loc15_13.3
-// CHECK:STDOUT:   %.loc15_14.1: ref C = converted %.loc15_13.1, %.loc15_13.4
-// CHECK:STDOUT:   %.loc15_14.2: C = bind_value %.loc15_14.1
-// CHECK:STDOUT:   %d: C = bind_name d, %.loc15_14.2
+// CHECK:STDOUT:   %.loc15_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc15_13.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc15_13.3: init %C = class_init (), %.loc15_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.2, %.loc15_13.3
+// CHECK:STDOUT:   %.loc15_14.1: ref %C = converted %.loc15_13.1, %.loc15_13.4
+// CHECK:STDOUT:   %.loc15_14.2: %C = bind_value %.loc15_14.1
+// CHECK:STDOUT:   %d: %C = bind_name d, %.loc15_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -20,11 +20,11 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
-// CHECK:STDOUT:   %Foo: <type of Foo> = struct_value () [template]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
-// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
+// CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,15 +35,15 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Foo.decl: <type of Foo> = fn_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
 // CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc11_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -55,12 +55,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref.loc14: <type of Foo> = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
+// CHECK:STDOUT:   %Foo.ref.loc14: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Foo.call.loc14: init () = call %Foo.ref.loc14(%.loc14)
-// CHECK:STDOUT:   %Foo.ref.loc15: <type of Foo> = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
+// CHECK:STDOUT:   %Foo.call.loc14: init %.1 = call %Foo.ref.loc14(%.loc14)
+// CHECK:STDOUT:   %Foo.ref.loc15: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Foo.call.loc15: init () = call %Foo.ref.loc15(%.loc15)
+// CHECK:STDOUT:   %Foo.call.loc15: init %.1 = call %Foo.ref.loc15(%.loc15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

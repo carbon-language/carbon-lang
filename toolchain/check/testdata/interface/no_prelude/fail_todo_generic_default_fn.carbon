@@ -44,45 +44,45 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %I: <type of I> = struct_value () [template]
-// CHECK:STDOUT:   %Self: <cannot stringify inst+7> = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %I: %I.type = struct_value () [template]
+// CHECK:STDOUT:   %Self: %I = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @I, <type of F> [template]
-// CHECK:STDOUT:   %.3: <associated <type of F> in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @I, %F.type [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.4: <type of <invalid>> = struct_value () [template]
+// CHECK:STDOUT:   %.4: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: <type of I> = interface_decl @I [template = constants.%I] {
+// CHECK:STDOUT:   %I.decl: %I.type = interface_decl @I [template = constants.%I] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: <type of <invalid>> = fn_decl @.1 [template = constants.%.4] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %T.loc39_6.1: type = param T
 // CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %Self.ref.loc39_24: <cannot stringify inst+7> = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %Self.ref.loc39_24: %I = name_ref Self, @I.%Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc39_18.1: <error> = param self
 // CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc39_18.1
-// CHECK:STDOUT:     %Self.ref.loc39_35: <cannot stringify inst+7> = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %Self.ref.loc39_35: %I = name_ref Self, @I.%Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     @.1.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: <cannot stringify inst+7> = bind_symbolic_name Self 1 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref.loc22_14: <cannot stringify inst+7> = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I = bind_symbolic_name Self 1 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %Self.ref.loc22_14: %I = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc22_8.1: <error> = param self
 // CHECK:STDOUT:     %self.loc22_8.2: <error> = bind_name self, %self.loc22_8.1
-// CHECK:STDOUT:     %Self.ref.loc22_25: <cannot stringify inst+7> = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %Self.ref.loc22_25: %I = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc22: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

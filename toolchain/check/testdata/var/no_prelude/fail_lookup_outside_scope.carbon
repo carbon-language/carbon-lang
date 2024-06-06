@@ -22,7 +22,7 @@ var y: () = x;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
+// CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,19 +30,19 @@ var y: () = x;
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
-// CHECK:STDOUT:   %.loc18_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT:   %.loc18_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc18_9.2: type = converted %.loc18_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %y.var: ref () = var y
-// CHECK:STDOUT:   %y: ref () = bind_name y, %y.var
+// CHECK:STDOUT:   %y.var: ref %.1 = var y
+// CHECK:STDOUT:   %y: ref %.1 = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref () = var x
-// CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
+// CHECK:STDOUT:   %x.var: ref %.1 = var x
+// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

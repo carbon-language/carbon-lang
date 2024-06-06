@@ -28,12 +28,12 @@ fn Test() {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.j: i32, .k: i32} [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
-// CHECK:STDOUT:   %Test: <type of Test> = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
@@ -46,22 +46,22 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Test.decl: <type of Test> = fn_decl @Test [template = constants.%Test] {}
-// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {}
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_8: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %.2 = field_decl j, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_8: <unbound element of class Class> = field_decl k, element1 [template]
+// CHECK:STDOUT:   %.loc13_8: %.2 = field_decl k, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -74,29 +74,29 @@ fn Test() {
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc17: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %cv.var: ref Class = var cv
-// CHECK:STDOUT:   %cv: ref Class = bind_name cv, %cv.var
-// CHECK:STDOUT:   %cv.ref.loc18: ref Class = name_ref cv, %cv
-// CHECK:STDOUT:   %j.ref.loc18: <unbound element of class Class> = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %cv.var: ref %Class = var cv
+// CHECK:STDOUT:   %cv: ref %Class = bind_name cv, %cv.var
+// CHECK:STDOUT:   %cv.ref.loc18: ref %Class = name_ref cv, %cv
+// CHECK:STDOUT:   %j.ref.loc18: %.2 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_5: ref i32 = class_element_access %cv.ref.loc18, element0
 // CHECK:STDOUT:   %.loc18_10: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   assign %.loc18_5, %.loc18_10
-// CHECK:STDOUT:   %cv.ref.loc19: ref Class = name_ref cv, %cv
-// CHECK:STDOUT:   %k.ref.loc19: <unbound element of class Class> = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
+// CHECK:STDOUT:   %cv.ref.loc19: ref %Class = name_ref cv, %cv
+// CHECK:STDOUT:   %k.ref.loc19: %.2 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc19_5: ref i32 = class_element_access %cv.ref.loc19, element1
 // CHECK:STDOUT:   %.loc19_10: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   assign %.loc19_5, %.loc19_10
 // CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %cv.ref.loc20: ref Class = name_ref cv, %cv
-// CHECK:STDOUT:   %.loc20: Class = bind_value %cv.ref.loc20
-// CHECK:STDOUT:   %c: Class = bind_name c, %.loc20
+// CHECK:STDOUT:   %cv.ref.loc20: ref %Class = name_ref cv, %cv
+// CHECK:STDOUT:   %.loc20: %Class = bind_value %cv.ref.loc20
+// CHECK:STDOUT:   %c: %Class = bind_name c, %.loc20
 // CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_11.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_11.2: type = converted %int.make_type_32.loc21, %.loc21_11.1 [template = i32]
 // CHECK:STDOUT:   %cj.var: ref i32 = var cj
 // CHECK:STDOUT:   %cj: ref i32 = bind_name cj, %cj.var
-// CHECK:STDOUT:   %c.ref.loc21: Class = name_ref c, %c
-// CHECK:STDOUT:   %j.ref.loc21: <unbound element of class Class> = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %c.ref.loc21: %Class = name_ref c, %c
+// CHECK:STDOUT:   %j.ref.loc21: %.2 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc21_18.1: ref i32 = class_element_access %c.ref.loc21, element0
 // CHECK:STDOUT:   %.loc21_18.2: i32 = bind_value %.loc21_18.1
 // CHECK:STDOUT:   assign %cj.var, %.loc21_18.2
@@ -105,8 +105,8 @@ fn Test() {
 // CHECK:STDOUT:   %.loc22_11.2: type = converted %int.make_type_32.loc22, %.loc22_11.1 [template = i32]
 // CHECK:STDOUT:   %ck.var: ref i32 = var ck
 // CHECK:STDOUT:   %ck: ref i32 = bind_name ck, %ck.var
-// CHECK:STDOUT:   %c.ref.loc22: Class = name_ref c, %c
-// CHECK:STDOUT:   %k.ref.loc22: <unbound element of class Class> = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
+// CHECK:STDOUT:   %c.ref.loc22: %Class = name_ref c, %c
+// CHECK:STDOUT:   %k.ref.loc22: %.2 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc22_18.1: ref i32 = class_element_access %c.ref.loc22, element1
 // CHECK:STDOUT:   %.loc22_18.2: i32 = bind_value %.loc22_18.1
 // CHECK:STDOUT:   assign %ck.var, %.loc22_18.2

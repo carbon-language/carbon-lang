@@ -129,14 +129,14 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -146,15 +146,15 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -167,14 +167,14 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -184,15 +184,15 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -205,14 +205,14 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -222,15 +222,15 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -243,14 +243,14 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -263,15 +263,15 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -281,14 +281,14 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -301,15 +301,15 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -322,7 +322,7 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -330,9 +330,9 @@ fn B() {}
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %A.ref: <type of A> = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:   %B: <type of A> = bind_alias B, %A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:   %B: %A.type = bind_alias B, %A.decl [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -342,9 +342,9 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: <type of <invalid>> = struct_value () [template]
+// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -353,8 +353,8 @@ fn B() {}
 // CHECK:STDOUT:     .B = %import_ref.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: <type of A> = import_ref ir0, inst+6, loaded [template = constants.%A]
-// CHECK:STDOUT:   %.decl: <type of <invalid>> = fn_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref ir0, inst+6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
