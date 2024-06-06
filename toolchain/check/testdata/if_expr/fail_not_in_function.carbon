@@ -40,16 +40,16 @@ class C {
 // CHECK:STDOUT: --- fail_not_in_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 64 [template]
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
-// CHECK:STDOUT:   %struct.2: Float = struct_value () [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type C, i32 [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT: }
@@ -58,8 +58,8 @@ class C {
 // CHECK:STDOUT:   %.loc23: i32 = block_arg <unexpected instblockref block8> [template = constants.%.3]
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc23
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

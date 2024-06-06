@@ -15,17 +15,17 @@ fn Foo() {}
 // CHECK:STDOUT: --- forward_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Foo: type = fn_type @Foo [template]
+// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Foo = struct_value () [template]
+// CHECK:STDOUT:   %Foo: <type of Foo> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo.decl.loc11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc11: Foo = fn_decl @Foo [template = constants.%struct] {}
-// CHECK:STDOUT:   %Foo.decl.loc13: Foo = fn_decl @Foo [template = constants.%struct] {}
+// CHECK:STDOUT:   %Foo.decl.loc11: <type of Foo> = fn_decl @Foo [template = constants.%Foo] {}
+// CHECK:STDOUT:   %Foo.decl.loc13: <type of Foo> = fn_decl @Foo [template = constants.%Foo] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

@@ -48,30 +48,30 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %.2: type = interface_type @Inc [template]
 // CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type C [template]
-// CHECK:STDOUT:   %Op.1: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Op = struct_value () [template]
+// CHECK:STDOUT:   %Op.1: <type of Op> = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %Op.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %struct.2: Op = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%struct.1) [template]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %Op.2: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %.7: type = interface_type @AddAssign [template]
 // CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Op.3: type = fn_type @Op.3 [template]
-// CHECK:STDOUT:   %struct.3: Op = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
+// CHECK:STDOUT:   %Op.3: <type of Op> = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %Op.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %struct.4: Op = struct_value () [template]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (%struct.3) [template]
-// CHECK:STDOUT:   %TestIncNonRef: type = fn_type @TestIncNonRef [template]
-// CHECK:STDOUT:   %struct.5: TestIncNonRef = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %Op.4: <type of Op> = struct_value () [template]
+// CHECK:STDOUT:   %.9: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [template]
+// CHECK:STDOUT:   %TestIncNonRef: <type of TestIncNonRef> = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type @Inc, Op [template]
-// CHECK:STDOUT:   %.12: <associated Op in Inc> = assoc_entity element0, file.%import_ref.10 [template]
-// CHECK:STDOUT:   %TestAddAssignNonRef: type = fn_type @TestAddAssignNonRef [template]
-// CHECK:STDOUT:   %struct.6: TestAddAssignNonRef = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, Op [template]
-// CHECK:STDOUT:   %.14: <associated Op in AddAssign> = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type @Inc, <type of Op> [template]
+// CHECK:STDOUT:   %.12: <associated <type of Op> in Inc> = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [template]
+// CHECK:STDOUT:   %TestAddAssignNonRef: <type of TestAddAssignNonRef> = struct_value () [template]
+// CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, <type of Op> [template]
+// CHECK:STDOUT:   %.14: <associated <type of Op> in AddAssign> = assoc_entity element0, file.%import_ref.12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -85,8 +85,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Op in Inc> = import_ref ir4, inst+65, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir4, inst+61, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: <associated <type of Op> in Inc> = import_ref ir4, inst+65, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.4: <type of Op> = import_ref ir4, inst+61, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, %Core [template = %Core]
@@ -94,21 +94,21 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+26, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.7: <associated Op in AddAssign> = import_ref ir4, inst+47, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.8: Op = import_ref ir4, inst+43, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.7: <associated <type of Op> in AddAssign> = import_ref ir4, inst+47, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.8: <type of Op> = import_ref ir4, inst+43, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc18: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.5 [template = constants.%.7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %TestIncNonRef.decl: TestIncNonRef = fn_decl @TestIncNonRef [template = constants.%struct.5] {
+// CHECK:STDOUT:   %TestIncNonRef.decl: <type of TestIncNonRef> = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc22_18.1: C = param a
 // CHECK:STDOUT:     @TestIncNonRef.%a: C = bind_name a, %a.loc22_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+61, unloaded
-// CHECK:STDOUT:   %TestAddAssignNonRef.decl: TestAddAssignNonRef = fn_decl @TestAddAssignNonRef [template = constants.%struct.6] {
+// CHECK:STDOUT:   %TestAddAssignNonRef.decl: <type of TestAddAssignNonRef> = fn_decl @TestAddAssignNonRef [template = constants.%TestAddAssignNonRef] {
 // CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc33_24.1: C = param a
 // CHECK:STDOUT:     @TestAddAssignNonRef.%a: C = bind_name a, %a.loc33_24.1
@@ -135,7 +135,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: C as Inc {
-// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.1] {
+// CHECK:STDOUT:   %Op.decl: <type of Op> = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type C [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc16_14.1: C* = param self
@@ -150,7 +150,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: C as AddAssign {
-// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.3 [template = constants.%struct.3] {
+// CHECK:STDOUT:   %Op.decl: <type of Op> = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type C [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc19_14.1: C* = param self
@@ -183,7 +183,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
-// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.1.%.1, element0 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.1: <type of Op> = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc30: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %Op.call: init () = call %.loc30(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
@@ -193,7 +193,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.2.%.1, element0 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.1: <type of Op> = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc40: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %Op.call: init () = call %.loc40(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return

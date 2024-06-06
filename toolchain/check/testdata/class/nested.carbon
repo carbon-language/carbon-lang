@@ -53,26 +53,26 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
-// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
 // CHECK:STDOUT:   %.2: type = ptr_type Inner [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type Inner, Inner* [template]
 // CHECK:STDOUT:   %.4: type = ptr_type Outer [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type Inner, Outer* [template]
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
-// CHECK:STDOUT:   %H: type = fn_type @H [template]
-// CHECK:STDOUT:   %struct.3: H = struct_value () [template]
+// CHECK:STDOUT:   %H.type: type = fn_type @H [template]
+// CHECK:STDOUT:   %H: <type of H> = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = unbound_element_type Outer, Outer* [template]
 // CHECK:STDOUT:   %.8: type = unbound_element_type Outer, Inner* [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
 // CHECK:STDOUT:   %.10: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
 // CHECK:STDOUT:   %.11: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
-// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %struct.4: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,7 +83,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.4] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41: type = ptr_type Outer [template = constants.%.4]
 // CHECK:STDOUT:     %a.loc41_6.1: Outer* = param a
@@ -92,9 +92,9 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
-// CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %H.decl: <type of H> = fn_decl @H [template = constants.%H] {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc36_15: type = ptr_type Outer [template = constants.%.4]
 // CHECK:STDOUT:   %.loc36_9: <unbound element of class Outer> = field_decl po, element0 [template]
@@ -125,7 +125,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc21_18: type = ptr_type Inner [template = constants.%.2]
 // CHECK:STDOUT:   %.loc21_11: <unbound element of class Inner> = field_decl qi, element2 [template]
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner

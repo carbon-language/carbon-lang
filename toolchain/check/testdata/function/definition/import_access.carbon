@@ -150,9 +150,9 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Def: type = fn_type @Def [template]
+// CHECK:STDOUT:   %Def.type: type = fn_type @Def [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Def = struct_value () [template]
+// CHECK:STDOUT:   %Def: <type of Def> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -161,7 +161,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .Def [private] = %Def.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Def.decl: Def = fn_decl @Def [template = constants.%struct] {}
+// CHECK:STDOUT:   %Def.decl: <type of Def> = fn_decl @Def [template = constants.%Def] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def() {
@@ -172,9 +172,9 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ForwardWithDef: type = fn_type @ForwardWithDef [template]
+// CHECK:STDOUT:   %ForwardWithDef.type: type = fn_type @ForwardWithDef [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: ForwardWithDef = struct_value () [template]
+// CHECK:STDOUT:   %ForwardWithDef: <type of ForwardWithDef> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -183,8 +183,8 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: ForwardWithDef = fn_decl @ForwardWithDef [template = constants.%struct] {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: ForwardWithDef = fn_decl @ForwardWithDef [template = constants.%struct] {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: <type of ForwardWithDef> = fn_decl @ForwardWithDef [template = constants.%ForwardWithDef] {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: <type of ForwardWithDef> = fn_decl @ForwardWithDef [template = constants.%ForwardWithDef] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef() {
@@ -195,9 +195,9 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- forward.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Forward: type = fn_type @Forward [template]
+// CHECK:STDOUT:   %Forward.type: type = fn_type @Forward [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Forward = struct_value () [template]
+// CHECK:STDOUT:   %Forward: <type of Forward> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -206,7 +206,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .Forward [private] = %Forward.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Forward.decl: Forward = fn_decl @Forward [template = constants.%struct] {}
+// CHECK:STDOUT:   %Forward.decl: <type of Forward> = fn_decl @Forward [template = constants.%Forward] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward();
@@ -371,8 +371,8 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Forward: type = fn_type @Forward [template]
-// CHECK:STDOUT:   %struct: Forward = struct_value () [template]
+// CHECK:STDOUT:   %Forward.type: type = fn_type @Forward [template]
+// CHECK:STDOUT:   %Forward: <type of Forward> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -386,7 +386,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref () = var f
 // CHECK:STDOUT:   %f: ref () = bind_name f, %f.var
-// CHECK:STDOUT:   %Forward.decl: Forward = fn_decl @Forward [template = constants.%struct] {}
+// CHECK:STDOUT:   %Forward.decl: <type of Forward> = fn_decl @Forward [template = constants.%Forward] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward() {
@@ -457,9 +457,9 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- todo_fail_private_on_redecl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Redecl: type = fn_type @Redecl [template]
+// CHECK:STDOUT:   %Redecl.type: type = fn_type @Redecl [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Redecl = struct_value () [template]
+// CHECK:STDOUT:   %Redecl: <type of Redecl> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -468,8 +468,8 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Redecl.decl.loc4: Redecl = fn_decl @Redecl [template = constants.%struct] {}
-// CHECK:STDOUT:   %Redecl.decl.loc6: Redecl = fn_decl @Redecl [template = constants.%struct] {}
+// CHECK:STDOUT:   %Redecl.decl.loc4: <type of Redecl> = fn_decl @Redecl [template = constants.%Redecl] {}
+// CHECK:STDOUT:   %Redecl.decl.loc6: <type of Redecl> = fn_decl @Redecl [template = constants.%Redecl] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Redecl() {

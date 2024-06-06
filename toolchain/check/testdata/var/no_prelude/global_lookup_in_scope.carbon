@@ -20,9 +20,9 @@ fn Main() {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.v: ()} [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %struct.1: {.v: ()} = struct_value (%tuple) [template]
-// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
-// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
+// CHECK:STDOUT:   %struct: {.v: ()} = struct_value (%tuple) [template]
+// CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
+// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -35,7 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: ()} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.v: ()} = var x
 // CHECK:STDOUT:   %x: ref {.v: ()} = bind_name x, %x.var
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -50,8 +50,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_21.2: ref () = struct_access %y.var, element0
 // CHECK:STDOUT:   %.loc14_21.3: init () = tuple_init () to %.loc14_21.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc14_21.4: init () = converted %.loc14_21.1, %.loc14_21.3 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_21.5: init {.v: ()} = struct_init (%.loc14_21.4) to %y.var [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc14_22: init {.v: ()} = converted %x.ref, %.loc14_21.5 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc14_21.5: init {.v: ()} = struct_init (%.loc14_21.4) to %y.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc14_22: init {.v: ()} = converted %x.ref, %.loc14_21.5 [template = constants.%struct]
 // CHECK:STDOUT:   assign %y.var, %.loc14_22
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -63,8 +63,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_27.2: ref () = struct_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc11_26.2: init () = tuple_init () to %.loc11_27.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_27.3: init () = converted %.loc11_26.1, %.loc11_26.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_27.4: init {.v: ()} = struct_init (%.loc11_27.3) to file.%x.var [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc11_28: init {.v: ()} = converted %.loc11_27.1, %.loc11_27.4 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc11_27.4: init {.v: ()} = struct_init (%.loc11_27.3) to file.%x.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_28: init {.v: ()} = converted %.loc11_27.1, %.loc11_27.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_28
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

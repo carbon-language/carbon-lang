@@ -87,9 +87,9 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %UseEmpty: type = fn_type @UseEmpty [template]
+// CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: UseEmpty = struct_value () [template]
+// CHECK:STDOUT:   %UseEmpty: <type of UseEmpty> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -99,7 +99,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %UseEmpty.decl: UseEmpty = fn_decl @UseEmpty [template = constants.%struct] {
+// CHECK:STDOUT:   %UseEmpty.decl: <type of UseEmpty> = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:     %i.loc6_13.1: I = param i
 // CHECK:STDOUT:     @UseEmpty.%i: I = bind_name i, %i.loc6_13.1

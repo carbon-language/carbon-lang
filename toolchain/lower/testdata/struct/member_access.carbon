@@ -18,14 +18,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.4.loc12_49 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
+// CHECK:STDOUT: @struct.loc12_49 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8
 // CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc12_48.4.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.4.loc12_49, i64 16, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc12_49, i64 16, i1 false)
 // CHECK:STDOUT:   %y.var = alloca i32, align 4
 // CHECK:STDOUT:   %.loc13_17.1.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.b, align 4

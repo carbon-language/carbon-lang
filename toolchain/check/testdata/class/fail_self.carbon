@@ -56,18 +56,18 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf [template]
-// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
-// CHECK:STDOUT:   %CallWrongSelf: type = fn_type @CallWrongSelf [template]
-// CHECK:STDOUT:   %struct.4: CallWrongSelf = struct_value () [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %CallWrongSelf.type: type = fn_type @CallWrongSelf [template]
+// CHECK:STDOUT:   %CallWrongSelf: <type of CallWrongSelf> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,17 +79,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc25_12.1: Class = param self
 // CHECK:STDOUT:     @F.1.%self: Class = bind_name self, %self.loc25_12.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     @G.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {}
-// CHECK:STDOUT:   %CallWrongSelf.decl: CallWrongSelf = fn_decl @CallWrongSelf [template = constants.%struct.4] {
+// CHECK:STDOUT:   %CallWrongSelf.decl: <type of CallWrongSelf> = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
 // CHECK:STDOUT:     %ws.loc45_18.1: WrongSelf = param ws
 // CHECK:STDOUT:     @CallWrongSelf.%ws: WrongSelf = bind_name ws, %ws.loc45_18.1
@@ -97,12 +97,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc16_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc16_8.2: Class = bind_name self, %self.loc16_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.var: ref Class = var <return slot>
 // CHECK:STDOUT:   }
@@ -114,7 +114,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongSelf {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.3] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc42_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc42_8.2: Class = bind_name self, %self.loc42_8.1
@@ -145,7 +145,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: WrongSelf = name_ref ws, %ws
-// CHECK:STDOUT:   %F.ref: F = name_ref F, @WrongSelf.%F.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %F.ref: <type of F> = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc52: <bound method> = bound_method %ws.ref, %F.ref
 // CHECK:STDOUT:   %F.call: init () = call %.loc52(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return

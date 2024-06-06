@@ -18,11 +18,11 @@ fn Main() {
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
+// CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Main = struct_value () [template]
-// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %struct.2: Bool = struct_value () [template]
+// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,13 +32,13 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT:   %import_ref: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct.2() [template = bool]
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %bool.make_type, %.loc15_10.1 [template = bool]
 // CHECK:STDOUT:   %x.var: ref bool = var x

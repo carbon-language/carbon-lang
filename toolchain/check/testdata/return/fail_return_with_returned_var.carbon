@@ -35,21 +35,21 @@ fn G() -> C {
 // CHECK:STDOUT: --- fail_return_with_returned_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type C, i32 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.3: G = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %struct.4: C = struct_value (%.3, %.7) [template]
+// CHECK:STDOUT:   %struct: C = struct_value (%.3, %.7) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,29 +60,29 @@ fn G() -> C {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
+// CHECK:STDOUT:   %import_ref.3: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @G.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %int.make_type_32.loc23_18: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc23_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_18.1: type = value_of_initializer %int.make_type_32.loc23_18 [template = i32]
 // CHECK:STDOUT:   %.loc23_18.2: type = converted %int.make_type_32.loc23_18, %.loc23_18.1 [template = i32]
 // CHECK:STDOUT:   %.loc23_16: <unbound element of class C> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc23_30: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc23_30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_30.1: type = value_of_initializer %int.make_type_32.loc23_30 [template = i32]
 // CHECK:STDOUT:   %.loc23_30.2: type = converted %int.make_type_32.loc23_30, %.loc23_30.1 [template = i32]
 // CHECK:STDOUT:   %.loc23_28: <unbound element of class C> = field_decl b, element1 [template]
@@ -97,7 +97,7 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_19.2: type = converted %int.make_type_32, %.loc12_19.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
@@ -119,8 +119,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc25_38.3: init i32 = initialize_from %.loc25_29 to %.loc25_38.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc25_38.4: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc25_38.5: init i32 = initialize_from %.loc25_37 to %.loc25_38.4 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc25_38.6: init C = class_init (%.loc25_38.3, %.loc25_38.5), %return [template = constants.%struct.4]
-// CHECK:STDOUT:   %.loc25_39: init C = converted %.loc25_38.1, %.loc25_38.6 [template = constants.%struct.4]
+// CHECK:STDOUT:   %.loc25_38.6: init C = class_init (%.loc25_38.3, %.loc25_38.5), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc25_39: init C = converted %.loc25_38.1, %.loc25_38.6 [template = constants.%struct]
 // CHECK:STDOUT:   assign %return, %.loc25_39
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   return <error>

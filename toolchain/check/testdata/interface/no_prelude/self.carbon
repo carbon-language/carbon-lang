@@ -17,11 +17,11 @@ interface UseSelf {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @UseSelf [template]
 // CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: F = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @UseSelf, F [template]
-// CHECK:STDOUT:   %.4: <associated F in UseSelf> = assoc_entity element0, @UseSelf.%F.decl [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @UseSelf, <type of F> [template]
+// CHECK:STDOUT:   %.4: <associated <type of F> in UseSelf> = assoc_entity element0, @UseSelf.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -33,7 +33,7 @@ interface UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
 // CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc12_14: UseSelf = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = constants.%Self]
@@ -44,7 +44,7 @@ interface UseSelf {
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %Self.ref.loc12_25, %.loc12_25.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_29: <associated F in UseSelf> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_29: <associated <type of F> in UseSelf> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

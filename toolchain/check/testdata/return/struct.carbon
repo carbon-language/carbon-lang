@@ -15,14 +15,14 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: --- struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
-// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
+// CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
+// CHECK:STDOUT:   %Main: <type of Main> = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %struct.3: {.a: i32} = struct_value (%.3) [template]
+// CHECK:STDOUT:   %struct: {.a: i32} = struct_value (%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -31,9 +31,9 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Main.decl: <type of Main> = fn_decl @Main [template = constants.%Main] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_22: type = struct_type {.a: i32} [template = constants.%.2]
@@ -47,8 +47,8 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_17: {.a: i32} = struct_literal (%.loc12_16)
-// CHECK:STDOUT:   %struct: {.a: i32} = struct_value (%.loc12_16) [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc12_18: {.a: i32} = converted %.loc12_17, %struct [template = constants.%struct.3]
+// CHECK:STDOUT:   %struct: {.a: i32} = struct_value (%.loc12_16) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_18: {.a: i32} = converted %.loc12_17, %struct [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc12_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,13 +15,13 @@ fn Baz() {}
 // CHECK:STDOUT: --- order.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Foo: type = fn_type @Foo [template]
+// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Foo = struct_value () [template]
-// CHECK:STDOUT:   %Bar: type = fn_type @Bar [template]
-// CHECK:STDOUT:   %struct.2: Bar = struct_value () [template]
-// CHECK:STDOUT:   %Baz: type = fn_type @Baz [template]
-// CHECK:STDOUT:   %struct.3: Baz = struct_value () [template]
+// CHECK:STDOUT:   %Foo: <type of Foo> = struct_value () [template]
+// CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [template]
+// CHECK:STDOUT:   %Bar: <type of Bar> = struct_value () [template]
+// CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [template]
+// CHECK:STDOUT:   %Baz: <type of Baz> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,9 +30,9 @@ fn Baz() {}
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:     .Baz = %Baz.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %Bar.decl: Bar = fn_decl @Bar [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %Baz.decl: Baz = fn_decl @Baz [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %Foo.decl: <type of Foo> = fn_decl @Foo [template = constants.%Foo] {}
+// CHECK:STDOUT:   %Bar.decl: <type of Bar> = fn_decl @Bar [template = constants.%Bar] {}
+// CHECK:STDOUT:   %Baz.decl: <type of Baz> = fn_decl @Baz [template = constants.%Baz] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

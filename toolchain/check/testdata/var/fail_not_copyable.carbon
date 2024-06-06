@@ -32,9 +32,9 @@ fn F(x: X) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type String [template]
 // CHECK:STDOUT:   %.5: String = string_literal "hello" [template]
@@ -48,7 +48,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %x.loc14_6.1: X = param x
 // CHECK:STDOUT:     @F.%x: X = bind_name x, %x.loc14_6.1

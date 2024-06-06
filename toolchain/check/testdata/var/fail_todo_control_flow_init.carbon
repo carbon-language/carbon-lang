@@ -62,8 +62,8 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal false [template]
-// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,14 +83,14 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %.loc37_10.2: type = converted %.loc37_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x2.var: ref () = var x2
 // CHECK:STDOUT:   %x2: ref () = bind_name x2, %x2.var
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %bool.make_type.loc47: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:   %import_ref.1: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %bool.make_type.loc47: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc47_8.1: type = value_of_initializer %bool.make_type.loc47 [template = bool]
 // CHECK:STDOUT:   %.loc47_8.2: type = converted %bool.make_type.loc47, %.loc47_8.1 [template = bool]
 // CHECK:STDOUT:   %y.var: ref bool = var y
 // CHECK:STDOUT:   %y: ref bool = bind_name y, %y.var
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %bool.make_type.loc56: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:   %import_ref.2: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %bool.make_type.loc56: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc56_9.1: type = value_of_initializer %bool.make_type.loc56 [template = bool]
 // CHECK:STDOUT:   %.loc56_9.2: type = converted %bool.make_type.loc56, %.loc56_9.1 [template = bool]
 // CHECK:STDOUT:   %y2.var: ref bool = var y2

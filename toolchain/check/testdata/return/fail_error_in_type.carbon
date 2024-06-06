@@ -16,9 +16,9 @@ fn Six() -> x;
 // CHECK:STDOUT: --- fail_error_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Six: type = fn_type @Six [template]
+// CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Six = struct_value () [template]
+// CHECK:STDOUT:   %Six: <type of Six> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,7 +27,7 @@ fn Six() -> x;
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct] {
+// CHECK:STDOUT:   %Six.decl: <type of Six> = fn_decl @Six [template = constants.%Six] {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }

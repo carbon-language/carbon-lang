@@ -30,15 +30,15 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: --- shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.1: type = fn_type @A.1 [template]
+// CHECK:STDOUT:   %A.type.1: type = fn_type @A.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: A = struct_value () [template]
-// CHECK:STDOUT:   %A.2: type = fn_type @A.2 [template]
-// CHECK:STDOUT:   %struct.2: A = struct_value () [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.3: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %B: type = fn_type @B [template]
-// CHECK:STDOUT:   %struct.4: B = struct_value () [template]
+// CHECK:STDOUT:   %A.1: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %A.type.2: type = fn_type @A.2 [template]
+// CHECK:STDOUT:   %A.2: <type of A> = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %B.type: type = fn_type @B [template]
+// CHECK:STDOUT:   %B: <type of B> = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
@@ -50,23 +50,23 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A.decl.loc11: A = fn_decl @A.1 [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %A.decl.loc11: <type of A> = fn_decl @A.1 [template = constants.%A.1] {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl.loc14
 // CHECK:STDOUT:     .M = %M
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc14: A = fn_decl @A.2 [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %A.decl.loc14: <type of A> = fn_decl @A.2 [template = constants.%A.2] {}
 // CHECK:STDOUT:   %M: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.4] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %B.decl: <type of B> = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc18_15.2: type = converted %int.make_type_32, %.loc18_15.1 [template = i32]
 // CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1();
@@ -77,13 +77,13 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc20: A = name_ref A, file.%A.decl.loc14 [template = constants.%struct.2]
+// CHECK:STDOUT:   %A.ref.loc20: <type of A> = name_ref A, file.%A.decl.loc14 [template = constants.%A.2]
 // CHECK:STDOUT:   %A.call: init () = call %A.ref.loc20()
 // CHECK:STDOUT:   %.loc21: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc21 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc22_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc22_12.2: type = converted %int.make_type_32, %.loc22_12.1 [template = i32]
 // CHECK:STDOUT:   %A.var: ref i32 = var A

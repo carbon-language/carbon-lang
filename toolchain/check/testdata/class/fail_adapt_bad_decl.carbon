@@ -101,9 +101,9 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
 // CHECK:STDOUT:   %.1: i32 = int_literal 100 [template]
-// CHECK:STDOUT:   %Use: type = fn_type @Use [template]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Use = struct_value () [template]
+// CHECK:STDOUT:   %Use: <type of Use> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -114,7 +114,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
-// CHECK:STDOUT:   %Use.decl: Use = fn_decl @Use [template = constants.%struct] {
+// CHECK:STDOUT:   %Use.decl: <type of Use> = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %b.loc16_8.1: Bad = param b
 // CHECK:STDOUT:     @Use.%b: Bad = bind_name b, %b.loc16_8.1
@@ -141,9 +141,9 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
 // CHECK:STDOUT:   %.1: i32 = int_literal 100 [template]
-// CHECK:STDOUT:   %Use: type = fn_type @Use [template]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Use = struct_value () [template]
+// CHECK:STDOUT:   %Use: <type of Use> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -154,7 +154,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
-// CHECK:STDOUT:   %Use.decl: Use = fn_decl @Use [template = constants.%struct] {
+// CHECK:STDOUT:   %Use.decl: <type of Use> = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %b.loc13_8.1: Bad = param b
 // CHECK:STDOUT:     @Use.%b: Bad = bind_name b, %b.loc13_8.1

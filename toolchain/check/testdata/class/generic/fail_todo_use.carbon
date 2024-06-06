@@ -40,21 +40,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %Class.1: type = generic_class_type @Class [template]
+// CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Class = struct_value () [template]
+// CHECK:STDOUT:   %Class.1: <type of Class> = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class [template]
 // CHECK:STDOUT:   %.2: type = ptr_type Class [template]
 // CHECK:STDOUT:   %.3: type = ptr_type T [symbolic]
-// CHECK:STDOUT:   %Get: type = fn_type @Get [template]
-// CHECK:STDOUT:   %struct.2: Get = struct_value () [template]
+// CHECK:STDOUT:   %Get.type: type = fn_type @Get [template]
+// CHECK:STDOUT:   %Get: <type of Get> = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type Class, T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: T} [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type {.k: T} [symbolic]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.3: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
-// CHECK:STDOUT:   %struct.4: Run = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
+// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, (@Run.%.loc25_15.2) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.k: i32} [template]
@@ -68,22 +68,22 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Class.decl: Class = class_decl @Class [template = constants.%struct.1] {
+// CHECK:STDOUT:   %Class.decl: <type of Class> = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.4] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc20_13.2: type = converted %int.make_type_32, %.loc20_13.1 [template = i32]
 // CHECK:STDOUT:     @Run.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %Get.decl: Get = fn_decl @Get [template = constants.%struct.2] {
+// CHECK:STDOUT:   %Get.decl: <type of Get> = fn_decl @Get [template = constants.%Get] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [template = constants.%Class.2]
 // CHECK:STDOUT:     %.loc12_25: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:     %self.loc12_15.1: Class* = param self
@@ -116,8 +116,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: Class = name_ref Class, file.%Class.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %Class.ref: <type of Class> = name_ref Class, file.%Class.decl [template = constants.%Class.1]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc25_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc25_15.2: type = converted %int.make_type_32, %.loc25_15.1 [template = i32]
 // CHECK:STDOUT:   %Class: type = class_type @Class, (%.loc25_15.2) [template = constants.%Class.3]
@@ -127,7 +127,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc25_30: {.k: i32} = struct_literal (%.loc25_29)
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %v.ref: ref Class = name_ref v, %v
-// CHECK:STDOUT:   %Get.ref: Get = name_ref Get, @Class.%Get.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %Get.ref: <type of Get> = name_ref Get, @Class.%Get.decl [template = constants.%Get]
 // CHECK:STDOUT:   %.loc36_11: <bound method> = bound_method %v.ref, %Get.ref
 // CHECK:STDOUT:   %.loc36_10: Class* = addr_of %v.ref
 // CHECK:STDOUT:   %Get.call: init T* = call %.loc36_11(<invalid>) [template = <error>]

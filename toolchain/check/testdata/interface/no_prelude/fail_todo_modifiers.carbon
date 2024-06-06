@@ -25,15 +25,15 @@ interface Modifiers {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Modifiers [template]
 // CHECK:STDOUT:   %Self: Modifiers = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Final: type = fn_type @Final [template]
+// CHECK:STDOUT:   %Final.type: type = fn_type @Final [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Final = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Modifiers, Final [template]
-// CHECK:STDOUT:   %.4: <associated Final in Modifiers> = assoc_entity element0, @Modifiers.%Final.decl [template]
-// CHECK:STDOUT:   %Default: type = fn_type @Default [template]
-// CHECK:STDOUT:   %struct.2: Default = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @Modifiers, Default [template]
-// CHECK:STDOUT:   %.6: <associated Default in Modifiers> = assoc_entity element1, @Modifiers.%Default.decl [template]
+// CHECK:STDOUT:   %Final: <type of Final> = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @Modifiers, <type of Final> [template]
+// CHECK:STDOUT:   %.4: <associated <type of Final> in Modifiers> = assoc_entity element0, @Modifiers.%Final.decl [template]
+// CHECK:STDOUT:   %Default.type: type = fn_type @Default [template]
+// CHECK:STDOUT:   %Default: <type of Default> = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type @Modifiers, <type of Default> [template]
+// CHECK:STDOUT:   %.6: <associated <type of Default> in Modifiers> = assoc_entity element1, @Modifiers.%Default.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,10 +45,10 @@ interface Modifiers {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
 // CHECK:STDOUT:   %Self: Modifiers = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Final.decl: Final = fn_decl @Final [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc16: <associated Final in Modifiers> = assoc_entity element0, %Final.decl [template = constants.%.4]
-// CHECK:STDOUT:   %Default.decl: Default = fn_decl @Default [template = constants.%struct.2] {}
-// CHECK:STDOUT:   %.loc20: <associated Default in Modifiers> = assoc_entity element1, %Default.decl [template = constants.%.6]
+// CHECK:STDOUT:   %Final.decl: <type of Final> = fn_decl @Final [template = constants.%Final] {}
+// CHECK:STDOUT:   %.loc16: <associated <type of Final> in Modifiers> = assoc_entity element0, %Final.decl [template = constants.%.4]
+// CHECK:STDOUT:   %Default.decl: <type of Default> = fn_decl @Default [template = constants.%Default] {}
+// CHECK:STDOUT:   %.loc20: <associated <type of Default> in Modifiers> = assoc_entity element1, %Default.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

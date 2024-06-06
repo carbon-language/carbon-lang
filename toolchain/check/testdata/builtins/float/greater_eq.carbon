@@ -32,20 +32,20 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 64 [template]
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Float = struct_value () [template]
-// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %struct.2: Bool = struct_value () [template]
-// CHECK:STDOUT:   %GreaterEq: type = fn_type @GreaterEq [template]
-// CHECK:STDOUT:   %struct.3: GreaterEq = struct_value () [template]
-// CHECK:STDOUT:   %Negate: type = fn_type @Negate [template]
-// CHECK:STDOUT:   %struct.4: Negate = struct_value () [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: <type of Bool> = struct_value () [template]
+// CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [template]
+// CHECK:STDOUT:   %GreaterEq: <type of GreaterEq> = struct_value () [template]
+// CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [template]
+// CHECK:STDOUT:   %Negate: <type of Negate> = struct_value () [template]
 // CHECK:STDOUT:   %True: type = class_type @True [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %False: type = class_type @False [template]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.5: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %.6: f64 = float_literal 2 [template]
@@ -53,8 +53,8 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.8: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.9: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %.10: f64 = float_literal -1 [template]
-// CHECK:STDOUT:   %RuntimeCall: type = fn_type @RuntimeCall [template]
-// CHECK:STDOUT:   %struct.6: RuntimeCall = struct_value () [template]
+// CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
+// CHECK:STDOUT:   %RuntimeCall: <type of RuntimeCall> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -68,45 +68,45 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %GreaterEq.decl: GreaterEq = fn_decl @GreaterEq [template = constants.%struct.3] {
+// CHECK:STDOUT:   %import_ref.1: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.3: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %GreaterEq.decl: <type of GreaterEq> = fn_decl @GreaterEq [template = constants.%GreaterEq] {
 // CHECK:STDOUT:     %.loc2_17.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type.loc2_17: init type = call constants.%struct.1(%.loc2_17.1) [template = f64]
+// CHECK:STDOUT:     %float.make_type.loc2_17: init type = call constants.%Float(%.loc2_17.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_17.2: type = value_of_initializer %float.make_type.loc2_17 [template = f64]
 // CHECK:STDOUT:     %.loc2_17.3: type = converted %float.make_type.loc2_17, %.loc2_17.2 [template = f64]
 // CHECK:STDOUT:     %a.loc2_14.1: f64 = param a
 // CHECK:STDOUT:     @GreaterEq.%a: f64 = bind_name a, %a.loc2_14.1
 // CHECK:STDOUT:     %.loc2_25.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type.loc2_25: init type = call constants.%struct.1(%.loc2_25.1) [template = f64]
+// CHECK:STDOUT:     %float.make_type.loc2_25: init type = call constants.%Float(%.loc2_25.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_25.2: type = value_of_initializer %float.make_type.loc2_25 [template = f64]
 // CHECK:STDOUT:     %.loc2_25.3: type = converted %float.make_type.loc2_25, %.loc2_25.2 [template = f64]
 // CHECK:STDOUT:     %b.loc2_22.1: f64 = param b
 // CHECK:STDOUT:     @GreaterEq.%b: f64 = bind_name b, %b.loc2_22.1
-// CHECK:STDOUT:     %bool.make_type.loc2: init type = call constants.%struct.2() [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc2: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc2_33.1: type = value_of_initializer %bool.make_type.loc2 [template = bool]
 // CHECK:STDOUT:     %.loc2_33.2: type = converted %bool.make_type.loc2, %.loc2_33.1 [template = bool]
 // CHECK:STDOUT:     @GreaterEq.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.4] {
+// CHECK:STDOUT:   %import_ref.4: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.5: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %Negate.decl: <type of Negate> = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %.loc3_14.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type.loc3_14: init type = call constants.%struct.1(%.loc3_14.1) [template = f64]
+// CHECK:STDOUT:     %float.make_type.loc3_14: init type = call constants.%Float(%.loc3_14.1) [template = f64]
 // CHECK:STDOUT:     %.loc3_14.2: type = value_of_initializer %float.make_type.loc3_14 [template = f64]
 // CHECK:STDOUT:     %.loc3_14.3: type = converted %float.make_type.loc3_14, %.loc3_14.2 [template = f64]
 // CHECK:STDOUT:     %a.loc3_11.1: f64 = param a
 // CHECK:STDOUT:     @Negate.%a: f64 = bind_name a, %a.loc3_11.1
 // CHECK:STDOUT:     %.loc3_22.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type.loc3_22: init type = call constants.%struct.1(%.loc3_22.1) [template = f64]
+// CHECK:STDOUT:     %float.make_type.loc3_22: init type = call constants.%Float(%.loc3_22.1) [template = f64]
 // CHECK:STDOUT:     %.loc3_22.2: type = value_of_initializer %float.make_type.loc3_22 [template = f64]
 // CHECK:STDOUT:     %.loc3_22.3: type = converted %float.make_type.loc3_22, %.loc3_22.2 [template = f64]
 // CHECK:STDOUT:     @Negate.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.5] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
 // CHECK:STDOUT:     %true_.loc8_6.1: True = param true_
 // CHECK:STDOUT:     @F.%true_: True = bind_name true_, %true_.loc8_6.1
@@ -114,23 +114,23 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %false_.loc8_19.1: False = param false_
 // CHECK:STDOUT:     @F.%false_: False = bind_name false_, %false_.loc8_19.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.6] {
+// CHECK:STDOUT:   %import_ref.6: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.7: <type of Float> = import_ref ir3, inst+31, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.8: <type of Bool> = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %RuntimeCall.decl: <type of RuntimeCall> = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %.loc16_19.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%struct.1(%.loc16_19.1) [template = f64]
+// CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%Float(%.loc16_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc16_19.2: type = value_of_initializer %float.make_type.loc16_19 [template = f64]
 // CHECK:STDOUT:     %.loc16_19.3: type = converted %float.make_type.loc16_19, %.loc16_19.2 [template = f64]
 // CHECK:STDOUT:     %a.loc16_16.1: f64 = param a
 // CHECK:STDOUT:     @RuntimeCall.%a: f64 = bind_name a, %a.loc16_16.1
 // CHECK:STDOUT:     %.loc16_27.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type.loc16_27: init type = call constants.%struct.1(%.loc16_27.1) [template = f64]
+// CHECK:STDOUT:     %float.make_type.loc16_27: init type = call constants.%Float(%.loc16_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc16_27.2: type = value_of_initializer %float.make_type.loc16_27 [template = f64]
 // CHECK:STDOUT:     %.loc16_27.3: type = converted %float.make_type.loc16_27, %.loc16_27.2 [template = f64]
 // CHECK:STDOUT:     %b.loc16_24.1: f64 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: f64 = bind_name b, %b.loc16_24.1
-// CHECK:STDOUT:     %bool.make_type.loc16: init type = call constants.%struct.2() [template = bool]
+// CHECK:STDOUT:     %bool.make_type.loc16: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_35.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
 // CHECK:STDOUT:     %.loc16_35.2: type = converted %bool.make_type.loc16, %.loc16_35.1 [template = bool]
 // CHECK:STDOUT:     @RuntimeCall.%return: ref bool = var <return slot>
@@ -158,7 +158,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @F(%true_: True, %false_: False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: False = name_ref false_, %false_
-// CHECK:STDOUT:   %GreaterEq.ref.loc9: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %GreaterEq.ref.loc9: <type of GreaterEq> = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %.loc9_27: f64 = float_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_32: f64 = float_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %float.greater_eq.loc9: init bool = call %GreaterEq.ref.loc9(%.loc9_27, %.loc9_32) [template = constants.%.7]
@@ -177,7 +177,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_14.3: type = block_arg !if.expr.result.loc9 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc10: True = name_ref true_, %true_
-// CHECK:STDOUT:   %GreaterEq.ref.loc10: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %GreaterEq.ref.loc10: <type of GreaterEq> = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %.loc10_26: f64 = float_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc10_31: f64 = float_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %float.greater_eq.loc10: init bool = call %GreaterEq.ref.loc10(%.loc10_26, %.loc10_31) [template = constants.%.8]
@@ -196,7 +196,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc10:
 // CHECK:STDOUT:   %.loc10_13.3: type = block_arg !if.expr.result.loc10 [template = constants.%True]
 // CHECK:STDOUT:   %true_.ref.loc11: True = name_ref true_, %true_
-// CHECK:STDOUT:   %GreaterEq.ref.loc11: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %GreaterEq.ref.loc11: <type of GreaterEq> = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %.loc11_26: f64 = float_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc11_31: f64 = float_literal 0 [template = constants.%.9]
 // CHECK:STDOUT:   %float.greater_eq.loc11: init bool = call %GreaterEq.ref.loc11(%.loc11_26, %.loc11_31) [template = constants.%.8]
@@ -215,8 +215,8 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc11:
 // CHECK:STDOUT:   %.loc11_13.3: type = block_arg !if.expr.result.loc11 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref.loc12: False = name_ref false_, %false_
-// CHECK:STDOUT:   %GreaterEq.ref.loc12: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.3]
-// CHECK:STDOUT:   %Negate.ref.loc12: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.4]
+// CHECK:STDOUT:   %GreaterEq.ref.loc12: <type of GreaterEq> = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
+// CHECK:STDOUT:   %Negate.ref.loc12: <type of Negate> = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc12_34: f64 = float_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %float.negate.loc12: init f64 = call %Negate.ref.loc12(%.loc12_34) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc12_40: f64 = float_literal 0 [template = constants.%.9]
@@ -238,9 +238,9 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc12:
 // CHECK:STDOUT:   %.loc12_14.3: type = block_arg !if.expr.result.loc12 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc13: True = name_ref true_, %true_
-// CHECK:STDOUT:   %GreaterEq.ref.loc13: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %GreaterEq.ref.loc13: <type of GreaterEq> = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %.loc13_26: f64 = float_literal 0 [template = constants.%.9]
-// CHECK:STDOUT:   %Negate.ref.loc13: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.4]
+// CHECK:STDOUT:   %Negate.ref.loc13: <type of Negate> = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc13_38: f64 = float_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %float.negate.loc13: init f64 = call %Negate.ref.loc13(%.loc13_38) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc13_25.1: f64 = value_of_initializer %float.negate.loc13 [template = constants.%.10]
@@ -265,7 +265,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: f64, %b: f64) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %GreaterEq.ref: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %GreaterEq.ref: <type of GreaterEq> = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
 // CHECK:STDOUT:   %float.greater_eq: init bool = call %GreaterEq.ref(%a.ref, %b.ref)

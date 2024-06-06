@@ -15,7 +15,7 @@ interface Interface {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:3: ERROR: Value of type `<associated F in Interface>` is not callable.
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:3: ERROR: Value of type `<associated <type of F> in Interface>` is not callable.
   // CHECK:STDERR:   Interface.F();
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -32,15 +32,15 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Interface, F [template]
-// CHECK:STDOUT:   %.4: <associated F in Interface> = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %F.1: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @Interface, <type of F> [template]
+// CHECK:STDOUT:   %.4: <associated <type of F> in Interface> = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Interface, type [template]
 // CHECK:STDOUT:   %.6: <associated type in Interface> = assoc_entity element1, @Interface.%T [template]
-// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.2: <type of F> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -49,13 +49,13 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.2 [template = constants.%F.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %.loc12: <associated F in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc12: <associated <type of F> in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc14: <associated type in Interface> = assoc_entity element1, %T [template = constants.%.6]
 // CHECK:STDOUT:
@@ -71,7 +71,7 @@ fn F() {
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated F in Interface> = name_ref F, @Interface.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: <associated <type of F> in Interface> = name_ref F, @Interface.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   %Interface.ref.loc27: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc14 [template = constants.%.6]
 // CHECK:STDOUT:   %v.var: ref <error> = var v

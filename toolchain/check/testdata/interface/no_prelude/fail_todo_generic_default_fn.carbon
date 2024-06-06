@@ -27,13 +27,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, F [template]
-// CHECK:STDOUT:   %.4: <associated F in I> = assoc_entity element0, @I.%F.decl [template]
-// CHECK:STDOUT:   %.5: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %F: <type of F> = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, <type of F> [template]
+// CHECK:STDOUT:   %.4: <associated <type of F> in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.5: <type of <invalid>> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,7 +44,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.2] {
+// CHECK:STDOUT:   %.decl: <type of <invalid>> = fn_decl @.1 [template = constants.%.5] {
 // CHECK:STDOUT:     %T.loc22_6.1: type = param T
 // CHECK:STDOUT:     %T.loc22_6.2: type = bind_symbolic_name T 0, %T.loc22_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %Self.ref.loc22_24: I = name_ref Self, @I.%Self [symbolic = constants.%Self]
@@ -61,7 +61,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 1 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
+// CHECK:STDOUT:   %F.decl: <type of F> = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc13_14: I = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref.loc13_14 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref.loc13_14, %.loc13_14.1 [symbolic = constants.%Self]
@@ -72,7 +72,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %.loc13_25.2: type = converted %Self.ref.loc13_25, %.loc13_25.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_29: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_29: <associated <type of F> in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

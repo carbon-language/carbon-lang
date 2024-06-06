@@ -47,11 +47,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
-// CHECK:STDOUT:   %struct.2: Float = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,9 +60,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .Float = %Float.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %Float.decl: Float = fn_decl @Float [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Float.decl: <type of Float> = fn_decl @Float [template = constants.%Float] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %int.make_type_32, %.loc4_16.1 [template = i32]
 // CHECK:STDOUT:     %size.loc4_10.1: i32 = param size
@@ -78,15 +78,15 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Float = struct_value () [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
-// CHECK:STDOUT:   %GetFloat: type = fn_type @GetFloat [template]
-// CHECK:STDOUT:   %struct.3: GetFloat = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
+// CHECK:STDOUT:   %GetFloat.type: type = fn_type @GetFloat [template]
+// CHECK:STDOUT:   %GetFloat: <type of GetFloat> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -96,18 +96,18 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .GetFloat = %GetFloat.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir1, inst+14, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: <type of Float> = import_ref ir1, inst+14, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Float.ref: Float = name_ref Float, %import_ref.1 [template = constants.%struct.1]
+// CHECK:STDOUT:   %Float.ref: <type of Float> = name_ref Float, %import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %.loc6_14: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%.loc6_14) [template = f64]
 // CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc6_16.2: type = converted %float.make_type, %.loc6_16.1 [template = f64]
 // CHECK:STDOUT:   %f.var: ref f64 = var f
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %GetFloat.decl: GetFloat = fn_decl @GetFloat [template = constants.%struct.3] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir4, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %GetFloat.decl: <type of GetFloat> = fn_decl @GetFloat [template = constants.%GetFloat] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_32, %.loc8_23.1 [template = i32]
 // CHECK:STDOUT:     %dyn_size.loc8_13.1: i32 = param dyn_size
@@ -122,7 +122,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetFloat(%dyn_size: i32) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Float.ref: Float = name_ref Float, file.%import_ref.1 [template = constants.%struct.1]
+// CHECK:STDOUT:   %Float.ref: <type of Float> = name_ref Float, file.%import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%dyn_size.ref)
 // CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %float.make_type
@@ -140,12 +140,12 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: --- fail_invalid_size.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Float: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Float = struct_value () [template]
+// CHECK:STDOUT:   %Float: <type of Float> = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 32 [template]
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 64 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -157,22 +157,22 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .dyn_size = %dyn_size
 // CHECK:STDOUT:     .dyn = %dyn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir1, inst+14, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: <type of Float> = import_ref ir1, inst+14, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Float.ref.loc10: Float = name_ref Float, %import_ref.1 [template = constants.%struct.1]
+// CHECK:STDOUT:   %Float.ref.loc10: <type of Float> = name_ref Float, %import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 32 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type.loc10: init type = call %Float.ref.loc10(%.loc10_26) [template = <error>]
 // CHECK:STDOUT:   %.loc10_28.1: type = value_of_initializer %float.make_type.loc10 [template = <error>]
 // CHECK:STDOUT:   %.loc10_28.2: type = converted %float.make_type.loc10, %.loc10_28.1 [template = <error>]
 // CHECK:STDOUT:   %invalid_float.var: ref <error> = var invalid_float
 // CHECK:STDOUT:   %invalid_float: ref <error> = bind_name invalid_float, %invalid_float.var
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir4, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_15.2: type = converted %int.make_type_32, %.loc12_15.1 [template = i32]
 // CHECK:STDOUT:   %dyn_size.var: ref i32 = var dyn_size
 // CHECK:STDOUT:   %dyn_size: ref i32 = bind_name dyn_size, %dyn_size.var
-// CHECK:STDOUT:   %Float.ref.loc16: Float = name_ref Float, %import_ref.1 [template = constants.%struct.1]
+// CHECK:STDOUT:   %Float.ref.loc16: <type of Float> = name_ref Float, %import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: ref i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %.loc16_16: i32 = bind_value %dyn_size.ref
 // CHECK:STDOUT:   %float.make_type.loc16: init type = call %Float.ref.loc16(%.loc16_16)

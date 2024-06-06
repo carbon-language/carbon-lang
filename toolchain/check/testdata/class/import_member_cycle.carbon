@@ -57,9 +57,9 @@ fn Run() {
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
+// CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Run = struct_value () [template]
+// CHECK:STDOUT:   %Run: <type of Run> = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
 // CHECK:STDOUT:   %.2: type = ptr_type Cycle [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: Cycle*} [template]
@@ -73,7 +73,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct] {}
+// CHECK:STDOUT:   %Run.decl: <type of Run> = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT: }

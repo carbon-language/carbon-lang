@@ -22,16 +22,16 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: --- fail_collapse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: <type of Int32> = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = const_type i32 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type const i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type const i32* [template]
 // CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type i32* [template]
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: <type of G> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,10 +40,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
-// CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %import_ref.1: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: <type of Int32> = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %G.decl: <type of G> = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
 // CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_32.loc15_22, %.loc15_16.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_16.3: type = const_type i32 [template = constants.%.2]
@@ -52,7 +52,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc15_27: type = ptr_type const i32* [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc15_6.1: const i32** = param p
 // CHECK:STDOUT:     @G.%p: const i32** = bind_name p, %p.loc15_6.1
-// CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.3: type = ptr_type i32 [template = constants.%.5]

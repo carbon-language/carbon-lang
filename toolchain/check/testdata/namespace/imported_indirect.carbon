@@ -90,9 +90,9 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- d.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %D: type = fn_type @D [template]
+// CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: D = struct_value () [template]
+// CHECK:STDOUT:   %D: <type of D> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -113,7 +113,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %D.decl: D = fn_decl @D [template = constants.%struct] {}
+// CHECK:STDOUT:   %D.decl: <type of D> = fn_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
@@ -125,8 +125,8 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %D: type = fn_type @D [template]
-// CHECK:STDOUT:   %struct: D = struct_value () [template]
+// CHECK:STDOUT:   %D.type: type = fn_type @D [template]
+// CHECK:STDOUT:   %D: <type of D> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,7 +147,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+8, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.4: <type of D> = import_ref ir1, inst+8, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
@@ -162,7 +162,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%B [template = file.%B]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%C [template = file.%C]
-// CHECK:STDOUT:   %D.ref: D = name_ref D, file.%import_ref.4 [template = constants.%struct]
+// CHECK:STDOUT:   %D.ref: <type of D> = name_ref D, file.%import_ref.4 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return

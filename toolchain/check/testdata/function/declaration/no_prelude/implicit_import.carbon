@@ -66,16 +66,16 @@ extern fn A();
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -83,17 +83,17 @@ extern fn A();
 // CHECK:STDOUT: --- basic.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: A = import_ref ir0, inst+1, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
+// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -101,16 +101,16 @@ extern fn A();
 // CHECK:STDOUT: --- extern_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -118,17 +118,17 @@ extern fn A();
 // CHECK:STDOUT: --- fail_extern_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: A = import_ref ir0, inst+1, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
+// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -136,16 +136,16 @@ extern fn A();
 // CHECK:STDOUT: --- extern_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -153,17 +153,17 @@ extern fn A();
 // CHECK:STDOUT: --- fail_extern_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT:   %A: <type of A> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: A = import_ref ir0, inst+1, loaded [template = constants.%struct]
-// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
+// CHECK:STDOUT:   %import_ref: <type of A> = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %A.decl: <type of A> = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
