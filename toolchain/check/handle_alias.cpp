@@ -33,10 +33,6 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Alias>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
-                 "access modifier");
-  }
 
   auto bind_name_id = context.bind_names().Add(
       {.name_id = name_context.name_id_for_new_inst(),
@@ -70,7 +66,8 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   // Add the name of the binding to the current scope.
   context.decl_name_stack().PopScope();
-  context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context, alias_id);
+  context.decl_name_stack().AddNameOrDiagnoseDuplicate(
+      name_context, alias_id, introducer.modifier_set.GetAccessKind());
   return true;
 }
 

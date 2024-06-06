@@ -126,7 +126,7 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
   auto& names = context.name_scopes().Get(scope_id).names;
   auto it = names.find(name_id);
   if (it != names.end()) {
-    it->second = new_inst_id;
+    it->second.inst_id = new_inst_id;
   }
 }
 

@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -321,9 +322,15 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Name doesn't exist in the import scope.
       continue;
     }
-    if (import_ir.sem_ir->insts().Is<SemIR::AnyImportRef>(it->second)) {
+    auto import_inst = import_ir.sem_ir->insts().Get(it->second.inst_id);
+    if (import_inst.Is<SemIR::AnyImportRef>()) {
       // This entity was added to name lookup by using an import, and is not
       // exported.
+      continue;
+    }
+
+    if (it->second.access_kind != SemIR::AccessKind::Public) {
+      // Ignore cross-package non-public names.
       continue;
     }
 
@@ -335,16 +342,16 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       }
       VerifySameCanonicalImportIRInst(context, result_id,
                                       *canonical_result_inst, import_ir_id,
-                                      import_ir.sem_ir, it->second);
+                                      import_ir.sem_ir, it->second.inst_id);
     } else {
       // Add the first result found.
       auto bind_name_id = context.bind_names().Add(
           {.name_id = name_id,
            .parent_scope_id = scope_id,
            .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-      result_id =
-          AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second},
-                       bind_name_id);
+      result_id = AddImportRef(
+          context, {.ir_id = import_ir_id, .inst_id = it->second.inst_id},
+          bind_name_id);
       LoadImportRef(context, result_id);
     }
   }
@@ -357,8 +364,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    LoadImportRef(*this, it->second);
-    return it->second;
+    LoadImportRef(*this, it->second.inst_id);
+    return it->second.inst_id;
   }
   if (!scope.import_ir_scopes.empty()) {
     return LookupInImportIRScopes(*this, loc, name_id, scope_id, scope);

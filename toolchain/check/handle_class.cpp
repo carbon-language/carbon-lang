@@ -117,9 +117,10 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::InstId class_decl_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
-                           bool is_extern) -> void {
-  auto prev_id =
-      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
+                           bool is_extern, SemIR::AccessKind access_kind)
+    -> void {
+  auto prev_id = context.decl_name_stack().LookupOrAddName(
+      name_context, class_decl_id, access_kind);
   if (!prev_id.is_valid()) {
     return;
   }
@@ -173,6 +174,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                        prev_import_ir_id)) {
     // When merging, use the existing entity rather than adding a new one.
     class_decl.class_id = prev_class_id;
+    // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 }
 
@@ -195,11 +197,6 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                            KeywordModifierSet::Extern);
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
-                 "access modifier");
-  }
 
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto inheritance_kind =
@@ -230,7 +227,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .inheritance_kind = inheritance_kind};
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
-                 class_info, is_definition, is_extern);
+                 class_info, is_definition, is_extern,
+                 introducer.modifier_set.GetAccessKind());
 
   // Create a new class if this isn't a valid redeclaration.
   bool is_new_class = !class_decl.class_id.is_valid();
@@ -289,10 +287,9 @@ auto HandleClassDefinitionStart(Context& context,
   context.scope_stack().Push(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.name_scopes()
-      .Get(class_info.scope_id)
-      .names.insert({SemIR::NameId::SelfType,
-                     context.types().GetInstId(class_info.self_type_id)});
+  context.name_scopes().AddRequiredName(
+      class_info.scope_id, SemIR::NameId::SelfType,
+      context.types().GetInstId(class_info.self_type_id));
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
@@ -541,7 +538,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   context.decl_name_stack().AddNameOrDiagnoseDuplicate(
       context.decl_name_stack().MakeUnqualifiedName(node_id,
                                                     SemIR::NameId::Base),
-      class_info.base_id);
+      class_info.base_id, introducer.modifier_set.GetAccessKind());
 
   // Extend the class scope with the base class.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {

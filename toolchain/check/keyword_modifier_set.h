@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_KEYWORD_MODIFIER_SET_H_
 
 #include "llvm/ADT/BitmaskEnum.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -71,6 +72,17 @@ class KeywordModifierSet {
   // Returns true if there's a non-empty set intersection.
   constexpr auto HasAnyOf(KeywordModifierSet other) -> bool {
     return set_ & other.set_;
+  }
+
+  // Returns the access kind from modifiers.
+  auto GetAccessKind() -> SemIR::AccessKind {
+    if (HasAnyOf(KeywordModifierSet::Protected)) {
+      return SemIR::AccessKind::Protected;
+    }
+    if (HasAnyOf(KeywordModifierSet::Private)) {
+      return SemIR::AccessKind::Private;
+    }
+    return SemIR::AccessKind::Public;
   }
 
   // Returns true if empty.

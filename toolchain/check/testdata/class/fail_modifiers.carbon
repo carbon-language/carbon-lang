@@ -8,10 +8,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `access modifier`.
-// CHECK:STDERR: private abstract private class DuplicatePrivate;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:18: ERROR: `private` repeated on declaration.
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR:                  ^~~~~~~
@@ -21,10 +17,6 @@
 // CHECK:STDERR:
 private abstract private class DuplicatePrivate;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `access modifier`.
-// CHECK:STDERR: private base protected class TwoAccess {}
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:14: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR:              ^~~~~~~~~
@@ -99,8 +91,8 @@ extern class ExternDefined {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .DuplicatePrivate = %DuplicatePrivate.decl
-// CHECK:STDOUT:     .TwoAccess = %TwoAccess.decl
+// CHECK:STDOUT:     .DuplicatePrivate [private] = %DuplicatePrivate.decl
+// CHECK:STDOUT:     .TwoAccess [private] = %TwoAccess.decl
 // CHECK:STDOUT:     .TwoAbstract = %TwoAbstract.decl
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl

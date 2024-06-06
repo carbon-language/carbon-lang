@@ -14,10 +14,6 @@
 // CHECK:STDERR:
 protected var b: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `access modifier`.
-// CHECK:STDERR: private protected var c: ();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected var c: ();
 // CHECK:STDERR:         ^~~~~~~~~
@@ -54,7 +50,7 @@ abstract var e: ();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .b = %b
-// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .c [private] = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
@@ -62,16 +58,16 @@ abstract var e: ();
 // CHECK:STDOUT:   %.loc15_19.2: type = converted %.loc15_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc28_27.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc28_27.2: type = converted %.loc28_27.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc24_27.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc24_27.2: type = converted %.loc24_27.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %c.var: ref () = var c
 // CHECK:STDOUT:   %c: ref () = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc41_29.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc41_29.2: type = converted %.loc41_29.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc37_29.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc37_29.2: type = converted %.loc37_29.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc46_18.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc46_18.2: type = converted %.loc46_18.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc42_18.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc42_18.2: type = converted %.loc42_18.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT: }

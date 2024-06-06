@@ -9,6 +9,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -27,9 +28,12 @@ auto HandleLetInitializer(Context& context, Parse::LetInitializerId node_id)
   return true;
 }
 
-static auto BuildAssociatedConstantDecl(
-    Context& context, Parse::LetDeclId node_id, SemIR::InstId pattern_id,
-    SemIR::LocIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
+static auto BuildAssociatedConstantDecl(Context& context,
+                                        Parse::LetDeclId node_id,
+                                        SemIR::InstId pattern_id,
+                                        SemIR::LocIdAndInst pattern,
+                                        SemIR::InterfaceId interface_id,
+                                        SemIR::AccessKind access_kind) -> void {
   auto& interface_info = context.interfaces().Get(interface_id);
 
   auto binding_pattern = pattern.inst.TryAs<SemIR::BindSymbolicName>();
@@ -58,7 +62,8 @@ static auto BuildAssociatedConstantDecl(
   auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
   auto name_context =
       context.decl_name_stack().MakeUnqualifiedName(pattern.loc_id, name_id);
-  context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context, assoc_id);
+  context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context, assoc_id,
+                                                       access_kind);
 }
 
 auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
@@ -90,10 +95,6 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
       context, introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Interface);
 
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Access)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Access),
-                 "access modifier");
-  }
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
@@ -112,7 +113,8 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // different rules.
   if (interface_scope) {
     BuildAssociatedConstantDecl(context, node_id, pattern_id, pattern,
-                                interface_scope->interface_id);
+                                interface_scope->interface_id,
+                                introducer.modifier_set.GetAccessKind());
     return true;
   }
 
@@ -137,7 +139,8 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // Add the name of the binding to the current scope.
   auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
   context.AddNameToLookup(name_id, pattern_id);
-  if (parent_scope_inst_id == SemIR::InstId::PackageNamespace) {
+  if (parent_scope_inst_id == SemIR::InstId::PackageNamespace &&
+      introducer.modifier_set.GetAccessKind() == SemIR::AccessKind::Public) {
     context.AddExport(pattern_id);
   }
   return true;

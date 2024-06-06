@@ -34,10 +34,6 @@ default protected fn WrongOrder();
 // CHECK:STDERR:
 virtual virtual fn DuplicateVirtual() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `access modifier`.
-// CHECK:STDERR: private protected fn TwoAccess();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR:         ^~~~~~~~~
@@ -122,7 +118,7 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
 // CHECK:STDOUT:     .DuplicateVirtual = %DuplicateVirtual.decl
-// CHECK:STDOUT:     .TwoAccess = %TwoAccess.decl
+// CHECK:STDOUT:     .TwoAccess [private] = %TwoAccess.decl
 // CHECK:STDOUT:     .ModifiersConflict = %ModifiersConflict.decl
 // CHECK:STDOUT:     .InvalidModifier = %InvalidModifier.decl
 // CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2.decl

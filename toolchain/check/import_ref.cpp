@@ -536,12 +536,14 @@ class ImportRefResolver {
   // lookup.
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
                               SemIR::NameScope& new_scope) -> void {
-    for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
+    for (auto [entry_name_id, entry] : import_scope.names) {
       auto ref_id = AddImportRef(
-          context_, {.ir_id = import_ir_id_, .inst_id = entry_inst_id},
+          context_, {.ir_id = import_ir_id_, .inst_id = entry.inst_id},
           SemIR::BindNameId::Invalid);
       CARBON_CHECK(
-          new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
+          new_scope.names
+              .insert({GetLocalNameId(entry_name_id),
+                       {.inst_id = ref_id, .access_kind = entry.access_kind}})
               .second);
     }
   }
