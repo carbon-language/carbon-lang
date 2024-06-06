@@ -371,29 +371,36 @@ class ImportRefResolver {
     return GetLocalConstantId(import_ir_.types().GetInstId(type_id));
   }
 
-  // Returns the ConstantId for a TypeId. Adds unresolved constants to
-  // work_stack_.
-  auto GetLocalCanonicalInstBlockId(SemIR::InstBlockId import_block_id)
-      -> SemIR::InstBlockId {
-    if (!import_block_id.is_valid()) {
-      return SemIR::InstBlockId::Invalid;
+  // Gets the local constant values corresponding to an imported inst block.
+  auto GetLocalInstBlockContents(SemIR::InstBlockId import_block_id)
+      -> llvm::SmallVector<SemIR::InstId> {
+    llvm::SmallVector<SemIR::InstId> inst_ids;
+    if (!import_block_id.is_valid() ||
+        import_block_id == SemIR::InstBlockId::Empty) {
+      return inst_ids;
     }
-
-    auto initial_work = work_stack_.size();
 
     // Import all the values in the block.
     auto import_block = import_ir_.inst_blocks().Get(import_block_id);
-    llvm::SmallVector<SemIR::InstId> inst_ids;
     inst_ids.reserve(import_block.size());
     for (auto import_inst_id : import_block) {
       auto const_id = GetLocalConstantId(import_inst_id);
       inst_ids.push_back(const_id.inst_id());
     }
 
-    if (HasNewWork(initial_work)) {
+    return inst_ids;
+  }
+
+  // Gets a local canonical instruction block ID corresponding to an imported
+  // inst block whose contents were already imported, for example by
+  // GetLocalInstBlockContents.
+  auto GetLocalCanonicalInstBlockId(
+      SemIR::InstBlockId import_block_id,
+      const llvm::SmallVector<SemIR::InstId>& contents) -> SemIR::InstBlockId {
+    if (!import_block_id.is_valid()) {
       return SemIR::InstBlockId::Invalid;
     }
-    return context_.inst_blocks().AddCanonical(inst_ids);
+    return context_.inst_blocks().AddCanonical(contents);
   }
 
   // Returns the ConstantId for each parameter's type. Adds unresolved constants
@@ -945,7 +952,7 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_const_id =
         GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
-    auto args_id = GetLocalCanonicalInstBlockId(inst.args_id);
+    auto args = GetLocalInstBlockContents(inst.args_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
@@ -957,6 +964,7 @@ class ImportRefResolver {
     if (!class_const_inst.Is<SemIR::ClassType>()) {
       auto generic_class_type = context_.types().GetAs<SemIR::GenericClassType>(
           class_const_inst.type_id());
+      auto args_id = GetLocalCanonicalInstBlockId(inst.args_id, args);
       class_const_id =
           TryEvalInst(context_, SemIR::InstId::Invalid,
                       SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
@@ -1261,7 +1269,7 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_const_id = GetLocalConstantId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
-    auto args_id = GetLocalCanonicalInstBlockId(inst.args_id);
+    auto args = GetLocalInstBlockContents(inst.args_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
@@ -1276,6 +1284,7 @@ class ImportRefResolver {
       auto generic_interface_type =
           context_.types().GetAs<SemIR::GenericInterfaceType>(
               interface_const_inst.type_id());
+      auto args_id = GetLocalCanonicalInstBlockId(inst.args_id, args);
       interface_const_id =
           TryEvalInst(context_, SemIR::InstId::Invalid,
                       SemIR::InterfaceType{

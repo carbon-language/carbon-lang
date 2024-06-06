@@ -168,6 +168,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",

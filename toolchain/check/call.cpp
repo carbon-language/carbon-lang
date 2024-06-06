@@ -4,6 +4,7 @@
 
 #include "toolchain/check/call.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/function.h"
@@ -58,24 +59,28 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   // Identify the function we're calling.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
   if (!callee_function.function_id.is_valid()) {
-    if (auto generic_class = context.types().TryGetAs<SemIR::GenericClassType>(
-            context.insts().Get(callee_id).type_id())) {
-      return PerformCallToGenericClass(context, node_id,
-                                       generic_class->class_id, arg_ids);
+    auto type_inst =
+        context.types().GetAsInst(context.insts().Get(callee_id).type_id());
+    CARBON_KIND_SWITCH(type_inst) {
+      case CARBON_KIND(SemIR::GenericClassType generic_class): {
+        return PerformCallToGenericClass(context, node_id,
+                                         generic_class.class_id, arg_ids);
+      }
+      case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
+        return PerformCallToGenericInterface(
+            context, node_id, generic_interface.interface_id, arg_ids);
+      }
+      default: {
+        if (!callee_function.is_error) {
+          CARBON_DIAGNOSTIC(CallToNonCallable, Error,
+                            "Value of type `{0}` is not callable.",
+                            SemIR::TypeId);
+          context.emitter().Emit(node_id, CallToNonCallable,
+                                 context.insts().Get(callee_id).type_id());
+        }
+        return SemIR::InstId::BuiltinError;
+      }
     }
-    if (auto generic_interface =
-            context.types().TryGetAs<SemIR::GenericInterfaceType>(
-                context.insts().Get(callee_id).type_id())) {
-      return PerformCallToGenericInterface(
-          context, node_id, generic_interface->interface_id, arg_ids);
-    }
-    if (!callee_function.is_error) {
-      CARBON_DIAGNOSTIC(CallToNonCallable, Error,
-                        "Value of type `{0}` is not callable.", SemIR::TypeId);
-      context.emitter().Emit(node_id, CallToNonCallable,
-                             context.insts().Get(callee_id).type_id());
-    }
-    return SemIR::InstId::BuiltinError;
   }
   auto& callable = context.functions().Get(callee_function.function_id);
 

@@ -999,7 +999,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      // If the class has generic arguments, we don't produce a class type, but
+      // If the class has generic parameters, we don't produce a class type, but
       // a callable whose return value is a class type.
       if (context.classes().Get(class_decl.class_id).is_generic()) {
         return MakeConstantResult(
@@ -1016,7 +1016,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           Phase::Template);
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      // If the interface has generic arguments, we don't produce an interface
+      // If the interface has generic parameters, we don't produce an interface
       // type, but a callable whose return value is an interface type.
       if (context.interfaces().Get(interface_decl.interface_id).is_generic()) {
         return MakeConstantResult(
