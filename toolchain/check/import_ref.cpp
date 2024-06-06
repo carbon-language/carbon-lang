@@ -396,7 +396,7 @@ class ImportRefResolver {
   // GetLocalInstBlockContents.
   auto GetLocalCanonicalInstBlockId(
       SemIR::InstBlockId import_block_id,
-      const llvm::SmallVector<SemIR::InstId>& contents) -> SemIR::InstBlockId {
+      llvm::ArrayRef<SemIR::InstId> contents) -> SemIR::InstBlockId {
     if (!import_block_id.is_valid()) {
       return SemIR::InstBlockId::Invalid;
     }
