@@ -83,8 +83,10 @@ static auto GetIdentifierName(const SharedValueStores& value_stores,
     -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
     if (p.node_kind(ch) == Parse::NodeKind::IdentifierName) {
-      return value_stores.identifiers().Get(
-          tokens.GetIdentifier(p.node_token(ch)));
+      auto token = p.node_token(ch);
+      if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
+        return value_stores.identifiers().Get(tokens.GetIdentifier(token));
+      }
     }
   }
   return std::nullopt;
