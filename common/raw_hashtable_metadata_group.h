@@ -16,7 +16,12 @@
 #include "llvm/Support/MathExtras.h"
 
 // Detect whether we can use SIMD accelerated implementations of the control
-// groups.
+// groups, and include the relevant platform specific APIs for the SIMD
+// implementations.
+//
+// Reference documentation for the SIMD APIs used here:
+// - https://arm-software.github.io/acle/neon_intrinsics/advsimd.html
+// - https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
 #if defined(__SSSE3__)
 #include <x86intrin.h>
 #define CARBON_X86_SIMD_SUPPORT 1
@@ -190,7 +195,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
       __builtin_assume(bits_ != 0);
       index_ = BitIndexT(bits_).index();
       // Note that we store the index in a member so we can return a reference
-      // to it here as required.
+      // to it here as required to be a forward iterator.
       return index_;
     }
 
@@ -977,7 +982,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   // We arrange the byte vector for present bytes so that we can directly
-  // extract it as match bits.
+  // extract it as our bit-encoded match.
   result = MatchRange(_mm_movemask_epi8(metadata_vec));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
