@@ -14,40 +14,6 @@ filegroup(
 )
 
 cc_library(
-    name = "node_stack",
-    srcs = ["node_stack.cpp"],
-    hdrs = ["node_stack.h"],
-    deps = [
-        "//common:check",
-        "//common:ostream",
-        "//common:vlog",
-        "//toolchain/parse:node_kind",
-        "//toolchain/parse:tree",
-        "//toolchain/sem_ir:ids",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "scope_stack",
-    srcs = ["scope_stack.cpp"],
-    hdrs = [
-        "lexical_lookup.h",
-        "scope_index.h",
-        "scope_stack.h",
-    ],
-    deps = [
-        "//common:check",
-        "//common:ostream",
-        "//common:vlog",
-        "//toolchain/base:index_base",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "context",
     srcs = [
         "context.cpp",
@@ -124,6 +90,7 @@ cc_library(
         ":member_access",
         ":operator",
         ":pointer_dereference",
+        ":sem_ir_diagnostic_converter",
         "//common:check",
         "//common:error",
         "//common:ostream",
@@ -239,6 +206,21 @@ cc_library(
 )
 
 cc_library(
+    name = "node_stack",
+    srcs = ["node_stack.cpp"],
+    hdrs = ["node_stack.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/parse:node_kind",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:ids",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "operator",
     srcs = ["operator.cpp"],
     hdrs = ["operator.h"],
@@ -266,6 +248,38 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "scope_stack",
+    srcs = ["scope_stack.cpp"],
+    hdrs = [
+        "lexical_lookup.h",
+        "scope_index.h",
+        "scope_stack.h",
+    ],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/base:index_base",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "sem_ir_diagnostic_converter",
+    srcs = ["sem_ir_diagnostic_converter.cpp"],
+    hdrs = ["sem_ir_diagnostic_converter.h"],
+    deps = [
+        ":context",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/parse:tree_node_diagnostic_converter",
+        "//toolchain/sem_ir:file",
         "@llvm-project//llvm:Support",
     ],
 )
