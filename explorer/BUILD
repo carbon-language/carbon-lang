@@ -4,7 +4,6 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
-load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
@@ -93,23 +92,6 @@ file_test(
             "testdata/linked_list/typed_linked_list.carbon",
         ],
     ),
-)
-
-glob_sh_run(
-    args = ["$(location //explorer)"],
-    data = ["//explorer"],
-    file_exts = ["carbon"],
-)
-
-glob_sh_run(
-    args = [
-        "$(location //explorer)",
-        "--parser_debug",
-        "--trace_file=-",
-    ],
-    data = ["//explorer"],
-    file_exts = ["carbon"],
-    run_ext = "verbose",
 )
 
 filegroup(

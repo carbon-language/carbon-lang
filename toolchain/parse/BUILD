@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -190,27 +189,4 @@ cc_test(
         "//toolchain/lex:token_kind",
         "@googletest//:gtest",
     ],
-)
-
-glob_sh_run(
-    args = [
-        "$(location //toolchain/driver:carbon)",
-        "compile",
-        "--phase=parse",
-        "--dump-parse-tree",
-    ],
-    data = ["//toolchain/driver:carbon"],
-    file_exts = ["carbon"],
-)
-
-glob_sh_run(
-    args = [
-        "$(location //toolchain/driver:carbon)",
-        "-v",
-        "compile",
-        "--phase=parse",
-    ],
-    data = ["//toolchain/driver:carbon"],
-    file_exts = ["carbon"],
-    run_ext = "verbose",
 )
