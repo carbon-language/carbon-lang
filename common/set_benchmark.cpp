@@ -78,7 +78,7 @@ struct SetWrapperImpl<Set<KT, MinSmallSize>> {
   auto BenchErase(KeyT k) -> bool { return s.Erase(k); }
 };
 
-// Provide a way to override the Carbon Set specific benchmark runs with another
+// Provide a way to override the Carbon-Set-specific benchmark runs with another
 // hashtable implementation. When building, you can use one of these enum names
 // in a macro define such as `-DCARBON_SET_BENCH_OVERRIDE=Name` in order to
 // trigger a specific override for the `Set` type benchmarks. This is used to
@@ -168,8 +168,7 @@ static void BM_SetContainsHitPtr(benchmark::State& state) {
       bool result = s.BenchContains(lookup_keys[i]);
       CARBON_DCHECK(result);
       // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup and allowing us to measure latency
-      // rather than throughput.
+      // dependency between each lookup. This doesn't fully allow us to measure latency rather than throughput, as noted above.
       i += static_cast<ssize_t>(result);
     }
   }
@@ -327,7 +326,7 @@ static void BM_SetInsertSeq(benchmark::State& state) {
     CARBON_DCHECK(!inserted) << "Must already be in the map!";
 
     // Rotate through the shuffled keys.
-    i = (i + static_cast<ssize_t>(inserted)) & (LookupKeysSize - 1);
+    i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
   }
 
   // It can be easier in some cases to think of this as a key-throughput rate of

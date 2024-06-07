@@ -213,8 +213,8 @@ static void BM_MapContainsHit(benchmark::State& state) {
       bool result = m.BenchContains(lookup_keys[i]);
       CARBON_DCHECK(result);
       // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup and allowing us to measure latency
-      // rather than throughput.
+      // dependency between each lookup. This doesn't fully allow us to measure latency
+      // rather than throughput, as noted above.
       i += static_cast<ssize_t>(result);
     }
   }
