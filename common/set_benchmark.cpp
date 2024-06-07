@@ -24,12 +24,16 @@ struct IsCarbonSetImpl : std::false_type {};
 template <typename KT, int MinSmallSize>
 struct IsCarbonSetImpl<Set<KT, MinSmallSize>> : std::true_type {};
 
-template <typename MapT>
-static constexpr bool IsCarbonSet = IsCarbonSetImpl<MapT>::value;
+template <typename SetT>
+static constexpr bool IsCarbonSet = IsCarbonSetImpl<SetT>::value;
 
+// A wrapper around various set types that we specialize to implement a common
+// API used in the benchmarks for various different map data structures that
+// support different APIs. The primary template assumes a roughly
+// `std::unordered_set` API design, and types with a different API design are
+// supported through specializations.
 template <typename SetT>
 struct SetWrapperImpl {
-  static constexpr bool IsCarbonSet = false;
   using KeyT = typename SetT::key_type;
 
   SetT s;
@@ -53,6 +57,8 @@ struct SetWrapperImpl {
   auto BenchErase(KeyT k) -> bool { return s.erase(k) != 0; }
 };
 
+// Explicit (partial) specialization for the Carbon map type that uses its
+// different API design.
 template <typename KT, int MinSmallSize>
 struct SetWrapperImpl<Set<KT, MinSmallSize>> {
   using SetT = Set<KT, MinSmallSize>;
@@ -78,7 +84,7 @@ struct SetWrapperImpl<Set<KT, MinSmallSize>> {
   auto BenchErase(KeyT k) -> bool { return s.Erase(k); }
 };
 
-// Provide a way to override the Carbon-Set-specific benchmark runs with another
+// Provide a way to override the Carbon Set specific benchmark runs with another
 // hashtable implementation. When building, you can use one of these enum names
 // in a macro define such as `-DCARBON_SET_BENCH_OVERRIDE=Name` in order to
 // trigger a specific override for the `Set` type benchmarks. This is used to
@@ -236,12 +242,22 @@ static void BM_SetLookupHitPtr(benchmark::State& state) {
 }
 MAP_BENCHMARK_ONE_OP(BM_SetLookupHitPtr, HitArgs);
 
-// First erase and then insert a key.
+// First erase and then insert the key. The code path will always be the same
+// here and so we expect this to largely be a throughput benchmark because of
+// branch prediction and speculative execution.
 //
-// This provides a measure of the cost or efficiency of both the erase and
-// insertion code paths. However, we always use keys that are in the set to
-// start, and so this is expected to be perfectly predicted and not measure
-// meaningful latency.
+// We don't expect erase followed by insertion to be a common user code
+// sequence, but we don't have a good way of benchmarking either erase or insert
+// in isolation -- each would change the size of the table and thus the next
+// iteration's benchmark. And if we try to correct the table size outside of the
+// timed region, we end up trying to exclude too fine grained of a region from
+// timers to get good measurement data.
+// 
+// Our solution is to benchmark both erase and insertion back to back. We can
+// then get a good profile of the code sequence of each, and at least measure
+// the sum cost of these reliably. Careful profiling can help attribute that
+// cost between erase and insert in order to understand which of the two
+// operations is contributing most to any performance artifacts observed.
 template <typename SetT>
 static void BM_SetEraseInsertHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;

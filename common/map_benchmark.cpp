@@ -54,6 +54,11 @@ struct IsCarbonMapImpl<Map<KT, VT, MinSmallSize>> : std::true_type {};
 template <typename MapT>
 static constexpr bool IsCarbonMap = IsCarbonMapImpl<MapT>::value;
 
+// A wrapper around various map types that we specialize to implement a common
+// API used in the benchmarks for various different map data structures that
+// support different APIs. The primary template assumes a roughly
+// `std::unordered_map` API design, and types with a different API design are
+// supported through specializations.
 template <typename MapT>
 struct MapWrapperImpl {
   using KeyT = typename MapT::key_type;
@@ -85,8 +90,8 @@ struct MapWrapperImpl {
   auto BenchErase(KeyT k) -> bool { return m.erase(k) != 0; }
 };
 
-// Explicit (partial) specialization for the Carbon map type. The core reason is
-// to switch to the Carbon Map API which is structured a bit differently.
+// Explicit (partial) specialization for the Carbon map type that uses its
+// different API design.
 template <typename KT, typename VT, int MinSmallSize>
 struct MapWrapperImpl<Map<KT, VT, MinSmallSize>> {
   using MapT = Map<KT, VT, MinSmallSize>;
@@ -213,8 +218,8 @@ static void BM_MapContainsHit(benchmark::State& state) {
       bool result = m.BenchContains(lookup_keys[i]);
       CARBON_DCHECK(result);
       // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup. This doesn't fully allow us to measure latency
-      // rather than throughput, as noted above.
+      // dependency between each lookup. This doesn't fully allow us to measure
+      // latency rather than throughput, as noted above.
       i += static_cast<ssize_t>(result);
     }
   }
@@ -337,13 +342,22 @@ static void BM_MapUpdateHit(benchmark::State& state) {
 }
 MAP_BENCHMARK_ONE_OP(BM_MapUpdateHit, HitArgs);
 
-// Similar to the basic update benchmark, but here we first erase and then
-// insert the key. The code path will always be the same here and so we expect
-// this to largely be a throughput benchmark.
+// First erase and then insert the key. The code path will always be the same
+// here and so we expect this to largely be a throughput benchmark because of
+// branch prediction and speculative execution.
 //
-// The only difference between this code path and the above is covering both the
-// erase code sequence and the code sequence when inserting over an entry rather
-// than merely updating an already present entry.
+// We don't expect erase followed by insertion to be a common user code
+// sequence, but we don't have a good way of benchmarking either erase or insert
+// in isolation -- each would change the size of the table and thus the next
+// iteration's benchmark. And if we try to correct the table size outside of the
+// timed region, we end up trying to exclude too fine grained of a region from
+// timers to get good measurement data.
+// 
+// Our solution is to benchmark both erase and insertion back to back. We can
+// then get a good profile of the code sequence of each, and at least measure
+// the sum cost of these reliably. Careful profiling can help attribute that
+// cost between erase and insert in order to understand which of the two
+// operations is contributing most to any performance artifacts observed.
 template <typename MapT>
 static void BM_MapEraseUpdateHit(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
