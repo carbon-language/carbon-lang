@@ -394,9 +394,9 @@ class ImportRefResolver {
   // Gets a local canonical instruction block ID corresponding to an imported
   // inst block whose contents were already imported, for example by
   // GetLocalInstBlockContents.
-  auto GetLocalCanonicalInstBlockId(
-      SemIR::InstBlockId import_block_id,
-      llvm::ArrayRef<SemIR::InstId> contents) -> SemIR::InstBlockId {
+  auto GetLocalCanonicalInstBlockId(SemIR::InstBlockId import_block_id,
+                                    llvm::ArrayRef<SemIR::InstId> contents)
+      -> SemIR::InstBlockId {
     if (!import_block_id.is_valid()) {
       return SemIR::InstBlockId::Invalid;
     }
