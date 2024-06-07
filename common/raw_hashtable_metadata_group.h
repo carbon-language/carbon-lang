@@ -82,7 +82,7 @@ class BitIndex
 
   // Returns the index of the first matched tag.
   auto index() -> ssize_t {
-    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from a zero mask!";
+    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from zero bits!";
     __builtin_assume(bits_ != 0);
     ssize_t index = unscaled_index();
 
@@ -97,7 +97,7 @@ class BitIndex
   // Optimized tool to index a pointer `p` by `index()`.
   template <typename T>
   auto index_ptr(T* pointer) -> T* {
-    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from a zero mask!";
+    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from zero bits!";
     __builtin_assume(bits_ != 0);
     if constexpr (!ByteEncoding) {
       return &pointer[unscaled_index()];
@@ -186,7 +186,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
     }
 
     auto operator*() -> ssize_t& {
-      CARBON_DCHECK(bits_ != 0) << "Cannot get an index from a zero mask!";
+      CARBON_DCHECK(bits_ != 0) << "Cannot get an index from zero bits!";
       __builtin_assume(bits_ != 0);
       index_ = BitIndexT(bits_).index();
       // Note that we store the index in a member so we can return a reference
@@ -432,7 +432,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
 
   // Functions for validating the returned matches agree with what is predicted
   // by the `byte_match` function. These either `CHECK`-fail or return true. To
-  // pass validation, the `*_mask` argument must have `0x80` for those bytes
+  // pass validation, the `*_bits` argument must have `0x80` for those bytes
   // where `byte_match` returns true, and `0` for the rest.
 
   // `VerifyIndexBits` is for functions that return `MatchIndex`, as they only
@@ -644,7 +644,7 @@ inline auto MetadataGroup::VerifyIndexBits(
       CARBON_CHECK(((index_bits >> byte_index) & 1) == 0)
           << "Bit set at non-matching byte index: " << byte_index;
     } else {
-      // The mask is byte-encoded rather than bit encoded, so extract a byte.
+      // `index_bits` is byte-encoded rather than bit encoded, so extract a byte.
       uint8_t index_byte = (index_bits >> (byte_index * 8)) & 0xFF;
       if (byte_match(metadata_bytes[byte_index])) {
         CARBON_CHECK((index_byte & 0x80) == 0x80)
@@ -675,7 +675,7 @@ inline auto MetadataGroup::VerifyRangeBits(
             << "Bit set at non-matching byte index: " << byte_index;
       }
     } else {
-      // The mask is byte-encoded rather than bit encoded, so extract a byte.
+      // `range_bits` is byte-encoded rather than bit encoded, so extract a byte.
       uint8_t range_byte = (range_bits >> (byte_index * 8)) & 0xFF;
       if (byte_match(metadata_bytes[byte_index])) {
         CARBON_CHECK(range_byte == 0x80)
@@ -784,7 +784,7 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // with the same value as `Empty` or `Deleted`, those bytes will be zero as
   // well.
   match_bits = match_bits ^ broadcast;
-  // Subtract the mask bytes from `0x80` bytes. After this, the high bit will be
+  // Subtract each byte of `match_bits` from `0x80` bytes. After this, the high bit will be
   // set only for those bytes that were zero.
   match_bits = MSBs - match_bits;
   // Zero everything but the high bits, and also zero the high bits of any bytes
@@ -792,7 +792,7 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // for `Empty` and `Deleted` bytes in the metadata.
   match_bits &= (metadata_ints[0] & MSBs);
 
-  // At this point, `mask` has the high bit set for bytes where the original
+  // At this point, `match_bits` has the high bit set for bytes where the original
   // group byte equals `tag` plus the high bit.
   CARBON_DCHECK(VerifyRangeBits(
       match_bits, [&](uint8_t byte) { return byte == (tag | PresentMask); }));
@@ -843,7 +843,7 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
     return MatchIndex(0);
   }
 
-  // This sets the high bit of every byte in our match mask unless the
+  // This sets the high bit of every byte in `match_bits` unless the
   // corresponding metadata byte is 0. We take advantage of the fact that
   // the metadata bytes in are non-zero only if they are either:
   // - present: in which case the high bit of the byte will already be set; or
@@ -853,7 +853,7 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
   // This inverts the high bits of the bytes, and clears the remaining bits.
   match_bits = ~match_bits & MSBs;
 
-  // The high bits of the bytes of `mask` are set if the corresponding metadata
+  // The high bits of the bytes of `match_bits` are set if the corresponding metadata
   // byte is `Empty`.
   CARBON_DCHECK(
       VerifyIndexBits(match_bits, [](uint8_t byte) { return byte == Empty; }));
@@ -877,7 +877,7 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
     return MatchIndex(0);
   }
 
-  // This sets the high bit of every byte in our match mask unless the
+  // This sets the high bit of every byte in `match_bits` unless the
   // corresponding metadata byte is 1. We take advantage of the fact that the
   // metadata bytes are not 1 only if they are either:
   // - present: in which case the high bit of the byte will already be set; or
@@ -887,7 +887,7 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
   // This inverts the high bits of the bytes, and clears the remaining bits.
   match_bits = ~match_bits & MSBs;
 
-  // The high bits of the bytes of `mask` are set if the corresponding metadata
+  // The high bits of the bytes of `match_bits` are set if the corresponding metadata
   // byte is `Deleted`.
   CARBON_DCHECK(VerifyIndexBits(match_bits,
                                 [](uint8_t byte) { return byte == Deleted; }));
@@ -975,7 +975,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
   // We arrange the byte vector for present bytes so that we can directly
-  // extract it as a mask.
+  // extract it as match bits.
   result = MatchRange(_mm_movemask_epi8(metadata_vec));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
