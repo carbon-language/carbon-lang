@@ -16,22 +16,18 @@ interface AddWith(T:! type) {
   fn F();
 }
 
-// --- b.carbon
+// --- fail_todo_b.carbon
 
 library "b";
-// CHECK:STDERR: b.carbon:[[@LINE+5]]:1: In import.
+// CHECK:STDERR: b.carbon:[[@LINE+4]]:1: In import.
 // CHECK:STDERR: import library "a";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: a.carbon: ERROR: Semantics TODO: `TryResolveInst on StructValue`.
-// CHECK:STDERR:
 import library "a";
 
 class C {}
 
-// CHECK:STDERR: b.carbon:[[@LINE+3]]:19: ERROR: Name `Core` not found.
-// CHECK:STDERR: impl C as AddWith(i32) {
-// CHECK:STDERR:                   ^~~
-impl C as AddWith(i32) {
+impl C as AddWith(C) {
   fn F() {}
 }
 
@@ -82,7 +78,7 @@ impl C as AddWith(i32) {
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %Self: <error> = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+14> [symbolic]
-// CHECK:STDOUT:   %.3: type = interface_type @AddWith [template]
+// CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%C) [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -101,9 +97,10 @@ impl C as AddWith(i32) {
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+10, loaded [template = constants.%F.2]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc11_6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, %import_ref.1 [template = constants.%AddWith]
-// CHECK:STDOUT:     %.loc15: type = interface_type @AddWith [template = constants.%.3]
+// CHECK:STDOUT:     %C.ref.loc11_19: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc11: type = interface_type @AddWith, (%C.ref.loc11_19) [template = constants.%.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
