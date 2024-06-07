@@ -352,7 +352,7 @@ MAP_BENCHMARK_ONE_OP(BM_MapUpdateHit, HitArgs);
 // iteration's benchmark. And if we try to correct the table size outside of the
 // timed region, we end up trying to exclude too fine grained of a region from
 // timers to get good measurement data.
-// 
+//
 // Our solution is to benchmark both erase and insertion back to back. We can
 // then get a good profile of the code sequence of each, and at least measure
 // the sum cost of these reliably. Careful profiling can help attribute that

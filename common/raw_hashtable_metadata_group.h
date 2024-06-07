@@ -644,7 +644,8 @@ inline auto MetadataGroup::VerifyIndexBits(
       CARBON_CHECK(((index_bits >> byte_index) & 1) == 0)
           << "Bit set at non-matching byte index: " << byte_index;
     } else {
-      // `index_bits` is byte-encoded rather than bit encoded, so extract a byte.
+      // `index_bits` is byte-encoded rather than bit encoded, so extract a
+      // byte.
       uint8_t index_byte = (index_bits >> (byte_index * 8)) & 0xFF;
       if (byte_match(metadata_bytes[byte_index])) {
         CARBON_CHECK((index_byte & 0x80) == 0x80)
@@ -675,7 +676,8 @@ inline auto MetadataGroup::VerifyRangeBits(
             << "Bit set at non-matching byte index: " << byte_index;
       }
     } else {
-      // `range_bits` is byte-encoded rather than bit encoded, so extract a byte.
+      // `range_bits` is byte-encoded rather than bit encoded, so extract a
+      // byte.
       uint8_t range_byte = (range_bits >> (byte_index * 8)) & 0xFF;
       if (byte_match(metadata_bytes[byte_index])) {
         CARBON_CHECK(range_byte == 0x80)
@@ -784,16 +786,16 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // with the same value as `Empty` or `Deleted`, those bytes will be zero as
   // well.
   match_bits = match_bits ^ broadcast;
-  // Subtract each byte of `match_bits` from `0x80` bytes. After this, the high bit will be
-  // set only for those bytes that were zero.
+  // Subtract each byte of `match_bits` from `0x80` bytes. After this, the high
+  // bit will be set only for those bytes that were zero.
   match_bits = MSBs - match_bits;
   // Zero everything but the high bits, and also zero the high bits of any bytes
   // for "not present" slots in the original group. This avoids false positives
   // for `Empty` and `Deleted` bytes in the metadata.
   match_bits &= (metadata_ints[0] & MSBs);
 
-  // At this point, `match_bits` has the high bit set for bytes where the original
-  // group byte equals `tag` plus the high bit.
+  // At this point, `match_bits` has the high bit set for bytes where the
+  // original group byte equals `tag` plus the high bit.
   CARBON_DCHECK(VerifyRangeBits(
       match_bits, [&](uint8_t byte) { return byte == (tag | PresentMask); }));
   return MatchRange(match_bits);
@@ -853,8 +855,8 @@ inline auto MetadataGroup::PortableMatchEmpty() const -> MatchIndex {
   // This inverts the high bits of the bytes, and clears the remaining bits.
   match_bits = ~match_bits & MSBs;
 
-  // The high bits of the bytes of `match_bits` are set if the corresponding metadata
-  // byte is `Empty`.
+  // The high bits of the bytes of `match_bits` are set if the corresponding
+  // metadata byte is `Empty`.
   CARBON_DCHECK(
       VerifyIndexBits(match_bits, [](uint8_t byte) { return byte == Empty; }));
   return MatchIndex(match_bits);
@@ -887,8 +889,8 @@ inline auto MetadataGroup::PortableMatchDeleted() const -> MatchIndex {
   // This inverts the high bits of the bytes, and clears the remaining bits.
   match_bits = ~match_bits & MSBs;
 
-  // The high bits of the bytes of `match_bits` are set if the corresponding metadata
-  // byte is `Deleted`.
+  // The high bits of the bytes of `match_bits` are set if the corresponding
+  // metadata byte is `Deleted`.
   CARBON_DCHECK(VerifyIndexBits(match_bits,
                                 [](uint8_t byte) { return byte == Deleted; }));
   return MatchIndex(match_bits);

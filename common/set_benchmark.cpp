@@ -174,7 +174,8 @@ static void BM_SetContainsHitPtr(benchmark::State& state) {
       bool result = s.BenchContains(lookup_keys[i]);
       CARBON_DCHECK(result);
       // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup. This doesn't fully allow us to measure latency rather than throughput, as noted above.
+      // dependency between each lookup. This doesn't fully allow us to measure
+      // latency rather than throughput, as noted above.
       i += static_cast<ssize_t>(result);
     }
   }
@@ -252,7 +253,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetLookupHitPtr, HitArgs);
 // iteration's benchmark. And if we try to correct the table size outside of the
 // timed region, we end up trying to exclude too fine grained of a region from
 // timers to get good measurement data.
-// 
+//
 // Our solution is to benchmark both erase and insertion back to back. We can
 // then get a good profile of the code sequence of each, and at least measure
 // the sum cost of these reliably. Careful profiling can help attribute that
