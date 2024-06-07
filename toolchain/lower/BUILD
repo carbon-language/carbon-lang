@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -53,27 +52,4 @@ cc_library(
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
-)
-
-glob_sh_run(
-    args = [
-        "$(location //toolchain/driver:carbon)",
-        "compile",
-        "--phase=lower",
-        "--dump-llvm-ir",
-    ],
-    data = ["//toolchain/driver:carbon"],
-    file_exts = ["carbon"],
-)
-
-glob_sh_run(
-    args = [
-        "$(location //toolchain/driver:carbon)",
-        "-v",
-        "compile",
-        "--phase=lower",
-    ],
-    data = ["//toolchain/driver:carbon"],
-    file_exts = ["carbon"],
-    run_ext = "verbose",
 )
