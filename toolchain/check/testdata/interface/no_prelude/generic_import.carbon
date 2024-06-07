@@ -19,7 +19,7 @@ interface AddWith(T:! type) {
 // --- fail_todo_b.carbon
 
 library "b";
-// CHECK:STDERR: b.carbon:[[@LINE+4]]:1: In import.
+// CHECK:STDERR: fail_todo_b.carbon:[[@LINE+4]]:1: In import.
 // CHECK:STDERR: import library "a";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: a.carbon: ERROR: Semantics TODO: `TryResolveInst on StructValue`.
@@ -68,7 +68,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- fail_todo_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
