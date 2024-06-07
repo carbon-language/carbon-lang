@@ -120,7 +120,7 @@ static auto BuildBenchMetadata() -> llvm::ArrayRef<BenchMetadata> {
             match_b = absl::Uniform<uint8_t>(gen) | MetadataGroup::PresentMask;
           }
           // Store this as the byte to search for in this group, but without the
-          // present bit off to simulate where we start when using a 7-bit tag
+          // present bit to simulate where we start when using a 7-bit tag
           // from a hash.
           bytes_storage[bm_index][g_index] =
               match_b & ~MetadataGroup::PresentMask;
