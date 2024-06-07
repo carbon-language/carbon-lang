@@ -74,7 +74,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.1: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %AddWith.2: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %Self: %AddWith.2 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+15> [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+13> [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%C) [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
