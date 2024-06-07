@@ -525,6 +525,18 @@ struct GenericClassType {
   ClassId class_id;
 };
 
+// The type of the name of a generic interface. The corresponding value is an
+// empty `StructValue`.
+struct GenericInterfaceType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::GenericInterfaceType.Define<Parse::InvalidNodeId>(
+          "generic_interface_type");
+
+  TypeId type_id;
+  InterfaceId interface_id;
+};
+
 struct ImplDecl {
   static constexpr auto Kind =
       InstKind::ImplDecl.Define<Parse::AnyImplDeclId>("impl_decl");
@@ -602,8 +614,7 @@ struct InterfaceType {
 
   TypeId type_id;
   InterfaceId interface_id;
-  // TODO: Once we support generic interfaces, include the interface's arguments
-  // here.
+  InstBlockId args_id = InstBlockId::Invalid;
 };
 
 // A witness that a type implements an interface.

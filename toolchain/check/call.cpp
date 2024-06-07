@@ -4,6 +4,7 @@
 
 #include "toolchain/check/call.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/function.h"
@@ -31,24 +32,55 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
                                             .args_id = converted_args_id});
 }
 
+// Performs a call where the callee is the name of a generic interface, such as
+// `AddWith(i32)`.
+// TODO: Refactor with PerformCallToGenericClass.
+static auto PerformCallToGenericInterface(Context& context,
+                                          Parse::NodeId node_id,
+                                          SemIR::InterfaceId interface_id,
+                                          llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
+  auto& interface_info = context.interfaces().Get(interface_id);
+
+  // Convert the arguments to match the parameters.
+  auto converted_args_id = ConvertCallArgs(
+      context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
+      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info.decl_id,
+      interface_info.implicit_param_refs_id, interface_info.param_refs_id);
+  return context.AddInst<SemIR::InterfaceType>(
+      node_id, {.type_id = SemIR::TypeId::TypeType,
+                .interface_id = interface_id,
+                .args_id = converted_args_id});
+}
+
 auto PerformCall(Context& context, Parse::NodeId node_id,
                  SemIR::InstId callee_id, llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   // Identify the function we're calling.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
   if (!callee_function.function_id.is_valid()) {
-    if (auto generic_class = context.types().TryGetAs<SemIR::GenericClassType>(
-            context.insts().Get(callee_id).type_id())) {
-      return PerformCallToGenericClass(context, node_id,
-                                       generic_class->class_id, arg_ids);
+    auto type_inst =
+        context.types().GetAsInst(context.insts().Get(callee_id).type_id());
+    CARBON_KIND_SWITCH(type_inst) {
+      case CARBON_KIND(SemIR::GenericClassType generic_class): {
+        return PerformCallToGenericClass(context, node_id,
+                                         generic_class.class_id, arg_ids);
+      }
+      case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
+        return PerformCallToGenericInterface(
+            context, node_id, generic_interface.interface_id, arg_ids);
+      }
+      default: {
+        if (!callee_function.is_error) {
+          CARBON_DIAGNOSTIC(CallToNonCallable, Error,
+                            "Value of type `{0}` is not callable.",
+                            SemIR::TypeId);
+          context.emitter().Emit(node_id, CallToNonCallable,
+                                 context.insts().Get(callee_id).type_id());
+        }
+        return SemIR::InstId::BuiltinError;
+      }
     }
-    if (!callee_function.is_error) {
-      CARBON_DIAGNOSTIC(CallToNonCallable, Error,
-                        "Value of type `{0}` is not callable.", SemIR::TypeId);
-      context.emitter().Emit(node_id, CallToNonCallable,
-                             context.insts().Get(callee_id).type_id());
-    }
-    return SemIR::InstId::BuiltinError;
   }
   auto& callable = context.functions().Get(callee_function.function_id);
 

@@ -371,6 +371,38 @@ class ImportRefResolver {
     return GetLocalConstantId(import_ir_.types().GetInstId(type_id));
   }
 
+  // Gets the local constant values corresponding to an imported inst block.
+  auto GetLocalInstBlockContents(SemIR::InstBlockId import_block_id)
+      -> llvm::SmallVector<SemIR::InstId> {
+    llvm::SmallVector<SemIR::InstId> inst_ids;
+    if (!import_block_id.is_valid() ||
+        import_block_id == SemIR::InstBlockId::Empty) {
+      return inst_ids;
+    }
+
+    // Import all the values in the block.
+    auto import_block = import_ir_.inst_blocks().Get(import_block_id);
+    inst_ids.reserve(import_block.size());
+    for (auto import_inst_id : import_block) {
+      auto const_id = GetLocalConstantId(import_inst_id);
+      inst_ids.push_back(const_id.inst_id());
+    }
+
+    return inst_ids;
+  }
+
+  // Gets a local canonical instruction block ID corresponding to an imported
+  // inst block whose contents were already imported, for example by
+  // GetLocalInstBlockContents.
+  auto GetLocalCanonicalInstBlockId(SemIR::InstBlockId import_block_id,
+                                    llvm::ArrayRef<SemIR::InstId> contents)
+      -> SemIR::InstBlockId {
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+    return context_.inst_blocks().AddCanonical(contents);
+  }
+
   // Returns the ConstantId for each parameter's type. Adds unresolved constants
   // to work_stack_.
   auto GetLocalParamConstantIds(SemIR::InstBlockId param_refs_id)
@@ -523,13 +555,30 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return context_.interfaces().Get(inst.interface_id).scope_id;
       }
-      default:
+      case SemIR::StructValue::Kind: {
+        auto type_inst = context_.types().GetAsInst(name_scope_inst.type_id());
+        CARBON_KIND_SWITCH(type_inst) {
+          case CARBON_KIND(SemIR::GenericClassType inst): {
+            return context_.classes().Get(inst.class_id).scope_id;
+          }
+          case CARBON_KIND(SemIR::GenericInterfaceType inst): {
+            return context_.interfaces().Get(inst.interface_id).scope_id;
+          }
+          default: {
+            break;
+          }
+        }
+        break;
+      }
+      default: {
         if (const_id == SemIR::ConstantId::Error) {
           return SemIR::NameScopeId::Invalid;
         }
-        CARBON_FATAL() << "Unexpected instruction kind for name scope: "
-                       << name_scope_inst;
+        break;
+      }
     }
+    CARBON_FATAL() << "Unexpected instruction kind for name scope: "
+                   << name_scope_inst;
   }
 
   // Adds ImportRefUnloaded entries for members of the imported scope, for name
@@ -626,6 +675,9 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::GenericClassType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::GenericInterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::ImportRefLoaded inst): {
@@ -900,9 +952,26 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_const_id =
         GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
+    auto args = GetLocalInstBlockContents(inst.args_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
+
+    // Find the corresponding class type. For a non-generic class, this is the
+    // type of the class declaration. For a generic class, build a class type
+    // referencing this specialization of the generic class.
+    auto class_const_inst = context_.insts().Get(class_const_id.inst_id());
+    if (!class_const_inst.Is<SemIR::ClassType>()) {
+      auto generic_class_type = context_.types().GetAs<SemIR::GenericClassType>(
+          class_const_inst.type_id());
+      auto args_id = GetLocalCanonicalInstBlockId(inst.args_id, args);
+      class_const_id =
+          TryEvalInst(context_, SemIR::InstId::Invalid,
+                      SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
+                                       .class_id = generic_class_type.class_id,
+                                       .args_id = args_id});
+    }
+
     return {.const_id = class_const_id};
   }
 
@@ -1038,6 +1107,21 @@ class ImportRefResolver {
     return {.const_id = context_.types().GetConstantId(class_val.type_id())};
   }
 
+  auto TryResolveTypedInst(SemIR::GenericInterfaceType inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    auto interface_const_id = GetLocalConstantId(
+        import_ir_.interfaces().Get(inst.interface_id).decl_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    auto interface_val = context_.insts().Get(interface_const_id.inst_id());
+    CARBON_CHECK(context_.types().Is<SemIR::GenericInterfaceType>(
+        interface_val.type_id()));
+    return {.const_id =
+                context_.types().GetConstantId(interface_val.type_id())};
+  }
+
   auto TryResolveTypedInst(SemIR::ImportRefLoaded /*inst*/,
                            SemIR::InstId inst_id) -> ResolveResult {
     auto initial_work = work_stack_.size();
@@ -1063,7 +1147,7 @@ class ImportRefResolver {
   // Make a declaration of an interface. This is done as a separate step from
   // importing the interface definition in order to resolve cycles.
   auto MakeInterfaceDecl(const SemIR::Interface& import_interface)
-      -> SemIR::ConstantId {
+      -> std::pair<SemIR::InterfaceId, SemIR::ConstantId> {
     SemIR::InterfaceDecl interface_decl = {
         .type_id = SemIR::TypeId::TypeType,
         .interface_id = SemIR::InterfaceId::Invalid,
@@ -1073,7 +1157,7 @@ class ImportRefResolver {
             AddImportIRInst(import_interface.decl_id), interface_decl));
 
     // Start with an incomplete interface.
-    SemIR::Interface new_interface = {
+    interface_decl.interface_id = context_.interfaces().Add({
         .name_id = GetLocalNameId(import_interface.name_id),
         // These are set in the second pass once we've imported them. Import
         // enough of the parameter lists that we know whether this interface is
@@ -1089,14 +1173,17 @@ class ImportRefResolver {
                              ? SemIR::InstBlockId::Empty
                              : SemIR::InstBlockId::Invalid,
         .decl_id = interface_decl_id,
-    };
+    });
+
+    if (import_interface.is_generic()) {
+      interface_decl.type_id =
+          context_.GetGenericInterfaceType(interface_decl.interface_id);
+    }
 
     // Write the interface ID into the InterfaceDecl.
-    interface_decl.interface_id = context_.interfaces().Add(new_interface);
     context_.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
-
-    // Set the constant value for the imported interface.
-    return context_.constant_values().Get(interface_decl_id);
+    return {interface_decl.interface_id,
+            context_.constant_values().Get(interface_decl_id)};
   }
 
   // Imports the definition for an interface that has been imported as a forward
@@ -1129,9 +1216,25 @@ class ImportRefResolver {
     const auto& import_interface =
         import_ir_.interfaces().Get(inst.interface_id);
 
-    // On the first pass, create a forward declaration of the interface.
+    SemIR::InterfaceId interface_id = SemIR::InterfaceId::Invalid;
     if (!interface_const_id.is_valid()) {
-      interface_const_id = MakeInterfaceDecl(import_interface);
+      // On the first pass, create a forward declaration of the interface.
+      std::tie(interface_id, interface_const_id) =
+          MakeInterfaceDecl(import_interface);
+    } else {
+      // On the second pass, compute the interface ID from the constant value of
+      // the declaration.
+      auto interface_const_inst =
+          context_.insts().Get(interface_const_id.inst_id());
+      if (auto interface_type =
+              interface_const_inst.TryAs<SemIR::InterfaceType>()) {
+        interface_id = interface_type->interface_id;
+      } else {
+        auto generic_interface_type =
+            context_.types().GetAs<SemIR::GenericInterfaceType>(
+                interface_const_inst.type_id());
+        interface_id = generic_interface_type.interface_id;
+      }
     }
 
     auto initial_work = work_stack_.size();
@@ -1148,10 +1251,7 @@ class ImportRefResolver {
       return ResolveResult::Retry(interface_const_id);
     }
 
-    auto& new_interface = context_.interfaces().Get(
-        context_.insts()
-            .GetAs<SemIR::InterfaceType>(interface_const_id.inst_id())
-            .interface_id);
+    auto& new_interface = context_.interfaces().Get(interface_id);
     new_interface.parent_scope_id = parent_scope_id;
     new_interface.implicit_param_refs_id = GetLocalParamRefsId(
         import_interface.implicit_param_refs_id, implicit_param_const_ids);
@@ -1169,9 +1269,30 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_const_id = GetLocalConstantId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
+    auto args = GetLocalInstBlockContents(inst.args_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
+
+    // Find the corresponding interface type. For a non-generic interface, this
+    // is the type of the interface declaration. For a generic interface, build
+    // a interface type referencing this specialization of the generic
+    // interface.
+    auto interface_const_inst =
+        context_.insts().Get(interface_const_id.inst_id());
+    if (!interface_const_inst.Is<SemIR::InterfaceType>()) {
+      auto generic_interface_type =
+          context_.types().GetAs<SemIR::GenericInterfaceType>(
+              interface_const_inst.type_id());
+      auto args_id = GetLocalCanonicalInstBlockId(inst.args_id, args);
+      interface_const_id =
+          TryEvalInst(context_, SemIR::InstId::Invalid,
+                      SemIR::InterfaceType{
+                          .type_id = SemIR::TypeId::TypeType,
+                          .interface_id = generic_interface_type.interface_id,
+                          .args_id = args_id});
+    }
+
     return {.const_id = interface_const_id};
   }
 

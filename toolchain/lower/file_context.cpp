@@ -387,6 +387,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     case SemIR::InterfaceType::Kind:
     case SemIR::FunctionType::Kind:
     case SemIR::GenericClassType::Kind:
+    case SemIR::GenericInterfaceType::Kind:
     case SemIR::UnboundElementType::Kind: {
       // Return an empty struct as a placeholder.
       // TODO: Should we model an interface as a witness table, or an associated

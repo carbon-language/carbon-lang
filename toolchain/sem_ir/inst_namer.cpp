@@ -441,6 +441,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".type");
         continue;
       }
+      case CARBON_KIND(GenericInterfaceType inst): {
+        add_inst_name_id(sem_ir_.interfaces().Get(inst.interface_id).name_id,
+                         ".type");
+        continue;
+      }
       case CARBON_KIND(ImplDecl inst): {
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         break;
@@ -489,6 +494,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
                            inst.type_id)) {
           add_inst_name_id(
               sem_ir_.classes().Get(generic_class_ty->class_id).name_id);
+        } else if (auto generic_interface_ty =
+                       sem_ir_.types().TryGetAs<GenericInterfaceType>(
+                           inst.type_id)) {
+          add_inst_name_id(sem_ir_.interfaces()
+                               .Get(generic_interface_ty->interface_id)
+                               .name_id);
         } else {
           add_inst_name("struct");
         }

@@ -636,6 +636,14 @@ class Formatter {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
+  auto FormatInstructionRHS(InterfaceType inst) -> void {
+    if (inst.args_id.is_valid()) {
+      FormatArgs(inst.interface_id, inst.args_id);
+    } else {
+      FormatArgs(inst.interface_id);
+    }
+  }
+
   auto FormatInstructionRHS(IntLiteral inst) -> void {
     out_ << " ";
     sem_ir_.ints()

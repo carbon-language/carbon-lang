@@ -25,6 +25,11 @@ struct Interface : public Printable<Interface> {
     return definition_id.is_valid() && !is_defined();
   }
 
+  // Determines whether this is a generic interface.
+  auto is_generic() const -> bool {
+    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+  }
+
   // The following members always have values, and do not change throughout the
   // lifetime of the interface.
 

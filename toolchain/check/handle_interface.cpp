@@ -65,6 +65,7 @@ static auto BuildInterfaceDecl(Context& context,
                   existing_interface_decl->interface_id)))) {
         // This is a redeclaration of an existing interface.
         interface_decl.interface_id = existing_interface_decl->interface_id;
+        interface_decl.type_id = existing_interface_decl->type_id;
         // TODO: If the new declaration is a definition, keep its parameter
         // and implicit parameter lists rather than the ones from the
         // previous declaration.
@@ -81,12 +82,17 @@ static auto BuildInterfaceDecl(Context& context,
     // there was an error in the qualifier, we will have lost track of the
     // interface name here. We should keep track of it even if the name is
     // invalid.
-    interface_decl.interface_id = context.interfaces().Add(
-        {.name_id = name_context.name_id_for_new_inst(),
-         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-         .implicit_param_refs_id = name.implicit_params_id,
-         .param_refs_id = name.params_id,
-         .decl_id = interface_decl_id});
+    SemIR::Interface interface_info = {
+        .name_id = name_context.name_id_for_new_inst(),
+        .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+        .implicit_param_refs_id = name.implicit_params_id,
+        .param_refs_id = name.params_id,
+        .decl_id = interface_decl_id};
+    interface_decl.interface_id = context.interfaces().Add(interface_info);
+    if (interface_info.is_generic()) {
+      interface_decl.type_id =
+          context.GetGenericInterfaceType(interface_decl.interface_id);
+    }
   }
 
   // TODO: For a generic interface declaration, set the `type_id` to a suitable

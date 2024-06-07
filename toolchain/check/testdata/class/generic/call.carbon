@@ -77,10 +77,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 5 [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, (file.%.loc6_17.3, file.%.loc6_20) [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, (%.3, %.4) [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %Class.4: type = class_type @Class, (file.%.loc9_13, file.%.loc9_18) [template]
+// CHECK:STDOUT:   %Class.4: type = class_type @Class, (%.1, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
