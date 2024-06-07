@@ -16,13 +16,9 @@ interface AddWith(T:! type) {
   fn F();
 }
 
-// --- fail_todo_b.carbon
+// --- b.carbon
 
 library "b";
-// CHECK:STDERR: fail_todo_b.carbon:[[@LINE+4]]:1: In import.
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon: ERROR: Semantics TODO: `TryResolveInst on StructValue`.
 import library "a";
 
 class C {}
@@ -75,9 +71,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %AddWith.type: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %Self: <error> = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+14> [symbolic]
+// CHECK:STDOUT:   %AddWith.1: %AddWith.type = struct_value () [template]
+// CHECK:STDOUT:   %AddWith.2: %AddWith.type = struct_value () [template]
+// CHECK:STDOUT:   %Self: %AddWith.2 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+15> [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%C) [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -91,16 +88,16 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %import_ref.1
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith]
+// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith.1]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+10, loaded [template = constants.%F.2]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %C.ref.loc11_6: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, %import_ref.1 [template = constants.%AddWith]
-// CHECK:STDOUT:     %C.ref.loc11_19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc11: type = interface_type @AddWith, (%C.ref.loc11_19) [template = constants.%.3]
+// CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, %import_ref.1 [template = constants.%AddWith.1]
+// CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc7: type = interface_type @AddWith, (%C.ref.loc7_19) [template = constants.%.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

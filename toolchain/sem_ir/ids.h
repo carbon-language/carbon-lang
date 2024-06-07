@@ -141,6 +141,12 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
     return InstId(Abs(index) - IndexOffset);
   }
 
+  // Returns the instruction that describes this constant value, or
+  // InstId::Invalid if this is invalid or a runtime value.
+  constexpr auto inst_id_if_valid() const -> InstId {
+    return is_valid() ? inst_id() : InstId::Invalid;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     if (!is_valid()) {
       IdBase::Print(out);

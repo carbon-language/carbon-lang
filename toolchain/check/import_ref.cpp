@@ -385,7 +385,7 @@ class ImportRefResolver {
     inst_ids.reserve(import_block.size());
     for (auto import_inst_id : import_block) {
       auto const_id = GetLocalConstantId(import_inst_id);
-      inst_ids.push_back(const_id.inst_id());
+      inst_ids.push_back(const_id.inst_id_if_valid());
     }
 
     return inst_ids;
@@ -692,13 +692,22 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::IntLiteral inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::PointerType inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::StructType inst): {
         return TryResolveTypedInst(inst, inst_id);
       }
+      case CARBON_KIND(SemIR::StructValue inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::TupleType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::TupleValue inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::UnboundElementType inst): {
@@ -1321,6 +1330,20 @@ class ImportRefResolver {
                                         .elements_id = elements_id})};
   }
 
+  auto TryResolveTypedInst(SemIR::IntLiteral inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    auto type_id = GetLocalConstantId(inst.type_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    return {.const_id = TryEvalInst(
+                context_, SemIR::InstId::Invalid,
+                SemIR::IntLiteral{
+                    .type_id = context_.GetTypeIdForTypeConstant(type_id),
+                    .int_id = context_.ints().Add(
+                        import_ir_.ints().Get(inst.int_id))})};
+  }
+
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {
     auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
@@ -1369,6 +1392,22 @@ class ImportRefResolver {
                 context_.GetStructType(context_.inst_blocks().Add(fields)))};
   }
 
+  auto TryResolveTypedInst(SemIR::StructValue inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    auto type_id = GetLocalConstantId(inst.type_id);
+    auto elems = GetLocalInstBlockContents(inst.elements_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+
+    return {.const_id = TryEvalInst(
+                context_, SemIR::InstId::Invalid,
+                SemIR::StructValue{
+                    .type_id = context_.GetTypeIdForTypeConstant(type_id),
+                    .elements_id = GetLocalCanonicalInstBlockId(
+                        inst.elements_id, elems)})};
+  }
+
   auto TryResolveTypedInst(SemIR::TupleType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
@@ -1391,8 +1430,24 @@ class ImportRefResolver {
       elem_type_ids.push_back(context_.GetTypeIdForTypeConstant(elem_const_id));
     }
 
-    return {
-        context_.types().GetConstantId(context_.GetTupleType(elem_type_ids))};
+    return {.const_id = context_.types().GetConstantId(
+                context_.GetTupleType(elem_type_ids))};
+  }
+
+  auto TryResolveTypedInst(SemIR::TupleValue inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    auto type_id = GetLocalConstantId(inst.type_id);
+    auto elems = GetLocalInstBlockContents(inst.elements_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+
+    return {.const_id = TryEvalInst(
+                context_, SemIR::InstId::Invalid,
+                SemIR::TupleValue{
+                    .type_id = context_.GetTypeIdForTypeConstant(type_id),
+                    .elements_id = GetLocalCanonicalInstBlockId(
+                        inst.elements_id, elems)})};
   }
 
   auto TryResolveTypedInst(SemIR::UnboundElementType inst) -> ResolveResult {
