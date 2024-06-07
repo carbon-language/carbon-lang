@@ -31,6 +31,7 @@ static_assert(llvm::isPowerOf2_64(NumChars));
 static auto MakeChars() -> llvm::OwningArrayRef<char> {
   llvm::OwningArrayRef<char> characters(NumChars);
 
+  // Start with `-` and `_`, and then add `a` - `z`, `A` - `Z`, and `0` - `9`.
   characters[0] = '-';
   characters[1] = '_';
   ssize_t i = 2;
@@ -51,8 +52,8 @@ constexpr ssize_t NumFourCharStrs = NumChars * NumChars * NumChars * NumChars;
 static_assert(llvm::isPowerOf2_64(NumFourCharStrs));
 
 // Compute every 4-character string in a shuffled array. This is a little memory
-// intense, but ends up being much cheaper by letting us reliably select a
-// unique 4-character sequence to avoid collisions.
+// intense -- 64 MiB -- but ends up being much cheaper by letting us reliably
+// select a unique 4-character sequence to avoid collisions.
 static auto MakeFourCharStrs(llvm::ArrayRef<char> characters, absl::BitGen& gen)
     -> llvm::OwningArrayRef<std::array<char, 4>> {
   constexpr ssize_t NumCharsMask = NumChars - 1;
@@ -138,8 +139,8 @@ static auto MakeRawStrKeys(ssize_t length, ssize_t key_count,
 // Build up a large collection of random and unique string keys. This is
 // actually a relatively expensive operation due to needing to build all the
 // random string text. As a consequence, the initializer of this global is
-// somewhat performance tuned to ensure benchmarks take an excessive amount of
-// time to run or use an excessive amount of memory.
+// somewhat performance tuned to ensure benchmarks don't take an excessive
+// amount of time to run or use an excessive amount of memory.
 static absl::NoDestructor<llvm::OwningArrayRef<llvm::StringRef>> raw_str_keys{
     [] {
       llvm::OwningArrayRef<llvm::StringRef> keys(MaxNumKeys);
@@ -166,7 +167,7 @@ static absl::NoDestructor<llvm::OwningArrayRef<llvm::StringRef>> raw_str_keys{
 
       ssize_t prev_length = -1;
       for (auto [length_index, length] : llvm::enumerate(length_buckets)) {
-        // We can detect repetitions as the lengths are required to be sorted.
+        // We can detect repetitions in length as they are sorted.
         if (length == prev_length) {
           raw_keys_buckets[length_index] = raw_keys_buckets[length_index - 1];
           continue;
@@ -237,7 +238,7 @@ static absl::NoDestructor<
     lookup_keys_storage;
 
 template <typename T>
-auto GetShuffledLookupKeys(ssize_t size, ssize_t lookup_size)
+auto GetShuffledLookupKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
     -> llvm::ArrayRef<T> {
   // The raw keys aren't shuffled and round-robin through the sizes. We want to
   // keep the total size of lookup keys used exactly the same across runs. So
@@ -247,17 +248,17 @@ auto GetShuffledLookupKeys(ssize_t size, ssize_t lookup_size)
   // of keys. We store each of these shuffled sequences in a map to avoid
   // repeatedly computing them.
   llvm::OwningArrayRef<T>& lookup_keys =
-      (*lookup_keys_storage<T>)[{size, lookup_size}];
+      (*lookup_keys_storage<T>)[{table_keys_size, lookup_keys_size}];
   if (lookup_keys.empty()) {
-    lookup_keys = llvm::OwningArrayRef<T>(lookup_size);
+    lookup_keys = llvm::OwningArrayRef<T>(lookup_keys_size);
     auto raw_keys = GetRawKeys<T>();
     for (auto [index, key] : llvm::enumerate(lookup_keys)) {
-      key = raw_keys[index % size];
+      key = raw_keys[index % table_keys_size];
     }
     absl::BitGen gen;
     Shuffle(lookup_keys, gen);
   }
-  CARBON_CHECK(static_cast<ssize_t>(lookup_keys.size()) == lookup_size);
+  CARBON_CHECK(static_cast<ssize_t>(lookup_keys.size()) == lookup_keys_size);
 
   return lookup_keys;
 }
@@ -265,9 +266,9 @@ auto GetShuffledLookupKeys(ssize_t size, ssize_t lookup_size)
 }  // namespace
 
 template <typename T>
-auto GetKeysAndMissKeys(ssize_t size)
+auto GetKeysAndMissKeys(ssize_t table_keys_size)
     -> std::pair<llvm::ArrayRef<T>, llvm::ArrayRef<T>> {
-  CARBON_CHECK(size <= MaxNumKeys);
+  CARBON_CHECK(table_keys_size <= MaxNumKeys);
   // The raw keys aren't shuffled and round-robin through the sizes. Take the
   // tail of this sequence and shuffle it to form a random set of miss keys with
   // a consistent total size.
@@ -280,7 +281,7 @@ auto GetKeysAndMissKeys(ssize_t size)
     return keys;
   }()};
 
-  return {GetRawKeys<T>().slice(0, size), *miss_keys};
+  return {GetRawKeys<T>().slice(0, table_keys_size), *miss_keys};
 }
 template auto GetKeysAndMissKeys<int>(ssize_t size)
     -> std::pair<llvm::ArrayRef<int>, llvm::ArrayRef<int>>;
@@ -291,12 +292,12 @@ template auto GetKeysAndMissKeys<llvm::StringRef>(ssize_t size)
                  llvm::ArrayRef<llvm::StringRef>>;
 
 template <typename T>
-auto GetKeysAndHitKeys(ssize_t size, ssize_t lookup_keys_size)
+auto GetKeysAndHitKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
     -> std::pair<llvm::ArrayRef<T>, llvm::ArrayRef<T>> {
-  CARBON_CHECK(size <= MaxNumKeys);
+  CARBON_CHECK(table_keys_size <= MaxNumKeys);
   CARBON_CHECK(lookup_keys_size <= MaxNumKeys);
-  return {GetRawKeys<T>().slice(0, size),
-          GetShuffledLookupKeys<T>(size, lookup_keys_size)};
+  return {GetRawKeys<T>().slice(0, table_keys_size),
+          GetShuffledLookupKeys<T>(table_keys_size, lookup_keys_size)};
 }
 template auto GetKeysAndHitKeys<int>(ssize_t size, ssize_t lookup_keys_size)
     -> std::pair<llvm::ArrayRef<int>, llvm::ArrayRef<int>>;
@@ -321,10 +322,11 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
 
   constexpr int GroupShift = llvm::CTLog2<GroupSize>();
 
-  auto get_hash_index = [expected_size](auto x) -> ssize_t {
-    size_t mask = ComputeProbeMaskFromSize(expected_size);
+  size_t mask = ComputeProbeMaskFromSize(expected_size);
+  uint64_t salt = ComputeSeed();
+  auto get_hash_index = [mask, salt](auto x) -> ssize_t {
     auto [hash_index, _] =
-        HashValue(x, ComputeSeed()).template ExtractIndexAndTag<7>();
+        HashValue(x, salt).template ExtractIndexAndTag<7>();
     return (hash_index & mask) >> GroupShift;
   };
 
@@ -358,8 +360,7 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   for (auto i : llvm::ArrayRef(grouped_key_indices[max_group_index])
                     .take_front(2 * GroupSize)) {
     auto k = keys[i];
-    auto hash = static_cast<uint64_t>(HashValue(k, ComputeSeed()));
-    uint64_t salt = ComputeSeed();
+    auto hash = static_cast<uint64_t>(HashValue(k, salt));
     llvm::errs() << "  key: " << k
                  << "  salt: " << llvm::formatv("{0:x16}", salt)
                  << "  hash: " << llvm::formatv("{0:x16}", hash) << "\n";

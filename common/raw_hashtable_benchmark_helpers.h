@@ -37,7 +37,7 @@ inline constexpr ssize_t MaxNumKeys = (1 << 24) + NumOtherKeys;
 // For a given size, this will return the same arrays. This uses unsynchronized
 // global state, and so is thread hostile and must not be called before main.
 template <typename T>
-auto GetKeysAndMissKeys(ssize_t size)
+auto GetKeysAndMissKeys(ssize_t table_keys_size)
     -> std::pair<llvm::ArrayRef<T>, llvm::ArrayRef<T>>;
 
 // Get an array of main keys with the given `size`, which must be less than
@@ -48,7 +48,7 @@ auto GetKeysAndMissKeys(ssize_t size)
 // For a given size, this will return the same arrays. This uses unsynchronized
 // global state, and so is thread hostile and must not be called before main.
 template <typename T>
-auto GetKeysAndHitKeys(ssize_t size, ssize_t lookup_keys_size)
+auto GetKeysAndHitKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
     -> std::pair<llvm::ArrayRef<T>, llvm::ArrayRef<T>>;
 
 // Dump statistics about hashing the given keys.
@@ -72,8 +72,8 @@ auto ValueToBool(T value) -> bool {
 
 inline auto SizeArgs(benchmark::internal::Benchmark* b) -> void {
   // Benchmarks for "miss" operations only have one parameter -- the size of the
-  // table. These benchmarks use a fixed 1k set of extra keys for each miss
-  // operation.
+  // table. These benchmarks use a fixed `NumOtherKeys` set of extra keys for
+  // each miss operation.
   b->DenseRange(1, 4, 1);
   b->Arg(8);
   b->Arg(16);
@@ -95,16 +95,20 @@ inline auto HitArgs(benchmark::internal::Benchmark* b) -> void {
   // the size of the hashtable itself. The second is the size of a buffer of
   // random keys actually in the hashtable to use for the operations.
   //
-  // For small sizes, we use a fixed 1k lookup key count. This is enough to
-  // avoid patterns of queries training the branch predictor just from the keys
-  // themselves, while small enough to avoid significant L1 cache pressure.
+  // For small sizes, we use a fixed `NumOtherKeys` lookup key count. This is
+  // enough to avoid patterns of queries training the branch predictor just from
+  // the keys themselves, while small enough to avoid significant L1 cache
+  // pressure.
   b->ArgsProduct({benchmark::CreateDenseRange(1, 4, 1), {NumOtherKeys}});
   b->Args({8, NumOtherKeys});
   b->Args({16, NumOtherKeys});
   b->Args({32, NumOtherKeys});
 
   // For sizes >= 64 we first use the power of two which will have a low load
-  // factor, and then target exactly at our max load factor.
+  // factor, and then target exactly at our max load factor. Start the sizes
+  // list off with the powers of two, and the append a version of each power of
+  // two adjusted down to the load factor. We'll then build the benchmarks from
+  // these below.
   std::vector<ssize_t> large_sizes = {64,      1 << 8,  1 << 12,
                                       1 << 16, 1 << 20, 1 << 24};
   for (auto i : llvm::seq<int>(0, large_sizes.size())) {
@@ -115,9 +119,10 @@ inline auto HitArgs(benchmark::internal::Benchmark* b) -> void {
   for (auto s : large_sizes) {
     b->Args({s, NumOtherKeys});
 
-    // Once the sizes are more than 4x the 1k minimum lookup buffer size, also
-    // include 50% and 100% lookup buffer sizes.
-    if (s >= (4 << 10)) {
+    // Once the sizes are more than 4x the `NumOtherKeys` minimum lookup buffer
+    // size, also include 25% and 50% lookup buffer sizes which will
+    // increasingly exhaust the ability to keep matching entries in the cache.
+    if (s >= NumOtherKeys) {
       b->Args({s, s / 4});
       b->Args({s, s / 2});
     }
