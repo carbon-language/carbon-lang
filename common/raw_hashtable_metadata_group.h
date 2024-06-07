@@ -943,6 +943,7 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
   // high latency.
   metadata_ints[0] &= (~LSBs | metadata_ints[0] >> 7);
 #elif CARBON_X86_SIMD_SUPPORT
+  // For each byte, use `metadata_vec` if the byte's high bit is set (indicating it is present), otherwise (it is empty or deleted) replace it with zero (representing empty).
   metadata_vec =
       _mm_blendv_epi8(_mm_setzero_si128(), metadata_vec, metadata_vec);
 #else
@@ -953,7 +954,9 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
 inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> MatchRange {
   MatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
+  // Broadcast query to every byte.
   auto match_byte_vec = vdup_n_u8(tag | PresentMask);
+  // Result bytes have all bits set for the bytes that match, so we have to clear everything but MSBs next.
   auto match_byte_cmp_vec = vceq_u8(metadata_vec, match_byte_vec);
   uint64_t match_bits = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
@@ -981,8 +984,7 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   // here rather than above prior to extracting the match bits.
   result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
-  // We arrange the byte vector for present bytes so that we can directly
-  // extract it as our bit-encoded match.
+  // We arranged the byte vector so that present bytes have the high bit set, which this instruction extracts.
   result = MatchRange(_mm_movemask_epi8(metadata_vec));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
@@ -993,6 +995,8 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
 inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
+  // Use the fact that empty slots are represented by zero bytes.
+  // Result will have all bits set for any input zero byte, so we zero all but the high bits below.
   auto cmp_vec = vceqz_u8(metadata_vec);
   uint64_t metadata_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that

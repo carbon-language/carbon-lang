@@ -99,7 +99,7 @@ enum class BenchKind : uint8_t {
 //
 // The returned array will have exactly `GroupSize` elements, each of
 // `BenchMetadata`. For the `BenchMetadata` at index `i`, there will be `i+1`
-// matches of that kind within each group of the metadata. This let's us
+// matches of that kind within each group of the metadata. This lets us
 // benchmark each of the possible match-counts for a group.
 template <BenchKind Kind = BenchKind::Random>
 static auto BuildBenchMetadata() -> llvm::ArrayRef<BenchMetadata> {
