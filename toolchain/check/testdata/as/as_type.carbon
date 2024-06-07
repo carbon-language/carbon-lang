@@ -23,11 +23,18 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .t = @__global_init.%t
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc11_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int.make_type_32.loc11_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc11_21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc11_24: %.2 = tuple_literal (%int.make_type_32.loc11_16, %int.make_type_32.loc11_21)
 // CHECK:STDOUT:   %.loc11_26.1: type = value_of_initializer %int.make_type_32.loc11_16 [template = i32]
@@ -36,7 +43,6 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:   %.loc11_26.4: type = converted %int.make_type_32.loc11_21, %.loc11_26.3 [template = i32]
 // CHECK:STDOUT:   %.loc11_26.5: type = converted %.loc11_24, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %t: type = bind_name t, %.loc11_26.5
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

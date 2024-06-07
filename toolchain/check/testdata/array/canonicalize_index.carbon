@@ -36,6 +36,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Add = %Add.decl
 // CHECK:STDOUT:     .a = %a.loc13
+// CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -75,9 +76,6 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_32.loc14, %.loc14_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_15: type = array_type %.loc14_14, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_16: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %a.ref: ref %.5 = name_ref a, %a.loc13
-// CHECK:STDOUT:   %.loc14_20: %.6 = addr_of %a.ref
-// CHECK:STDOUT:   %b.loc14: %.6 = bind_name b, %.loc14_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -102,6 +100,9 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc13_35.11: init %.5 = array_init (%.loc13_35.4, %.loc13_35.7, %.loc13_35.10) to file.%a.var [template = constants.%array]
 // CHECK:STDOUT:   %.loc13_36: init %.5 = converted %.loc13_35.1, %.loc13_35.11 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc13_36
+// CHECK:STDOUT:   %a.ref: ref %.5 = name_ref a, file.%a.loc13
+// CHECK:STDOUT:   %.loc14: %.6 = addr_of %a.ref
+// CHECK:STDOUT:   %b: %.6 = bind_name b, %.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

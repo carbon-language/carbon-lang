@@ -37,6 +37,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
@@ -47,17 +48,6 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %NS.ref.loc16: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %a.ref.loc16: type = name_ref a, %a [template = constants.%C]
-// CHECK:STDOUT:   %.loc16_22.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_23.1: %.3 = struct_literal (%.loc16_22.1)
-// CHECK:STDOUT:   %.loc16_23.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc16_23.3: ref %.1 = class_element_access %.loc16_23.2, element0
-// CHECK:STDOUT:   %.loc16_22.2: init %.1 = tuple_init () to %.loc16_23.3 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_23.4: init %.1 = converted %.loc16_22.1, %.loc16_22.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_23.5: init %C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc16_23.6: ref %C = temporary %.loc16_23.2, %.loc16_23.5
-// CHECK:STDOUT:   %.loc16_24.1: ref %C = converted %.loc16_23.1, %.loc16_23.6
-// CHECK:STDOUT:   %.loc16_24.2: %C = bind_value %.loc16_24.1
-// CHECK:STDOUT:   %b: %C = bind_name b, %.loc16_24.2
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %NS.ref.loc18: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:     %a.ref.loc18: type = name_ref a, %a [template = constants.%C]
@@ -85,5 +75,21 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc19_18.4: init %C = class_init (%.loc19_18.3), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc19_19: init %C = converted %.loc19_18.1, %.loc19_18.4 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc19_19 to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_22.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_23.1: %.3 = struct_literal (%.loc16_22.1)
+// CHECK:STDOUT:   %.loc16_23.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc16_23.3: ref %.1 = class_element_access %.loc16_23.2, element0
+// CHECK:STDOUT:   %.loc16_22.2: init %.1 = tuple_init () to %.loc16_23.3 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_23.4: init %.1 = converted %.loc16_22.1, %.loc16_22.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_23.5: init %C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_23.6: ref %C = temporary %.loc16_23.2, %.loc16_23.5
+// CHECK:STDOUT:   %.loc16_24.1: ref %C = converted %.loc16_23.1, %.loc16_23.6
+// CHECK:STDOUT:   %.loc16_24.2: %C = bind_value %.loc16_24.1
+// CHECK:STDOUT:   %b: %C = bind_name b, %.loc16_24.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

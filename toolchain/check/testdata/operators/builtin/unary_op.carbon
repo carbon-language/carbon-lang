@@ -39,6 +39,8 @@ fn Constant() {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Not = %Not.decl
+// CHECK:STDOUT:     .not_true = @__global_init.%not_true
+// CHECK:STDOUT:     .not_false = @__global_init.%not_false
 // CHECK:STDOUT:     .Constant = %Constant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -59,16 +61,10 @@ fn Constant() {
 // CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %bool.make_type.loc15, %.loc15_15.1 [template = bool]
-// CHECK:STDOUT:   %.loc15_26: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_22: bool = not %.loc15_26 [template = constants.%.3]
-// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc15_22
 // CHECK:STDOUT:   %import_ref.4: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type.loc16: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc16_16.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
 // CHECK:STDOUT:   %.loc16_16.2: type = converted %bool.make_type.loc16, %.loc16_16.1 [template = bool]
-// CHECK:STDOUT:   %.loc16_27: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   %.loc16_23: bool = not %.loc16_27 [template = constants.%.2]
-// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc16_23
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {}
 // CHECK:STDOUT:   %import_ref.5: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.6: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
@@ -129,6 +125,17 @@ fn Constant() {
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
 // CHECK:STDOUT:   %.loc20_43: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   assign %b.var, %.loc20_43
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15_26: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_22: bool = not %.loc15_26 [template = constants.%.3]
+// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc15_22
+// CHECK:STDOUT:   %.loc16_27: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16_23: bool = not %.loc16_27 [template = constants.%.2]
+// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc16_23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

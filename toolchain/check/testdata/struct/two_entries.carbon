@@ -30,6 +30,8 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .v = @__global_init.%v
+// CHECK:STDOUT:     .w = @__global_init.%w
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
@@ -43,12 +45,6 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc11_22.1: type = value_of_initializer %int.make_type_32.loc11_22 [template = i32]
 // CHECK:STDOUT:   %.loc11_22.2: type = converted %int.make_type_32.loc11_22, %.loc11_22.1 [template = i32]
 // CHECK:STDOUT:   %.loc11_25: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_35: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc11_43: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_44: %.2 = struct_literal (%.loc11_35, %.loc11_43)
-// CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc11_35, %.loc11_43) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_45: %.2 = converted %.loc11_44, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %v: %.2 = bind_name v, %.loc11_45
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc12_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_13.1: type = value_of_initializer %int.make_type_32.loc12_13 [template = i32]
@@ -58,8 +54,6 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc12_22.1: type = value_of_initializer %int.make_type_32.loc12_22 [template = i32]
 // CHECK:STDOUT:   %.loc12_22.2: type = converted %int.make_type_32.loc12_22, %.loc12_22.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_25: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
-// CHECK:STDOUT:   %v.ref: %.2 = name_ref v, %v
-// CHECK:STDOUT:   %w: %.2 = bind_name w, %v.ref
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32.loc14_13 [template = i32]
@@ -88,6 +82,14 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_35: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_43: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_44: %.2 = struct_literal (%.loc11_35, %.loc11_43)
+// CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc11_35, %.loc11_43) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_45: %.2 = converted %.loc11_44, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %v: %.2 = bind_name v, %.loc11_45
+// CHECK:STDOUT:   %v.ref: %.2 = name_ref v, %v
+// CHECK:STDOUT:   %w: %.2 = bind_name w, %v.ref
 // CHECK:STDOUT:   %.loc14_35: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_43: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_44.1: %.2 = struct_literal (%.loc14_35, %.loc14_43)

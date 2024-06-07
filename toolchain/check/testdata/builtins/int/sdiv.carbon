@@ -79,6 +79,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Div = %Div.decl
 // CHECK:STDOUT:     .arr = %arr
+// CHECK:STDOUT:     .arr_p = @__global_init.%arr_p
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -119,9 +120,6 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, %arr
-// CHECK:STDOUT:   %.loc5_24: %.6 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc5_24
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -158,6 +156,14 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %.loc5: %.6 = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -183,6 +189,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:     .Div = %Div.decl
 // CHECK:STDOUT:     .Sub = %Sub.decl
 // CHECK:STDOUT:     .Negate = %Negate.decl
+// CHECK:STDOUT:     .a = @__global_init.%a
+// CHECK:STDOUT:     .b = @__global_init.%b
+// CHECK:STDOUT:     .c = @__global_init.%c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -240,11 +249,31 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
 // CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32.loc9, %.loc9_8.1 [template = i32]
-// CHECK:STDOUT:   %Div.ref.loc9: %Div.type = name_ref Div, %Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %Negate.ref.loc9_18: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc12_8.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_8.2: type = converted %int.make_type_32.loc12, %.loc12_8.1 [template = i32]
+// CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc19_8.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
+// CHECK:STDOUT:   %.loc19_8.2: type = converted %int.make_type_32.loc19, %.loc19_8.1 [template = i32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.sdiv";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Div.ref.loc9: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
+// CHECK:STDOUT:   %Negate.ref.loc9_18: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc9_25: i32 = int_literal 2147483647 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate.loc9_24: init i32 = call %Negate.ref.loc9_18(%.loc9_25) [template = constants.%.3]
-// CHECK:STDOUT:   %Negate.ref.loc9_39: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc9_39: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc9_46: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.snegate.loc9_45: init i32 = call %Negate.ref.loc9_39(%.loc9_46) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_17.1: i32 = value_of_initializer %int.snegate.loc9_24 [template = constants.%.3]
@@ -254,14 +283,10 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %int.sdiv.loc9: init i32 = call %Div.ref.loc9(%.loc9_17.2, %.loc9_17.4) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_49.1: i32 = value_of_initializer %int.sdiv.loc9 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_49.2: i32 = converted %int.sdiv.loc9, %.loc9_49.1 [template = constants.%.2]
-// CHECK:STDOUT:   %a.loc9: i32 = bind_name a, %.loc9_49.2
-// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_8.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
-// CHECK:STDOUT:   %.loc12_8.2: type = converted %int.make_type_32.loc12, %.loc12_8.1 [template = i32]
-// CHECK:STDOUT:   %Div.ref.loc12: %Div.type = name_ref Div, %Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %Sub.ref.loc12: %Sub.type = name_ref Sub, %Sub.decl [template = constants.%Sub]
-// CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %a: i32 = bind_name a, %.loc9_49.2
+// CHECK:STDOUT:   %Div.ref.loc12: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
+// CHECK:STDOUT:   %Sub.ref.loc12: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
+// CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc12_29: i32 = int_literal 2147483647 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_29) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_43: i32 = int_literal 1 [template = constants.%.4]
@@ -274,21 +299,17 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %int.sdiv.loc12: init i32 = call %Div.ref.loc12(%.loc12_17.2, %.loc12_47) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_49.1: i32 = value_of_initializer %int.sdiv.loc12 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_49.2: i32 = converted %int.sdiv.loc12, %.loc12_49.1 [template = constants.%.6]
-// CHECK:STDOUT:   %b.loc12: i32 = bind_name b, %.loc12_49.2
-// CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc19_8.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:   %.loc19_8.2: type = converted %int.make_type_32.loc19, %.loc19_8.1 [template = i32]
-// CHECK:STDOUT:   %Div.ref.loc19: %Div.type = name_ref Div, %Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %Sub.ref.loc19: %Sub.type = name_ref Sub, %Sub.decl [template = constants.%Sub]
-// CHECK:STDOUT:   %Negate.ref.loc19_22: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc12_49.2
+// CHECK:STDOUT:   %Div.ref.loc19: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
+// CHECK:STDOUT:   %Sub.ref.loc19: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
+// CHECK:STDOUT:   %Negate.ref.loc19_22: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc19_29: i32 = int_literal 2147483647 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate.loc19_28: init i32 = call %Negate.ref.loc19_22(%.loc19_29) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc19_43: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc19_21.1: i32 = value_of_initializer %int.snegate.loc19_28 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc19_21.2: i32 = converted %int.snegate.loc19_28, %.loc19_21.1 [template = constants.%.3]
 // CHECK:STDOUT:   %int.ssub.loc19: init i32 = call %Sub.ref.loc19(%.loc19_21.2, %.loc19_43) [template = constants.%.6]
-// CHECK:STDOUT:   %Negate.ref.loc19_47: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc19_47: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc19_54: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.snegate.loc19_53: init i32 = call %Negate.ref.loc19_47(%.loc19_54) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc19_17.1: i32 = value_of_initializer %int.ssub.loc19 [template = constants.%.6]
@@ -299,15 +320,8 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %.loc19_57.1: i32 = value_of_initializer %int.sdiv.loc19 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc19_57.2: i32 = converted %int.sdiv.loc19, %.loc19_57.1 [template = constants.%.6]
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc19_57.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.sdiv";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_div_by_zero.carbon
 // CHECK:STDOUT:
@@ -325,6 +339,8 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Div = %Div.decl
+// CHECK:STDOUT:     .a = @__global_init.%a
+// CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -350,27 +366,32 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc10_8.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
 // CHECK:STDOUT:   %.loc10_8.2: type = converted %int.make_type_32.loc10, %.loc10_8.1 [template = i32]
-// CHECK:STDOUT:   %Div.ref.loc10: %Div.type = name_ref Div, %Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc10_18: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_21: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %int.sdiv.loc10: init i32 = call %Div.ref.loc10(%.loc10_18, %.loc10_21) [template = <error>]
-// CHECK:STDOUT:   %.loc10_23.1: i32 = value_of_initializer %int.sdiv.loc10 [template = <error>]
-// CHECK:STDOUT:   %.loc10_23.2: i32 = converted %int.sdiv.loc10, %.loc10_23.1 [template = <error>]
-// CHECK:STDOUT:   %a.loc10: i32 = bind_name a, %.loc10_23.2
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
-// CHECK:STDOUT:   %Div.ref.loc15: %Div.type = name_ref Div, %Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc15_18: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %int.sdiv.loc15: init i32 = call %Div.ref.loc15(%.loc15_18, %.loc15_21) [template = <error>]
-// CHECK:STDOUT:   %.loc15_23.1: i32 = value_of_initializer %int.sdiv.loc15 [template = <error>]
-// CHECK:STDOUT:   %.loc15_23.2: i32 = converted %int.sdiv.loc15, %.loc15_23.1 [template = <error>]
-// CHECK:STDOUT:   %b.loc15: i32 = bind_name b, %.loc15_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.sdiv";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Div.ref.loc10: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
+// CHECK:STDOUT:   %.loc10_18: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_21: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %int.sdiv.loc10: init i32 = call %Div.ref.loc10(%.loc10_18, %.loc10_21) [template = <error>]
+// CHECK:STDOUT:   %.loc10_23.1: i32 = value_of_initializer %int.sdiv.loc10 [template = <error>]
+// CHECK:STDOUT:   %.loc10_23.2: i32 = converted %int.sdiv.loc10, %.loc10_23.1 [template = <error>]
+// CHECK:STDOUT:   %a: i32 = bind_name a, %.loc10_23.2
+// CHECK:STDOUT:   %Div.ref.loc15: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
+// CHECK:STDOUT:   %.loc15_18: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %int.sdiv.loc15: init i32 = call %Div.ref.loc15(%.loc15_18, %.loc15_21) [template = <error>]
+// CHECK:STDOUT:   %.loc15_23.1: i32 = value_of_initializer %int.sdiv.loc15 [template = <error>]
+// CHECK:STDOUT:   %.loc15_23.2: i32 = converted %int.sdiv.loc15, %.loc15_23.1 [template = <error>]
+// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc15_23.2
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

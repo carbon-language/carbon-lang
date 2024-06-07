@@ -63,13 +63,20 @@ let v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .v [private] = @__global_init.%v
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_22: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc4_23: %.1 = converted %.loc4_22, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %v: %.1 = bind_name v, %.loc4_23
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_def.impl.carbon
@@ -79,11 +86,18 @@ let v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .v2 = @__global_init.%v2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
 // CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
@@ -93,11 +107,18 @@ let v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .v2 = @__global_init.%v2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
 // CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_other_def.carbon
@@ -109,12 +130,18 @@ let v2: () = Test.v;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, file.%Test [template = file.%Test]
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
 // CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

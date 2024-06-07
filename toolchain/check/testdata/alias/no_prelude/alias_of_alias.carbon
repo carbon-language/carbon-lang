@@ -30,6 +30,7 @@ let d: c = {};
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .d = @__global_init.%d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
@@ -39,6 +40,15 @@ let d: c = {};
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [template = constants.%C]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc15_13.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc15_13.3: init %C = class_init (), %.loc15_13.2 [template = constants.%struct]
@@ -46,10 +56,6 @@ let d: c = {};
 // CHECK:STDOUT:   %.loc15_14.1: ref %C = converted %.loc15_13.1, %.loc15_13.4
 // CHECK:STDOUT:   %.loc15_14.2: %C = bind_value %.loc15_14.1
 // CHECK:STDOUT:   %d: %C = bind_name d, %.loc15_14.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

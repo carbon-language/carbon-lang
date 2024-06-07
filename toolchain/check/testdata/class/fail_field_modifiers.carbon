@@ -84,6 +84,8 @@ class Class {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .j = %.loc17_16
 // CHECK:STDOUT:   .k = %.loc23_14
+// CHECK:STDOUT:   .l = %l
+// CHECK:STDOUT:   .m = %m
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

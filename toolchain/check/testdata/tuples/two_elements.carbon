@@ -31,6 +31,8 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .v = @__global_init.%v
+// CHECK:STDOUT:     .w = @__global_init.%w
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
@@ -45,12 +47,6 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc11_17.4: type = value_of_initializer %int.make_type_32.loc11_14 [template = i32]
 // CHECK:STDOUT:   %.loc11_17.5: type = converted %int.make_type_32.loc11_14, %.loc11_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc11_17.6: type = converted %.loc11_17.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc11_22: i32 = int_literal 4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_25: i32 = int_literal 102 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_28: %.3 = tuple_literal (%.loc11_22, %.loc11_25)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc11_22, %.loc11_25) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_29: %.3 = converted %.loc11_28, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %v: %.3 = bind_name v, %.loc11_29
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc12_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -61,8 +57,6 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc12_17.4: type = value_of_initializer %int.make_type_32.loc12_14 [template = i32]
 // CHECK:STDOUT:   %.loc12_17.5: type = converted %int.make_type_32.loc12_14, %.loc12_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc12_17.6: type = converted %.loc12_17.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %v.ref: %.3 = name_ref v, %v
-// CHECK:STDOUT:   %w: %.3 = bind_name w, %v.ref
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -93,6 +87,14 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_22: i32 = int_literal 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_25: i32 = int_literal 102 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_28: %.3 = tuple_literal (%.loc11_22, %.loc11_25)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc11_22, %.loc11_25) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_29: %.3 = converted %.loc11_28, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %v: %.3 = bind_name v, %.loc11_29
+// CHECK:STDOUT:   %v.ref: %.3 = name_ref v, %v
+// CHECK:STDOUT:   %w: %.3 = bind_name w, %v.ref
 // CHECK:STDOUT:   %.loc14_22: i32 = int_literal 4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_25: i32 = int_literal 102 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_28.1: %.3 = tuple_literal (%.loc14_22, %.loc14_25)

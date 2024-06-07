@@ -36,6 +36,7 @@ let c_var: c = d;
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:     .c_var = @__global_init.%c_var
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
@@ -45,8 +46,6 @@ let c_var: c = d;
 // CHECK:STDOUT:   %d.var: ref %D = var d
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
-// CHECK:STDOUT:   %d.ref: ref %D = name_ref d, %d
-// CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -65,6 +64,8 @@ let c_var: c = d;
 // CHECK:STDOUT:   %.loc15_13.2: init %D = class_init (), file.%d.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14
+// CHECK:STDOUT:   %d.ref: ref %D = name_ref d, file.%d
+// CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

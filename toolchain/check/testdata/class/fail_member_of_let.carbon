@@ -17,9 +17,12 @@ let T: type = Class;
 
 // The class name is required to be written in the same way as in the class
 // declaration. An expression that evaluates to the class name is not accepted.
-// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+3]]:4: ERROR: Name `T` not found.
+// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+6]]:4: ERROR: Name qualifiers are only allowed for entities that provide a scope.
 // CHECK:STDERR: fn T.F() {}
 // CHECK:STDERR:    ^
+// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: Referenced non-scope entity declared here.
+// CHECK:STDERR: let T: type = Class;
+// CHECK:STDERR:     ^
 fn T.F() {}
 
 // CHECK:STDOUT: --- fail_member_of_let.carbon
@@ -40,12 +43,11 @@ fn T.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .T = @__global_init.%T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,6 +70,13 @@ fn T.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
