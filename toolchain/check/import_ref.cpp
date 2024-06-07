@@ -577,6 +577,7 @@ class ImportRefResolver {
   // unresolved constants to the work stack.
   auto GetLocalNameScopeId(SemIR::NameScopeId name_scope_id)
       -> SemIR::NameScopeId {
+    // Get the instruction that create the scope.
     auto [inst_id, inst] =
         import_ir_.name_scopes().GetInstIfValid(name_scope_id);
     if (!inst) {
@@ -585,14 +586,29 @@ class ImportRefResolver {
       // to remap them.
       return SemIR::NameScopeId::Invalid;
     }
-    if (inst->Is<SemIR::ImplDecl>()) {
-      // TODO: Import the scope for an `impl` definition.
+
+    // Get the constant value for the scope.
+    auto const_id = SemIR::ConstantId::Invalid;
+    CARBON_KIND_SWITCH(*inst) {
+      case SemIR::ImplDecl::Kind:
+        // TODO: Import the scope for an `impl` definition.
+        return SemIR::NameScopeId::Invalid;
+
+      case SemIR::Namespace::Kind:
+        // If the namespace has already been imported, we can use its constant.
+        // However, if it hasn't, we use Invalid instead of adding it to the
+        // work stack. That's expected to be okay when resolving references.
+        const_id = import_ir_constant_values().Get(inst_id);
+        break;
+
+      default:
+        const_id = GetLocalConstantId(inst_id);
+    }
+    if (!const_id.is_valid()) {
       return SemIR::NameScopeId::Invalid;
     }
-    auto const_inst_id = GetLocalConstantInstId(inst_id);
-    if (!const_inst_id.is_valid()) {
-      return SemIR::NameScopeId::Invalid;
-    }
+
+    auto const_inst_id = context_.constant_values().GetInstId(const_id);
     auto name_scope_inst = context_.insts().Get(const_inst_id);
     CARBON_KIND_SWITCH(name_scope_inst) {
       case CARBON_KIND(SemIR::Namespace inst): {
@@ -741,6 +757,10 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::IntLiteral inst): {
         return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::Namespace inst): {
+        CARBON_FATAL() << "Namespaces shouldn't need resolution this way: "
+                       << inst;
       }
       case CARBON_KIND(SemIR::PointerType inst): {
         return TryResolveTypedInst(inst);
@@ -1546,8 +1566,11 @@ static auto GetInstForLoad(Context& context,
     import_ir_inst =
         cursor_ir->import_ir_insts().Get(import_ref->import_ir_inst_id);
     cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-    import_ir_insts.push_back({.ir_id = context.GetImportIRId(*cursor_ir),
-                               .inst_id = import_ir_inst.inst_id});
+    import_ir_insts.push_back(
+        {.ir_id = AddImportIR(context, {.node_id = Parse::NodeId::Invalid,
+                                        .sem_ir = cursor_ir,
+                                        .is_export = false}),
+         .inst_id = import_ir_inst.inst_id});
   }
 }
 

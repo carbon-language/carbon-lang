@@ -345,7 +345,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]

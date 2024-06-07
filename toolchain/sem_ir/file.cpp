@@ -526,15 +526,16 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
-      case ImportRefUnloaded::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case CARBON_KIND(ImportRefLoaded inst): {
-        auto import_ir_inst = ir->import_ir_insts().Get(inst.import_ir_inst_id);
+      case ImportRefUnloaded::Kind:
+      case ImportRefLoaded::Kind: {
+        auto import_ir_inst = ir->import_ir_insts().Get(
+            untyped_inst.As<SemIR::AnyImportRef>().import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
         inst_id = import_ir_inst.inst_id;
         continue;

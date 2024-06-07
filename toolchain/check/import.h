@@ -11,6 +11,14 @@
 
 namespace Carbon::Check {
 
+// Imports the API file's name lookup information into a corresponding
+// implementation file. Only information for the current package will be copied;
+// information for other packages should be handled through
+// ImportLibrariesFromOtherPackage.
+auto ImportApiFile(Context& context, SemIR::TypeId namespace_type_id,
+                   Parse::ImportDeclId node_id, const SemIR::File& api_sem_ir)
+    -> void;
+
 // Add the current package's imports to name lookup. This pulls in all names;
 // conflicts for things such as `package.a.b.c` will be flagged even though they
 // are several layers deep.
