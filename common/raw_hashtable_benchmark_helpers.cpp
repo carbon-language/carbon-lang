@@ -325,8 +325,7 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   size_t mask = ComputeProbeMaskFromSize(expected_size);
   uint64_t salt = ComputeSeed();
   auto get_hash_index = [mask, salt](auto x) -> ssize_t {
-    auto [hash_index, _] =
-        HashValue(x, salt).template ExtractIndexAndTag<7>();
+    auto [hash_index, _] = HashValue(x, salt).template ExtractIndexAndTag<7>();
     return (hash_index & mask) >> GroupShift;
   };
 

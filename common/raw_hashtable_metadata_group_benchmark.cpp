@@ -109,7 +109,7 @@ static auto BuildBenchMetadata() -> llvm::ArrayRef<BenchMetadata> {
   // The first storage is of `BenchSize` groups of metadata.
   static uint8_t metadata_storage[GroupSize][BenchSize * GroupSize];
   // When `Kind` is `Random`, each group above will have a *different* byte that
-  // matches in that group. This array stores those bytes for teh benchmark to
+  // matches in that group. This array stores those bytes for the benchmark to
   // match against the group.
   static uint8_t bytes_storage[GroupSize][BenchSize];
 
@@ -293,7 +293,7 @@ static void BM_LoadMatchMissSteps(benchmark::State& s) {
 
     // We don't use a `CARBON_CHECK` here as the loop below will test the range
     // to see if the loop should be skipped, replicating the test that we also
-    // expect in hashtable usage. 
+    // expect in hashtable usage.
 
     // We want to simulate the code sequence a hashtable would produce when
     // matching indices are "misses" in the hashtable, but only the aspects of
