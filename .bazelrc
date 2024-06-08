@@ -9,6 +9,10 @@ build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_ti
 build:clang-tidy --output_groups=report
 build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
 
+# This warning seems to incorrectly fire in this build configuration, despite
+# not firing in our normal builds.
+build:clang-tidy --copt=-Wno-unknown-pragmas
+
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
 # here can be overridden in the user configuration where needed.
