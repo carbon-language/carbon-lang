@@ -1010,6 +1010,10 @@ inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   // here rather than above prior to extracting the match bits.
   result = MatchIndex(metadata_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
+  // Even though we only need the first match rather than all matches, we don't
+  // have a more efficient way to compute this on x86 and so we reuse the
+  // general match infrastructure that computes all matches in a bit-encoding.
+  // We then convert it into a `MatchIndex` that just finds the first one.
   result = static_cast<MatchIndex>(X86SIMDMatch(Empty));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
@@ -1031,6 +1035,10 @@ inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
   // here rather than above prior to extracting the match bits.
   result = MatchIndex(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
+  // Even though we only need the first match rather than all matches, we don't
+  // have a more efficient way to compute this on x86 and so we reuse the
+  // general match infrastructure that computes all matches in a bit-encoding.
+  // We then convert it into a `MatchIndex` that just finds the first one.
   result = static_cast<MatchIndex>(X86SIMDMatch(Deleted));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
