@@ -943,7 +943,9 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
   // high latency.
   metadata_ints[0] &= (~LSBs | metadata_ints[0] >> 7);
 #elif CARBON_X86_SIMD_SUPPORT
-  // For each byte, use `metadata_vec` if the byte's high bit is set (indicating it is present), otherwise (it is empty or deleted) replace it with zero (representing empty).
+  // For each byte, use `metadata_vec` if the byte's high bit is set (indicating
+  // it is present), otherwise (it is empty or deleted) replace it with zero
+  // (representing empty).
   metadata_vec =
       _mm_blendv_epi8(_mm_setzero_si128(), metadata_vec, metadata_vec);
 #else
@@ -954,9 +956,10 @@ inline auto MetadataGroup::SIMDClearDeleted() -> void {
 inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> MatchRange {
   MatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
-  // Broadcast query to every byte.
+  // Broadcast byte we want to match to every byte in the vector.
   auto match_byte_vec = vdup_n_u8(tag | PresentMask);
-  // Result bytes have all bits set for the bytes that match, so we have to clear everything but MSBs next.
+  // Result bytes have all bits set for the bytes that match, so we have to
+  // clear everything but MSBs next.
   auto match_byte_cmp_vec = vceq_u8(metadata_vec, match_byte_vec);
   uint64_t match_bits = vreinterpret_u64_u8(match_byte_cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
@@ -976,7 +979,7 @@ inline auto MetadataGroup::SIMDMatch(uint8_t tag) const -> MatchRange {
 inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   MatchRange result;
 #if CARBON_NEON_SIMD_SUPPORT
-  // Just extract directly.
+  // Just extract the metadata directly.
   uint64_t match_bits = vreinterpret_u64_u8(metadata_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
   // test can often be folded into masking the bits with `MSBs` when we do that
@@ -984,7 +987,8 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
   // here rather than above prior to extracting the match bits.
   result = MatchRange(match_bits & MSBs);
 #elif CARBON_X86_SIMD_SUPPORT
-  // We arranged the byte vector so that present bytes have the high bit set, which this instruction extracts.
+  // We arranged the byte vector so that present bytes have the high bit set,
+  // which this instruction extracts.
   result = MatchRange(_mm_movemask_epi8(metadata_vec));
 #else
   static_assert(!UseSIMD && !DebugSIMD, "Unimplemented SIMD operation");
@@ -995,8 +999,9 @@ inline auto MetadataGroup::SIMDMatchPresent() const -> MatchRange {
 inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
-  // Use the fact that empty slots are represented by zero bytes.
-  // Result will have all bits set for any input zero byte, so we zero all but the high bits below.
+  // Compare all bytes with zero, as that is the empty byte value. Result will
+  // have all bits set for any input zero byte, so we zero all but the high bits
+  // below.
   auto cmp_vec = vceqz_u8(metadata_vec);
   uint64_t metadata_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
@@ -1015,6 +1020,9 @@ inline auto MetadataGroup::SIMDMatchEmpty() const -> MatchIndex {
 inline auto MetadataGroup::SIMDMatchDeleted() const -> MatchIndex {
   MatchIndex result;
 #if CARBON_NEON_SIMD_SUPPORT
+  // Broadcast the `Deleted` byte across the vector and compare the bytes of
+  // that with the metadata vector. The result will have all bits set for any
+  // input zero byte, so we zero all but the high bits below.
   auto cmp_vec = vceq_u8(metadata_vec, vdup_n_u8(Deleted));
   uint64_t match_bits = vreinterpret_u64_u8(cmp_vec)[0];
   // The matched range is likely to be tested for zero by the caller, and that
@@ -1036,11 +1044,17 @@ inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
   return vreinterpret_u64_u8(vceq_u8(lhs.metadata_vec, rhs.metadata_vec))[0] ==
          static_cast<uint64_t>(-1LL);
 #elif CARBON_X86_SIMD_SUPPORT
-  // Different x86 SIMD extensions provide different comparison functionality.
+  // Different x86 SIMD extensions provide different comparison functionality
+  // available.
 #if __SSE4_2__
+  // With SSE 4.2, we can directly test and branch in the SIMD domain on whether
+  // the two metadata vectors are equal.
   return _mm_testc_si128(_mm_cmpeq_epi8(lhs.metadata_vec, rhs.metadata_vec),
                          _mm_set1_epi8(0xff)) == 1;
 #else
+  // With older versions of SSE we have to extract the result of the comparison,
+  // much like we do when matching. That will have the usual bitmask
+  // representing equal bytes, and test for that exact bitmask in scalar code.
   return _mm_movemask_epi8(_mm_cmpeq_epi8(lhs.metadata_vec,
                                           rhs.metadata_vec)) == 0x0000'ffffU;
 #endif
@@ -1055,8 +1069,12 @@ inline auto MetadataGroup::SIMDCompareEqual(MetadataGroup lhs,
 #if CARBON_X86_SIMD_SUPPORT
 inline auto MetadataGroup::X86SIMDMatch(uint8_t match_byte) const
     -> MatchRange {
+  // Broadcast the byte we're matching against to all bytes in a vector, and
+  // compare those bytes with the metadata vector bytes.
   auto match_byte_vec = _mm_set1_epi8(match_byte);
   auto match_byte_cmp_vec = _mm_cmpeq_epi8(metadata_vec, match_byte_vec);
+  // Extract the result of each byte-wise comparison into the low bits of an
+  // integer.
   uint32_t match_bits = _mm_movemask_epi8(match_byte_cmp_vec);
   return MatchRange(match_bits);
 }

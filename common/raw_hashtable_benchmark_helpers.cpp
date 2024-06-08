@@ -237,6 +237,17 @@ static absl::NoDestructor<
     std::map<std::pair<ssize_t, ssize_t>, llvm::OwningArrayRef<T>>>
     lookup_keys_storage;
 
+// Given a particular table keys size and lookup keys size, provide an array ref
+// to a shuffled set of lookup keys.
+//
+// Because different table sizes pull from different sub-ranges of our raw keys,
+// we need to compute a distinct set of random keys in the table to use for
+// lookups depending on the table size. And we also want to have an even
+// distribution of key *sizes* throughout the lookup keys, and so we can't
+// compute a single lookup keys array of the maximum size. Instead we need to
+// compute a distinct special set of lookup keys for each pair of table and
+// lookup size, and then shuffle that specific set into a random sequence that
+// is returned. This function memoizes this sequence for each pair of sizes.
 template <typename T>
 auto GetShuffledLookupKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
     -> llvm::ArrayRef<T> {
