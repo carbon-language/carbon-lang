@@ -203,6 +203,39 @@ struct CarbonHashDI<llvm::StringRef> {
   }
 };
 
+template <typename TableT>
+auto ReportTableMetrics(const TableT& table, benchmark::State& state) -> void {
+  // While this count is "iteration invariant" (it should be exactly the same
+  // for every iteration as the set of keys is the same), we don't use that
+  // because it will scale this by the number of iterations. We want to
+  // display the metrics for this benchmark *parameter*, not what resulted
+  // from the number of iterations. That means we use the normal counter API
+  // without flags.
+  auto metrics = table.ComputeMetrics();
+  state.counters["P-compares"] = metrics.probe_avg_compares;
+  state.counters["P-distance"] = metrics.probe_avg_distance;
+  state.counters["P-fraction"] =
+      static_cast<double>(metrics.probed_key_count) / metrics.key_count;
+  state.counters["Pmax-distance"] = metrics.probe_max_distance;
+  state.counters["Pmax-compares"] = metrics.probe_max_compares;
+  state.counters["Probed"] = metrics.probed_key_count;
+
+  state.counters["Storage"] = metrics.storage_bytes;
+
+  // Also compute how 'efficient' the storage is, 1.0 being zero bytes outside
+  // of key and value.
+  ssize_t element_size;
+  if constexpr (requires { TableT::ValueT; }) {
+    element_size =
+        sizeof(typename TableT::KeyT) + sizeof(typename TableT::ValueT);
+  } else {
+    element_size = sizeof(typename TableT::KeyT);
+  }
+  state.counters["Storage eff"] =
+      static_cast<double>(metrics.key_count * element_size) /
+      metrics.storage_bytes;
+}
+
 }  // namespace Carbon::RawHashtable
 
 #endif  // CARBON_COMMON_RAW_HASHTABLE_BENCHMARK_HELPERS_H_

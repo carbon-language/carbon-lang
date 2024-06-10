@@ -16,6 +16,7 @@ using RawHashtable::CarbonHashDI;
 using RawHashtable::GetKeysAndHitKeys;
 using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
+using RawHashtable::ReportTableMetrics;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
 
@@ -362,13 +363,7 @@ static void BM_SetInsertSeq(benchmark::State& state) {
       CARBON_DCHECK(inserted) << "Must be a successful insert!";
     }
 
-    // While this count is "iteration invariant" (it should be exactly the same
-    // for every iteration as the set of keys is the same), we don't use that
-    // because it will scale this by the number of iterations. We want to
-    // display the probe count of this benchmark *parameter*, not the probe
-    // count that resulted from the number of iterations. That means we use the
-    // normal counter API without flags.
-    state.counters["Probed"] = s.CountProbedKeys();
+    ReportTableMetrics(s, state);
 
     // Uncomment this call to print out statistics about the index-collisions
     // among these keys for debugging:
