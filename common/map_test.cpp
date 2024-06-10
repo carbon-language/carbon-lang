@@ -226,6 +226,92 @@ TYPED_TEST(MapTest, Conversions) {
   EXPECT_EQ(104, *cmv3[4]);
 }
 
+TYPED_TEST(MapTest, Grow) {
+  using MapT = TypeParam;
+
+  MapT m;
+  // Grow when empty. May be a no-op for some small sizes.
+  m.Grow(32);
+
+  // Add some elements that will need to be propagated through subsequent
+  // growths. Also delete some.
+  for (int i : llvm::seq(1, 24)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
+  }
+  for (int i : llvm::seq(1, 8)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Erase(i));
+  }
+
+  // No-op.
+  m.Grow(16);
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
+
+  // Get a couple of doubling based growths.
+  m.Grow(64);
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
+  m.Grow(128);
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
+
+  // Add some more, but not enough to trigger further growth, and then grow by
+  // several more multiples of two to test handling large growth.
+  for (int i : llvm::seq(24, 48)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
+  }
+  for (int i : llvm::seq(8, 16)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Erase(i));
+  }
+  m.Grow(1024);
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(16, 48)));
+}
+
+TYPED_TEST(MapTest, GrowForInsert) {
+  using MapT = TypeParam;
+
+  MapT m;
+  m.GrowForInsertCount(42);
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
+  }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 42)));
+
+  // Erase many elements and grow again for another insert.
+  for (int i : llvm::seq(1, 32)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Erase(i));
+  }
+  m.GrowForInsertCount(42);
+  for (int i : llvm::seq(42, 84)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
+  }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(32, 84)));
+
+  // Erase all the elements, then grow for a much larger insertion and insert
+  // again.
+  for (int i : llvm::seq(32, 84)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Erase(i));
+  }
+  m.GrowForInsertCount(1717);
+  for (int i : llvm::seq(128, 1717 + 128)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
+  }
+  ExpectMapElementsAre(m, MakeKeyValues([](int k) { return k * 100; },
+                                        llvm::seq(128, 1717 + 128)));
+}
+
 // This test is largely exercising the underlying `RawHashtable` implementation
 // with complex growth, erasure, and re-growth.
 TYPED_TEST(MapTest, ComplexOpSequence) {

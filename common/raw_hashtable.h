@@ -417,6 +417,19 @@ class BaseImpl {
   auto InsertImpl(LookupKeyT lookup_key, KeyContextT key_context)
       -> std::pair<EntryT*, bool>;
 
+  // Grow the table to specific allocation size.
+  //
+  // This will grow the the table if necessary for it to have an allocation size
+  // of `target_alloc_size` which must be a power of two. Note that this will
+  // not allow that many keys to be inserted into the hashtable, but a smaller
+  // number based on the load factor. If a specific number of insertions need to
+  // be achieved without triggering growth, use the `GrowForInsertCountImpl`
+  // method.
+  auto GrowImpl(ssize_t target_alloc_size, KeyContextT key_context) -> void;
+
+  // Grow the table to allow inserting the specified number of keys.
+  auto GrowForInsertCountImpl(ssize_t count, KeyContextT key_context) -> void;
+
   // Looks up the entry in the hashtable, and if found destroys the entry and
   // returns `true`. If not found, returns `false`.
   //
@@ -475,6 +488,7 @@ class BaseImpl {
   static auto ComputeNextAllocSize(ssize_t old_alloc_size) -> ssize_t;
   static auto GrowthThresholdForAllocSize(ssize_t alloc_size) -> ssize_t;
 
+  auto GrowToNextAllocSize(KeyContextT key_context) -> void;
   template <typename LookupKeyT>
   auto GrowAndInsert(LookupKeyT lookup_key, KeyContextT key_context) -> EntryT*;
 
@@ -828,6 +842,84 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+[[clang::noinline]] auto
+BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowImpl(
+    ssize_t target_alloc_size, KeyContextT key_context) -> void {
+  CARBON_CHECK(llvm::isPowerOf2_64(target_alloc_size));
+  if (target_alloc_size < alloc_size()) {
+    return;
+  }
+
+  // If this is the next alloc size, we can used our optimized growth strategy.
+  if (target_alloc_size == ComputeNextAllocSize(alloc_size())) {
+    GrowToNextAllocSize(key_context);
+    return;
+  }
+
+  // Create locals for the old state of the table.
+  ssize_t old_size = alloc_size();
+  CARBON_DCHECK(old_size > 0);
+  bool old_small = is_small();
+  Storage* old_storage = storage();
+  uint8_t* old_metadata = metadata();
+  EntryT* old_entries = entries();
+
+  // Configure for the new size allocate the new storage.
+  alloc_size() = target_alloc_size;
+  storage() = Allocate(target_alloc_size);
+  std::memset(metadata(), 0, target_alloc_size);
+  growth_budget_ = GrowthThresholdForAllocSize(target_alloc_size);
+
+  // Just re-insert all the entries. As we're more than doubling the table size,
+  // we don't bother with fancy optimizations here. Even using `memcpy` for the
+  // entries seems unlikely to be a significant win given how sparse the
+  // insertions will end up being.
+  ssize_t count = 0;
+  for (ssize_t group_index = 0; group_index < old_size;
+       group_index += GroupSize) {
+    auto g = MetadataGroup::Load(old_metadata, group_index);
+    auto present_matched_range = g.MatchPresent();
+    for (ssize_t byte_index : present_matched_range) {
+      ++count;
+      ssize_t index = group_index + byte_index;
+      EntryT* new_entry =
+          InsertIntoEmpty(old_entries[index].key(), key_context);
+      new_entry->MoveFrom(std::move(old_entries[index]));
+    }
+  }
+  growth_budget_ -= count;
+
+  if (!old_small) {
+    // Old isn't a small buffer, so we need to deallocate it.
+    Deallocate(old_storage, old_size);
+  }
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowForInsertCountImpl(
+    ssize_t count, KeyContextT key_context) -> void {
+  if (count < growth_budget_) {
+    // Already space for the needed growth.
+    return;
+  }
+
+  // Currently, we don't account for any tombstones marking deleted elements,
+  // and just conservatively ensure the growth will create adequate growth
+  // budget for insertions. We could make this more precise by instead walking
+  // the table and only counting present slots, as once we grow we'll be able to
+  // reclaim all of the deleted slots. But this adds complexity and it isn't
+  // clear this is necessary so we do the simpler conservative thing.
+  ssize_t used_budget =
+      GrowthThresholdForAllocSize(alloc_size()) - growth_budget_;
+  ssize_t budget_needed = used_budget + count;
+  ssize_t space_needed = budget_needed + (budget_needed / 7);
+  ssize_t target_alloc_size = llvm::NextPowerOf2(space_needed);
+  CARBON_CHECK(GrowthThresholdForAllocSize(target_alloc_size) >
+               (budget_needed));
+  GrowImpl(target_alloc_size, key_context);
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::EraseImpl(
     LookupKeyT lookup_key, KeyContextT key_context) -> bool {
@@ -1004,16 +1096,35 @@ auto BaseImpl<InputKeyT, InputValueT,
   return alloc_size - alloc_size / 8;
 }
 
-// Grow the hashtable to create space and then insert into it. Returns the
-// selected insertion entry. Never returns null. In addition to growing and
-// selecting the insertion entry, this routine updates the metadata array so
-// that this function can be directly called and the result returned from
-// `InsertImpl`.
+// Optimized routine for growing to the next alloc size.
+//
+// A particularly common and important to optimize path is growing to the next
+// alloc size, which will always be a doubling of the allocated size. This
+// allows an important optimization -- we're adding exactly one more high bit to
+// the hash-computed index for each entry. This in turn means we can classify
+// every entry in the table into three cases:
+//
+// 1) The new high bit is zero, the entry is at the same index in the new
+//    table as the old.
+//
+// 2) The new high bit is one, the entry is at the old index plus the old
+//    size.
+//
+// 3) The entry's current index doesn't match the initial hash index because
+//    it required some amount of probing to find an empty slot.
+//
+// The design of the hash table tries to minimize how many entries fall into
+// case (3), so we expect the vast majority of entries to be in (1) or (2).
+// This lets us model growth notionally as duplicating the hash table,
+// clearing out the empty slots, and inserting any probed elements. That model
+// in turn is much more efficient than re-inserting all of the elements as it
+// avoids the unnecessary parts of insertion and avoids interleaving random
+// accesses for the probed elements. But most importantly, for trivially
+// relocatable types it allows us to use `memcpy` rather than moving the
+// elements individually.
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-template <typename LookupKeyT>
-[[clang::noinline]] auto
-BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
-    LookupKeyT lookup_key, KeyContextT key_context) -> EntryT* {
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
+    KeyContextT key_context) -> void {
   // We collect the probed elements in a small vector for re-insertion. It is
   // tempting to reuse the already allocated storage, but doing so appears to
   // be a (very slight) performance regression. These are relatively rare and
@@ -1025,12 +1136,9 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
   // we can handle this most efficiently with temporary, additional storage.
   llvm::SmallVector<ssize_t, 128> probed_indices;
 
-  // We grow into a new `MapBase` so that both the new and old maps are
-  // fully functional until all the entries are moved over. However, we directly
-  // manipulate the internals to short circuit many aspects of the growth.
+  // Create locals for the old state of the table.
   ssize_t old_size = alloc_size();
   CARBON_DCHECK(old_size > 0);
-  CARBON_DCHECK(growth_budget_ == 0);
 
   bool old_small = is_small();
   Storage* old_storage = storage();
@@ -1053,7 +1161,7 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
       << ", size: " << old_size;
 #endif
 
-  // Compute the new size and grow the storage in place (if possible).
+  // Configure for the new size allocate the new storage.
   ssize_t new_size = ComputeNextAllocSize(old_size);
   alloc_size() = new_size;
   storage() = Allocate(new_size);
@@ -1063,25 +1171,11 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
   uint8_t* new_metadata = metadata();
   EntryT* new_entries = entries();
 
-  // We always double the size when we grow. This allows an important
-  // optimization -- we're adding exactly one more high bit to the hash-computed
-  // index for each entry. This in turn means we can classify every entry in the
-  // table into three cases:
-  //
-  // 1) The new high bit is zero, the entry is at the same index in the new
-  //    table as the old.
-  //
-  // 2) The new high bit is one, the entry is at the old index plus the old
-  //    size.
-  //
-  // 3) The entry's current index doesn't match the initial hash index because
-  //    it required some amount of probing to find an empty slot.
-  //
-  // The design of the hash table tries to minimize how many entries fall into
-  // case (3), so we expect the vast majority of entries to be in (1) or (2).
-  // This lets us model growth notionally as duplicating the hash table,
-  // clearing out the empty slots, and inserting any probed elements.
-
+  // Walk the metadata groups, clearing deleted to empty, duplicating the
+  // metadata for the low and high halves, and updating it based on where each
+  // entry will go in the new table. The updated metadata group is written to
+  // the new table, and for non-trivially relocatable entry types, the entry is
+  // also moved to its new location.
   ssize_t count = 0;
   for (ssize_t group_index = 0; group_index < old_size;
        group_index += GroupSize) {
@@ -1196,9 +1290,22 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
     // Old isn't a small buffer, so we need to deallocate it.
     Deallocate(old_storage, old_size);
   }
+}
 
-  // And lastly insert the lookup_key into an index in the newly grown map and
-  // return that index for use.
+// Grow the hashtable to create space and then insert into it. Returns the
+// selected insertion entry. Never returns null. In addition to growing and
+// selecting the insertion entry, this routine updates the metadata array so
+// that this function can be directly called and the result returned from
+// `InsertImpl`.
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+template <typename LookupKeyT>
+[[clang::noinline]] auto
+BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
+    LookupKeyT lookup_key, KeyContextT key_context) -> EntryT* {
+  GrowToNextAllocSize(key_context);
+
+  // And insert the lookup_key into an index in the newly grown map and return
+  // that index for use.
   --growth_budget_;
   return InsertIntoEmpty(lookup_key, key_context);
 }
