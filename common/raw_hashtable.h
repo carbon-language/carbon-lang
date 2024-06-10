@@ -846,7 +846,7 @@ template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowImpl(
     ssize_t target_alloc_size, KeyContextT key_context) -> void {
   CARBON_CHECK(llvm::isPowerOf2_64(target_alloc_size));
-  if (target_alloc_size < alloc_size()) {
+  if (target_alloc_size <= alloc_size()) {
     return;
   }
 
@@ -864,7 +864,7 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowImpl(
   uint8_t* old_metadata = metadata();
   EntryT* old_entries = entries();
 
-  // Configure for the new size allocate the new storage.
+  // Configure for the new size and allocate the new storage.
   alloc_size() = target_alloc_size;
   storage() = Allocate(target_alloc_size);
   std::memset(metadata(), 0, target_alloc_size);
@@ -1098,7 +1098,7 @@ auto BaseImpl<InputKeyT, InputValueT,
 
 // Optimized routine for growing to the next alloc size.
 //
-// A particularly common and important to optimize path is growing to the next
+// A particularly common and important-to-optimize path is growing to the next
 // alloc size, which will always be a doubling of the allocated size. This
 // allows an important optimization -- we're adding exactly one more high bit to
 // the hash-computed index for each entry. This in turn means we can classify
@@ -1161,7 +1161,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
       << ", size: " << old_size;
 #endif
 
-  // Configure for the new size allocate the new storage.
+  // Configure for the new size and allocate the new storage.
   ssize_t new_size = ComputeNextAllocSize(old_size);
   alloc_size() = new_size;
   storage() = Allocate(new_size);
