@@ -369,6 +369,7 @@ static void BM_SetInsertSeq(benchmark::State& state) {
     // from the number of iterations. That means we use the normal counter API
     // without flags.
     auto metrics = s.GetMetrics();
+    CARBON_CHECK(metrics.key_count == static_cast<ssize_t>(keys.size()));
     state.counters["P-compares"] = metrics.probe_avg_compares;
     state.counters["P-distance"] = metrics.probe_avg_distance;
     state.counters["P-fraction"] =
