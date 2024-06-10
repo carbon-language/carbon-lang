@@ -121,8 +121,8 @@ class MapView
   // benchmarking or logging of performance anomalies. The specific metrics
   // returned have no specific guarantees beyond being informative in
   // benchmarks.
-  auto GetMetrics(KeyContextT key_context = KeyContextT()) -> MetricsT {
-    return ImplT::GetMetrics(key_context);
+  auto ComputeMetrics(KeyContextT key_context = KeyContextT()) -> MetricsT {
+    return ImplT::ComputeMetricsImpl(key_context);
   }
 
  private:
@@ -231,8 +231,9 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   }
 
   // Convenience forwarder to the view type.
-  auto GetMetrics(KeyContextT key_context = KeyContextT()) const -> MetricsT {
-    return ViewT(*this).GetMetrics(key_context);
+  auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
+      -> MetricsT {
+    return ViewT(*this).ComputeMetrics(key_context);
   }
 
   // Insert a key and value into the map. If the key is already present, the new

@@ -101,8 +101,8 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   // benchmarking or logging of performance anomalies. The specific metrics
   // returned have no specific guarantees beyond being informative in
   // benchmarks.
-  auto GetMetrics(KeyContextT key_context = KeyContextT()) -> MetricsT {
-    return ImplT::GetMetrics(key_context);
+  auto ComputeMetrics(KeyContextT key_context = KeyContextT()) -> MetricsT {
+    return ImplT::ComputeMetricsImpl(key_context);
   }
 
  private:
@@ -191,8 +191,9 @@ class SetBase
   }
 
   // Convenience forwarder to the view type.
-  auto GetMetrics(KeyContextT key_context = KeyContextT()) const -> MetricsT {
-    return ViewT(*this).GetMetrics(key_context);
+  auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
+      -> MetricsT {
+    return ViewT(*this).ComputeMetrics(key_context);
   }
 
   // Insert a key into the set. If the key is already present, no insertion is

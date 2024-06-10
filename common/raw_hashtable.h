@@ -372,7 +372,7 @@ class ViewImpl {
   // Returns a collection of informative metrics on the the current state of the
   // table, useful for performance analysis. These include relatively slow to
   // compute metrics requiring deep inspection of the table's state.
-  auto GetMetrics(KeyContextT key_context) const -> MetricsT;
+  auto ComputeMetricsImpl(KeyContextT key_context) const -> MetricsT;
 
  private:
   ViewImpl(ssize_t alloc_size, Storage* storage)
@@ -747,7 +747,7 @@ ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ForEachEntry(
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::GetMetrics(
+auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeMetricsImpl(
     KeyContextT key_context) const -> Metrics {
   uint8_t* local_metadata = metadata();
   EntryT* local_entries = entries();

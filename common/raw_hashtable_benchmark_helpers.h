@@ -211,7 +211,7 @@ auto ReportTableMetrics(const TableT& table, benchmark::State& state) -> void {
   // display the metrics for this benchmark *parameter*, not what resulted
   // from the number of iterations. That means we use the normal counter API
   // without flags.
-  auto metrics = table.GetMetrics();
+  auto metrics = table.ComputeMetrics();
   state.counters["P-compares"] = metrics.probe_avg_compares;
   state.counters["P-distance"] = metrics.probe_avg_distance;
   state.counters["P-fraction"] =
