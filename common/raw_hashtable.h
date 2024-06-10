@@ -257,14 +257,34 @@ struct StorageEntry<KeyT, void> {
 };
 
 struct Metrics {
+  // How many keys are present in the table.
   ssize_t key_count = 0;
+  // How many slots of the table are reserved due to deleted markers required to
+  // preserve probe sequences.
   ssize_t deleted_count = 0;
+  // How many bytes of allocated storage are used by the table. Note, does not
+  // include the table object or any small-size buffer.
   ssize_t storage_bytes = 0;
 
+  // How many keys have required probing beyond the initial group. These are the
+  // keys with a probe distance > 0.
   ssize_t probed_key_count = 0;
+  // The probe distance averaged over every key. If every key is in its initial
+  // group, this will be zero as no keys will have a larger probe distance. In
+  // general, we want this to be as close to zero as possible.
   double probe_avg_distance = 0.0;
+  // The maximum probe distance found for a single key in the table.
   ssize_t probe_max_distance = 0;
+  // The average number of probing comparisons required to locate a specific key
+  // in the table. This is how many comparisons are required *before* the key is
+  // located, or the *failed* comparisons. We always have to do one successful
+  // comparison at the end. This successful comparison isn't counted because
+  // that focuses this metric on the overhead the table is introducing, and
+  // keeps a "perfect" table with an average of `0.0` here similar to the
+  // perfect average of `0.0` average probe distance.
   double probe_avg_compares = 0.0;
+  // The maximum number of probing comparisons required to locate a specific
+  // key in the table.
   ssize_t probe_max_compares = 0;
 };
 
@@ -761,18 +781,17 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::GetMetrics(
       ssize_t distance = 0;
       ssize_t compares = 0;
       for (; s.index() != group_index; s.Next()) {
-        auto metadata_matched_range =
-            MetadataGroup::Load(local_metadata, s.index()).Match(tag);
-        auto metadata_matched_range = probe_g.Match(tag);
-        compares += std::distance(metadata_matched_range.begin(),
-                                  metadata_matched_range.end());
+        auto probe_g = MetadataGroup::Load(local_metadata, s.index());
+        auto probe_matched_range = probe_g.Match(tag);
+        compares += std::distance(probe_matched_range.begin(),
+                                  probe_matched_range.end());
         distance += 1;
       }
 
-      auto metadata_matched_range =
-          MetadataGroup::Load(local_metadata, s.index()).Match(tag);
-      CARBON_CHECK(!metadata_matched_range.empty());
-      for (ssize_t match_index : metadata_matched_range) {
+      auto probe_g = MetadataGroup::Load(local_metadata, s.index());
+      auto probe_matched_range = probe_g.Match(tag);
+      CARBON_CHECK(!probe_matched_range.empty());
+      for (ssize_t match_index : probe_matched_range) {
         if (match_index >= byte_index) {
           // Note we only count the compares that will *fail* as part of
           // probing. The last successful compare isn't interesting, it is
@@ -789,8 +808,10 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::GetMetrics(
           std::max(metrics.probe_max_compares, compares);
     }
   }
-  metrics.probe_avg_compares /= metrics.key_count;
-  metrics.probe_avg_distance /= metrics.key_count;
+  if (metrics.key_count > 0) {
+    metrics.probe_avg_compares /= metrics.key_count;
+    metrics.probe_avg_distance /= metrics.key_count;
+  }
   return metrics;
 }
 
