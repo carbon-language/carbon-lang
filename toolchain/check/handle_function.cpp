@@ -13,10 +13,10 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -240,18 +240,23 @@ static auto BuildFunctionDecl(Context& context,
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
+  auto decl_id =
+      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, function_decl));
+
+  // Build the function entity. This will be merged into an existing function if
+  // there is one, or otherwise added to the function store.
   auto function_info = SemIR::Function{
       .name_id = name_context.name_id_for_new_inst(),
       .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-      .decl_id = context.AddPlaceholderInst(
-          SemIR::LocIdAndInst(node_id, function_decl)),
+      .decl_id = decl_id,
+      .generic_id = SemIR::GenericId::Invalid,
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       .return_storage_id = return_storage_id,
       .is_extern = is_extern,
       .return_slot = return_slot};
   if (is_definition) {
-    function_info.definition_id = function_info.decl_id;
+    function_info.definition_id = decl_id;
   }
 
   TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
@@ -259,6 +264,14 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
+    // For a generic function, build the corresponding Generic entity.
+    if (!context.scope_stack().compile_time_binding_stack().empty()) {
+      function_info.generic_id = context.generics().Add(SemIR::Generic{
+          .decl_id = decl_id,
+          .bindings_id = context.inst_blocks().Add(
+              context.scope_stack().compile_time_binding_stack())});
+    }
+
     function_decl.function_id = context.functions().Add(function_info);
   } else {
     // TODO: Validate that the redeclaration doesn't set an access modifier.
@@ -266,7 +279,7 @@ static auto BuildFunctionDecl(Context& context,
   function_decl.type_id = context.GetFunctionType(function_decl.function_id);
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
+  context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
 
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
@@ -278,7 +291,7 @@ static auto BuildFunctionDecl(Context& context,
       if (auto interface_scope =
               parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
         lookup_result_id = BuildAssociatedEntity(
-            context, interface_scope->interface_id, function_info.decl_id);
+            context, interface_scope->interface_id, decl_id);
       }
     }
 
@@ -303,7 +316,7 @@ static auto BuildFunctionDecl(Context& context,
     }
   }
 
-  return {function_decl.function_id, function_info.decl_id};
+  return {function_decl.function_id, decl_id};
 }
 
 auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId node_id)

@@ -56,6 +56,16 @@ auto ScopeStack::Pop() -> void {
     CARBON_CHECK(return_scope_stack_.back().returned_var.is_valid());
     return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
   }
+
+  CARBON_CHECK(scope.next_compile_time_bind_index.index ==
+               static_cast<int32_t>(compile_time_binding_stack_.size()))
+      << "Wrong number of entries in compile-time binding stack, have "
+      << compile_time_binding_stack_.size() << ", expected "
+      << scope.next_compile_time_bind_index.index;
+  compile_time_binding_stack_.truncate(
+      scope_stack_.empty()
+          ? 0
+          : scope_stack_.back().next_compile_time_bind_index.index);
 }
 
 auto ScopeStack::PopTo(ScopeIndex index) -> void {
@@ -147,12 +157,24 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
 auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty()) << "No scope to suspend";
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
-                           .suspended_lookups = {}};
+                           .suspended_lookups = {},
+                           .compile_time_bindings = {}};
   if (result.entry.scope_id.is_valid()) {
     non_lexical_scope_stack_.pop_back();
   }
   for (auto name_id : result.entry.names) {
     result.suspended_lookups.push_back(lexical_lookup_.Suspend(name_id));
+  }
+  // Move any compile-time bindings into the suspended scope.
+  {
+    auto new_size =
+        scope_stack_.empty()
+            ? 0
+            : scope_stack_.back().next_compile_time_bind_index.index;
+    result.compile_time_bindings.assign(
+        compile_time_binding_stack_.begin() + new_size,
+        compile_time_binding_stack_.end());
+    compile_time_binding_stack_.truncate(new_size);
   }
   // This would be easy to support if we had a need, but currently we do not.
   CARBON_CHECK(!result.entry.has_returned_var)
@@ -161,6 +183,18 @@ auto ScopeStack::Suspend() -> SuspendedScope {
 }
 
 auto ScopeStack::Restore(SuspendedScope scope) -> void {
+  if (!scope_stack_.empty()) {
+    CARBON_CHECK(scope.entry.next_compile_time_bind_index.index ==
+                 static_cast<int32_t>(compile_time_binding_stack_.size() +
+                                      scope.compile_time_bindings.size()))
+        << "Wrong number of entries in compile-time binding stack "
+           "when restoring, have "
+        << compile_time_binding_stack_.size() << " existing and "
+        << scope.compile_time_bindings.size() << " restored, expected "
+        << scope.entry.next_compile_time_bind_index.index;
+  }
+
+  compile_time_binding_stack_.append(scope.compile_time_bindings);
   for (auto entry : scope.suspended_lookups) {
     // clang-tidy warns that the `std::move` below has no effect. While that's
     // true, this `move` defends against the suspended lookup growing more state

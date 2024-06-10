@@ -59,6 +59,15 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
   };
 
+  // Push the binding onto the node stack and, if necessary, onto the scope
+  // stack.
+  auto push_bind_name = [&](SemIR::InstId bind_id) {
+    context.node_stack().Push(node_id, bind_id);
+    if (is_generic && !is_associated_constant) {
+      context.scope_stack().PushCompileTimeBinding(bind_id);
+    }
+  };
+
   // A `self` binding can only appear in an implicit parameter list.
   if (name_id == SemIR::NameId::SelfValue &&
       !context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
@@ -133,7 +142,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             name_node, {.type_id = cast_type_id, .name_id = name_id});
       }
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, value_id));
-      context.node_stack().Push(node_id, bind_id);
+      push_bind_name(bind_id);
 
       if (context_node_kind == Parse::NodeKind::ReturnedModifier) {
         RegisterReturnedVar(context, bind_id);
@@ -150,14 +159,14 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto param_id = context.AddInst<SemIR::Param>(
           name_node, {.type_id = cast_type_id, .name_id = name_id});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
+      push_bind_name(bind_id);
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
       context.AddNameToLookup(name_id, bind_id);
-      context.node_stack().Push(node_id, bind_id);
       break;
     }
 
-    case Parse::NodeKind::LetIntroducer:
+    case Parse::NodeKind::LetIntroducer: {
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                           "`let` binding has incomplete type `{0}`.",
@@ -169,10 +178,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
-      context.node_stack().Push(
-          node_id, context.AddPlaceholderInstInNoBlock(
-                       make_bind_name(cast_type_id, SemIR::InstId::Invalid)));
+      auto bind_id = context.AddPlaceholderInstInNoBlock(
+          make_bind_name(cast_type_id, SemIR::InstId::Invalid));
+      push_bind_name(bind_id);
       break;
+    }
 
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "

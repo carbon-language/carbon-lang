@@ -84,6 +84,8 @@ struct Function : public Printable<Function> {
   NameScopeId parent_scope_id;
   // The first declaration of the function. This is a FunctionDecl.
   InstId decl_id;
+  // If this is a generic function, information about the generic.
+  GenericId generic_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.

@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -128,6 +129,8 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
+  auto generics() -> ValueStore<GenericId>& { return generics_; }
+  auto generics() const -> const ValueStore<GenericId>& { return generics_; }
   auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
   auto import_irs() const -> const ValueStore<ImportIRId>& {
     return import_irs_;
@@ -207,6 +210,9 @@ class File : public Printable<File> {
 
   // Storage for impls.
   ImplStore impls_;
+
+  // Storage for generics.
+  ValueStore<GenericId> generics_;
 
   // Related IRs. There are some fixed entries at the start; see ImportIRId.
   ValueStore<ImportIRId> import_irs_;
