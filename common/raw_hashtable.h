@@ -760,29 +760,26 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::GetMetrics(
       // probe distance and how many comparisons are required.
       ssize_t distance = 0;
       ssize_t compares = 0;
-      for (;; s.Next()) {
-        ssize_t probe_index = s.index();
-        MetadataGroup probe_g =
-            MetadataGroup::Load(local_metadata, probe_index);
+      for (; s.index() != group_index; s.Next()) {
+        auto metadata_matched_range =
+            MetadataGroup::Load(local_metadata, s.index()).Match(tag);
         auto metadata_matched_range = probe_g.Match(tag);
-        if (probe_index != group_index) {
-          compares += std::distance(metadata_matched_range.begin(),
-                                    metadata_matched_range.end());
-          distance += 1;
-          continue;
-        }
+        compares += std::distance(metadata_matched_range.begin(),
+                                  metadata_matched_range.end());
+        distance += 1;
+      }
 
-        CARBON_CHECK(!metadata_matched_range.empty());
-        for (ssize_t match_index : metadata_matched_range) {
-          if (match_index >= byte_index) {
-            // Note we only count the compares that will *fail* as part of
-            // probing. The last successful compare isn't interesting, it is
-            // always needed.
-            break;
-          }
-          compares += 1;
+      auto metadata_matched_range =
+          MetadataGroup::Load(local_metadata, s.index()).Match(tag);
+      CARBON_CHECK(!metadata_matched_range.empty());
+      for (ssize_t match_index : metadata_matched_range) {
+        if (match_index >= byte_index) {
+          // Note we only count the compares that will *fail* as part of
+          // probing. The last successful compare isn't interesting, it is
+          // always needed.
+          break;
         }
-        break;
+        compares += 1;
       }
       metrics.probe_avg_distance += distance;
       metrics.probe_max_distance =
