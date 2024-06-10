@@ -18,6 +18,7 @@ using RawHashtable::CarbonHashDI;
 using RawHashtable::GetKeysAndHitKeys;
 using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
+using RawHashtable::ReportTableMetrics;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
 
@@ -162,35 +163,9 @@ using MapWrapper =
 template <typename MapT>
 auto ReportMetrics(const MapWrapper<MapT>& m_wrapper, benchmark::State& state)
     -> void {
-  using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
-
-  const auto& m = m_wrapper.m;
-
   // Report some extra statistics about the Carbon type.
   if constexpr (IsCarbonMap<MapT>) {
-    // While this count is "iteration invariant" (it should be exactly the same
-    // for every iteration as the set of keys is the same), we don't use that
-    // because it will scale this by the number of iterations. We want to
-    // display the metrics for this benchmark *parameter*, not what resulted
-    // from the number of iterations. That means we use the normal counter API
-    // without flags.
-    auto metrics = m.GetMetrics();
-    state.counters["P-compares"] = metrics.probe_avg_compares;
-    state.counters["P-distance"] = metrics.probe_avg_distance;
-    state.counters["P-fraction"] =
-        static_cast<double>(metrics.probed_key_count) / metrics.key_count;
-    state.counters["Pmax-distance"] = metrics.probe_max_distance;
-    state.counters["Pmax-compares"] = metrics.probe_max_compares;
-    state.counters["Probed"] = metrics.probed_key_count;
-
-    state.counters["Storage"] = metrics.storage_bytes;
-    // Also compute how 'efficient' the storage is, 1.0 being zero bytes outside
-    // of key and value.
-    state.counters["Storage eff"] =
-        static_cast<double>(metrics.key_count * (sizeof(KT) + sizeof(VT))) /
-        metrics.storage_bytes;
+    ReportTableMetrics(m_wrapper.m, state);
   }
 }
 
