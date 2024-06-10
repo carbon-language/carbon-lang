@@ -425,7 +425,8 @@ class BaseImpl {
   // number based on the load factor. If a specific number of insertions need to
   // be achieved without triggering growth, use the `GrowForInsertCountImpl`
   // method.
-  auto GrowImpl(ssize_t target_alloc_size, KeyContextT key_context) -> void;
+  auto GrowToAllocSizeImpl(ssize_t target_alloc_size, KeyContextT key_context)
+      -> void;
 
   // Grow the table to allow inserting the specified number of keys.
   auto GrowForInsertCountImpl(ssize_t count, KeyContextT key_context) -> void;
@@ -843,7 +844,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 [[clang::noinline]] auto
-BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowImpl(
+BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSizeImpl(
     ssize_t target_alloc_size, KeyContextT key_context) -> void {
   CARBON_CHECK(llvm::isPowerOf2_64(target_alloc_size));
   if (target_alloc_size <= alloc_size()) {
@@ -916,7 +917,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowForInsertCountImpl(
   ssize_t target_alloc_size = llvm::NextPowerOf2(space_needed);
   CARBON_CHECK(GrowthThresholdForAllocSize(target_alloc_size) >
                (budget_needed));
-  GrowImpl(target_alloc_size, key_context);
+  GrowToAllocSizeImpl(target_alloc_size, key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -1114,14 +1115,15 @@ auto BaseImpl<InputKeyT, InputValueT,
 //    it required some amount of probing to find an empty slot.
 //
 // The design of the hash table tries to minimize how many entries fall into
-// case (3), so we expect the vast majority of entries to be in (1) or (2).
-// This lets us model growth notionally as duplicating the hash table,
-// clearing out the empty slots, and inserting any probed elements. That model
-// in turn is much more efficient than re-inserting all of the elements as it
-// avoids the unnecessary parts of insertion and avoids interleaving random
-// accesses for the probed elements. But most importantly, for trivially
-// relocatable types it allows us to use `memcpy` rather than moving the
-// elements individually.
+// case (3), so we expect the vast majority of entries to be in (1) or (2). This
+// lets us model growth notionally as copying the hashtable twice into the lower
+// and higher halves of the new allocation, clearing out the now-empty slots
+// (from both deleted entries and entries in the other half of the table after
+// growth), and inserting any probed elements. That model in turn is much more
+// efficient than re-inserting all of the elements as it avoids the unnecessary
+// parts of insertion and avoids interleaving random accesses for the probed
+// elements. But most importantly, for trivially relocatable types it allows us
+// to use `memcpy` rather than moving the elements individually.
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
     KeyContextT key_context) -> void {

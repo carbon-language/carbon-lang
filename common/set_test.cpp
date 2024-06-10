@@ -176,12 +176,12 @@ TYPED_TEST(SetTest, Conversions) {
   EXPECT_TRUE(csv2.Contains(3));
 }
 
-TYPED_TEST(SetTest, Grow) {
+TYPED_TEST(SetTest, GrowToAllocSize) {
   using SetT = TypeParam;
 
   SetT s;
   // Grow when empty. May be a no-op for some small sizes.
-  s.Grow(32);
+  s.GrowToAllocSize(32);
 
   // Add some elements that will need to be propagated through subsequent
   // growths. Also delete some.
@@ -195,13 +195,13 @@ TYPED_TEST(SetTest, Grow) {
   }
 
   // No-op.
-  s.Grow(16);
+  s.GrowToAllocSize(16);
   ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
 
   // Get a couple of doubling based growths.
-  s.Grow(64);
+  s.GrowToAllocSize(64);
   ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
-  s.Grow(128);
+  s.GrowToAllocSize(128);
   ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
 
   // Add some more, but not enough to trigger further growth, and then grow by
@@ -214,7 +214,7 @@ TYPED_TEST(SetTest, Grow) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(s.Erase(i));
   }
-  s.Grow(1024);
+  s.GrowToAllocSize(1024);
   ExpectSetElementsAre(s, MakeElements(llvm::seq(16, 48)));
 }
 

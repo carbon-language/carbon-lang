@@ -230,8 +230,8 @@ class SetBase
   // number based on the maximum load factor. If a specific number of insertions
   // need to be achieved without triggering growth, use the `GrowForInsertCount`
   // method.
-  auto Grow(ssize_t target_alloc_size, KeyContextT key_context = KeyContextT())
-      -> void;
+  auto GrowToAllocSize(ssize_t target_alloc_size,
+                       KeyContextT key_context = KeyContextT()) -> void;
 
   // Grow the set sufficiently to allow inserting the specified number of keys.
   auto GrowForInsertCount(ssize_t count,
@@ -351,9 +351,9 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
 }
 
 template <typename InputKeyT, typename InputKeyContextT>
-void SetBase<InputKeyT, InputKeyContextT>::Grow(ssize_t target_alloc_size,
-                                                KeyContextT key_context) {
-  this->GrowImpl(target_alloc_size, key_context);
+void SetBase<InputKeyT, InputKeyContextT>::GrowToAllocSize(
+    ssize_t target_alloc_size, KeyContextT key_context) {
+  this->GrowToAllocSizeImpl(target_alloc_size, key_context);
 }
 
 template <typename InputKeyT, typename InputKeyContextT>

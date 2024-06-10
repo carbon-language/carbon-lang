@@ -226,12 +226,12 @@ TYPED_TEST(MapTest, Conversions) {
   EXPECT_EQ(104, *cmv3[4]);
 }
 
-TYPED_TEST(MapTest, Grow) {
+TYPED_TEST(MapTest, GrowToAllocSize) {
   using MapT = TypeParam;
 
   MapT m;
   // Grow when empty. May be a no-op for some small sizes.
-  m.Grow(32);
+  m.GrowToAllocSize(32);
 
   // Add some elements that will need to be propagated through subsequent
   // growths. Also delete some.
@@ -245,15 +245,15 @@ TYPED_TEST(MapTest, Grow) {
   }
 
   // No-op.
-  m.Grow(16);
+  m.GrowToAllocSize(16);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
 
   // Get a couple of doubling based growths.
-  m.Grow(64);
+  m.GrowToAllocSize(64);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
-  m.Grow(128);
+  m.GrowToAllocSize(128);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
 
@@ -267,7 +267,7 @@ TYPED_TEST(MapTest, Grow) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Erase(i));
   }
-  m.Grow(1024);
+  m.GrowToAllocSize(1024);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(16, 48)));
 }
