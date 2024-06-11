@@ -235,6 +235,7 @@ TYPED_TEST(MapTest, GrowToAllocSize) {
 
   // Add some elements that will need to be propagated through subsequent
   // growths. Also delete some.
+  ssize_t storage_bytes = m.ComputeMetrics().storage_bytes;
   for (int i : llvm::seq(1, 24)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
@@ -243,11 +244,15 @@ TYPED_TEST(MapTest, GrowToAllocSize) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Erase(i));
   }
+  // No further growth triggered.
+  EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 
   // No-op.
   m.GrowToAllocSize(16);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
+  // No further growth triggered.
+  EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 
   // Get a couple of doubling based growths.
   m.GrowToAllocSize(64);
@@ -256,6 +261,9 @@ TYPED_TEST(MapTest, GrowToAllocSize) {
   m.GrowToAllocSize(128);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
+  // Update the storage bytes after growth.
+  EXPECT_LT(storage_bytes, m.ComputeMetrics().storage_bytes);
+  storage_bytes = m.ComputeMetrics().storage_bytes;
 
   // Add some more, but not enough to trigger further growth, and then grow by
   // several more multiples of two to test handling large growth.
@@ -267,9 +275,14 @@ TYPED_TEST(MapTest, GrowToAllocSize) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Erase(i));
   }
+  // No growth from insertions.
+  EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
+
   m.GrowToAllocSize(1024);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(16, 48)));
+  // Storage should have grown.
+  EXPECT_LT(storage_bytes, m.ComputeMetrics().storage_bytes);
 }
 
 TYPED_TEST(MapTest, GrowForInsert) {
@@ -277,12 +290,14 @@ TYPED_TEST(MapTest, GrowForInsert) {
 
   MapT m;
   m.GrowForInsertCount(42);
+  ssize_t storage_bytes = m.ComputeMetrics().storage_bytes;
   for (int i : llvm::seq(1, 42)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 42)));
+  EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 
   // Erase many elements and grow again for another insert.
   for (int i : llvm::seq(1, 32)) {
@@ -290,12 +305,14 @@ TYPED_TEST(MapTest, GrowForInsert) {
     ASSERT_TRUE(m.Erase(i));
   }
   m.GrowForInsertCount(42);
+  storage_bytes = m.ComputeMetrics().storage_bytes;
   for (int i : llvm::seq(42, 84)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(32, 84)));
+  EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 
   // Erase all the elements, then grow for a much larger insertion and insert
   // again.
@@ -304,12 +321,14 @@ TYPED_TEST(MapTest, GrowForInsert) {
     ASSERT_TRUE(m.Erase(i));
   }
   m.GrowForInsertCount(1717);
+  storage_bytes = m.ComputeMetrics().storage_bytes;
   for (int i : llvm::seq(128, 1717 + 128)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
   ExpectMapElementsAre(m, MakeKeyValues([](int k) { return k * 100; },
                                         llvm::seq(128, 1717 + 128)));
+  EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 }
 
 // This test is largely exercising the underlying `RawHashtable` implementation
