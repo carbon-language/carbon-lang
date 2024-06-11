@@ -113,7 +113,7 @@ static auto GetConstantValue(Context& context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
   auto const_id = context.constant_values().Get(inst_id);
   *phase = LatestPhase(*phase, GetPhase(const_id));
-  return const_id.inst_id();
+  return context.constant_values().GetInstId(const_id);
 }
 
 // A type is always constant, but we still need to extract its phase.
@@ -1122,8 +1122,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       auto const_id = context.constant_values().Get(typed_inst.operand_id);
       auto phase = GetPhase(const_id);
       if (phase == Phase::Template) {
-        auto value =
-            context.insts().GetAs<SemIR::BoolLiteral>(const_id.inst_id());
+        auto value = context.insts().GetAs<SemIR::BoolLiteral>(
+            context.constant_values().GetInstId(const_id));
         return MakeBoolResult(context, value.type_id, !value.value.ToBool());
       }
       if (phase == Phase::UnknownDueToError) {
@@ -1138,7 +1138,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       auto inner_id = context.constant_values().Get(
           context.types().GetInstId(typed_inst.inner_id));
       if (inner_id.is_constant() &&
-          context.insts().Get(inner_id.inst_id()).Is<SemIR::ConstType>()) {
+          context.insts()
+              .Get(context.constant_values().GetInstId(inner_id))
+              .Is<SemIR::ConstType>()) {
         return inner_id;
       }
       return MakeConstantResult(context, inst, GetPhase(inner_id));

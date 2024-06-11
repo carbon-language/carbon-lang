@@ -164,7 +164,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
       // Use the type to get the ID.
       if (auto struct_value = context.insts().TryGetAs<SemIR::StructValue>(
-              context.constant_values().Get(prev_id).inst_id())) {
+              context.constant_values().GetConstantInstId(prev_id))) {
         if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
                 struct_value->type_id)) {
           prev_function_id = function_type->function_id;

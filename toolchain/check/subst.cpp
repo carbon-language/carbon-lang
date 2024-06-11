@@ -148,7 +148,7 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id)
   auto result_id = TryEvalInst(context, SemIR::InstId::Invalid, inst);
   CARBON_CHECK(result_id.is_constant())
       << "Substitution into constant produced non-constant";
-  return result_id.inst_id();
+  return context.constant_values().GetInstId(result_id);
 }
 
 auto SubstConstant(Context& context, SemIR::ConstantId const_id,
@@ -165,7 +165,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     return const_id;
   }
 
-  Worklist worklist(const_id.inst_id());
+  Worklist worklist(context.constant_values().GetInstId(const_id));
 
   // For each instruction that forms part of the constant, we will visit it
   // twice:
@@ -208,7 +208,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
         if (context.bind_names().Get(bind->bind_name_id).bind_index ==
             bind_index) {
           // This is the binding we're replacing. Perform substitution.
-          item.inst_id = replacement_id.inst_id();
+          item.inst_id = context.constant_values().GetInstId(replacement_id);
           break;
         }
       }

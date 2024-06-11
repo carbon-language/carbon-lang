@@ -92,9 +92,9 @@ static auto BuildInterfaceWitness(
 
   for (auto decl_id : assoc_entities) {
     LoadImportRef(context, decl_id);
-    auto const_id = context.constant_values().Get(decl_id);
-    CARBON_CHECK(const_id.is_constant()) << "Non-constant associated entity";
-    auto decl = context.insts().Get(const_id.inst_id());
+    decl_id = context.constant_values().GetConstantInstId(decl_id);
+    CARBON_CHECK(decl_id.is_valid()) << "Non-constant associated entity";
+    auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::TypeId::Error) {

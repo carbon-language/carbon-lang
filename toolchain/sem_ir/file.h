@@ -80,6 +80,9 @@ class File : public Printable<File> {
   // Produces a string version of a type.
   auto StringifyType(TypeId type_id) const -> std::string;
 
+  // Same, but with a constant ID rather than a type ID.
+  auto StringifyType(ConstantId type_const_id) const -> std::string;
+
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
   auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
@@ -238,7 +241,7 @@ class File : public Printable<File> {
   ConstantStore constants_;
 
   // Descriptions of types used in this file.
-  TypeStore types_ = TypeStore(&insts_);
+  TypeStore types_ = TypeStore(&insts_, &constant_values_);
 
   // Types that were completed in this file.
   llvm::SmallVector<TypeId> complete_types_;

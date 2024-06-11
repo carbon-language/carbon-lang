@@ -457,9 +457,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         // a block. Constants that refer to them need to be separately
         // named.
         auto const_id = sem_ir_.constant_values().Get(inst_id);
-        if (const_id.is_valid() && const_id.is_template() &&
-            !insts[const_id.inst_id().index].second) {
-          CollectNamesInBlock(ScopeId::ImportRef, const_id.inst_id());
+        if (const_id.is_valid() && const_id.is_template()) {
+          auto const_inst_id = sem_ir_.constant_values().GetInstId(const_id);
+          if (!insts[const_inst_id.index].second) {
+            CollectNamesInBlock(ScopeId::ImportRef, const_inst_id);
+          }
         }
         continue;
       }

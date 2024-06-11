@@ -37,6 +37,24 @@ class ConstantValueStore {
     values_[inst_id.index] = const_id;
   }
 
+  // Gets the instruction ID that defines the value of the given constant.
+  // Returns Invalid if the constant ID is non-constant. Requires is_valid.
+  auto GetInstId(ConstantId const_id) const -> InstId {
+    return const_id.inst_id();
+  }
+
+  // Gets the instruction ID that defines the value of the given constant.
+  // Returns Invalid if the constant ID is non-constant or invalid.
+  auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
+    return const_id.is_valid() ? GetInstId(const_id) : InstId::Invalid;
+  }
+
+  // Given an instruction, returns the unique constant instruction that is
+  // equivalent to it. Returns Invalid for a non-constant instruction.
+  auto GetConstantInstId(InstId inst_id) const -> InstId {
+    return GetInstId(Get(inst_id));
+  }
+
   // Returns the constant values mapping as an ArrayRef whose keys are
   // instruction indexes. Some of the elements in this mapping may be Invalid or
   // NotConstant.

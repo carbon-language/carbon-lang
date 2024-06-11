@@ -80,7 +80,7 @@ auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
   auto const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
   if (const_id.is_constant()) {
     CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
-                  << const_id.inst_id() << "\n";
+                  << constant_values().GetInstId(const_id) << "\n";
     constant_values().Set(inst_id, const_id);
   }
 
@@ -128,7 +128,7 @@ auto Context::ReplaceLocIdAndInstBeforeConstantUse(
   auto const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
   if (const_id.is_constant()) {
     CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
-                  << const_id.inst_id() << "\n";
+                  << constant_values().GetInstId(const_id) << "\n";
   }
   constant_values().Set(inst_id, const_id);
 }
@@ -144,8 +144,8 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   // ensure.
   auto const_id = TryEvalInst(*this, inst_id, inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << inst << " -> " << const_id.inst_id()
-                  << "\n";
+    CARBON_VLOG() << "Constant: " << inst << " -> "
+                  << constant_values().GetInstId(const_id) << "\n";
   }
   constant_values().Set(inst_id, const_id);
 }
@@ -470,7 +470,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   }
 
   // Look through import_refs and aliases.
-  return constant_values().Get(inst_id).inst_id();
+  return constant_values().GetConstantInstId(inst_id);
 }
 
 template <typename BranchNode, typename... Args>
@@ -558,7 +558,7 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   if (!cond_const_id.is_template()) {
     // Symbolic or non-constant condition means a non-constant result.
   } else if (auto literal = insts().TryGetAs<SemIR::BoolLiteral>(
-                 cond_const_id.inst_id())) {
+                 constant_values().GetInstId(cond_const_id))) {
     const_id = constant_values().Get(literal.value().value.ToBool() ? if_true
                                                                     : if_false);
   } else {
@@ -569,7 +569,7 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
 
   if (const_id.is_constant()) {
     CARBON_VLOG() << "Constant: " << insts().Get(select_id) << " -> "
-                  << const_id.inst_id() << "\n";
+                  << constant_values().GetInstId(const_id) << "\n";
     constant_values().Set(select_id, const_id);
   }
 }
@@ -893,13 +893,8 @@ class TypeCompleter {
       if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
         field.field_type_id = field_value_rep.type_id;
-        // TODO: Use `TryEvalInst` to form this value.
-        field_id = context_
-                       .AddConstant(field, context_.constant_values()
-                                               .Get(context_.types().GetInstId(
-                                                   field.field_type_id))
-                                               .is_symbolic())
-                       .inst_id();
+        field_id = context_.constant_values().GetInstId(
+            TryEvalInst(context_, SemIR::InstId::Invalid, field));
       }
       value_rep_fields.push_back(field_id);
     }

@@ -145,8 +145,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
       }
 
       // Use the constant value to get the ID.
-      auto decl_value =
-          context.insts().Get(context.constant_values().Get(prev_id).inst_id());
+      auto decl_value = context.insts().Get(
+          context.constant_values().GetConstantInstId(prev_id));
       if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
         prev_class_id = class_type->class_id;
         prev_import_ir_id = import_ir_inst.ir_id;
