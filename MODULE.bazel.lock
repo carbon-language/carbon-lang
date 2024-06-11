@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "439583f1efb19cfa4ef173e2ac4774602be6be5061bc14218f9856f4beb33e07",
+  "moduleFileHash": "2229e2fa995d00859c76832081e78c1260d43da826c71273e51f34182539eafd",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -37,6 +37,7 @@
           },
           "imports": {
             "com_google_libprotobuf_mutator": "com_google_libprotobuf_mutator",
+            "boost_unordered": "boost_unordered",
             "llvm-raw": "llvm-raw"
           },
           "devImports": [],
@@ -62,6 +63,24 @@
             {
               "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
               "attributeValues": {
+                "build_file": "@//:third_party/boost_unordered/BUILD.bazel",
+                "integrity": "sha256-2dQ4IQH/xFiK1iWCkrMYLeR8zsSQqGchKOdTuf1u0zI=",
+                "strip_prefix": "boost_unordered-1.85.0",
+                "urls": [
+                  "https://github.com/MikePopoloski/boost_unordered/archive/v1.85.0.tar.gz"
+                ],
+                "name": "boost_unordered"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 100,
+                "column": 13
+              }
+            },
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
                 "build_file_content": "# empty",
                 "patch_args": [
                   "-p1"
@@ -80,7 +99,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 113,
+                "line": 123,
                 "column": 13
               }
             }
@@ -111,7 +130,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 127,
+            "line": 137,
             "column": 29
           },
           "imports": {
@@ -128,7 +147,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 139,
+            "line": 149,
             "column": 23
           },
           "imports": {
@@ -144,7 +163,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 140,
+                "line": 150,
                 "column": 17
               }
             }

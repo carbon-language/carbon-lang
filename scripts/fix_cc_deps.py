@@ -71,6 +71,12 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
         ":gtest",
         use_system_include=True,
     ),
+    # All of the `boost_unordered` headers are in a single rule.
+    "@boost_unordered": ExternalRepo(
+        lambda x: re.sub("^(.*:include)/", "", x),
+        ":boost_unordered",
+        use_system_include=True,
+    ),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in

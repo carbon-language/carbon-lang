@@ -149,6 +149,7 @@ def _impl(ctx):
                             # to be initial directories in the `#include` line.
                             "--system-header-prefix=absl/",
                             "--system-header-prefix=benchmark/",
+                            "--system-header-prefix=boost/",
                             "--system-header-prefix=clang-tools-extra/",
                             "--system-header-prefix=clang/",
                             "--system-header-prefix=gmock/",

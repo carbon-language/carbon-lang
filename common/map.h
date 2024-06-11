@@ -66,6 +66,7 @@ class MapView
   using KeyT = typename ImplT::KeyT;
   using ValueT = typename ImplT::ValueT;
   using KeyContextT = typename ImplT::KeyContextT;
+  using MetricsT = typename ImplT::MetricsT;
 
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key and value.
@@ -117,15 +118,11 @@ class MapView
     requires(std::invocable<CallbackT, KeyT&, ValueT&>);
 
   // This routine is relatively inefficient and only intended for use in
-  // benchmarking or logging of performance anomalies. The specific count
-  // returned has no specific guarantees beyond being informative in benchmarks.
-  // It counts how many of the keys in the hashtable have required probing
-  // beyond their initial group of slots.
-  //
-  // TODO: Replace with a more general metrics routine that covers other
-  // important aspects such as load factor, and average probe *distance*.
-  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) -> ssize_t {
-    return ImplT::CountProbedKeys(key_context);
+  // benchmarking or logging of performance anomalies. The specific metrics
+  // returned have no specific guarantees beyond being informative in
+  // benchmarks.
+  auto ComputeMetrics(KeyContextT key_context = KeyContextT()) -> MetricsT {
+    return ImplT::ComputeMetricsImpl(key_context);
   }
 
  private:
@@ -165,6 +162,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   using KeyContextT = typename ImplT::KeyContextT;
   using ViewT = MapView<KeyT, ValueT, KeyContextT>;
   using LookupKVResult = typename ViewT::LookupKVResult;
+  using MetricsT = typename ImplT::MetricsT;
 
   // The result type for insertion operations both indicates whether an insert
   // was needed (as opposed to finding an existing element), and provides access
@@ -233,9 +231,9 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   }
 
   // Convenience forwarder to the view type.
-  auto CountProbedKeys(KeyContextT key_context = KeyContextT()) const
-      -> ssize_t {
-    return ViewT(*this).CountProbedKeys(key_context);
+  auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
+      -> MetricsT {
+    return ViewT(*this).ComputeMetrics(key_context);
   }
 
   // Insert a key and value into the map. If the key is already present, the new

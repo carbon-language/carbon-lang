@@ -4,6 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <type_traits>
 
 #include "absl/container/flat_hash_map.h"
@@ -18,6 +19,7 @@ using RawHashtable::CarbonHashDI;
 using RawHashtable::GetKeysAndHitKeys;
 using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
+using RawHashtable::ReportTableMetrics;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
 
@@ -132,6 +134,7 @@ struct MapWrapperImpl<Map<KT, VT, MinSmallSize>> {
 enum class MapOverride : uint8_t {
   None,
   Abseil,
+  Boost,
   LLVM,
   LLVMAndCarbonHash,
 };
@@ -147,6 +150,10 @@ struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::Abseil>
     : MapWrapperImpl<absl::flat_hash_map<KeyT, ValueT>> {};
 
 template <typename KeyT, typename ValueT, int MinSmallSize>
+struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::Boost>
+    : MapWrapperImpl<boost::unordered::unordered_flat_map<KeyT, ValueT>> {};
+
+template <typename KeyT, typename ValueT, int MinSmallSize>
 struct MapWrapperOverride<Map<KeyT, ValueT, MinSmallSize>, MapOverride::LLVM>
     : MapWrapperImpl<llvm::DenseMap<KeyT, ValueT>> {};
 
@@ -159,11 +166,21 @@ template <typename MapT>
 using MapWrapper =
     MapWrapperOverride<MapT, MapOverride::CARBON_MAP_BENCH_OVERRIDE>;
 
+template <typename MapT>
+auto ReportMetrics(const MapWrapper<MapT>& m_wrapper, benchmark::State& state)
+    -> void {
+  // Report some extra statistics about the Carbon type.
+  if constexpr (IsCarbonMap<MapT>) {
+    ReportTableMetrics(m_wrapper.m, state);
+  }
+}
+
 // NOLINTBEGIN(bugprone-macro-parentheses): Parentheses are incorrect here.
-#define MAP_BENCHMARK_ONE_OP_SIZE(NAME, APPLY, KT, VT)        \
-  BENCHMARK(NAME<Map<KT, VT>>)->Apply(APPLY);                 \
-  BENCHMARK(NAME<absl::flat_hash_map<KT, VT>>)->Apply(APPLY); \
-  BENCHMARK(NAME<llvm::DenseMap<KT, VT>>)->Apply(APPLY);      \
+#define MAP_BENCHMARK_ONE_OP_SIZE(NAME, APPLY, KT, VT)                         \
+  BENCHMARK(NAME<Map<KT, VT>>)->Apply(APPLY);                                  \
+  BENCHMARK(NAME<absl::flat_hash_map<KT, VT>>)->Apply(APPLY);                  \
+  BENCHMARK(NAME<boost::unordered::unordered_flat_map<KT, VT>>)->Apply(APPLY); \
+  BENCHMARK(NAME<llvm::DenseMap<KT, VT>>)->Apply(APPLY);                       \
   BENCHMARK(NAME<llvm::DenseMap<KT, VT, CarbonHashDI<KT>>>)->Apply(APPLY)
 // NOLINTEND(bugprone-macro-parentheses)
 
@@ -223,6 +240,8 @@ static void BM_MapContainsHit(benchmark::State& state) {
       i += static_cast<ssize_t>(result);
     }
   }
+
+  ReportMetrics(m, state);
 }
 MAP_BENCHMARK_ONE_OP(BM_MapContainsHit, HitArgs);
 
@@ -250,6 +269,8 @@ static void BM_MapContainsMiss(benchmark::State& state) {
       i += static_cast<ssize_t>(!result);
     }
   }
+
+  ReportMetrics(m, state);
 }
 MAP_BENCHMARK_ONE_OP(BM_MapContainsMiss, SizeArgs);
 
@@ -302,6 +323,8 @@ static void BM_MapLookupHit(benchmark::State& state) {
       i += static_cast<ssize_t>(result);
     }
   }
+
+  ReportMetrics(m, state);
 }
 MAP_BENCHMARK_ONE_OP(BM_MapLookupHit, HitArgs);
 
@@ -339,6 +362,8 @@ static void BM_MapUpdateHit(benchmark::State& state) {
       CARBON_DCHECK(!inserted);
     }
   }
+
+  ReportMetrics(m, state);
 }
 MAP_BENCHMARK_ONE_OP(BM_MapUpdateHit, HitArgs);
 
@@ -389,6 +414,8 @@ MAP_BENCHMARK_ONE_OP(BM_MapEraseUpdateHit, HitArgs);
 #define MAP_BENCHMARK_OP_SEQ_SIZE(NAME, KT, VT)                  \
   BENCHMARK(NAME<Map<KT, VT>>)->Apply(SizeArgs);                 \
   BENCHMARK(NAME<absl::flat_hash_map<KT, VT>>)->Apply(SizeArgs); \
+  BENCHMARK(NAME<boost::unordered::unordered_flat_map<KT, VT>>)  \
+      ->Apply(SizeArgs);                                         \
   BENCHMARK(NAME<llvm::DenseMap<KT, VT>>)->Apply(APPLY);         \
   BENCHMARK(NAME<llvm::DenseMap<KT, VT, CarbonHashDI<KT>>>)->Apply(SizeArgs)
 // NOLINTEND(bugprone-macro-parentheses)
@@ -454,19 +481,13 @@ static void BM_MapInsertSeq(benchmark::State& state) {
   if constexpr (IsCarbonMap<MapT>) {
     // Re-build a map outside of the timing loop to look at the statistics
     // rather than the timing.
-    MapT m;
+    MapWrapperT m;
     for (auto k : keys) {
-      bool inserted = m.Insert(k, MakeValue<VT>()).is_inserted();
+      bool inserted = m.BenchInsert(k, MakeValue<VT>());
       CARBON_DCHECK(inserted) << "Must be a successful insert!";
     }
 
-    // While this count is "iteration invariant" (it should be exactly the same
-    // for every iteration as the set of keys is the same), we don't use that
-    // because it will scale this by the number of iterations. We want to
-    // display the probe count of this benchmark *parameter*, not the probe
-    // count that resulted from the number of iterations. That means we use the
-    // normal counter API without flags.
-    state.counters["Probed"] = m.CountProbedKeys();
+    ReportMetrics(m, state);
 
     // Uncomment this call to print out statistics about the index-collisions
     // among these keys for debugging:
