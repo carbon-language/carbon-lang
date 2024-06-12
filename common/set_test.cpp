@@ -176,6 +176,107 @@ TYPED_TEST(SetTest, Conversions) {
   EXPECT_TRUE(csv2.Contains(3));
 }
 
+TYPED_TEST(SetTest, GrowToAllocSize) {
+  using SetT = TypeParam;
+
+  SetT s;
+  // Grow when empty. May be a no-op for some small sizes.
+  s.GrowToAllocSize(32);
+
+  // Add some elements that will need to be propagated through subsequent
+  // growths. Also delete some.
+  ssize_t storage_bytes = s.ComputeMetrics().storage_bytes;
+  for (int i : llvm::seq(1, 24)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  for (int i : llvm::seq(1, 8)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Erase(i));
+  }
+  // No further growth triggered.
+  EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
+
+  // No-op.
+  s.GrowToAllocSize(16);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
+  // No further growth triggered.
+  EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
+
+  // Get a few doubling based growths, and at least one beyond the largest small
+  // size.
+  s.GrowToAllocSize(64);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
+  s.GrowToAllocSize(128);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
+  s.GrowToAllocSize(256);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(8, 24)));
+  // Update the storage bytes after growth.
+  EXPECT_LT(storage_bytes, s.ComputeMetrics().storage_bytes);
+  storage_bytes = s.ComputeMetrics().storage_bytes;
+
+  // Add some more, but not enough to trigger further growth, and then grow by
+  // several more multiples of two to test handling large growth.
+  for (int i : llvm::seq(24, 48)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  for (int i : llvm::seq(8, 16)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Erase(i));
+  }
+  // No growth from insertions.
+  EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
+
+  s.GrowToAllocSize(1024);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(16, 48)));
+  // Storage should have grown.
+  EXPECT_LT(storage_bytes, s.ComputeMetrics().storage_bytes);
+}
+
+TYPED_TEST(SetTest, GrowForInsert) {
+  using SetT = TypeParam;
+
+  SetT s;
+  s.GrowForInsertCount(42);
+  ssize_t storage_bytes = s.ComputeMetrics().storage_bytes;
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 42)));
+  EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
+
+  // Erase many elements and grow again for another insert.
+  for (int i : llvm::seq(1, 32)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Erase(i));
+  }
+  s.GrowForInsertCount(42);
+  storage_bytes = s.ComputeMetrics().storage_bytes;
+  for (int i : llvm::seq(42, 84)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(32, 84)));
+  EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
+
+  // Erase all the elements, then grow for a much larger insertion and insert
+  // again.
+  for (int i : llvm::seq(32, 84)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Erase(i));
+  }
+  s.GrowForInsertCount(321);
+  storage_bytes = s.ComputeMetrics().storage_bytes;
+  for (int i : llvm::seq(128, 321 + 128)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(128, 321 + 128)));
+  EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
+}
+
 TEST(SetContextTest, Basic) {
   llvm::SmallVector<TestData> keys;
   for (int i : llvm::seq(0, 513)) {

@@ -323,6 +323,21 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
              std::invocable<InsertCallbackT, LookupKeyT, void*, void*> &&
              std::invocable<UpdateCallbackT, KeyT&, ValueT&>);
 
+  // Grow the map to a specific allocation size.
+  //
+  // This will grow the map's hashtable if necessary for it to have an
+  // allocation size of `target_alloc_size` which must be a power of two. Note
+  // that this will not allow that many keys to be inserted, but a smaller
+  // number based on the maximum load factor. If a specific number of insertions
+  // need to be achieved without triggering growth, use the `GrowForInsertCount`
+  // method.
+  auto GrowToAllocSize(ssize_t target_alloc_size,
+                       KeyContextT key_context = KeyContextT()) -> void;
+
+  // Grow the map sufficiently to allow inserting the specified number of keys.
+  auto GrowForInsertCount(ssize_t count,
+                          KeyContextT key_context = KeyContextT()) -> void;
+
   // Erase a key from the map.
   template <typename LookupKeyT>
   auto Erase(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
@@ -531,6 +546,18 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
   insert_cb(lookup_key, static_cast<void*>(&entry->key_storage),
             static_cast<void*>(&entry->value_storage));
   return InsertKVResult(true, *entry);
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+void MapBase<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSize(
+    ssize_t target_alloc_size, KeyContextT key_context) {
+  this->GrowToAllocSizeImpl(target_alloc_size, key_context);
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+void MapBase<InputKeyT, InputValueT, InputKeyContextT>::GrowForInsertCount(
+    ssize_t count, KeyContextT key_context) {
+  this->GrowForInsertCountImpl(count, key_context);
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
