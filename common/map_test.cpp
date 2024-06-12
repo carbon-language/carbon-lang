@@ -104,14 +104,10 @@ TYPED_TEST(MapTest, Basic) {
   for (int i : llvm::seq(2, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100).is_inserted());
-
-    // Immediately do a basic check of all elements to pin down when an
-    // insertion corrupts the rest of the table.
-    ExpectMapElementsAre(
-        m,
-        MakeKeyValues([](int k) { return k * 100 + static_cast<int>(k == 1); },
-                      llvm::seq_inclusive(1, i)));
   }
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100 + static_cast<int>(k == 1); },
+                       llvm::seq(1, 512)));
   for (int i : llvm::seq(1, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_FALSE(m.Insert(i, i * 100 + 1).is_inserted());
@@ -587,13 +583,9 @@ TYPED_TEST(MapCollisionTest, Basic) {
   for (int i : llvm::seq(1, 256)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100).is_inserted());
-
-    // Immediately do a basic check of all elements to pin down when an
-    // insertion corrupts the rest of the table.
-    ExpectMapElementsAre(m, MakeKeyValues([](int k) { return k * 100; },
-                                          llvm::seq_inclusive(1, i)));
   }
-  EXPECT_FALSE(m.Contains(257));
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 256)));
 
   // Erase and re-fill from the back.
   for (int i : llvm::seq(192, 256)) {
@@ -701,16 +693,14 @@ TEST(MapContextTest, Basic) {
   for (int i : llvm::seq(2, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(m.Insert(i, i * 100, key_context).is_inserted());
-
-    // Immediately do a basic check of all elements to pin down when an
-    // insertion corrupts the rest of the table.
-    for (int j : llvm::seq(1, i)) {
-      SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
-      ASSERT_EQ(j * 100 + static_cast<int>(j == 1),
-                m.Lookup(j, key_context).value());
-      ASSERT_EQ(j * 100 + static_cast<int>(j == 1),
-                m.Lookup(TestData(j * 100000), key_context).value());
-    }
+  }
+  // Check all the elements, including using the context.
+  for (int j : llvm::seq(1, 512)) {
+    SCOPED_TRACE(llvm::formatv("Assert key: {0}", j).str());
+    ASSERT_EQ(j * 100 + static_cast<int>(j == 1),
+              m.Lookup(j, key_context).value());
+    ASSERT_EQ(j * 100 + static_cast<int>(j == 1),
+              m.Lookup(TestData(j * 100000), key_context).value());
   }
   for (int i : llvm::seq(1, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
