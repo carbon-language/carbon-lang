@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_GENERIC_H_
 #define CARBON_TOOLCHAIN_SEM_IR_GENERIC_H_
 
+#include "common/set.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -53,33 +54,44 @@ struct GenericInstance : Printable<GenericInstance> {
 // Provides storage for deduplicated instances of generics.
 class GenericInstanceStore {
  public:
-  explicit GenericInstanceStore(InstBlockStore& inst_block_store,
-                                llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator),
-        inst_block_store_(&inst_block_store),
-        lookup_table_(this) {}
-
   // Adds a new generic instance, or gets the existing generic instance for a
   // specified generic and argument list. Returns the ID of the generic
-  // instance.
-  //
-  // This allocates a new InstBlock for the arguments if the instance is new.
-  auto GetOrAdd(GenericId generic_id,
-                llvm::ArrayRef<ConstantId> arg_ids) -> GenericInstanceId;
+  // instance. The argument IDs must be for instructions in the constant block,
+  // and must be a canonical instruction block ID.
+  auto GetOrAdd(GenericId generic_id, InstBlockId args_id) -> GenericInstanceId;
 
  private:
-  // A deduplicated generic instance node in our folding set.
-  struct Node : llvm::FoldingSetNode {
-    GenericInstanceId generic_instance_id;
+  // A lookup key for a generic instance.
+  struct Key {
+    GenericId generic_id;
+    InstBlockId args_id;
 
-    auto Profile(llvm::FoldingSetNodeID& id,
-                 GenericInstanceStore* store) -> void;
+    friend auto operator==(const Key&, const Key&) -> bool = default;
+  };
+
+  // Context for hashing keys.
+  struct KeyContext {
+    llvm::ArrayRef<GenericInstance> instances;
+
+    auto AsKey(GenericInstanceId id) const -> Key {
+      const auto& instance = instances[id.index];
+      return {.generic_id = instance.generic_id, .args_id = instance.args_id};
+    }
+    static auto AsKey(Key key) -> Key { return key; }
+
+    template <typename KeyT>
+    auto HashKey(KeyT key, uint64_t seed) const -> HashCode {
+      return HashValue(AsKey(key), seed);
+    }
+
+    template <typename LHSKeyT, typename RHSKeyT>
+    auto KeyEq(const LHSKeyT& lhs_key, const RHSKeyT& rhs_key) const -> bool {
+      return AsKey(lhs_key) == AsKey(rhs_key);
+    }
   };
 
   ValueStore<GenericInstanceId> generic_instances_;
-  llvm::BumpPtrAllocator* allocator_;
-  InstBlockStore* inst_block_store_;
-  llvm::ContextualFoldingSet<Node, GenericInstanceStore*> lookup_table_;
+  Carbon::Set<GenericInstanceId, 0, KeyContext> lookup_table_;
 };
 
 }  // namespace Carbon::SemIR
