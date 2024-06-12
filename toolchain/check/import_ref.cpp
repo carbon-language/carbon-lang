@@ -1034,8 +1034,9 @@ class ImportRefResolver {
 
     const auto& function = import_ir_.functions().Get(inst.function_id);
     auto return_type_const_id = SemIR::ConstantId::Invalid;
-    if (function.return_type_id.is_valid()) {
-      return_type_const_id = GetLocalConstantId(function.return_type_id);
+    if (function.return_storage_id.is_valid()) {
+      return_type_const_id =
+          GetLocalConstantId(function.declared_return_type(import_ir_));
     }
     auto parent_scope_id = GetLocalNameScopeId(function.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
@@ -1059,10 +1060,6 @@ class ImportRefResolver {
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
 
-    auto new_return_type_id =
-        return_type_const_id.is_valid()
-            ? context_.GetTypeIdForTypeConstant(return_type_const_id)
-            : SemIR::TypeId::Invalid;
     auto new_return_storage = SemIR::InstId::Invalid;
     if (function.return_storage_id.is_valid()) {
       // Recreate the return slot from scratch.
@@ -1070,7 +1067,7 @@ class ImportRefResolver {
       // use the same return storage variable in the declaration and definition.
       new_return_storage = context_.AddInstInNoBlock<SemIR::VarStorage>(
           AddImportIRInst(function.return_storage_id),
-          {.type_id = new_return_type_id,
+          {.type_id = context_.GetTypeIdForTypeConstant(return_type_const_id),
            .name_id = SemIR::NameId::ReturnSlot});
     }
     function_decl.function_id = context_.functions().Add(
@@ -1081,7 +1078,6 @@ class ImportRefResolver {
              function.implicit_param_refs_id, implicit_param_const_ids),
          .param_refs_id =
              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
-         .return_type_id = new_return_type_id,
          .return_storage_id = new_return_storage,
          .is_extern = function.is_extern,
          .return_slot = function.return_slot,

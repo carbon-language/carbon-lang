@@ -631,7 +631,6 @@ auto Context::FinalizeGlobalInit() -> void {
          .decl_id = SemIR::InstId::Invalid,
          .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
          .param_refs_id = SemIR::InstBlockId::Empty,
-         .return_type_id = SemIR::TypeId::Invalid,
          .return_storage_id = SemIR::InstId::Invalid,
          .is_extern = false,
          .return_slot = SemIR::Function::ReturnSlot::Absent,

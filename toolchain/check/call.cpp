@@ -86,7 +86,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.
-  SemIR::TypeId type_id = callable.return_type_id;
+  SemIR::TypeId type_id = callable.declared_return_type(context.sem_ir());
   if (!type_id.is_valid()) {
     type_id = context.GetTupleType({});
   }
@@ -107,7 +107,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
       return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
-          node_id, {.type_id = callable.return_type_id});
+          node_id, {.type_id = type_id});
       break;
     case SemIR::Function::ReturnSlot::Absent:
       break;

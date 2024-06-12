@@ -142,10 +142,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   // TODO: Include parameters corresponding to positional parameters.
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
+  auto return_type_id = function.declared_return_type(sem_ir());
 
   SemIR::InitRepr return_rep =
-      function.return_type_id.is_valid()
-          ? SemIR::GetInitRepr(sem_ir(), function.return_type_id)
+      return_type_id.is_valid()
+          ? SemIR::GetInitRepr(sem_ir(), return_type_id)
           : SemIR::InitRepr{.kind = SemIR::InitRepr::None};
   CARBON_CHECK(return_rep.has_return_slot() == has_return_slot);
 
@@ -160,7 +161,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
   if (has_return_slot) {
-    param_types.push_back(GetType(function.return_type_id)->getPointerTo());
+    param_types.push_back(GetType(return_type_id)->getPointerTo());
     param_inst_ids.push_back(function.return_storage_id);
   }
   for (auto param_ref_id :
@@ -187,7 +188,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // If the initializing representation doesn't produce a value, set the return
   // type to void.
   llvm::Type* return_type = return_rep.kind == SemIR::InitRepr::ByCopy
-                                ? GetType(function.return_type_id)
+                                ? GetType(return_type_id)
                                 : llvm::Type::getVoidTy(llvm_context());
 
   std::string mangled_name;
@@ -216,7 +217,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     if (inst_id == function.return_storage_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
-          llvm_context(), GetType(function.return_type_id)));
+          llvm_context(), GetType(return_type_id)));
     } else {
       name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
                     .second.name_id;

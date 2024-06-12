@@ -118,7 +118,6 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     prev_function.definition_id = new_function.definition_id;
     prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
     prev_function.param_refs_id = new_function.param_refs_id;
-    prev_function.return_type_id = new_function.return_type_id;
     prev_function.return_storage_id = new_function.return_storage_id;
   }
   // The new function might have return slot information if it was imported.
@@ -199,13 +198,11 @@ static auto BuildFunctionDecl(Context& context,
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   auto decl_block_id = context.inst_block_stack().Pop();
 
-  auto return_type_id = SemIR::TypeId::Invalid;
   auto return_storage_id = SemIR::InstId::Invalid;
   auto return_slot = SemIR::Function::ReturnSlot::NotComputed;
   if (auto [return_node, maybe_return_storage_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
       maybe_return_storage_id) {
-    return_type_id = context.insts().Get(*maybe_return_storage_id).type_id();
     return_storage_id = *maybe_return_storage_id;
   } else {
     // If there's no return type, there's no return slot.
@@ -250,7 +247,6 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::LocIdAndInst(node_id, function_decl)),
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
-      .return_type_id = return_type_id,
       .return_storage_id = return_storage_id,
       .is_extern = is_extern,
       .return_slot = return_slot};
@@ -291,14 +287,15 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
+    auto return_type_id = function_info.declared_return_type(context.sem_ir());
     // TODO: Update this once valid signatures for the entry point are decided.
     if (function_info.implicit_param_refs_id.is_valid() ||
         !function_info.param_refs_id.is_valid() ||
         !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
-        (function_info.return_type_id.is_valid() &&
-         function_info.return_type_id !=
+        (return_type_id.is_valid() &&
+         return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::IntType) &&
-         function_info.return_type_id != context.GetTupleType({}))) {
+         return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
@@ -398,7 +395,7 @@ auto HandleFunctionDefinition(Context& context,
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (context.is_current_position_reachable()) {
-    if (context.functions().Get(function_id).return_type_id.is_valid()) {
+    if (context.functions().Get(function_id).return_storage_id.is_valid()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "Missing `return` at end of function with declared return type.");
@@ -467,7 +464,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   }
 
   // Get the return type. This is `()` if none was specified.
-  auto return_type_id = function.return_type_id;
+  auto return_type_id = function.declared_return_type(context.sem_ir());
   if (!return_type_id.is_valid()) {
     return_type_id = context.GetTupleType({});
   }

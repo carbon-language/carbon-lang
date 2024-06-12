@@ -19,15 +19,18 @@ auto CheckFunctionTypeMatches(Context& context,
     return false;
   }
 
-  if (new_function.return_type_id == SemIR::TypeId::Error ||
-      prev_function.return_type_id == SemIR::TypeId::Error) {
+  auto new_return_type_id = new_function.declared_return_type(context.sem_ir());
+  auto prev_return_type_id =
+      prev_function.declared_return_type(context.sem_ir());
+  if (new_return_type_id == SemIR::TypeId::Error ||
+      prev_return_type_id == SemIR::TypeId::Error) {
     return false;
   }
-  auto prev_return_type_id =
-      prev_function.return_type_id.is_valid()
-          ? SubstType(context, prev_function.return_type_id, substitutions)
-          : SemIR::TypeId::Invalid;
-  if (new_function.return_type_id != prev_return_type_id) {
+  if (prev_return_type_id.is_valid()) {
+    prev_return_type_id =
+        SubstType(context, prev_return_type_id, substitutions);
+  }
+  if (new_return_type_id != prev_return_type_id) {
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
         "Function redeclaration differs because return type is `{0}`.",
@@ -36,10 +39,10 @@ auto CheckFunctionTypeMatches(Context& context,
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
         "Function redeclaration differs because no return type is provided.");
     auto diag =
-        new_function.return_type_id.is_valid()
+        new_return_type_id.is_valid()
             ? context.emitter().Build(new_function.decl_id,
                                       FunctionRedeclReturnTypeDiffers,
-                                      new_function.return_type_id)
+                                      new_return_type_id)
             : context.emitter().Build(new_function.decl_id,
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.is_valid()) {
@@ -68,11 +71,15 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     return;
   }
 
-  if (!function.return_type_id.is_valid()) {
+  if (!function.return_storage_id.is_valid()) {
     // Implicit `-> ()` has no return slot.
     function.return_slot = SemIR::Function::ReturnSlot::Absent;
     return;
   }
+
+  auto return_type_id = function.declared_return_type(context.sem_ir());
+  CARBON_CHECK(return_type_id.is_valid())
+      << "Have return storage but no return type.";
 
   // Check the return type is complete. Only diagnose incompleteness if we've
   // not already done so.
@@ -80,15 +87,15 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                       "Function returns incomplete type `{0}`.", SemIR::TypeId);
     return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
-                                   function.return_type_id);
+                                   return_type_id);
   };
   if (!context.TryToCompleteType(
-          function.return_type_id,
+          return_type_id,
           function.return_slot == SemIR::Function::ReturnSlot::Error
               ? std::nullopt
               : std::optional(diagnose_incomplete_return_type))) {
     function.return_slot = SemIR::Function::ReturnSlot::Error;
-  } else if (SemIR::GetInitRepr(context.sem_ir(), function.return_type_id)
+  } else if (SemIR::GetInitRepr(context.sem_ir(), return_type_id)
                  .has_return_slot()) {
     function.return_slot = SemIR::Function::ReturnSlot::Present;
   } else {
