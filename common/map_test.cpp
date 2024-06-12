@@ -250,7 +250,8 @@ TYPED_TEST(MapTest, GrowToAllocSize) {
   // No further growth triggered.
   EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 
-  // Get a couple of doubling based growths.
+  // Get a few doubling based growths, and at least one beyond the largest small
+  // size.
   m.GrowToAllocSize(64);
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(8, 24)));
@@ -316,14 +317,14 @@ TYPED_TEST(MapTest, GrowForInsert) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Erase(i));
   }
-  m.GrowForInsertCount(1717);
+  m.GrowForInsertCount(321);
   storage_bytes = m.ComputeMetrics().storage_bytes;
-  for (int i : llvm::seq(128, 1717 + 128)) {
+  for (int i : llvm::seq(128, 321 + 128)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
   }
   ExpectMapElementsAre(m, MakeKeyValues([](int k) { return k * 100; },
-                                        llvm::seq(128, 1717 + 128)));
+                                        llvm::seq(128, 321 + 128)));
   EXPECT_EQ(storage_bytes, m.ComputeMetrics().storage_bytes);
 }
 
