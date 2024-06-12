@@ -441,6 +441,10 @@ class Context {
     SemIR::TypeId type_id_;
   };
 
+  // Finish producing an instruction. Set its constant value, and register it in
+  // any applicable instruction lists.
+  auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
+
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
 
