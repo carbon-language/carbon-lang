@@ -845,25 +845,59 @@ static auto MakeConstantForCall(Context& context, SemIRLoc loc,
 
   auto callee_function =
       SemIR::GetCalleeFunction(context.sem_ir(), call.callee_id);
-  if (!callee_function.function_id.is_valid()) {
-    return SemIR::ConstantId::Error;
-  }
-  const auto& function = context.functions().Get(callee_function.function_id);
-
-  // Handle calls to builtins.
-  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
-    if (!ReplaceFieldWithConstantValue(context, &call, &SemIR::Call::args_id,
-                                       &phase)) {
+  auto builtin_kind = SemIR::BuiltinFunctionKind::None;
+  if (callee_function.function_id.is_valid()) {
+    // Calls to builtins might be constant.
+    builtin_kind =
+        context.functions().Get(callee_function.function_id).builtin_kind;
+    if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
+      // TODO: Eventually we'll want to treat some kinds of non-builtin
+      // functions as producing constants.
       return SemIR::ConstantId::NotConstant;
     }
-    if (phase == Phase::UnknownDueToError) {
-      return SemIR::ConstantId::Error;
-    }
-    return MakeConstantForBuiltinCall(context, loc, call, function.builtin_kind,
+  } else {
+    // Calls to non-functions, such as calls to generic entity names, might be
+    // constant.
+  }
+
+  // If the arguments aren't constant, this is not a constant call.
+  if (!ReplaceFieldWithConstantValue(context, &call, &SemIR::Call::args_id,
+                                     &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ConstantId::Error;
+  }
+
+  // Handle calls to builtins.
+  if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
+    return MakeConstantForBuiltinCall(context, loc, call, builtin_kind,
                                       context.inst_blocks().Get(call.args_id),
                                       phase);
   }
-  return SemIR::ConstantId::NotConstant;
+
+  // Look at the type of the callee for special cases: calls to generic class
+  // and generic interface types.
+  auto type_inst =
+      context.types().GetAsInst(context.insts().Get(call.callee_id).type_id());
+  CARBON_KIND_SWITCH(type_inst) {
+    case CARBON_KIND(SemIR::GenericClassType generic_class):
+      return MakeConstantResult(
+          context,
+          SemIR::ClassType{.type_id = call.type_id,
+                           .class_id = generic_class.class_id,
+                           .args_id = call.args_id},
+          phase);
+    case CARBON_KIND(SemIR::GenericInterfaceType generic_interface):
+      return MakeConstantResult(
+          context,
+          SemIR::InterfaceType{.type_id = call.type_id,
+                               .interface_id = generic_interface.interface_id,
+                               .args_id = call.args_id},
+          phase);
+    default:
+      return SemIR::ConstantId::NotConstant;
+  }
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)

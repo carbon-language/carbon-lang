@@ -30,14 +30,10 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+14]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
-// CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+10]]:14: ERROR: Missing value for field `a` in struct initialization.
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-8]]:6: In import.
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:6: In import.
 // CHECK:STDERR: impl package Implicit;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: implicit.carbon:8:1: Initializing parameter 1 of function declared here.
@@ -141,8 +137,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc9_27: i32 = int_literal 2 [template = constants.%.14]
 // CHECK:STDOUT:     %.loc9_28: %.11 = struct_literal (%.loc9_19, %.loc9_27)
 // CHECK:STDOUT:     %struct: %.11 = struct_value (%.loc9_19, %.loc9_27) [template = constants.%struct.4]
-// CHECK:STDOUT:     %.loc9_12: %.11 = converted %.loc9_28, %struct [template = constants.%struct.4]
-// CHECK:STDOUT:     %C: type = class_type @C, (%.loc9_12) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc9_12.1: %.11 = converted %.loc9_28, %struct [template = constants.%struct.4]
+// CHECK:STDOUT:     %.loc9_12.2: init type = call %C.ref(%.loc9_12.1) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc9_29.1: type = value_of_initializer %.loc9_12.2 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc9_29.2: type = converted %.loc9_12.2, %.loc9_29.1 [template = constants.%C.3]
 // CHECK:STDOUT:     @F.%return: ref %C.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -230,7 +228,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.1: ref %.2 = import_ref ir0, inst+16, loaded
 // CHECK:STDOUT:   %import_ref.2: ref %.6 = import_ref ir0, inst+59, loaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+103, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+123, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
@@ -263,8 +261,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc6_24: i32 = int_literal 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc6_25: %.11 = struct_literal (%.loc6_16, %.loc6_24)
 // CHECK:STDOUT:   %struct: %.11 = struct_value (%.loc6_16, %.loc6_24) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_9: %.11 = converted %.loc6_25, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %C: type = class_type @C, (%.loc6_9) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_9.1: %.11 = converted %.loc6_25, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_9.2: init type = call %C.ref(%.loc6_9.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_26.1: type = value_of_initializer %.loc6_9.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_26.2: type = converted %.loc6_9.2, %.loc6_26.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c.var: ref %C.3 = var c
 // CHECK:STDOUT:   %c: ref %C.3 = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -330,11 +330,11 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.c: i32, .d: i32} [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %struct: %.3 = struct_value (%.4, %.5) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, (%struct) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -349,16 +349,18 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+59, unloaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+103, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+123, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+106, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc17_20: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_28: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc17_29: %.6 = struct_literal (%.loc17_20, %.loc17_28)
-// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C.2]
-// CHECK:STDOUT:   %c_bad.var: ref %C.2 = var c_bad
-// CHECK:STDOUT:   %c_bad: ref %C.2 = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT:   %.loc13_20: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_28: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_29: %.6 = struct_literal (%.loc13_20, %.loc13_28)
+// CHECK:STDOUT:   %.loc13_13: init type = call %C.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc13_30.1: type = value_of_initializer %.loc13_13 [template = <error>]
+// CHECK:STDOUT:   %.loc13_30.2: type = converted %.loc13_13, %.loc13_30.1 [template = <error>]
+// CHECK:STDOUT:   %c_bad.var: ref <error> = var c_bad
+// CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -371,8 +373,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc17: ref %C.3 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc17
+// CHECK:STDOUT:   %.loc13: ref %C.3 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc13
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -413,7 +415,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+59, unloaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+103, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+123, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+106, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
@@ -421,8 +423,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc6_28: i32 = int_literal 4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc6_29: %.3 = struct_literal (%.loc6_20, %.loc6_28)
 // CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc6_20, %.loc6_28) [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc6_13: %.3 = converted %.loc6_29, %struct [template = constants.%struct.1]
-// CHECK:STDOUT:   %C: type = class_type @C, (%.loc6_13) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_13.1: %.3 = converted %.loc6_29, %struct [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc6_13.2: init type = call %C.ref(%.loc6_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_30.1: type = value_of_initializer %.loc6_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_30.2: type = converted %.loc6_13.2, %.loc6_30.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }

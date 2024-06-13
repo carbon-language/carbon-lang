@@ -31,14 +31,10 @@ var c: C((1, 2)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+14]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
-// CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+10]]:14: ERROR: Cannot initialize tuple of 2 element(s) from tuple with 3 element(s).
 // CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
 // CHECK:STDERR:              ^~~~~~~~~
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-9]]:6: In import.
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:6: In import.
 // CHECK:STDERR: impl package Implicit;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: implicit.carbon:7:1: Initializing parameter 1 of function declared here.
@@ -156,8 +152,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc9_17: i32 = int_literal 2 [template = constants.%.16]
 // CHECK:STDOUT:     %.loc9_18: %.9 = tuple_literal (%.loc9_14, %.loc9_17)
 // CHECK:STDOUT:     %tuple: %.9 = tuple_value (%.loc9_14, %.loc9_17) [template = constants.%tuple.5]
-// CHECK:STDOUT:     %.loc9_12: %.9 = converted %.loc9_18, %tuple [template = constants.%tuple.5]
-// CHECK:STDOUT:     %C: type = class_type @C, (%.loc9_12) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc9_12.1: %.9 = converted %.loc9_18, %tuple [template = constants.%tuple.5]
+// CHECK:STDOUT:     %.loc9_12.2: init type = call %C.ref(%.loc9_12.1) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc9_19.1: type = value_of_initializer %.loc9_12.2 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc9_19.2: type = converted %.loc9_12.2, %.loc9_19.1 [template = constants.%C.3]
 // CHECK:STDOUT:     @F.%return: ref %C.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -254,7 +252,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %import_ref.1: ref %.3 = import_ref ir0, inst+16, loaded
 // CHECK:STDOUT:   %import_ref.2: ref %.9 = import_ref ir0, inst+60, loaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+108, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+123, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
@@ -296,8 +294,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc6_14: i32 = int_literal 2 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc6_15: %.8 = tuple_literal (%.loc6_11, %.loc6_14)
 // CHECK:STDOUT:   %tuple: %.8 = tuple_value (%.loc6_11, %.loc6_14) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_9: %.8 = converted %.loc6_15, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C: type = class_type @C, (%.loc6_9) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_9.1: %.8 = converted %.loc6_15, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc6_9.2: init type = call %C.ref(%.loc6_9.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %.loc6_9.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_16.2: type = converted %.loc6_9.2, %.loc6_16.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c.var: ref %C.3 = var c
 // CHECK:STDOUT:   %c: ref %C.3 = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -372,11 +372,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4, %.5) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, (%tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -391,17 +391,19 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+108, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+123, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+111, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc18_15: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc18_18: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_21: i32 = int_literal 3 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_22: %.7 = tuple_literal (%.loc18_15, %.loc18_18, %.loc18_21)
-// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C.2]
-// CHECK:STDOUT:   %c_bad.var: ref %C.2 = var c_bad
-// CHECK:STDOUT:   %c_bad: ref %C.2 = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_18: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_22: %.7 = tuple_literal (%.loc14_15, %.loc14_18, %.loc14_21)
+// CHECK:STDOUT:   %.loc14_13: init type = call %C.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc14_23.1: type = value_of_initializer %.loc14_13 [template = <error>]
+// CHECK:STDOUT:   %.loc14_23.2: type = converted %.loc14_13, %.loc14_23.1 [template = <error>]
+// CHECK:STDOUT:   %c_bad.var: ref <error> = var c_bad
+// CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -414,8 +416,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc18: ref %C.3 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc18
+// CHECK:STDOUT:   %.loc14: ref %C.3 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc14
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -456,7 +458,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+108, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+123, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+111, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
@@ -464,8 +466,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7_19: %.3 = tuple_literal (%.loc7_15, %.loc7_18)
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13: %.3 = converted %.loc7_19, %tuple [template = constants.%tuple.1]
-// CHECK:STDOUT:   %C: type = class_type @C, (%.loc7_13) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc7_13.1: %.3 = converted %.loc7_19, %tuple [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc7_13.2: init type = call %C.ref(%.loc7_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_13.2, %.loc7_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
