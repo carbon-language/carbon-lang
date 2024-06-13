@@ -399,8 +399,10 @@ follows:
     components of the segments.
 -   If `E` is an arity coercion `⟪F; S⟫`, the only scalar component of `E` is
     `F`.
--   Otherwise, the only scalar component of `E` is `E`. The scalar components of
-    any other expression are the scalar components of its fully expanded form.
+-   Otherwise, the only scalar component of `E` is `E`.
+
+The scalar components of any other expression are the scalar components of its
+fully expanded form.
 
 By construction, a segment of a pack literal never has more than one scalar
 component. Also by construction, a scalar component cannot contain a pack
@@ -504,7 +506,7 @@ function as only having one parameter. The fact that it's composed of an
 ordinary name and an each-name has no further effect, except to record the fact
 that this pack must have at least one element (and consequently `each args` must
 too). Note in particular that `Vector(⟬First, each Next⟭)` is considered to be
-fully expanded, and this it has a single scalar component, itself.
+fully expanded, and thus it has a single scalar component, itself.
 
 A synthetic deduced parameter must satisfy the following requirements:
 
@@ -533,19 +535,23 @@ same arity. For example, consider this call to `ZipAtLeastOne` (as defined in
 the previous section):
 
 ```carbon
-fn F[... each T:! I, U:! J](... each t: Vector(each T), u: Vector(U)) {
+fn F[... each T:! type](... each t: Vector(each T), u: Vector(i32)) {
   ZipAtLeastOne(... each t, u);
 }
 ```
 
 The pattern type is `(... Vector(⟬First, each Next⟭))`, so we need to rewrite
-the scrutinee type `(... Vector(each T), Vector(U))` to have a single segment
-with an arity that matches `‖each Next‖+1`. We can do that by merging the
-scrutinee segments in much the same way that we originally did with the pattern
-segments, to obtain `(... Vector(⟬each T, U⟭))`. This has a single segment with
-arity `‖each T‖+1`, which can match `‖each Next‖+1` because the deduced arity
-`‖each Next‖` behaves as a deduced parameter of the pattern, so they match by
-deducing `‖each Next‖ == ‖each T`.
+the scrutinee type `(... Vector(each T), Vector(i32))` to have a single tuple
+segment with an arity that matches `‖each Next‖+1`. We can do that by merging
+the scrutinee segments to obtain `(... ⟬Vector(each T), Vector(i32)⟭)`. This has
+a single segment with arity `‖each T‖+1`, which can match `‖each Next‖+1`
+because the deduced arity `‖each Next‖` behaves as a deduced parameter of the
+pattern, so they match by deducing `‖each Next‖ == ‖each T‖`.
+
+Note that when merging segments of the scrutinee, we can't form synthetic
+deduced parameters (because the scrutinee is not in a deducing context), but we
+also don't need to: we don't require a merged scrutinee segments to have a
+single scalar component.
 
 The search for this rewrite processes each pattern segment to the left of the
 segment with deduced arity, in order from left to right. For each pattern
@@ -566,10 +572,13 @@ segment has only one scalar component). Since we are checking scalar components
 against scalar components, this proceeds according to the usual rules of
 non-variadic typechecking.
 
-> **TODO:** Extend this approach to fall back to maximally merging the scrutinee
-> tuple, and then merging/splitting the pattern tuple to match it. This isn't
-> quite symmetric with the current approach because the scrutinee isn't in a
-> pattern context, so name-packs-as-names have different semantics.
+> **TODO:** Extend this approach to fall back to a complementary approach, where
+> the pattern and scrutinee trade roles: we maximally merge the scrutinee tuple,
+> while requiring each segment to have a single scalar component, and then
+> merge/split the pattern tuple to match it, without requiring pattern tuple
+> segments to have a single scalar component. This isn't quite symmetric with
+> the current approach, because when processing the scrutinee we're not forming
+> synthetic deduced parameters, we're forming synthetic `let` bindings.
 
 ## Appendix: Type system formalism
 
@@ -835,6 +844,8 @@ further merging, so this must be the canonical form.
 > merging can fail.
 
 ## Alternatives considered
+
+FIXME update this
 
 -   [Member packs](/proposals/p2240.md#member-packs)
 -   [First-class packs](/proposals/p2240.md#first-class-packs)
