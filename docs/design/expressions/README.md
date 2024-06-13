@@ -69,7 +69,7 @@ graph BT
                   x->(...)"]
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
-    call{"x(...)"}
+    callPostfix{"x(...)"}
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
@@ -151,17 +151,17 @@ graph BT
     top --> parens & braces & unqualifiedName
     memberAccess --> top
 
-    call --> memberAccess
+    callPostfix --> memberAccess
 
-    constType --> call
+    constType --> callPostfix
     pointerType --> constType
     as --> pointerType
 
-    pointer --> call
+    pointer --> callPostfix
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> call
+    not -------> callPostfix
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
