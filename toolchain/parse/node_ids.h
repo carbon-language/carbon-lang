@@ -76,6 +76,7 @@ using AnyMemberNameOrMemberExprId =
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
+using AnyWhereId = NodeIdInCategory<NodeCategory::Where>;
 
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>

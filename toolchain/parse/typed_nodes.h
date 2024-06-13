@@ -747,6 +747,68 @@ struct MatchStatement {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// Struct type and value literals
+// ------------------------------
+
+// `{`
+using StructLiteralStart =
+    LeafNode<NodeKind::StructLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
+using StructTypeLiteralStart =
+    LeafNode<NodeKind::StructTypeLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
+// `,`
+using StructComma = LeafNode<NodeKind::StructComma, Lex::CommaTokenIndex>;
+
+// `.a`
+struct StructFieldDesignator {
+  static constexpr auto Kind =
+      NodeKind::StructFieldDesignator.Define({.child_count = 1});
+
+  Lex::PeriodTokenIndex token;
+  NodeIdOneOf<IdentifierName, BaseName> name;
+};
+
+// `.a = 0`
+struct StructField {
+  static constexpr auto Kind = NodeKind::StructField.Define(
+      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
+
+  StructFieldDesignatorId designator;
+  Lex::EqualTokenIndex token;
+  AnyExprId expr;
+};
+
+// `.a: i32`
+struct StructTypeField {
+  static constexpr auto Kind = NodeKind::StructTypeField.Define(
+      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
+
+  StructFieldDesignatorId designator;
+  Lex::ColonTokenIndex token;
+  AnyExprId type_expr;
+};
+
+// Struct literals, such as `{.a = 0}`.
+struct StructLiteral {
+  static constexpr auto Kind = NodeKind::StructLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = StructLiteralStart::Kind});
+
+  StructLiteralStartId start;
+  CommaSeparatedList<StructFieldId, StructCommaId> fields;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
+// Struct type literals, such as `{.a: i32}`.
+struct StructTypeLiteral {
+  static constexpr auto Kind = NodeKind::StructTypeLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = StructTypeLiteralStart::Kind});
+
+  StructTypeLiteralStartId start;
+  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
 // Expression nodes
 // ----------------
 
@@ -1000,6 +1062,71 @@ struct IfExprElse {
   AnyExprId else_result;
 };
 
+// A `where` expression
+
+// `.Self`
+// FIXME: SelfDesignator?
+struct DotSelf {
+  static constexpr auto Kind = NodeKind::DotSelf.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::PeriodTokenIndex token;
+  SelfTypeNameExprId self;
+};
+
+// virtual node
+// FIXME: WhereType? WhereOperand?
+struct WhereIntroducer {
+  static constexpr auto Kind =
+      NodeKind::WhereIntroducer.Define({.child_count = 1});
+  AnyExprId type;
+  Lex::WhereTokenIndex token;
+};
+
+struct WhereExpr {
+  static constexpr auto Kind =
+      NodeKind::WhereExpr.Define({.category = NodeCategory::Expr,
+                                  .bracketed_by = WhereIntroducer::Kind,
+                                  .child_count = 2});
+  WhereIntroducerId introducer;
+  Lex::WhereTokenIndex token;
+  AnyWhereId condition;
+};
+
+// FIXME: WhereRewrite?
+struct WhereAssign {
+  static constexpr auto Kind = NodeKind::WhereAssign.Define(
+      {.category = NodeCategory::Where, .child_count = 2});
+  NodeIdOneOf<StructFieldDesignator, DotSelf> designator;
+  Lex::EqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+// FIXME: WhereEqualEqual?
+struct WhereEquals {
+  static constexpr auto Kind = NodeKind::WhereEquals.Define(
+      {.category = NodeCategory::Where, .child_count = 2});
+  AnyExprId lhs;
+  Lex::EqualEqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct WhereImpls {
+  static constexpr auto Kind = NodeKind::WhereImpls.Define(
+      {.category = NodeCategory::Where, .child_count = 2});
+  AnyExprId lhs;
+  Lex::ImplsTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct WhereAnd {
+  static constexpr auto Kind = NodeKind::WhereAnd.Define(
+      {.category = NodeCategory::Where, .child_count = 2});
+  AnyWhereId lhs;
+  Lex::AndTokenIndex token;
+  AnyWhereId rhs;
+};
+
 // Choice nodes
 // ------------
 
@@ -1032,68 +1159,6 @@ struct ChoiceDefinition {
     std::optional<TuplePatternId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
-  Lex::CloseCurlyBraceTokenIndex token;
-};
-
-// Struct type and value literals
-// ----------------------------------------
-
-// `{`
-using StructLiteralStart =
-    LeafNode<NodeKind::StructLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
-using StructTypeLiteralStart =
-    LeafNode<NodeKind::StructTypeLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
-// `,`
-using StructComma = LeafNode<NodeKind::StructComma, Lex::CommaTokenIndex>;
-
-// `.a`
-struct StructFieldDesignator {
-  static constexpr auto Kind =
-      NodeKind::StructFieldDesignator.Define({.child_count = 1});
-
-  Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierName, BaseName> name;
-};
-
-// `.a = 0`
-struct StructField {
-  static constexpr auto Kind = NodeKind::StructField.Define(
-      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
-
-  StructFieldDesignatorId designator;
-  Lex::EqualTokenIndex token;
-  AnyExprId expr;
-};
-
-// `.a: i32`
-struct StructTypeField {
-  static constexpr auto Kind = NodeKind::StructTypeField.Define(
-      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
-
-  StructFieldDesignatorId designator;
-  Lex::ColonTokenIndex token;
-  AnyExprId type_expr;
-};
-
-// Struct literals, such as `{.a = 0}`.
-struct StructLiteral {
-  static constexpr auto Kind = NodeKind::StructLiteral.Define(
-      {.category = NodeCategory::Expr,
-       .bracketed_by = StructLiteralStart::Kind});
-
-  StructLiteralStartId start;
-  CommaSeparatedList<StructFieldId, StructCommaId> fields;
-  Lex::CloseCurlyBraceTokenIndex token;
-};
-
-// Struct type literals, such as `{.a: i32}`.
-struct StructTypeLiteral {
-  static constexpr auto Kind = NodeKind::StructTypeLiteral.Define(
-      {.category = NodeCategory::Expr,
-       .bracketed_by = StructTypeLiteralStart::Kind});
-
-  StructTypeLiteralStartId start;
-  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
