@@ -150,6 +150,7 @@ graph BT
 
     top --> parens & braces & unqualifiedName
     memberAccess --> top
+
     call --> memberAccess
 
     constType --> call
