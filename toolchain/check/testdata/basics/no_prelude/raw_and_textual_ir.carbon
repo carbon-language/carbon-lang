@@ -25,7 +25,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   bind_names:
 // CHECK:STDOUT:     bindName0:       {name: name1, parent_scope: name_scope<invalid>, index: compTimeBind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block3, return_type: type2, return_storage: inst+13, return_slot: present, body: [block6]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block3, return_storage: inst+13, return_slot: present, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}

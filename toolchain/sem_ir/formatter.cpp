@@ -246,13 +246,13 @@ class Formatter {
       out_ << ")";
     }
 
-    if (fn.return_type_id.is_valid()) {
+    if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
       if (!fn.body_block_ids.empty() && fn.has_return_slot()) {
         FormatInstName(fn.return_storage_id);
         out_ << ": ";
       }
-      FormatType(fn.return_type_id);
+      FormatType(sem_ir_.insts().Get(fn.return_storage_id).type_id());
     }
 
     if (fn.builtin_kind != BuiltinFunctionKind::None) {

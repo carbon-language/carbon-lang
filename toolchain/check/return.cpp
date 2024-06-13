@@ -38,11 +38,11 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
 
 // Produces a note describing the return type of the given function.
 static auto NoteReturnType(Context::DiagnosticBuilder& diag,
-                           const SemIR::Function& function) {
+                           const SemIR::Function& function,
+                           SemIR::TypeId return_type_id) {
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
                     "Return type of function is `{0}`.", SemIR::TypeId);
-  diag.Note(function.return_storage_id, ReturnTypeHereNote,
-            function.return_type_id);
+  diag.Note(function.return_storage_id, ReturnTypeHereNote, return_type_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
@@ -58,7 +58,8 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
     -> SemIR::InstId {
   // A `returned var` requires an explicit return type.
   auto& function = GetCurrentFunction(context);
-  if (!function.return_type_id.is_valid()) {
+  auto return_type_id = function.declared_return_type(context.sem_ir());
+  if (!return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarWithNoReturnType, Error,
                       "Cannot declare a `returned var` in this function.");
     auto diag =
@@ -69,14 +70,14 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   }
 
   // The declared type of the var must match the return type of the function.
-  if (function.return_type_id != type_id) {
+  if (return_type_id != type_id) {
     CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
                       "Type `{0}` of `returned var` does not match "
                       "return type of enclosing function.",
                       SemIR::TypeId);
     auto diag =
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
-    NoteReturnType(diag, function);
+    NoteReturnType(diag, function, return_type_id);
     diag.Emit();
     return SemIR::InstId::BuiltinError;
   }
@@ -105,12 +106,13 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
 auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
     -> void {
   const auto& function = GetCurrentFunction(context);
+  auto return_type_id = function.declared_return_type(context.sem_ir());
 
-  if (function.return_type_id.is_valid()) {
+  if (return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
                       "Missing return value.");
     auto diag = context.emitter().Build(node_id, ReturnStatementMissingExpr);
-    NoteReturnType(diag, function);
+    NoteReturnType(diag, function, return_type_id);
     diag.Emit();
   }
 
@@ -122,8 +124,9 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::Invalid;
+  auto return_type_id = function.declared_return_type(context.sem_ir());
 
-  if (!function.return_type_id.is_valid()) {
+  if (!return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         ReturnStatementDisallowExpr, Error,
         "No return expression should be provided in this context.");
@@ -146,8 +149,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     // Don't produce a second error complaining the return type is incomplete.
     expr_id = SemIR::InstId::BuiltinError;
   } else {
-    expr_id = ConvertToValueOfType(context, node_id, expr_id,
-                                   function.return_type_id);
+    expr_id = ConvertToValueOfType(context, node_id, expr_id, return_type_id);
   }
 
   context.AddInst<SemIR::ReturnExpr>(
