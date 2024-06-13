@@ -9,6 +9,7 @@
 #include <optional>
 
 #include "common/command_line.h"
+#include "common/version.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -398,24 +399,7 @@ The linked file name. The output is always a linked binary.
 };
 
 struct Driver::Options {
-  static constexpr CommandLine::CommandInfo Info = {
-      .name = "carbon",
-      // TODO: Set up more detailed version information and use that here.
-      .version = R"""(
-Carbon Language toolchain -- version 0.0.0
-)""",
-      .help = R"""(
-This is the unified Carbon Language toolchain driver. Its subcommands provide
-all of the core behavior of the toolchain, including compilation, linking, and
-developer tools. Each of these has its own subcommand, and you can pass a
-specific subcommand to the `help` subcommand to get details about its usage.
-)""",
-      .help_epilogue = R"""(
-For questions, issues, or bug reports, please use our GitHub project:
-
-  https://github.com/carbon-language/carbon-lang
-)""",
-  };
+  static const CommandLine::CommandInfo Info;
 
   enum class Subcommand : int8_t {
     Compile,
@@ -451,6 +435,25 @@ For questions, issues, or bug reports, please use our GitHub project:
   CodegenOptions codegen_options;
   CompileOptions compile_options;
   LinkOptions link_options;
+};
+
+// Note that this is not constexpr so that it can include information generated
+// in separate translation units and potentially overridden at link time in the
+// version string.
+const CommandLine::CommandInfo Driver::Options::Info = {
+    .name = "carbon",
+    .version = Version::ToolchainInfo,
+    .help = R"""(
+This is the unified Carbon Language toolchain driver. Its subcommands provide
+all of the core behavior of the toolchain, including compilation, linking, and
+developer tools. Each of these has its own subcommand, and you can pass a
+specific subcommand to the `help` subcommand to get details about its usage.
+)""",
+    .help_epilogue = R"""(
+For questions, issues, or bug reports, please use our GitHub project:
+
+  https://github.com/carbon-language/carbon-lang
+)""",
 };
 
 auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)

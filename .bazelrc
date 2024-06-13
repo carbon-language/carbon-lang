@@ -2,6 +2,22 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# Ensure all builds have Carbon's workspace status attached. We have carefully
+# factored the stamping done by this to avoid excessive build performance impact
+# and so enable stamping with it by default. CI and systems especially dependent
+# on caching should explicitly use `--nostamp`.
+build --workspace_status_command=./scripts/workspace_status.py
+build --stamp
+
+# Provide aliases for configuring the release and pre-release version being
+# built.
+build --flag_alias=release=//bazel/version:release
+build --flag_alias=pre_release=//bazel/version:pre_release
+build --flag_alias=rc_number=//bazel/version:rc_number
+build --flag_alias=beta_number=//bazel/version:beta_number
+build --flag_alias=alpha_number=//bazel/version:alpha_number
+build --flag_alias=nightly_date=//bazel/version:nightly_date
+
 # Support running clang-tidy with:
 #   bazel build --config=clang-tidy -k //...
 # See: https://github.com/erenon/bazel_clang_tidy
