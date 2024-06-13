@@ -120,7 +120,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc25_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc25_15.2: type = converted %int.make_type_32, %.loc25_15.1 [template = i32]
-// CHECK:STDOUT:   %Class: type = class_type @Class, (%.loc25_15.2) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc25_15.3: init type = call %Class.ref(%.loc25_15.2) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc25_19.1: type = value_of_initializer %.loc25_15.3 [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc25_19.2: type = converted %.loc25_15.3, %.loc25_19.1 [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
 // CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc25_29: i32 = int_literal 0 [template = constants.%.7]

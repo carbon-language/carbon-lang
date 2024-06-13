@@ -108,14 +108,18 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %int.make_type_32.loc6, %.loc6_17.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_17.3: type = ptr_type i32 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc6_20: i32 = int_literal 5 [template = constants.%.4]
-// CHECK:STDOUT:   %Class.loc6: type = class_type @Class, (%.loc6_17.3, %.loc6_20) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc6_13: init type = call %Class.ref.loc6(%.loc6_17.3, %.loc6_20) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc6_21.1: type = value_of_initializer %.loc6_13 [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc6_21.2: type = converted %.loc6_13, %.loc6_21.1 [template = constants.%Class.3]
 // CHECK:STDOUT:   %a.var: ref %Class.3 = var a
 // CHECK:STDOUT:   %a: ref %Class.3 = bind_name a, %a.var
 // CHECK:STDOUT:   %Class.ref.loc9: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %.loc9_15: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 0 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_13: type = converted %.loc9_15, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %Class.loc9: type = class_type @Class, (%.loc9_13, %.loc9_18) [template = constants.%Class.4]
+// CHECK:STDOUT:   %.loc9_13.1: type = converted %.loc9_15, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_13.2: init type = call %Class.ref.loc9(%.loc9_13.1, %.loc9_18) [template = constants.%Class.4]
+// CHECK:STDOUT:   %.loc9_19.1: type = value_of_initializer %.loc9_13.2 [template = constants.%Class.4]
+// CHECK:STDOUT:   %.loc9_19.2: type = converted %.loc9_13.2, %.loc9_19.1 [template = constants.%Class.4]
 // CHECK:STDOUT:   %b.var: ref %Class.4 = var b
 // CHECK:STDOUT:   %b: ref %Class.4 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -140,7 +144,6 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %Class.2: type = class_type @Class [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -166,9 +169,11 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.loc13_17.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_17.2: type = converted %int.make_type_32.loc13, %.loc13_17.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_17.3: type = ptr_type i32 [template = constants.%.3]
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class.2]
-// CHECK:STDOUT:   %a.var: ref %Class.2 = var a
-// CHECK:STDOUT:   %a: ref %Class.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc13_13: init type = call %Class.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc13_18.1: type = value_of_initializer %.loc13_13 [template = <error>]
+// CHECK:STDOUT:   %.loc13_18.2: type = converted %.loc13_13, %.loc13_18.1 [template = <error>]
+// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -193,7 +198,6 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -221,9 +225,11 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.loc13_17.3: type = ptr_type i32 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_20: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_23: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class.2]
-// CHECK:STDOUT:   %a.var: ref %Class.2 = var a
-// CHECK:STDOUT:   %a: ref %Class.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc13_13: init type = call %Class.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %.loc13_13 [template = <error>]
+// CHECK:STDOUT:   %.loc13_24.2: type = converted %.loc13_13, %.loc13_24.1 [template = <error>]
+// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -247,7 +253,6 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -274,9 +279,11 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %.loc12_20.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_20.2: type = converted %int.make_type_32.loc12, %.loc12_20.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_20.3: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class.2]
-// CHECK:STDOUT:   %a.var: ref %Class.2 = var a
-// CHECK:STDOUT:   %a: ref %Class.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc12_13: init type = call %Class.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %.loc12_13 [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.2: type = converted %.loc12_13, %.loc12_21.1 [template = <error>]
+// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
