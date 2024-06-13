@@ -69,7 +69,8 @@ graph BT
                   x->(...)"]
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
-    callPostfix{"x(...)"}
+    callAndIndexing{"x(...)<br>
+                     x[y]"}
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
@@ -151,17 +152,17 @@ graph BT
     top --> parens & braces & unqualifiedName
     memberAccess --> top
 
-    callPostfix --> memberAccess
+    callAndIndexing --> memberAccess
 
-    constType --> callPostfix
+    constType --> callAndIndexing
     pointerType --> constType
     as --> pointerType
 
-    pointer --> callPostfix
+    pointer --> callAndIndexing
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> callPostfix
+    not -------> callAndIndexing
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
@@ -306,6 +307,8 @@ Most expressions are modeled as operators:
 
 | Category   | Operator                            | Syntax    | Function                                                              |
 | ---------- | ----------------------------------- | --------- | --------------------------------------------------------------------- |
+| Call       | `()` (unary)                        | `x(...)`  | Function call: the value returned by calling the function `x`.        |
+| Call       | `[]` (unary)                        | `x[y]`    | Subscripting or indexing: returns the element `y` of `x`.             |
 | Pointer    | [`*`](pointer_operators.md) (unary) | `*x`      | Pointer dereference: the object pointed to by `x`.                    |
 | Pointer    | [`&`](pointer_operators.md) (unary) | `&x`      | Address-of: a pointer to the object `x`.                              |
 | Arithmetic | [`-`](arithmetic.md) (unary)        | `-x`      | The negation of `x`.                                                  |
