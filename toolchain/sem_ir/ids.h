@@ -134,19 +134,6 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
     return index >= IndexOffset;
   }
 
-  // Returns the instruction that describes this constant value, or
-  // InstId::Invalid for a runtime value. Requires is_valid.
-  constexpr auto inst_id() const -> InstId {
-    CARBON_CHECK(is_valid());
-    return InstId(Abs(index) - IndexOffset);
-  }
-
-  // Returns the instruction that describes this constant value, or
-  // InstId::Invalid if this is invalid or a runtime value.
-  constexpr auto inst_id_if_valid() const -> InstId {
-    return is_valid() ? inst_id() : InstId::Invalid;
-  }
-
   auto Print(llvm::raw_ostream& out) const -> void {
     if (!is_valid()) {
       IdBase::Print(out);
@@ -160,9 +147,20 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   }
 
  private:
+  friend class ConstantValueStore;
+
   // TODO: C++23 makes std::abs constexpr, but until then we mirror std::abs
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
+
+  // Returns the instruction that describes this constant value, or
+  // InstId::Invalid for a runtime value. This is not part of the public
+  // interface of `ConstantId`. Use `ConstantValueStore::GetInstId` to get the
+  // instruction ID of a `ConstantId`.
+  constexpr auto inst_id() const -> InstId {
+    CARBON_CHECK(is_valid());
+    return InstId(Abs(index) - IndexOffset);
+  }
 
   static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
   // The offset of InstId indices to ConstantId indices.
@@ -170,7 +168,6 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
-static_assert(ConstantId::NotConstant.inst_id() == InstId::Invalid);
 constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);

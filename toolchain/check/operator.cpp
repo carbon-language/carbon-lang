@@ -47,7 +47,7 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
   }
 
   // Look through import_refs and aliases.
-  op_id = context.constant_values().Get(op_id).inst_id();
+  op_id = context.constant_values().GetConstantInstId(op_id);
 
   // We expect it to be an associated function.
   if (context.insts().Is<SemIR::AssociatedEntity>(op_id)) {

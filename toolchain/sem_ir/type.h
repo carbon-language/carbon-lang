@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -15,7 +16,8 @@ namespace Carbon::SemIR {
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public ValueStore<TypeId> {
  public:
-  explicit TypeStore(InstStore* insts) : insts_(insts) {}
+  explicit TypeStore(InstStore* insts, ConstantValueStore* constants)
+      : insts_(insts), constants_(constants) {}
 
   // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
@@ -33,7 +35,7 @@ class TypeStore : public ValueStore<TypeId> {
 
   // Returns the ID of the instruction used to define the specified type.
   auto GetInstId(TypeId type_id) const -> InstId {
-    return GetConstantId(type_id).inst_id();
+    return constants_->GetInstId(GetConstantId(type_id));
   }
 
   // Returns the instruction used to define the specified type.
@@ -56,7 +58,8 @@ class TypeStore : public ValueStore<TypeId> {
       return GetAsInst(type_id).As<InstT>();
     } else {
       // The type is not a builtin, so no need to check for special values.
-      return insts_->Get(Get(type_id).constant_id.inst_id()).As<InstT>();
+      auto inst_id = constants_->GetInstId(Get(type_id).constant_id);
+      return insts_->GetAs<InstT>(inst_id);
     }
   }
 
@@ -95,6 +98,7 @@ class TypeStore : public ValueStore<TypeId> {
 
  private:
   InstStore* insts_;
+  ConstantValueStore* constants_;
 };
 
 }  // namespace Carbon::SemIR

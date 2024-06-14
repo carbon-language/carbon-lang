@@ -70,11 +70,13 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
 
   auto const_id = sem_ir().constant_values().Get(inst_id);
   if (const_id.is_template()) {
+    auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
+
     // For value expressions and initializing expressions, the value produced by
     // a constant instruction is a value representation of the constant. For
     // initializing expressions, `FinishInit` will perform a copy if needed.
     // TODO: Handle reference expression constants.
-    auto* const_value = constants_[const_id.inst_id().index];
+    auto* const_value = constants_[const_inst_id.index];
 
     // If we want a pointer to the constant, materialize a global to hold it.
     // TODO: We could reuse the same global if the constant is used more than
@@ -86,7 +88,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
       llvm::StringRef const_name;
       llvm::StringRef use_name;
       if (inst_namer_) {
-        const_name = inst_namer_->GetUnscopedNameFor(const_id.inst_id());
+        const_name = inst_namer_->GetUnscopedNameFor(const_inst_id);
         use_name = inst_namer_->GetUnscopedNameFor(inst_id);
       }
 
