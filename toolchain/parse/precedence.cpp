@@ -29,6 +29,8 @@ enum PrecedenceLevel : int8_t {
   // Type formation.
   TypePrefix,
   TypePostfix,
+  // `where` keyword
+  Where,
   // Casts.
   As,
   // Logical.
@@ -69,7 +71,8 @@ struct OperatorPriorityTable {
     // Types are mostly a separate precedence graph.
     MarkHigherThan({Highest}, {TypePrefix});
     MarkHigherThan({TypePrefix}, {TypePostfix});
-    MarkHigherThan({TypePostfix}, {As});
+    MarkHigherThan({TypePostfix}, {Where});
+    MarkHigherThan({Where}, {As});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -193,6 +196,10 @@ auto PrecedenceGroup::ForType() -> PrecedenceGroup { return ForTopLevelExpr(); }
 
 auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
   return PrecedenceGroup(As);
+}
+
+auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
+  return PrecedenceGroup(Relational);
 }
 
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)

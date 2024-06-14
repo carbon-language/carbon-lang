@@ -1062,7 +1062,7 @@ struct IfExprElse {
   AnyExprId else_result;
 };
 
-// A `where` expression
+// A `where` expression (TODO: `require` and `observe` declarations)
 
 // `.Self`
 // FIXME: SelfDesignator?
@@ -1072,6 +1072,40 @@ struct DotSelf {
 
   Lex::PeriodTokenIndex token;
   SelfTypeNameExprId self;
+};
+
+// FIXME: RequirementRewrite?
+struct RequirementAssign {
+  static constexpr auto Kind = NodeKind::RequirementAssign.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  NodeIdOneOf<StructFieldDesignator, DotSelf> designator;
+  Lex::EqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+// FIXME: RequirementEqualEqual?
+struct RequirementEquals {
+  static constexpr auto Kind = NodeKind::RequirementEquals.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  AnyExprId lhs;
+  Lex::EqualEqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct RequirementImpls {
+  static constexpr auto Kind = NodeKind::RequirementImpls.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  AnyExprId lhs;
+  Lex::ImplsTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct RequirementAnd {
+  static constexpr auto Kind = NodeKind::RequirementAnd.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  AnyRequirementId lhs;
+  Lex::AndTokenIndex token;
+  AnyRequirementId rhs;
 };
 
 // virtual node
@@ -1090,41 +1124,7 @@ struct WhereExpr {
                                   .child_count = 2});
   WhereIntroducerId introducer;
   Lex::WhereTokenIndex token;
-  AnyWhereId condition;
-};
-
-// FIXME: WhereRewrite?
-struct WhereAssign {
-  static constexpr auto Kind = NodeKind::WhereAssign.Define(
-      {.category = NodeCategory::Where, .child_count = 2});
-  NodeIdOneOf<StructFieldDesignator, DotSelf> designator;
-  Lex::EqualTokenIndex token;
-  AnyExprId rhs;
-};
-
-// FIXME: WhereEqualEqual?
-struct WhereEquals {
-  static constexpr auto Kind = NodeKind::WhereEquals.Define(
-      {.category = NodeCategory::Where, .child_count = 2});
-  AnyExprId lhs;
-  Lex::EqualEqualTokenIndex token;
-  AnyExprId rhs;
-};
-
-struct WhereImpls {
-  static constexpr auto Kind = NodeKind::WhereImpls.Define(
-      {.category = NodeCategory::Where, .child_count = 2});
-  AnyExprId lhs;
-  Lex::ImplsTokenIndex token;
-  AnyExprId rhs;
-};
-
-struct WhereAnd {
-  static constexpr auto Kind = NodeKind::WhereAnd.Define(
-      {.category = NodeCategory::Where, .child_count = 2});
-  AnyWhereId lhs;
-  Lex::AndTokenIndex token;
-  AnyWhereId rhs;
+  AnyRequirementId requirements;
 };
 
 // Choice nodes

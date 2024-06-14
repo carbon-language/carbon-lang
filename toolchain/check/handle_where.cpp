@@ -17,20 +17,24 @@ auto HandleDotSelf(Context& context, Parse::DotSelfId node_id) -> bool {
   return context.TODO(node_id, "HandleDotSelf");
 }
 
-auto HandleWhereAssign(Context& context, Parse::WhereAssignId node_id) -> bool {
-  return context.TODO(node_id, "HandleWhereAssign");
+auto HandleRequirementAssign(Context& context,
+                             Parse::RequirementAssignId node_id) -> bool {
+  return context.TODO(node_id, "HandleRequirementAssign");
 }
 
-auto HandleWhereEquals(Context& context, Parse::WhereEqualsId node_id) -> bool {
-  return context.TODO(node_id, "HandleWhereEquals");
+auto HandleRequirementEquals(Context& context,
+                             Parse::RequirementEqualsId node_id) -> bool {
+  return context.TODO(node_id, "HandleRequirementEquals");
 }
 
-auto HandleWhereImpls(Context& context, Parse::WhereImplsId node_id) -> bool {
-  return context.TODO(node_id, "HandleWhereImpls");
+auto HandleRequirementImpls(Context& context, Parse::RequirementImplsId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleRequirementImpls");
 }
 
-auto HandleWhereAnd(Context& context, Parse::WhereAndId node_id) -> bool {
-  return context.TODO(node_id, "HandleWhereAnd");
+auto HandleRequirementAnd(Context& context, Parse::RequirementAndId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleRequirementAnd");
 }
 
 auto HandleWhereExpr(Context& context, Parse::WhereExprId node_id) -> bool {
