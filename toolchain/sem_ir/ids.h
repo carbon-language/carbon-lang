@@ -95,6 +95,11 @@ constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
 // - a symbolic constant, whose value includes a symbolic parameter, such as
 //   `Vector(T*)`, or
 // - a runtime expression, such as `Print("hello")`.
+//
+// Template constants are a thin wrapper around the instruction ID of the
+// constant instruction that defines the constant. Symbolic constants are an
+// index into a separate table of `SymbolicConstant`s maintained by the constant
+// value store.
 struct ConstantId : public IdBase, public Printable<ConstantId> {
   // An ID for an expression that is not constant.
   static const ConstantId NotConstant;
@@ -108,14 +113,13 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // either be in the `constants` block in the file or should be known to be
   // unique.
   static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
-    return ConstantId(const_id.index + IndexOffset);
+    return ConstantId(const_id.index);
   }
 
-  // Returns the constant ID corresponding to a symbolic constant, which should
-  // either be in the `constants` block in the file or should be known to be
-  // unique.
-  static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
-    return ConstantId(-const_id.index - IndexOffset);
+  // Returns the constant ID corresponding to a symbolic constant index.
+  static constexpr auto ForSymbolicConstantIndex(int32_t symbolic_index)
+      -> ConstantId {
+    return ConstantId(FirstSymbolicIndex - symbolic_index);
   }
 
   using IdBase::IdBase;
@@ -128,21 +132,21 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
     CARBON_CHECK(is_valid());
-    return index <= -IndexOffset;
+    return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
     CARBON_CHECK(is_valid());
-    return index >= IndexOffset;
+    return index >= 0;
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_template()) {
-      out << "template " << inst_id();
+      out << "template " << template_inst_id();
     } else if (is_symbolic()) {
-      out << "symbolic " << inst_id();
+      out << "symbolic " << symbolic_index();
     } else {
       out << "runtime";
     }
@@ -155,18 +159,25 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
 
-  // Returns the instruction that describes this constant value, or
+  // Returns the instruction that describes this template constant value, or
   // InstId::Invalid for a runtime value. This is not part of the public
   // interface of `ConstantId`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
-  constexpr auto inst_id() const -> InstId {
-    CARBON_CHECK(is_valid());
-    return InstId(Abs(index) - IndexOffset);
+  constexpr auto template_inst_id() const -> InstId {
+    CARBON_CHECK(is_template());
+    return InstId(index);
+  }
+
+  // Returns the symbolic constant index that describes this symbolic constant
+  // value.  Requires is_symbolic. This is not part of the public interface of
+  // `ConstantId`.
+  constexpr auto symbolic_index() const -> int32_t {
+    CARBON_CHECK(is_symbolic());
+    return FirstSymbolicIndex - index;
   }
 
   static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
-  // The offset of InstId indices to ConstantId indices.
-  static constexpr int32_t IndexOffset = -NotConstantIndex + 1;
+  static constexpr int32_t FirstSymbolicIndex = InvalidIndex - 2;
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
@@ -318,6 +329,62 @@ struct GenericInstanceId : public IdBase, public Printable<GenericInstanceId> {
 
 constexpr GenericInstanceId GenericInstanceId::Invalid =
     GenericInstanceId(InvalidIndex);
+
+// The index of an instruction that depends on generic parameters within a
+// generic, and the value of that instruction within the instances of that
+// generic. This is a pair of a region and an index, stored in 32 bits.
+struct GenericInstIndex : public IndexBase, public Printable<GenericInstIndex> {
+  // Where the value is first used within the generic.
+  enum Region : uint8_t {
+    // In the declaration.
+    Declaration,
+    // In the definition.
+    Definition,
+  };
+
+  // An explicitly invalid index.
+  static const GenericInstIndex Invalid;
+
+  explicit constexpr GenericInstIndex(Region region, int32_t index)
+      : IndexBase(region == Declaration ? index
+                                        : FirstDefinitionIndex - index) {
+    CARBON_CHECK(index >= 0);
+  }
+
+  // Returns the index of the instruction within the region.
+  auto index() const -> int32_t {
+    CARBON_CHECK(is_valid());
+    return IndexBase::index >= 0 ? IndexBase::index
+                                 : FirstDefinitionIndex - IndexBase::index;
+  }
+
+  // Returns the region within which this instruction was first used.
+  auto region() const -> Region {
+    CARBON_CHECK(is_valid());
+    return IndexBase::index >= 0 ? Declaration : Definition;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "genericInst";
+    if (is_valid()) {
+      out << (region() == Declaration ? "InDecl" : "InDef") << index();
+    } else {
+      out << "<invalid>";
+    }
+  }
+
+ private:
+  static constexpr auto MakeInvalid() -> GenericInstIndex {
+    GenericInstIndex result(Declaration, 0);
+    result.IndexBase::index = InvalidIndex;
+    return result;
+  }
+
+  static constexpr int32_t FirstDefinitionIndex = InvalidIndex - 1;
+};
+
+constexpr GenericInstIndex GenericInstIndex::Invalid =
+    GenericInstIndex::MakeInvalid();
 
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
