@@ -25,6 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Reduction rules](#reduction-rules)
     -   [Other equivalences](#other-equivalences)
     -   [Convertibility and parameter deduction](#convertibility-and-parameter-deduction)
+        -   [Example](#example)
     -   [Deduction algorithm](#deduction-algorithm)
         -   [Canonicalization algorithm](#canonicalization-algorithm)
 -   [Alternatives considered](#alternatives-considered)
@@ -155,16 +156,13 @@ if `a`, `x`, and `y` are packs with arity 3, then
 `... each a += each x * each y;` is roughly equivalent to
 
 ```carbon
-for (let i:! i32 in (0, 1, 2)) {
-  a[:i:] += x[:i:] * y[:i:];
-}
+a[:0:] += x[:0:] * y[:0:];
+a[:1:] += x[:1:] * y[:1:];
+a[:2:] += x[:2:] * y[:2:];
 ```
 
 Here we are using `[::]` as a hypothetical pack indexing operator for purposes
-of illustration; packs cannot actually be indexed in Carbon code. Note also that
-this rewritten form would not typecheck under the usual rules, because the
-expressions `a[:i:]`, `x[:i:]`, and `y[:i:]` may have different types depending
-on the value of `i`.
+of illustration; packs cannot actually be indexed in Carbon code.
 
 `...and` and `...or` behave like chains of the corresponding boolean operator,
 so `...and F(each x, each y)` behaves like
@@ -190,13 +188,16 @@ expressed as a loop in Carbon code, but it is still fundamentally iterative.
 
 A pack expansion pattern "`...` _subpattern_" appears as part of a tuple pattern
 (or an implicit parameter list), and matches a sequence of tuple elements if
-each element matches _subpattern_. Since _subpattern_ will be matched against
-multiple scrutinees (or none) in a single pattern-matching operation, a binding
-patterns within a pack expansion pattern must declare an each-name, and the Nth
-iteration of the pack expansion will initialize the Nth element of the named
-pack from the Nth scrutinee. The binding pattern's type expression may contain
-an each-name, but if so, it must be a deduced parameter of the enclosing
-pattern.
+each element matches _subpattern_. For example, in the signature of `Zip` shown
+earlier, the parameter list consists of a single pack expansion pattern
+`... each vector: Vector(each ElementType)`.
+
+Since _subpattern_ will be matched against multiple scrutinees (or none) in a
+single pattern-matching operation, a binding patterns within a pack expansion
+pattern must declare an each-name, and the Nth iteration of the pack expansion
+will initialize the Nth element of the named pack from the Nth scrutinee. The
+binding pattern's type expression may contain an each-name, but if so, it must
+be a deduced parameter of the enclosing pattern.
 
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
@@ -462,7 +463,18 @@ an optional return type expression.
 A pack expansion pattern has _fixed arity_ if it contains at least one usage of
 an each-name that is not a parameter of the enclosing full pattern. Otherwise it
 has _deduced arity_. A tuple pattern can have at most one segment with deduced
-arity.
+arity. For example:
+
+```carbon
+class C(... each T:! type)
+  fn F[... each U:! type](... each t: each T, ... each u: each U);
+}
+```
+
+In the signature of `F`, `... each t: each T` has fixed arity, and
+`... each u: each U` has deduced arity, because the arity of `each U` is
+determined by the arguments passed to `F`, but the arity of `each T` is
+determined by the arguments passed to `C`, before the call to `F`.
 
 After typechecking a full pattern, we attempt to merge as many tuple segments as
 possible, in order to simplify the subsequent pattern matching. For example,
@@ -511,9 +523,14 @@ fully expanded, and thus it has a single scalar component, itself.
 A synthetic deduced parameter must satisfy the following requirements:
 
 -   Its segments are all the names of deduced parameters of the full pattern.
--   No name occurs more than once.
--   One of the names must be an each-name.
--   All the names must have the same declared type.
+    For example, `⟬i32, each Y⟭` is not a valid synthetic deduced parameter.
+-   No name occurs more than once. For example, `⟬X, each Y, X⟭` is not a valid
+    synthetic deduced parameter.
+-   One of the names must be an each-name. For example, `⟬X, Y⟭` is not a valid
+    synthetic deduced parameter.
+-   All the names must have the same declared type. For example, in the context
+    of a deduced parameter list `[X:! I, ... each Y:! type]`, `⟬X, each Y⟭` is
+    not a valid synthetic deduced parameter list.
 
 The rewritten full pattern must satisfy the following requirements:
 
@@ -522,6 +539,14 @@ The rewritten full pattern must satisfy the following requirements:
     equal.
 -   A pack expansion containing a synthetic deduced parameter doesn't contain
     any pack literals that aren't synthetic deduced parameters.
+
+For example `⟬X, each Y⟭` is not a valid synthetic deduced parameter in either
+of the following function signatures:
+
+```carbon
+fn F[X:! type, ... each Y:! type](... each args: ⟬X, each Y⟭) -> ⟬each Y, X⟭;
+fn F[X:! type, ... each Y:! type](... each args: ⟬X, each Y⟭) -> X;
+```
 
 See the [appendix](#deduction-algorithm) for a more formal discussion of the
 rewriting process.
@@ -603,7 +628,8 @@ as follows:
     containing the declaration of the each-name.
 -   Any other AST node is _well shaped_ if there is some shape `S` such that all
     of the node's children have shape either 1 or `S`. When that condition
-    holds, the shape of the node is `S` (or 1 if all children have shape 1).
+    holds, the shape of the node is 1 if all children have shape 1, or `S`
+    otherwise.
 
 The type of an expression or pattern can be computed as follows:
 
@@ -638,7 +664,10 @@ before the reduction is equivalent to the expression after, so these rules can
 sometimes be run in reverse (particularly during deduction).
 
 Expressions that are reduced by these rules must be well-shaped (and the reduced
-form will likewise be well-shaped), but need not be well-typed.
+form will likewise be well-shaped), but need not be well-typed. This enables us
+to apply these reductions while determining whether an expression is well-typed,
+as in the case of typing an expression that contains a pack literal or arity
+coercion, above.
 
 _Empty pack removal:_ `...⟬⟭` reduces to the empty string.
 
@@ -698,54 +727,98 @@ permutation of `S2`.
 
 ### Convertibility and parameter deduction
 
-Type convertibility is governed by a set of deduction rules for the "convertible
-to" and "deducible from" relations. For example:
+Type convertibility is governed by a set of inference rules for the "convertible
+to" relation. For example:
 
--   `T` is convertible to `U` if `T` implements `ImplicitAs(U)`.
--   `T` is convertible to `U` if `U` is deducible from `T`.
--   For any `X`, `X` is deducible from `X`.
--   Let `T` and `U` be tuple segments, and let `Ts` and `Us` be sequences of
-    tuple segments. `(T, Ts)` is convertible to `(U, Us)` if `T` is convertible
-    to `U` and `(Ts)` is convertible to `(Us)`.
--   Let `P` be a parameterized type. `P(A, B)` is deducible from `P(C, D)` if
-    `A` is deducible from `C` and `B` is deducible from `D`.
+-   _Equality implies convertibility:_ `T` is convertible to `U` if `T` equals
+    `U`.
+-   _ImplicitAs rule:_ `T` is convertible to `U` if `T` implements
+    `ImplicitAs(U)`.
+-   _Tuple convertibility:_ Let `T` and `U` be tuple segments, and let `Ts` and
+    `Us` be sequences of tuple segments. `(T, Ts)` is convertible to `(U, Us)`
+    if `T` is convertible to `U` and `(Ts)` is convertible to `(Us)`.
 
-Formally, these rules all implicitly propagate a _binding map_. For example, the
-last rule above can be stated more precisely as:
+Type equality (which implies convertibility, as seen above) is likewise governed
+by a set of deduction rules for the "equals" relation. For example:
 
--   Let `P` be a parameterized type. If `A` is deducible from `C` given a
-    binding map `M1`, and `B` is deducible from `D` given a binding map `M2`,
-    then `P(A, B)` is deducible from `P(C, D)` given a binding map `M1` ∪ `M2`.
+-   _Identity:_ For any `X`, `X` equals `X`.
+-   _Parameterized type equality:_ Let `P` be a parameterized type. `P(A, B)`
+    equals `P(C, D)` if `A` equals `C` and `B` equals `D`.
 
-A binding map is a set of pairs where the first element of the pair is a deduced
-parameter of the pattern, and the second element is the deduced value of that
+This is complicated by the fact that in a function call, the parameter tuple
+type may use deduced parameters of the function, which act as unknowns that we
+must solve for. We will model parameter deduction using the concept of a
+_binding map_, which is a set of pairs where the first element of the pair is a
+deduced parameter, and the second element is the deduced value of that
 parameter. We model a parameter as a sequence of names, in order to accommodate
 synthetic deduced parameters. A binding map must be _consistent_, which means
 that if `N1` and `N2` are the names of two different name/value pairs in the
 map, `N1` cannot be a (non-strict) subsequence of `N2`.
 
-In almost all cases, the binding map in the conclusion is the union of the
-binding maps in the premises, and in those cases we will usually leave the
+We can then re-express convertibility and equality as ternary relations: "`T` =
+`U` given a binding map `M`" means that if we rewrite `T` and `U` by replacing
+every deduced parameter with the corresponding value in `M`, the two rewritten
+forms are equal. "`T` is convertible to `U` given a binding map `M`" is
+interpreted similarly. For example, we can re-express the last deduction rule
+above in terms of these ternary relations as follows:
+
+-   _Parameterized type equality:_ Let `P` be a parameterized type. If `A`
+    equals `C` given a binding map `M1`, and `B` equals `D` given a binding map
+    `M2`, and `M1` ∪ `M2` is consistent, then `P(A, B)` equals `P(C, D)` given a
+    binding map `M1` ∪ `M2`.
+
+Almost all of the deduction rules can be generalized in the same way: the
+binding map in the conclusion is the union of the binding maps in the premises,
+and there's an additional premise that this union is consistent. If there are no
+"equals" or "convertible to" relations in the premises, the binding map in the
+conclusion is empty. When that pattern applies, we will usually leave the
 binding maps implicit (as in the original formulation of the above rule). One
 major exception is the following rule:
 
 _Binding introduction:_ Let `X` be a deduced parameter with type `T`. If the
-type of `E` is convertible to `T` given binding map `M`, then `X` is deducible
-from `E` given a binding map `M` ∪ "`X` is bound to `E`".
+type of `E` is convertible to `T` given binding map `M`, and `M` ∪ {(`X`, `E`)}
+is consistent, then `X` equals `E` given a binding map `M` ∪ {(`X`, `E`)}.
 
 The deduction rules that are specific to variadic types are as follows:
 
-`...T` is convertible to `...U` if the shape of `U` is deducible from the shape
-of `T`, and each scalar component of `T` is convertible to every scalar
-component of `U`.
+-   _Expansion convertibility:_ `...T` is convertible to `...U` if the shape of
+    `U` equals the shape of `T`, and each scalar component of `T` is convertible
+    to every scalar component of `U`.
+-   _Shape binding introduction:_ Let `X` be a deduced arity binding, and let
+    `S` be a shape expression. `X` is equal to `S` given a binding map that
+    consists of the single element "`X` is bound to `S`".
+-   _Shape equality:_ Let `(S1)`, `(S2)`, `(S3)`, and `(S4)` be shapes.
+    `(S1, S2)` equals `(S3, S4)` if `(S1)` equals `(S3)` and `(S2)` equals
+    `(S4)`.
 
-Let `X` be a deduced arity binding, and let `S` be a shape expression. `X` is
-deducible from `S` given a binding map that consists of the single element "`X`
-is bound to `S`".
+#### Example
 
-Let `(S1)`, `(S2)`, `(S3)`, and `(S4)` be shapes. `(S1, S2)` is deducible from
-`(S3, S4)` if `(S1)` is deducible from `(S3)` and `(S2)` is deducible from
-`(S4)`.
+Suppose we are typechecking the following function call:
+
+```carbon
+fn F[T:! type](x: Vector(T));
+F(() as Vector(i32));
+```
+
+We need to verify that `Vector(i32)` is convertible to `Vector(T)`. We can
+construct a proof by applying the above inference rules, as follows:
+
+1. (By identity) `type` equals `type` given a binding map {}.
+2. (By equality implies convertibility) `type` is convertible to `type` given a
+   binding map {}.
+3. (By binding introduction) `T` equals `i32` given a binding map {(`T`,
+   `i32`)}.
+4. (By parameterized type equality) `Vector(T)` equals `Vector(i32)` given a
+   binding map {(`T`, `i32`)}.
+5. (By equality implies convertibility) `Vector(T)` is convertible to
+   `Vector(i32)` given a binding map {(`T`, `i32`)}.
+
+Notice that as a byproduct, this proof gives us a binding map with the deduced
+values of the parameters.
+
+Conceptually, the typechecker constructs this proof by searching backwards from
+desired conclusion without considering binding maps, and then running the
+resulting proof forward to compute the final binding map.
 
 ### Deduction algorithm
 
