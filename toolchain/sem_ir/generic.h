@@ -54,6 +54,16 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
   // and must be a canonical instruction block ID.
   auto GetOrAdd(GenericId generic_id, InstBlockId args_id) -> GenericInstanceId;
 
+  // Gets the specified generic instance.
+  auto Get(GenericInstanceId instance_id) const -> const GenericInstance& {
+    return generic_instances_.Get(instance_id);
+  }
+
+  // Gets the specified generic instance.
+  auto Get(GenericInstanceId instance_id) -> GenericInstance& {
+    return generic_instances_.Get(instance_id);
+  }
+
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return generic_instances_.OutputYaml();

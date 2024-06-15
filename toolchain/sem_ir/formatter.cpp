@@ -621,8 +621,8 @@ class Formatter {
   }
 
   auto FormatInstructionRHS(ClassType inst) -> void {
-    if (inst.args_id.is_valid()) {
-      FormatArgs(inst.class_id, inst.args_id);
+    if (inst.instance_id.is_valid()) {
+      FormatArgs(inst.class_id, inst.instance_id);
     } else {
       FormatArgs(inst.class_id);
     }
@@ -639,8 +639,8 @@ class Formatter {
   }
 
   auto FormatInstructionRHS(InterfaceType inst) -> void {
-    if (inst.args_id.is_valid()) {
-      FormatArgs(inst.interface_id, inst.args_id);
+    if (inst.instance_id.is_valid()) {
+      FormatArgs(inst.interface_id, inst.instance_id);
     } else {
       FormatArgs(inst.interface_id);
     }
@@ -774,6 +774,11 @@ class Formatter {
       FormatArg(inst_id);
     }
     out_ << ')';
+  }
+
+  auto FormatArg(GenericInstanceId id) -> void {
+    const auto& instance = sem_ir_.generic_instances().Get(id);
+    FormatArg(instance.args_id);
   }
 
   auto FormatArg(RealId id) -> void {

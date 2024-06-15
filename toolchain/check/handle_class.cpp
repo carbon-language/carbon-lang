@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -38,6 +39,8 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
+  // This class is potentially generic.
+  StartGenericDecl(context);
   return true;
 }
 
@@ -221,6 +224,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   SemIR::Class class_info = {
       .name_id = name_context.name_id_for_new_inst(),
       .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+      .generic_id = SemIR::GenericId::Invalid,
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       // `.self_type_id` depends on the ClassType, so is set below.
@@ -238,10 +242,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
+    class_info.generic_id = FinishGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.is_generic()) {
       class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
     }
+  } else {
+    FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
   }
 
   // Write the class ID into the ClassDecl.
@@ -253,11 +260,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // declaration.
     auto& class_info = context.classes().Get(class_decl.class_id);
     if (class_info.is_generic()) {
-      // TODO: Pass in the generic arguments once we can represent them.
+      // TODO: Build generic arguments representing the parameters.
+      auto instance_id = SemIR::GenericInstanceId::Invalid;
       class_info.self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
-                                       .class_id = class_decl.class_id}));
+                                       .class_id = class_decl.class_id,
+                                       .instance_id = instance_id}));
     } else {
       class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
     }
@@ -291,6 +300,7 @@ auto HandleClassDefinitionStart(Context& context,
 
   // Enter the class scope.
   context.scope_stack().Push(class_decl_id, class_info.scope_id);
+  StartGenericDefinition(context, class_info.generic_id);
 
   // Introduce `Self`.
   context.name_scopes().AddRequiredName(
@@ -607,6 +617,8 @@ auto HandleClassDefinition(Context& context,
   } else {
     class_info.object_repr_id = context.GetStructType(fields_id);
   }
+
+  FinishGenericDefinition(context, class_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

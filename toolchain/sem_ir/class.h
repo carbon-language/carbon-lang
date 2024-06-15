@@ -40,6 +40,8 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The parent scope.
   NameScopeId parent_scope_id;
+  // If this is a generic function, information about the generic.
+  GenericId generic_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.

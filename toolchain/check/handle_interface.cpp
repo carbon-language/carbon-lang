@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
@@ -22,6 +23,8 @@ auto HandleInterfaceIntroducer(Context& context,
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Interface>();
   context.decl_name_stack().PushScopeAndStartName();
+  // This interface is potentially generic.
+  StartGenericDecl(context);
   return true;
 }
 
@@ -78,6 +81,7 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Create a new interface if this isn't a valid redeclaration.
   if (!interface_decl.interface_id.is_valid()) {
+    auto generic_id = FinishGenericDecl(context, interface_decl_id);
     // TODO: If this is an invalid redeclaration of a non-interface entity or
     // there was an error in the qualifier, we will have lost track of the
     // interface name here. We should keep track of it even if the name is
@@ -85,6 +89,7 @@ static auto BuildInterfaceDecl(Context& context,
     SemIR::Interface interface_info = {
         .name_id = name_context.name_id_for_new_inst(),
         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+        .generic_id = generic_id,
         .implicit_param_refs_id = name.implicit_params_id,
         .param_refs_id = name.params_id,
         .decl_id = interface_decl_id};
@@ -93,10 +98,11 @@ static auto BuildInterfaceDecl(Context& context,
       interface_decl.type_id =
           context.GetGenericInterfaceType(interface_decl.interface_id);
     }
+  } else {
+    FinishGenericRedecl(
+        context, interface_decl_id,
+        context.interfaces().Get(interface_decl.interface_id).generic_id);
   }
-
-  // TODO: For a generic interface declaration, set the `type_id` to a suitable
-  // generic interface type rather than `type`.
 
   // Write the interface ID into the InterfaceDecl.
   context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
@@ -136,6 +142,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
 
   // Enter the interface scope.
   context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
+  StartGenericDefinition(context, interface_info.generic_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);
@@ -193,6 +200,9 @@ auto HandleInterfaceDefinition(Context& context,
   if (!interface_info.associated_entities_id.is_valid()) {
     interface_info.associated_entities_id = associated_entities_id;
   }
+
+  FinishGenericDefinition(context, interface_info.generic_id);
+
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
 }
