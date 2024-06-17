@@ -27,7 +27,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: %T} [symbolic]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
+// CHECK:STDOUT:   %.4: type = unbound_element_type <unexpected instref inst+27> (%Class.2), @Class.%T.ref.loc12 (%T) [symbolic]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,6 +84,12 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref.loc12 => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+27> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+28> => constants.%.4
+// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {

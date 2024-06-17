@@ -293,6 +293,33 @@ auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
   return MakeGenericInstance(context, generic_id, args_id);
 }
 
+auto ResolveSpecificDefinition(Context& context,
+                               SemIR::GenericInstanceId specific_id) -> bool {
+  auto& specific = context.generic_instances().Get(specific_id);
+  auto generic_id = specific.generic_id;
+
+  // TODO: Remove this once we import generics properly.
+  if (!generic_id.is_valid()) {
+    return true;
+  }
+
+  if (!specific.definition_block_id.is_valid()) {
+    // Evaluate the eval block for the definition of the generic.
+    auto& generic = context.generics().Get(generic_id);
+    if (!generic.definition_block_id.is_valid()) {
+      // The generic is not defined yet.
+      return false;
+    }
+    auto definition_block_id = TryEvalBlockForSpecific(
+        context, specific_id, SemIR::GenericInstIndex::Region::Definition);
+    // Note that TryEvalBlockForSpecific may reallocate the list of generic
+    // instances, so re-lookup the instance here.
+    context.generic_instances().Get(specific_id).definition_block_id =
+        definition_block_id;
+  }
+  return true;
+}
+
 auto GetTypeInInstance(Context& context, SemIR::GenericInstanceId instance_id,
                        SemIR::TypeId type_id) -> SemIR::TypeId {
   auto const_id = context.types().GetConstantId(type_id);

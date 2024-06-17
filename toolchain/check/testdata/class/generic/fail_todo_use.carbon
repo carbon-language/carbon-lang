@@ -50,15 +50,16 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Get: %Get.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
+// CHECK:STDOUT:   %.6: type = unbound_element_type <unexpected instref inst+31> (%Class.2), @Class.%T.ref.loc16 (%T) [symbolic]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, file.%Class.decl(i32) [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.k: i32} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %Class.3 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %Class.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -132,13 +133,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc25_19.2: type = converted %.loc25_15.3, %.loc25_19.1 [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
 // CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc25_29: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc25_30: %.8 = struct_literal (%.loc25_29)
+// CHECK:STDOUT:   %.loc25_29: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc25_30: %.9 = struct_literal (%.loc25_29)
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %v.ref: ref %Class.3 = name_ref v, %v
 // CHECK:STDOUT:   %Get.ref: %Get.type = name_ref Get, @Class.%Get.decl [template = constants.%Get]
 // CHECK:STDOUT:   %.loc36_11: <bound method> = bound_method %v.ref, %Get.ref
-// CHECK:STDOUT:   %.loc36_10: %.9 = addr_of %v.ref
+// CHECK:STDOUT:   %.loc36_10: %.10 = addr_of %v.ref
 // CHECK:STDOUT:   %Get.call: init %.3 = call %.loc36_11(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -146,6 +147,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref.loc16 => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.6
+// CHECK:STDOUT:   <unexpected instref inst+28> => <unexpected instref inst+29>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%Get.decl(constants.%T) {
@@ -164,5 +171,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT: specific file.%Class.decl(i32) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => i32
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref.loc16 => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.6
+// CHECK:STDOUT:   <unexpected instref inst+28> => <unexpected instref inst+29>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

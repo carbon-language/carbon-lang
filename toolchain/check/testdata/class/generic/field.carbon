@@ -63,7 +63,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %.3: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
+// CHECK:STDOUT:   %.4: type = unbound_element_type <unexpected instref inst+17> (%Class.2), @Class.%T.ref (%T) [symbolic]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -116,6 +117,12 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.4
+// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref) {
@@ -144,7 +151,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, file.%Class.decl(i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
+// CHECK:STDOUT:   %.4: type = unbound_element_type <unexpected instref inst+17> (%Class.2), @Class.%T.ref (%T) [symbolic]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic]
 // CHECK:STDOUT:   %Class.4: type = class_type @Class, file.%Class.decl(%U) [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -231,6 +239,12 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.4
+// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref) {
@@ -241,11 +255,23 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: specific file.%Class.decl(i32) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => i32
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.4
+// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%U
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.4
+// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%H.decl(constants.%U) {

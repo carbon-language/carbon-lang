@@ -46,6 +46,12 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
 auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
     -> SemIR::GenericInstanceId;
 
+// Attempts to resolve the definition of the given specific, by evaluating the
+// eval block of the corresponding generic. Returns false if a definition is
+// not available.
+auto ResolveSpecificDefinition(Context& context,
+                               SemIR::GenericInstanceId specific_id) -> bool;
+
 // Gets the substituted value of a type within a specified instance of a
 // generic. Note that this does not perform substitution, and will return
 // `Invalid` if the substituted type is not yet known.

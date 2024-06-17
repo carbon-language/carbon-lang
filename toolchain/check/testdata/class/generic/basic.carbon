@@ -38,7 +38,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
+// CHECK:STDOUT:   %.6: type = unbound_element_type <unexpected instref inst+40> (%Class.2), @Class.%T.ref.loc21 (%T) [symbolic]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -109,6 +110,12 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Class.%T.ref.loc21 => constants.%T
+// CHECK:STDOUT:   <unexpected instref inst+40> => constants.%Class.2
+// CHECK:STDOUT:   <unexpected instref inst+41> => constants.%.6
+// CHECK:STDOUT:   <unexpected instref inst+37> => <unexpected instref inst+38>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%GetAddr.decl(constants.%T) {

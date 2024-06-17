@@ -256,6 +256,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @A.%T.ref => constants.%T
 // CHECK:STDOUT:   @A.%N.loc5_11.2 => constants.%N
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.%F.decl(constants.%T, constants.%N) {
