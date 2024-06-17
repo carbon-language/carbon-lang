@@ -75,6 +75,7 @@ subgraph memberCallIndex[" "]
                      x[y]"}
     click callAndIndexing "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md"
 end
+style memberCallIndex fill:none
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
