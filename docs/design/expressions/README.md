@@ -159,8 +159,8 @@ graph BT
     callAndIndexing --> memberAccess
     memberAccess --> callAndIndexing
 
-    memberCallIndex -> memberAccess
-    memberCallIndex -> callAndIndexing
+    memberCallIndex --> memberAccess
+    memberCallIndex --> callAndIndexing
 
     constType --> memberCallIndex
     pointerType --> constType
