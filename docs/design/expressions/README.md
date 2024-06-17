@@ -308,7 +308,7 @@ Most expressions are modeled as operators:
 | Category   | Operator                            | Syntax    | Function                                                              |
 | ---------- | ----------------------------------- | --------- | --------------------------------------------------------------------- |
 | Call       | `()` (unary)                        | `x(...)`  | Function call: the value returned by calling the function `x`.        |
-| Call       | `[]` (unary)                        | `x[y]`    | Subscripting or indexing: returns the element `y` of `x`.             |
+| Call       | [`[]`](indexing.md) (unary)         | `x[y]`    | Subscripting or indexing: returns the element `y` of `x`.             |
 | Pointer    | [`*`](pointer_operators.md) (unary) | `*x`      | Pointer dereference: the object pointed to by `x`.                    |
 | Pointer    | [`&`](pointer_operators.md) (unary) | `&x`      | Address-of: a pointer to the object `x`.                              |
 | Arithmetic | [`-`](arithmetic.md) (unary)        | `-x`      | The negation of `x`.                                                  |
