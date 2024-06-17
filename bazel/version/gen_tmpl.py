@@ -70,6 +70,7 @@ def main() -> None:
         metavar="FILE",
         type=Path,
         action="append",
+        default=[],
         help="A file of key/value updates in Bazel's status file format.",
     )
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -78,25 +79,24 @@ def main() -> None:
     # Collect the supported substitutions from the command line.
     substitutions = {}
     for substitution_arg in args.substitution:
-        key, value = substitution_arg.split("=", maxsplit=1)
+        key, value = substitution_arg.split("=", 1)
         substitutions.update({key: value})
 
     # Read either of the two status files provided to build up substitutions,
     # with the stable file last so its values override any duplicates.
-    for status_file in args.status_file if args.status_file else []:
+    for status_file in args.status_file:
         if args.verbose:
             print(f"Reading status file: {status_file}", file=sys.stderr)
         for line in status_file.open():
             # Remove line endings.
             line = line.rstrip("\r\n")
             # Exactly matches our pattern
-            if m := re.fullmatch(_VAR_RE, line):
-                key = m.group("key")
-                if key in substitutions:
-                    value = m.group("value")
-                    if args.verbose:
-                        print(f"Parsed: '{key}': '{value}'", file=sys.stderr)
-                    substitutions.update({key: value})
+            (key, value) = line.split(' ', 1)
+            key = key.removeprefix("STABLE_")
+            if key in substitutions:
+                if args.verbose:
+                    print(f"Parsed: '{key}': '{value}'", file=sys.stderr)
+                substitutions.update({key: value})
 
     if args.verbose:
         print(f"Reading template file: {args.template}", file=sys.stderr)
