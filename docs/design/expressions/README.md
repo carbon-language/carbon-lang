@@ -65,10 +65,10 @@ graph BT
 
 subgraph memberCallIndex[" "]
     direction LR
-    memberAccess>"x.y<br>
+    memberAccess{"x.y<br>
                   x.(...)<br>
                   x->y<br>
-                  x->(...)"]
+                  x->(...)"}
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
     callAndIndexing{"x(...)<br>
@@ -165,8 +165,7 @@ end
     as --> pointerType
 
     pointer --> memberCallIndex
-    negation & complement --> pointer
-    incDec ---> pointer
+    negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -------> memberCallIndex
