@@ -1,0 +1,99 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Setup build environment (macOS)
+inputs:
+  matrix_runner:
+    required: true
+  remote_cache_upload:
+    required: true
+runs:
+  using: composite
+  steps:
+    # Setup Python and related tools.
+    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      with:
+        # Match the min version listed in docs/project/contribution_tools.md
+        # or the oldest version available on the OS.
+        python-version:
+          ${{ inputs.matrix_runner == 'macos-14' && '3.11' || '3.9' }}
+
+    # Print the various tool paths and versions to help in debugging.
+    - name: Print tool debugging info
+      shell: bash
+      run: |
+        echo '*** PATH'
+        echo $PATH
+        echo '*** bazelisk'
+        which bazelisk
+        bazelisk --version
+        echo '*** run_bazel.py'
+        ./scripts/run_bazel.py --version
+        echo '*** python'
+        which python
+        python --version
+        echo '*** clang'
+        which clang
+        clang --version
+        echo '*** clang++'
+        which clang++
+        clang++ --version
+
+    # Add our bazel configuration and print basic info to ease debugging.
+    - name: Configure Bazel and print info
+      env:
+        # Add a cache version for changes that bazel won't otherwise detect,
+        # like llvm version changes.
+        CACHE_VERSION: 1
+      shell: bash
+      run: |
+        cat >user.bazelrc <<EOF
+        # Enable remote cache for our CI but minimize downloads.
+        build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
+        build --remote_download_minimal
+
+        # We import a special key into every action in order to key the Bazel
+        # remote cache in a way that avoids collisions between different
+        # runners. Anything that might change the system external to Bazel but
+        # not be fully captured by the sand-boxing of the build should be used
+        # as part of the key. We don't need to use the CPU target for example,
+        # as that is captured by Bazel's configuration of each action. And the
+        # Clang version is incorporated by our Clang toolchain setup. But we
+        # do need to capture any differences between GitHub runner OSes that
+        # don't impact the Bazel configuration to avoid collisions between
+        # those.
+        build --action_env=BAZEL_REMOTE_CACHE_KEY=github-action-${{ inputs.matrix_runner }}
+
+        build ${{ inputs.remote_cache_upload }}
+
+        # Set an artificially high jobs count. This flag controls the number
+        # of concurrency Bazel itself uses, which is essential for actions
+        # that are internally blocked on for example downloading results form
+        # the cache above. Without setting this high, Bazel will pick a small
+        # number based on the available host CPUs and the reality will be a
+        # long chain of largely serialized download events with little or no
+        # usage of the host machine. Fortunately, local actions are
+        # *separately* gated on '--local_*_resources' that will avoid a large
+        # jobs value overwhelming the host. There is a bug to make downloads
+        # behave completely asynchronously and remove the need for this filed
+        # back in 2018 but work seemed to not finish:
+        # https://github.com/bazelbuild/bazel/issues/6394
+        #
+        # There is a new effort (yay!) but until then it seems worth using the
+        # workaround of a high jobs value. The biggest downside (increased
+        # heap usage) seems like it isn't currently a big loss for our builds.
+        #
+        # Higher values like 50 have led to CI failures with network errors
+        # and IOExceptions, see
+        # https://discord.com/channels/655572317891461132/707150492370862090/1151605725576056934
+        build --jobs=32
+
+        # Avoid any cache impact from build stamping in CI.
+        build --nostamp
+
+        # General build options.
+        build --verbose_failures
+        test --test_output=errors
+        EOF
+        ./scripts/run_bazel.py info
