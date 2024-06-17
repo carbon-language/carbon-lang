@@ -115,6 +115,8 @@ class [[clang::internal_linkage]] Lexer {
   auto LexVerticalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
 
+  auto LexCR(llvm::StringRef source_text, ssize_t& position) -> void;
+
   auto LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
       -> void;
 
@@ -502,6 +504,7 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
   }
 CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
+CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexCommentOrSlash)
 
 // Build a table of function pointers that we can use to dispatch to the
@@ -598,6 +601,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   table[' '] = &DispatchLexHorizontalWhitespace;
   table['\t'] = &DispatchLexHorizontalWhitespace;
   table['\n'] = &DispatchLexVerticalWhitespace;
+  table['\r'] = &DispatchLexCR;
 
   return table;
 }
@@ -647,11 +651,19 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   // carefully selected variables and the `ssize_t` type for performance and
   // code size of this hot loop.
   //
-  // TODO: Eventually, we'll likely need to roll our own SIMD-optimized
-  // routine here in order to handle CR+LF line endings, as we'll want those
-  // to stay on the fast path. We'll also need to detect and diagnose Unicode
-  // vertical whitespace. Starting with `memchr` should give us a strong
-  // baseline performance target when adding those features.
+  // Note that the `memchr` approach here works equally well for LF and CR+LF
+  // line endings. Either way, it finds the end of the line and the start of the
+  // next line. The lexer below will find the CR byte and peek to see the
+  // following LF and jump to the next line correctly. However, this approach
+  // does *not* support plain CR or LF+CR line endings. Nor does it support
+  // vertical tab or other vertical whitespace.
+  //
+  // TODO: Eventually, we should extend this to have correct fallback support
+  // for handling CR, LF+CR, vertical tab, and other esoteric vertical
+  // whitespace as line endings. Notably, including *mixtures* of them. This
+  // will likely be somewhat tricky as even detecting their absence without
+  // performance overhead and without a custom scanner here rather than memchr
+  // is likely to be difficult.
   const char* const text = source_text.data();
   const ssize_t size = source_text.size();
   ssize_t start = 0;
@@ -706,6 +718,27 @@ auto Lexer::LexVerticalWhitespace(llvm::StringRef source_text,
   position = line_start;
   SkipHorizontalWhitespace(source_text, position);
   line_info->indent = position - line_start;
+}
+
+auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
+  if (LLVM_LIKELY((position + 1) < static_cast<ssize_t>(source_text.size())) &&
+      LLVM_LIKELY(source_text[position + 1] == '\n')) {
+    // Skip to the vertical whitespace path, it will skip over both CR and LF.
+    LexVerticalWhitespace(source_text, position);
+    return;
+  }
+
+  CARBON_DIAGNOSTIC(UnsupportedLFCRLineEnding, Error,
+                    "The LF+CR line ending is not supported, only LF and CR+LF "
+                    "is supported.");
+  CARBON_DIAGNOSTIC(
+      UnsupportedCRLineEnding, Error,
+      "A raw CR line ending is not supported, only LF and CR+LF is supported.");
+  bool is_lfcr = position > 0 && source_text[position - 1] == '\n';
+  emitter_.Emit(source_text.begin() + position,
+                is_lfcr ? UnsupportedLFCRLineEnding : UnsupportedCRLineEnding);
+  const auto* line_info = current_line_info();
+  position = line_info->start + line_info->length;
 }
 
 auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)

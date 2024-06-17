@@ -101,6 +101,86 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
       }));
 }
 
+TEST_F(LexerTest, TracksLinesAndColumnsCRLF) {
+  auto buffer =
+      Lex("\r\n  ;;\r\n   ;;;\r\n   x\"foo\" '''baz\r\n  a\r\n ''' y");
+  EXPECT_FALSE(buffer.has_errors());
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart,
+           .line = 1,
+           .column = 1,
+           .indent_column = 1},
+          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 2, .column = 4, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 3, .column = 4, .indent_column = 4},
+          {.kind = TokenKind::Semi, .line = 3, .column = 5, .indent_column = 4},
+          {.kind = TokenKind::Semi, .line = 3, .column = 6, .indent_column = 4},
+          {.kind = TokenKind::Identifier,
+           .line = 4,
+           .column = 4,
+           .indent_column = 4,
+           .text = "x"},
+          {.kind = TokenKind::StringLiteral,
+           .line = 4,
+           .column = 5,
+           .indent_column = 4},
+          {.kind = TokenKind::StringLiteral,
+           .line = 4,
+           .column = 11,
+           .indent_column = 4},
+          {.kind = TokenKind::Identifier,
+           .line = 6,
+           .column = 6,
+           .indent_column = 11,
+           .text = "y"},
+          {.kind = TokenKind::FileEnd, .line = 6, .column = 7},
+      }));
+}
+
+TEST_F(LexerTest, InvalidCR) {
+  auto buffer = Lex("\n  ;;\r   ;;;\n   x");
+  EXPECT_TRUE(buffer.has_errors());
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart,
+           .line = 1,
+           .column = 1,
+           .indent_column = 1},
+          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 2, .column = 4, .indent_column = 3},
+          {.kind = TokenKind::Identifier,
+           .line = 3,
+           .column = 4,
+           .indent_column = 4,
+           .text = "x"},
+          {.kind = TokenKind::FileEnd, .line = 3, .column = 5},
+      }));
+}
+
+TEST_F(LexerTest, InvalidLFCR) {
+  auto buffer = Lex("\n  ;;\n\r   ;;;\n   x");
+  EXPECT_TRUE(buffer.has_errors());
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart,
+           .line = 1,
+           .column = 1,
+           .indent_column = 1},
+          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 2, .column = 4, .indent_column = 3},
+          {.kind = TokenKind::Identifier,
+           .line = 4,
+           .column = 4,
+           .indent_column = 4,
+           .text = "x"},
+          {.kind = TokenKind::FileEnd, .line = 4, .column = 5},
+      }));
+}
+
 TEST_F(LexerTest, HandlesNumericLiteral) {
   auto buffer = Lex("12-578\n  1  2\n0x12_3ABC\n0b10_10_11\n1_234_567\n1.5e9");
   EXPECT_FALSE(buffer.has_errors());
