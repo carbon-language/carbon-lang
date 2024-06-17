@@ -63,7 +63,7 @@ graph BT
 
     top((" "))
 
-subgraph memberCallIndex(" ")
+subgraph memberCallIndex((" "))
     direction LR
     memberAccess>"x.y<br>
                   x.(...)<br>
