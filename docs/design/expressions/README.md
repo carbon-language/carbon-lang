@@ -154,7 +154,7 @@ graph BT
 
     top --> parens & braces & unqualifiedName
 
-    memberCallIndex --> memberAccess & callAndIndexing -> top
+    memberCallIndex --> memberAccess & callAndIndexing --> top
 
     callAndIndexing --> memberAccess
     memberAccess --> callAndIndexing
