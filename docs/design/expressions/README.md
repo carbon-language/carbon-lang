@@ -63,6 +63,7 @@ graph BT
 
     top((" "))
 
+subgraph "" LR
     memberAccess>"x.y<br>
                   x.(...)<br>
                   x->y<br>
@@ -72,6 +73,7 @@ graph BT
     callAndIndexing{"x(...)<br>
                      x[y]"}
     click callAndIndexing "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md"
+end
 
     memberCallIndex((" "))
 
