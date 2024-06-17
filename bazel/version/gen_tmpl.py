@@ -18,13 +18,14 @@ The initial key/value pairs are read from the command line using repeated
 Updated values for those keys will be read from any files provided to the
 `--status-file` flag. This flag can be given multiple times and the values will
 be read and updated from the files in order, meaning the last file's value will
-win. New keys are never read from these files. The file format parsed is chose
-to be compatible with Bazel's status file format, but any files with lines
-matching the regex `^(?P<key>[_A-Za-z][_A-Za-z0-9]) (?P<value>.*)$` may be used.
-To assist with using Bazel status files, if the key parsed from the file begins
-with `STABLE_`, that prefix is removed. Any keys which are present in the
-substitutions provided on the command line will have their value updated with
-the string read from the file.
+win. New keys are never read from these files. The file format parsed is Bazel's
+[status file format](https://bazel.build/docs/user-manual#workspace-status):
+each line is a single entry starting with a key using only characters `[_A-Z]`,
+one space character, and the rest of the line is the value. To assist with using
+Bazel status files, if the key parsed from the file begins with `STABLE_`, that
+prefix is removed. Any keys which are present in the substitutions provided on
+the command line will have their value updated with the string read from the
+file.
 """
 
 __copyright__ = """
@@ -34,13 +35,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
-import re
 import sys
 from pathlib import Path
 from string import Template
-
-
-_VAR_RE = re.compile(r"(STABLE_)?(?P<key>[_A-Za-z][_A-Za-z0-9]*) (?P<value>.*)")
 
 
 def main() -> None:
@@ -91,7 +88,7 @@ def main() -> None:
             # Remove line endings.
             line = line.rstrip("\r\n")
             # Exactly matches our pattern
-            (key, value) = line.split(' ', 1)
+            (key, value) = line.split(" ", 1)
             key = key.removeprefix("STABLE_")
             if key in substitutions:
                 if args.verbose:

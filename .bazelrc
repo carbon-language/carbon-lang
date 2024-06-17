@@ -10,7 +10,7 @@ build --workspace_status_command=./scripts/workspace_status.py
 build --stamp
 
 # Provide aliases for configuring the release and pre-release version being
-# built.
+# built. For documentation of these flags, see //bazel/version/BUILD.
 build --flag_alias=release=//bazel/version:release
 build --flag_alias=pre_release=//bazel/version:pre_release
 build --flag_alias=rc_number=//bazel/version:rc_number

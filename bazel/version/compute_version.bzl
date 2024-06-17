@@ -33,6 +33,9 @@ def compute_version(ctx):
     version = version_base
 
     # See if we need to append a pre-release suffix to the version.
+    #
+    # TODO: We should more fully check for erroneous combinations of flags here
+    # to help ensure users don't get surprising results.
     if not ctx.attr._release_flag[BuildSettingInfo].value:
         pre_release = ctx.attr._pre_release_flag[BuildSettingInfo].value
         pre_release_numbers = {
