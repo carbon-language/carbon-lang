@@ -166,7 +166,7 @@ end
 
     pointer --> memberCallIndex
     negation & complement --> pointer
-    incDec ----> pointer
+    incDec -----------> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -------> memberCallIndex
