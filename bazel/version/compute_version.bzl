@@ -49,10 +49,10 @@ def compute_version(ctx):
             date = ctx.attr._nightly_date_flag[BuildSettingInfo].value
             _validate_nightly_date(date)
             version += "-0.nightly.{}".format(date)
-        else:
-            if pre_release != "dev":
-                fail("Invalid pre-release flag: " + pre_release)
+        elif pre_release == "dev":
             version += "-0.dev"
+        else:
+            fail("Invalid pre-release flag: " + pre_release)
 
     return version
 
