@@ -4,7 +4,7 @@
 
 """The base version of the Carbon repository.
 
-The Carbon SemVer version is defined here and then exported to various layers
+Carbon's version is defined here for export to various layers
 where it is needed. This is not the currently *released* version, but the
 version under *active development*.
 
@@ -15,7 +15,8 @@ non-development pre-release of 0.0.0, only nightly development pre-releases are
 expected.
 
 For more details on Carbon's versioning, see:
-TODO: Add link.
+  https://semver.org/
+  TODO: Add Carbon-specific link.
 """
 
 version_base = "0.0.0"

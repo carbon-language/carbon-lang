@@ -13,7 +13,7 @@ namespace Carbon {
 // `std::string_view` for its broader `constexpr` API.
 static consteval auto ToInt(std::string_view str) -> int {
   int result = 0;
-  for (;;) {
+  while (true) {
     result += str.front() - '0';
     str.remove_prefix(1);
     if (str.empty()) {

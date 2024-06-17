@@ -17,13 +17,13 @@ import subprocess
 
 def git_commit_sha() -> str:
     return subprocess.check_output(
-        ["git", "rev-parse", "--short", "HEAD"], shell=False, text=True
+        ["git", "rev-parse", "--short", "HEAD"], encoding="utf-8"
     ).strip()
 
 
 def git_dirty_suffix() -> str:
     status = subprocess.check_output(
-        ["git", "status", "--porcelain"], shell=False, text=True
+        ["git", "status", "--porcelain"], encoding="utf-8"
     ).strip()
     return ".dirty" if len(status) > 0 else ""
 
