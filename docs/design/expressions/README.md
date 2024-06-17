@@ -63,7 +63,8 @@ graph BT
 
     top((" "))
 
-subgraph "" LR
+subgraph ""
+    direction LR
     memberAccess>"x.y<br>
                   x.(...)<br>
                   x->y<br>
