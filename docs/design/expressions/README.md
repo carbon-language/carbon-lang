@@ -153,14 +153,12 @@ graph BT
     expressionStatement["x;"]
 
     top --> parens & braces & unqualifiedName
-    memberAccess --> top
-    callAndIndexing ---> top
+
+    memberCallIndex --> memberAccess & callAndIndexing -> top
 
     callAndIndexing --> memberAccess
     memberAccess --> callAndIndexing
 
-    memberCallIndex --> memberAccess
-    memberCallIndex --> callAndIndexing
 
     constType --> memberCallIndex
     pointerType --> constType
