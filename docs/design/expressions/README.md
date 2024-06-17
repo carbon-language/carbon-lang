@@ -71,6 +71,9 @@ graph BT
 
     callAndIndexing{"x(...)<br>
                      x[y]"}
+    click callAndIndexing "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md"
+
+    memberCallIndex((" "))
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
@@ -151,18 +154,23 @@ graph BT
 
     top --> parens & braces & unqualifiedName
     memberAccess --> top
+    callAndIndexing --> top
 
     callAndIndexing --> memberAccess
+    memberAccess --> callAndIndexing
 
-    constType --> callAndIndexing
+    memberCallIndex -> memberAccess
+    memberCallIndex -> callAndIndexing
+
+    constType --> memberCallIndex
     pointerType --> constType
     as --> pointerType
 
-    pointer --> callAndIndexing
+    pointer --> memberCallIndex
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> callAndIndexing
+    not -------> memberCallIndex
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
