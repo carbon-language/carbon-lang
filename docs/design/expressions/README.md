@@ -165,9 +165,9 @@ style memberCallIndex fill:none
 
     constType --> memberCallIndex
     pointerType --> constType
+    as --> pointerType
     as --> where
     where --> pointerType
-    where --> bitwise_and
 
     pointer --> memberCallIndex
     negation & complement & incDec --> pointer
