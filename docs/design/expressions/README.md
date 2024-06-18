@@ -165,7 +165,6 @@ style memberCallIndex fill:none
 
     constType --> memberCallIndex
     pointerType --> constType
-    as --> pointerType
     as --> where
     where --> pointerType
 
