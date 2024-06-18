@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Unqualified names](#unqualified-names)
     -   [Qualified names and member access](#qualified-names-and-member-access)
 -   [Operators](#operators)
+-   [Suffix ops](#suffix-ops)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
 -   [Numeric type literal expressions](#numeric-type-literal-expressions)
@@ -63,19 +64,13 @@ graph BT
 
     top((" "))
 
-subgraph memberCallIndex[" "]
-    direction LR
-    memberAccess{"x.y<br>
+    suffixOps{"x.y<br>
                   x.(...)<br>
                   x->y<br>
-                  x->(...)"}
-    click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
-
-    callAndIndexing{"x(...)<br>
-                     x[y]"}
-    click callAndIndexing "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md"
-end
-style memberCallIndex fill:none
+                  x->(...)<br>
+                  x(...)<br>
+                  x[y]"}
+    click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-ops"
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
@@ -156,20 +151,17 @@ style memberCallIndex fill:none
 
     top --> parens & braces & unqualifiedName
 
-    memberCallIndex --> top
+    suffixOps --> top
 
-    callAndIndexing --> memberAccess
-    memberAccess --> callAndIndexing
-
-    constType --> memberCallIndex
+    constType --> suffixOps
     pointerType --> constType
     as --> pointerType
 
-    pointer --> memberCallIndex
+    pointer --> suffixOps
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> memberCallIndex
+    not -------> suffixOps
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
@@ -344,6 +336,11 @@ Most expressions are modeled as operators:
 The binary arithmetic and bitwise operators also have
 [compound assignment](/docs/design/assignment.md) forms. These are statements
 rather than expressions, and do not produce a value.
+
+## Suffix ops
+
+https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md
+https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md
 
 ## Conversions and casts
 
