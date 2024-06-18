@@ -43,8 +43,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %Class.2 [template]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T) [symbolic]
+// CHECK:STDOUT:   %.2: type = ptr_type %Class.2 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get [template]
 // CHECK:STDOUT:   %Get: %Get.type = struct_value () [template]
@@ -85,8 +85,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Get.decl: %Get.type = fn_decl @Get [template = constants.%Get] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [template = constants.%Class.2]
-// CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [template = constants.%.2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc12_15.1: %.2 = param self
 // CHECK:STDOUT:     %self.loc12_15.3: %.2 = bind_name self, %self.loc12_15.1
 // CHECK:STDOUT:     %.loc12_10: %.2 = addr_pattern %self.loc12_15.3

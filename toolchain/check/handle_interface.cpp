@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
-#include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -152,10 +152,18 @@ auto HandleInterfaceDefinitionStart(Context& context,
 
   // Declare and introduce `Self`.
   if (!interface_info.is_defined()) {
-    // TODO: Once we support parameterized interfaces, this won't be the right
-    // type. For `interface X(T:! type)`, the type of `Self` is `X(T)`, whereas
-    // this will be simply `X`.
-    auto self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
+    SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
+    if (interface_info.is_generic()) {
+      auto instance_id =
+          MakeUnsubstitutedGenericInstance(context, interface_info.generic_id);
+      self_type_id = context.GetTypeIdForTypeConstant(
+          TryEvalInst(context, SemIR::InstId::Invalid,
+                      SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
+                                           .interface_id = interface_id,
+                                           .instance_id = instance_id}));
+    } else {
+      self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
+    }
 
     // We model `Self` as a symbolic binding whose type is the interface.
     // Because there is no equivalent non-symbolic value, we use `Invalid` as
