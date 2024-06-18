@@ -28,10 +28,15 @@ bool_flag(
 
 # A `--pre_release=KIND` flag where `KIND` must be one of:
 # - `rc` -- a release candidate version.
+#    Example: `--pre_release=rc --rc_number=2`
 # - `beta` -- a beta version.
+#    Example: `--pre_release=beta --beta_number=2`
 # - `alpha` -- an alpha version.
+#    Example: `--pre_release=alpha --alpha_number=2`
 # - `nightly -- a nightly version.
+#    Example: `--pre_release=nightly --nightly_date=2024.06.17`
 # - `dev` -- the default, a development build.
+#    Example: `--pre_release=dev`
 #
 # This flag cannot be used along with `--release`, and for all but the `dev`
 # kind must be combined with one of the below flags to specify further details
@@ -48,10 +53,7 @@ string_flag(
     ],
 )
 
-# When `--pre_release=rc` is used, `--rc_number=N` set's the release candidate
-# number to `N`.
-#
-# An error if used without `--pre_release=rc`.
+# `--rc_number=N` sets the release candidate number to `N`. Requires `--pre_release=rc`.
 int_flag(
     name = "rc_number",
     build_setting_default = -1,
