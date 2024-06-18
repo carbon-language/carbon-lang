@@ -94,4 +94,4 @@ jobs:
             --notes 'A nightly development build of Carbon.' \
             --prerelease \
             v${{ env.release_version }} \
-            "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.bz2#Linux x86-64 binaries - Ubuntu-22.04 (tar.bz2)"
+            "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.bz2"
