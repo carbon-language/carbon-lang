@@ -33,12 +33,12 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Inner, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

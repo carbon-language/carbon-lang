@@ -281,6 +281,13 @@ auto GetConstantInInstance(Context& context,
   return context.constant_values().Get(symbolic.inst_id);
 }
 
+auto GetConstantValueInInstance(Context& context,
+                                SemIR::GenericInstanceId instance_id,
+                                SemIR::InstId inst_id) -> SemIR::ConstantId {
+  return GetConstantInInstance(context, instance_id,
+                               context.constant_values().Get(inst_id));
+}
+
 auto GetTypeInInstance(Context& context, SemIR::GenericInstanceId instance_id,
                        SemIR::TypeId type_id) -> SemIR::TypeId {
   auto const_id = context.types().GetConstantId(type_id);

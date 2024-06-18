@@ -29,6 +29,8 @@ let b: B = C.base;
 // CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %.3} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

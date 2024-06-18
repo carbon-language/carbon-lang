@@ -39,6 +39,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.3: type = struct_type {.field: i32} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

@@ -80,15 +80,15 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
 // lookup.
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> bool {
-  auto value_id = context.LookupUnqualifiedName(node_id, name_id);
-  // TODO: Lookup should produce this.
-  auto instance_id = SemIR::GenericInstanceId::Invalid;
-  auto value = context.insts().Get(value_id);
-  auto type_id = GetTypeInInstance(context, instance_id, value.type_id());
+  auto result = context.LookupUnqualifiedName(node_id, name_id);
+  auto value = context.insts().Get(result.inst_id);
+  auto type_id =
+      GetTypeInInstance(context, result.instance_id, value.type_id());
   CARBON_CHECK(type_id.is_valid()) << "Missing type for " << value;
 
   context.AddInstAndPush<SemIR::NameRef>(
-      node_id, {.type_id = type_id, .name_id = name_id, .value_id = value_id});
+      node_id,
+      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
   return true;
 }
 

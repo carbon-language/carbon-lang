@@ -56,9 +56,9 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.type: type = fn_type @WithSelf [template]
 // CHECK:STDOUT:   %WithSelf: %WithSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

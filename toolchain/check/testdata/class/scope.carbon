@@ -45,6 +45,7 @@ fn Run() {
 // CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
