@@ -61,6 +61,7 @@ cc_test(
         "//testing/fuzzing:carbon_cc_proto",
         "//testing/fuzzing:proto_to_carbon_lib",
         "@googletest//:gtest",
+        "@protobuf//:differencer",
         "@protobuf//:protobuf_headers",
     ],
 )
