@@ -1,4 +1,4 @@
-# Expressions
+<# Expressions
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -98,6 +98,8 @@ style memberCallIndex fill:none
 
     unary((" "))
 
+    where["T where R"]
+
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
@@ -163,14 +165,16 @@ style memberCallIndex fill:none
 
     constType --> memberCallIndex
     pointerType --> constType
-    as --> pointerType
+    as --> where
+    where --> pointerType
+    where -> bitwise_and
 
     pointer --> memberCallIndex
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -------> memberCallIndex
-    as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     logicalOperand --> comparison & not
