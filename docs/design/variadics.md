@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Typechecking patterns](#typechecking-patterns)
     -   [Typechecking pattern matches](#typechecking-pattern-matches)
 -   [Appendix: Type system formalism](#appendix-type-system-formalism)
+    -   [Explicit deduced arities](#explicit-deduced-arities)
     -   [Typing and shaping rules](#typing-and-shaping-rules)
     -   [Reduction rules](#reduction-rules)
     -   [Other equivalences](#other-equivalences)
@@ -190,14 +191,17 @@ A pack expansion pattern "`...` _subpattern_" appears as part of a tuple pattern
 (or an implicit parameter list), and matches a sequence of tuple elements if
 each element matches _subpattern_. For example, in the signature of `Zip` shown
 earlier, the parameter list consists of a single pack expansion pattern
-`... each vector: Vector(each ElementType)`.
+`... each vector: Vector(each ElementType)`, and so the entire argument list
+will be matched against the binding pattern
+`each vector: Vector(each ElementType)`.
 
 Since _subpattern_ will be matched against multiple scrutinees (or none) in a
-single pattern-matching operation, a binding patterns within a pack expansion
-pattern must declare an each-name, and the Nth iteration of the pack expansion
-will initialize the Nth element of the named pack from the Nth scrutinee. The
-binding pattern's type expression may contain an each-name, but if so, it must
-be a deduced parameter of the enclosing pattern.
+single pattern-matching operation, a binding pattern within a pack expansion
+pattern must declare an each-name (such as `each vector` in the `Zip` example),
+and the Nth iteration of the pack expansion will initialize the Nth element of
+the named pack from the Nth scrutinee. The binding pattern's type expression may
+contain an each-name (such as `each ElementType` in the `Zip` example), but if
+so, it must be a deduced parameter of the enclosing pattern.
 
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
@@ -372,26 +376,28 @@ example, so we represent its type in the same way, as a sequence of segments:
 `⟬f32, Optional(each T), ⟪i32; ‖each y‖⟫⟭`. The `⟬⟭` delimiters make this a
 _pack literal_ rather than a tuple literal. Notice one subtle difference: the
 segments of a pack literal do not contain `...`. In effect, every segment of a
-pack literal acts as a separate loop body.
+pack literal acts as a separate loop body. As with the tuple literal syntax, the
+pattern literal pseudo-syntax can also be used in patterns.
 
 The _shape_ of a pack literal is a tuple of the arities of its segments, so the
 shape of `⟬f32, Optional(each T), ⟪i32; ‖each y‖⟫⟭` is
-`(1, ‖each T‖, ‖each y‖)`. Other expressions also have shapes. In particular,
-the shape of an arity coercion `⟪E; A⟫` is `(A)`, the shape of `each X` is
-`‖each X‖`, and the shape of an expression that does not contain pack literals,
-shape coercions, or each-names is 1. The arity of an expression is the sum of
-the elements of its shape. See the [appendix](#typing-and-shaping-rules) for the
-full rules for determining the shape of an expression.
+`(1, ‖each T‖, ‖each y‖)`. Other expressions and patterns also have shapes. In
+particular, the shape of an arity coercion `⟪E; A⟫` is `(A)`, the shape of
+`each X` is `‖each X‖`, and the shape of an expression that does not contain
+pack literals, shape coercions, or each-names is 1. The arity of an expression
+is the sum of the elements of its shape. See the
+[appendix](#typing-and-shaping-rules) for the full rules for determining the
+shape of an expression.
 
 A pack literal can be _expanded_, which moves its parent AST node inside the
 pack literal, so long as the parent node is not `...`. For example,
 `... Optional(⟬each X, Y⟭)` is equivalent to
 `... ⟬Optional(each X), Optional(Y)⟭`. Similarly, an arity coercion can be
-expanded so long as the parent node is not `...` or ` pack literal. See the
-[appendix](#reduction-rules) for the full rules governing this operation. _Fully
-expanding_ an expression that does not contain a pack expansion means repeatedly
-expanding any pack literals and arity coercions within it, until they cannot be
-expanded any further.
+expanded so long as the parent node is not `...`, a pattern, or a pack literal.
+See the [appendix](#reduction-rules) for the full rules governing this
+operation. _Fully expanding_ an expression or pattern that does not contain a
+pack expansion means repeatedly expanding any pack literals and arity coercions
+within it, until they cannot be expanded any further.
 
 The _scalar components_ of a fully-expanded expression `E` are a set, defined as
 follows:
@@ -506,47 +512,44 @@ fn ZipAtLeastOne[First:! type, ... each Next:! type]
 During typechecking, we transform that function signature to the following form:
 
 ```carbon
-fn ZipAtLeastOne[... ⟬First, each Next⟭:! type]
-    (... each args: Vector(⟬First, each Next⟭))
-    -> Vector((...⟬First, each Next⟭));
+fn ZipAtLeastOne[... ⟬First, each Next⟭:! ⟪type; ‖each next‖+1⟫]
+    (... each __args: Vector(⟬First, each Next⟭))
+    -> Vector((... ⟬First, each Next⟭));
 ```
 
-In this rewritten form, we treat the pack of deduced parameter names
-`⟬First, each Next⟭` as though it were the each-name of a single deduced
-parameter, called a _synthetic deduced parameter_. This enables us to model this
-function as only having one parameter. The fact that it's composed of an
-ordinary name and an each-name has no further effect, except to record the fact
-that this pack must have at least one element (and consequently `each args` must
-too). Note in particular that `Vector(⟬First, each Next⟭)` is considered to be
-fully expanded, and thus it has a single scalar component, itself.
-
-A synthetic deduced parameter must satisfy the following requirements:
-
--   Its segments are all the names of deduced parameters of the full pattern.
-    For example, `⟬i32, each Y⟭` is not a valid synthetic deduced parameter.
--   No name occurs more than once. For example, `⟬X, each Y, X⟭` is not a valid
-    synthetic deduced parameter.
--   One of the names must be an each-name. For example, `⟬X, Y⟭` is not a valid
-    synthetic deduced parameter.
--   All the names must have the same declared type. For example, in the context
-    of a deduced parameter list `[X:! I, ... each Y:! type]`, `⟬X, each Y⟭` is
-    not a valid synthetic deduced parameter list.
-
-The rewritten full pattern must satisfy the following requirements:
-
--   Names that are part of a synthetic deduced parameter are not used outside a
-    synthetic deduced parameter, or in synthetic deduced parameters that are not
-    equal.
--   A pack expansion containing a synthetic deduced parameter doesn't contain
-    any pack literals that aren't synthetic deduced parameters.
-
-For example `⟬X, each Y⟭` is not a valid synthetic deduced parameter in either
-of the following function signatures:
+We can then rewrite that by replacing the pack of names `⟬First, each Next⟭`
+with an invented name `each __Args`, so that the function has only one
+parameter:
 
 ```carbon
-fn F[X:! type, ... each Y:! type](... each args: ⟬X, each Y⟭) -> ⟬each Y, X⟭;
-fn F[X:! type, ... each Y:! type](... each args: ⟬X, each Y⟭) -> X;
+fn ZipAtLeastOne[... each __Args:! ⟪type; ‖each next‖+1⟫]
+    (... each __args: Vector(each __Args))
+    -> Vector((... each __Args));
 ```
+
+We can replace a name pack with an invented each-name only if all of the
+following conditions hold:
+
+-   The name pack doesn't use any name more than once. For example, we can't
+    apply this rewrite to `⟬X, each Y, X⟭`.
+-   The name pack contains at least one each-name. For example, we can't apply
+    this rewrite to `⟬X, Y⟭`.
+-   The replacement removes all usages of the constituent names. For example, we
+    can't apply this rewrite to `⟬X, each Y⟭` in this code, because the
+    resulting signature would have return type `X` but no declaration of `X`:
+    ```carbon
+    fn F[... ⟬X, each Y⟭:! ⟪type; ‖each next‖+1⟫]
+        (... each __args: each ⟬X, each Y⟭) -> X;
+    ```
+-   The pack expansions being rewritten do not contain any pack literals other
+    than the name pack being replaced. For example, we can't apply this rewrite
+    to `⟬X, each Y⟭` in this code, because the pack expansion in the deduced
+    parameter list also contains the pack literal `⟬I, each type⟭`:
+    ```carbon
+    fn F[... ⟬X, each Y⟭:! ⟬I, each type⟭](... each __args: each ⟬X, each Y⟭);
+    ```
+    Notice that as a corollary of this rule, all the names in the name pack must
+    have the same type.
 
 See the [appendix](#deduction-algorithm) for a more formal discussion of the
 rewriting process.
@@ -573,10 +576,9 @@ a single segment with arity `‖each T‖+1`, which can match `‖each Next‖+1
 because the deduced arity `‖each Next‖` behaves as a deduced parameter of the
 pattern, so they match by deducing `‖each Next‖ == ‖each T‖`.
 
-Note that when merging segments of the scrutinee, we can't form synthetic
-deduced parameters (because the scrutinee is not in a deducing context), but we
-also don't need to: we don't require a merged scrutinee segments to have a
-single scalar component.
+When merging segments of the scrutinee, we don't attempt to form name packs and
+replace them with invented names, but we also don't need to: we don't require a
+merged scrutinee segments to have a single scalar component.
 
 The search for this rewrite processes each pattern segment to the left of the
 segment with deduced arity, in order from left to right. For each pattern
@@ -602,45 +604,67 @@ non-variadic typechecking.
 > while requiring each segment to have a single scalar component, and then
 > merge/split the pattern tuple to match it, without requiring pattern tuple
 > segments to have a single scalar component. This isn't quite symmetric with
-> the current approach, because when processing the scrutinee we're not forming
-> synthetic deduced parameters, we're forming synthetic `let` bindings.
+> the current approach, because when processing the scrutinee we can't merge
+> deduced parameters (scrutinees don't have any), but we can invent new `let`
+> bindings.
 
 ## Appendix: Type system formalism
 
+A _pack literal_ is a comma-separated sequence of segments, enclosed in `⟬⟭`
+delimiters. A pack literal can appear in an expression, pattern, or name
+context, and every segment must be valid in the context where the pack literal
+appears (for example, the segments of a pack literal in a name context must all
+be names). Pack literals cannot be nested, and cannot appear outside a pack
+expansion.
+
+### Explicit deduced arities
+
+In this formalism, deduced arities are explicit rather than implicit, so Carbon
+code must be desugared into this formalism as follows:
+
+For each pack expansion pattern, we introduce a binding pattern `__N:! Arity` as
+a deduced parameter of the enclosing full pattern, where `__N` is a name chosen
+to avoid collisions. Then, for each binding pattern of the form `each X: T`
+within that expansion, if `T` does not contain an each-name, the binding pattern
+is rewritten as `each X: ⟪T; __N⟫`.
+
+`Arity` is a compiler-internal type which represents non-negative integers. The
+only operation it supports is `+`, with non-negative integer literals and other
+`Arity`s. `Arity` is used only during type checking, so `+` has no run-time
+semantics, and its only symbolic semantics are that it is commutative and
+associative.
+
 ### Typing and shaping rules
 
-The _body arity_ of a pack expansion pattern is determined as follows:
-
--   If it contains a usage of at least one each-name that is not a parameter of
-    the pattern, the body arity is the shape of that each-name.
--   Otherwise, the body arity is a hidden deduced parameter of the pattern
-    called the _deduced arity binding_.
-
-The shapes of expressions and statements within a pack expansion are determined
-as follows:
+The shape of an AST node within a pack expansion is determined as follows:
 
 -   The shape of an arity coercion is the value of the expression after the `;`.
 -   The shape of a pack literal is the concatenation of the arities of its
     segments.
--   The shape of a binding pattern that declares an each-name is the body arity
-    of the enclosing pack expansion.
--   The shape of an each-name expression is the body arity of the pack expansion
-    containing the declaration of the each-name.
--   Any other AST node is _well shaped_ if there is some shape `S` such that all
-    of the node's children have shape either 1 or `S`. When that condition
-    holds, the shape of the node is 1 if all children have shape 1, or `S`
-    otherwise.
+-   The shape of an each-name expression is the shape of the binding pattern
+    that declared the name.
+-   If a binding pattern's name and type components have the same number of
+    segments, and each name segment is an each-name if and only if the
+    corresponding type segment's shape is not 1, then the shape of the binding
+    pattern is the shape of the type expression. Otherwise, the binding pattern
+    is ill-shaped.
+-   For any other AST node:
+    -   If all the node's children have shape 1, its shape is 1.
+    -   If there is some shape `S` such that all of the node's children have
+        shape either 1 or `S`, its shape is `S`.
+    -   Otherwise, the node is ill-shaped.
+
+> **TODO:** The "well-shaped" rules as stated are slightly too restrictive. For
+> example, `⟬each X, Y⟭: ⟪Z; N+1⟫` is well-shaped, and `(⟬each X, Y⟭, ⟪Z; N+1⟫)`
+> is well-shaped if the shape of `each Y` is `N`.
 
 The type of an expression or pattern can be computed as follows:
 
--   If `E` is an expression that does not contain any each-names or pack
-    literals, the type of `each x: E` is `⟪E; A⟫`, where `A` is the body arity
-    of the enclosing pack expansion.
--   The type of `each x: auto` is `each X`, a newly-invented deduced parameter
+-   The type of `each x: auto` is `each __X`, a newly-invented deduced parameter
     of the enclosing full pattern, which behaves as if it was declared as
-    `... each X:! type`.
--   The type of an each-name expression is the type of the binding pattern that
-    declared it.
+    `... each __X:! type`.
+-   The type of an each-name expression is the type expression of the binding
+    pattern that declared it.
 -   The type of an arity coercion `⟪E; S⟫` is `⟪T; S⟫`, where `T` is the type of
     `E`.
 -   The type of a pack literal is a pack literal consisting of the concatenated
@@ -650,26 +674,26 @@ The type of an expression or pattern can be computed as follows:
     the type of its body.
 -   The type of a tuple literal is a tuple literal consisting of the types of
     its segments.
--   If an expression `E` contains a pack literal or arity coercion that is not
-    inside a pack expansion, the type of `E` is the type of the fully expanded
-    form of `E`.
+-   If an expression or pattern `E` contains a pack literal or arity coercion
+    that is not inside a pack expansion, the type of `E` is the type of the
+    fully expanded form of `E`.
 
 > **TODO:** address `...expand`, `...and` and `...or`.
 
 ### Reduction rules
 
 Unless otherwise specified, all expressions in these rules must be free of side
-effects. Note that every reduction rule is also an equivalence: the expression
-before the reduction is equivalent to the expression after, so these rules can
+effects. Note that every reduction rule is also an equivalence: the utterance
+before the reduction is equivalent to the utterance after, so these rules can
 sometimes be run in reverse (particularly during deduction).
 
-Expressions that are reduced by these rules must be well-shaped (and the reduced
+Utterances that are reduced by these rules must be well-shaped (and the reduced
 form will likewise be well-shaped), but need not be well-typed. This enables us
-to apply these reductions while determining whether an expression is well-typed,
-as in the case of typing an expression that contains a pack literal or arity
-coercion, above.
+to apply these reductions while determining whether an utterance is well-typed,
+as in the case of typing an expression or pattern that contains a pack literal
+or arity coercion, above.
 
-_Empty pack removal:_ `...⟬⟭` reduces to the empty string.
+_Singular pack removal:_ if `E` is a pack segment, `⟬E⟭` reduces to `E`.
 
 _Singular expansion removal:_ `...E` reduces to `E`, if `E` contains no pack
 literals, arity coercions, or each-names.
@@ -677,18 +701,24 @@ literals, arity coercions, or each-names.
 _Pack expansion splitting:_ If `E` is a segment and `S` is a sequence of
 segments, `...⟬E, S⟭` reduces to `...E, ...⟬S⟭`.
 
-_Pack expanding:_ If `F` is a function, and `X` is an expression that does not
-contain pack literals or each-names, then `F(⟬A1, A2⟭, X, ⟬B1, B2⟭, ⟪Y; S⟫)`
-reduces to `⟬F(A1, X, B1, Y), F(A2, X, B2, Y)⟭`. This rule generalizes in
+_Pack expanding:_ If `F` is a function, `X` is an utterance that does not
+contain pack literals or each-names, and `⟬P1, P2⟭` and `⟬Q1, Q2⟭` both have the
+shape `(S1, S2)`, then `F(⟬P1, P2⟭, X, ⟬Q1, Q2⟭, ⟪Y; S1+S2⟫)` reduces to
+`⟬F(P1, X, Q1, ⟪Y; S1⟫), F(P2, X, Q2, ⟪Y; S2⟫)⟭`. This rule generalizes in
 several dimensions:
 
 -   `F` can have any number of non-pack-literal arguments, and any positive
     number of pack literal arguments, and they can be in any order.
--   The pack literal arguments can have any number of segments, so long as they
-    all have the same number of segments.
+-   The pack literal arguments can have any number of segments (but the
+    well-shapedness requirement means they must have the same number of
+    segments).
 -   `F()` can be any expression syntax other than `...`, not just a function
     call. For example, this rule implies that `⟬X1, X2⟭ * ⟬Y1, Y2⟭` reduces to
     `⟬X1 * Y1, X2 * Y2⟭`, where the `*` operator plays the role of `F`.
+-   `F()` can also a be a pattern syntax. For example, this rule implies that
+    `(⟬x1: X1, x2: X2⟭, ⟬y1: Y1, y2: Y2⟭)` reduces to
+    `⟬(x1: X1, y1: Y1), (x2: X2, y2: Y2)⟭`, where the tuple syntax `( , )` plays
+    the role of `F`.
 
 _Coercion expanding:_ If `F` is a function, `S` is a shape, and `Y` is an
 expression that does not contain pack literals or arity coercions,
@@ -698,7 +728,8 @@ this rule generalizes:
 -   `F` can have any number of non-arity-coercion arguments, and any positive
     number of arity coercion arguments, and they can be in any order.
 -   `F()` can be any expression syntax other than `...` or pack literal
-    formation, not just a function call.
+    formation, not just a function call. Unlike pack expanding, coercion
+    expanding does not apply if `F` is a pattern syntax.
 
 _Coercion removal:_ `⟪E; 1⟫` reduces to `E`.
 
@@ -725,6 +756,19 @@ _Coercion merging:_
 _Coercion shape commutativty:_ `⟪E; S1⟫` is equivalent to `⟪E; S2⟫` if `S1` is a
 permutation of `S2`.
 
+_Pack renaming:_ Let `Ns` be a sequence of names, let `⟬Ns⟭: ⟪T; N⟫` be a name
+binding pattern (which may be a symbolic or template binding as well as a
+runtime binding), and let `__A` be an identifier that does not collide with any
+name that's visible where `⟬Ns⟭` is visible. We can rewrite all occurrences of
+`⟬Ns⟭` to `each __A` in the scope of the binding pattern (including the pattern
+itself) if all of the following conditions hold:
+
+-   `Ns` contains at least one each-name.
+-   No name in `Ns` is used in the scope outside of `Ns`.
+-   No name occurs more than once in `Ns`.
+-   No other pack literals occur in the same pack expansion as an occurrence of
+    `⟬Ns⟭`.
+
 ### Convertibility and parameter deduction
 
 Type convertibility is governed by a set of inference rules for the "convertible
@@ -750,10 +794,11 @@ type may use deduced parameters of the function, which act as unknowns that we
 must solve for. We will model parameter deduction using the concept of a
 _binding map_, which is a set of pairs where the first element of the pair is a
 deduced parameter, and the second element is the deduced value of that
-parameter. We model a parameter as a sequence of names, in order to accommodate
-synthetic deduced parameters. A binding map must be _consistent_, which means
-that if `N1` and `N2` are the names of two different name/value pairs in the
-map, `N1` cannot be a (non-strict) subsequence of `N2`.
+parameter. A binding map must be _consistent_, which means that it cannot
+contain two pairs with the same first element (for simplicity, we will require
+function signatures and other full patterns to be expressed without deduced
+parameters that have pack names when applying these rules, so we don't need to
+worry about pairs with overlapping but non-equal first elements).
 
 We can then re-express convertibility and equality as ternary relations: "`T` =
 `U` given a binding map `M`" means that if we rewrite `T` and `U` by replacing
@@ -782,14 +827,11 @@ is consistent, then `X` equals `E` given a binding map `M` ∪ {(`X`, `E`)}.
 The deduction rules that are specific to variadic types are as follows:
 
 -   _Expansion convertibility:_ `...T` is convertible to `...U` if the shape of
-    `U` equals the shape of `T`, and each scalar component of `T` is convertible
-    to every scalar component of `U`.
--   _Shape binding introduction:_ Let `X` be a deduced arity binding, and let
-    `S` be a shape expression. `X` is equal to `S` given a binding map that
-    consists of the single element "`X` is bound to `S`".
--   _Shape equality:_ Let `(S1)`, `(S2)`, `(S3)`, and `(S4)` be shapes.
-    `(S1, S2)` equals `(S3, S4)` if `(S1)` equals `(S3)` and `(S2)` equals
-    `(S4)`.
+    `U` equals the shape of `T`, and all scalar components of `T` are
+    convertible to all scalar components of `U`.
+-   _Shape equality:_ Let `(S1s)`, `(S2s)`, `(S3s)`, and `(S4s)` be shapes.
+    `(S1s, S2s)` equals `(S3s, S4s)` if `(S1s)` equals `(S3s)` and `(S2s)`
+    equals `(S4s)`.
 
 #### Example
 
@@ -822,22 +864,15 @@ resulting proof forward to compute the final binding map.
 
 ### Deduction algorithm
 
-A function type is in _normal form_ if every pack expansion is fully expanded,
-and the only pack literals are synthetic deduced parameters. Note that by
-construction, this means that the body of every pack expansion has a single
-scalar component.
+A full pattern is in _normal form_ if it contains no pack literals, and every
+arity coercion is fully expanded. Note that all user-written full patterns are
+in normal form. Note also that by construction, this means that the type of the
+body of every pack expansion has a single scalar component. The _canonical form_
+of a full pattern is the unique normal form (if any) that is "maximally merged",
+meaning that every tuple pattern and tuple literal has the smallest number of
+segments.
 
-The _canonical form_ of a function type is the unique normal form that is
-"maximally merged", meaning that if `C` is the canonical form, and `D` is any
-other normal form of the function type, then either `D` has more pack expansions
-than `C`, or
-
--   `D` has the same number of pack expansions as `C`,
--   the shape of the body of every pack expansion in `D` is a prefix or suffix
-    of the shape of the body of the corresponding pack expansion in `C`, and
--   in at least one case, it is a _strict_ prefix or suffix.
-
-> **TODO:** Specify algorithm for converting a function type to canonical form,
+> **TODO:** Specify algorithm for converting a full pattern to canonical form,
 > or establishing that there is no such form. See next section for a start.
 
 If a function with type `F` is called with argument type `A`, we typecheck the
@@ -852,7 +887,8 @@ function return type to obtain the type of the call expression.
 
 Typechecking for pattern match operations other than function calls is defined
 in terms of typechecking a function call: We check a scrutinee type `S` against
-a pattern `P` by checking `(S,)` against `(P,)->()`.
+a pattern `P` by checking `__F(S,)` against a hypothetical function signature
+`fn __F(P,)->();`.
 
 > **Future work:** Extend this approach to support merging the argument list as
 > well as the parameter list.
@@ -871,47 +907,85 @@ fn F[First:! type, Second:! type, ... each Next:! type]
      ... each next: Vector(each Next)) -> (First, Second, ... each Next);
 ```
 
-The function type derived from that signature is:
+First, we desugar the implicit arity:
 
 ```carbon
-(Vector(First), Vector(Second), ... Vector(each Next))
-    -> (First, Second, ... each Next)
+fn F[__N:! Arity, First:! type, Second:! type, ... each Next:! ⟪type; __N⟫]
+    (first: Vector(First), second: Vector(Second),
+     ... each next: Vector(each Next)) -> (First, Second, ... each Next);
 ```
 
-We wrap `each Next` in a pack literal to express it in normal form:
+Then we attempt to merge `Second` with `each Next` as follows (note that for
+brevity, some of the steps presented here actually contain multiple independent
+reductions):
 
 ```carbon
-(Vector(First), Vector(Second), ... Vector(⟬each Next⟭)) -> (First, Second, ... ⟬each Next⟭)
-```
-
-Then we attempt to merge `Vector(Second)` into the pack expansion:
-
-```carbon
+// Singular pack removal (in reverse)
+fn F[__N:! Arity, First:! type, Second:! type, ... ⟬each Next:! ⟪type; __N⟫⟭]
+    (first: Vector(First), second: Vector(Second),
+     ... each next: Vector(⟬each Next⟭)) -> (First, Second, ... ⟬each Next⟭);
 // Pack expanding
-(Vector(First), Vector(Second), ... ⟬Vector(each Next)⟭) -> (First, Second, ...⟬each Next⟭)
+fn F[__N:! Arity, First:! type, Second:! type, ... ⟬each Next:! ⟪type; __N⟫⟭]
+    (first: Vector(First), second: Vector(Second),
+     ... each next: ⟬Vector(each Next)⟭) -> (First, Second, ... ⟬each Next⟭);
+// Pack expanding
+fn F[__N:! Arity, First:! type, Second:! type, ... ⟬each Next:! ⟪type; __N⟫⟭]
+    (first: Vector(First), second: Vector(Second),
+     ... ⟬each next: Vector(each Next)⟭) -> (First, Second, ... ⟬each Next⟭);
 // Pack expansion splitting (in reverse)
-(Vector(First), ... ⟬Vector(Second), Vector(each Next)⟭) -> (First, ...⟬Second, each Next⟭)
+fn F[__N:! Arity, First:! type, ... ⟬Second:! type, each Next:! ⟪type; __N⟫⟭]
+    (first: Vector(First), ... ⟬second: Vector(Second),
+                                each next: Vector(each Next)⟭)
+    -> (First, ... ⟬Second, each Next⟭);
 // Pack expanding (in reverse)
-(Vector(First), ... Vector(⟬Second, each Next⟭)) -> (First, ...⟬Second, each Next⟭)
+fn F[__N:! Arity, First:! type, ... ⟬Second, each Next⟭:! ⟪type; __N+1⟫]
+    (first: Vector(First), ... ⟬second, each next⟭: ⟬Vector(Second), Vector(each Next)⟭)
+    -> (First, ... ⟬Second, each Next⟭);
+// Pack expanding (in reverse)
+fn F[__N:! Arity, First:! type, ... ⟬Second, each Next⟭:! ⟪type; __N+1⟫]
+    (first: Vector(First), ... ⟬second, each next⟭: Vector(⟬Second, each Next⟭))
+    -> (First, ... ⟬Second, each Next⟭);
+// Pack renaming
+fn F[__N:! Arity, First:! type, ... each __A:! ⟪type; __N+1⟫]
+    (first: Vector(First), ... each __a: Vector(each __A))
+    -> (First, ... each __A);
 ```
 
-This is a normal form, because `⟬Second, each Next⟭` is a valid synthetic
-deduced parameter. We can now repeat that process to merge the remaining
-parameter type:
+This brings us back to a normal form, while reducing the number of tuple
+segments. We can now repeat that process to merge the remaining parameter type:
 
 ```carbon
-(Vector(First), ... Vector(⟬Second, each Next⟭)) -> (First, ...⟬Second, each Next⟭)
+fn F[__N:! Arity, First:! type, ... ⟬each __A:! ⟪type; __N+1⟫⟭]
+    (first: Vector(First), ... each __a: Vector(⟬each __A⟭))
+    -> (First, ... ⟬each __A⟭);
 // Pack expanding
-(Vector(First), ...⟬Vector(Second), Vector(each Next)⟭) -> (First, ...⟬Second, each Next⟭)
+fn F[__N:! Arity, First:! type, ... ⟬each __A:! ⟪type; __N+1⟫⟭]
+    (first: Vector(First), ... each __a: ⟬Vector(each __A)⟭)
+    -> (First, ... ⟬each __A⟭);
+// Pack expanding
+fn F[__N:! Arity, First:! type, ... ⟬each __A:! ⟪type; __N+1⟫⟭]
+    (first: Vector(First), ... ⟬each __a: Vector(each __A)⟭)
+    -> (First, ... ⟬each __A⟭);
 // Pack expansion splitting (in reverse)
-(...⟬Vector(First), Vector(Second), Vector(each Next)⟭) -> (...⟬First, Second, each Next⟭)
+fn F[__N:! Arity, ... ⟬First:! type, each __A:! ⟪type; __N+1⟫⟭]
+    (... ⟬first: Vector(First), each __a: Vector(each __A)⟭)
+    -> (... ⟬First, each __A⟭);
 // Pack expanding (in reverse)
-(...Vector(⟬First, Second, each Next⟭)) -> (...⟬First, Second, each Next⟭)
+fn F[__N:! Arity, ... ⟬First, each __A⟭:! ⟪type; __N+2⟫⟭]
+    (... ⟬first, each __a⟭: ⟬Vector(First), Vector(each __A)⟭)
+    -> (... ⟬First, each __A⟭);
+// Pack expanding (in reverse)
+fn F[__N:! Arity, ... ⟬First, each __A⟭:! ⟪type; __N+2⟫⟭]
+    (... ⟬first, each __a⟭: Vector(⟬First, each __A⟭))
+    -> (... ⟬First, each __A⟭);
+// Pack renaming
+fn F[__N:! Arity, ... __B:! ⟪type; __N+2⟫⟭]
+    (... __b: Vector(__B))
+    -> (... __B);
 ```
 
-Here again, this is a normal form, because `⟬First, Second, each Next⟭` is a
-valid synthetic deduced parameter. There is demonstrably no way to perform any
-further merging, so this must be the canonical form.
+Here again, this is a normal form, and there is demonstrably no way to perform
+any further merging, so this must be the canonical form.
 
 > **TODO:** define the algorithm in more general terms, and discuss ways that
 > merging can fail.
