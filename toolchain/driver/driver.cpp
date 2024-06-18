@@ -950,6 +950,14 @@ auto Driver::Link(const LinkOptions& options,
   // Use LLD, which we provide in our install directory, for linking.
   clang_args.push_back("-fuse-ld=lld");
 
+  // Disable linking the C++ standard library until can build and ship it as
+  // part of the Carbon toolchain. This clearly won't work once we get into
+  // interop, but for now it avoids spurious failures and distraction. The plan
+  // is to build and bundle libc++ at which point we can replace this with
+  // pointing at our bundled library.
+  // TODO: Replace this when ready.
+  clang_args.push_back("-nostdlib++");
+
   // Add OS-specific flags based on the target.
   AddOSFlags(codegen_options.target, clang_args);
 
