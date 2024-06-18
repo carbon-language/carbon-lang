@@ -62,10 +62,6 @@ jobs:
           echo "nightly_date=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
 
       - name: Build release
-        env:
-          # 'libtool_check_unique failed to generate' workaround.
-          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
-          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
         run: |
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
