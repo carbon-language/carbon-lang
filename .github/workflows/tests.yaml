@@ -294,6 +294,9 @@ jobs:
           # https://discord.com/channels/655572317891461132/707150492370862090/1151605725576056934
           build --jobs=32
 
+          # Avoid any cache impact from build stamping in CI.
+          build --nostamp
+
           # General build options.
           build --verbose_failures
           test --test_output=errors

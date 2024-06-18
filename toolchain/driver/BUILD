@@ -63,6 +63,7 @@ cc_library(
     deps = [
         ":clang_runner",
         "//common:command_line",
+        "//common:version",
         "//common:vlog",
         "//toolchain/base:value_store",
         "//toolchain/check",
@@ -127,6 +128,7 @@ cc_binary(
         "//common:bazel_working_dir",
         "//common:exe_path",
         "//common:init_llvm",
+        "//common:version_stamp",
         "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],
