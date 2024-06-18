@@ -28,6 +28,9 @@ on:
     - cron: '0 2 * * *'
   # Enable manual runs for testing or manually (re-)creating a nightly release.
   workflow_dispatch:
+  # FIXME:
+  push:
+    branches: [action-test]
 
 permissions:
   contents: write # For creating and uploading to releases.
