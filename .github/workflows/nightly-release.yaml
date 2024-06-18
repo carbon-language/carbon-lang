@@ -28,9 +28,6 @@ on:
     - cron: '0 2 * * *'
   # Enable manual runs for testing or manually (re-)creating a nightly release.
   workflow_dispatch:
-  # FIXME:
-  push:
-    branches: [action-test]
 
 permissions:
   contents: write # For creating and uploading to releases.
@@ -95,7 +92,6 @@ jobs:
           gh release create \
             --title "Nightly build ${{ env.nightly_date }}" \
             --notes 'A nightly development build of Carbon.' \
-            -d \
             --prerelease \
             v${{ env.release_version }} \
             "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.bz2#Linux x86-64 binaries - Ubuntu-22.04 (tar.bz2)"
