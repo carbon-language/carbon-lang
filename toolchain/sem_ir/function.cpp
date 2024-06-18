@@ -19,11 +19,11 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   }
 
   // Identify the function we're calling.
-  auto val_id = sem_ir.constant_values().Get(callee_id);
-  if (!val_id.is_constant()) {
+  auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
+  if (!val_id.is_valid()) {
     return result;
   }
-  auto val_inst = sem_ir.insts().Get(val_id.inst_id());
+  auto val_inst = sem_ir.insts().Get(val_id);
   auto struct_val = val_inst.TryAs<StructValue>();
   if (!struct_val) {
     result.is_error = val_inst.type_id() == SemIR::TypeId::Error;
@@ -36,6 +36,13 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
 
   result.function_id = fn_type->function_id;
   return result;
+}
+
+auto Function::declared_return_type(const File& file) const -> TypeId {
+  if (!return_storage_id.is_valid()) {
+    return TypeId::Invalid;
+  }
+  return file.insts().Get(return_storage_id).type_id();
 }
 
 }  // namespace Carbon::SemIR

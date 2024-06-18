@@ -63,11 +63,19 @@ graph BT
 
     top((" "))
 
-    memberAccess>"x.y<br>
+subgraph memberCallIndex[" "]
+    direction LR
+    memberAccess{"x.y<br>
                   x.(...)<br>
                   x->y<br>
-                  x->(...)"]
+                  x->(...)"}
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
+
+    callAndIndexing{"x(...)<br>
+                     x[y]"}
+    click callAndIndexing "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md"
+end
+style memberCallIndex fill:none
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
@@ -148,16 +156,20 @@ graph BT
 
     top --> parens & braces & unqualifiedName
 
-    constType --> top
+    memberCallIndex --> top
+
+    callAndIndexing --> memberAccess
+    memberAccess --> callAndIndexing
+
+    constType --> memberCallIndex
     pointerType --> constType
     as --> pointerType
 
-    memberAccess --> top
-    pointer --> memberAccess
+    pointer --> memberCallIndex
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> memberAccess
+    not -------> memberCallIndex
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
@@ -302,6 +314,8 @@ Most expressions are modeled as operators:
 
 | Category   | Operator                            | Syntax    | Function                                                              |
 | ---------- | ----------------------------------- | --------- | --------------------------------------------------------------------- |
+| Call       | `()` (unary)                        | `x(...)`  | Function call: the value returned by calling the function `x`.        |
+| Call       | [`[]`](indexing.md) (unary)         | `x[y]`    | Subscripting or indexing: returns the element `y` of `x`.             |
 | Pointer    | [`*`](pointer_operators.md) (unary) | `*x`      | Pointer dereference: the object pointed to by `x`.                    |
 | Pointer    | [`&`](pointer_operators.md) (unary) | `&x`      | Address-of: a pointer to the object `x`.                              |
 | Arithmetic | [`-`](arithmetic.md) (unary)        | `-x`      | The negation of `x`.                                                  |

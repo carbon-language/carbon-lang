@@ -246,13 +246,13 @@ class Formatter {
       out_ << ")";
     }
 
-    if (fn.return_type_id.is_valid()) {
+    if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
       if (!fn.body_block_ids.empty() && fn.has_return_slot()) {
         FormatInstName(fn.return_storage_id);
         out_ << ": ";
       }
-      FormatType(fn.return_type_id);
+      FormatType(sem_ir_.insts().Get(fn.return_storage_id).type_id());
     }
 
     if (fn.builtin_kind != BuiltinFunctionKind::None) {
@@ -401,7 +401,7 @@ class Formatter {
     out_ << InstT::Kind.ir_name();
     pending_constant_value_ = sem_ir_.constant_values().Get(inst_id);
     pending_constant_value_is_self_ =
-        pending_constant_value_.inst_id() == inst_id;
+        sem_ir_.constant_values().GetInstId(pending_constant_value_) == inst_id;
     FormatInstructionRHS(inst);
     FormatPendingConstantValue(AddSpace::Before);
     out_ << "\n";
@@ -433,7 +433,8 @@ class Formatter {
       out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
-        FormatInstName(pending_constant_value_.inst_id());
+        FormatInstName(
+            sem_ir_.constant_values().GetInstId(pending_constant_value_));
       }
     } else {
       out_ << pending_constant_value_;

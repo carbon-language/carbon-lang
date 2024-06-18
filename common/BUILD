@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/version:rules.bzl", "expand_version_build_info")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -452,6 +453,77 @@ cc_library(
     hdrs = ["variant_helpers.h"],
     deps = [
         ":error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+# The base version source file only uses non-stamped parts of the version
+# information so we expand it once here without any stamping.
+expand_version_build_info(
+    name = "version_cpp_gen",
+    out = "version.cpp",
+    stamp = 0,
+    template = "version.tmpl.cpp",
+)
+
+# Build a nostamp version of the stamp source, but mark its definitions as weak.
+# We'll include this in the library to satisfy definitions of library and test
+# users, but still allow binaries that want full build stamping to depend on the
+# stamp library below to override with strong, stamped definitions.
+expand_version_build_info(
+    name = "version_nostamp_cpp_gen",
+    out = "version_nostamp.cpp",
+    stamp = 0,
+    substitutions = {"MAKE_WEAK": "1"},
+    template = "version_stamp.tmpl.cpp",
+)
+
+# Provides APIs for accessing Carbon version information.
+#
+# These provide full access to the major, minor, and patch version. It also
+# provides an API for querying version strings that may contain detailed build
+# information such as the commit SHA.
+#
+# By default, this provides the API and an *unstamped* implementations of
+# version strings. As a consequence, depending on this library doesn't introduce
+# any dependency on the commit SHA or loss of build caching.
+#
+# Targets that want full build info stamping in the data produced by these APIs
+# should additionally depend on `:version_stamp` below -- the data these APIs
+# return will be overridden in any binaries depending on that rule with the
+# fully stamped details.
+cc_library(
+    name = "version",
+    srcs = [
+        "version.cpp",
+        "version_nostamp.cpp",
+    ],
+    hdrs = ["version.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+# Generate the fully stamped sourcefile if stamping is enabled in the build.
+expand_version_build_info(
+    name = "version_stamp_cpp_gen",
+    out = "version_stamp.cpp",
+    template = "version_stamp.tmpl.cpp",
+)
+
+# Depend on this library to enable fully-stamped build information in the
+# version API provided by `:version`. This doesn't provide the API, it injects
+# an override of stamped versions of the data.
+#
+# Note that depending on this will significantly reduce build caching with
+# `--stamp` builds. It should be used sparingly, typically in user-facing
+# binaries or systems that need to render a maximally detailed version string
+# with build information stamped into it.
+cc_library(
+    name = "version_stamp",
+    srcs = ["version_stamp.cpp"],
+    deps = [
+        ":version",
         "@llvm-project//llvm:Support",
     ],
 )

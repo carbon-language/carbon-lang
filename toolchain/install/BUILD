@@ -8,6 +8,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
+load("pkg_naming.bzl", "pkg_naming_variables")
 load("symlink_filegroup.bzl", "symlink_filegroup")
 
 package(default_visibility = ["//visibility:public"])
@@ -185,23 +186,32 @@ pkg_filegroup(
     ],
 )
 
+pkg_naming_variables(
+    name = "packaging_variables",
+)
+
 # TODO: We should add support for injecting a version string into both the
 # output filename and the package directory name.
 pkg_tar(
-    name = "carbon_toolchain.tar.bz2.rule",
+    name = "carbon_toolchain_tar_rule",
     srcs = [":packaging_files"],
-    out = "carbon_toolchain.tar.bz2",
     extension = "tar.bz2",
-    package_dir = "carbon_toolchain",
+    package_dir = "carbon_toolchain-$(version)",
+    package_file_name = "carbon_toolchain-$(version).tar.bz2",
+    package_variables = ":packaging_variables",
+    stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
     tags = ["manual"],  # Slow, exclude from wildcard builds.
 )
 
 # TODO: We should add support for injecting a version string into both the
 # output filename and the package directory name.
 pkg_zip(
-    name = "carbon_toolchain.zip.rule",
+    name = "carbon_toolchain_zip_rule",
     srcs = [":packaging_files"],
     out = "carbon_toolchain.zip",
-    package_dir = "carbon_toolchain",
+    package_dir = "carbon_toolchain-$(version)",
+    package_file_name = "carbon_toolchain-$(version).zip",
+    package_variables = ":packaging_variables",
+    stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
     tags = ["manual"],  # Slow, exclude from wildcard builds.
 )

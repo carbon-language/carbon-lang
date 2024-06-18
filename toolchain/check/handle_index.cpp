@@ -88,8 +88,8 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
         context.emitter().Emit(node_id, TupleIndexNotConstant);
         index_inst_id = SemIR::InstId::BuiltinError;
       } else {
-        auto index_literal =
-            context.insts().GetAs<SemIR::IntLiteral>(index_const_id.inst_id());
+        auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
+            context.constant_values().GetInstId(index_const_id));
         auto type_block = context.type_blocks().Get(tuple_type.elements_id);
         if (const auto* index_val =
                 ValidateTupleIndex(context, node_id, operand_inst,

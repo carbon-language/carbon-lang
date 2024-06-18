@@ -21,7 +21,8 @@ namespace Carbon::Check {
 static auto GetAsNameScope(Context& context, Parse::NodeId node_id,
                            SemIR::ConstantId base_const_id)
     -> std::optional<SemIR::NameScopeId> {
-  auto base = context.insts().Get(base_const_id.inst_id());
+  auto base_id = context.constant_values().GetInstId(base_const_id);
+  auto base = context.insts().Get(base_id);
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
@@ -35,7 +36,7 @@ static auto GetAsNameScope(Context& context, Parse::NodeId node_id,
                         std::string);
       auto builder = context.emitter().Build(
           node_id, QualifiedExprInIncompleteClassScope,
-          context.sem_ir().StringifyTypeExpr(base_const_id.inst_id()));
+          context.sem_ir().StringifyType(base_const_id));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
     }
@@ -50,7 +51,7 @@ static auto GetAsNameScope(Context& context, Parse::NodeId node_id,
                         std::string);
       auto builder = context.emitter().Build(
           node_id, QualifiedExprInUndefinedInterfaceScope,
-          context.sem_ir().StringifyTypeExpr(base_const_id.inst_id()));
+          context.sem_ir().StringifyType(base_const_id));
       context.NoteUndefinedInterface(base_as_interface->interface_id, builder);
       builder.Emit();
     }
@@ -131,7 +132,8 @@ static auto LookupInterfaceWitness(Context& context,
   // considering impls that are for the same interface we're querying. We can
   // also skip impls that mention any types that aren't part of our impl query.
   for (const auto& impl : context.impls().array_ref()) {
-    if (context.types().GetInstId(impl.self_id) != type_const_id.inst_id()) {
+    if (context.types().GetInstId(impl.self_id) !=
+        context.constant_values().GetInstId(type_const_id)) {
       continue;
     }
     auto interface_type =
@@ -168,22 +170,22 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
                       "Cannot access member of interface {0} in type {1} "
                       "that does not implement that interface.",
                       SemIR::NameId, std::string);
-    context.emitter().Emit(
-        node_id, MissingImplInMemberAccess, interface.name_id,
-        context.sem_ir().StringifyTypeExpr(type_const_id.inst_id()));
+    context.emitter().Emit(node_id, MissingImplInMemberAccess,
+                           interface.name_id,
+                           context.sem_ir().StringifyType(type_const_id));
     return SemIR::InstId::BuiltinError;
   }
 
-  auto const_id = context.constant_values().Get(member_id);
-  if (!const_id.is_constant()) {
-    if (const_id != SemIR::ConstantId::Error) {
+  auto member_value_id = context.constant_values().GetConstantInstId(member_id);
+  if (!member_value_id.is_valid()) {
+    if (member_value_id != SemIR::InstId::BuiltinError) {
       context.TODO(member_id, "non-constant associated entity");
     }
     return SemIR::InstId::BuiltinError;
   }
 
   auto assoc_entity =
-      context.insts().TryGetAs<SemIR::AssociatedEntity>(const_id.inst_id());
+      context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
   if (!assoc_entity) {
     context.TODO(member_id, "unexpected value for associated entity");
     return SemIR::InstId::BuiltinError;
@@ -256,11 +258,11 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
 
       // Find the specified element, which could be either a field or a base
       // class, and build an element access expression.
-      auto element_id = context.constant_values().Get(member_id);
-      CARBON_CHECK(element_id.is_constant())
+      auto element_id = context.constant_values().GetConstantInstId(member_id);
+      CARBON_CHECK(element_id.is_valid())
           << "Non-constant value " << context.insts().Get(member_id)
           << " of unbound element type";
-      auto index = GetClassElementIndex(context, element_id.inst_id());
+      auto index = GetClassElementIndex(context, element_id);
       auto access_id = context.AddInst<SemIR::ClassElementAccess>(
           node_id, {.type_id = unbound_element_type.element_type_id,
                     .base_id = base_id,
@@ -329,7 +331,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
   if (!name_scope_id) {
     // The base type is not a name scope. Try some fallback options.
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
-            base_type_const_id.inst_id())) {
+            context.constant_values().GetInstId(base_type_const_id))) {
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] :
            llvm::enumerate(context.inst_blocks().Get(struct_type->fields_id))) {

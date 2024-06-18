@@ -93,11 +93,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+10, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_18 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_18, %.loc7_20.1 [template = constants.%.3]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, %import_ref.1 [template = constants.%AddWith.1]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc7: type = interface_type @AddWith, (%C.ref.loc7_19) [template = constants.%.3]
+// CHECK:STDOUT:     %.loc7_18: init type = call %AddWith.ref(%C.ref.loc7_19) [template = constants.%.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

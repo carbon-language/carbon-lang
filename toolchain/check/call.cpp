@@ -16,6 +16,7 @@ namespace Carbon::Check {
 // Performs a call where the callee is the name of a generic class, such as
 // `Vector(i32)`.
 static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
+                                      SemIR::InstId callee_id,
                                       SemIR::ClassId class_id,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
@@ -26,10 +27,10 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
       /*return_storage_id=*/SemIR::InstId::Invalid, class_info.decl_id,
       class_info.implicit_param_refs_id, class_info.param_refs_id);
-  return context.AddInst<SemIR::ClassType>(node_id,
-                                           {.type_id = SemIR::TypeId::TypeType,
-                                            .class_id = class_id,
-                                            .args_id = converted_args_id});
+  return context.AddInst<SemIR::Call>(node_id,
+                                      {.type_id = SemIR::TypeId::TypeType,
+                                       .callee_id = callee_id,
+                                       .args_id = converted_args_id});
 }
 
 // Performs a call where the callee is the name of a generic interface, such as
@@ -37,6 +38,7 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
 // TODO: Refactor with PerformCallToGenericClass.
 static auto PerformCallToGenericInterface(Context& context,
                                           Parse::NodeId node_id,
+                                          SemIR::InstId callee_id,
                                           SemIR::InterfaceId interface_id,
                                           llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
@@ -47,10 +49,10 @@ static auto PerformCallToGenericInterface(Context& context,
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
       /*return_storage_id=*/SemIR::InstId::Invalid, interface_info.decl_id,
       interface_info.implicit_param_refs_id, interface_info.param_refs_id);
-  return context.AddInst<SemIR::InterfaceType>(
-      node_id, {.type_id = SemIR::TypeId::TypeType,
-                .interface_id = interface_id,
-                .args_id = converted_args_id});
+  return context.AddInst<SemIR::Call>(node_id,
+                                      {.type_id = SemIR::TypeId::TypeType,
+                                       .callee_id = callee_id,
+                                       .args_id = converted_args_id});
 }
 
 auto PerformCall(Context& context, Parse::NodeId node_id,
@@ -63,12 +65,13 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
         context.types().GetAsInst(context.insts().Get(callee_id).type_id());
     CARBON_KIND_SWITCH(type_inst) {
       case CARBON_KIND(SemIR::GenericClassType generic_class): {
-        return PerformCallToGenericClass(context, node_id,
+        return PerformCallToGenericClass(context, node_id, callee_id,
                                          generic_class.class_id, arg_ids);
       }
       case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-        return PerformCallToGenericInterface(
-            context, node_id, generic_interface.interface_id, arg_ids);
+        return PerformCallToGenericInterface(context, node_id, callee_id,
+                                             generic_interface.interface_id,
+                                             arg_ids);
       }
       default: {
         if (!callee_function.is_error) {
@@ -86,7 +89,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.
-  SemIR::TypeId type_id = callable.return_type_id;
+  SemIR::TypeId type_id = callable.declared_return_type(context.sem_ir());
   if (!type_id.is_valid()) {
     type_id = context.GetTupleType({});
   }
@@ -107,7 +110,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
       return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
-          node_id, {.type_id = callable.return_type_id});
+          node_id, {.type_id = type_id});
       break;
     case SemIR::Function::ReturnSlot::Absent:
       break;

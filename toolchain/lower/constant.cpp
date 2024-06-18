@@ -30,11 +30,15 @@ class ConstantContext {
   // Gets the lowered constant value for a constant that has already been
   // lowered.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
-    CARBON_CHECK(const_id.is_template() && const_id.inst_id().index >= 0)
+    CARBON_CHECK(const_id.is_template())
         << "Unexpected constant ID " << const_id;
-    CARBON_CHECK(const_id.inst_id().index <= last_lowered_constant_index_)
-        << "Queried constant " << const_id << " that has not been lowered yet";
-    return constants_[const_id.inst_id().index];
+    auto inst_id =
+        file_context_->sem_ir().constant_values().GetInstId(const_id);
+    CARBON_CHECK(inst_id.index >= 0 &&
+                 inst_id.index <= last_lowered_constant_index_)
+        << "Queried constant " << const_id << " with instruction " << inst_id
+        << " that has not been lowered yet";
+    return constants_[inst_id.index];
   }
 
   // Returns a constant for the case of a value that should never be used.
@@ -238,13 +242,14 @@ auto LowerConstants(FileContext& file_context,
       // We are only interested in lowering template constants.
       continue;
     }
+    auto inst_id = file_context.sem_ir().constant_values().GetInstId(const_id);
 
-    if (const_id.inst_id().index != static_cast<int32_t>(inst_id_val)) {
+    if (inst_id.index != static_cast<int32_t>(inst_id_val)) {
       // This isn't the instruction that defines the constant.
       continue;
     }
 
-    auto inst = file_context.sem_ir().insts().Get(const_id.inst_id());
+    auto inst = file_context.sem_ir().insts().Get(inst_id);
     llvm::Constant* value = nullptr;
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_NEVER(...)
@@ -259,8 +264,8 @@ auto LowerConstants(FileContext& file_context,
         CARBON_FATAL() << "Unexpected constant instruction kind " << inst;
     }
 
-    constants[const_id.inst_id().index] = value;
-    context.SetLastLoweredConstantIndex(const_id.inst_id().index);
+    constants[inst_id.index] = value;
+    context.SetLastLoweredConstantIndex(inst_id.index);
   }
 }
 

@@ -30,9 +30,6 @@ struct Function : public Printable<Function> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", param_refs: " << param_refs_id;
-    if (return_type_id.is_valid()) {
-      out << ", return_type: " << return_type_id;
-    }
     if (return_storage_id.is_valid()) {
       out << ", return_storage: " << return_storage_id;
       out << ", return_slot: ";
@@ -65,6 +62,10 @@ struct Function : public Printable<Function> {
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
 
+  // Gets the declared return type of the function. Returns `Invalid` if no
+  // return type was specified,
+  auto declared_return_type(const File& file) const -> TypeId;
+
   // Returns whether the function has a return slot. Can only be called for a
   // function that has either been called or defined, otherwise this is not
   // known.
@@ -87,11 +88,10 @@ struct Function : public Printable<Function> {
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.
   InstBlockId param_refs_id;
-  // The return type. This will be invalid if the return type wasn't specified.
-  TypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
   // type is the return type of the function. This may or may not be used by the
-  // function, depending on whether the return type needs a return slot.
+  // function, depending on whether the return type needs a return slot, but is
+  // always present if the function has a declared return type.
   InstId return_storage_id;
   // Whether the declaration is extern.
   bool is_extern;

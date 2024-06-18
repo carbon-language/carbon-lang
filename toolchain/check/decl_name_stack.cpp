@@ -302,7 +302,8 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
   auto builder = context.emitter().Build(
       loc, QualifiedDeclInUndefinedInterfaceScope,
       context.sem_ir().StringifyTypeExpr(
-          context.sem_ir().constant_values().Get(interface_inst_id).inst_id()));
+          context.sem_ir().constant_values().GetConstantInstId(
+              interface_inst_id)));
   context.NoteUndefinedInterface(interface_id, builder);
   builder.Emit();
 }

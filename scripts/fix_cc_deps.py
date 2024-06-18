@@ -79,12 +79,14 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     ),
 }
 
-# TODO: proto rules are aspect-based and their generated files don't show up in
-# `bazel query` output.
+# TODO: proto rules and template expansions are aspect-based and their generated
+# files don't show up in `bazel query` output.
 # Try using `bazel cquery --output=starlark` to print `target.files`.
 # For protobuf, need to add support for `alias` rule kind.
 IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)$")
-IGNORE_SOURCE_FILE_REGEX = re.compile("^third_party/clangd")
+IGNORE_SOURCE_FILE_REGEX = re.compile(
+    "^(third_party/clangd.*|common/version.*\\.cpp)$"
+)
 
 
 class Rule(NamedTuple):
