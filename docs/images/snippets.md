@@ -67,7 +67,7 @@ void PrintTotalArea(std::span<Circle> circles) {
 }
 
 auto main() -> int {
-  std::vector<Circle> circles{{.r = 1.0}, {.r = 2.0}};
+  std::vector<Circle> circles = {{.r = 1.0}, {.r = 2.0}};
   // Implicitly converts `vector` to `span`.
   PrintTotalArea(circles);
   return 0;
@@ -85,7 +85,7 @@ class Circle {
   var r: f32;
 }
 
-fn PrintTotalArea(circles: Slice(Circle)) {
+fn PrintTotalArea(circles: [Circle]) {
   var area: f32 = 0;
   for (c: Circle in circles) {
     area += Math.Pi * c.r * c.r;
@@ -95,8 +95,8 @@ fn PrintTotalArea(circles: Slice(Circle)) {
 
 fn Main() -> i32 {
   // A dynamically sized array, like `std::vector`.
-  var circles: Array(Circle) = ({.r = 1.0}, {.r = 2.0});
-  // Implicitly constructs `Slice` from `Array`.
+  var circles: array [Circle] = ({.r = 1.0}, {.r = 2.0});
+  // Implicitly constructs a slice from the array.
   PrintTotalArea(circles);
   return 0;
 }
@@ -107,6 +107,7 @@ fn Main() -> i32 {
 ```cpp
 // C++ code used in both Carbon and C++:
 #include <stdfloat>
+
 struct Circle {
   std::float32_t r;
 };
@@ -116,7 +117,7 @@ package Geometry;
 import Cpp library "circle.h";
 import Math;
 
-fn PrintTotalArea(circles: Slice(Cpp.Circle)) {
+fn PrintTotalArea(circles: [Cpp.Circle]) {
   var area: f32 = 0;
   for (c: Cpp.Circle in circles) {
     area += Math.Pi * c.r * c.r;
@@ -131,8 +132,8 @@ fn PrintTotalArea(circles: Slice(Cpp.Circle)) {
 
 auto main() -> int {
   std::vector<Circle> circles = {{1.0}, {2.0}};
-  // Carbon's `Slice` supports implicit construction from `std::vector`,
-  // similar to `std::span`.
+  // A Carbon slice supports implicit construction
+  // from `std::vector`, similar to `std::span`.
   Geometry::PrintTotalArea(circles);
   return 0;
 }
