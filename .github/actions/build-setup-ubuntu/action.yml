@@ -1,0 +1,66 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Setup build environment (Ubuntu)
+runs:
+  using: composite
+  steps:
+    # Ubuntu images start with 23GB available, and this adds 14GB more. For
+    # comparison, MacOS images have >100GB free.
+    #
+    # Although we could delete more, if we run into a limit, not deleting
+    # everything provides a little flexibility to get space while trying
+    # to shrink the build.
+    - name: Free up disk space
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      with:
+        android: true
+        dotnet: true
+        haskell: true
+
+    # Cache and install a recent version of LLVM. This uses the GitHub action
+    # cache to avoid directly downloading on each iteration and improve
+    # reliability.
+    - name: Cache LLVM and Clang installation
+      id: cache-llvm-ubuntu
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      env:
+        cache-name: cache-llvm
+      with:
+        path: ~/llvm
+        key: LLVM-16-Cache-ubuntu-${{ runner.arch }}
+
+    - name: Download LLVM and Clang installation
+      if: steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        cd ~
+        LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
+        echo "*** Downloading $LLVM_RELEASE"
+        wget --show-progress=off "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/$LLVM_RELEASE.tar.xz"
+        echo "*** Extracting $LLVM_RELEASE"
+        tar -xJf "$LLVM_RELEASE.tar.xz"
+        echo "*** Moving to 'llvm'"
+        mv "$LLVM_RELEASE" llvm
+        echo "*** Testing `clang++ --version`"
+        ~/llvm/bin/clang++ --version
+
+        # The installation contains *huge* parts of LLVM we don't need for the
+        # toolchain. Prune them here to keep our cache small.
+        echo "*** Cleaning the 'llvm' directory"
+        rm llvm/lib/{*.a,*.so,*.so.*,*.bc}
+        rm llvm/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
+        echo "*** Size of the 'llvm' directory"
+        du -hs llvm
+
+    - name: Setup LLVM and Clang paths
+      shell: bash
+      run: |
+        LLVM_PATH=~/llvm
+        echo "Using ${LLVM_PATH}"
+        echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
+        echo '*** ls "${LLVM_PATH}"'
+        ls "${LLVM_PATH}"
+        echo '*** ls "${LLVM_PATH}/bin"'
+        ls "${LLVM_PATH}/bin"

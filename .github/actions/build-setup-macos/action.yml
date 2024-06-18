@@ -1,0 +1,74 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Setup build environment (macOS)
+inputs:
+  matrix_runner:
+    required: true
+runs:
+  using: composite
+  steps:
+    # Install and cache LLVM 16 from Homebrew.
+    # TODO: We can potentially remove this and simplify things when the
+    # Homebrew version of LLVM updates to 16 here:
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+    - name: Cache Homebrew
+      id: cache-homebrew-macos
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      env:
+        cache-name: cache-homebrew
+      with:
+        # Cover all the critical parts of Homebrew here. Homebrew on Arm macOS
+        # uses its own prefix making this easy to cover, but we need a few
+        # different paths for Intel.
+        path: |
+          ${{
+            runner.arch == 'ARM64' && '/opt/homebrew' ||
+            '
+              /usr/local/Homebrew
+              /usr/local/Cellar
+              /usr/local/Frameworks
+              /usr/local/bin
+              /usr/local/opt
+            '
+          }}
+        # Note the key needs to include all the packages we're adding.
+        key: Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}
+
+    - name: Install LLVM and Clang with Homebrew
+      if: steps.cache-homebrew-macos.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo '*** Prune brew leaves'
+        # We prune all the leaf packages to have a minimal environment. This
+        # both minimizes the install space and avoids accidental dependencies
+        # on installed packages.
+        brew leaves
+        LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|openssl@.*|wget|yq|zlib)$')
+        brew uninstall -f --ignore-dependencies $LEAVES
+        echo '*** Installing LLVM deps'
+        brew install --force-bottle --only-dependencies llvm@16
+        echo '*** Installing LLVM itself'
+        brew install --force-bottle --force --verbose llvm@16
+        echo '*** brew info llvm@16'
+        brew info llvm@16
+        echo '*** brew autoremove'
+        brew autoremove
+        echo '*** brew info'
+        brew info
+        echo '*** brew leaves'
+        brew leaves
+        echo '*** brew config'
+        brew config
+
+    - name: Setup LLVM and Clang
+      shell: bash
+      run: |
+        LLVM_PATH="$(brew --prefix llvm@16)"
+        echo "Using ${LLVM_PATH}"
+        echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
+        echo '*** ls "${LLVM_PATH}"'
+        ls "${LLVM_PATH}"
+        echo '*** ls "${LLVM_PATH}/bin"'
+        ls "${LLVM_PATH}/bin"
