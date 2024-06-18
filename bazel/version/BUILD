@@ -53,35 +53,30 @@ string_flag(
     ],
 )
 
-# `--rc_number=N` sets the release candidate number to `N`. Requires `--pre_release=rc`.
+# `--rc_number=N` sets the release candidate number to `N`. Requires
+# `--pre_release=rc`.
 int_flag(
     name = "rc_number",
     build_setting_default = -1,
 )
 
-# When `--pre_release=beta` is used, `--beta_number=N` set's the beta
-# pre-release number to `N`.
-#
-# An error if used without `--pre_release=beta`.
+# `--beta_number=N` sets the beta pre-release number to `N`. Requires
+# `--pre_release=beta`.
 int_flag(
     name = "beta_number",
     build_setting_default = -1,
 )
 
-# When `--pre_release=alpha` is used, `--alpha_number=N` set's the alpha
-# pre-release number to `N`.
-#
-# An error if used without `--pre_release=alpha`.
+# `--alpha_number=N` sets the alpha pre-release number to `N`. Requires
+# `--pre_release=alpha`.
 int_flag(
     name = "alpha_number",
     build_setting_default = -1,
 )
 
-# When `--pre_release=nightly` is used, `--nightly_date=YYYY.MM.DD` set's the
-# nightly build date. The value for this flag must be a string with the exact
-# format of `YYYY.MM.DD`.
-#
-# An error if used without `--pre_release=nightly`.
+# `--nigthly_date=YYYY.MM.DD` sets the nightly pre-release date. Requires
+# `--pre_release=nightly`. The value for this flag must be a string with the
+# exact format of `YYYY.MM.DD`.
 string_flag(
     name = "nightly_date",
     build_setting_default = "",
