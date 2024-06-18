@@ -140,7 +140,7 @@ TEST_F(LexerTest, TracksLinesAndColumnsCRLF) {
 }
 
 TEST_F(LexerTest, InvalidCR) {
-  auto buffer = Lex("\n  ;;\r   ;;;\n   x");
+  auto buffer = Lex("\n ;;\r ;\n   x");
   EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
@@ -149,8 +149,9 @@ TEST_F(LexerTest, InvalidCR) {
            .line = 1,
            .column = 1,
            .indent_column = 1},
-          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 3},
-          {.kind = TokenKind::Semi, .line = 2, .column = 4, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 2, .column = 2, .indent_column = 2},
+          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 2},
+          {.kind = TokenKind::Semi, .line = 2, .column = 6, .indent_column = 2},
           {.kind = TokenKind::Identifier,
            .line = 3,
            .column = 4,
@@ -161,7 +162,7 @@ TEST_F(LexerTest, InvalidCR) {
 }
 
 TEST_F(LexerTest, InvalidLFCR) {
-  auto buffer = Lex("\n  ;;\n\r   ;;;\n   x");
+  auto buffer = Lex("\n ;;\n\r ;\n   x");
   EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
@@ -170,8 +171,9 @@ TEST_F(LexerTest, InvalidLFCR) {
            .line = 1,
            .column = 1,
            .indent_column = 1},
-          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 3},
-          {.kind = TokenKind::Semi, .line = 2, .column = 4, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 2, .column = 2, .indent_column = 2},
+          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 2},
+          {.kind = TokenKind::Semi, .line = 3, .column = 3, .indent_column = 1},
           {.kind = TokenKind::Identifier,
            .line = 4,
            .column = 4,
