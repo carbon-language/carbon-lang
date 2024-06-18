@@ -52,8 +52,6 @@ jobs:
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
               >> $GITHUB_ENV
 
-      - uses: ./.github/actions/build-setup-ubuntu
-
       - uses: ./.github/actions/build-setup-common
         with:
           matrix_runner: ubuntu-22.04

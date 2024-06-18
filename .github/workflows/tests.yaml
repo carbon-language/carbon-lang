@@ -37,9 +37,6 @@ jobs:
             build_mode: clang-tidy
     runs-on: ${{ matrix.runner }}
 
-    env:
-      os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
-
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
@@ -87,14 +84,6 @@ jobs:
           echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
               >> $GITHUB_ENV
-
-      - uses: ./.github/actions/build-setup-macos
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
-        with:
-          matrix_runner: ${{ matrix.runner }}
-
-      - uses: ./.github/actions/build-setup-ubuntu
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
 
       - uses: ./.github/actions/build-setup-common
         if: steps.filter.outputs.has_code == 'true'

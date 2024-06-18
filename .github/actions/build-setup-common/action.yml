@@ -19,6 +19,14 @@ runs:
         python-version:
           ${{ inputs.matrix_runner == 'macos-14' && '3.11' || '3.9' }}
 
+    - uses: ./.github/actions/build-setup-macos
+      if: startsWith(input.matrix_runner, 'macos')
+      with:
+        matrix_runner: ${{ inputs.matrix_runner }}
+
+    - uses: ./.github/actions/build-setup-ubuntu
+      if: startsWith(input.matrix_runner, 'ubuntu')
+
     # Print the various tool paths and versions to help in debugging.
     - name: Print tool debugging info
       shell: bash
