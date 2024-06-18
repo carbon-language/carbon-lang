@@ -730,10 +730,10 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
 
   CARBON_DIAGNOSTIC(UnsupportedLFCRLineEnding, Error,
                     "The LF+CR line ending is not supported, only LF and CR+LF "
-                    "is supported.");
+                    "are supported.");
   CARBON_DIAGNOSTIC(
       UnsupportedCRLineEnding, Error,
-      "A raw CR line ending is not supported, only LF and CR+LF is supported.");
+      "A raw CR line ending is not supported, only LF and CR+LF are supported.");
   bool is_lfcr = position > 0 && source_text[position - 1] == '\n';
   emitter_.Emit(source_text.begin() + position,
                 is_lfcr ? UnsupportedLFCRLineEnding : UnsupportedCRLineEnding);
