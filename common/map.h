@@ -385,6 +385,8 @@ class Map : public RawHashtable::TableImpl<
   Map() = default;
   Map(const Map& arg) = default;
   Map(Map&& arg) noexcept = default;
+  auto operator=(const Map& arg) -> Map& = default;
+  auto operator=(Map&& arg) noexcept -> Map& = default;
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.

@@ -337,6 +337,8 @@ class ViewImpl {
   using MetricsT = Metrics;
 
   friend class BaseImpl<KeyT, ValueT, KeyContextT>;
+  template <typename InputBaseT, ssize_t SmallSize>
+  friend class TableImpl;
 
   // Make more-`const` types friends to enable conversions that add `const`.
   friend class ViewImpl<const KeyT, ValueT, KeyContextT>;
@@ -519,6 +521,8 @@ class BaseImpl {
 
   auto Construct(Storage* small_storage) -> void;
   auto Destroy() -> void;
+  auto CopySlotsFrom(const BaseImpl& arg) -> void;
+  auto MoveFrom(BaseImpl&& arg, Storage* small_storage) -> void;
 
   template <typename LookupKeyT>
   auto InsertIntoEmpty(LookupKeyT lookup_key, KeyContextT key_context)
@@ -566,6 +570,8 @@ class TableImpl : public InputBaseT {
   TableImpl() : BaseT(SmallSize, small_storage()) {}
   TableImpl(const TableImpl& arg);
   TableImpl(TableImpl&& arg) noexcept;
+  auto operator=(const TableImpl& arg) -> TableImpl&;
+  auto operator=(TableImpl&& arg) noexcept -> TableImpl&;
 
   // Resets the hashtable to its initial state, clearing all entries and
   // releasing all memory. If the hashtable had an SSO buffer, that is restored
@@ -579,6 +585,8 @@ class TableImpl : public InputBaseT {
   using SmallStorage = BaseT::template SmallStorage<SmallSize>;
 
   auto small_storage() const -> Storage*;
+
+  auto SetupStorage() -> void;
 
   [[no_unique_address]] mutable SmallStorage small_storage_;
 };
@@ -1130,6 +1138,82 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Destroy() -> void {
   Deallocate(storage(), alloc_size());
 }
 
+// Copy all of the slots over from another table that is exactly the same
+// allocation size.
+//
+// This requires the current table to already have storage allocated and setup
+// but not initialized (or already cleared). It directly overwrites the storage
+// allocation of the table to match the incoming argument.
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::CopySlotsFrom(
+    const BaseImpl& arg) -> void {
+  CARBON_DCHECK(alloc_size() == arg.alloc_size());
+  ssize_t local_size = alloc_size();
+
+  // Preserve which slot every entry is in, including tombstones in the
+  // metadata, in order to copy into the new table's storage without rehashing
+  // all of the keys. This is especially important as we don't have an easy way
+  // to access the key context needed for rehashing here.
+  uint8_t* local_metadata = metadata();
+  EntryT* local_entries = entries();
+  const uint8_t* local_arg_metadata = arg.metadata();
+  const EntryT* local_arg_entries = arg.entries();
+  memcpy(local_metadata, local_arg_metadata, local_size);
+
+  for (ssize_t group_index = 0; group_index < local_size;
+       group_index += GroupSize) {
+    auto g = MetadataGroup::Load(local_arg_metadata, group_index);
+    for (ssize_t byte_index : g.MatchPresent()) {
+      local_entries[group_index + byte_index].CopyFrom(
+          local_arg_entries[group_index + byte_index]);
+    }
+  }
+}
+
+// Move from another table to this one.
+//
+// This requires the table to have size and growth already setup but nothing
+// else. Notably, storage should either not yet be constructed or already
+// destroyed. It both sets up the storage and handles any moving slots needed.
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::MoveFrom(
+    BaseImpl&& arg, Storage* small_storage) -> void {
+  ssize_t local_size = alloc_size();
+  if (arg.is_small()) {
+    CARBON_DCHECK(local_size == small_alloc_size_);
+    this->storage() = small_storage;
+
+    // For small tables, we have to move the entries as we can't move the tables
+    // themselves. We do this preserving their slots and even tombstones to
+    // avoid rehashing.
+    uint8_t* local_metadata = this->metadata();
+    EntryT* local_entries = this->entries();
+    uint8_t* local_arg_metadata = arg.metadata();
+    EntryT* local_arg_entries = arg.entries();
+    memcpy(local_metadata, local_arg_metadata, local_size);
+    if (EntryT::IsTriviallyRelocatable) {
+      memcpy(local_entries, local_arg_entries, local_size * sizeof(EntryT));
+    } else {
+      for (ssize_t group_index = 0; group_index < local_size;
+           group_index += GroupSize) {
+        auto g = MetadataGroup::Load(local_arg_metadata, group_index);
+        for (ssize_t byte_index : g.MatchPresent()) {
+          local_entries[group_index + byte_index].MoveFrom(
+              std::move(local_arg_entries[group_index + byte_index]));
+        }
+      }
+    }
+  } else {
+    // Just point to the allocated storage.
+    storage() = arg.storage();
+  }
+
+  // Finally, put the incoming table into a moved-from state.
+  arg.alloc_size() = 0;
+  // Replace the pointer with null to ease debugging.
+  arg.storage() = nullptr;
+}
+
 // Optimized routine to insert a key into a table when that key *definitely*
 // isn't present in the table and the table *definitely* has a viable empty slot
 // (and growth space) to insert into before any deleted slots. When both of
@@ -1399,35 +1483,48 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
 template <typename InputBaseT, ssize_t SmallSize>
 TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
     : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
+  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot copy from a moved-from table!";
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
+  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
+  CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
-  ssize_t local_size = arg.alloc_size();
+  SetupStorage();
+  this->CopySlotsFrom(arg);
+}
 
-  if (SmallSize > 0 && arg.is_small()) {
-    CARBON_DCHECK(local_size == SmallSize);
-    this->storage() = small_storage();
-  } else {
-    this->storage() = BaseT::Allocate(local_size);
-  }
+template <typename InputBaseT, ssize_t SmallSize>
+auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
+    -> TableImpl& {
+  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot copy from a moved-from table!";
+  CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
+  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
+  CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
-  // Preserve which slot every entry is in, including tombstones in the
-  // metadata, in order to copy into the new table's storage without rehashing
-  // all of the keys. This is especially important as we don't have an easy way
-  // to access the key context needed for rehashing here.
-  uint8_t* local_metadata = this->metadata();
-  EntryT* local_entries = this->entries();
-  const uint8_t* local_arg_metadata = arg.metadata();
-  const EntryT* local_arg_entries = arg.entries();
-  memcpy(local_metadata, local_arg_metadata, local_size);
-
-  for (ssize_t group_index = 0; group_index < local_size;
-       group_index += GroupSize) {
-    auto g = MetadataGroup::Load(local_arg_metadata, group_index);
-    for (ssize_t byte_index : g.MatchPresent()) {
-      local_entries[group_index + byte_index].CopyFrom(
-          local_arg_entries[group_index + byte_index]);
+  // We have to end up with an allocation size exactly equivalent to the
+  // incoming argument to avoid re-hashing every entry in the table, which isn't
+  // possible without key context.
+  if (arg.alloc_size() == this->alloc_size()) {
+    // No effective way for self-assignment to fall out of an efficient
+    // implementation so detect and bypass here.
+    if (&arg == this) {
+      return *this;
     }
+    CARBON_DCHECK(arg.storage() != this->storage());
+    // The sizes match, so just clear out old entries.
+    if constexpr (!EntryT::IsTriviallyDestructible) {
+      this->view_impl_.ForEachEntry([](EntryT& entry) { entry.Destroy(); },
+                                    [](auto...) {});
+    }
+  } else {
+    // The sizes don't match so destroy everything and re-setup the table
+    // storage.
+    this->Destroy();
+    this->alloc_size() = arg.alloc_size();
+    SetupStorage();
   }
+  this->growth_budget_ = arg.growth_budget_;
+  this->CopySlotsFrom(arg);
+  return *this;
 }
 
 // Puts the incoming table into a moved-from state that can be destroyed or
@@ -1435,43 +1532,29 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
 template <typename InputBaseT, ssize_t SmallSize>
 TableImpl<InputBaseT, SmallSize>::TableImpl(TableImpl&& arg) noexcept
     : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
+  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot move from a moved-from table!";
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
+  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
+  CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
+  this->MoveFrom(std::move(arg), small_storage());
+}
 
-  ssize_t local_size = arg.alloc_size();
+template <typename InputBaseT, ssize_t SmallSize>
+auto TableImpl<InputBaseT, SmallSize>::operator=(TableImpl&& arg) noexcept
+    -> TableImpl& {
+  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot move from a moved-from table!";
+  CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
+  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
+  CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
-  if (SmallSize > 0 && arg.is_small()) {
-    CARBON_DCHECK(local_size == SmallSize);
-    this->storage() = small_storage();
+  // Destroy and deallocate our table.
+  this->Destroy();
 
-    // For small tables, we have to move the entries as we can't move the tables
-    // themselves. We do this preserving their slots and even tombstones to
-    // avoid rehashing.
-    uint8_t* local_metadata = this->metadata();
-    EntryT* local_entries = this->entries();
-    uint8_t* local_arg_metadata = arg.metadata();
-    EntryT* local_arg_entries = arg.entries();
-    memcpy(local_metadata, local_arg_metadata, local_size);
-    if (EntryT::IsTriviallyRelocatable) {
-      memcpy(local_entries, local_arg_entries, SmallSize * sizeof(EntryT));
-    } else {
-      for (ssize_t group_index = 0; group_index < local_size;
-           group_index += GroupSize) {
-        auto g = MetadataGroup::Load(local_arg_metadata, group_index);
-        for (ssize_t byte_index : g.MatchPresent()) {
-          local_entries[group_index + byte_index].MoveFrom(
-              std::move(local_arg_entries[group_index + byte_index]));
-        }
-      }
-    }
-  } else {
-    // Just point to the allocated storage.
-    this->storage() = arg.storage();
-  }
-
-  // Finally, put the incoming table into a moved-from state.
-  arg.alloc_size() = 0;
-  // Replace the pointer with null to ease debugging.
-  arg.storage() = nullptr;
+  // Setup to match argument and then finish the move.
+  this->alloc_size() = arg.alloc_size();
+  this->growth_budget_ = arg.growth_budget_;
+  this->MoveFrom(std::move(arg), small_storage());
+  return *this;
 }
 
 // Reset a table to its original state, including releasing any allocated
@@ -1521,6 +1604,19 @@ auto TableImpl<InputBaseT, SmallSize>::small_storage() const -> Storage* {
         "Empty small storage caused a size difference and wasted space!");
 
     return nullptr;
+  }
+}
+
+// Helper to setup the storage of a table when a specific size has already been
+// setup. If possible, uses any small storage, otherwise allocates.
+template <typename InputBaseT, ssize_t SmallSize>
+auto TableImpl<InputBaseT, SmallSize>::SetupStorage() -> void {
+  CARBON_DCHECK(this->small_alloc_size() == SmallSize);
+  ssize_t local_size = this->alloc_size();
+  if (SmallSize > 0 && local_size == SmallSize) {
+    this->storage() = small_storage();
+  } else {
+    this->storage() = BaseT::Allocate(local_size);
   }
 }
 

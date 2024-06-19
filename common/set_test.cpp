@@ -134,6 +134,22 @@ TYPED_TEST(SetTest, Copy) {
   // A new copy does.
   SetT other_s2 = s;
   ExpectSetElementsAre(other_s2, MakeElements(llvm::seq(1, 32)));
+
+  // Copy-assign updates.
+  other_s1 = s;
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // Self-assign is a no-op.
+  other_s1 = const_cast<const SetT&>(other_s1);
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // But mutating original still doesn't change copies.
+  for (int i : llvm::seq(32, 48)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(s.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+  ExpectSetElementsAre(other_s2, MakeElements(llvm::seq(1, 32)));
 }
 
 TYPED_TEST(SetTest, Move) {
@@ -156,6 +172,25 @@ TYPED_TEST(SetTest, Move) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     ASSERT_TRUE(other_s1.Insert(i).is_inserted());
   }
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // Move back over a moved-from.
+  s = std::move(other_s1);
+  ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 32)));
+
+  // Copy over moved-from state also works.
+  other_s1 = s;
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // Now add still more elements.
+  for (int i : llvm::seq(32, 48)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(other_s1.Insert(i).is_inserted());
+  }
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 48)));
+
+  // And move-assign over the copy looks like the moved-from table not the copy.
+  other_s1 = std::move(s);
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
 }
 
