@@ -65,10 +65,11 @@ jobs:
         run: |
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
-            build -c opt --remote_download_toplevel \
+            test -c opt --remote_download_toplevel \
             --pre_release=nightly --nightly_date=${{ env.nightly_date }} \
             //toolchain/install:prefix_root/bin/carbon \
-            //toolchain/install:carbon_toolchain_tar_rule
+            //toolchain/install:carbon_toolchain_tar_gz_rule \
+            //toolchain/install:carbon_toolchain_tar_gz_test
 
       - name: Extract the release version
         run: |
@@ -90,4 +91,4 @@ jobs:
             --notes 'A nightly development build of Carbon.' \
             --prerelease \
             v${{ env.release_version }} \
-            "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.bz2"
+            "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.gz"
