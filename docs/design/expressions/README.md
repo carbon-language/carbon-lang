@@ -159,14 +159,14 @@ graph BT
 
     constType --> suffixOps
     pointerType --> constType
-    where -----> pointerType
+    where ------> pointerType
     as --> pointerType
 
     pointer --> suffixOps
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> suffixOps
+    not --------> suffixOps
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
