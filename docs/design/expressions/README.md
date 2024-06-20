@@ -93,8 +93,6 @@ graph BT
 
     unary((" "))
 
-    where["T where R"]
-
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
@@ -120,6 +118,8 @@ graph BT
            x >> y"]
     click shift "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
+    binaryOps((" "))
+
     comparison["x == y<br>
                 x != y<br>
                 x < y<br>
@@ -141,6 +141,8 @@ graph BT
 
     logicalExpression((" "))
 
+    where["T where R"]
+
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
 
@@ -157,8 +159,7 @@ graph BT
 
     constType --> suffixOps
     pointerType --> constType
-    as --> where
-    where --> pointerType
+    as --> pointerType
 
     pointer --> suffixOps
     negation & complement & incDec --> pointer
@@ -167,7 +168,9 @@ graph BT
     not -------> suffixOps
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
-    comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
+    binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
+    comparison --> as & binaryOps
+    where --> pointerType & binaryOps
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or
