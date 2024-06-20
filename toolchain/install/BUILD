@@ -6,9 +6,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm-project//llvm:binary_alias.bzl", "binary_alias")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
-load("pkg_naming.bzl", "pkg_naming_variables")
+load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 load("symlink_filegroup.bzl", "symlink_filegroup")
 
 package(default_visibility = ["//visibility:public"])
@@ -32,10 +30,22 @@ write_file(
     ],
 )
 
+# Create symlinks for the core library. Note that this should *not* be depended
+# on directly, use `:core_data` instead.
 symlink_filegroup(
-    name = "core_data",
+    name = "symlink_core",
     srcs = ["//core:prelude"],
     out_prefix = "prefix_root/lib/carbon/",
+    visibility = ["//visibility:private"],
+)
+
+# The filegroup to get the core library.
+filegroup(
+    name = "core_data",
+    srcs = [
+        ":install_marker",
+        ":symlink_core",
+    ],
 )
 
 # Copy Clang and LLVM toolchain files into a synthetic LLVM installation under
@@ -170,15 +180,17 @@ pkg_files(
 ]
 
 pkg_files(
-    name = "packaging_core_files",
-    srcs = [":core_data"],
+    name = "packaging_data_files",
+    srcs = [
+        ":core_data",
+    ],
     strip_prefix = strip_prefix.from_pkg("prefix_root"),
 )
 
 pkg_filegroup(
     name = "packaging_files",
     srcs = [
-        ":packaging_core_files",
+        ":packaging_data_files",
         ":packaging_exe_files",
     ] + [
         ":packaging_link_lld_alias_" + bin_name
@@ -190,28 +202,18 @@ pkg_naming_variables(
     name = "packaging_variables",
 )
 
-# TODO: We should add support for injecting a version string into both the
-# output filename and the package directory name.
-pkg_tar(
-    name = "carbon_toolchain_tar_rule",
+# We build both a compressed and uncompressed tar file with the same code here.
+# This lets us use the tar file in testing as it is fast to create, but ship the
+# compressed version as a release.
+pkg_tar_and_test(
     srcs = [":packaging_files"],
-    extension = "tar.bz2",
+    name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
-    package_file_name = "carbon_toolchain-$(version).tar.bz2",
+    package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
-    tags = ["manual"],  # Slow, exclude from wildcard builds.
-)
-
-# TODO: We should add support for injecting a version string into both the
-# output filename and the package directory name.
-pkg_zip(
-    name = "carbon_toolchain_zip_rule",
-    srcs = [":packaging_files"],
-    out = "carbon_toolchain.zip",
-    package_dir = "carbon_toolchain-$(version)",
-    package_file_name = "carbon_toolchain-$(version).zip",
-    package_variables = ":packaging_variables",
-    stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
-    tags = ["manual"],  # Slow, exclude from wildcard builds.
+    test_data = [
+        ":install_data",
+    ],
+    test_install_marker = ":install_marker",
 )

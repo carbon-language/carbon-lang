@@ -37,28 +37,11 @@ jobs:
             build_mode: clang-tidy
     runs-on: ${{ matrix.runner }}
 
-    env:
-      os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
-
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
         with:
           egress-policy: audit
-
-      # Ubuntu images start with 23GB available, and this adds 14GB more. For
-      # comparison, MacOS images have >100GB free.
-      #
-      # Although we could delete more, if we run into a limit, not deleting
-      # everything provides a little flexibility to get space while trying
-      # to shrink the build.
-      - name: Free up disk space (Ubuntu)
-        if: env.os == 'ubuntu'
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
-        with:
-          android: true
-          dotnet: true
-          haskell: true
 
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
@@ -81,149 +64,6 @@ jobs:
             has_code:
               - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
 
-      # Setup Python and related tools.
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
-        if: steps.filter.outputs.has_code == 'true'
-        with:
-          # Match the min version listed in docs/project/contribution_tools.md
-          # or the oldest version available on the OS.
-          python-version: ${{ matrix.runner == 'macos-14' && '3.11' || '3.9' }}
-
-      # Install and cache LLVM 16 from Homebrew.
-      # TODO: We can potentially remove this and simplify things when the
-      # Homebrew version of LLVM updates to 16 here:
-      # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-      - name: Cache Homebrew (macOS)
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
-        id: cache-homebrew-macos
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        env:
-          cache-name: cache-homebrew
-        with:
-          # Cover all the critical parts of Homebrew here. Homebrew on Arm macOS
-          # uses its own prefix making this easy to cover, but we need a few
-          # different paths for Intel.
-          path: |
-            ${{
-              runner.arch == 'ARM64' && '/opt/homebrew' ||
-              '
-                /usr/local/Homebrew
-                /usr/local/Cellar
-                /usr/local/Frameworks
-                /usr/local/bin
-                /usr/local/opt
-              '
-            }}
-          # Note the key needs to include all the packages we're adding.
-          key: Homebrew-Cache-${{ matrix.runner }}-${{ runner.arch }}
-
-      - name: Install LLVM and Clang with Homebrew (macOS)
-        if:
-          steps.filter.outputs.has_code == 'true' && env.os == 'macos' &&
-          steps.cache-homebrew-macos.outputs.cache-hit != 'true'
-        run: |
-          echo '*** Prune brew leaves'
-          # We prune all the leaf packages to have a minimal environment. This
-          # both minimizes the install space and avoids accidental dependencies
-          # on installed packages.
-          brew leaves
-          LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|openssl@.*|wget|yq|zlib)$')
-          brew uninstall -f --ignore-dependencies $LEAVES
-          echo '*** Installing LLVM deps'
-          brew install --force-bottle --only-dependencies llvm@16
-          echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm@16
-          echo '*** brew info llvm@16'
-          brew info llvm@16
-          echo '*** brew autoremove'
-          brew autoremove
-          echo '*** brew info'
-          brew info
-          echo '*** brew leaves'
-          brew leaves
-          echo '*** brew config'
-          brew config
-
-      - name: Setup LLVM and Clang (macOS)
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
-        run: |
-          LLVM_PATH="$(brew --prefix llvm@16)"
-          echo "Using ${LLVM_PATH}"
-          echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
-          echo '*** ls "${LLVM_PATH}"'
-          ls "${LLVM_PATH}"
-          echo '*** ls "${LLVM_PATH}/bin"'
-          ls "${LLVM_PATH}/bin"
-
-      # Cache and install a recent version of LLVM. This uses the GitHub action
-      # cache to avoid directly downloading on each iteration and improve
-      # reliability.
-      - name: Cache LLVM and Clang installation (Ubuntu)
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
-        id: cache-llvm-ubuntu
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        env:
-          cache-name: cache-llvm
-        with:
-          path: ~/llvm
-          key: LLVM-16-Cache-${{ env.os }}-${{ runner.arch }}
-
-      - name: Download LLVM and Clang installation (Ubuntu)
-        if:
-          steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu' &&
-          steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
-        run: |
-          cd ~
-          LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
-          echo "*** Downloading $LLVM_RELEASE"
-          wget --show-progress=off "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/$LLVM_RELEASE.tar.xz"
-          echo "*** Extracting $LLVM_RELEASE"
-          tar -xJf "$LLVM_RELEASE.tar.xz"
-          echo "*** Moving to 'llvm'"
-          mv "$LLVM_RELEASE" llvm
-          echo "*** Testing `clang++ --version`"
-          ~/llvm/bin/clang++ --version
-
-          # The installation contains *huge* parts of LLVM we don't need for the
-          # toolchain. Prune them here to keep our cache small.
-          echo "*** Cleaning the 'llvm' directory"
-          rm llvm/lib/{*.a,*.so,*.so.*,*.bc}
-          rm llvm/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
-          echo "*** Size of the 'llvm' directory"
-          du -hs llvm
-
-      - name: Setup LLVM and Clang paths (Ubuntu)
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
-        run: |
-          LLVM_PATH=~/llvm
-          echo "Using ${LLVM_PATH}"
-          echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
-          echo '*** ls "${LLVM_PATH}"'
-          ls "${LLVM_PATH}"
-          echo '*** ls "${LLVM_PATH}/bin"'
-          ls "${LLVM_PATH}/bin"
-
-      # Print the various tool paths and versions to help in debugging.
-      - name: Print tool debugging info
-        if: steps.filter.outputs.has_code == 'true'
-        run: |
-          echo '*** PATH'
-          echo $PATH
-          echo '*** bazelisk'
-          which bazelisk
-          bazelisk --version
-          echo '*** run_bazel.py'
-          ./scripts/run_bazel.py --version
-          echo '*** python'
-          which python
-          python --version
-          echo '*** clang'
-          which clang
-          clang --version
-          echo '*** clang++'
-          which clang++
-          clang++ --version
-
       # Disable uploads when the remote cache is read-only.
       - name: Set up remote cache access (read-only)
         if:
@@ -245,63 +85,11 @@ jobs:
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
               >> $GITHUB_ENV
 
-      # Add our bazel configuration and print basic info to ease debugging.
-      - name: Configure Bazel and print info
+      - uses: ./.github/actions/build-setup-common
         if: steps.filter.outputs.has_code == 'true'
-        env:
-          # Add a cache version for changes that bazel won't otherwise detect,
-          # like llvm version changes.
-          CACHE_VERSION: 1
-        run: |
-          cat >user.bazelrc <<EOF
-          # Enable remote cache for our CI but minimize downloads.
-          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
-          build --remote_download_minimal
-
-          # We import a special key into every action in order to key the Bazel
-          # remote cache in a way that avoids collisions between different
-          # runners. Anything that might change the system external to Bazel but
-          # not be fully captured by the sand-boxing of the build should be used
-          # as part of the key. We don't need to use the CPU target for example,
-          # as that is captured by Bazel's configuration of each action. And the
-          # Clang version is incorporated by our Clang toolchain setup. But we
-          # do need to capture any differences between GitHub runner OSes that
-          # don't impact the Bazel configuration to avoid collisions between
-          # those.
-          build --action_env=BAZEL_REMOTE_CACHE_KEY=github-action-${{ matrix.runner }}
-
-          build ${{ env.remote_cache_upload }}
-
-          # Set an artificially high jobs count. This flag controls the number
-          # of concurrency Bazel itself uses, which is essential for actions
-          # that are internally blocked on for example downloading results form
-          # the cache above. Without setting this high, Bazel will pick a small
-          # number based on the available host CPUs and the reality will be a
-          # long chain of largely serialized download events with little or no
-          # usage of the host machine. Fortunately, local actions are
-          # *separately* gated on '--local_*_resources' that will avoid a large
-          # jobs value overwhelming the host. There is a bug to make downloads
-          # behave completely asynchronously and remove the need for this filed
-          # back in 2018 but work seemed to not finish:
-          # https://github.com/bazelbuild/bazel/issues/6394
-          #
-          # There is a new effort (yay!) but until then it seems worth using the
-          # workaround of a high jobs value. The biggest downside (increased
-          # heap usage) seems like it isn't currently a big loss for our builds.
-          #
-          # Higher values like 50 have led to CI failures with network errors
-          # and IOExceptions, see
-          # https://discord.com/channels/655572317891461132/707150492370862090/1151605725576056934
-          build --jobs=32
-
-          # Avoid any cache impact from build stamping in CI.
-          build --nostamp
-
-          # General build options.
-          build --verbose_failures
-          test --test_output=errors
-          EOF
-          ./scripts/run_bazel.py info
+        with:
+          matrix_runner: ${{ matrix.runner }}
+          remote_cache_upload: ${{ env.remote_cache_upload }}
 
       # Just for visibility, print space before and after the build.
       - name: Disk space before build
