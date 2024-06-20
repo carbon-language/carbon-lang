@@ -171,15 +171,16 @@ graph BT
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     comparison --> binaryOps
     comparison ----> as
-    where ----> pointerType
-    where ---> binaryOps
+    where -----> pointerType
+    where ----> binaryOps
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
-    insideParens ----> where
-    comparison ~~~ not
+    insideParens ---> where
+    %% Try and improve layout
+    %% comparison ~~~ not
 ```
 
 The diagram's attributes are:
