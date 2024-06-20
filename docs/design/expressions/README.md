@@ -179,6 +179,7 @@ graph BT
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
     insideParens ----> where
+    comparison ~~~ not
 ```
 
 The diagram's attributes are:
