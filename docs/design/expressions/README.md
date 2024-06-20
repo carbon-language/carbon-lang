@@ -159,7 +159,7 @@ graph BT
 
     constType --> suffixOps
     pointerType --> constType
-    where --> pointerType
+    where -----> pointerType
     as --> pointerType
 
     pointer --> suffixOps
