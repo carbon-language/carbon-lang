@@ -176,6 +176,7 @@ graph BT
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
+    insideParens --> where
 ```
 
 The diagram's attributes are:
