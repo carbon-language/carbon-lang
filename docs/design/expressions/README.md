@@ -65,11 +65,11 @@ graph BT
     top((" "))
 
     suffixOps{"x.y<br>
-                  x.(...)<br>
-                  x->y<br>
-                  x->(...)<br>
-                  x(...)<br>
-                  x[y]"}
+               x.(...)<br>
+               x->y<br>
+               x->(...)<br>
+               x(...)<br>
+               x[y]"}
     click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-ops"
 
     constType["const T"]
@@ -339,8 +339,20 @@ rather than expressions, and do not produce a value.
 
 ## Suffix ops
 
-https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md
-https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/indexing.md
+These operators act like unary postfix operators for purposes of precedence:
+
+-   [Member access operators](member_access.md), like `x.y` and the
+    dereferencing variant `x->y`, only have an expression on their left-hand
+    side. The right-hand side is a name.
+-   The [compound member access operators](member_access.md), `x.(...)` and
+    `x->(...)`, have an expression as their second operand, but put that
+    expression in parenthesis and so it doesn't participate in the precedence
+    considerations of its first operand.
+-   The [indexing operator](indexing.md), `x[y]`, similarly puts its second
+    operand in matching brackets.
+-   The call operator, `x(...)`, takes a comma-separated list of arguments, but
+    again puts them in parenthesis that clearly separate them for precedence
+    purposes.
 
 ## Conversions and casts
 
