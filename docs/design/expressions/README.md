@@ -172,13 +172,13 @@ graph BT
     comparison --> binaryOps
     comparison ----> as
     where ------> pointerType
-    where ----> binaryOps
+    %% where ----> binaryOps
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
-    insideParens --> where
+    %% insideParens --> where
     %% Try and improve layout
     %% comparison ~~~ not
 ```
