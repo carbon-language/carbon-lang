@@ -408,8 +408,8 @@ follows:
     `F`.
 -   Otherwise, the only scalar component of `E` is `E`.
 
-The scalar components of any other expression are the scalar components of its
-fully expanded form.
+The scalar components of any other expression that does not contain `...` are
+the scalar components of its fully expanded form.
 
 By construction, a segment of a pack literal never has more than one scalar
 component. Also by construction, a scalar component cannot contain a pack
@@ -826,8 +826,8 @@ is consistent, then `X` equals `E` given a binding map `M` ∪ {(`X`, `E`)}.
 
 The deduction rules that are specific to variadic types are as follows:
 
--   _Expansion convertibility:_ `...T` is convertible to `...U` if the shape of
-    `U` equals the shape of `T`, and all scalar components of `T` are
+-   _Expansion convertibility:_ `...T` is convertible to `...U` if the arity of
+    `U` equals the arity of `T`, and all scalar components of `T` are
     convertible to all scalar components of `U`.
 -   _Shape equality:_ Let `(S1s)`, `(S2s)`, `(S3s)`, and `(S4s)` be shapes.
     `(S1s, S2s)` equals `(S3s, S4s)` if `(S1s)` equals `(S3s)` and `(S2s)`
@@ -992,14 +992,12 @@ any further merging, so this must be the canonical form.
 
 ## Alternatives considered
 
-FIXME update this
-
 -   [Member packs](/proposals/p2240.md#member-packs)
--   [First-class packs](/proposals/p2240.md#first-class-packs)
+-   [Single semantic model for pack expansions](/proposals/p2240.md#single-semantic-model-for-pack-expansions)
 -   [Generalize `expand`](/proposals/p2240.md#generalize-expand)
 -   [Omit `expand`](/proposals/p2240.md#omit-expand)
 -   [Support expanding arrays](/proposals/p2240.md#support-expanding-arrays)
--   [Omit pack bindings](/proposals/p2240.md#omit-pack-bindings)
+-   [Omit each-names](/proposals/p2240.md#omit-each-names)
     -   [Disallow pack-type bindings](/proposals/p2240.md#disallow-pack-type-bindings)
 -   [Fold expressions](/proposals/p2240.md#fold-expressions)
 -   [Allow multiple pack expansions in a tuple pattern](/proposals/p2240.md#allow-multiple-pack-expansions-in-a-tuple-pattern)
@@ -1011,7 +1009,8 @@ FIXME update this
     -   [Keyword syntax](/proposals/p2240.md#keyword-syntax)
 -   [Require parentheses around `each`](/proposals/p2240.md#require-parentheses-around-each)
 -   [Fused expansion tokens](/proposals/p2240.md#fused-expansion-tokens)
--   [Support merging parameters](/proposals/p2240.md#support-merging-parameters)
+-   [No parameter merging](/proposals/p2240.md#no-parameter-merging)
+-   [Exhaustive function call typechecking](/proposals/p2240.md#exhaustive-function-call-typechecking)
 
 ## References
 
