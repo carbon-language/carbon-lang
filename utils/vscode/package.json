@@ -7,7 +7,7 @@
     "url": "https://github.com/carbon-language/carbon-lang"
   },
   "engines": {
-    "vscode": "^1.70.1"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Programming Languages"
@@ -42,7 +42,7 @@
     "@vscode/vsce": "^2.27.0"
   },
   "dependencies": {
-    "vsce": "^2.15.0",
-    "vscode-languageclient": "^8.1.0"
+    "@vscode/vsce": "^2.27.0",
+    "vscode-languageclient": "^9.0.1"
   }
 }
