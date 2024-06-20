@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Unqualified names](#unqualified-names)
     -   [Qualified names and member access](#qualified-names-and-member-access)
 -   [Operators](#operators)
--   [Suffix ops](#suffix-ops)
+-   [Suffix operators](#suffix-operators)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
 -   [Numeric type literal expressions](#numeric-type-literal-expressions)
@@ -70,7 +70,7 @@ graph BT
                x->(...)<br>
                x(...)<br>
                x[y]"}
-    click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-ops"
+    click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-operators"
 
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
@@ -337,7 +337,7 @@ The binary arithmetic and bitwise operators also have
 [compound assignment](/docs/design/assignment.md) forms. These are statements
 rather than expressions, and do not produce a value.
 
-## Suffix ops
+## Suffix operators
 
 These operators act like unary postfix operators for purposes of precedence:
 
