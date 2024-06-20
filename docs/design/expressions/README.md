@@ -169,7 +169,8 @@ graph BT
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
-    comparison --> as & binaryOps
+    comparison --> binaryOps
+    comparison ----> as
     where ----> pointerType
     where ---> binaryOps
     logicalOperand --> comparison & not
