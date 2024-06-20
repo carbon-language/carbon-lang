@@ -165,7 +165,7 @@ graph BT
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -------> suffixOps
-    multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     logicalOperand --> comparison & not
