@@ -346,12 +346,12 @@ These operators act like unary postfix operators for purposes of precedence:
     side. The right-hand side is a name.
 -   The [compound member access operators](member_access.md), `x.(...)` and
     `x->(...)`, have an expression as their second operand, but put that
-    expression in parenthesis and so it doesn't participate in the precedence
+    expression in parentheses and so it doesn't participate in the precedence
     considerations of its first operand.
 -   The [indexing operator](indexing.md), `x[y]`, similarly puts its second
-    operand in matching brackets.
+    operand in matching square brackets.
 -   The call operator, `x(...)`, takes a comma-separated list of arguments, but
-    again puts them in parenthesis that clearly separate them for precedence
+    again puts them in parentheses that clearly separate them for precedence
     purposes.
 
 ## Conversions and casts
