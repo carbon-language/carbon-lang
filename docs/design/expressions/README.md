@@ -120,6 +120,8 @@ graph BT
 
     binaryOps((" "))
 
+    where["T where R"]
+
     comparison["x == y<br>
                 x != y<br>
                 x < y<br>
@@ -140,8 +142,6 @@ graph BT
     click or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
     logicalExpression((" "))
-
-    where["T where R"]
 
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
