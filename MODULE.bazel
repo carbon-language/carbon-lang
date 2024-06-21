@@ -128,7 +128,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
-    sha256 = "4c53512522cfd625a75aa7f201e6932f18ebf3fbe8ee89e05883c3d30ca935ac",
+    sha256 = "3216d56b308d420170d6284d04560175b56fd56065a7442f32b732c606e77367",
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
 )
