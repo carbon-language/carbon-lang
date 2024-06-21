@@ -47,8 +47,8 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+2, loaded [template = constants.%ForwardDecl]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}

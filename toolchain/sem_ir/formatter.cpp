@@ -332,21 +332,11 @@ class Formatter {
       out_ << label;
     }
 
-    // Name scopes aren't kept in any particular order. Sort the entries before
-    // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<NameScope::Entry, NameId>> entries;
-    for (auto [name_id, entry] : scope.names) {
-      entries.push_back({entry, name_id});
-    }
-    llvm::sort(entries, [](auto a, auto b) {
-      return a.first.inst_id.index < b.first.inst_id.index;
-    });
-
-    for (auto [entry, name_id] : entries) {
+    for (auto [name_id, inst_id, access_kind] : scope.names) {
       Indent();
       out_ << ".";
       FormatName(name_id);
-      switch (entry.access_kind) {
+      switch (access_kind) {
         case SemIR::AccessKind::Public:
           break;
         case SemIR::AccessKind::Protected:
@@ -357,7 +347,7 @@ class Formatter {
           break;
       }
       out_ << " = ";
-      FormatInstName(entry.inst_id);
+      FormatInstName(inst_id);
       out_ << "\n";
     }
 

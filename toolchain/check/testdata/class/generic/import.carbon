@@ -198,10 +198,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .CompleteClass = %import_ref.2
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .CompleteClass = %import_ref.2
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref ir0, inst+5, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir0, inst+12, loaded [template = constants.%CompleteClass.1]

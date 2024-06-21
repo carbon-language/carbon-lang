@@ -119,8 +119,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.2: %.5 = import_ref ir1, inst+10, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir1, inst+10, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir1, inst+21, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+12, loaded [template = constants.%C]
@@ -136,8 +136,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = file.%import_ref.2
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .F = file.%import_ref.3
 // CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,7 +153,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref: <namespace> = name_ref Impl, file.%Impl [template = file.%Impl]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%import_ref.7 [template = constants.%.2]
-// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, file.%import_ref.2 [template = constants.%.6]
+// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, file.%import_ref.3 [template = constants.%.6]
 // CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access file.%import_ref.5, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %.3 = call %.1()
 // CHECK:STDOUT:   return

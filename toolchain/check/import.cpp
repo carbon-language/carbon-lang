@@ -14,6 +14,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -84,19 +85,18 @@ static auto AddNamespace(
     SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
     std::optional<llvm::function_ref<SemIR::InstId()>> make_import_id)
     -> std::tuple<SemIR::NameScopeId, SemIR::ConstantId, bool> {
-  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+  auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
   auto [it, success] =
-      parent_scope.names.insert({name_id,
-                                 {.inst_id = SemIR::InstId::Invalid,
-                                  .access_kind = SemIR::AccessKind::Public}});
+      parent_scope->name_map.insert({name_id, parent_scope->names.size()});
   if (!success) {
+    auto inst_id = parent_scope->names[it->second].inst_id;
     if (auto namespace_inst =
-            context.insts().TryGetAs<SemIR::Namespace>(it->second.inst_id)) {
+            context.insts().TryGetAs<SemIR::Namespace>(inst_id)) {
       if (diagnose_duplicate_namespace) {
-        context.DiagnoseDuplicateName(node_id, it->second.inst_id);
+        context.DiagnoseDuplicateName(node_id, inst_id);
       }
       return {namespace_inst->name_scope_id,
-              context.constant_values().Get(it->second.inst_id), true};
+              context.constant_values().Get(inst_id), true};
     }
   }
 
@@ -111,14 +111,23 @@ static auto AddNamespace(
       context.name_scopes().Add(namespace_id, name_id, parent_scope_id);
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
+  // Note we have to get the parent scope freshly, creating the imported
+  // namespace may invalidate the pointer above.
+  parent_scope = &context.name_scopes().Get(parent_scope_id);
+
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics.
   if (!success) {
-    context.DiagnoseDuplicateName(namespace_id, it->second.inst_id);
+    auto& entry = parent_scope->names[it->second];
+    context.DiagnoseDuplicateName(namespace_id, entry.inst_id);
+    entry.inst_id = namespace_id;
+    entry.access_kind = SemIR::AccessKind::Public;
+  } else {
+    parent_scope->names.push_back({.name_id = name_id,
+                                   .inst_id = namespace_id,
+                                   .access_kind = SemIR::AccessKind::Public});
   }
 
-  it->second = {.inst_id = namespace_id,
-                .access_kind = SemIR::AccessKind::Public};
   return {namespace_inst.name_scope_id,
           context.constant_values().Get(namespace_id), false};
 }
@@ -224,25 +233,28 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
                                 SemIR::NameScopeId parent_scope_id,
                                 SemIR::NameId name_id) -> void {
   // Leave a placeholder that the inst comes from the other IR.
-  auto& names = context.name_scopes().Get(parent_scope_id).names;
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
   auto [it, success] =
-      names.insert({name_id,
-                    {.inst_id = SemIR::InstId::Invalid,
-                     .access_kind = SemIR::AccessKind::Public}});
+      parent_scope.name_map.insert({name_id, parent_scope.names.size()});
   if (success) {
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
          .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-    it->second.inst_id = AddImportRef(
-        context, {.ir_id = ir_id, .inst_id = import_inst_id}, bind_name_id);
+    parent_scope.names.push_back(
+        {.name_id = name_id,
+         .inst_id =
+             AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
+                          bind_name_id),
+         .access_kind = SemIR::AccessKind::Public});
     return;
   }
 
+  auto inst_id = parent_scope.names[it->second].inst_id;
   auto prev_ir_inst =
-      GetCanonicalImportIRInst(context, &context.sem_ir(), it->second.inst_id);
-  VerifySameCanonicalImportIRInst(context, it->second.inst_id, prev_ir_inst,
-                                  ir_id, &import_sem_ir, import_inst_id);
+      GetCanonicalImportIRInst(context, &context.sem_ir(), inst_id);
+  VerifySameCanonicalImportIRInst(context, inst_id, prev_ir_inst, ir_id,
+                                  &import_sem_ir, import_inst_id);
 }
 
 auto ImportLibrariesFromCurrentPackage(

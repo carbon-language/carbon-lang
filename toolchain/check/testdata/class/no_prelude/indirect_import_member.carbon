@@ -151,15 +151,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = file.%import_ref.2
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .F = file.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
@@ -186,8 +186,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%C]
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -234,14 +234,14 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
 // CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %import_ref.2: %F.type = import_ref ir2, inst+3, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir2, inst+3, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = file.%import_ref.2
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .F = file.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -249,7 +249,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.2 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.3 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
@@ -275,8 +275,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
 // CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+5, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+6, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -316,8 +316,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
 // CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir2, inst+5, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir2, inst+6, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
