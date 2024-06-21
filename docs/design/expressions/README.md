@@ -168,7 +168,8 @@ graph BT
     unary --> pointerType & negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not --------> suffixOps
-    as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    as -----> unary
+    multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     where --> binaryOps
@@ -176,7 +177,7 @@ graph BT
     %% comparison ----> as
     logicalOperand --> comparison & not
     and & or --> logicalOperand
-    logicalExpression -------> as
+    logicalExpression ----> as
     logicalExpression ----> where
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
