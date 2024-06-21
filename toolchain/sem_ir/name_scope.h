@@ -54,7 +54,7 @@ struct NameScope : Printable<NameScope> {
                           << name_entry.name_id;
   }
 
-  // Names in the scope. We store both an insertion-orderd vector for iterating
+  // Names in the scope. We store both an insertion-ordered vector for iterating
   // and a map from `NameId` to the index of that vector for name lookup.
   //
   // Optimization notes: this is somewhat memory inefficient. If this ends up
