@@ -281,6 +281,8 @@ class Set : public RawHashtable::TableImpl<SetBase<InputKeyT, InputKeyContextT>,
   Set() = default;
   Set(const Set& arg) = default;
   Set(Set&& arg) noexcept = default;
+  auto operator=(const Set& arg) -> Set& = default;
+  auto operator=(Set&& arg) noexcept -> Set& = default;
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.

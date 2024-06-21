@@ -168,6 +168,26 @@ TYPED_TEST(MapTest, Copy) {
   MapT other_m2 = m;
   ExpectMapElementsAre(
       other_m2, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Copy-assign updates.
+  other_m1 = m;
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Self-assign is a no-op.
+  other_m1 = const_cast<const MapT&>(other_m1);
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // But mutating original still doesn't change copies.
+  for (int i : llvm::seq(32, 48)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(m.Insert(i, i * 100).is_inserted());
+  }
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+  ExpectMapElementsAre(
+      other_m2, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
 }
 
 TYPED_TEST(MapTest, Move) {
@@ -193,6 +213,44 @@ TYPED_TEST(MapTest, Move) {
   }
   ExpectMapElementsAre(
       other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Move back over a moved-from.
+  m = std::move(other_m1);
+  ExpectMapElementsAre(
+      m, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Copy over moved-from state also works.
+  other_m1 = m;
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Now add still more elements.
+  for (int i : llvm::seq(32, 48)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    ASSERT_TRUE(other_m1.Insert(i, i * 100).is_inserted());
+  }
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 48)));
+
+  // And move-assign over the copy looks like the moved-from table not the copy.
+  other_m1 = std::move(m);
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Self-swap (which does a self-move) works and is a no-op.
+  std::swap(other_m1, other_m1);
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Test copying of a moved-from table over a valid table and self-move-assign.
+  // The former is required to be valid, and the latter is in at least the case
+  // of self-move-assign-when-moved-from, but the result can be in any state so
+  // just do them and ensure we don't crash.
+  MapT other_m2 = other_m1;
+  // NOLINTNEXTLINE(bugprone-use-after-move): Testing required use-after-move.
+  other_m2 = m;
+  other_m1 = std::move(other_m1);
+  m = std::move(m);
 }
 
 TYPED_TEST(MapTest, Conversions) {
