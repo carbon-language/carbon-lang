@@ -176,7 +176,7 @@ graph BT
     %% comparison ----> as
     logicalOperand --> comparison & not
     and & or --> logicalOperand
-    %% logicalExpression ---------> as
+    logicalExpression -------> as
     logicalExpression ----> where
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
