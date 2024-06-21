@@ -176,10 +176,10 @@ graph BT
     %% comparison ----> as
     logicalOperand --> comparison & not
     and & or --> logicalOperand
+    %% logicalExpression ---------> as
+    logicalExpression ------> where
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
-    insideParens ---------> as
-    insideParens ------> where
     insideParens & assignment --> if
     %% Try and improve layout
     %% comparison ~~~ not
