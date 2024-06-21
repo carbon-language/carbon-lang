@@ -153,6 +153,8 @@ graph BT
 
     expressionStatement["x;"]
 
+    classDef hidden display: none;
+
     top --> parens & braces & unqualifiedName
 
     suffixOps --> top
@@ -180,7 +182,7 @@ graph BT
     and & or --> logicalOperand
     logicalExpression ----> as
     logicalExpression ----> where
-    logicalExpression --> and & or
+    logicalExpression --> HIDDEN:::hidden & and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
     %% Try and improve layout
