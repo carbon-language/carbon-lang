@@ -202,6 +202,7 @@ TYPED_TEST(SetTest, Move) {
   // of self-move-assign-when-moved-from, but the result can be in any state so
   // just do them and ensure we don't crash.
   SetT other_s2 = other_s1;
+  // NOLINTNEXTLINE(bugprone-use-after-move): Testing required use-after-move.
   other_s2 = s;
   other_s1 = std::move(other_s1);
   s = std::move(s);

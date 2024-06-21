@@ -247,6 +247,7 @@ TYPED_TEST(MapTest, Move) {
   // of self-move-assign-when-moved-from, but the result can be in any state so
   // just do them and ensure we don't crash.
   MapT other_m2 = other_m1;
+  // NOLINTNEXTLINE(bugprone-use-after-move): Testing required use-after-move.
   other_m2 = m;
   other_m1 = std::move(other_m1);
   m = std::move(m);
