@@ -179,6 +179,7 @@ graph BT
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
+    insideParens ---------> as
     insideParens ------> where
     %% Try and improve layout
     %% comparison ~~~ not
