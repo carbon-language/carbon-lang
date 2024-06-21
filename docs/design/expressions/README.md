@@ -170,9 +170,9 @@ graph BT
     as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
-    comparison --> binaryOps
-    comparison ----> as
     where --> binaryOps
+    comparison --> binaryOps
+    %% comparison ----> as
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or
