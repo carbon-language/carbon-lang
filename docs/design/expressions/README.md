@@ -163,6 +163,7 @@ graph BT
     as --> pointerType
 
     pointer --> suffixOps
+    unary ~~~~ pointer
     negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
