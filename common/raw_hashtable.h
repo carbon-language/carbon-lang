@@ -1607,8 +1607,8 @@ auto TableImpl<InputBaseT, SmallSize>::small_storage() const -> Storage* {
   }
 }
 
-// Helper to setup the storage of a table when a specific size has already been
-// setup. If possible, uses any small storage, otherwise allocates.
+// Helper to set up the storage of a table when a specific size has already been
+// set up. If possible, uses any small storage, otherwise allocates.
 template <typename InputBaseT, ssize_t SmallSize>
 auto TableImpl<InputBaseT, SmallSize>::SetupStorage() -> void {
   CARBON_DCHECK(this->small_alloc_size() == SmallSize);
