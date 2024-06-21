@@ -116,8 +116,8 @@ bazel_dep(name = "zstd", version = "1.5.6", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2024-05-17.
-llvm_project_version = "a68d20e986053ec571223a9f3ead3e146a27dc82"
+# HEAD as of 2024-06-20.
+llvm_project_version = "80f881485accb020345ee7e1c4c3151ec55ce590"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
