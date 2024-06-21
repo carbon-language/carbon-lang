@@ -236,6 +236,20 @@ TYPED_TEST(MapTest, Move) {
   other_m1 = std::move(m);
   ExpectMapElementsAre(
       other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Self-swap (which does a self-move) works and is a no-op.
+  std::swap(other_m1, other_m1);
+  ExpectMapElementsAre(
+      other_m1, MakeKeyValues([](int k) { return k * 100; }, llvm::seq(1, 32)));
+
+  // Test copying of a moved-from table over a valid table and self-move-assign.
+  // The former is required to be valid, and the latter is in at least the case
+  // of self-move-assign-when-moved-from, but the result can be in any state so
+  // just do them and ensure we don't crash.
+  MapT other_m2 = other_m1;
+  other_m2 = m;
+  other_m1 = std::move(other_m1);
+  m = std::move(m);
 }
 
 TYPED_TEST(MapTest, Conversions) {

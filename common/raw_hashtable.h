@@ -517,7 +517,10 @@ class BaseImpl {
   auto small_alloc_size() const -> ssize_t {
     return static_cast<unsigned>(small_alloc_size_);
   }
-  auto is_small() const -> bool { return alloc_size() <= small_alloc_size(); }
+  auto is_small() const -> bool {
+    CARBON_DCHECK(alloc_size() >= small_alloc_size());
+    return alloc_size() == small_alloc_size();
+  }
 
   auto Construct(Storage* small_storage) -> void;
   auto Destroy() -> void;
@@ -586,7 +589,7 @@ class TableImpl : public InputBaseT {
 
   auto small_storage() const -> Storage*;
 
-  auto SetupStorage() -> void;
+  auto SetUpStorage() -> void;
 
   [[no_unique_address]] mutable SmallStorage small_storage_;
 };
@@ -1141,9 +1144,13 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Destroy() -> void {
 // Copy all of the slots over from another table that is exactly the same
 // allocation size.
 //
-// This requires the current table to already have storage allocated and setup
+// This requires the current table to already have storage allocated and set up
 // but not initialized (or already cleared). It directly overwrites the storage
 // allocation of the table to match the incoming argument.
+//
+// Despite being used in construction, this shouldn't be called for a moved-from
+// `arg` -- in practice it is better for callers to handle this when setting up
+// storage.
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::CopySlotsFrom(
     const BaseImpl& arg) -> void {
@@ -1172,13 +1179,26 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::CopySlotsFrom(
 
 // Move from another table to this one.
 //
-// This requires the table to have size and growth already setup but nothing
-// else. Notably, storage should either not yet be constructed or already
-// destroyed. It both sets up the storage and handles any moving slots needed.
+// Note that the `small_storage` is *this* table's small storage pointer,
+// provided from the `TableImpl` to this `BaseImpl` method as an argument.
+//
+// Requires the table to have size and growth already set up but otherwise the
+// the table has not yet been initialized. Notably, storage should either not
+// yet be constructed or already destroyed. It both sets up the storage and
+// handles any moving slots needed.
+//
+// Note that because this is used in construction it needs to handle a
+// moved-from `arg`.
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::MoveFrom(
     BaseImpl&& arg, Storage* small_storage) -> void {
   ssize_t local_size = alloc_size();
+  CARBON_DCHECK(local_size == arg.alloc_size());
+  // If `arg` is moved-from, skip the rest as the local size is all we need.
+  if (local_size == 0) {
+    return;
+  }
+
   if (arg.is_small()) {
     CARBON_DCHECK(local_size == small_alloc_size_);
     this->storage() = small_storage;
@@ -1483,21 +1503,25 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
 template <typename InputBaseT, ssize_t SmallSize>
 TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
     : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
-  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot copy from a moved-from table!";
+  // Check for completely broken objects. These invariants should be true even
+  // in a moved-from state.
+  CARBON_DCHECK(arg.alloc_size() == 0 || !arg.is_small() ||
+                arg.alloc_size() == SmallSize);
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
-  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
   CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
-  SetupStorage();
+  SetUpStorage();
   this->CopySlotsFrom(arg);
 }
 
 template <typename InputBaseT, ssize_t SmallSize>
 auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
     -> TableImpl& {
-  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot copy from a moved-from table!";
+  // Check for completely broken objects. These invariants should be true even
+  // in a moved-from state.
+  CARBON_DCHECK(arg.alloc_size() == 0 || !arg.is_small() ||
+                arg.alloc_size() == SmallSize);
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
-  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
   CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
   // We have to end up with an allocation size exactly equivalent to the
@@ -1505,12 +1529,12 @@ auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
   // possible without key context.
   if (arg.alloc_size() == this->alloc_size()) {
     // No effective way for self-assignment to fall out of an efficient
-    // implementation so detect and bypass here.
-    if (&arg == this) {
+    // implementation so detect and bypass here. Similarly, if both are in a
+    // moved-from state, there is nothing to do.
+    if (&arg == this || this->alloc_size() == 0) {
       return *this;
     }
     CARBON_DCHECK(arg.storage() != this->storage());
-    // The sizes match, so just clear out old entries.
     if constexpr (!EntryT::IsTriviallyDestructible) {
       this->view_impl_.ForEachEntry([](EntryT& entry) { entry.Destroy(); },
                                     [](auto...) {});
@@ -1520,7 +1544,12 @@ auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
     // storage.
     this->Destroy();
     this->alloc_size() = arg.alloc_size();
-    SetupStorage();
+    // If `arg` is moved-from, we've clear out our elements and put ourselves
+    // into a moved-from state. We're done.
+    if (this->alloc_size() == 0) {
+      return *this;
+    }
+    SetUpStorage();
   }
   this->growth_budget_ = arg.growth_budget_;
   this->CopySlotsFrom(arg);
@@ -1532,9 +1561,11 @@ auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
 template <typename InputBaseT, ssize_t SmallSize>
 TableImpl<InputBaseT, SmallSize>::TableImpl(TableImpl&& arg) noexcept
     : BaseT(arg.alloc_size(), arg.growth_budget_, SmallSize) {
-  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot move from a moved-from table!";
+  // Check for completely broken objects. These invariants should be true even
+  // in a moved-from state.
+  CARBON_DCHECK(arg.alloc_size() == 0 || !arg.is_small() ||
+                arg.alloc_size() == SmallSize);
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
-  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
   CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
   this->MoveFrom(std::move(arg), small_storage());
 }
@@ -1542,13 +1573,19 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(TableImpl&& arg) noexcept
 template <typename InputBaseT, ssize_t SmallSize>
 auto TableImpl<InputBaseT, SmallSize>::operator=(TableImpl&& arg) noexcept
     -> TableImpl& {
-  CARBON_DCHECK(arg.alloc_size() > 0) << "Cannot move from a moved-from table!";
+  // Check for completely broken objects. These invariants should be true even
+  // in a moved-from state.
+  CARBON_DCHECK(arg.alloc_size() == 0 || !arg.is_small() ||
+                arg.alloc_size() == SmallSize);
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
-  CARBON_DCHECK(!arg.is_small() || arg.alloc_size() == SmallSize);
   CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
   // Destroy and deallocate our table.
   this->Destroy();
+
+  // Defend against self-move by zeroing the size here before we start moving
+  // out of `arg`.
+  this->alloc_size() = 0;
 
   // Setup to match argument and then finish the move.
   this->alloc_size() = arg.alloc_size();
@@ -1610,7 +1647,7 @@ auto TableImpl<InputBaseT, SmallSize>::small_storage() const -> Storage* {
 // Helper to set up the storage of a table when a specific size has already been
 // set up. If possible, uses any small storage, otherwise allocates.
 template <typename InputBaseT, ssize_t SmallSize>
-auto TableImpl<InputBaseT, SmallSize>::SetupStorage() -> void {
+auto TableImpl<InputBaseT, SmallSize>::SetUpStorage() -> void {
   CARBON_DCHECK(this->small_alloc_size() == SmallSize);
   ssize_t local_size = this->alloc_size();
   if (SmallSize > 0 && local_size == SmallSize) {

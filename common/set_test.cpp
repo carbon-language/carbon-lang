@@ -189,9 +189,22 @@ TYPED_TEST(SetTest, Move) {
   }
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 48)));
 
-  // And move-assign over the copy looks like the moved-from table not the copy.
+  // Move-assign over the copy looks like the moved-from table not the copy.
   other_s1 = std::move(s);
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // Self-swap (which does a self-move) works and is a no-op.
+  std::swap(other_s1, other_s1);
+  ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 32)));
+
+  // Test copying of a moved-from table over a valid table and self-move-assign.
+  // The former is required to be valid, and the latter is in at least the case
+  // of self-move-assign-when-moved-from, but the result can be in any state so
+  // just do them and ensure we don't crash.
+  SetT other_s2 = other_s1;
+  other_s2 = s;
+  other_s1 = std::move(other_s1);
+  s = std::move(s);
 }
 
 TYPED_TEST(SetTest, Conversions) {
