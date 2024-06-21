@@ -161,8 +161,6 @@ graph BT
 
     constType --> suffixOps
     pointerType --> constType
-    %% where ------> pointerType
-    %% as --> pointerType
 
     pointer --> suffixOps
     %% unary ~~~~ pointer
@@ -176,19 +174,15 @@ graph BT
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     where --> binaryOps
     comparison --> binaryOps
-    %% comparison ----> as
     logicalOperand --> comparison
     logicalOperand-------> not
     HIDDEN:::hidden ~~~ logicalOperand
     and & or --> logicalOperand
     logicalExpression ----> as
     logicalExpression ----> where
-    %% logicalExpression ~~~ HIDDEN:::hidden
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
-    %% Try and improve layout
-    %% comparison ~~~ not
 ```
 
 The diagram's attributes are:
