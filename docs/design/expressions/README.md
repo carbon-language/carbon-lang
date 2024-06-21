@@ -159,8 +159,8 @@ graph BT
 
     constType --> suffixOps
     pointerType --> constType
-    where ------> pointerType
-    as --> pointerType
+    %% where ------> pointerType
+    %% as --> pointerType
 
     pointer --> suffixOps
     %% unary ~~~~ pointer
