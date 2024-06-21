@@ -179,6 +179,7 @@ graph BT
     %% comparison ----> as
     logicalOperand --> comparison
     logicalOperand-------> not
+    HIDDEN:::hidden & HIDDEN2:::hidden --> logicalOperand
     and & or --> logicalOperand
     logicalExpression ----> as
     logicalExpression ----> where
