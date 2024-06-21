@@ -152,7 +152,7 @@ auto FunctionContext::CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
 }
 
 auto FunctionContext::Inserter::InsertHelper(
-    llvm::Instruction* inst, const llvm::Twine& name, llvm::BasicBlock* block,
+    llvm::Instruction* inst, const llvm::Twine& name,
     llvm::BasicBlock::iterator insert_pt) const -> void {
   llvm::StringRef base_name;
   llvm::StringRef separator;
@@ -164,7 +164,7 @@ auto FunctionContext::Inserter::InsertHelper(
   }
 
   IRBuilderDefaultInserter::InsertHelper(inst, base_name + separator + name,
-                                         block, insert_pt);
+                                         insert_pt);
 }
 
 }  // namespace Carbon::Lower

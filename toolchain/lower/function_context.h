@@ -115,7 +115,6 @@ class FunctionContext {
 
    private:
     auto InsertHelper(llvm::Instruction* inst, const llvm::Twine& name,
-                      llvm::BasicBlock* block,
                       llvm::BasicBlock::iterator insert_pt) const
         -> void override;
 
