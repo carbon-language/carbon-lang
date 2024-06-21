@@ -1510,8 +1510,10 @@ TableImpl<InputBaseT, SmallSize>::TableImpl(const TableImpl& arg)
   CARBON_DCHECK(arg.small_alloc_size_ == SmallSize);
   CARBON_DCHECK(this->small_alloc_size_ == SmallSize);
 
-  SetUpStorage();
-  this->CopySlotsFrom(arg);
+  if (this->alloc_size() != 0) {
+    SetUpStorage();
+    this->CopySlotsFrom(arg);
+  }
 }
 
 template <typename InputBaseT, ssize_t SmallSize>
@@ -1650,7 +1652,8 @@ template <typename InputBaseT, ssize_t SmallSize>
 auto TableImpl<InputBaseT, SmallSize>::SetUpStorage() -> void {
   CARBON_DCHECK(this->small_alloc_size() == SmallSize);
   ssize_t local_size = this->alloc_size();
-  if (SmallSize > 0 && local_size == SmallSize) {
+  CARBON_DCHECK(local_size != 0);
+  if (local_size == SmallSize) {
     this->storage() = small_storage();
   } else {
     this->storage() = BaseT::Allocate(local_size);
