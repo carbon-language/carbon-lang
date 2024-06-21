@@ -182,7 +182,8 @@ graph BT
     and & or --> logicalOperand
     logicalExpression ----> as
     logicalExpression ----> where
-    logicalExpression --> HIDDEN:::hidden & and & or
+    logicalExpression --> HIDDEN:::hidden & HIDDEN2:::hidden
+    logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
     %% Try and improve layout
