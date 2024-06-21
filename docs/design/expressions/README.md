@@ -179,11 +179,11 @@ graph BT
     %% comparison ----> as
     logicalOperand --> comparison
     logicalOperand-------> not
-    HIDDEN:::hidden & HIDDEN2:::hidden --> logicalOperand
+    HIDDEN:::hidden --> logicalOperand
     and & or --> logicalOperand
     logicalExpression ----> as
     logicalExpression ----> where
-    logicalExpression --> HIDDEN:::hidden & HIDDEN2:::hidden
+    logicalExpression --> HIDDEN:::hidden
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
