@@ -317,19 +317,21 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
     // Look up the name in the import scope.
     const auto& import_scope =
         import_ir.sem_ir->name_scopes().Get(import_scope_id);
-    auto it = import_scope.names.find(import_name_id);
-    if (it == import_scope.names.end()) {
+    auto it = import_scope.name_map.find(import_name_id);
+    if (it == import_scope.name_map.end()) {
       // Name doesn't exist in the import scope.
       continue;
     }
-    auto import_inst = import_ir.sem_ir->insts().Get(it->second.inst_id);
+    const auto& import_scope_entry = import_scope.names[it->second];
+    auto import_inst =
+        import_ir.sem_ir->insts().Get(import_scope_entry.inst_id);
     if (import_inst.Is<SemIR::AnyImportRef>()) {
       // This entity was added to name lookup by using an import, and is not
       // exported.
       continue;
     }
 
-    if (it->second.access_kind != SemIR::AccessKind::Public) {
+    if (import_scope_entry.access_kind != SemIR::AccessKind::Public) {
       // Ignore cross-package non-public names.
       continue;
     }
@@ -340,9 +342,9 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
         canonical_result_inst =
             GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
       }
-      VerifySameCanonicalImportIRInst(context, result_id,
-                                      *canonical_result_inst, import_ir_id,
-                                      import_ir.sem_ir, it->second.inst_id);
+      VerifySameCanonicalImportIRInst(
+          context, result_id, *canonical_result_inst, import_ir_id,
+          import_ir.sem_ir, import_scope_entry.inst_id);
     } else {
       // Add the first result found.
       auto bind_name_id = context.bind_names().Add(
@@ -350,7 +352,8 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
            .parent_scope_id = scope_id,
            .bind_index = SemIR::CompileTimeBindIndex::Invalid});
       result_id = AddImportRef(
-          context, {.ir_id = import_ir_id, .inst_id = it->second.inst_id},
+          context,
+          {.ir_id = import_ir_id, .inst_id = import_scope_entry.inst_id},
           bind_name_id);
       LoadImportRef(context, result_id);
     }
@@ -363,9 +366,10 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
-  if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    LoadImportRef(*this, it->second.inst_id);
-    return it->second.inst_id;
+  if (auto it = scope.name_map.find(name_id); it != scope.name_map.end()) {
+    auto inst_id = scope.names[it->second].inst_id;
+    LoadImportRef(*this, inst_id);
+    return inst_id;
   }
   if (!scope.import_ir_scopes.empty()) {
     return LookupInImportIRScopes(*this, loc, name_id, scope_id, scope);

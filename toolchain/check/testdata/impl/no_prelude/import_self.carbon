@@ -101,8 +101,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: %.4 = import_ref ir1, inst+24, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref ir1, inst+24, loaded [template = constants.%.5]
 // CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir1, inst+19, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: %.1 = tuple_literal ()
@@ -127,8 +127,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = file.%import_ref.2
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Op = file.%import_ref.3
 // CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,7 +164,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, file.%import_ref.1 [template = constants.%.2]
-// CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, file.%import_ref.2 [template = constants.%.5]
+// CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, file.%import_ref.3 [template = constants.%.5]
 // CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc11_11: <bound method> = bound_method %x.ref, %.1
 // CHECK:STDOUT:   %y.ref: %.1 = name_ref y, %y

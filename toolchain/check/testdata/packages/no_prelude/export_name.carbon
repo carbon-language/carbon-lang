@@ -260,8 +260,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+11, loaded
@@ -269,8 +269,8 @@ private export C;
 // CHECK:STDOUT:     .NSC = %NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+12, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+17, unloaded
@@ -279,8 +279,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.4
-// CHECK:STDOUT:   .Self = file.%import_ref.5
+// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .x = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
@@ -316,8 +316,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+3, loaded
@@ -325,11 +325,11 @@ private export C;
 // CHECK:STDOUT:     .NSC = %NSC
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+21, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %NSC: type = export NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -341,8 +341,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .y = file.%import_ref.6
-// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.6
+// CHECK:STDOUT:   .y = file.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_in_impl.carbon
@@ -379,14 +379,14 @@ private export C;
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+21, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
@@ -400,8 +400,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .y = file.%import_ref.6
-// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.6
+// CHECK:STDOUT:   .y = file.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -474,8 +474,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .y = file.%import_ref.6
-// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.6
+// CHECK:STDOUT:   .y = file.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -548,8 +548,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .y = file.%import_ref.6
-// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.6
+// CHECK:STDOUT:   .y = file.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -626,14 +626,14 @@ private export C;
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.4
-// CHECK:STDOUT:   .Self = file.%import_ref.5
+// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .x = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_both.carbon
@@ -664,8 +664,8 @@ private export C;
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+12, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -679,8 +679,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.4
-// CHECK:STDOUT:   .Self = file.%import_ref.5
+// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .x = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
@@ -738,14 +738,14 @@ private export C;
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+21, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
@@ -759,8 +759,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .y = file.%import_ref.6
-// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.6
+// CHECK:STDOUT:   .y = file.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -807,8 +807,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+11, loaded
@@ -816,15 +816,15 @@ private export C;
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.4
-// CHECK:STDOUT:   .Self = file.%import_ref.5
+// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .x = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_repeat_export.carbon
@@ -844,8 +844,8 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+13, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -880,8 +880,8 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+11, loaded
@@ -889,14 +889,14 @@ private export C;
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.4
-// CHECK:STDOUT:   .Self = file.%import_ref.5
+// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .x = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

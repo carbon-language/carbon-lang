@@ -295,11 +295,11 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+2, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+22, loaded [template = constants.%B]
@@ -341,8 +341,8 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl.loc6
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %A.type = import_ref ir1, inst+2, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -368,8 +368,8 @@ fn D() {}
 // CHECK:STDOUT:     .A = %import_ref.1
 // CHECK:STDOUT:     .B = %import_ref.2
 // CHECK:STDOUT:     .C = %import_ref.3
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl.loc13
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded

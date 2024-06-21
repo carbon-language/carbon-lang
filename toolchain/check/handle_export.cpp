@@ -77,10 +77,11 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
   // Replace the ImportRef in name lookup, both for the above duplicate
   // diagnostic and so that cross-package imports can find it easily.
   auto bind_name = context.bind_names().Get(import_ref->bind_name_id);
-  auto& names = context.name_scopes().Get(bind_name.parent_scope_id).names;
-  auto it = names.find(bind_name.name_id);
-  CARBON_CHECK(it->second.inst_id == inst_id);
-  it->second.inst_id = export_id;
+  auto& parent_scope = context.name_scopes().Get(bind_name.parent_scope_id);
+  auto it = parent_scope.name_map.find(bind_name.name_id);
+  auto& scope_inst_id = parent_scope.names[it->second].inst_id;
+  CARBON_CHECK(scope_inst_id == inst_id);
+  scope_inst_id = export_id;
 
   return true;
 }

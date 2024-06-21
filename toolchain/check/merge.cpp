@@ -123,10 +123,10 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
-  auto& names = context.name_scopes().Get(scope_id).names;
-  auto it = names.find(name_id);
-  if (it != names.end()) {
-    it->second.inst_id = new_inst_id;
+  auto& scope = context.name_scopes().Get(scope_id);
+  auto it = scope.name_map.find(name_id);
+  if (it != scope.name_map.end()) {
+    scope.names[it->second].inst_id = new_inst_id;
   }
 }
 

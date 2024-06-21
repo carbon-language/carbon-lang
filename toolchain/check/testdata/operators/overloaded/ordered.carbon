@@ -132,11 +132,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir6, inst+51, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: %.8 = import_ref ir6, inst+93, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir6, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.12 = import_ref ir6, inst+133, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.5: %.6 = import_ref ir6, inst+73, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: %.10 = import_ref ir6, inst+113, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir6, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref ir6, inst+73, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref ir6, inst+93, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %.10 = import_ref ir6, inst+113, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.6: %.12 = import_ref ir6, inst+133, loaded [template = constants.%.13]
 // CHECK:STDOUT:   %import_ref.7: %Less.type.2 = import_ref ir6, inst+69, loaded [template = constants.%Less.2]
 // CHECK:STDOUT:   %import_ref.8: %LessOrEquivalent.type.2 = import_ref ir6, inst+89, loaded [template = constants.%LessOrEquivalent.2]
 // CHECK:STDOUT:   %import_ref.9: %Greater.type.2 = import_ref ir6, inst+109, loaded [template = constants.%Greater.2]
@@ -214,11 +214,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .LessOrEquivalent = file.%import_ref.2
-// CHECK:STDOUT:   .Self = file.%import_ref.3
-// CHECK:STDOUT:   .GreaterOrEquivalent = file.%import_ref.4
-// CHECK:STDOUT:   .Less = file.%import_ref.5
-// CHECK:STDOUT:   .Greater = file.%import_ref.6
+// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Less = file.%import_ref.3
+// CHECK:STDOUT:   .LessOrEquivalent = file.%import_ref.4
+// CHECK:STDOUT:   .Greater = file.%import_ref.5
+// CHECK:STDOUT:   .GreaterOrEquivalent = file.%import_ref.6
 // CHECK:STDOUT:   witness = (file.%import_ref.7, file.%import_ref.8, file.%import_ref.9, file.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -414,11 +414,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir6, inst+51, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.3: %.7 = import_ref ir6, inst+93, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir6, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.11 = import_ref ir6, inst+133, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.6: %.5 = import_ref ir6, inst+73, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.7: %.9 = import_ref ir6, inst+113, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir6, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref ir6, inst+73, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref ir6, inst+93, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref ir6, inst+113, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref ir6, inst+133, loaded [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir6, inst+69, unloaded
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir6, inst+89, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir6, inst+109, unloaded
@@ -473,11 +473,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .LessOrEquivalent = file.%import_ref.3
-// CHECK:STDOUT:   .Self = file.%import_ref.4
-// CHECK:STDOUT:   .GreaterOrEquivalent = file.%import_ref.5
-// CHECK:STDOUT:   .Less = file.%import_ref.6
-// CHECK:STDOUT:   .Greater = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Less = file.%import_ref.4
+// CHECK:STDOUT:   .LessOrEquivalent = file.%import_ref.5
+// CHECK:STDOUT:   .Greater = file.%import_ref.6
+// CHECK:STDOUT:   .GreaterOrEquivalent = file.%import_ref.7
 // CHECK:STDOUT:   witness = (file.%import_ref.8, file.%import_ref.9, file.%import_ref.10, file.%import_ref.11)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

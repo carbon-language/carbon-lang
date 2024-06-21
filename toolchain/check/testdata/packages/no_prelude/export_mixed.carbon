@@ -175,20 +175,20 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = %import_ref.2
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = %import_ref.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+11, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+7, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.3
-// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .x = file.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name.carbon
@@ -201,20 +201,20 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = %import_ref.2
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = %import_ref.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+11, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = file.%import_ref.3
-// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .x = file.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_then_import.carbon
@@ -243,8 +243,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -286,8 +286,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -329,8 +329,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -398,8 +398,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -448,8 +448,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir5, inst+11, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
