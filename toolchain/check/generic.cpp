@@ -261,37 +261,11 @@ auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
   return MakeGenericInstance(context, generic_id, args_id);
 }
 
-auto GetConstantInInstance(Context& context,
-                           SemIR::GenericInstanceId /*instance_id*/,
-                           SemIR::ConstantId const_id) -> SemIR::ConstantId {
-  if (!const_id.is_symbolic()) {
-    // Type does not depend on a generic parameter.
-    return const_id;
-  }
-
-  const auto& symbolic =
-      context.constant_values().GetSymbolicConstant(const_id);
-  if (!symbolic.generic_id.is_valid()) {
-    // Constant is an abstract symbolic constant, not an instance-specific one.
-    return const_id;
-  }
-
-  // TODO: Look up the value in the generic instance. For now, return the
-  // canonical constant value.
-  return context.constant_values().Get(symbolic.inst_id);
-}
-
-auto GetConstantValueInInstance(Context& context,
-                                SemIR::GenericInstanceId instance_id,
-                                SemIR::InstId inst_id) -> SemIR::ConstantId {
-  return GetConstantInInstance(context, instance_id,
-                               context.constant_values().Get(inst_id));
-}
-
 auto GetTypeInInstance(Context& context, SemIR::GenericInstanceId instance_id,
                        SemIR::TypeId type_id) -> SemIR::TypeId {
   auto const_id = context.types().GetConstantId(type_id);
-  auto inst_const_id = GetConstantInInstance(context, instance_id, const_id);
+  auto inst_const_id =
+      GetConstantInInstance(context.sem_ir(), instance_id, const_id);
   if (inst_const_id == const_id) {
     // Common case: not an instance constant.
     return type_id;

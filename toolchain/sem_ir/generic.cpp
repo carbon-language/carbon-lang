@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
 
@@ -40,6 +41,33 @@ auto GenericInstanceStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
           },
           KeyContext(generic_instances_.array_ref()))
       .key();
+}
+
+auto GetConstantInInstance(const File& sem_ir,
+                           GenericInstanceId /*instance_id*/,
+                           ConstantId const_id) -> ConstantId {
+  if (!const_id.is_symbolic()) {
+    // Type does not depend on a generic parameter.
+    return const_id;
+  }
+
+  const auto& symbolic =
+      sem_ir.constant_values().GetSymbolicConstant(const_id);
+  if (!symbolic.generic_id.is_valid()) {
+    // Constant is an abstract symbolic constant, not an instance-specific one.
+    return const_id;
+  }
+
+  // TODO: Look up the value in the generic instance. For now, return the
+  // canonical constant value.
+  return sem_ir.constant_values().Get(symbolic.inst_id);
+}
+
+auto GetConstantValueInInstance(const File& sem_ir,
+                                GenericInstanceId instance_id,
+                                InstId inst_id) -> ConstantId {
+  return GetConstantInInstance(sem_ir, instance_id,
+                               sem_ir.constant_values().Get(inst_id));
 }
 
 }  // namespace Carbon::SemIR

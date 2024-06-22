@@ -92,6 +92,19 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
   Carbon::Set<GenericInstanceId, 0, KeyContext> lookup_table_;
 };
 
+// Gets the substituted value of a constant within a specified instance of a
+// generic. Note that this does not perform substitution, and will return
+// `Invalid` if the substituted constant value is not yet known.
+auto GetConstantInInstance(const File& sem_ir, GenericInstanceId instance_id,
+                           ConstantId const_id) -> ConstantId;
+
+// Gets the substituted constant value of an instruction within a specified
+// instance of a generic. Note that this does not perform substitution, and will
+// return `Invalid` if the substituted constant value is not yet known.
+auto GetConstantValueInInstance(const File& sem_ir,
+                                GenericInstanceId instance_id,
+                                InstId inst_id) -> ConstantId;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_GENERIC_H_

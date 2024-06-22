@@ -10,6 +10,7 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
@@ -191,6 +192,12 @@ static auto EmitInterfaceWitnessAsConstant(ConstantContext& context,
   // TODO: For dynamic dispatch, we might want to lower witness tables as
   // constants.
   return context.GetUnusedConstant(inst.type_id);
+}
+
+static auto EmitInstanceConstantAsConstant(
+    ConstantContext& context, SemIR::InstanceConstant inst) -> llvm::Constant* {
+  return context.GetConstant(SemIR::GetConstantValueInInstance(
+      context.sem_ir(), inst.instance_id, inst.inst_id));
 }
 
 static auto EmitIntLiteralAsConstant(ConstantContext& context,

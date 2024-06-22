@@ -53,9 +53,8 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
   }
 
   // Look through import_refs and aliases.
-  auto op_const_id =
-      GetConstantInInstance(context, op_result.instance_id,
-                            context.constant_values().Get(op_result.inst_id));
+  auto op_const_id = GetConstantValueInInstance(
+      context.sem_ir(), op_result.instance_id, op_result.inst_id);
   auto op_id = context.constant_values().GetInstId(op_const_id);
 
   // We expect it to be an associated function.
