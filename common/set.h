@@ -212,9 +212,6 @@ class SetBase
   // The point of this function is when the lookup key is _different_from the
   // stored key. However, we don't restrict it in case that blocks generic
   // usage.
-  //
-  // TODO: The `;` formatting below appears to be bugs in clang-format with
-  // concepts that should be filed upstream.
   template <typename LookupKeyT, typename KeyCallbackT>
   auto Insert(LookupKeyT lookup_key, KeyCallbackT key_cb,
               KeyContextT key_context = KeyContextT()) -> InsertResult
