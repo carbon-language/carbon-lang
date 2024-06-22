@@ -343,12 +343,17 @@ TEST(SetContextTest, Basic) {
   auto i_result = s.Insert(1, IndexKeyContext<TestData>(keys));
   EXPECT_FALSE(i_result.is_inserted());
   EXPECT_TRUE(s.Contains(1, key_context));
+  EXPECT_TRUE(s.Insert(
+                   TestData(200), [] { return 2; }, key_context)
+                  .is_inserted());
+  EXPECT_TRUE(s.Contains(2, key_context));
+  EXPECT_TRUE(s.Contains(TestData(200), key_context));
 
   // Verify all the elements.
-  ExpectSetElementsAre(s, {1});
+  ExpectSetElementsAre(s, {1, 2});
 
   // Fill up a bunch to ensure we trigger growth a few times.
-  for (int i : llvm::seq(2, 512)) {
+  for (int i : llvm::seq(3, 512)) {
     SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
     EXPECT_TRUE(s.Insert(i, key_context).is_inserted());
   }
@@ -359,6 +364,8 @@ TEST(SetContextTest, Basic) {
   }
   EXPECT_FALSE(s.Contains(0, key_context));
   EXPECT_FALSE(s.Contains(512, key_context));
+  EXPECT_FALSE(s.Contains(TestData(0), key_context));
+  EXPECT_FALSE(s.Contains(TestData(51200), key_context));
 
   // Verify all the elements.
   ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 512)));
