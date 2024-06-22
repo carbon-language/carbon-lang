@@ -204,6 +204,24 @@ class SetBase
   auto Insert(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
       -> InsertResult;
 
+  // Insert a key into the map and call the provided callback if necessary to
+  // produce a new key when no existing value is found.
+  //
+  // Example: `m.Insert(key_equivalent, [] { return real_key; });`
+  //
+  // The point of this function is when the lookup key is _different_from the
+  // stored key. However, we don't restrict it in case that blocks generic
+  // usage.
+  //
+  // TODO: The `;` formatting below appears to be bugs in clang-format with
+  // concepts that should be filed upstream.
+  template <typename LookupKeyT, typename KeyCallbackT>
+  auto Insert(LookupKeyT lookup_key, KeyCallbackT key_cb,
+              KeyContextT key_context = KeyContextT()) -> InsertResult
+    requires(
+        !std::same_as<KeyT, KeyCallbackT> &&
+        std::convertible_to<decltype(std::declval<KeyCallbackT>()()), KeyT>);
+
   // Insert a key into the set and call the provided callback to allow in-place
   // construction of the key if not already present. The lookup key is passed
   // through to the callback so it needn't be captured and can be kept in a
@@ -327,6 +345,23 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
       lookup_key,
       [](LookupKeyT lookup_key, void* key_storage) {
         new (key_storage) KeyT(std::move(lookup_key));
+      },
+      key_context);
+}
+
+template <typename InputKeyT, typename InputKeyContextT>
+template <typename LookupKeyT, typename KeyCallbackT>
+auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
+                                                  KeyCallbackT key_cb,
+                                                  KeyContextT key_context)
+    -> InsertResult
+  requires(!std::same_as<KeyT, KeyCallbackT> &&
+           std::convertible_to<decltype(std::declval<KeyCallbackT>()()), KeyT>)
+{
+  return Insert(
+      lookup_key,
+      [&key_cb](LookupKeyT /*lookup_key*/, void* key_storage) {
+        new (key_storage) KeyT(key_cb());
       },
       key_context);
 }
