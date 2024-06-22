@@ -153,8 +153,6 @@ graph BT
 
     expressionStatement["x;"]
 
-    classDef hidden display: none;
-
     top --> parens & braces & unqualifiedName
 
     suffixOps --> top
@@ -165,8 +163,9 @@ graph BT
     pointer --> suffixOps
     negation & complement & incDec --> pointer
     unary --> pointerType & negation & complement
-    %% Use a longer arrow here to put `not` next to `and` and `or`.
+    %% Use a longer arrow here to put `not` next to other unary operators
     not ---> suffixOps
+    %% `as` at the same level as `where` and comparisons
     as -----> unary
     multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
@@ -174,13 +173,15 @@ graph BT
     where --> binaryOps
     comparison --> binaryOps
     logicalOperand --> comparison
-    logicalOperand-------> not
+    logicalOperand -------> not
+
+    %% This helps group `and` and `or` together
+    classDef hidden display: none;
     HIDDEN:::hidden ~~~ logicalOperand
+
     and & or --> logicalOperand
     logicalExpression ----> as & where
-    %% insideParens ------> as & where
     logicalExpression --> and & or
-    %% HIDDEN2:::hidden ~~~ logicalExpression
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
 ```
