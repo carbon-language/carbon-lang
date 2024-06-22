@@ -177,10 +177,10 @@ graph BT
     logicalOperand-------> not
     HIDDEN:::hidden ~~~ logicalOperand
     and & or --> logicalOperand
-    %% logicalExpression ----> as & where
-    insideParens ------> as & where
+    logicalExpression ----> as & where
+    %% insideParens ------> as & where
     logicalExpression --> and & or
-    HIDDEN2:::hidden ~~~ logicalExpression
+    %% HIDDEN2:::hidden ~~~ logicalExpression
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
 ```
