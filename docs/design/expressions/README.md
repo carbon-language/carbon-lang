@@ -180,6 +180,7 @@ graph BT
     %% logicalExpression ----> as & where
     insideParens ------> as & where
     logicalExpression --> and & or
+    HIDDEN2:::hidden ~~~ logicalExpression
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
 ```
