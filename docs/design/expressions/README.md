@@ -163,25 +163,27 @@ graph BT
     pointer --> suffixOps
     negation & complement & incDec --> pointer
     unary --> pointerType & negation & complement
+
     %% Use a longer arrow here to put `not` next to other unary operators
     not ---> suffixOps
+
     %% `as` at the same level as `where` and comparisons
     as -----> unary
+
     multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
+
     where --> binaryOps
     comparison --> binaryOps
-    logicalOperand --> comparison
-    logicalOperand --> not
+    logicalOperand --> comparison & not
 
     %% This helps group `and` and `or` together
     classDef hidden display: none;
     HIDDEN:::hidden ~~~ logicalOperand
 
     and & or --> logicalOperand
-    logicalExpression --> as & where
-    logicalExpression --> and & or
+    logicalExpression --> as & where & and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
 ```
