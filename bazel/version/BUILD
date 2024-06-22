@@ -3,10 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag", "string_flag")
+load("@rules_python//python:defs.bzl", "py_binary")
 
 package(default_visibility = ["//toolchain/install:__pkg__"])
 
-exports_files(["gen_tmpl.py"])
+py_binary(
+    name = "gen_tmpl",
+    srcs = ["gen_tmpl.py"],
+    python_version = "PY3",
+)
 
 # Several flags are provided for customizing the exact version used for the
 # build of Carbon. Each of these is documented here, but rather than using the
