@@ -173,14 +173,14 @@ graph BT
     where --> binaryOps
     comparison --> binaryOps
     logicalOperand --> comparison
-    logicalOperand -------> not
+    logicalOperand --> not
 
     %% This helps group `and` and `or` together
     classDef hidden display: none;
     HIDDEN:::hidden ~~~ logicalOperand
 
     and & or --> logicalOperand
-    logicalExpression ----> as & where
+    logicalExpression --> as & where
     logicalExpression --> and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
