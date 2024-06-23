@@ -26,20 +26,36 @@ jobs:
             documentation:
               - '*.md'
               - 'docs/**'
+              - 'examples/**'
             explorer:
               - 'explorer/**'
             infrastructure:
-              - 'BUILD'
-              - 'WORKSPACE'
+              - '*.bzl'
+              - '*.cfg'
+              - '*.toml'
               - '.*'
               - '.*/**'
+              - 'BUILD'
+              - 'MODULE.*'
+              - 'WORKSPACE'
               - 'bazel/**'
+              - 'common/**'
+              - 'github_tools/**'
+              - 'installers/**'
+              - 'language_server/**'
+              - 'proposal/scripts/**'
               - 'scripts/**'
+              - 'testing/**'
+              - 'third_party/**'
+              - 'utils/**'
+            proposal:
+              - added: 'proposals/*'
             toolchain:
+              - 'core/**'
               - 'toolchain/**'
 
       - id: documentation
-        if: steps.filter.outputs.docs == 'true'
+        if: steps.filter.outputs.documentation == 'true'
         run: |
           gh pr edit "${PR}" --add-label "documentation"
         env:
@@ -55,9 +71,17 @@ jobs:
           PR: ${{ github.event.pull_request.html_url }}
 
       - id: infrastructure
-        if: steps.filter.outputs.docs == 'true'
+        if: steps.filter.outputs.infrastructure == 'true'
         run: |
           gh pr edit "${PR}" --add-label "infrastructure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: proposal
+        if: steps.filter.outputs.proposal == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "proposal"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -66,6 +90,16 @@ jobs:
         if: steps.filter.outputs.toolchain == 'true'
         run: |
           gh pr edit "${PR}" --add-label "toolchain"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: automated
+        if:
+          contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
+          github.event.pull_request.user.login)
+        run: |
+          gh pr edit "${PR}" --add-label "automated"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}

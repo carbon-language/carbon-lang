@@ -1,0 +1,43 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Provide the configuration and categorization for generated release notes.
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+
+  categories:
+    - title: Proposals Accepted and Merged 📜
+      labels:
+        - proposal
+      exclude.labels:
+        - automated
+    - title: Toolchain Changes 🛠
+      labels:
+        - toolchain
+      exclude.labels:
+        - automated
+    - title: Explorer Changes 🔭
+      labels:
+        - explorer
+      exclude.labels:
+        - automated
+    - title: Documentation Changes 🖺
+      labels:
+        - documentation
+      exclude.labels:
+        - automated
+    - title: Infrastructure Changes 🏗
+      labels:
+        - infrastructure
+      exclude.labels:
+        - automated
+    - title: Automated Updates 🤖
+      labels:
+        - automated
+    - title: Other Changes
+      labels:
+        - '*'
