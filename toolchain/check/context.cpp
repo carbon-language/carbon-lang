@@ -33,7 +33,7 @@ namespace Carbon::Check {
 
 Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
                  const Parse::Tree& parse_tree, SemIR::File& sem_ir,
-                 llvm::raw_ostream* vlog_stream)
+                 llvm::raw_ostream* vlog_stream, bool is_impl_file)
     : tokens_(&tokens),
       emitter_(&emitter),
       parse_tree_(&parse_tree),
@@ -44,7 +44,8 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
-      scope_stack_(sem_ir_->identifiers()) {
+      scope_stack_(sem_ir_->identifiers()),
+      is_impl_file_(is_impl_file) {
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.insert(
