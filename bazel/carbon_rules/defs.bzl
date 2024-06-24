@@ -101,7 +101,7 @@ def carbon_binary(name, srcs):
       name: The name of the build target.
       srcs: List of Carbon source files to compile.
     """
-    carbon_binary_internal(
+    _carbon_binary_internal(
         name = name,
         srcs = srcs,
 
