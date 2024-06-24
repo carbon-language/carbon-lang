@@ -28,9 +28,11 @@ jobs:
               - 'docs/**'
               - 'examples/**'
               - 'third_party/examples/**'
+
             explorer:
               - 'explorer/**'
               - 'installers/**'
+
             infrastructure:
               - '*.bzl'
               - '*.cfg'
@@ -44,14 +46,23 @@ jobs:
               - 'github_tools/**'
               - 'proposal/scripts/**'
               - 'scripts/**'
+
+            # Here we only want the `proposal` label when a *new* file is added
+            # directly in this directory. We use `added` and a single level glob
+            # to achieve that.
             proposal:
               - added: 'proposals/*'
+
+            # We include common, shared code into the toolchain label for
+            # convenience. Essentially, this is everything we intend to ship as
+            # part of the reference implementation of the language.
             toolchain:
               - 'common/**'
               - 'core/**'
               - 'language_server/**'
               - 'testing/**'
               - 'toolchain/**'
+
             utilities:
               - 'utils/**'
 
