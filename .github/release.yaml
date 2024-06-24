@@ -10,34 +10,34 @@ changelog:
       - ignore-for-release
 
   categories:
-    - title: Proposals Accepted and Merged 📜
+    - title: 'Proposals accepted and merged :scroll:'
       labels:
         - proposal
       exclude.labels:
-        - automated
-    - title: Toolchain Changes 🛠
+        - bot
+    - title: 'Toolchain changes :hammer_and_wrench:'
       labels:
         - toolchain
       exclude.labels:
-        - automated
-    - title: Explorer Changes 🔭
+        - bot
+    - title: 'Explorer changes :telescope:'
       labels:
         - explorer
       exclude.labels:
-        - automated
-    - title: Documentation Changes 🖺
+        - bot
+    - title: 'Documentation changes :memo:'
       labels:
         - documentation
       exclude.labels:
-        - automated
-    - title: Infrastructure Changes 🏗
+        - bot
+    - title: 'Infrastructure changes :building_construction:'
       labels:
         - infrastructure
       exclude.labels:
-        - automated
-    - title: Automated Updates 🤖
+        - bot
+    - title: 'Automated robot PRs :robot:'
       labels:
-        - automated
-    - title: Other Changes
+        - bot
+    - title: 'Other changes'
       labels:
         - '*'
