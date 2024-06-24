@@ -60,7 +60,7 @@ def _carbon_binary_impl(ctx):
     )
     return [DefaultInfo(files = depset([bin]))]
 
-carbon_binary_internal = rule(
+_carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
         # The exec config toolchain driver and data. These will be `None` when
