@@ -63,7 +63,9 @@ static auto PushOperand(Context& context, Worklist& worklist,
       worklist.Push(static_cast<SemIR::InstId>(arg));
       break;
     case SemIR::IdKind::For<SemIR::TypeId>:
-      worklist.Push(context.types().GetInstId(static_cast<SemIR::TypeId>(arg)));
+      if (auto type_id = static_cast<SemIR::TypeId>(arg); type_id.is_valid()) {
+        worklist.Push(context.types().GetInstId(type_id));
+      }
       break;
     case SemIR::IdKind::For<SemIR::InstBlockId>:
       for (auto inst_id :
@@ -88,6 +90,8 @@ static auto ExpandOperands(Context& context, Worklist& worklist,
                            SemIR::InstId inst_id) -> void {
   auto inst = context.insts().Get(inst_id);
   auto kinds = inst.ArgKinds();
+  PushOperand(context, worklist, SemIR::IdKind::For<SemIR::TypeId>,
+              inst.type_id().index);
   PushOperand(context, worklist, kinds.first, inst.arg0());
   PushOperand(context, worklist, kinds.second, inst.arg1());
 }
@@ -98,8 +102,13 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
       return worklist.Pop().index;
-    case SemIR::IdKind::For<SemIR::TypeId>:
+    case SemIR::IdKind::For<SemIR::TypeId>: {
+      auto type_id = static_cast<SemIR::TypeId>(arg);
+      if (!type_id.is_valid()) {
+        return arg;
+      }
       return context.GetTypeIdForTypeInst(worklist.Pop()).index;
+    }
     case SemIR::IdKind::For<SemIR::InstBlockId>: {
       auto old_inst_block_id = static_cast<SemIR::InstBlockId>(arg);
       auto size = context.inst_blocks().Get(old_inst_block_id).size();
@@ -136,14 +145,16 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id)
   // Note that we pop in reverse order because we pushed them in forwards order.
   int32_t arg1 = PopOperand(context, worklist, kinds.second, inst.arg1());
   int32_t arg0 = PopOperand(context, worklist, kinds.first, inst.arg0());
-  if (arg0 == inst.arg0() && arg1 == inst.arg1()) {
+  int32_t type_id =
+      PopOperand(context, worklist, SemIR::IdKind::For<SemIR::TypeId>,
+                 inst.type_id().index);
+  if (type_id == inst.type_id().index && arg0 == inst.arg0() &&
+      arg1 == inst.arg1()) {
     return inst_id;
   }
 
-  // TODO: Updating the arguments might result in the instruction having a
-  // different type. We should consider either recomputing the type or
-  // substituting into it. In the latter case, consider caching, as we may
-  // substitute into related types repeatedly.
+  // TODO: Do we need to require this type to be complete?
+  inst.SetType(SemIR::TypeId(type_id));
   inst.SetArgs(arg0, arg1);
   auto result_id = TryEvalInst(context, SemIR::InstId::Invalid, inst);
   CARBON_CHECK(result_id.is_constant())
@@ -165,6 +176,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     return const_id;
   }
 
+  // TODO: Consider caching; we may perform the same substitutions repeatedly.
   Worklist worklist(context.constant_values().GetInstId(const_id));
 
   // For each instruction that forms part of the constant, we will visit it
