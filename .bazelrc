@@ -29,6 +29,12 @@ build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
 # not firing in our normal builds.
 build:clang-tidy --copt=-Wno-unknown-pragmas
 
+# Provide an alias for controlling the `carbon_*` Bazel rules' configuration. We
+# enable use of the target config here to make our build and tests more
+# efficient, see the documentation in //bazel/carbon_rules/BUILD for details.
+build --flag_alias=use_target_config_carbon_rules=//bazel/carbon_rules:use_target_config_carbon_rules
+build --use_target_config_carbon_rules
+
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
 # here can be overridden in the user configuration where needed.
