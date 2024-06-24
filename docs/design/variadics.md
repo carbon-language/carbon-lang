@@ -477,10 +477,7 @@ class C(... each T:! type)
 }
 ```
 
-In the signature of `F`, `... each t: each T` has fixed arity, and
-`... each u: each U` has deduced arity, because the arity of `each U` is
-determined by the arguments passed to `F`, but the arity of `each T` is
-determined by the arguments passed to `C`, before the call to `F`.
+In the signature of `F`, `... each t: each T` has fixed arity, since the arity is determined by the arguments passed to `C`, before the call to `F`. On the other hand, `... each u: each U` has deduced arity, because the arity of `each U` is determined by the arguments passed to `F`.
 
 After typechecking a full pattern, we attempt to merge as many tuple segments as
 possible, in order to simplify the subsequent pattern matching. For example,
@@ -778,9 +775,7 @@ to" relation. For example:
     `U`.
 -   _ImplicitAs rule:_ `T` is convertible to `U` if `T` implements
     `ImplicitAs(U)`.
--   _Tuple convertibility:_ Let `T` and `U` be tuple segments, and let `Ts` and
-    `Us` be sequences of tuple segments. `(T, Ts)` is convertible to `(U, Us)`
-    if `T` is convertible to `U` and `(Ts)` is convertible to `(Us)`.
+-   _Tuple convertibility:_ Let `Ts` and `Us` be sequences of tuple segments. `(Ts)` is convertible to `(Us)` if the segments of `Ts` are convertible to the corresponding segments of `(Us)`.
 
 Type equality (which implies convertibility, as seen above) is likewise governed
 by a set of deduction rules for the "equals" relation. For example:
