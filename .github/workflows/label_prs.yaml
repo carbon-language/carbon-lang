@@ -27,8 +27,10 @@ jobs:
               - '*.md'
               - 'docs/**'
               - 'examples/**'
+              - 'third_party/examples/**'
             explorer:
               - 'explorer/**'
+              - 'installers/**'
             infrastructure:
               - '*.bzl'
               - '*.cfg'
@@ -39,20 +41,19 @@ jobs:
               - 'MODULE.*'
               - 'WORKSPACE'
               - 'bazel/**'
-              - 'common/**'
               - 'github_tools/**'
-              - 'installers/**'
-              - 'language_server/**'
               - 'proposal/scripts/**'
               - 'scripts/**'
-              - 'testing/**'
-              - 'third_party/**'
-              - 'utils/**'
             proposal:
               - added: 'proposals/*'
             toolchain:
+              - 'common/**'
               - 'core/**'
+              - 'language_server/**'
+              - 'testing/**'
               - 'toolchain/**'
+            utilities:
+              - 'utils/**'
 
       - id: documentation
         if: steps.filter.outputs.documentation == 'true'
@@ -94,6 +95,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
+      - id: utilities
+        if: steps.filter.outputs.utilities == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "utilities"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      # Note that this is not a path-based label, but an *author* based label,
+      # and it applies orthogonally to the others.
       - id: automated
         if:
           contains(fromJSON('["CarbonInfraBot", "dependabot"]'),

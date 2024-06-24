@@ -15,19 +15,20 @@ changelog:
         - proposal
       exclude.labels:
         - bot
-    - title: 'Toolchain changes :hammer_and_wrench:'
+    - title: 'Toolchain and implementation changes :hammer_and_wrench:'
       labels:
         - toolchain
-      exclude.labels:
-        - bot
-    - title: 'Explorer changes :telescope:'
-      labels:
         - explorer
       exclude.labels:
         - bot
     - title: 'Documentation changes :memo:'
       labels:
         - documentation
+      exclude.labels:
+        - bot
+    - title: 'Utilities :triangular_ruler:'
+      labels:
+        - utilities
       exclude.labels:
         - bot
     - title: 'Infrastructure changes :building_construction:'
