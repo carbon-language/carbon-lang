@@ -26,20 +26,48 @@ jobs:
             documentation:
               - '*.md'
               - 'docs/**'
+              - 'examples/**'
+              - 'third_party/examples/**'
+
             explorer:
               - 'explorer/**'
+              - 'installers/**'
+
             infrastructure:
-              - 'BUILD'
-              - 'WORKSPACE'
+              - '*.bzl'
+              - '*.cfg'
+              - '*.toml'
               - '.*'
               - '.*/**'
+              - 'BUILD'
+              - 'MODULE.*'
+              - 'WORKSPACE'
               - 'bazel/**'
+              - 'github_tools/**'
+              - 'proposal/scripts/**'
               - 'scripts/**'
+
+            # Here we only want the `proposal` label when a *new* file is added
+            # directly in this directory. We use `added` and a single level glob
+            # to achieve that.
+            proposal:
+              - added: 'proposals/*'
+
+            # We include common, shared code into the toolchain label for
+            # convenience. Essentially, this is everything we intend to ship as
+            # part of the reference implementation of the language.
             toolchain:
+              - 'common/**'
+              - 'core/**'
+              - 'language_server/**'
+              - 'testing/**'
               - 'toolchain/**'
 
+            utilities:
+              - 'utils/**'
+
       - id: documentation
-        if: steps.filter.outputs.docs == 'true'
+        if: steps.filter.outputs.documentation == 'true'
         run: |
           gh pr edit "${PR}" --add-label "documentation"
         env:
@@ -55,9 +83,17 @@ jobs:
           PR: ${{ github.event.pull_request.html_url }}
 
       - id: infrastructure
-        if: steps.filter.outputs.docs == 'true'
+        if: steps.filter.outputs.infrastructure == 'true'
         run: |
           gh pr edit "${PR}" --add-label "infrastructure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: proposal
+        if: steps.filter.outputs.proposal == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "proposal"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -66,6 +102,26 @@ jobs:
         if: steps.filter.outputs.toolchain == 'true'
         run: |
           gh pr edit "${PR}" --add-label "toolchain"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: utilities
+        if: steps.filter.outputs.utilities == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "utilities"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      # Note that this is not a path-based label, but an *author* based label,
+      # and it applies orthogonally to the others.
+      - id: automated
+        if:
+          contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
+          github.event.pull_request.user.login)
+        run: |
+          gh pr edit "${PR}" --add-label "automated"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
