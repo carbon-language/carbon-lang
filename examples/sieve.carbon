@@ -116,6 +116,7 @@ fn Run() -> i32 {
   while (n < 1000) {
     if (s.is_prime[n]) {
       ++number_of_primes;
+      Core.Print(n);
       s.MarkMultiplesNotPrime(n);
     }
     ++n;
