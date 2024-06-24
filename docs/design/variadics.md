@@ -358,7 +358,7 @@ So to represent this type, we need two new pseudo-syntaxes:
     the declaration of `each X`.
 -   `⟪E; N⟫` evaluates to `N` repetitions of `E`. This is called a _arity
     coercion_, because it coerces the expression `E` to have arity `N`. `E` must
-    not contain any pack expansions, each-names, or pack literals.
+    not contain any pack expansions, each-names, or pack literals (see below).
 
 Combining the two, the type of `... each y` is `... ⟪i32; ‖each y‖⟫`. Thus, the
 type of `z` is `(f32, ... Optional(each T), ... ⟪i32; ‖each y‖⟫)`.
@@ -367,7 +367,7 @@ Now, consider a modified version of that example:
 
 ```carbon
 fn F[... each T:! type]((... each x: Optional(each T)), (... each y: i32)) {
-  let (each z: auto) = (0 as f32, ... each x, ... each y);
+  let (.. each z: auto) = (0 as f32, ... each x, ... each y);
 }
 ```
 
@@ -377,7 +377,7 @@ example, so we represent its type in the same way, as a sequence of segments:
 _pack literal_ rather than a tuple literal. Notice one subtle difference: the
 segments of a pack literal do not contain `...`. In effect, every segment of a
 pack literal acts as a separate loop body. As with the tuple literal syntax, the
-pattern literal pseudo-syntax can also be used in patterns.
+pack literal pseudo-syntax can also be used in patterns.
 
 The _shape_ of a pack literal is a tuple of the arities of its segments, so the
 shape of `⟬f32, Optional(each T), ⟪i32; ‖each y‖⟫⟭` is
@@ -472,7 +472,7 @@ has _deduced arity_. A tuple pattern can have at most one segment with deduced
 arity. For example:
 
 ```carbon
-class C(... each T:! type)
+class C(... each T:! type) {
   fn F[... each U:! type](... each t: each T, ... each u: each U);
 }
 ```
@@ -656,7 +656,7 @@ The shape of an AST node within a pack expansion is determined as follows:
 
 > **TODO:** The "well-shaped" rules as stated are slightly too restrictive. For
 > example, `⟬each X, Y⟭: ⟪Z; N+1⟫` is well-shaped, and `(⟬each X, Y⟭, ⟪Z; N+1⟫)`
-> is well-shaped if the shape of `each Y` is `N`.
+> is well-shaped if the shape of `each X` is `N`.
 
 The type of an expression or pattern can be computed as follows:
 
