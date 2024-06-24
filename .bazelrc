@@ -100,6 +100,10 @@ build --test_env=ASAN_SYMBOLIZER_PATH
 # `en_US`.
 build --action_env=LANG=en_US.UTF-8
 
+# Enable libpfm for google_benchmark on Linux only.
+build --enable_platform_specific_config
+build:linux --define=pfm=1
+
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
 try-import %workspace%/user.bazelrc
