@@ -24,10 +24,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Explicit deduced arities](#explicit-deduced-arities)
     -   [Typing and shaping rules](#typing-and-shaping-rules)
     -   [Reduction rules](#reduction-rules)
-    -   [Other equivalences](#other-equivalences)
-    -   [Convertibility and parameter deduction](#convertibility-and-parameter-deduction)
-        -   [Example](#example)
-    -   [Deduction algorithm](#deduction-algorithm)
+    -   [Equivalence, equality, and convertibility](#equivalence-equality-and-convertibility)
+    -   [Pattern match typechecking algorithm](#pattern-match-typechecking-algorithm)
         -   [Canonicalization algorithm](#canonicalization-algorithm)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -532,11 +530,12 @@ following conditions hold:
 
 -   The name pack doesn't use any name more than once. For example, we can't
     apply this rewrite to `⟬X, each Y, X⟭`.
--   The name pack contains at least one each-name. For example, we can't apply
+-   The name pack contains exactly one each-name. For example, we can't apply
     this rewrite to `⟬X, Y⟭`.
--   The replacement removes all usages of the constituent names. For example, we
-    can't apply this rewrite to `⟬X, each Y⟭` in this code, because the
-    resulting signature would have return type `X` but no declaration of `X`:
+-   The replacement removes all usages of the constituent names, including their
+    declarations. For example, we can't apply this rewrite to `⟬X, each Y⟭` in
+    this code, because the resulting signature would have return type `X` but no
+    declaration of `X`:
     ```carbon
     fn F[... ⟬X, each Y⟭:! ⟪type; ‖each next‖+1⟫]
         (... each __args: each ⟬X, each Y⟭) -> X;
@@ -551,8 +550,8 @@ following conditions hold:
     Notice that as a corollary of this rule, all the names in the name pack must
     have the same type.
 
-See the [appendix](#deduction-algorithm) for a more formal discussion of the
-rewriting process.
+See the [appendix](#pattern-match-typechecking-algorithm) for a more formal
+discussion of the rewriting process.
 
 ### Typechecking pattern matches
 
@@ -626,7 +625,8 @@ For each pack expansion pattern, we introduce a binding pattern `__N:! Arity` as
 a deduced parameter of the enclosing full pattern, where `__N` is a name chosen
 to avoid collisions. Then, for each binding pattern of the form `each X: T`
 within that expansion, if `T` does not contain an each-name, the binding pattern
-is rewritten as `each X: ⟪T; __N⟫`.
+is rewritten as `each X: ⟪T; __N⟫`. If this does not introduce any usages of
+`__N`, we remove its declaration.
 
 `Arity` is a compiler-internal type which represents non-negative integers. The
 only operation it supports is `+`, with non-negative integer literals and other
@@ -717,8 +717,12 @@ several dimensions:
     `⟬X1 * Y1, X2 * Y2⟭`, where the `*` operator plays the role of `F`.
 -   `F()` can also a be a pattern syntax. For example, this rule implies that
     `(⟬x1: X1, x2: X2⟭, ⟬y1: Y1, y2: Y2⟭)` reduces to
-    `⟬(x1: X1, y1: Y1), (x2: X2, y2: Y2)⟭`, where the tuple syntax `( , )` plays
-    the role of `F`.
+    `⟬(x1: X1, y1: Y1), (x2: X2, y2: Y2)⟭`, where the tuple pattern syntax
+    `( , )` plays the role of `F`.
+-   When binding pattern syntax takes the role of `F`, the name part of the
+    binding pattern must be a name pack. For example, `⟬x1, x2⟭: ⟬X1, X2⟭`
+    reduces to `⟬x1: X1, x2: X2⟭`, but `each x: ⟬X1, X2⟭` cannot be reduced by
+    this rule.
 
 _Coercion expanding:_ If `F` is a function, `S` is a shape, and `Y` is an
 expression that does not contain pack literals or arity coercions,
@@ -742,19 +746,7 @@ segment, and let `Ys` be a sequence of tuple segments.
     -   If `X` is not a pack expansion, then `(X, Ys).(I)` reduces to `X`.
     -   If `X` is of the form `...⟬⟪E; S⟫⟭`, then `(X, Ys).(I)` reduces to `E`.
 
-### Other equivalences
-
-Unless otherwise specified, all expressions in these rules must be free of side
-effects.
-
-_Coercion merging:_
-
--   `⟪E; M⟫, ⟪E; N⟫` is equivalent to `⟪E; M, N⟫`.
--   `⟪E; N⟫, E` is equivalent to `⟪E; N, 1⟫`.
--   `E, ⟪E; N⟫` is equivalent to `⟪E; 1, N⟫`.
-
-_Coercion shape commutativty:_ `⟪E; S1⟫` is equivalent to `⟪E; S2⟫` if `S1` is a
-permutation of `S2`.
+### Equivalence, equality, and convertibility
 
 _Pack renaming:_ Let `Ns` be a sequence of names, let `⟬Ns⟭: ⟪T; N⟫` be a name
 binding pattern (which may be a symbolic or template binding as well as a
@@ -769,109 +761,27 @@ itself) if all of the following conditions hold:
 -   No other pack literals occur in the same pack expansion as an occurrence of
     `⟬Ns⟭`.
 
-### Convertibility and parameter deduction
+_Expansion convertibility:_ `...T` is convertible to `...U` if the arity of `U`
+equals the arity of `T`, and the scalar components of `T` are each convertible
+to all scalar components of `U`.
 
-Type convertibility is governed by a set of inference rules for the "convertible
-to" relation. For example:
+_Shape equality:_ Let `(S1s)`, `(S2s)`, `(S3s)`, and `(S4s)` be shapes.
+`(S1s, S2s)` equals `(S3s, S4s)` if `(S1s)` equals `(S3s)` and `(S2s)` equals
+`(S4s)`.
 
--   _Equality implies convertibility:_ `T` is convertible to `U` if `T` equals
-    `U`.
--   _ImplicitAs rule:_ `T` is convertible to `U` if `T` implements
-    `ImplicitAs(U)`.
--   _Tuple convertibility:_ Let `Ts` and `Us` be sequences of tuple segments.
-    `(Ts)` is convertible to `(Us)` if they have equal numbers of segments, and
-    the segments of `Ts` are convertible to the corresponding segments of
-    `(Us)`.
-
-Type equality (which implies convertibility, as seen above) is likewise governed
-by a set of deduction rules for the "equals" relation. For example:
-
--   _Identity:_ For any `X`, `X` equals `X`.
--   _Parameterized type equality:_ Let `P` be a parameterized type. `P(A, B)`
-    equals `P(C, D)` if `A` equals `C` and `B` equals `D`.
-
-This is complicated by the fact that in a function call, the parameter tuple
-type may use deduced parameters of the function, which act as unknowns that we
-must solve for. We will model parameter deduction using the concept of a
-_binding map_, which is a set of pairs where the first element of the pair is a
-deduced parameter, and the second element is the deduced value of that
-parameter. A binding map must be _consistent_, which means that it cannot
-contain two pairs with the same first element (for simplicity, we will require
-function signatures and other full patterns to be expressed without deduced
-parameters that have pack names when applying these rules, so we don't need to
-worry about pairs with overlapping but non-equal first elements).
-
-We can then re-express convertibility and equality as ternary relations: "`T` =
-`U` given a binding map `M`" means that if we rewrite `T` and `U` by replacing
-every deduced parameter with the corresponding value in `M`, the two rewritten
-forms are equal. "`T` is convertible to `U` given a binding map `M`" is
-interpreted similarly. For example, we can re-express the last deduction rule
-above in terms of these ternary relations as follows:
-
--   _Parameterized type equality:_ Let `P` be a parameterized type. If `A`
-    equals `C` given a binding map `M1`, and `B` equals `D` given a binding map
-    `M2`, and `M1` ∪ `M2` is consistent, then `P(A, B)` equals `P(C, D)` given a
-    binding map `M1` ∪ `M2`.
-
-Almost all of the deduction rules can be generalized in the same way: the
-binding map in the conclusion is the union of the binding maps in the premises,
-and there's an additional premise that this union is consistent. If there are no
-"equals" or "convertible to" relations in the premises, the binding map in the
-conclusion is empty. When that pattern applies, we will usually leave the
-binding maps implicit (as in the original formulation of the above rule). One
-major exception is the following rule:
-
-_Binding introduction:_ Let `X` be a deduced parameter with type `T`. If the
-type of `E` is convertible to `T` given binding map `M`, and `M` ∪ {(`X`, `E`)}
-is consistent, then `X` equals `E` given a binding map `M` ∪ {(`X`, `E`)}.
-
-The deduction rules that are specific to variadic types are as follows:
-
--   _Expansion convertibility:_ `...T` is convertible to `...U` if the arity of
-    `U` equals the arity of `T`, and all scalar components of `T` are
-    convertible to all scalar components of `U`.
--   _Shape equality:_ Let `(S1s)`, `(S2s)`, `(S3s)`, and `(S4s)` be shapes.
-    `(S1s, S2s)` equals `(S3s, S4s)` if `(S1s)` equals `(S3s)` and `(S2s)`
-    equals `(S4s)`.
-
-#### Example
-
-Suppose we are typechecking the following function call:
-
-```carbon
-fn F[T:! type](x: Vector(T));
-F(() as Vector(i32));
-```
-
-We need to verify that `Vector(i32)` is convertible to `Vector(T)`. We can
-construct a proof by applying the above inference rules, as follows:
-
-1. (By identity) `type` equals `type` given a binding map {}.
-2. (By equality implies convertibility) `type` is convertible to `type` given a
-   binding map {}.
-3. (By binding introduction) `T` equals `i32` given a binding map {(`T`,
-   `i32`)}.
-4. (By parameterized type equality) `Vector(T)` equals `Vector(i32)` given a
-   binding map {(`T`, `i32`)}.
-5. (By equality implies convertibility) `Vector(T)` is convertible to
-   `Vector(i32)` given a binding map {(`T`, `i32`)}.
-
-Notice that as a byproduct, this proof gives us a binding map with the deduced
-values of the parameters.
-
-Conceptually, the typechecker constructs this proof by searching backwards from
-desired conclusion without considering binding maps, and then running the
-resulting proof forward to compute the final binding map.
-
-### Deduction algorithm
+### Pattern match typechecking algorithm
 
 A full pattern is in _normal form_ if it contains no pack literals, and every
-arity coercion is fully expanded. Note that all user-written full patterns are
-in normal form. Note also that by construction, this means that the type of the
-body of every pack expansion has a single scalar component. The _canonical form_
-of a full pattern is the unique normal form (if any) that is "maximally merged",
-meaning that every tuple pattern and tuple literal has the smallest number of
-segments.
+arity coercion is fully expanded. For example,
+`[__N:! Arity](... each x: Vector(⟪i32; __N⟫))` is not in normal form, but
+`[__N:! Arity](... each x: ⟪Vector(i32); __N⟫)` is. Note that all user-written
+full patterns are in normal form. Note also that by construction, this means
+that the type of the body of every pack expansion has a single scalar component.
+The _canonical form_ of a full pattern is the unique normal form (if any) that
+is "maximally merged", meaning that every tuple pattern and tuple literal has
+the smallest number of segments. For example, the canonical form of
+`[__N:! Arity](... each x: ⟪i32; __N⟫, y: i32)` is
+`[__N:! Arity](... each __args: ⟪i32; __N+1⟫)`.
 
 > **TODO:** Specify algorithm for converting a full pattern to canonical form,
 > or establishing that there is no such form. See next section for a start.
@@ -879,7 +789,7 @@ segments.
 If a function with type `F` is called with argument type `A`, we typecheck the
 call by converting `F` to canonical form, and then checking whether `A` is
 convertible to the parameter type by applying the deduction rules in the
-previous section. If that succeeds, we apply the resulting binding map to the
+previous sections. If that succeeds, we apply the resulting binding map to the
 function return type to obtain the type of the call expression.
 
 > **TODO:** Specify the algorithm more precisely. In particular, discuss how to
