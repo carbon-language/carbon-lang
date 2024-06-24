@@ -64,7 +64,10 @@ _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
         # The exec config toolchain driver and data. These will be `None` when
-        # using the target config and populated when using the exec config.
+        # using the target config and populated when using the exec config. We
+        # have to use duplicate attributes here and below to have different
+        # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
+        # when populating these.
         "internal_exec_toolchain_data": attr.label(
             cfg = "exec",
         ),
@@ -75,7 +78,10 @@ _carbon_binary_internal = rule(
         ),
 
         # The target config toolchain driver and data. These will be 'None' when
-        # using the exec config and populated when using the target config.
+        # using the exec config and populated when using the target config. We
+        # have to use duplicate attributes here and below to have different
+        # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
+        # when populating these.
         "internal_target_toolchain_data": attr.label(
             cfg = "target",
         ),
@@ -98,6 +104,11 @@ def carbon_binary(name, srcs):
     carbon_binary_internal(
         name = name,
         srcs = srcs,
+
+        # We synthesize two sets of attributes from mirrored `select`s here
+        # because we want to select on an internal property of these attributes
+        # but that isn't `select`-able. Instead, we have both attributes and
+        # `select` which one we use.
         internal_exec_toolchain_driver = select({
             "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
             "//conditions:default": "//toolchain/install:prefix_root/bin/carbon",
