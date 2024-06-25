@@ -221,7 +221,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
                params_node, constraint_type_id);
   }
 
-  if (context.is_impl_file()) {
+  if (context.IsImplFile()) {
     context.definitions_required().push_back(impl_decl_id);
   }
 

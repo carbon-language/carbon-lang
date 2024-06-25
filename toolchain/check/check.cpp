@@ -664,31 +664,37 @@ static auto DiagnoseMissingDefinitions(Context& context,
     -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "No definition found for declaration in impl file");
-  for (SemIR::InstId decl_inst : context.definitions_required()) {
-    CARBON_KIND_SWITCH(context.insts().Get(decl_inst)) {
+  for (SemIR::InstId decl_inst_id : context.definitions_required()) {
+    SemIR::Inst decl_inst = context.insts().Get(decl_inst_id);
+    CARBON_KIND_SWITCH(context.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
         if (!context.classes().Get(class_decl.class_id).is_defined()) {
-          emitter.Emit(decl_inst, MissingDefinitionInImpl);
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;
       }
       case CARBON_KIND(SemIR::FunctionDecl function_decl): {
         if (context.functions().Get(function_decl.function_id).definition_id ==
             SemIR::InstId::Invalid) {
-          emitter.Emit(decl_inst, MissingDefinitionInImpl);
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         if (!context.impls().Get(impl_decl.impl_id).is_defined()) {
-          emitter.Emit(decl_inst, MissingDefinitionInImpl);
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;
+      }
+      case SemIR::InterfaceDecl::Kind: {
+        CARBON_FATAL()
+            << "TODO: Support interfaces in DiagnoseMissingDefinitions";
       }
       // TODO: handle `interface` as well, once we can test it without
       // triggering https://github.com/carbon-language/carbon-lang/issues/4071
       default: {
-        CARBON_CHECK(false);  // FIXME
+        CARBON_FATAL() << "Unexpected inst in definitions_required: "
+                       << decl_inst;
       }
     }
   }
@@ -749,7 +755,7 @@ static auto CheckParseTree(
   SemIRDiagnosticConverter converter(node_converters, &sem_ir);
   Context::DiagnosticEmitter emitter(converter, unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
-                  sem_ir, vlog_stream, unit_info.api_for_impl != nullptr);
+                  sem_ir, vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 

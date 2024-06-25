@@ -263,7 +263,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     }
   }
 
-  if (context.is_impl_file() && !is_extern) {
+  if (!is_definition && context.IsImplFile() && !is_extern) {
     context.definitions_required().push_back(class_decl_id);
   }
 

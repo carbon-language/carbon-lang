@@ -33,8 +33,7 @@ class Context {
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
-                   SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream,
-                   bool is_impl_file);
+                   SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIRLoc loc, std::string label) -> bool;
@@ -312,6 +311,12 @@ class Context {
     return check_ir_map_[sem_ir.check_ir_id().index];
   }
 
+  // True if the current file is an impl file.
+  auto IsImplFile() -> bool {
+    return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
+           nullptr;
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -407,8 +412,6 @@ class Context {
   }
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
 
-  auto is_impl_file() -> bool { return is_impl_file_; }
-
   auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
     return definitions_required_;
   }
@@ -489,12 +492,8 @@ class Context {
   // Inline 0 elements because it's expected to require heap allocation.
   llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
 
-  // True if the file being processed is an impl file.
-  bool is_impl_file_;
-
   // Declaration instructions of entities that should have definitions by the
-  // end of the current source file. Currently only supports ClassDecl,
-  // FunctionDecl, and ImplDecl.
+  // end of the current source file.
   llvm::SmallVector<SemIR::InstId> definitions_required_;
 };
 
