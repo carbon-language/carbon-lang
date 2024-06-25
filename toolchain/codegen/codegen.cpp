@@ -29,10 +29,9 @@ auto CodeGen::Make(llvm::Module& module, llvm::StringRef target_triple,
   constexpr llvm::StringLiteral Features = "";
 
   llvm::TargetOptions target_opts;
-  std::optional<llvm::Reloc::Model> reloc_model;
   CodeGen codegen(module, errors);
   codegen.target_machine_.reset(target->createTargetMachine(
-      target_triple, CPU, Features, target_opts, reloc_model));
+      target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
   return codegen;
 }
 

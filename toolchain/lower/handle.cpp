@@ -235,6 +235,23 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "No callee in function call.";
 
+    case SemIR::BuiltinFunctionKind::PrintInt: {
+      llvm::Type* char_type[] = {llvm::PointerType::get(
+          llvm::Type::getInt8Ty(context.llvm_context()), 0)};
+      auto* printf_type = llvm::FunctionType::get(
+          llvm::IntegerType::getInt32Ty(context.llvm_context()),
+          llvm::ArrayRef<llvm::Type*>(char_type, 1), /*isVarArg=*/true);
+      auto callee =
+          context.llvm_module().getOrInsertFunction("printf", printf_type);
+
+      llvm::SmallVector<llvm::Value*, 1> args = {
+          context.builder().CreateGlobalString("%d\n", "printf.int.format")};
+      args.push_back(context.GetValue(arg_ids[0]));
+      context.SetLocal(inst_id,
+                       context.builder().CreateCall(callee, args, "printf"));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeType32:

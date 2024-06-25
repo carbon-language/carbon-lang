@@ -10,6 +10,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -708,6 +709,11 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "Not a builtin function.";
+
+    case SemIR::BuiltinFunctionKind::PrintInt: {
+      // Providing a constant result would allow eliding the function call.
+      return SemIR::ConstantId::NotConstant;
+    }
 
     case SemIR::BuiltinFunctionKind::IntMakeType32: {
       return context.constant_values().Get(SemIR::InstId::BuiltinIntType);
