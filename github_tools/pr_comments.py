@@ -14,7 +14,7 @@ import hashlib
 import os
 import importlib.util
 import textwrap
-from typing import Any, Dict, Callable, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 
 # Do some extra work to support direct runs.
@@ -121,7 +121,7 @@ class _Comment:
         self.body = body
 
     @staticmethod
-    def from_raw_comment(raw_comment: Dict) -> "_Comment":
+    def from_raw_comment(raw_comment: dict) -> "_Comment":
         """Creates the comment from a raw comment dict."""
         return _Comment(
             raw_comment["author"]["login"],
@@ -168,7 +168,7 @@ class _Comment:
 class _PRComment(_Comment):
     """A comment on the top-level PR."""
 
-    def __init__(self, raw_comment: Dict):
+    def __init__(self, raw_comment: dict):
         super().__init__(
             raw_comment["author"]["login"],
             raw_comment["createdAt"],
@@ -186,7 +186,7 @@ class _PRComment(_Comment):
 class _Thread:
     """A review thread on a line of code."""
 
-    def __init__(self, parsed_args: argparse.Namespace, thread: Dict):
+    def __init__(self, parsed_args: argparse.Namespace, thread: dict):
         self.is_resolved: bool = thread["isResolved"]
 
         comments = thread["comments"]["nodes"]
@@ -261,7 +261,7 @@ class _Thread:
         return False
 
 
-def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description="Lists comments on a PR.")
     parser.add_argument(
@@ -337,8 +337,8 @@ def _query(
 
 def _accumulate_pr_comment(
     parsed_args: argparse.Namespace,
-    comments: List[_PRComment],
-    raw_comment: Dict,
+    comments: list[_PRComment],
+    raw_comment: dict,
 ) -> None:
     """Collects top-level comments and reviews."""
     # Elide reviews that have no top-level comment body.
@@ -348,8 +348,8 @@ def _accumulate_pr_comment(
 
 def _accumulate_thread(
     parsed_args: argparse.Namespace,
-    threads_by_path: Dict[str, List[_Thread]],
-    raw_thread: Dict,
+    threads_by_path: dict[str, list[_Thread]],
+    raw_thread: dict,
 ) -> None:
     """Adds threads to threads_by_path for later sorting."""
     thread = _Thread(parsed_args, raw_thread)
@@ -378,10 +378,10 @@ def _accumulate_thread(
 
 def _paginate(
     field_name: str,
-    accumulator: Callable[[argparse.Namespace, Any, Dict], None],
+    accumulator: Callable[[argparse.Namespace, Any, dict], None],
     parsed_args: argparse.Namespace,
     client: github_helpers.Client,
-    main_result: Dict,
+    main_result: dict,
     output: Any,
 ) -> None:
     """Paginates through the given field_name, accumulating results."""
@@ -395,7 +395,7 @@ def _paginate(
 
 def _fetch_comments(
     parsed_args: argparse.Namespace,
-) -> Tuple[List[_PRComment], Dict[str, List[_Thread]]]:
+) -> tuple[list[_PRComment], dict[str, list[_Thread]]]:
     """Fetches comments and review threads from GitHub."""
     # Each _query call will print a '.' for progress.
     print(
@@ -412,7 +412,7 @@ def _fetch_comments(
     pull_request = main_result["repository"]["pullRequest"]
 
     # Paginate comments, reviews, and review threads.
-    comments: List[_PRComment] = []
+    comments: list[_PRComment] = []
     _paginate(
         "comments",
         _accumulate_pr_comment,
@@ -430,7 +430,7 @@ def _fetch_comments(
         main_result,
         comments,
     )
-    threads_by_path: Dict[str, List[_Thread]] = {}
+    threads_by_path: dict[str, list[_Thread]] = {}
     _paginate(
         "reviewThreads",
         _accumulate_thread,
