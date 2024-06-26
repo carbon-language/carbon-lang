@@ -303,6 +303,10 @@ static auto BuildFunctionDecl(Context& context,
     }
   }
 
+  if (!is_definition && context.IsImplFile() && !is_extern) {
+    context.definitions_required().push_back(function_info.decl_id);
+  }
+
   return {function_decl.function_id, function_info.decl_id};
 }
 
