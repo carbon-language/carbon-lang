@@ -14,7 +14,7 @@ from pathlib import Path
 import platform
 import shutil
 import time
-from typing import Dict, Optional
+from typing import Optional
 import urllib.request
 
 _BAZEL_TOOLS_URL = (
@@ -161,7 +161,7 @@ def _get_platform_ext() -> str:
         return ""
 
 
-def _select_hash(hashes: Dict[str, str], version: str) -> str:
+def _select_hash(hashes: dict[str, str], version: str) -> str:
     # Ensure the platform version is supported and has a hash.
     if version not in hashes:
         # If this because a platform support issue, we may need to print errors.

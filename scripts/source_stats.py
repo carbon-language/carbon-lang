@@ -16,7 +16,7 @@ from multiprocessing import Pool
 import re
 import termplotlib as tpl  # type:ignore
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from dataclasses import dataclass, field, asdict
 from collections import Counter
 
@@ -167,7 +167,7 @@ def scan_file(file: Path) -> Stats:
     return stats
 
 
-def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     """Parsers command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -232,7 +232,7 @@ Fraction IDs: {stats.identifiers / tokens}
     )
 
     def print_histogram(
-        title: str, data: Dict[int, int], column_format: str
+        title: str, data: dict[int, int], column_format: str
     ) -> None:
         print()
         key_min = min(data.keys())
