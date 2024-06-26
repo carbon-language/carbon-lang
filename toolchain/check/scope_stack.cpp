@@ -172,7 +172,8 @@ auto ScopeStack::Suspend() -> SuspendedScope {
                                  remaining_compile_time_bindings);
   for (auto name_id : result.entry.names) {
     auto [index, inst_id] = lexical_lookup_.Suspend(name_id);
-    CARBON_CHECK(index != SuspendedScope::ScopeItem::CompileTimeBindingIndex);
+    CARBON_CHECK(index !=
+                 SuspendedScope::ScopeItem::IndexForCompileTimeBinding);
     result.suspended_items.push_back({.index = index, .inst_id = inst_id});
   }
 
@@ -180,7 +181,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)
                           .drop_back(remaining_compile_time_bindings)) {
     result.suspended_items.push_back(
-        {.index = SuspendedScope::ScopeItem::CompileTimeBindingIndex,
+        {.index = SuspendedScope::ScopeItem::IndexForCompileTimeBinding,
          .inst_id = inst_id});
   }
   compile_time_binding_stack_.truncate(remaining_compile_time_bindings);
@@ -193,7 +194,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
 
 auto ScopeStack::Restore(SuspendedScope scope) -> void {
   for (auto [index, inst_id] : scope.suspended_items) {
-    if (index == SuspendedScope::ScopeItem::CompileTimeBindingIndex) {
+    if (index == SuspendedScope::ScopeItem::IndexForCompileTimeBinding) {
       compile_time_binding_stack_.push_back(inst_id);
     } else {
       lexical_lookup_.Restore({.index = index, .inst_id = inst_id},

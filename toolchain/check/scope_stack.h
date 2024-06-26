@@ -220,7 +220,7 @@ class ScopeStack {
 struct ScopeStack::SuspendedScope {
   // An item that was suspended within this scope.
   struct ScopeItem {
-    static constexpr uint32_t CompileTimeBindingIndex = -1;
+    static constexpr uint32_t IndexForCompileTimeBinding = -1;
 
     // The scope index for a LexicalLookup::SuspendedResult, or
     // CompileTimeBindingIndex for a suspended compile time binding.
@@ -234,7 +234,7 @@ struct ScopeStack::SuspendedScope {
   // The list of items that were within this scope when it was suspended. The
   // inline size is an attempt to keep the size of a `SuspendedFunction`
   // reasonable while avoiding heap allocations most of the time.
-  llvm::SmallVector<ScopeItem> suspended_items;
+  llvm::SmallVector<ScopeItem, 8> suspended_items;
 };
 
 }  // namespace Carbon::Check
