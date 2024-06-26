@@ -165,17 +165,16 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   for (auto name_id : result.entry.names) {
     result.suspended_lookups.push_back(lexical_lookup_.Suspend(name_id));
   }
+
   // Move any compile-time bindings into the suspended scope.
-  {
-    auto new_size =
-        scope_stack_.empty()
-            ? 0
-            : scope_stack_.back().next_compile_time_bind_index.index;
-    result.compile_time_bindings.assign(
-        compile_time_binding_stack_.begin() + new_size,
-        compile_time_binding_stack_.end());
-    compile_time_binding_stack_.truncate(new_size);
-  }
+  auto remaining_compile_time_bindings = scope_stack_.empty()
+                      ? 0
+                      : scope_stack_.back().next_compile_time_bind_index.index;
+  result.compile_time_bindings.assign(
+      compile_time_binding_stack_.begin() + remaining_compile_time_bindings,
+      compile_time_binding_stack_.end());
+  compile_time_binding_stack_.truncate(remaining_compile_time_bindings);
+
   // This would be easy to support if we had a need, but currently we do not.
   CARBON_CHECK(!result.entry.has_returned_var)
       << "Should not suspend a scope with a returned var.";
