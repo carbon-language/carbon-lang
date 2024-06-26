@@ -162,9 +162,10 @@ auto ScopeStack::Suspend() -> SuspendedScope {
     non_lexical_scope_stack_.pop_back();
   }
 
-  auto remaining_compile_time_bindings = scope_stack_.empty()
-                      ? 0
-                      : scope_stack_.back().next_compile_time_bind_index.index;
+  auto remaining_compile_time_bindings =
+      scope_stack_.empty()
+          ? 0
+          : scope_stack_.back().next_compile_time_bind_index.index;
 
   result.suspended_items.reserve(result.entry.names.size() +
                                  compile_time_binding_stack_.size() -
@@ -201,9 +202,9 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
   }
 
   CARBON_CHECK(scope.entry.next_compile_time_bind_index.index ==
-                static_cast<int32_t>(compile_time_binding_stack_.size()))
+               static_cast<int32_t>(compile_time_binding_stack_.size()))
       << "Wrong number of entries in compile-time binding stack "
-          "when restoring, have "
+         "when restoring, have "
       << compile_time_binding_stack_.size() << ", expected "
       << scope.entry.next_compile_time_bind_index.index;
 
