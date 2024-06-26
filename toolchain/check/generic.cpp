@@ -17,8 +17,8 @@ auto StartGenericDefinition(Context& /*context*/,
   // TODO: Start tracking the contents of this definition.
 }
 
-auto FinishGenericDecl(Context& context,
-                       SemIR::InstId decl_id) -> SemIR::GenericId {
+auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
+    -> SemIR::GenericId {
   if (context.scope_stack().compile_time_binding_stack().empty()) {
     return SemIR::GenericId::Invalid;
   }

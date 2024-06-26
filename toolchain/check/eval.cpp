@@ -186,10 +186,10 @@ static auto GetConstantValue(Context& context, SemIR::TypeBlockId type_block_id,
 }
 
 // The constant value of a generic instance is the generic instance with the
-// corresponding constant values for its arguemnts.
+// corresponding constant values for its arguments.
 static auto GetConstantValue(Context& context,
-                             SemIR::GenericInstanceId instance_id,
-                             Phase* phase) -> SemIR::GenericInstanceId {
+                             SemIR::GenericInstanceId instance_id, Phase* phase)
+    -> SemIR::GenericInstanceId {
   if (!instance_id.is_valid()) {
     return SemIR::GenericInstanceId::Invalid;
   }
@@ -929,7 +929,7 @@ static auto MakeConstantForCall(Context& context, SemIRLoc loc,
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(call.callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
-    case CARBON_KIND(SemIR::GenericClassType generic_class):{
+    case CARBON_KIND(SemIR::GenericClassType generic_class): {
       auto instance_id = MakeGenericInstance(
           context, context.classes().Get(generic_class.class_id).generic_id,
           call.args_id);

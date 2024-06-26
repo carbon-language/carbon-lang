@@ -20,8 +20,8 @@ auto StartGenericDefinition(Context& /*context*/,
 // Finish processing a potentially generic declaration and produce a
 // corresponding generic object. Returns SemIR::GenericId::Invalid if this
 // declaration is not actually generic.
-auto FinishGenericDecl(Context& context,
-                       SemIR::InstId decl_id) -> SemIR::GenericId;
+auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
+    -> SemIR::GenericId;
 
 // Merge a redeclaration of an entity that might be a generic into the original
 // declaration.
@@ -29,8 +29,8 @@ auto FinishGenericRedecl(Context& context, SemIR::InstId decl_id,
                          SemIR::GenericId generic_id) -> void;
 
 // Finish processing a potentially generic definition.
-auto FinishGenericDefinition(Context& context,
-                             SemIR::GenericId generic_id) -> void;
+auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
+    -> void;
 
 }  // namespace Carbon::Check
 
