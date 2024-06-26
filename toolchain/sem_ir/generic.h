@@ -70,25 +70,7 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
   };
 
   // Context for hashing keys.
-  struct KeyContext {
-    llvm::ArrayRef<GenericInstance> instances;
-
-    auto AsKey(GenericInstanceId id) const -> Key {
-      const auto& instance = instances[id.index];
-      return {.generic_id = instance.generic_id, .args_id = instance.args_id};
-    }
-    static auto AsKey(Key key) -> Key { return key; }
-
-    template <typename KeyT>
-    auto HashKey(KeyT key, uint64_t seed) const -> HashCode {
-      return HashValue(AsKey(key), seed);
-    }
-
-    template <typename LHSKeyT, typename RHSKeyT>
-    auto KeyEq(const LHSKeyT& lhs_key, const RHSKeyT& rhs_key) const -> bool {
-      return AsKey(lhs_key) == AsKey(rhs_key);
-    }
-  };
+  struct KeyContext;
 
   ValueStore<GenericInstanceId> generic_instances_;
   Carbon::Set<GenericInstanceId, 0, KeyContext> lookup_table_;
