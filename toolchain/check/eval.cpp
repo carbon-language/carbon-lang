@@ -50,9 +50,13 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
   }
 }
 
+// Gets the earliest possible phase for a constant whose type is `type_id`. The
+// type of a constant is effectively treated as an operand of that constant when
+// determining its phase. For example, an empty struct with a symbolic type is a
+// symbolic constant, not a template constant.
 static auto GetTypePhase(Context& context, SemIR::TypeId type_id) -> Phase {
-  return context.types().GetConstantId(type_id).is_symbolic() ? Phase::Symbolic
-                                                              : Phase::Template;
+  CARBON_CHECK(type_id.is_valid());
+  return GetPhase(context.types().GetConstantId(type_id));
 }
 
 // Returns the later of two phases.
@@ -205,7 +209,11 @@ static auto RebuildAndValidateIfFieldsAreConstant(
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
-  Phase phase = GetTypePhase(context, inst.type_id());
+  // Some instruction kinds don't have a `type_id` field. For those that do, the
+  // type contributes to the phase.
+  Phase phase = inst.type_id().is_valid()
+                    ? GetTypePhase(context, inst.type_id())
+                    : Phase::Template;
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
        ...)) {
