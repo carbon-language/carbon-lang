@@ -70,7 +70,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %Class.2](%n: %T) {
+// CHECK:STDOUT: fn @F[%self: %Class.2](%n: %T)
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -99,9 +99,11 @@ class C {
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: %T);
+// CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: %T)
+// CHECK:STDOUT:   generic [file.%T.loc11_28.2: type, @GenericInterface.%Self: %GenericInterface];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: %T) {
+// CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: %T)
+// CHECK:STDOUT:   generic [@C.%T.loc19_23.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

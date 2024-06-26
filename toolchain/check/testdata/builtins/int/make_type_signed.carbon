@@ -201,7 +201,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: %.6) -> %.6 {
+// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: %.6) -> %.6
+// CHECK:STDOUT:   generic [%N: i32] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %.6 = name_ref x, %x
 // CHECK:STDOUT:   return %x.ref

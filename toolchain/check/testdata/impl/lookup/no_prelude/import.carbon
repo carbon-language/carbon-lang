@@ -85,7 +85,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
+// CHECK:STDOUT: fn @F.1()
+// CHECK:STDOUT:   generic [@HasF.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:

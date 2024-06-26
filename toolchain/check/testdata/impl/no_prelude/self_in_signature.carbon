@@ -249,7 +249,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@UseSelf.%self.loc12_8.2: %Self.1](@UseSelf.%x.loc12_20.2: %Self.1) -> %Self.1;
+// CHECK:STDOUT: fn @F.1[@UseSelf.%self.loc12_8.2: %Self.1](@UseSelf.%x.loc12_20.2: %Self.1) -> %Self.1
+// CHECK:STDOUT:   generic [@UseSelf.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.1.%self.loc20_8.2: %C](@impl.1.%x.loc20_17.2: %C) -> @impl.1.%return.var: %C {
 // CHECK:STDOUT: !entry:
@@ -267,7 +268,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   return %.loc24_48 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.4(@SelfNested.%x.loc28_8.2: %.13);
+// CHECK:STDOUT: fn @F.4(@SelfNested.%x.loc28_8.2: %.13)
+// CHECK:STDOUT:   generic [@SelfNested.%Self: %.9];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5(@impl.3.%x.loc32_8.2: %.18);
 // CHECK:STDOUT:

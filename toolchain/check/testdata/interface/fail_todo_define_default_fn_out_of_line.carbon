@@ -122,11 +122,13 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F()
+// CHECK:STDOUT:   generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Interface.%a.loc22_16.2: i32, @Interface.%b.loc22_24.2: i32) -> i32;
+// CHECK:STDOUT: fn @G(@Interface.%a.loc22_16.2: i32, @Interface.%b.loc22_24.2: i32) -> i32
+// CHECK:STDOUT:   generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:

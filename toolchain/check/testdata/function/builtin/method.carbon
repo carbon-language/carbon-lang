@@ -125,7 +125,8 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc12_8.2: %Self](@I.%other.loc12_20.2: %Self) -> %Self;
+// CHECK:STDOUT: fn @F.1[@I.%self.loc12_8.2: %Self](@I.%other.loc12_20.2: %Self) -> %Self
+// CHECK:STDOUT:   generic [@I.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

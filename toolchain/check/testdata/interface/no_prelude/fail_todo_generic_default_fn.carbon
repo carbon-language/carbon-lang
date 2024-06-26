@@ -90,9 +90,11 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@I.%self.loc22_8.2: <error>]() -> <error>;
+// CHECK:STDOUT: fn @F[@I.%self.loc22_8.2: <error>]() -> <error>
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type, @I.%Self: %I];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%self: <error>]() -> <error> {
+// CHECK:STDOUT: fn @.1[%self: <error>]() -> <error>
+// CHECK:STDOUT:   generic [file.%T.loc39_6.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: <error> = name_ref self, %self
 // CHECK:STDOUT:   return <error>

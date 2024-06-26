@@ -65,7 +65,9 @@ interface I {
 // CHECK:STDOUT:   witness = (%F.decl, %U, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@I.%T.loc12_8.2: type);
+// CHECK:STDOUT: fn @F(@I.%T.loc12_8.2: type)
+// CHECK:STDOUT:   generic [@I.%Self: %.1, @I.%T.loc12_8.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@I.%T.loc16_8.2: type);
+// CHECK:STDOUT: fn @G(@I.%T.loc16_8.2: type)
+// CHECK:STDOUT:   generic [@I.%Self: %.1, @I.%T.loc16_8.2: type];
 // CHECK:STDOUT:

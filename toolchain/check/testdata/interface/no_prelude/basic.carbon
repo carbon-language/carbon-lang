@@ -60,5 +60,6 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F()
+// CHECK:STDOUT:   generic [@ForwardDeclared.%Self: %.2];
 // CHECK:STDOUT:

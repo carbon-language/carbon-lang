@@ -164,7 +164,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() -> i32 {
+// CHECK:STDOUT: fn @F.1() -> i32
+// CHECK:STDOUT:   generic [file.%T.loc6_21.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc8
