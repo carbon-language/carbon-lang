@@ -36,11 +36,6 @@ struct Generic : public Printable<Generic> {
 // entity, this contains the corresponding non-generic value. This includes
 // values for the compile-time parameters themselves.
 struct GenericInstance : Printable<GenericInstance> {
-  // Values corresponding to a region of a generic.
-  struct Region {
-    InstBlockId symbolic_constant_values_id = InstBlockId::Invalid;
-  };
-
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
