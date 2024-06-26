@@ -218,7 +218,14 @@ class ScopeStack {
 };
 
 struct ScopeStack::SuspendedScope {
-  // An item that was suspended within this scope.
+  // An item that was suspended within this scope. This represents either a
+  // lexical lookup entry in this scope, or a compile time binding entry in this
+  // scope.
+  //
+  // TODO: For compile-time bindings, the common case is that they will both
+  // have a suspended lexical lookup entry and a suspended compile time binding
+  // entry. We should be able to store that as a single ScopeItem rather than
+  // two.
   struct ScopeItem {
     static constexpr uint32_t IndexForCompileTimeBinding = -1;
 
