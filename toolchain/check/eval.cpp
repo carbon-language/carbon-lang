@@ -50,6 +50,15 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
   }
 }
 
+// Gets the earliest possible phase for a constant whose type is `type_id`. The
+// type of a constant is effectively treated as an operand of that constant when
+// determining its phase. For example, an empty struct with a symbolic type is a
+// symbolic constant, not a template constant.
+static auto GetTypePhase(Context& context, SemIR::TypeId type_id) -> Phase {
+  CARBON_CHECK(type_id.is_valid());
+  return GetPhase(context.types().GetConstantId(type_id));
+}
+
 // Returns the later of two phases.
 static auto LatestPhase(Phase a, Phase b) -> Phase {
   return static_cast<Phase>(
@@ -200,7 +209,11 @@ static auto RebuildAndValidateIfFieldsAreConstant(
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
-  Phase phase = Phase::Template;
+  // Some instruction kinds don't have a `type_id` field. For those that do, the
+  // type contributes to the phase.
+  Phase phase = inst.type_id().is_valid()
+                    ? GetTypePhase(context, inst.type_id())
+                    : Phase::Template;
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
        ...)) {
@@ -227,7 +240,7 @@ static auto RebuildInitAsValue(Context& context, SemIR::Inst inst,
                                SemIR::InstKind value_kind)
     -> SemIR::ConstantId {
   auto init_inst = inst.As<SemIR::AnyAggregateInit>();
-  Phase phase = Phase::Template;
+  Phase phase = GetTypePhase(context, init_inst.type_id);
   auto elements_id = GetConstantValue(context, init_inst.elements_id, &phase);
   return MakeConstantResult(
       context,
@@ -1035,7 +1048,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           context,
           SemIR::StructValue{.type_id = fn_decl.type_id,
                              .elements_id = SemIR::InstBlockId::Empty},
-          Phase::Template);
+          GetTypePhase(context, fn_decl.type_id));
     }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -1046,7 +1059,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             context,
             SemIR::StructValue{.type_id = class_decl.type_id,
                                .elements_id = SemIR::InstBlockId::Empty},
-            Phase::Template);
+            GetTypePhase(context, class_decl.type_id));
       }
       // A non-generic class declaration evaluates to the class type.
       return MakeConstantResult(
@@ -1063,7 +1076,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             context,
             SemIR::StructValue{.type_id = interface_decl.type_id,
                                .elements_id = SemIR::InstBlockId::Empty},
-            Phase::Template);
+            GetTypePhase(context, interface_decl.type_id));
       }
       // A non-generic interface declaration evaluates to the interface type.
       return MakeConstantResult(

@@ -10,6 +10,7 @@
 #include "common/error.h"
 #include "common/variant_helpers.h"
 #include "common/vlog.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -656,6 +657,49 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
   }
 }
 
+// Emits a diagnostic for each declaration in context.definitions_required()
+// that doesn't have a definition.
+static auto DiagnoseMissingDefinitions(Context& context,
+                                       Context::DiagnosticEmitter& emitter)
+    -> void {
+  CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
+                    "No definition found for declaration in impl file");
+  for (SemIR::InstId decl_inst_id : context.definitions_required()) {
+    SemIR::Inst decl_inst = context.insts().Get(decl_inst_id);
+    CARBON_KIND_SWITCH(context.insts().Get(decl_inst_id)) {
+      case CARBON_KIND(SemIR::ClassDecl class_decl): {
+        if (!context.classes().Get(class_decl.class_id).is_defined()) {
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+        if (context.functions().Get(function_decl.function_id).definition_id ==
+            SemIR::InstId::Invalid) {
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        if (!context.impls().Get(impl_decl.impl_id).is_defined()) {
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
+      }
+      case SemIR::InterfaceDecl::Kind: {
+        // TODO: handle `interface` as well, once we can test it without
+        // triggering https://github.com/carbon-language/carbon-lang/issues/4071
+        CARBON_FATAL()
+            << "TODO: Support interfaces in DiagnoseMissingDefinitions";
+      }
+      default: {
+        CARBON_FATAL() << "Unexpected inst in definitions_required: "
+                       << decl_inst;
+      }
+    }
+  }
+}
+
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
@@ -735,6 +779,8 @@ static auto CheckParseTree(
   context.scope_stack().Pop();
   context.FinalizeExports();
   context.FinalizeGlobalInit();
+
+  DiagnoseMissingDefinitions(context, emitter);
 
   context.VerifyOnFinish();
 

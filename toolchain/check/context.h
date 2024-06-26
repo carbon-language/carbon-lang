@@ -311,6 +311,12 @@ class Context {
     return check_ir_map_[sem_ir.check_ir_id().index];
   }
 
+  // True if the current file is an impl file.
+  auto IsImplFile() -> bool {
+    return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
+           nullptr;
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -409,6 +415,10 @@ class Context {
   }
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
 
+  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
+    return definitions_required_;
+  }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -484,6 +494,10 @@ class Context {
   //
   // Inline 0 elements because it's expected to require heap allocation.
   llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
+
+  // Declaration instructions of entities that should have definitions by the
+  // end of the current source file.
+  llvm::SmallVector<SemIR::InstId> definitions_required_;
 };
 
 }  // namespace Carbon::Check
