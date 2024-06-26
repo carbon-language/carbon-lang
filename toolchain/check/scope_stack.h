@@ -218,14 +218,23 @@ class ScopeStack {
 };
 
 struct ScopeStack::SuspendedScope {
+  // An item that was suspended within this scope.
+  struct ScopeItem {
+    static constexpr uint32_t CompileTimeBindingIndex = -1;
+
+    // The scope index for a LexicalLookup::SuspendedResult, or
+    // CompileTimeBindingIndex for a suspended compile time binding.
+    uint32_t index;
+    // The instruction within the scope.
+    SemIR::InstId inst_id;
+  };
+
   // The suspended scope stack entry.
   ScopeStackEntry entry;
-  // The lexical lookups for the suspended entry. The inline size is an attempt
-  // to keep the size of a `SuspendedFunction` reasonable while avoiding heap
-  // allocations most of the time.
-  llvm::SmallVector<LexicalLookup::SuspendedResult, 8> suspended_lookups;
-  // The compile-time bindings that were introduced in this scope.
-  llvm::SmallVector<SemIR::InstId, 8> compile_time_bindings;
+  // The list of items that were within this scope when it was suspended. The
+  // inline size is an attempt to keep the size of a `SuspendedFunction`
+  // reasonable while avoiding heap allocations most of the time.
+  llvm::SmallVector<ScopeItem> suspended_items;
 };
 
 }  // namespace Carbon::Check

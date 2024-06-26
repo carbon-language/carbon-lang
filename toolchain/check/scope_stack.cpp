@@ -157,22 +157,31 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
 auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty()) << "No scope to suspend";
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
-                           .suspended_lookups = {},
-                           .compile_time_bindings = {}};
+                           .suspended_items = {}};
   if (result.entry.scope_id.is_valid()) {
     non_lexical_scope_stack_.pop_back();
   }
-  for (auto name_id : result.entry.names) {
-    result.suspended_lookups.push_back(lexical_lookup_.Suspend(name_id));
-  }
 
-  // Move any compile-time bindings into the suspended scope.
   auto remaining_compile_time_bindings = scope_stack_.empty()
                       ? 0
                       : scope_stack_.back().next_compile_time_bind_index.index;
-  result.compile_time_bindings.assign(
-      compile_time_binding_stack_.begin() + remaining_compile_time_bindings,
-      compile_time_binding_stack_.end());
+
+  result.suspended_items.reserve(result.entry.names.size() +
+                                 compile_time_binding_stack_.size() -
+                                 remaining_compile_time_bindings);
+  for (auto name_id : result.entry.names) {
+    auto [index, inst_id] = lexical_lookup_.Suspend(name_id);
+    CARBON_CHECK(index != SuspendedScope::ScopeItem::CompileTimeBindingIndex);
+    result.suspended_items.push_back({.index = index, .inst_id = inst_id});
+  }
+
+  // Move any compile-time bindings into the suspended scope.
+  for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)
+                          .drop_back(remaining_compile_time_bindings)) {
+    result.suspended_items.push_back(
+        {.index = SuspendedScope::ScopeItem::CompileTimeBindingIndex,
+         .inst_id = inst_id});
+  }
   compile_time_binding_stack_.truncate(remaining_compile_time_bindings);
 
   // This would be easy to support if we had a need, but currently we do not.
@@ -182,25 +191,22 @@ auto ScopeStack::Suspend() -> SuspendedScope {
 }
 
 auto ScopeStack::Restore(SuspendedScope scope) -> void {
-  if (!scope_stack_.empty()) {
-    CARBON_CHECK(scope.entry.next_compile_time_bind_index.index ==
-                 static_cast<int32_t>(compile_time_binding_stack_.size() +
-                                      scope.compile_time_bindings.size()))
-        << "Wrong number of entries in compile-time binding stack "
-           "when restoring, have "
-        << compile_time_binding_stack_.size() << " existing and "
-        << scope.compile_time_bindings.size() << " restored, expected "
-        << scope.entry.next_compile_time_bind_index.index;
+  for (auto [index, inst_id] : scope.suspended_items) {
+    if (index == SuspendedScope::ScopeItem::CompileTimeBindingIndex) {
+      compile_time_binding_stack_.push_back(inst_id);
+    } else {
+      lexical_lookup_.Restore({.index = index, .inst_id = inst_id},
+                              scope.entry.index);
+    }
   }
 
-  compile_time_binding_stack_.append(scope.compile_time_bindings);
-  for (auto entry : scope.suspended_lookups) {
-    // clang-tidy warns that the `std::move` below has no effect. While that's
-    // true, this `move` defends against the suspended lookup growing more state
-    // later.
-    // NOLINTNEXTLINE(performance-move-const-arg)
-    lexical_lookup_.Restore(std::move(entry), scope.entry.index);
-  }
+  CARBON_CHECK(scope.entry.next_compile_time_bind_index.index ==
+                static_cast<int32_t>(compile_time_binding_stack_.size()))
+      << "Wrong number of entries in compile-time binding stack "
+          "when restoring, have "
+      << compile_time_binding_stack_.size() << ", expected "
+      << scope.entry.next_compile_time_bind_index.index;
+
   if (scope.entry.scope_id.is_valid()) {
     non_lexical_scope_stack_.push_back({.scope_index = scope.entry.index,
                                         .name_scope_id = scope.entry.scope_id});
