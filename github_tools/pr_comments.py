@@ -263,7 +263,7 @@ class _Thread:
 
 def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     """Parses command-line arguments and flags."""
-    parser = argparse.ArgumentParser(description="lists comments on a PR.")
+    parser = argparse.ArgumentParser(description="Lists comments on a PR.")
     parser.add_argument(
         "pr_num",
         metavar="PR#",
