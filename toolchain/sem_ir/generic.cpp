@@ -2,11 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/generic.h"
 
 namespace Carbon::SemIR {
 
-struct GenericInstanceStore::KeyContext {
+class GenericInstanceStore::KeyContext {
+ public:
   // A lookup key for a generic instance.
   struct Key {
     GenericId generic_id;
@@ -15,10 +16,11 @@ struct GenericInstanceStore::KeyContext {
     friend auto operator==(const Key&, const Key&) -> bool = default;
   };
 
-  llvm::ArrayRef<GenericInstance> instances;
+  explicit KeyContext(llvm::ArrayRef<GenericInstance> instances)
+      : instances_(instances) {}
 
   auto AsKey(GenericInstanceId id) const -> Key {
-    const auto& instance = instances[id.index];
+    const auto& instance = instances_[id.index];
     return {.generic_id = instance.generic_id, .args_id = instance.args_id};
   }
   static auto AsKey(Key key) -> Key { return key; }
@@ -32,6 +34,9 @@ struct GenericInstanceStore::KeyContext {
   auto KeyEq(const LHSKeyT& lhs_key, const RHSKeyT& rhs_key) const -> bool {
     return AsKey(lhs_key) == AsKey(rhs_key);
   }
+
+ private:
+  llvm::ArrayRef<GenericInstance> instances_;
 };
 
 auto GenericInstanceStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
@@ -43,7 +48,7 @@ auto GenericInstanceStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
             return generic_instances_.Add(
                 {.generic_id = generic_id, .args_id = args_id});
           },
-          KeyContext{.instances = generic_instances_.array_ref()})
+          KeyContext(generic_instances_.array_ref()))
       .key();
 }
 

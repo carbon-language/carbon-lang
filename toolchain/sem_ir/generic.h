@@ -61,16 +61,8 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
   }
 
  private:
-  // A lookup key for a generic instance.
-  struct Key {
-    GenericId generic_id;
-    InstBlockId args_id;
-
-    friend auto operator==(const Key&, const Key&) -> bool = default;
-  };
-
   // Context for hashing keys.
-  struct KeyContext;
+  class KeyContext;
 
   ValueStore<GenericInstanceId> generic_instances_;
   Carbon::Set<GenericInstanceId, 0, KeyContext> lookup_table_;
