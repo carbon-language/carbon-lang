@@ -62,6 +62,7 @@ TEST(SemIRTest, YAML) {
       Pair("bind_names", Yaml::Mapping(SizeIs(1))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
+      Pair("generics", Yaml::Mapping(SizeIs(0))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
       Pair("type_blocks", Yaml::Mapping(SizeIs(Ge(1)))),
       Pair("insts",
