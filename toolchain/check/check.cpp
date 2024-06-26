@@ -687,11 +687,11 @@ static auto DiagnoseMissingDefinitions(Context& context,
         break;
       }
       case SemIR::InterfaceDecl::Kind: {
+        // TODO: handle `interface` as well, once we can test it without
+        // triggering https://github.com/carbon-language/carbon-lang/issues/4071
         CARBON_FATAL()
             << "TODO: Support interfaces in DiagnoseMissingDefinitions";
       }
-      // TODO: handle `interface` as well, once we can test it without
-      // triggering https://github.com/carbon-language/carbon-lang/issues/4071
       default: {
         CARBON_FATAL() << "Unexpected inst in definitions_required: "
                        << decl_inst;
