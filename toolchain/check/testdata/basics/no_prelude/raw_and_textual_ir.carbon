@@ -28,6 +28,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block3, return_storage: inst+13, return_slot: present, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
+// CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {constant: template inst+1, value_rep: {kind: none, type: type1}}

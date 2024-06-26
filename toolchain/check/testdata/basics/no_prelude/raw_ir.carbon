@@ -30,6 +30,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:
 // CHECK:STDOUT:     generic0:        {decl: inst+16, bindings: block7}
+// CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {constant: symbolic inst+3, value_rep: {kind: copy, type: type1}}

@@ -141,6 +141,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("generics", generics_.OutputYaml());
+          map.Add("generic_instances", generic_instances_.OutputYaml());
           map.Add("types", types_.OutputYaml());
           map.Add("type_blocks", type_blocks_.OutputYaml());
           map.Add("insts",

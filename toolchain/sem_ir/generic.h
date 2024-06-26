@@ -52,13 +52,18 @@ struct GenericInstance : Printable<GenericInstance> {
 };
 
 // Provides storage for deduplicated instances of generics.
-class GenericInstanceStore {
+class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
  public:
   // Adds a new generic instance, or gets the existing generic instance for a
   // specified generic and argument list. Returns the ID of the generic
   // instance. The argument IDs must be for instructions in the constant block,
   // and must be a canonical instruction block ID.
   auto GetOrAdd(GenericId generic_id, InstBlockId args_id) -> GenericInstanceId;
+
+  // These are to support printable structures, and are not guaranteed.
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return generic_instances_.OutputYaml();
+  }
 
  private:
   // A lookup key for a generic instance.
