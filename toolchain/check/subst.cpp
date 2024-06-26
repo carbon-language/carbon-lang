@@ -60,22 +60,20 @@ static auto PushOperand(Context& context, Worklist& worklist,
                         SemIR::IdKind kind, int32_t arg) -> void {
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
-      worklist.Push(static_cast<SemIR::InstId>(arg));
+      worklist.Push(SemIR::InstId(arg));
       break;
     case SemIR::IdKind::For<SemIR::TypeId>:
-      if (auto type_id = static_cast<SemIR::TypeId>(arg); type_id.is_valid()) {
+      if (auto type_id = SemIR::TypeId(arg); type_id.is_valid()) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
     case SemIR::IdKind::For<SemIR::InstBlockId>:
-      for (auto inst_id :
-           context.inst_blocks().Get(static_cast<SemIR::InstBlockId>(arg))) {
+      for (auto inst_id : context.inst_blocks().Get(SemIR::InstBlockId(arg))) {
         worklist.Push(inst_id);
       }
       break;
     case SemIR::IdKind::For<SemIR::TypeBlockId>:
-      for (auto type_id :
-           context.type_blocks().Get(static_cast<SemIR::TypeBlockId>(arg))) {
+      for (auto type_id : context.type_blocks().Get(SemIR::TypeBlockId(arg))) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
@@ -103,14 +101,14 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
     case SemIR::IdKind::For<SemIR::InstId>:
       return worklist.Pop().index;
     case SemIR::IdKind::For<SemIR::TypeId>: {
-      auto type_id = static_cast<SemIR::TypeId>(arg);
+      auto type_id = SemIR::TypeId(arg);
       if (!type_id.is_valid()) {
         return arg;
       }
       return context.GetTypeIdForTypeInst(worklist.Pop()).index;
     }
     case SemIR::IdKind::For<SemIR::InstBlockId>: {
-      auto old_inst_block_id = static_cast<SemIR::InstBlockId>(arg);
+      auto old_inst_block_id = SemIR::InstBlockId(arg);
       auto size = context.inst_blocks().Get(old_inst_block_id).size();
       SemIR::CopyOnWriteInstBlock new_inst_block(context.sem_ir(),
                                                  old_inst_block_id);
@@ -120,7 +118,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       return new_inst_block.GetCanonical().index;
     }
     case SemIR::IdKind::For<SemIR::TypeBlockId>: {
-      auto old_type_block_id = static_cast<SemIR::TypeBlockId>(arg);
+      auto old_type_block_id = SemIR::TypeBlockId(arg);
       auto size = context.type_blocks().Get(old_type_block_id).size();
       SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
                                                  old_type_block_id);
