@@ -7,8 +7,7 @@
 namespace Carbon::SemIR {
 
 auto GenericInstanceStore::GetOrAdd(GenericId generic_id,
-                                    InstBlockId args_id)
-    -> GenericInstanceId {
+                                    InstBlockId args_id) -> GenericInstanceId {
   return lookup_table_
       .Insert(
           Key{.generic_id = generic_id, .args_id = args_id},
