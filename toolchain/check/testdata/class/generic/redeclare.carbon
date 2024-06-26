@@ -113,7 +113,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic {
+// CHECK:STDOUT: class @Generic
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Generic.2
 // CHECK:STDOUT: }
@@ -145,7 +146,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @.1
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -191,9 +193,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B;
+// CHECK:STDOUT: class @B
+// CHECK:STDOUT:     generic [file.%N.loc4_9.2: i32];
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @.1
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type, file.%N.loc12_19.2: %T] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -239,9 +243,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
+// CHECK:STDOUT: class @C
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @.1
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type, file.%U.loc12_19.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -285,9 +291,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @D;
+// CHECK:STDOUT: class @D
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @.1
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -325,9 +333,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @E;
+// CHECK:STDOUT: class @E
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: class @.1
+// CHECK:STDOUT:     generic [file.%U.loc11_9.2: type] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }

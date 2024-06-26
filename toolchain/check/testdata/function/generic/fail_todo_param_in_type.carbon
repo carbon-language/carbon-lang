@@ -52,5 +52,5 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%N: i32, %a: <error>)
-// CHECK:STDOUT:   generic [%N: i32];
+// CHECK:STDOUT:     generic [%N: i32];
 // CHECK:STDOUT:

@@ -82,7 +82,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:   generic [@I.%Self: %.1] {
+// CHECK:STDOUT:     generic [@I.%Self: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c

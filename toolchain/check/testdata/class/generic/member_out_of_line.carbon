@@ -133,7 +133,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc5_8.1: %T = param n
@@ -148,7 +149,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n: %T) -> %T
-// CHECK:STDOUT:   generic [file.%T.loc4_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
@@ -197,7 +198,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type] {
 // CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %N.loc5_11.1: %T = param N
@@ -209,7 +211,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: class @B
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: %T] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [template = constants.%B.2]
 // CHECK:STDOUT:     %self.loc6_10.1: %B.2 = param self
@@ -225,7 +228,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: %B.2](%a: %T)
-// CHECK:STDOUT:   generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: %T] {
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: %T] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -267,7 +270,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:   generic [file.%T.loc15_15.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc15_15.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -300,7 +303,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic {
+// CHECK:STDOUT: class @Generic
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
 // CHECK:STDOUT:   %TooFew.decl: %TooFew.type = fn_decl @TooFew [template = constants.%TooFew] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -309,7 +313,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew()
-// CHECK:STDOUT:   generic [file.%T.loc4_15.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
@@ -350,7 +354,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic {
+// CHECK:STDOUT: class @Generic
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
 // CHECK:STDOUT:   %TooMany.decl: %TooMany.type = fn_decl @TooMany [template = constants.%TooMany] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -359,10 +364,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooMany()
-// CHECK:STDOUT:   generic [file.%T.loc4_15.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:   generic [file.%T.loc15_12.2: type, file.%U.loc15_22.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc15_12.2: type, file.%U.loc15_22.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -401,7 +406,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic {
+// CHECK:STDOUT: class @Generic
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
 // CHECK:STDOUT:   %WrongType.decl: %WrongType.type = fn_decl @WrongType [template = constants.%WrongType] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -410,10 +416,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongType()
-// CHECK:STDOUT:   generic [file.%T.loc4_15.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:   generic [file.%T.loc14_12.2: %.1] {
+// CHECK:STDOUT:     generic [file.%T.loc14_12.2: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

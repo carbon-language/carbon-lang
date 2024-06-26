@@ -73,7 +73,8 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT: interface @I
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Self: %I = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc22_14: %I = name_ref Self, %Self [symbolic = constants.%Self]
@@ -91,10 +92,10 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[@I.%self.loc22_8.2: <error>]() -> <error>
-// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type, @I.%Self: %I];
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type, @I.%Self: %I];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[%self: <error>]() -> <error>
-// CHECK:STDOUT:   generic [file.%T.loc39_6.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc39_6.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: <error> = name_ref self, %self
 // CHECK:STDOUT:   return <error>

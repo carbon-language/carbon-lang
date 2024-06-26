@@ -845,7 +845,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:   generic [@I.%Self: %.1];
+// CHECK:STDOUT:     generic [@I.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PossiblyF();
 // CHECK:STDOUT:
@@ -858,7 +858,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5[@J.%self.loc93_20.2: bool](@J.%b.loc93_32.2: bool) -> bool
-// CHECK:STDOUT:   generic [@J.%Self: %.6];
+// CHECK:STDOUT:     generic [@J.%Self: %.6];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.6[@impl.7.%self.loc104_10.2: bool]() -> bool;
 // CHECK:STDOUT:
@@ -877,7 +877,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc188_8.2: %.13) -> %.15
-// CHECK:STDOUT:   generic [@SelfNested.%Self: %.9];
+// CHECK:STDOUT:     generic [@SelfNested.%Self: %.9];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: %.20) -> %.21;
 // CHECK:STDOUT:

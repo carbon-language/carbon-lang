@@ -127,10 +127,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:   generic [@Basic.%Self: %.2];
+// CHECK:STDOUT:     generic [@Basic.%Self: %.2];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2()
-// CHECK:STDOUT:   generic [@ForwardDeclared.%Self: %.8];
+// CHECK:STDOUT:     generic [@ForwardDeclared.%Self: %.8];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

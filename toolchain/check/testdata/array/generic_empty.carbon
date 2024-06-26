@@ -39,7 +39,7 @@ fn G(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%T: type)
-// CHECK:STDOUT:   generic [%T: type] {
+// CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc13_16: i32 = int_literal 0 [template = constants.%.2]

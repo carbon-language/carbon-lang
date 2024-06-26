@@ -97,7 +97,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.1() -> %Self
-// CHECK:STDOUT:   generic [@DefaultConstructible.%Self: %.1];
+// CHECK:STDOUT:     generic [@DefaultConstructible.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> @impl.%return.var: %C {
 // CHECK:STDOUT: !entry:

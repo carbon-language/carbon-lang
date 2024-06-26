@@ -39,7 +39,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.ref.loc12_11: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc12_8.1: %T = param n
@@ -54,7 +55,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(@Class.%n.loc12_8.2: %T) -> %T
-// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %T = name_ref n, @Class.%n.loc12_8.2
 // CHECK:STDOUT:   return %n.ref

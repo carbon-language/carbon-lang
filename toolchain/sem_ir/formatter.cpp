@@ -139,6 +139,11 @@ class Formatter {
     out_ << "\nclass ";
     FormatClassName(id);
 
+    if (class_info.generic_id.is_valid()) {
+      out_ << "\n    ";
+      FormatGeneric(class_info.generic_id);
+    }
+
     llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (class_info.scope_id.is_valid()) {
@@ -158,6 +163,11 @@ class Formatter {
 
     out_ << "\ninterface ";
     FormatInterfaceName(id);
+
+    if (interface_info.generic_id.is_valid()) {
+      out_ << "\n    ";
+      FormatGeneric(interface_info.generic_id);
+    }
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -263,7 +273,7 @@ class Formatter {
     }
 
     if (fn.generic_id.is_valid()) {
-      out_ << "\n  ";
+      out_ << "\n    ";
       FormatGeneric(fn.generic_id);
     }
 

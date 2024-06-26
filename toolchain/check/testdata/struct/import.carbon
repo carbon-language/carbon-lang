@@ -145,7 +145,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C
+// CHECK:STDOUT:     generic [file.%S.loc8_9.2: %.11] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C.2
 // CHECK:STDOUT: }

@@ -56,9 +56,11 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C1;
+// CHECK:STDOUT: class @C1
+// CHECK:STDOUT:     generic [file.%T.loc4_10.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C2;
+// CHECK:STDOUT: class @C2
+// CHECK:STDOUT:     generic [file.%T.loc5_10.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
