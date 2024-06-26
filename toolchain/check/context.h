@@ -390,6 +390,9 @@ class Context {
   auto generics() -> ValueStore<SemIR::GenericId>& {
     return sem_ir().generics();
   }
+  auto generic_instances() -> SemIR::GenericInstanceStore& {
+    return sem_ir().generic_instances();
+  }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
   }

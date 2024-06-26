@@ -33,6 +33,7 @@ fn B() {}
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
+// CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {constant: template inst+2, value_rep: {kind: none, type: type2}}
@@ -95,6 +96,7 @@ fn B() {}
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
+// CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {constant: template inst+2, value_rep: {kind: none, type: type2}}

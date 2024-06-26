@@ -22,6 +22,7 @@ struct BindNameInfo;
 struct Class;
 struct Function;
 struct Generic;
+struct GenericInstance;
 struct ImportIR;
 struct ImportIRInst;
 struct Interface;
@@ -299,6 +300,24 @@ struct GenericId : public IdBase, public Printable<GenericId> {
 };
 
 constexpr GenericId GenericId::Invalid = GenericId(InvalidIndex);
+
+// The ID of an instance of a generic.
+struct GenericInstanceId : public IdBase, public Printable<GenericInstanceId> {
+  using ValueType = GenericInstance;
+
+  // An explicitly invalid ID. This is typically used to represent a non-generic
+  // instance.
+  static const GenericInstanceId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "genericInstance";
+    IdBase::Print(out);
+  }
+};
+
+constexpr GenericInstanceId GenericInstanceId::Invalid =
+    GenericInstanceId(InvalidIndex);
 
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
