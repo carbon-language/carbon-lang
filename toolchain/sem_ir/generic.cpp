@@ -6,17 +6,15 @@
 
 namespace Carbon::SemIR {
 
-namespace {
-// A lookup key for a generic instance.
-struct Key {
-  GenericId generic_id;
-  InstBlockId args_id;
-
-  friend auto operator==(const Key&, const Key&) -> bool = default;
-};
-}  // namespace
-
 struct GenericInstanceStore::KeyContext {
+  // A lookup key for a generic instance.
+  struct Key {
+    GenericId generic_id;
+    InstBlockId args_id;
+
+    friend auto operator==(const Key&, const Key&) -> bool = default;
+  };
+
   llvm::ArrayRef<GenericInstance> instances;
 
   auto AsKey(GenericInstanceId id) const -> Key {
@@ -40,7 +38,7 @@ auto GenericInstanceStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
     -> GenericInstanceId {
   return lookup_table_
       .Insert(
-          Key{.generic_id = generic_id, .args_id = args_id},
+          KeyContext::Key{.generic_id = generic_id, .args_id = args_id},
           [&] {
             return generic_instances_.Add(
                 {.generic_id = generic_id, .args_id = args_id});

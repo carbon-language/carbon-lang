@@ -84,6 +84,7 @@ cc_library(
         "constant.cpp",
         "file.cpp",
         "function.cpp",
+        "generic.cpp",
         "name.cpp",
     ],
     hdrs = [
