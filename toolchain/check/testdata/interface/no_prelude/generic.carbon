@@ -209,7 +209,8 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() -> %X;
+// CHECK:STDOUT: fn @F.1() -> %X
+// CHECK:STDOUT:   generic [file.%T.loc8_23.2: type, @WithAssocFn.%Self: %WithAssocFn];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> @impl.2.%return.var: %X {
 // CHECK:STDOUT: !entry:
@@ -219,9 +220,11 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   return %.loc17_16 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Receive(%T: %.5);
+// CHECK:STDOUT: fn @Receive(%T: %.5)
+// CHECK:STDOUT:   generic [%T: %.5];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Pass(%T: %.5) {
+// CHECK:STDOUT: fn @Pass(%T: %.5)
+// CHECK:STDOUT:   generic [%T: %.5] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
 // CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = constants.%T.2]
@@ -302,9 +305,11 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: %.3);
+// CHECK:STDOUT: fn @F(%T: %.3)
+// CHECK:STDOUT:   generic [%T: %.3];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%T: %.4) {
+// CHECK:STDOUT: fn @G(%T: %.4)
+// CHECK:STDOUT:   generic [%T: %.4] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: %.4 = name_ref T, %T [symbolic = constants.%T.3]

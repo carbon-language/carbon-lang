@@ -37,7 +37,8 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type, %n: %T) -> %T {
+// CHECK:STDOUT: fn @F(%T: type, %n: %T) -> %T
+// CHECK:STDOUT:   generic [%T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %n.ref: %T = name_ref n, %n

@@ -57,12 +57,14 @@ interface Modifiers {
 // CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Final() {
+// CHECK:STDOUT: fn @Final()
+// CHECK:STDOUT:   generic [@Modifiers.%Self: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Default() {
+// CHECK:STDOUT: fn @Default()
+// CHECK:STDOUT:   generic [@Modifiers.%Self: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

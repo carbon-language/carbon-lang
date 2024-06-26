@@ -67,9 +67,11 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
+// CHECK:STDOUT: fn @F.1()
+// CHECK:STDOUT:   generic [@Simple.%Self: %.1];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.2()
+// CHECK:STDOUT:   generic [file.%T.loc15_14.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

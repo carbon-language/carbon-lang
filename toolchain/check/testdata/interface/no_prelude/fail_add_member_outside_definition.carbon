@@ -94,7 +94,9 @@ interface Outer {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
+// CHECK:STDOUT: fn @.1()
+// CHECK:STDOUT:   generic [@Outer.%Self: %.3, @Inner.%Self: %.4];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2();
+// CHECK:STDOUT: fn @F.2()
+// CHECK:STDOUT:   generic [@Outer.%Self: %.3];
 // CHECK:STDOUT:

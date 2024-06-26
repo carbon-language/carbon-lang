@@ -115,11 +115,18 @@ class ScopeStack {
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
       -> SemIR::InstId;
 
-  // Adds a compile-time binding in the current scope, and returns its index.
+  // Prepares to add a compile-time binding in the current scope, and returns
+  // its index. The added binding must then be pushed using
+  // `PushCompileTimeBinding`.
   auto AddCompileTimeBinding() -> SemIR::CompileTimeBindIndex {
     auto index = scope_stack_.back().next_compile_time_bind_index;
     ++scope_stack_.back().next_compile_time_bind_index.index;
     return index;
+  }
+
+  // Pushes a compile-time binding into the current scope.
+  auto PushCompileTimeBinding(SemIR::InstId bind_id) -> void {
+    compile_time_binding_stack_.push_back(bind_id);
   }
 
   // Temporarily removes the top of the stack and its lexical lookup results.
@@ -137,6 +144,10 @@ class ScopeStack {
 
   auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
     return break_continue_stack_;
+  }
+
+  auto compile_time_binding_stack() -> llvm::SmallVector<SemIR::InstId>& {
+    return compile_time_binding_stack_;
   }
 
  private:
@@ -195,6 +206,9 @@ class ScopeStack {
   // the information in scope_stack_.
   llvm::SmallVector<NonLexicalScope> non_lexical_scope_stack_;
 
+  // A stack of the current compile time bindings.
+  llvm::SmallVector<SemIR::InstId> compile_time_binding_stack_;
+
   // The index of the next scope that will be pushed onto scope_stack_. The
   // first is always the package scope.
   ScopeIndex next_scope_index_ = ScopeIndex::Package;
@@ -204,12 +218,30 @@ class ScopeStack {
 };
 
 struct ScopeStack::SuspendedScope {
+  // An item that was suspended within this scope. This represents either a
+  // lexical lookup entry in this scope, or a compile time binding entry in this
+  // scope.
+  //
+  // TODO: For compile-time bindings, the common case is that they will both
+  // have a suspended lexical lookup entry and a suspended compile time binding
+  // entry. We should be able to store that as a single ScopeItem rather than
+  // two.
+  struct ScopeItem {
+    static constexpr uint32_t IndexForCompileTimeBinding = -1;
+
+    // The scope index for a LexicalLookup::SuspendedResult, or
+    // CompileTimeBindingIndex for a suspended compile time binding.
+    uint32_t index;
+    // The instruction within the scope.
+    SemIR::InstId inst_id;
+  };
+
   // The suspended scope stack entry.
   ScopeStackEntry entry;
-  // The lexical lookups for the suspended entry. The inline size is an attempt
-  // to keep the size of a `SuspendedFunction` reasonable while avoiding heap
-  // allocations most of the time.
-  llvm::SmallVector<LexicalLookup::SuspendedResult, 8> suspended_lookups;
+  // The list of items that were within this scope when it was suspended. The
+  // inline size is an attempt to keep the size of a `SuspendedFunction`
+  // reasonable while avoiding heap allocations most of the time.
+  llvm::SmallVector<ScopeItem, 8> suspended_items;
 };
 
 }  // namespace Carbon::Check

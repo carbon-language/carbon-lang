@@ -107,7 +107,9 @@ interface BeingDefined {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() -> <error>;
+// CHECK:STDOUT: fn @H() -> <error>
+// CHECK:STDOUT:   generic [@BeingDefined.%Self: %.4];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.2();
+// CHECK:STDOUT: fn @.2()
+// CHECK:STDOUT:   generic [@BeingDefined.%Self: %.4];
 // CHECK:STDOUT:

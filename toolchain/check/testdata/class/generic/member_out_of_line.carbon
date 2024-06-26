@@ -147,7 +147,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: %T) -> %T {
+// CHECK:STDOUT: fn @F(%n: %T) -> %T
+// CHECK:STDOUT:   generic [file.%T.loc4_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
@@ -223,7 +224,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %B.2](%a: %T) {
+// CHECK:STDOUT: fn @F[%self: %B.2](%a: %T)
+// CHECK:STDOUT:   generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: %T] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -264,7 +266,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @.1()
+// CHECK:STDOUT:   generic [file.%T.loc15_15.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -305,7 +308,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .TooFew = %TooFew.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooFew();
+// CHECK:STDOUT: fn @TooFew()
+// CHECK:STDOUT:   generic [file.%T.loc4_15.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
@@ -354,9 +358,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .TooMany = %TooMany.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooMany();
+// CHECK:STDOUT: fn @TooMany()
+// CHECK:STDOUT:   generic [file.%T.loc4_15.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @.1()
+// CHECK:STDOUT:   generic [file.%T.loc15_12.2: type, file.%U.loc15_22.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -403,9 +409,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .WrongType = %WrongType.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WrongType();
+// CHECK:STDOUT: fn @WrongType()
+// CHECK:STDOUT:   generic [file.%T.loc4_15.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @.1()
+// CHECK:STDOUT:   generic [file.%T.loc14_12.2: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

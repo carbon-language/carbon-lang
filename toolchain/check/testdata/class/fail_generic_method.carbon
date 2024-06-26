@@ -94,11 +94,13 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: %Class.2](@Class.%n.loc13_20.2: %T);
+// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: %Class.2](@Class.%n.loc13_20.2: %T)
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%self: <error>](%n: <error>) {
+// CHECK:STDOUT: fn @.1[%self: <error>](%n: <error>)
+// CHECK:STDOUT:   generic [file.%N.loc32_10.2: i32] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

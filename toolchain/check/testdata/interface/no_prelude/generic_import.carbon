@@ -62,7 +62,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F()
+// CHECK:STDOUT:   generic [file.%T.loc4_19.2: type, @AddWith.%Self: %AddWith];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

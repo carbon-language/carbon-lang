@@ -161,6 +161,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
         SemIR::LocId::Invalid, {.type_id = self_type_id,
                                 .bind_name_id = bind_name_id,
                                 .value_id = SemIR::InstId::Invalid});
+    context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
     context.name_scopes().AddRequiredName(interface_info.scope_id,
                                           SemIR::NameId::SelfType,
                                           interface_info.self_param_id);

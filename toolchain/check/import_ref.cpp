@@ -1068,6 +1068,8 @@ class ImportRefResolver {
                                                  : function.decl_id);
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
+    // TODO: Implement import for generics.
+    auto generic_id = SemIR::GenericId::Invalid;
 
     auto new_return_storage = SemIR::InstId::Invalid;
     if (function.return_storage_id.is_valid()) {
@@ -1083,6 +1085,7 @@ class ImportRefResolver {
         {.name_id = GetLocalNameId(function.name_id),
          .parent_scope_id = parent_scope_id,
          .decl_id = function_decl_id,
+         .generic_id = generic_id,
          .implicit_param_refs_id = GetLocalParamRefsId(
              function.implicit_param_refs_id, implicit_param_const_ids),
          .param_refs_id =

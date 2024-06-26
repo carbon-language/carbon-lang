@@ -262,6 +262,11 @@ class Formatter {
       out_ << "\"";
     }
 
+    if (fn.generic_id.is_valid()) {
+      out_ << "\n  ";
+      FormatGeneric(fn.generic_id);
+    }
+
     if (!fn.body_block_ids.empty()) {
       out_ << ' ';
       OpenBrace();
@@ -279,6 +284,12 @@ class Formatter {
     } else {
       out_ << ";\n";
     }
+  }
+
+  auto FormatGeneric(GenericId generic_id) -> void {
+    out_ << "generic [";
+    FormatParamList(sem_ir_.generics().Get(generic_id).bindings_id);
+    out_ << "]";
   }
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {

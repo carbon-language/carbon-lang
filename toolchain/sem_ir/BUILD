@@ -94,6 +94,7 @@ cc_library(
         "copy_on_write_block.h",
         "file.h",
         "function.h",
+        "generic.h",
         "impl.h",
         "import_ir.h",
         "interface.h",

@@ -53,7 +53,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@Class.%n.loc12_8.2: %T) -> %T {
+// CHECK:STDOUT: fn @F(@Class.%n.loc12_8.2: %T) -> %T
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %T = name_ref n, @Class.%n.loc12_8.2
 // CHECK:STDOUT:   return %n.ref

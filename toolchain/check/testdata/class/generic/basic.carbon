@@ -81,7 +81,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   .k = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: %.2]() -> %.3 {
+// CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: %.2]() -> %.3
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_19.3
 // CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref
@@ -91,7 +92,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: %Class.2]() -> %T {
+// CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: %Class.2]() -> %T
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class.2 = name_ref self, @Class.%self.loc17_15.2
 // CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]

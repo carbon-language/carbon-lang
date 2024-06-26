@@ -102,7 +102,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .k = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: %.2]() -> %.3 {
+// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: %.2]() -> %.3
+// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_15.3
 // CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref
