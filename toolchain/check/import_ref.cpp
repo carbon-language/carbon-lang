@@ -413,6 +413,18 @@ class ImportRefResolver {
     return context_.inst_blocks().AddCanonical(contents);
   }
 
+  // Gets a local version of an imported generic.
+  auto GetLocalGeneric(SemIR::GenericId generic_id) -> SemIR::GenericId {
+    if (!generic_id.is_valid()) {
+      return SemIR::GenericId::Invalid;
+    }
+
+    // TODO: Support importing generics. Note that this comes up in the prelude,
+    // so for now we fall back to producing `Invalid` and treating imported
+    // generics as non-generic.
+    return SemIR::GenericId::Invalid;
+  }
+
   // Gets a local argument list corresponding to the arguments of an imported
   // generic instance.
   auto GetLocalGenericInstanceArgs(SemIR::GenericInstanceId instance_id)
@@ -870,7 +882,7 @@ class ImportRefResolver {
     auto class_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(AddImportIRInst(import_class.decl_id), class_decl));
     // TODO: Support for importing generics.
-    auto generic_id = SemIR::GenericId::Invalid;
+    auto generic_id = GetLocalGeneric(import_class.generic_id);
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
     class_decl.class_id = context_.classes().Add({
@@ -1099,7 +1111,7 @@ class ImportRefResolver {
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
     // TODO: Implement import for generics.
-    auto generic_id = SemIR::GenericId::Invalid;
+    auto generic_id = GetLocalGeneric(function.generic_id);
 
     auto new_return_storage = SemIR::InstId::Invalid;
     if (function.return_storage_id.is_valid()) {
@@ -1211,7 +1223,7 @@ class ImportRefResolver {
             AddImportIRInst(import_interface.decl_id), interface_decl));
 
     // TODO: Support for importing generics.
-    auto generic_id = SemIR::GenericId::Invalid;
+    auto generic_id = GetLocalGeneric(import_interface.generic_id);
     // Start with an incomplete interface.
     interface_decl.interface_id = context_.interfaces().Add({
         .name_id = GetLocalNameId(import_interface.name_id),
