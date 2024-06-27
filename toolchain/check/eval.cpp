@@ -194,7 +194,7 @@ static auto GetConstantValue(Context& context,
     return SemIR::GenericInstanceId::Invalid;
   }
 
-  auto& instance = context.generic_instances().Get(instance_id);
+  const auto& instance = context.generic_instances().Get(instance_id);
   auto args_id = GetConstantValue(context, instance.args_id, phase);
   if (!args_id.is_valid()) {
     return SemIR::GenericInstanceId::Invalid;
