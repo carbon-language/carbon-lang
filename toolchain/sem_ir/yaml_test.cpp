@@ -46,7 +46,7 @@ TEST(SemIRTest, YAML) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
-  auto type_block_id = Yaml::Scalar(MatchesRegex(R"(typeBlock\d+)"));
+  auto type_block_id = Yaml::Scalar(MatchesRegex(R"(type_block\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
   auto constant_id =
       Yaml::Scalar(MatchesRegex(R"((template|symbolic) inst(\w+|\+\d+))"));

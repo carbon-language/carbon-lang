@@ -23,7 +23,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}
 // CHECK:STDOUT:   bind_names:
-// CHECK:STDOUT:     bindName0:       {name: name1, parent_scope: name_scope<invalid>, index: compTimeBind<invalid>}
+// CHECK:STDOUT:     bind_name0:      {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block3, return_storage: inst+13, return_slot: present, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
@@ -36,20 +36,20 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     type3:           {constant: template inst+15, value_rep: {kind: none, type: type1}}
 // CHECK:STDOUT:     type4:           {constant: template inst+17, value_rep: {kind: copy, type: type4}}
 // CHECK:STDOUT:   type_blocks:
-// CHECK:STDOUT:     typeBlock0:      {}
-// CHECK:STDOUT:     typeBlock1:
+// CHECK:STDOUT:     type_block0:     {}
+// CHECK:STDOUT:     type_block1:
 // CHECK:STDOUT:       0:               type1
 // CHECK:STDOUT:       1:               type1
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     'inst+1':          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+1':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+2':          {kind: TupleLiteral, arg0: empty, type: type1}
 // CHECK:STDOUT:     'inst+3':          {kind: Converted, arg0: inst+2, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: Param, arg0: name1, type: type1}
-// CHECK:STDOUT:     'inst+5':          {kind: BindName, arg0: bindName0, arg1: inst+4, type: type1}
+// CHECK:STDOUT:     'inst+5':          {kind: BindName, arg0: bind_name0, arg1: inst+4, type: type1}
 // CHECK:STDOUT:     'inst+6':          {kind: TupleLiteral, arg0: empty, type: type1}
 // CHECK:STDOUT:     'inst+7':          {kind: TupleLiteral, arg0: empty, type: type1}
-// CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: type_block1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+9':          {kind: TupleLiteral, arg0: block4, type: type2}
 // CHECK:STDOUT:     'inst+10':         {kind: Converted, arg0: inst+6, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: Converted, arg0: inst+7, arg1: inst+1, type: typeTypeType}

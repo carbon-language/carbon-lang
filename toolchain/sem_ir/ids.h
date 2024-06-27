@@ -183,7 +183,7 @@ struct BindNameId : public IdBase, public Printable<BindNameId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "bindName";
+    out << "bind_name";
     IdBase::Print(out);
   }
 };
@@ -201,7 +201,7 @@ struct CompileTimeBindIndex : public IndexBase,
   using IndexBase::IndexBase;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "compTimeBind";
+    out << "comp_time_bind";
     IndexBase::Print(out);
   }
 };
@@ -584,7 +584,7 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "typeBlock";
+    out << "type_block";
     IdBase::Print(out);
   }
 };
@@ -601,13 +601,18 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
 };
 
 // The ID of an ImportIRInst.
-struct ImportIRInstId : public IdBase, public Printable<InstId> {
+struct ImportIRInstId : public IdBase, public Printable<ImportIRInstId> {
   using ValueType = ImportIRInst;
 
   // An explicitly invalid ID.
   static const ImportIRInstId Invalid;
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "import_ir_inst";
+    IdBase::Print(out);
+  }
 };
 
 constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
