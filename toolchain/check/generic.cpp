@@ -48,8 +48,9 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
   return instance_id;
 }
 
-auto MakeUnsubstitutedGenericInstance(
-    Context& context, SemIR::GenericId generic_id) -> SemIR::GenericInstanceId {
+auto MakeUnsubstitutedGenericInstance(Context& context,
+                                      SemIR::GenericId generic_id)
+    -> SemIR::GenericInstanceId {
   // TODO: Remove this once we import generics properly.
   if (!generic_id.is_valid()) {
     return SemIR::GenericInstanceId::Invalid;

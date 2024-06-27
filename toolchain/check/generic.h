@@ -43,8 +43,9 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
 
 // Builds the generic instance corresponding to the generic itself. For example,
 // for a generic `G(T:! type)`, this is `G(T)`.
-auto MakeUnsubstitutedGenericInstance(
-    Context& context, SemIR::GenericId generic_id) -> SemIR::GenericInstanceId;
+auto MakeUnsubstitutedGenericInstance(Context& context,
+                                      SemIR::GenericId generic_id)
+    -> SemIR::GenericInstanceId;
 
 }  // namespace Carbon::Check
 
