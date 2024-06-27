@@ -413,6 +413,8 @@ class ImportRefResolver {
     return context_.inst_blocks().AddCanonical(contents);
   }
 
+  // Gets a local argument list corresponding to the arguments of an imported
+  // generic instance.
   auto GetLocalGenericInstanceArgs(SemIR::GenericInstanceId instance_id)
       -> llvm::SmallVector<SemIR::InstId> {
     if (!instance_id.is_valid()) {
@@ -422,6 +424,8 @@ class ImportRefResolver {
         import_ir_.generic_instances().Get(instance_id).args_id);
   }
 
+  // Gets a local generic instance whose arguments were already imported by
+  // GetLocalGenericInstanceArgs. Does not add any new work.
   auto GetLocalGenericInstance(SemIR::GenericInstanceId instance_id,
                                llvm::ArrayRef<SemIR::InstId> args)
       -> SemIR::GenericInstanceId {

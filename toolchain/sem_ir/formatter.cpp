@@ -120,6 +120,14 @@ class Formatter {
     Indent(-2);
   }
 
+  // Wraps the current line, prior to some text that we expect to be quite long
+  // and more readable on a separate line. This is indented two levels more than
+  // the ambient text.
+  auto WrapLine() -> void {
+    out_ << '\n';
+    Indent(4);
+  }
+
   auto FormatConstants() -> void {
     if (!sem_ir_.constants().size()) {
       return;
@@ -140,7 +148,6 @@ class Formatter {
     FormatClassName(id);
 
     if (class_info.generic_id.is_valid()) {
-      out_ << "\n    ";
       FormatGeneric(class_info.generic_id);
     }
 
@@ -165,7 +172,6 @@ class Formatter {
     FormatInterfaceName(id);
 
     if (interface_info.generic_id.is_valid()) {
-      out_ << "\n    ";
       FormatGeneric(interface_info.generic_id);
     }
 
@@ -273,7 +279,6 @@ class Formatter {
     }
 
     if (fn.generic_id.is_valid()) {
-      out_ << "\n    ";
       FormatGeneric(fn.generic_id);
     }
 
@@ -297,6 +302,7 @@ class Formatter {
   }
 
   auto FormatGeneric(GenericId generic_id) -> void {
+    WrapLine();
     out_ << "generic [";
     FormatParamList(sem_ir_.generics().Get(generic_id).bindings_id);
     out_ << "]";
