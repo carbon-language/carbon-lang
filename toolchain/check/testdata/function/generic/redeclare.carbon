@@ -134,7 +134,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type) -> %.1
-// CHECK:STDOUT:   generic [file.%T.loc4_6.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc4_6.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -185,10 +185,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:   generic [%T: type, %U: type];
+// CHECK:STDOUT:     generic [%T: type, %U: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%T: type, %U: type) -> %.3
-// CHECK:STDOUT:   generic [%T: type, %U: type] {
+// CHECK:STDOUT:     generic [%T: type, %U: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -239,10 +239,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:   generic [%T: type, %U: type];
+// CHECK:STDOUT:     generic [%T: type, %U: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%U: type, %T: type) -> %.3
-// CHECK:STDOUT:   generic [%U: type, %T: type] {
+// CHECK:STDOUT:     generic [%U: type, %T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]
@@ -293,10 +293,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:   generic [%T: type, %U: type];
+// CHECK:STDOUT:     generic [%T: type, %U: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%U: type, %T: type) -> %.3
-// CHECK:STDOUT:   generic [%U: type, %T: type] {
+// CHECK:STDOUT:     generic [%U: type, %T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]

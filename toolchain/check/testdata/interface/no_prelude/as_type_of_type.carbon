@@ -47,7 +47,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: %.1)
-// CHECK:STDOUT:   generic [%T: %.1] {
+// CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]

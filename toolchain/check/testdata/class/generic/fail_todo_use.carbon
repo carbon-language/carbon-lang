@@ -82,7 +82,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Get.decl: %Get.type = fn_decl @Get [template = constants.%Get] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [template = constants.%Class.2]
 // CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [template = constants.%.2]
@@ -103,7 +104,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: %.2]() -> %.3
-// CHECK:STDOUT:   generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_15.3
 // CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref

@@ -8,6 +8,7 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
@@ -16,7 +17,6 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
-#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -32,6 +32,8 @@ auto HandleFunctionIntroducer(Context& context,
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Fn>();
   context.decl_name_stack().PushScopeAndStartName();
+  // The function is potentially generic.
+  StartGenericDecl(context);
   return true;
 }
 
@@ -264,16 +266,10 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
-    // For a generic function, build the corresponding Generic entity.
-    if (!context.scope_stack().compile_time_binding_stack().empty()) {
-      function_info.generic_id = context.generics().Add(SemIR::Generic{
-          .decl_id = decl_id,
-          .bindings_id = context.inst_blocks().Add(
-              context.scope_stack().compile_time_binding_stack())});
-    }
-
+    function_info.generic_id = FinishGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
+    FinishGenericRedecl(context, decl_id, function_info.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
   function_decl.type_id = context.GetFunctionType(function_decl.function_id);
@@ -342,6 +338,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
   context.scope_stack().Push(decl_id);
+  StartGenericDefinition(context, function.generic_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Check the return type is complete.
@@ -426,6 +423,11 @@ auto HandleFunctionDefinition(Context& context,
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
+
+  // If this is a generic function, collect information about the definition.
+  auto& function = context.functions().Get(function_id);
+  FinishGenericDefinition(context, function.generic_id);
+
   return true;
 }
 

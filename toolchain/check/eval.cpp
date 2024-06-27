@@ -15,6 +15,14 @@
 
 namespace Carbon::Check {
 
+static auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
+                                SemIR::InstBlockId args_id)
+    -> SemIR::GenericInstanceId {
+  auto instance_id = context.generic_instances().GetOrAdd(generic_id, args_id);
+  // TODO: Perform substitution into the generic declaration if needed.
+  return instance_id;
+}
+
 namespace {
 // The evaluation phase for an expression, computed by evaluation. These are
 // ordered so that the phase of an expression is the numerically highest phase
@@ -175,6 +183,27 @@ static auto GetConstantValue(Context& context, SemIR::TypeBlockId type_block_id,
     GetConstantValue(context, type_id, phase);
   }
   return type_block_id;
+}
+
+// The constant value of a generic instance is the generic instance with the
+// corresponding constant values for its arguments.
+static auto GetConstantValue(Context& context,
+                             SemIR::GenericInstanceId instance_id, Phase* phase)
+    -> SemIR::GenericInstanceId {
+  if (!instance_id.is_valid()) {
+    return SemIR::GenericInstanceId::Invalid;
+  }
+
+  const auto& instance = context.generic_instances().Get(instance_id);
+  auto args_id = GetConstantValue(context, instance.args_id, phase);
+  if (!args_id.is_valid()) {
+    return SemIR::GenericInstanceId::Invalid;
+  }
+
+  if (args_id == instance.args_id) {
+    return instance_id;
+  }
+  return MakeGenericInstance(context, instance.generic_id, args_id);
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -900,22 +929,32 @@ static auto MakeConstantForCall(Context& context, SemIRLoc loc,
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(call.callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
-    case CARBON_KIND(SemIR::GenericClassType generic_class):
+    case CARBON_KIND(SemIR::GenericClassType generic_class): {
+      auto instance_id = MakeGenericInstance(
+          context, context.classes().Get(generic_class.class_id).generic_id,
+          call.args_id);
       return MakeConstantResult(
           context,
           SemIR::ClassType{.type_id = call.type_id,
                            .class_id = generic_class.class_id,
-                           .args_id = call.args_id},
+                           .instance_id = instance_id},
           phase);
-    case CARBON_KIND(SemIR::GenericInterfaceType generic_interface):
+    }
+    case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
+      auto instance_id = MakeGenericInstance(
+          context,
+          context.interfaces().Get(generic_interface.interface_id).generic_id,
+          call.args_id);
       return MakeConstantResult(
           context,
           SemIR::InterfaceType{.type_id = call.type_id,
                                .interface_id = generic_interface.interface_id,
-                               .args_id = call.args_id},
+                               .instance_id = instance_id},
           phase);
-    default:
+    }
+    default: {
       return SemIR::ConstantId::NotConstant;
+    }
   }
 }
 
@@ -975,10 +1014,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                                         &SemIR::BoundMethod::function_id);
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::ClassType::args_id);
+                                        &SemIR::ClassType::instance_id);
     case SemIR::InterfaceType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::InterfaceType::args_id);
+                                        &SemIR::InterfaceType::instance_id);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::InterfaceWitness::elements_id);
@@ -1065,7 +1104,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return MakeConstantResult(
           context,
           SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
-                           .class_id = class_decl.class_id},
+                           .class_id = class_decl.class_id,
+                           .instance_id = SemIR::GenericInstanceId::Invalid},
           Phase::Template);
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
@@ -1081,8 +1121,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // A non-generic interface declaration evaluates to the interface type.
       return MakeConstantResult(
           context,
-          SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
-                               .interface_id = interface_decl.interface_id},
+          SemIR::InterfaceType{
+              .type_id = SemIR::TypeId::TypeType,
+              .interface_id = interface_decl.interface_id,
+              .instance_id = SemIR::GenericInstanceId::Invalid},
           Phase::Template);
     }
 

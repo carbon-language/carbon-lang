@@ -418,7 +418,7 @@ struct ClassType {
 
   TypeId type_id;
   ClassId class_id;
-  InstBlockId args_id = InstBlockId::Invalid;
+  GenericInstanceId instance_id;
 };
 
 struct ConstType {
@@ -614,7 +614,7 @@ struct InterfaceType {
 
   TypeId type_id;
   InterfaceId interface_id;
-  InstBlockId args_id = InstBlockId::Invalid;
+  GenericInstanceId instance_id;
 };
 
 // A witness that a type implements an interface.

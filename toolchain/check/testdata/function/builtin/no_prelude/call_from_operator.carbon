@@ -84,7 +84,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op[@Add.%self.loc7_9.2: %Self](@Add.%other.loc7_21.2: %Self) -> %Self
-// CHECK:STDOUT:   generic [@Add.%Self: %.2];
+// CHECK:STDOUT:     generic [@Add.%Self: %.2];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- user.carbon
 // CHECK:STDOUT:

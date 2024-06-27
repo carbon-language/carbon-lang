@@ -124,7 +124,8 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %b: ref %Class.4 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -176,7 +177,8 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -232,7 +234,8 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -286,7 +289,8 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT: class @Class
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }

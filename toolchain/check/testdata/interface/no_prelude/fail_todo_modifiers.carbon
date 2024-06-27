@@ -58,13 +58,13 @@ interface Modifiers {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Final()
-// CHECK:STDOUT:   generic [@Modifiers.%Self: %.1] {
+// CHECK:STDOUT:     generic [@Modifiers.%Self: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Default()
-// CHECK:STDOUT:   generic [@Modifiers.%Self: %.1] {
+// CHECK:STDOUT:     generic [@Modifiers.%Self: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

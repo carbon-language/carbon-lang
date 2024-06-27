@@ -120,6 +120,14 @@ class Formatter {
     Indent(-2);
   }
 
+  // Wraps the current line, prior to some text that we expect to be quite long
+  // and more readable on a separate line. This is indented two levels more than
+  // the ambient text.
+  auto WrapLine() -> void {
+    out_ << '\n';
+    Indent(4);
+  }
+
   auto FormatConstants() -> void {
     if (!sem_ir_.constants().size()) {
       return;
@@ -138,6 +146,10 @@ class Formatter {
 
     out_ << "\nclass ";
     FormatClassName(id);
+
+    if (class_info.generic_id.is_valid()) {
+      FormatGeneric(class_info.generic_id);
+    }
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -158,6 +170,10 @@ class Formatter {
 
     out_ << "\ninterface ";
     FormatInterfaceName(id);
+
+    if (interface_info.generic_id.is_valid()) {
+      FormatGeneric(interface_info.generic_id);
+    }
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -263,7 +279,6 @@ class Formatter {
     }
 
     if (fn.generic_id.is_valid()) {
-      out_ << "\n  ";
       FormatGeneric(fn.generic_id);
     }
 
@@ -287,6 +302,7 @@ class Formatter {
   }
 
   auto FormatGeneric(GenericId generic_id) -> void {
+    WrapLine();
     out_ << "generic [";
     FormatParamList(sem_ir_.generics().Get(generic_id).bindings_id);
     out_ << "]";
@@ -621,8 +637,8 @@ class Formatter {
   }
 
   auto FormatInstructionRHS(ClassType inst) -> void {
-    if (inst.args_id.is_valid()) {
-      FormatArgs(inst.class_id, inst.args_id);
+    if (inst.instance_id.is_valid()) {
+      FormatArgs(inst.class_id, inst.instance_id);
     } else {
       FormatArgs(inst.class_id);
     }
@@ -639,8 +655,8 @@ class Formatter {
   }
 
   auto FormatInstructionRHS(InterfaceType inst) -> void {
-    if (inst.args_id.is_valid()) {
-      FormatArgs(inst.interface_id, inst.args_id);
+    if (inst.instance_id.is_valid()) {
+      FormatArgs(inst.interface_id, inst.instance_id);
     } else {
       FormatArgs(inst.interface_id);
     }
@@ -774,6 +790,11 @@ class Formatter {
       FormatArg(inst_id);
     }
     out_ << ')';
+  }
+
+  auto FormatArg(GenericInstanceId id) -> void {
+    const auto& instance = sem_ir_.generic_instances().Get(id);
+    FormatArg(instance.args_id);
   }
 
   auto FormatArg(RealId id) -> void {

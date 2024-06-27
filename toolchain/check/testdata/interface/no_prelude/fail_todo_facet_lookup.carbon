@@ -78,10 +78,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:   generic [@Interface.%Self: %.1];
+// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallStatic(%T: %.1)
-// CHECK:STDOUT:   generic [%T: %.1] {
+// CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
@@ -89,7 +89,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFacet(%T: %.1, %x: %T)
-// CHECK:STDOUT:   generic [%T: %.1] {
+// CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
 // CHECK:STDOUT:   return
