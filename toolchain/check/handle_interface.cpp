@@ -155,7 +155,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
     SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
     if (interface_info.is_generic()) {
       auto instance_id =
-          MakeUnsubstitutedGenericInstance(context, interface_info.generic_id);
+          MakeGenericSelfInstance(context, interface_info.generic_id);
       self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
