@@ -40,4 +40,12 @@ auto FinishGenericDefinition(Context& /*context*/,
   // TODO: Track contents of this generic definition.
 }
 
+auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
+                         SemIR::InstBlockId args_id)
+    -> SemIR::GenericInstanceId {
+  auto instance_id = context.generic_instances().GetOrAdd(generic_id, args_id);
+  // TODO: Perform substitution into the generic declaration if needed.
+  return instance_id;
+}
+
 }  // namespace Carbon::Check

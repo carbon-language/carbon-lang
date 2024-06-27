@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
@@ -14,14 +15,6 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
-
-static auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
-                                SemIR::InstBlockId args_id)
-    -> SemIR::GenericInstanceId {
-  auto instance_id = context.generic_instances().GetOrAdd(generic_id, args_id);
-  // TODO: Perform substitution into the generic declaration if needed.
-  return instance_id;
-}
 
 namespace {
 // The evaluation phase for an expression, computed by evaluation. These are
