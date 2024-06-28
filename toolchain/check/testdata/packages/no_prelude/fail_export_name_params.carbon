@@ -35,10 +35,10 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
-// CHECK:STDOUT:   %C1.2: type = class_type @C1 [template]
+// CHECK:STDOUT:   %C1.2: type = class_type @C1, (%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
-// CHECK:STDOUT:   %C2.2: type = class_type @C2 [template]
+// CHECK:STDOUT:   %C2.2: type = class_type @C2, (%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -68,11 +68,11 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
-// CHECK:STDOUT:   %C1.2: type = class_type @C1 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+17> [symbolic]
+// CHECK:STDOUT:   %C1.2: type = class_type @C1, (%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
-// CHECK:STDOUT:   %C2.2: type = class_type @C2 [template]
+// CHECK:STDOUT:   %C2.2: type = class_type @C2, (%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

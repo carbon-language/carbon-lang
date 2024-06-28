@@ -5,6 +5,7 @@
 #include "toolchain/check/subst.h"
 
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -77,6 +78,13 @@ static auto PushOperand(Context& context, Worklist& worklist,
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
+    case SemIR::IdKind::For<SemIR::GenericInstanceId>:
+      if (auto instance_id = static_cast<SemIR::GenericInstanceId>(arg);
+          instance_id.is_valid()) {
+        PushOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
+                    context.generic_instances().Get(instance_id).args_id.index);
+      }
+      break;
     default:
       break;
   }
@@ -127,6 +135,19 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
                            context.GetTypeIdForTypeInst(worklist.Pop()));
       }
       return new_type_block.GetCanonical().index;
+    }
+    case SemIR::IdKind::For<SemIR::GenericInstanceId>: {
+      auto instance_id = static_cast<SemIR::GenericInstanceId>(arg);
+      if (!instance_id.is_valid()) {
+        return arg;
+      }
+      auto& instance = context.generic_instances().Get(instance_id);
+      auto args_id =
+          PopOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
+                     instance.args_id.index);
+      return MakeGenericInstance(context, instance.generic_id,
+                                 static_cast<SemIR::InstBlockId>(args_id))
+          .index;
     }
     default:
       return arg;

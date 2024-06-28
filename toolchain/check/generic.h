@@ -32,6 +32,20 @@ auto FinishGenericRedecl(Context& context, SemIR::InstId decl_id,
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     -> void;
 
+// Builds a new generic instance, or finds an existing one if this instance of
+// this generic has already been referenced. Performs substitution into the
+// declaration, but not the definition, of the generic.
+//
+// `args_id` should be a canonical instruction block referring to constants.
+auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
+                         SemIR::InstBlockId args_id)
+    -> SemIR::GenericInstanceId;
+
+// Builds the generic instance corresponding to the generic itself. For example,
+// for a generic `G(T:! type)`, this is `G(T)`.
+auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
+    -> SemIR::GenericInstanceId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

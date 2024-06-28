@@ -40,4 +40,37 @@ auto FinishGenericDefinition(Context& /*context*/,
   // TODO: Track contents of this generic definition.
 }
 
+auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
+                         SemIR::InstBlockId args_id)
+    -> SemIR::GenericInstanceId {
+  auto instance_id = context.generic_instances().GetOrAdd(generic_id, args_id);
+  // TODO: Perform substitution into the generic declaration if needed.
+  return instance_id;
+}
+
+auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
+    -> SemIR::GenericInstanceId {
+  // TODO: Remove this once we import generics properly.
+  if (!generic_id.is_valid()) {
+    return SemIR::GenericInstanceId::Invalid;
+  }
+
+  auto& generic = context.generics().Get(generic_id);
+  auto args = context.inst_blocks().Get(generic.bindings_id);
+
+  // Form a canonical argument list for the generic.
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(args.size());
+  for (auto arg_id : args) {
+    arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
+  }
+  auto args_id = context.inst_blocks().AddCanonical(arg_ids);
+
+  // Build a corresponding instance.
+  // TODO: This could be made more efficient. We don't need to perform
+  // substitution here; we know we want identity mappings for all constants and
+  // types. We could also consider not storing the mapping at all in this case.
+  return MakeGenericInstance(context, generic_id, args_id);
+}
+
 }  // namespace Carbon::Check

@@ -34,11 +34,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %Self: %AddWith = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @AddWith, (%T) [symbolic]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith, %F.type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @AddWith.%F.decl [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @AddWith, %F.type [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @AddWith.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -53,9 +54,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddWith
 // CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
-// CHECK:STDOUT:   %Self: %AddWith = bind_symbolic_name Self 1 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -64,7 +65,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: %AddWith];
+// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: %.2];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -73,16 +74,16 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %AddWith.type: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %AddWith.1: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.2: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %Self: %AddWith.2 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+13> [symbolic]
-// CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%C) [template]
+// CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%T) [symbolic]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @AddWith, (%C) [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.1) [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -90,18 +91,18 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %import_ref.1
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith.1]
+// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+10, loaded [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_18 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_18, %.loc7_20.1 [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+11, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_18 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_18, %.loc7_20.1 [template = constants.%.4]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, %import_ref.1 [template = constants.%AddWith.1]
+// CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, %import_ref.1 [template = constants.%AddWith]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc7_18: init type = call %AddWith.ref(%C.ref.loc7_19) [template = constants.%.3]
+// CHECK:STDOUT:     %.loc7_18: init type = call %AddWith.ref(%C.ref.loc7_19) [template = constants.%.4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,9 +113,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.3 {
+// CHECK:STDOUT: impl @impl: %C as %.4 {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
