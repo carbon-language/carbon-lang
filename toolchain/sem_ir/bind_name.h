@@ -11,7 +11,7 @@
 
 namespace Carbon::SemIR {
 
-struct BindNameInfo : public Printable<BindNameInfo> {
+struct ScopedName : public Printable<ScopedName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index << "}";
@@ -25,49 +25,48 @@ struct BindNameInfo : public Printable<BindNameInfo> {
   CompileTimeBindIndex bind_index;
 };
 
-// Hashing for BindNameInfo. See common/hashing.h.
-inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
+// Hashing for BindScopedName. See common/hashing.h.
+inline auto CarbonHashValue(const ScopedName& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.Hash(value);
   return static_cast<HashCode>(hasher);
 }
 
-// DenseMapInfo for BindNameInfo.
-struct BindNameInfoDenseMapInfo {
-  static auto getEmptyKey() -> BindNameInfo {
-    return BindNameInfo{.name_id = NameId::Invalid,
-                        .parent_scope_id = NameScopeId::Invalid,
-                        .bind_index = CompileTimeBindIndex(
-                            CompileTimeBindIndex::InvalidIndex - 1)};
+// DenseMapInfo for BindScopedName.
+struct BindScopedNameDenseMapInfo {
+  static auto getEmptyKey() -> ScopedName {
+    return ScopedName{.name_id = NameId::Invalid,
+                      .parent_scope_id = NameScopeId::Invalid,
+                      .bind_index = CompileTimeBindIndex(
+                          CompileTimeBindIndex::InvalidIndex - 1)};
   }
-  static auto getTombstoneKey() -> BindNameInfo {
-    return BindNameInfo{.name_id = NameId::Invalid,
-                        .parent_scope_id = NameScopeId::Invalid,
-                        .bind_index = CompileTimeBindIndex(
-                            CompileTimeBindIndex::InvalidIndex - 2)};
+  static auto getTombstoneKey() -> ScopedName {
+    return ScopedName{.name_id = NameId::Invalid,
+                      .parent_scope_id = NameScopeId::Invalid,
+                      .bind_index = CompileTimeBindIndex(
+                          CompileTimeBindIndex::InvalidIndex - 2)};
   }
-  static auto getHashValue(const BindNameInfo& val) -> unsigned {
+  static auto getHashValue(const ScopedName& val) -> unsigned {
     return static_cast<uint64_t>(HashValue(val));
   }
-  static auto isEqual(const BindNameInfo& lhs, const BindNameInfo& rhs)
-      -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(BindNameInfo)) == 0;
+  static auto isEqual(const ScopedName& lhs, const ScopedName& rhs) -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(ScopedName)) == 0;
   }
 };
 
-// Value store for BindNameInfo. In addition to the regular ValueStore
-// functionality, this can provide optional canonical IDs for BindNameInfos.
-struct BindNameStore : public ValueStore<BindNameId> {
+// Value store for BindScopedName. In addition to the regular ValueStore
+// functionality, this can provide optional canonical IDs for BindScopedNames.
+struct ScopedNameStore : public ValueStore<ScopedNameId> {
  public:
   // Convert an ID to a canonical ID. All calls to this with equivalent
-  // `BindNameInfo`s will return the same `BindNameId`.
-  auto MakeCanonical(BindNameId id) -> BindNameId {
+  // `BindScopedName`s will return the same `BindNameId`.
+  auto MakeCanonical(ScopedNameId id) -> ScopedNameId {
     return canonical_ids_.insert({Get(id), id}).first->second;
   }
 
  private:
-  llvm::DenseMap<BindNameInfo, BindNameId, BindNameInfoDenseMapInfo>
+  llvm::DenseMap<ScopedName, ScopedNameId, BindScopedNameDenseMapInfo>
       canonical_ids_;
 };
 

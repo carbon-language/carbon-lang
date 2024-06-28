@@ -137,7 +137,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
         "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
           map.Add("import_irs_size", Yaml::OutputScalar(import_irs_.size()));
           map.Add("name_scopes", name_scopes_.OutputYaml());
-          map.Add("bind_names", bind_names_.OutputYaml());
+          map.Add("scoped_names", scoped_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("generics", generics_.OutputYaml());
@@ -272,9 +272,10 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case BindAlias::Kind:
       case BindSymbolicName::Kind:
       case ExportDecl::Kind: {
-        auto name_id = untyped_inst.As<AnyBindNameOrExportDecl>().bind_name_id;
+        auto name_id =
+            untyped_inst.As<AnyBindNameOrExportDecl>().scoped_name_id;
         out << sem_ir.names().GetFormatted(
-            sem_ir.bind_names().Get(name_id).name_id);
+            sem_ir.scoped_names().Get(name_id).name_id);
         break;
       }
       case CARBON_KIND(ClassType inst): {

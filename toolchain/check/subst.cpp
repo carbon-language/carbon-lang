@@ -215,7 +215,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
       // TODO: Consider building a hash map for substitutions. We might have a
       // lot of them.
       for (auto [bind_index, replacement_id] : substitutions) {
-        if (context.bind_names().Get(bind->bind_name_id).bind_index ==
+        if (context.scoped_names().Get(bind->scoped_name_id).bind_index ==
             bind_index) {
           // This is the binding we're replacing. Perform substitution.
           item.inst_id = context.constant_values().GetInstId(replacement_id);

@@ -70,15 +70,15 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
 
   auto export_id = context.AddInst<SemIR::ExportDecl>(
       node_id, {.type_id = import_ref->type_id,
-                .bind_name_id = import_ref->bind_name_id,
+                .scoped_name_id = import_ref->scoped_name_id,
                 .value_id = inst_id});
   context.AddExport(export_id);
 
   // Replace the ImportRef in name lookup, both for the above duplicate
   // diagnostic and so that cross-package imports can find it easily.
-  auto bind_name = context.bind_names().Get(import_ref->bind_name_id);
-  auto& parent_scope = context.name_scopes().Get(bind_name.parent_scope_id);
-  auto it = parent_scope.name_map.find(bind_name.name_id);
+  auto scoped_name = context.scoped_names().Get(import_ref->scoped_name_id);
+  auto& parent_scope = context.name_scopes().Get(scoped_name.parent_scope_id);
+  auto it = parent_scope.name_map.find(scoped_name.name_id);
   auto& scope_inst_id = parent_scope.names[it->second].inst_id;
   CARBON_CHECK(scope_inst_id == inst_id);
   scope_inst_id = export_id;

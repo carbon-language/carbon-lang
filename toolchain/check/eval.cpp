@@ -1175,7 +1175,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
       // The constant form of a symbolic binding is an idealized form of the
       // original, with no equivalent value.
-      bind.bind_name_id = context.bind_names().MakeCanonical(bind.bind_name_id);
+      bind.scoped_name_id =
+          context.scoped_names().MakeCanonical(bind.scoped_name_id);
       bind.value_id = SemIR::InstId::Invalid;
       return MakeConstantResult(context, bind, Phase::Symbolic);
     }

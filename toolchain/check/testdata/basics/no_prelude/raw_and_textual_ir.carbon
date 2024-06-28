@@ -22,7 +22,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}
-// CHECK:STDOUT:   bind_names:
+// CHECK:STDOUT:   scoped_names:
 // CHECK:STDOUT:     bindName0:       {name: name1, parent_scope: name_scope<invalid>, index: compTimeBind<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block3, return_storage: inst+13, return_slot: present, body: [block6]}

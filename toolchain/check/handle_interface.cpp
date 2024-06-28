@@ -160,13 +160,13 @@ auto HandleInterfaceDefinitionStart(Context& context,
     // We model `Self` as a symbolic binding whose type is the interface.
     // Because there is no equivalent non-symbolic value, we use `Invalid` as
     // the `value_id` on the `BindSymbolicName`.
-    auto bind_name_id = context.bind_names().Add(
+    auto scoped_name_id = context.scoped_names().Add(
         {.name_id = SemIR::NameId::SelfType,
          .parent_scope_id = interface_info.scope_id,
          .bind_index = context.scope_stack().AddCompileTimeBinding()});
     interface_info.self_param_id = context.AddInst<SemIR::BindSymbolicName>(
         SemIR::LocId::Invalid, {.type_id = self_type_id,
-                                .bind_name_id = bind_name_id,
+                                .scoped_name_id = scoped_name_id,
                                 .value_id = SemIR::InstId::Invalid});
     context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
     context.name_scopes().AddRequiredName(interface_info.scope_id,
