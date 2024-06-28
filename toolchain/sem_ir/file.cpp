@@ -135,7 +135,8 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("filename", filename_);
     map.Add(
         "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-          map.Add("import_irs_size", Yaml::OutputScalar(import_irs_.size()));
+          map.Add("import_irs", import_irs_.OutputYaml());
+          map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("bind_names", bind_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
