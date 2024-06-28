@@ -30,7 +30,8 @@ fn While() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

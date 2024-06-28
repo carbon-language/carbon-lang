@@ -491,6 +491,12 @@ class Formatter {
     }
   }
 
+  // Format ImportDecl with its name.
+  auto FormatInstructionLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << " = ";
+  }
+
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
   auto FormatInstructionLHS(InstId inst_id, ImportRefUnloaded /*inst*/)

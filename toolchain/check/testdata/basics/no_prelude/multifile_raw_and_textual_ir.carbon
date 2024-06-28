@@ -30,7 +30,7 @@ fn B() {
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {node_id: <invalid>, is_export: false}
+// CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
@@ -95,14 +95,14 @@ fn B() {
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {node_id: <invalid>, is_export: false}
-// CHECK:STDOUT:     ir1:             {node_id: 4, is_export: false}
+// CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
+// CHECK:STDOUT:     ir1:             {decl_id: inst+1, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: ir1, inst_id: inst+1}
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst+1}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+1, name0: inst+2}}
-// CHECK:STDOUT:     name_scope1:     {inst: inst+1, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   bind_names:
 // CHECK:STDOUT:     bind_name0:      {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
@@ -113,55 +113,57 @@ fn B() {
 // CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {constant: template inst+3, value_rep: {kind: none, type: type2}}
-// CHECK:STDOUT:     type2:           {constant: template inst+4, value_rep: {kind: none, type: type2}}
-// CHECK:STDOUT:     type3:           {constant: template inst+9, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:     type1:           {constant: template inst+4, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:     type2:           {constant: template inst+5, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:     type3:           {constant: template inst+10, value_rep: {kind: none, type: type2}}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     'inst+1':          {kind: Namespace, arg0: name_scope1, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     'inst+2':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
-// CHECK:STDOUT:     'inst+3':          {kind: FunctionType, arg0: function0, type: typeTypeType}
-// CHECK:STDOUT:     'inst+4':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
-// CHECK:STDOUT:     'inst+5':          {kind: StructValue, arg0: empty, type: type1}
-// CHECK:STDOUT:     'inst+6':          {kind: NameRef, arg0: name1, arg1: inst+1, type: type0}
-// CHECK:STDOUT:     'inst+7':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: bind_name0, type: type3}
-// CHECK:STDOUT:     'inst+8':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type3}
-// CHECK:STDOUT:     'inst+9':          {kind: FunctionType, arg0: function1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+10':         {kind: StructValue, arg0: empty, type: type3}
-// CHECK:STDOUT:     'inst+11':         {kind: NameRef, arg0: name1, arg1: inst+7, type: type3}
-// CHECK:STDOUT:     'inst+12':         {kind: Call, arg0: inst+11, arg1: block4, type: type2}
-// CHECK:STDOUT:     'inst+13':         {kind: Return}
+// CHECK:STDOUT:     'inst+1':          {kind: ImportDecl, arg0: name1}
+// CHECK:STDOUT:     'inst+2':          {kind: Namespace, arg0: name_scope1, arg1: inst+1, type: type0}
+// CHECK:STDOUT:     'inst+3':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
+// CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type1}
+// CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type0}
+// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: bind_name0, type: type3}
+// CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type3}
+// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type3}
+// CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type3}
+// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block4, type: type2}
+// CHECK:STDOUT:     'inst+14':         {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          template inst+0
-// CHECK:STDOUT:     'inst+1':          template inst+1
-// CHECK:STDOUT:     'inst+2':          template inst+5
-// CHECK:STDOUT:     'inst+3':          template inst+3
+// CHECK:STDOUT:     'inst+2':          template inst+2
+// CHECK:STDOUT:     'inst+3':          template inst+6
 // CHECK:STDOUT:     'inst+4':          template inst+4
 // CHECK:STDOUT:     'inst+5':          template inst+5
-// CHECK:STDOUT:     'inst+6':          template inst+1
-// CHECK:STDOUT:     'inst+7':          template inst+10
-// CHECK:STDOUT:     'inst+8':          template inst+10
-// CHECK:STDOUT:     'inst+9':          template inst+9
+// CHECK:STDOUT:     'inst+6':          template inst+6
+// CHECK:STDOUT:     'inst+7':          template inst+2
+// CHECK:STDOUT:     'inst+8':          template inst+11
+// CHECK:STDOUT:     'inst+9':          template inst+11
 // CHECK:STDOUT:     'inst+10':         template inst+10
-// CHECK:STDOUT:     'inst+11':         template inst+10
+// CHECK:STDOUT:     'inst+11':         template inst+11
+// CHECK:STDOUT:     'inst+12':         template inst+11
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       0:               inst+3
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
-// CHECK:STDOUT:       0:               inst+6
-// CHECK:STDOUT:       1:               inst+11
-// CHECK:STDOUT:       2:               inst+12
-// CHECK:STDOUT:       3:               inst+13
+// CHECK:STDOUT:       0:               inst+7
+// CHECK:STDOUT:       1:               inst+12
+// CHECK:STDOUT:       2:               inst+13
+// CHECK:STDOUT:       3:               inst+14
 // CHECK:STDOUT:     block4:          {}
 // CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT:       2:               inst+2
-// CHECK:STDOUT:       3:               inst+7
+// CHECK:STDOUT:       3:               inst+3
+// CHECK:STDOUT:       4:               inst+8
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -179,7 +181,8 @@ fn B() {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A.import = import A
+// CHECK:STDOUT:   %A: <namespace> = namespace %A.import, [template] {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %import_ref: %A.type = import_ref ir1, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }

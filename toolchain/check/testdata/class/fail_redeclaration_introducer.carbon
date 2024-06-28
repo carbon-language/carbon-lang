@@ -103,7 +103,8 @@ base class F {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl.loc4: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %A.decl.loc12: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
@@ -125,7 +126,8 @@ base class F {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %B.decl.loc4: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT: }
@@ -147,7 +149,8 @@ base class F {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
@@ -169,7 +172,8 @@ base class F {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %D.decl.loc4: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %D.decl.loc12: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
@@ -191,7 +195,8 @@ base class F {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .E = %E.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %E.decl.loc4: type = class_decl @E [template = constants.%E] {}
 // CHECK:STDOUT:   %E.decl.loc12: type = class_decl @E [template = constants.%E] {}
 // CHECK:STDOUT: }
@@ -213,7 +218,8 @@ base class F {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %F.decl.loc4: type = class_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc11: type = class_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }

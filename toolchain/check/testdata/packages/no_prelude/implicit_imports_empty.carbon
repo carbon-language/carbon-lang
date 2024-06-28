@@ -69,12 +69,16 @@ impl library "lib";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %WithImpl.import = import WithImpl
+// CHECK:STDOUT:   %<default>.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_extra.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %WithImpl.import = import WithImpl
+// CHECK:STDOUT:   %<default>.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_lib.carbon
@@ -87,6 +91,8 @@ impl library "lib";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %WithImpl.import = import WithImpl
+// CHECK:STDOUT:   %<default>.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon
@@ -105,5 +111,7 @@ impl library "lib";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

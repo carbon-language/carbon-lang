@@ -70,6 +70,8 @@ let b:! () = Other.a;
 // CHECK:STDOUT:     .a = %import_ref
 // CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %<default>.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %.1 = import_ref ir0, inst+4, loaded [symbolic = constants.%a]
 // CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
@@ -120,7 +122,8 @@ let b:! () = Other.a;
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref: %.1 = import_ref ir1, inst+4, loaded [symbolic = constants.%a]

@@ -455,6 +455,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
@@ -670,6 +671,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TemporaryStorage::Kind:
       case ValueAsRef::Kind:
         return ExprCategory::EphemeralRef;
+
+      case ImportDecl::Kind:
+        CARBON_FATAL() << "Not valid in an expression.";
     }
   }
 }

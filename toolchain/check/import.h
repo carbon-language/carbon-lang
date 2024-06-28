@@ -16,8 +16,7 @@ namespace Carbon::Check {
 // information for other packages should be handled through
 // ImportLibrariesFromOtherPackage.
 auto ImportApiFile(Context& context, SemIR::TypeId namespace_type_id,
-                   Parse::ImportDeclId node_id, const SemIR::File& api_sem_ir)
-    -> void;
+                   const SemIR::File& api_sem_ir) -> void;
 
 // Add the current package's imports to name lookup. This pulls in all names;
 // conflicts for things such as `package.a.b.c` will be flagged even though they
@@ -34,7 +33,7 @@ auto ImportLibrariesFromCurrentPackage(
 // the package failed to import correctly.
 auto ImportLibrariesFromOtherPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
-                                     Parse::ImportDeclId node_id,
+                                     SemIR::InstId import_decl_id,
                                      IdentifierId package_id,
                                      llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void;

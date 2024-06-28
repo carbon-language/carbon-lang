@@ -97,8 +97,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc4_17.1: %.2 = tuple_literal (%int.make_type_32.loc4)
 // CHECK:STDOUT:   %.loc4_17.2: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
@@ -106,15 +107,15 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc4_17.4: type = converted %.loc4_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a_ref.var: ref %.3 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref %.3 = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_19: %.2 = tuple_literal (%int.make_type_32.loc5_15)
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_25: %.5 = tuple_literal (%.loc5_19, %int.make_type_32.loc5_22)
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_29: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_37: %.6 = tuple_literal (%int.make_type_32.loc5_29, %int.make_type_32.loc5_34)
 // CHECK:STDOUT:   %.loc5_38.1: %.7 = tuple_literal (%.loc5_25, %.loc5_37)
@@ -132,8 +133,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_38.13: type = converted %.loc5_38.1, constants.%.10 [template = constants.%.10]
 // CHECK:STDOUT:   %b_ref.var: ref %.10 = var b_ref
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
@@ -228,7 +229,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.14: type = struct_type {} [template]
-// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0, <unexpected instref inst+102> [symbolic]
+// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0, <unexpected instref inst+105> [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
 // CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.16: i32 = int_literal 2 [template]
@@ -250,12 +251,15 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref %.3 = import_ref ir0, inst+16, loaded
-// CHECK:STDOUT:   %import_ref.2: ref %.9 = import_ref ir0, inst+60, loaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+108, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %import_ref.1: ref %.3 = import_ref ir0, inst+17, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %.9 = import_ref ir0, inst+61, loaded
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+109, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+126, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc4_13.1: %.2 = tuple_literal (%int.make_type_32.loc4)
 // CHECK:STDOUT:   %.loc4_13.2: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
@@ -263,15 +267,15 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc4_13.4: type = converted %.loc4_13.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
 // CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_15: %.2 = tuple_literal (%int.make_type_32.loc5_11)
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_21: %.4 = tuple_literal (%.loc5_15, %int.make_type_32.loc5_18)
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_25: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_33: %.5 = tuple_literal (%int.make_type_32.loc5_25, %int.make_type_32.loc5_30)
 // CHECK:STDOUT:   %.loc5_34.1: %.6 = tuple_literal (%.loc5_21, %.loc5_33)
@@ -289,7 +293,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_34.13: type = converted %.loc5_34.1, constants.%.9 [template = constants.%.9]
 // CHECK:STDOUT:   %b.var: ref %.9 = var b
 // CHECK:STDOUT:   %b: ref %.9 = bind_name b, %b.var
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir0, inst+111, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir0, inst+112, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc6_11: i32 = int_literal 1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc6_14: i32 = int_literal 2 [template = constants.%.16]
@@ -366,7 +370,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected instref inst+14> [symbolic]
+// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected instref inst+17> [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
@@ -389,12 +393,15 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+60, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+108, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+111, unloaded
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+109, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+126, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+112, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_18: i32 = int_literal 2 [template = constants.%.5]
@@ -431,7 +438,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected instref inst+14> [symbolic]
+// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected instref inst+17> [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
 // CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 4 [template]
@@ -456,12 +463,15 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+60, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+108, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+125, loaded [template = constants.%F]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+111, unloaded
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+109, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+126, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+112, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc7_15: i32 = int_literal 3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4 [template = constants.%.5]

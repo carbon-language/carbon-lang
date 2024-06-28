@@ -25,7 +25,8 @@ var x: {.a = 1};
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_15: %.2 = struct_literal (%.loc14_14)
 // CHECK:STDOUT:   %x.var: ref <error> = var x

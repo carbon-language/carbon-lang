@@ -97,9 +97,9 @@ auto GetCanonicalImportIRInst(Context& context, const SemIR::File* cursor_ir,
         if (cursor_ir != &context.sem_ir()) {
           // This uses AddImportIR in case it was indirectly found, which can
           // happen with two or more steps of exports.
-          ir_id = AddImportIR(context, {.node_id = Parse::NodeId::Invalid,
-                                        .sem_ir = cursor_ir,
-                                        .is_export = false});
+          ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::Invalid,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir});
         }
         return {.ir_id = ir_id, .inst_id = cursor_inst_id};
       }
@@ -303,9 +303,9 @@ class ImportRefResolver {
       cursor_ir_id = context_.GetImportIRId(*cursor_ir);
       if (!cursor_ir_id.is_valid()) {
         // TODO: Should we figure out a location to assign here?
-        cursor_ir_id = AddImportIR(context_, {.node_id = Parse::NodeId::Invalid,
-                                              .sem_ir = cursor_ir,
-                                              .is_export = false});
+        cursor_ir_id = AddImportIR(context_, {.decl_id = SemIR::InstId::Invalid,
+                                              .is_export = false,
+                                              .sem_ir = cursor_ir});
       }
       cursor_inst_id = ir_inst.inst_id;
 
@@ -1567,9 +1567,9 @@ static auto GetInstForLoad(Context& context,
         cursor_ir->import_ir_insts().Get(import_ref->import_ir_inst_id);
     cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
     import_ir_insts.push_back(
-        {.ir_id = AddImportIR(context, {.node_id = Parse::NodeId::Invalid,
-                                        .sem_ir = cursor_ir,
-                                        .is_export = false}),
+        {.ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::Invalid,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir}),
          .inst_id = import_ir_inst.inst_id});
   }
 }

@@ -62,8 +62,10 @@ import B;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %B: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %B.import = import B
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %B: <namespace> = namespace %B.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -75,8 +77,10 @@ import B;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.import = import C
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %C: <namespace> = namespace %C.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -88,8 +92,10 @@ import B;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %A.import = import A
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %A: <namespace> = namespace %A.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -101,7 +107,9 @@ import B;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_cycle_child.carbon
@@ -111,8 +119,10 @@ import B;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %B: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %B.import = import B
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %B: <namespace> = namespace %B.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

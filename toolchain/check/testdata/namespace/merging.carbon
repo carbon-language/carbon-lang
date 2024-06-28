@@ -59,7 +59,8 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
@@ -86,7 +87,8 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
@@ -128,17 +130,19 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, loaded
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+3, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = %import_ref.2
 // CHECK:STDOUT:     .B1 = %import_ref.3
 // CHECK:STDOUT:     .B2 = %import_ref.4
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: %B1.type = import_ref ir2, inst+3, loaded [template = constants.%B1]
-// CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref ir2, inst+9, loaded [template = constants.%B2]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref ir1, inst+4, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: %B1.type = import_ref ir2, inst+4, loaded [template = constants.%B1]
+// CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref ir2, inst+10, loaded [template = constants.%B2]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}

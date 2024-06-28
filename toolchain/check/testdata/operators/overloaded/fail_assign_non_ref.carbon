@@ -81,7 +81,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     .TestIncNonRef = %TestIncNonRef.decl
 // CHECK:STDOUT:     .TestAddAssignNonRef = %TestAddAssignNonRef.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+51, unloaded

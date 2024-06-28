@@ -77,10 +77,11 @@ fn Run() {
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc11
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   %Field.decl: type = class_decl @Field [template = constants.%Field] {}
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc11: type = class_decl @ForwardDeclared [template = constants.%ForwardDeclared] {}
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc13: type = class_decl @ForwardDeclared [template = constants.%ForwardDeclared] {}
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
@@ -168,21 +169,23 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+21, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+39, loaded [template = constants.%Incomplete]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+6, loaded [template = constants.%Field]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+22, loaded [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+40, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.7 = import_ref ir1, inst+17, loaded [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.9: %F.type = import_ref ir1, inst+27, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref ir1, inst+36, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+36, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.7 = import_ref ir1, inst+18, loaded [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.9: %F.type = import_ref ir1, inst+28, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref ir1, inst+37, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+37, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {

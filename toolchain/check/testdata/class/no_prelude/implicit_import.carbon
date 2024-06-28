@@ -112,6 +112,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
@@ -151,6 +153,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+2, unloaded
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
@@ -192,6 +196,8 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+2, unloaded
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {}
@@ -238,6 +244,8 @@ class B {}
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .B = %import_ref.2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+4, loaded [template = constants.%C]
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {}

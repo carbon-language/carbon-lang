@@ -35,7 +35,8 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Bool = %Bool.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [template = constants.%Bool] {
 // CHECK:STDOUT:     @Bool.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
@@ -58,8 +59,10 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir1, inst+3, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir1, inst+4, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Bool.ref: %Bool.type = name_ref Bool, %import_ref [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]

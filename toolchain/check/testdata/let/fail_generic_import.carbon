@@ -38,8 +38,9 @@ let a: T = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .T = @__global_init.%T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -66,8 +67,11 @@ let a: T = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = @__global_init.%a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+2, loaded [symbolic = constants.%T]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+3, loaded [symbolic = constants.%T]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = constants.%T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

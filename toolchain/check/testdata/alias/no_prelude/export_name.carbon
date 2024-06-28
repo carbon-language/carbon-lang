@@ -102,6 +102,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %<default>.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
@@ -125,6 +126,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .D = %import_ref.2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %<default>.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
@@ -151,8 +153,9 @@ var d: D* = &c;
 // CHECK:STDOUT:     .D = %import_ref.1
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %d.var: ref %C = var d
 // CHECK:STDOUT:   %d: ref %C = bind_name d, %d.var
@@ -183,7 +186,8 @@ var d: D* = &c;
 // CHECK:STDOUT:     .D = %import_ref
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
@@ -214,9 +218,10 @@ var d: D* = &c;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
