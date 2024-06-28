@@ -60,7 +60,7 @@ var w: () = v;
 // CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v.var: ref %.1 = var v
-// CHECK:STDOUT:   %v: ref %.1 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.1 = bind_runtime_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
@@ -93,7 +93,7 @@ var w: () = v;
 // CHECK:STDOUT:   %.loc15_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %w.var: ref %.1 = var w
-// CHECK:STDOUT:   %w: ref %.1 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %.1 = bind_runtime_name w, %w.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

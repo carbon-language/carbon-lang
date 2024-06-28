@@ -29,7 +29,7 @@ var x: ((),) = ();
 // CHECK:STDOUT:   %.loc14_12.2: type = converted %.loc14_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_12.3: type = converted %.loc14_12.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.2 = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -51,7 +51,7 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %.loc16_19.2: type = converted %int.make_type_32, %.loc16_19.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_25: type = array_type %.loc16_24, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %array_index.var: ref %.3 = var array_index
-// CHECK:STDOUT:   %array_index: ref %.3 = bind_name array_index, %array_index.var
+// CHECK:STDOUT:   %array_index: ref %.3 = bind_runtime_name array_index, %array_index.var
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }

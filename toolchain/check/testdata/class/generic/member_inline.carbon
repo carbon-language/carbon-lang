@@ -44,7 +44,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.ref.loc12_11: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc12_8.1: %T = param n
-// CHECK:STDOUT:     %n.loc12_8.2: %T = bind_name n, %n.loc12_8.1
+// CHECK:STDOUT:     %n.loc12_8.2: %T = bind_runtime_name n, %n.loc12_8.1
 // CHECK:STDOUT:     %T.ref.loc12_17: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return.var: ref %T = var <return slot>
 // CHECK:STDOUT:   }

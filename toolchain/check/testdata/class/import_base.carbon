@@ -72,12 +72,12 @@ fn Run() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc5_8.1: %Base = param self
-// CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_name self, %self.loc5_8.1
+// CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_runtime_name self, %self.loc5_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc6_13.1: %Base = param self
-// CHECK:STDOUT:     %self.loc6_13.2: %Base = bind_name self, %self.loc6_13.1
+// CHECK:STDOUT:     %self.loc6_13.2: %Base = bind_runtime_name self, %self.loc6_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -177,7 +177,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, file.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref %Child = var a
-// CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %Child = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc7_33: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc7_46: i32 = int_literal 1 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc7_47.1: %.2 = struct_literal (%.loc7_33, %.loc7_46)

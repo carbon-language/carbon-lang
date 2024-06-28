@@ -383,13 +383,13 @@ private export C;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_runtime_name nsc, %nsc.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -457,13 +457,13 @@ private export C;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir0, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir0, inst+20, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_runtime_name nsc, %nsc.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -531,13 +531,13 @@ private export C;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_runtime_name nsc, %nsc.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -668,13 +668,13 @@ private export C;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+17, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_runtime_name nsc, %nsc.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -742,13 +742,13 @@ private export C;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, %import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_runtime_name nsc, %nsc.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -848,7 +848,7 @@ private export C;
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -77,7 +77,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
 // CHECK:STDOUT:     %b.loc13_6.1: %.3 = param b
-// CHECK:STDOUT:     @G.%b: %.3 = bind_name b, %b.loc13_6.1
+// CHECK:STDOUT:     @G.%b: %.3 = bind_runtime_name b, %b.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -89,7 +89,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
 // CHECK:STDOUT:     %.loc21_27: type = array_type %.loc21_26, i32 [template = constants.%.3]
 // CHECK:STDOUT:     %b.loc21_17.1: %.3 = param b
-// CHECK:STDOUT:     @ValueBinding.%b: %.3 = bind_name b, %b.loc21_17.1
+// CHECK:STDOUT:     @ValueBinding.%b: %.3 = bind_runtime_name b, %b.loc21_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -106,7 +106,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc14_11.2: type = converted %int.make_type_32.loc14, %.loc14_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_17: type = array_type %.loc14_16, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
-// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.3 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc14_22: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_25: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_28: i32 = int_literal 3 [template = constants.%.2]
@@ -128,7 +128,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc17_14.2: type = converted %int.make_type_32.loc17, %.loc17_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc17_14.3: type = ptr_type i32 [template = constants.%.9]
 // CHECK:STDOUT:   %pa.var: ref %.9 = var pa
-// CHECK:STDOUT:   %pa: ref %.9 = bind_name pa, %pa.var
+// CHECK:STDOUT:   %pa: ref %.9 = bind_runtime_name pa, %pa.var
 // CHECK:STDOUT:   %a.ref.loc17: ref %.3 = name_ref a, %a
 // CHECK:STDOUT:   %.loc17_21: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc17_22: ref i32 = array_index %a.ref.loc17, %.loc17_21
@@ -150,7 +150,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc22_11.2: type = converted %int.make_type_32, %.loc22_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc22_17: type = array_type %.loc22_16, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
-// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.3 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc22_22: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc22_25: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc22_28: i32 = int_literal 3 [template = constants.%.2]

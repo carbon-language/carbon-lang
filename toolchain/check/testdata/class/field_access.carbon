@@ -74,7 +74,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
-// CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %Class = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %c.ref.loc18: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc18: %.2 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_4: ref i32 = class_element_access %c.ref.loc18, element0
@@ -89,7 +89,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc20_11.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
 // CHECK:STDOUT:   %.loc20_11.2: type = converted %int.make_type_32.loc20, %.loc20_11.1 [template = i32]
 // CHECK:STDOUT:   %cj.var: ref i32 = var cj
-// CHECK:STDOUT:   %cj: ref i32 = bind_name cj, %cj.var
+// CHECK:STDOUT:   %cj: ref i32 = bind_runtime_name cj, %cj.var
 // CHECK:STDOUT:   %c.ref.loc20: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc20: %.2 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_18.1: ref i32 = class_element_access %c.ref.loc20, element0
@@ -99,7 +99,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc21_11.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_11.2: type = converted %int.make_type_32.loc21, %.loc21_11.1 [template = i32]
 // CHECK:STDOUT:   %ck.var: ref i32 = var ck
-// CHECK:STDOUT:   %ck: ref i32 = bind_name ck, %ck.var
+// CHECK:STDOUT:   %ck: ref i32 = bind_runtime_name ck, %ck.var
 // CHECK:STDOUT:   %c.ref.loc21: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc21: %.2 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc21_18.1: ref i32 = class_element_access %c.ref.loc21, element1

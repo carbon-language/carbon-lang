@@ -55,7 +55,7 @@ let d: c = {};
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.2, %.loc15_13.3
 // CHECK:STDOUT:   %.loc15_14.1: ref %C = converted %.loc15_13.1, %.loc15_13.4
 // CHECK:STDOUT:   %.loc15_14.2: %C = bind_value %.loc15_14.1
-// CHECK:STDOUT:   %d: %C = bind_name d, %.loc15_14.2
+// CHECK:STDOUT:   %d: %C = bind_runtime_name d, %.loc15_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

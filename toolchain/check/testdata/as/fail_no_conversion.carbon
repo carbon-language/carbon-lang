@@ -58,7 +58,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc14_35.4: type = value_of_initializer %int.make_type_32.loc14_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_35.5: type = converted %int.make_type_32.loc14_32, %.loc14_35.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_35.6: type = converted %.loc14_35.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %n: %.3 = bind_name n, <error>
+// CHECK:STDOUT:   %n: %.3 = bind_runtime_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

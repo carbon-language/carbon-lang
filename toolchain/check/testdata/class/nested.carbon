@@ -87,7 +87,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41: type = ptr_type %Outer [template = constants.%.4]
 // CHECK:STDOUT:     %a.loc41_6.1: %.4 = param a
-// CHECK:STDOUT:     @F.2.%a: %.4 = bind_name a, %a.loc41_6.1
+// CHECK:STDOUT:     @F.2.%a: %.4 = bind_runtime_name a, %a.loc41_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,10 +139,10 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
-// CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
+// CHECK:STDOUT:   %o: ref %Outer = bind_runtime_name o, %o.var
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
-// CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref %Inner = bind_runtime_name i, %i.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -150,10 +150,10 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
-// CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
+// CHECK:STDOUT:   %o: ref %Outer = bind_runtime_name o, %o.var
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
-// CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref %Inner = bind_runtime_name i, %i.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -161,10 +161,10 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
-// CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
+// CHECK:STDOUT:   %o: ref %Outer = bind_runtime_name o, %o.var
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
-// CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref %Inner = bind_runtime_name i, %i.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,7 +178,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %pi.ref.loc42: %.8 = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
 // CHECK:STDOUT:   %.loc42_29.1: ref %.2 = class_element_access %.loc42_26, element2
 // CHECK:STDOUT:   %.loc42_29.2: %.2 = bind_value %.loc42_29.1
-// CHECK:STDOUT:   %b: %.2 = bind_name b, %.loc42_29.2
+// CHECK:STDOUT:   %b: %.2 = bind_runtime_name b, %.loc42_29.2
 // CHECK:STDOUT:   %a.ref.loc44_3: %.4 = name_ref a, %a
 // CHECK:STDOUT:   %.loc44_4.1: ref %Outer = deref %a.ref.loc44_3
 // CHECK:STDOUT:   %po.ref.loc44: %.7 = name_ref po, @Outer.%.loc36_9 [template = @Outer.%.loc36_9]

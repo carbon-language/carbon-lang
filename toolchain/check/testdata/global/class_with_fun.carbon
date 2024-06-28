@@ -42,7 +42,7 @@ var a: A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %A = bind_runtime_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

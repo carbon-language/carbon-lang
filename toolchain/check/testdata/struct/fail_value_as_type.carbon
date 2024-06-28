@@ -29,6 +29,6 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_15: %.2 = struct_literal (%.loc14_14)
 // CHECK:STDOUT:   %x.var: ref <error> = var x
-// CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref <error> = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

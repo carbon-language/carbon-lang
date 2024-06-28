@@ -36,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_11.1: %.2 = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.2 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc15_16: %.1 = tuple_literal ()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return

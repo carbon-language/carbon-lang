@@ -88,7 +88,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc12_15.1: %.2 = param self
-// CHECK:STDOUT:     %self.loc12_15.3: %.2 = bind_name self, %self.loc12_15.1
+// CHECK:STDOUT:     %self.loc12_15.3: %.2 = bind_runtime_name self, %self.loc12_15.1
 // CHECK:STDOUT:     %.loc12_10: %.2 = addr_pattern %self.loc12_15.3
 // CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc12_34: type = ptr_type %T [symbolic = constants.%.3]
@@ -126,7 +126,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc25_19.1: type = value_of_initializer %.loc25_15.3 [template = constants.%Class.3]
 // CHECK:STDOUT:   %.loc25_19.2: type = converted %.loc25_15.3, %.loc25_19.1 [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
-// CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %Class.3 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc25_29: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc25_30: %.8 = struct_literal (%.loc25_29)
 // CHECK:STDOUT:   assign %v.var, <error>

@@ -52,7 +52,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
-// CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref i32 = bind_runtime_name n, %n.var
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %n.var, %.loc12_16
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
@@ -60,7 +60,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_13.2: type = converted %int.make_type_32.loc13, %.loc13_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_13.3: type = ptr_type i32 [template = constants.%.3]
 // CHECK:STDOUT:   %p.var: ref %.3 = var p
-// CHECK:STDOUT:   %p: ref %.3 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %.3 = bind_runtime_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc13_17: %.3 = addr_of %n.ref
 // CHECK:STDOUT:   assign %p.var, %.loc13_17

@@ -67,7 +67,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc21_25.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc21_25.2: type = converted %bool.make_type, %.loc21_25.1 [template = bool]
 // CHECK:STDOUT:     %b.loc21_22.1: bool = param b
-// CHECK:STDOUT:     @EnclosingButAfter.%b: bool = bind_name b, %b.loc21_22.1
+// CHECK:STDOUT:     @EnclosingButAfter.%b: bool = bind_runtime_name b, %b.loc21_22.1
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_34.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_34.2: type = converted %int.make_type_32.loc21, %.loc21_34.1 [template = i32]
@@ -89,7 +89,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc13_27: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc13_27
 // CHECK:STDOUT:   br !if.else.loc12
@@ -103,7 +103,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc16_21.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:   %.loc16_21.2: type = converted %int.make_type_32.loc16, %.loc16_21.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
-// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref i32 = bind_runtime_name w, %w.var
 // CHECK:STDOUT:   %.loc16_27: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %w.var, %.loc16_27
 // CHECK:STDOUT:   br !if.else.loc15
@@ -125,7 +125,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_32.loc23, %.loc23_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc23_27: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc23_27
 // CHECK:STDOUT:   %.loc23_18: i32 = bind_value %v
@@ -136,7 +136,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc26_19.1: type = value_of_initializer %int.make_type_32.loc26 [template = i32]
 // CHECK:STDOUT:   %.loc26_19.2: type = converted %int.make_type_32.loc26, %.loc26_19.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
-// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref i32 = bind_runtime_name w, %w.var
 // CHECK:STDOUT:   %.loc26_25: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %w.var, %.loc26_25
 // CHECK:STDOUT:   %.loc26_16: i32 = bind_value %w

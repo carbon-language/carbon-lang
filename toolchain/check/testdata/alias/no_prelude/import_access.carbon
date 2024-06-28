@@ -92,7 +92,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %import_ref = import_ref ir0, inst+1, unloaded
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %inst: ref <error> = bind_runtime_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -116,7 +116,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %inst: ref <error> = bind_runtime_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -141,7 +141,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %inst: ref <error> = bind_runtime_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

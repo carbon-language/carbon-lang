@@ -75,7 +75,7 @@ fn Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc17: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %cv.var: ref %Class = var cv
-// CHECK:STDOUT:   %cv: ref %Class = bind_name cv, %cv.var
+// CHECK:STDOUT:   %cv: ref %Class = bind_runtime_name cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc18: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %j.ref.loc18: %.2 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_5: ref i32 = class_element_access %cv.ref.loc18, element0
@@ -89,12 +89,12 @@ fn Test() {
 // CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %cv.ref.loc20: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc20: %Class = bind_value %cv.ref.loc20
-// CHECK:STDOUT:   %c: %Class = bind_name c, %.loc20
+// CHECK:STDOUT:   %c: %Class = bind_runtime_name c, %.loc20
 // CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_11.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_11.2: type = converted %int.make_type_32.loc21, %.loc21_11.1 [template = i32]
 // CHECK:STDOUT:   %cj.var: ref i32 = var cj
-// CHECK:STDOUT:   %cj: ref i32 = bind_name cj, %cj.var
+// CHECK:STDOUT:   %cj: ref i32 = bind_runtime_name cj, %cj.var
 // CHECK:STDOUT:   %c.ref.loc21: %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc21: %.2 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc21_18.1: ref i32 = class_element_access %c.ref.loc21, element0
@@ -104,7 +104,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc22_11.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
 // CHECK:STDOUT:   %.loc22_11.2: type = converted %int.make_type_32.loc22, %.loc22_11.1 [template = i32]
 // CHECK:STDOUT:   %ck.var: ref i32 = var ck
-// CHECK:STDOUT:   %ck: ref i32 = bind_name ck, %ck.var
+// CHECK:STDOUT:   %ck: ref i32 = bind_runtime_name ck, %ck.var
 // CHECK:STDOUT:   %c.ref.loc22: %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc22: %.2 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc22_18.1: ref i32 = class_element_access %c.ref.loc22, element1

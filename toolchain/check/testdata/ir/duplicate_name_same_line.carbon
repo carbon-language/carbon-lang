@@ -44,7 +44,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %.loc11_29.1: type = value_of_initializer %int.make_type_32.loc11_29 [template = i32]
 // CHECK:STDOUT:   %.loc11_29.2: type = converted %int.make_type_32.loc11_29, %.loc11_29.1 [template = i32]
 // CHECK:STDOUT:   %n.var.loc11_26: ref i32 = var n
-// CHECK:STDOUT:   %n.loc11_26: ref i32 = bind_name n, %n.var.loc11_26
+// CHECK:STDOUT:   %n.loc11_26: ref i32 = bind_runtime_name n, %n.var.loc11_26
 // CHECK:STDOUT:   %.loc11_35: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %n.var.loc11_26, %.loc11_35
 // CHECK:STDOUT:   br !if.else.loc11_18
@@ -58,7 +58,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %.loc11_59.1: type = value_of_initializer %int.make_type_32.loc11_59 [template = i32]
 // CHECK:STDOUT:   %.loc11_59.2: type = converted %int.make_type_32.loc11_59, %.loc11_59.1 [template = i32]
 // CHECK:STDOUT:   %n.var.loc11_56: ref i32 = var n
-// CHECK:STDOUT:   %n.loc11_56: ref i32 = bind_name n, %n.var.loc11_56
+// CHECK:STDOUT:   %n.loc11_56: ref i32 = bind_runtime_name n, %n.var.loc11_56
 // CHECK:STDOUT:   %.loc11_65: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   assign %n.var.loc11_56, %.loc11_65
 // CHECK:STDOUT:   br !if.else.loc11_48

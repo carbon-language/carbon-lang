@@ -75,7 +75,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref i32 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 12 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref.loc13: ref i32 = name_ref a, %a
@@ -90,7 +90,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_19.5: type = converted %int.make_type_32.loc15_16, %.loc15_19.4 [template = i32]
 // CHECK:STDOUT:   %.loc15_19.6: type = converted %.loc15_19.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %b.var: ref %.5 = var b
-// CHECK:STDOUT:   %b: ref %.5 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.5 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %.loc15_24: i32 = int_literal 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc15_27: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc15_28.1: %.5 = tuple_literal (%.loc15_24, %.loc15_27)
@@ -119,7 +119,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc19_24.2: type = converted %int.make_type_32.loc19_24, %.loc19_24.1 [template = i32]
 // CHECK:STDOUT:   %.loc19_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.12]
 // CHECK:STDOUT:   %c.var: ref %.12 = var c
-// CHECK:STDOUT:   %c: ref %.12 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %.12 = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %.loc19_37: i32 = int_literal 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc19_45: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc19_46.1: %.12 = struct_literal (%.loc19_37, %.loc19_45)
@@ -143,7 +143,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc23_13.2: type = converted %int.make_type_32.loc23, %.loc23_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc23_13.3: type = ptr_type i32 [template = constants.%.14]
 // CHECK:STDOUT:   %p.var: ref %.14 = var p
-// CHECK:STDOUT:   %p: ref %.14 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %.14 = bind_runtime_name p, %p.var
 // CHECK:STDOUT:   %a.ref.loc23: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc23_17: %.14 = addr_of %a.ref.loc23
 // CHECK:STDOUT:   assign %p.var, %.loc23_17

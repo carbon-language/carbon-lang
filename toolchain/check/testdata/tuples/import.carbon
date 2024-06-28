@@ -105,7 +105,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc4_17.3: type = converted %int.make_type_32.loc4, %.loc4_17.2 [template = i32]
 // CHECK:STDOUT:   %.loc4_17.4: type = converted %.loc4_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a_ref.var: ref %.3 = var a_ref
-// CHECK:STDOUT:   %a_ref: ref %.3 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref %.3 = bind_runtime_name a_ref, %a_ref.var
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_19: %.2 = tuple_literal (%int.make_type_32.loc5_15)
@@ -131,7 +131,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_38.12: type = converted %.loc5_37, constants.%.9 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc5_38.13: type = converted %.loc5_38.1, constants.%.10 [template = constants.%.10]
 // CHECK:STDOUT:   %b_ref.var: ref %.10 = var b_ref
-// CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
+// CHECK:STDOUT:   %b_ref: ref %.10 = bind_runtime_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
@@ -262,7 +262,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc4_13.3: type = converted %int.make_type_32.loc4, %.loc4_13.2 [template = i32]
 // CHECK:STDOUT:   %.loc4_13.4: type = converted %.loc4_13.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
-// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.3 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_15: %.2 = tuple_literal (%int.make_type_32.loc5_11)
@@ -288,7 +288,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_34.12: type = converted %.loc5_33, constants.%.8 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc5_34.13: type = converted %.loc5_34.1, constants.%.9 [template = constants.%.9]
 // CHECK:STDOUT:   %b.var: ref %.9 = var b
-// CHECK:STDOUT:   %b: ref %.9 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.9 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir0, inst+111, unloaded
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.3 [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc6_11: i32 = int_literal 1 [template = constants.%.15]
@@ -300,7 +300,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %.loc6_9.2 [template = constants.%C.3]
 // CHECK:STDOUT:   %.loc6_16.2: type = converted %.loc6_9.2, %.loc6_16.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c.var: ref %C.3 = var c
-// CHECK:STDOUT:   %c: ref %C.3 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C.3 = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -404,7 +404,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc14_23.1: type = value_of_initializer %.loc14_13 [template = <error>]
 // CHECK:STDOUT:   %.loc14_23.2: type = converted %.loc14_13, %.loc14_23.1 [template = <error>]
 // CHECK:STDOUT:   %c_bad.var: ref <error> = var c_bad
-// CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT:   %c_bad: ref <error> = bind_runtime_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -472,7 +472,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_13.2 [template = constants.%C.3]
 // CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_13.2, %.loc7_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
-// CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT:   %c_bad: ref %C.3 = bind_runtime_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

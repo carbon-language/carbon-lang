@@ -45,10 +45,10 @@ fn F() {
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc13: type = ptr_type %T [symbolic = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref %.2 = var p
-// CHECK:STDOUT:   %p: ref %.2 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %.2 = bind_runtime_name p, %p.var
 // CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a.var: ref %T = var a
-// CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %T = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %p.ref: ref %.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc14_15: %.2 = bind_value %p.ref
 // CHECK:STDOUT:   %.loc14_14.1: ref %T = deref %.loc14_15

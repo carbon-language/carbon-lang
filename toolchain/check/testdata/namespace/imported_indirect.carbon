@@ -152,7 +152,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.loc5_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %e: ref %.1 = bind_runtime_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();

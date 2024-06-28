@@ -85,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_14.2: type = converted %int.make_type_32, %.loc14_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_20: type = array_type %.loc14_19, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %ints.var: ref %.3 = var ints
-// CHECK:STDOUT:   %ints: ref %.3 = bind_name ints, %ints.var
+// CHECK:STDOUT:   %ints: ref %.3 = bind_runtime_name ints, %ints.var
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 8 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc16: i32 = int_literal 9 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17: i32 = int_literal 8 [template = constants.%.5]
@@ -121,7 +121,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_16.3: type = converted %float.make_type, %.loc22_16.2 [template = f64]
 // CHECK:STDOUT:   %.loc22_22: type = array_type %.loc22_21, f64 [template = constants.%.16]
 // CHECK:STDOUT:   %floats.var: ref %.16 = var floats
-// CHECK:STDOUT:   %floats: ref %.16 = bind_name floats, %floats.var
+// CHECK:STDOUT:   %floats: ref %.16 = bind_runtime_name floats, %floats.var
 // CHECK:STDOUT:   %.loc23: f64 = float_literal 0.90000000000000002 [template = constants.%.18]
 // CHECK:STDOUT:   %.loc24: f64 = float_literal 8 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc25: f64 = float_literal 80 [template = constants.%.20]

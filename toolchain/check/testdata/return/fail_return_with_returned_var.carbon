@@ -101,7 +101,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc12_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_19.2: type = converted %int.make_type_32, %.loc12_19.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc12_25: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc12_25
 // CHECK:STDOUT:   %.loc20: i32 = int_literal 1 [template = constants.%.3]
@@ -111,7 +111,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %return
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %return
 // CHECK:STDOUT:   %.loc25_29: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc25_37: i32 = int_literal 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc25_38.1: %.5 = struct_literal (%.loc25_29, %.loc25_37)

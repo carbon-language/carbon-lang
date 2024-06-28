@@ -61,7 +61,7 @@ class C {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %x.loc12_8.1: %T = param x
-// CHECK:STDOUT:     %x.loc12_8.2: %T = bind_name x, %x.loc12_8.1
+// CHECK:STDOUT:     %x.loc12_8.2: %T = bind_runtime_name x, %x.loc12_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -75,7 +75,7 @@ class C {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %x.loc20_10.1: %T = param x
-// CHECK:STDOUT:     %x.loc20_10.2: %T = bind_name x, %x.loc20_10.1
+// CHECK:STDOUT:     %x.loc20_10.2: %T = bind_runtime_name x, %x.loc20_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:

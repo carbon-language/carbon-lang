@@ -35,7 +35,7 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32, %.loc14_11.1 [template = i32]
 // CHECK:STDOUT:     %n.loc14_8.1: i32 = param n
-// CHECK:STDOUT:     @Run.%n: i32 = bind_name n, %n.loc14_8.1
+// CHECK:STDOUT:     @Run.%n: i32 = bind_runtime_name n, %n.loc14_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

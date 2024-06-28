@@ -76,7 +76,7 @@ fn T.F() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
+// CHECK:STDOUT:   %T: type = bind_runtime_name T, %Class.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

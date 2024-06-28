@@ -72,7 +72,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %.loc19_11.2: type = converted %int.make_type_32.loc19, %.loc19_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc19_26: type = array_type %int.sadd, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr.var: ref %.10 = var arr
-// CHECK:STDOUT:   %arr: ref %.10 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %arr: ref %.10 = bind_runtime_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -82,12 +82,12 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc12_8.1: %Self = param self
-// CHECK:STDOUT:     %self.loc12_8.2: %Self = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %self.loc12_8.2: %Self = bind_runtime_name self, %self.loc12_8.1
 // CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %other.loc12_20.1: %Self = param other
-// CHECK:STDOUT:     %other.loc12_20.2: %Self = bind_name other, %other.loc12_20.1
+// CHECK:STDOUT:     %other.loc12_20.2: %Self = bind_runtime_name other, %other.loc12_20.1
 // CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = constants.%Self]
@@ -107,12 +107,12 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %.loc16_14.1: type = value_of_initializer %int.make_type_32.loc16_14 [template = i32]
 // CHECK:STDOUT:     %.loc16_14.2: type = converted %int.make_type_32.loc16_14, %.loc16_14.1 [template = i32]
 // CHECK:STDOUT:     %self.loc16_8.1: i32 = param self
-// CHECK:STDOUT:     %self.loc16_8.2: i32 = bind_name self, %self.loc16_8.1
+// CHECK:STDOUT:     %self.loc16_8.2: i32 = bind_runtime_name self, %self.loc16_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc16_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_26.1: type = value_of_initializer %int.make_type_32.loc16_26 [template = i32]
 // CHECK:STDOUT:     %.loc16_26.2: type = converted %int.make_type_32.loc16_26, %.loc16_26.1 [template = i32]
 // CHECK:STDOUT:     %other.loc16_19.1: i32 = param other
-// CHECK:STDOUT:     %other.loc16_19.2: i32 = bind_name other, %other.loc16_19.1
+// CHECK:STDOUT:     %other.loc16_19.2: i32 = bind_runtime_name other, %other.loc16_19.1
 // CHECK:STDOUT:     %int.make_type_32.loc16_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_34.1: type = value_of_initializer %int.make_type_32.loc16_34 [template = i32]
 // CHECK:STDOUT:     %.loc16_34.2: type = converted %int.make_type_32.loc16_34, %.loc16_34.1 [template = i32]

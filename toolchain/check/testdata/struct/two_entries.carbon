@@ -64,7 +64,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc14_22.2: type = converted %int.make_type_32.loc14_22, %.loc14_22.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_25: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.2 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc15_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %int.make_type_32.loc15_13 [template = i32]
@@ -75,7 +75,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc15_22.2: type = converted %int.make_type_32.loc15_22, %.loc15_22.1 [template = i32]
 // CHECK:STDOUT:   %.loc15_25: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %y.var: ref %.2 = var y
-// CHECK:STDOUT:   %y: ref %.2 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %.2 = bind_runtime_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -87,9 +87,9 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc11_44: %.2 = struct_literal (%.loc11_35, %.loc11_43)
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc11_35, %.loc11_43) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc11_45: %.2 = converted %.loc11_44, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %v: %.2 = bind_name v, %.loc11_45
+// CHECK:STDOUT:   %v: %.2 = bind_runtime_name v, %.loc11_45
 // CHECK:STDOUT:   %v.ref: %.2 = name_ref v, %v
-// CHECK:STDOUT:   %w: %.2 = bind_name w, %v.ref
+// CHECK:STDOUT:   %w: %.2 = bind_runtime_name w, %v.ref
 // CHECK:STDOUT:   %.loc14_35: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_43: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_44.1: %.2 = struct_literal (%.loc14_35, %.loc14_43)

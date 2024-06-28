@@ -59,7 +59,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc12_19.1: %.2 = param self
-// CHECK:STDOUT:     %self.loc12_19.3: %.2 = bind_name self, %self.loc12_19.1
+// CHECK:STDOUT:     %self.loc12_19.3: %.2 = bind_runtime_name self, %self.loc12_19.1
 // CHECK:STDOUT:     %.loc12_14: %.2 = addr_pattern %self.loc12_19.3
 // CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc12_38: type = ptr_type %T [symbolic = constants.%.3]
@@ -68,7 +68,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %self.loc17_15.1: %Class.2 = param self
-// CHECK:STDOUT:     %self.loc17_15.2: %Class.2 = bind_name self, %self.loc17_15.1
+// CHECK:STDOUT:     %self.loc17_15.2: %Class.2 = bind_runtime_name self, %self.loc17_15.1
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }

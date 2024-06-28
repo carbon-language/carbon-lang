@@ -88,7 +88,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.2 = bind_runtime_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -121,7 +121,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %c_alias.ref.loc8: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:   %b.var: ref %.2 = var b
-// CHECK:STDOUT:   %b: ref %.2 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.2 = bind_runtime_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -149,7 +149,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %c_alias_alias.ref: type = name_ref c_alias_alias, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc6: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:   %c.var: ref %.2 = var c
-// CHECK:STDOUT:   %c: ref %.2 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %.2 = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -172,7 +172,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.1 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %.1 = name_ref a, %a
 // CHECK:STDOUT:   %a_alias: ref %.1 = bind_alias a_alias, %a
 // CHECK:STDOUT: }
@@ -207,7 +207,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %.loc8_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref %.1 = var b
-// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.1 = bind_runtime_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -237,7 +237,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %c.var: ref %.1 = var c
-// CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %.1 = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

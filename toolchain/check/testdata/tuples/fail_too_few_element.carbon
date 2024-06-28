@@ -43,7 +43,7 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.3 = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

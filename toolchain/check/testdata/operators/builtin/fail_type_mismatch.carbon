@@ -42,7 +42,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %bool.make_type, %.loc15_10.1 [template = bool]
 // CHECK:STDOUT:   %x.var: ref bool = var x
-// CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref bool = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 12 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_17: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>

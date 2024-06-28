@@ -65,7 +65,7 @@ var i: Int() = 0;
 // CHECK:STDOUT:   %.loc6_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc6_12.2: type = converted %int.make_type_32, %.loc6_12.1 [template = i32]
 // CHECK:STDOUT:   %i.var: ref i32 = var i
-// CHECK:STDOUT:   %i: ref i32 = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref i32 = bind_runtime_name i, %i.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int() -> type = "int.make_type_32";

@@ -74,7 +74,7 @@ let a: T = 0;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %a: %T = bind_name a, <error>
+// CHECK:STDOUT:   %a: %T = bind_runtime_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

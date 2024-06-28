@@ -42,11 +42,11 @@ var A: () = ();
 // CHECK:STDOUT:   %.loc20_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc20_9.2: type = converted %.loc20_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %A.var.loc20: ref %.1 = var A
-// CHECK:STDOUT:   %A.loc20: ref %.1 = bind_name A, %A.var.loc20
+// CHECK:STDOUT:   %A.loc20: ref %.1 = bind_runtime_name A, %A.var.loc20
 // CHECK:STDOUT:   %.loc28_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc28_9.2: type = converted %.loc28_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %A.var.loc28: ref %.1 = var A
-// CHECK:STDOUT:   %A.loc28: ref %.1 = bind_name A, %A.var.loc28
+// CHECK:STDOUT:   %A.loc28: ref %.1 = bind_runtime_name A, %A.var.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

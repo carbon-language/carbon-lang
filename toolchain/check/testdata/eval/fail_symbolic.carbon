@@ -55,7 +55,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %.loc16_11.2: type = converted %int.make_type_32, %.loc16_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_17: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:   %k.var: ref <error> = var k
-// CHECK:STDOUT:   %k: ref <error> = bind_name k, %k.var
+// CHECK:STDOUT:   %k: ref <error> = bind_runtime_name k, %k.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

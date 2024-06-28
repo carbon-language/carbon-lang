@@ -64,7 +64,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc17_16.1: %.3 = param self
-// CHECK:STDOUT:     @F.%self: %.3 = bind_name self, %self.loc17_16.1
+// CHECK:STDOUT:     @F.%self: %.3 = bind_runtime_name self, %self.loc17_16.1
 // CHECK:STDOUT:     @F.%.loc17: %.3 = addr_pattern @F.%self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
@@ -72,7 +72,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc25: type = ptr_type %Derived [template = constants.%.9]
 // CHECK:STDOUT:     %p.loc25_9.1: %.9 = param p
-// CHECK:STDOUT:     @Call.%p: %.9 = bind_name p, %p.loc25_9.1
+// CHECK:STDOUT:     @Call.%p: %.9 = bind_runtime_name p, %p.loc25_9.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,7 +85,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc14_23: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc14_13.1: %.3 = param self
-// CHECK:STDOUT:     %self.loc14_13.3: %.3 = bind_name self, %self.loc14_13.1
+// CHECK:STDOUT:     %self.loc14_13.3: %.3 = bind_runtime_name self, %self.loc14_13.1
 // CHECK:STDOUT:     %.loc14_8: %.3 = addr_pattern %self.loc14_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

@@ -42,7 +42,7 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:   %.loc11_26.3: type = value_of_initializer %int.make_type_32.loc11_21 [template = i32]
 // CHECK:STDOUT:   %.loc11_26.4: type = converted %int.make_type_32.loc11_21, %.loc11_26.3 [template = i32]
 // CHECK:STDOUT:   %.loc11_26.5: type = converted %.loc11_24, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %t: type = bind_name t, %.loc11_26.5
+// CHECK:STDOUT:   %t: type = bind_runtime_name t, %.loc11_26.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

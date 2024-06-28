@@ -101,16 +101,16 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %import_ref.7: %.4 = import_ref ir1, inst+7, loaded [template = imports.%.1]
 // CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.5 [template = constants.%C]
 // CHECK:STDOUT:   %d_val.var: ref %C = var d_val
-// CHECK:STDOUT:   %d_val: ref %C = bind_name d_val, %d_val.var
+// CHECK:STDOUT:   %d_val: ref %C = bind_runtime_name d_val, %d_val.var
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
-// CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
+// CHECK:STDOUT:   %c_val: ref %C = bind_runtime_name c_val, %c_val.var
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
-// CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
+// CHECK:STDOUT:   %b_val: ref %C = bind_runtime_name b_val, %b_val.var
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %a_val.var: ref %C = var a_val
-// CHECK:STDOUT:   %a_val: ref %C = bind_name a_val, %a_val.var
+// CHECK:STDOUT:   %a_val: ref %C = bind_runtime_name a_val, %a_val.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

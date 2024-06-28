@@ -85,7 +85,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc14_25.8: type = converted %.loc14_25.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_29: type = array_type %.loc14_28, %.3 [template = constants.%.5]
 // CHECK:STDOUT:   %v.var: ref %.5 = var v
-// CHECK:STDOUT:   %v: ref %.5 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.5 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_34: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_42.3: ref %.3 = splice_block %.loc14_42.2 {
 // CHECK:STDOUT:     %.loc14_42.1: i32 = int_literal 0 [template = constants.%.9]

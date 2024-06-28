@@ -89,7 +89,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%import_ref.1 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc7: type = ptr_type %Cycle [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.2 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

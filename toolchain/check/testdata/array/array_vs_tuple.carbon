@@ -56,7 +56,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32.loc13, %.loc13_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_17: type = array_type %.loc13_16, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
-// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.3 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc13_22: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_25: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_28: i32 = int_literal 3 [template = constants.%.2]
@@ -85,7 +85,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc14_24.7: type = converted %int.make_type_32.loc14_21, %.loc14_24.6 [template = i32]
 // CHECK:STDOUT:   %.loc14_24.8: type = converted %.loc14_24.1, constants.%.7 [template = constants.%.7]
 // CHECK:STDOUT:   %b.var: ref %.7 = var b
-// CHECK:STDOUT:   %b: ref %.7 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.7 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %.loc14_29: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_32: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_35: i32 = int_literal 3 [template = constants.%.2]

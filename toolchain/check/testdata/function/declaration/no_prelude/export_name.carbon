@@ -90,7 +90,7 @@ var f: () = F();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

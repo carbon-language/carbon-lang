@@ -65,7 +65,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]
 // CHECK:STDOUT:   %b.var: ref bool = var b
-// CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref bool = bind_runtime_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

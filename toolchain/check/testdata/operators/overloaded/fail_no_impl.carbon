@@ -96,7 +96,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [template = constants.%TestUnary] {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_14.1: %C = param a
-// CHECK:STDOUT:     @TestUnary.%a: %C = bind_name a, %a.loc15_14.1
+// CHECK:STDOUT:     @TestUnary.%a: %C = bind_runtime_name a, %a.loc15_14.1
 // CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestUnary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -108,10 +108,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_15.1: %C = param a
-// CHECK:STDOUT:     @TestBinary.%a: %C = bind_name a, %a.loc23_15.1
+// CHECK:STDOUT:     @TestBinary.%a: %C = bind_runtime_name a, %a.loc23_15.1
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc23_21.1: %C = param b
-// CHECK:STDOUT:     @TestBinary.%b: %C = bind_name b, %b.loc23_21.1
+// CHECK:STDOUT:     @TestBinary.%b: %C = bind_runtime_name b, %b.loc23_21.1
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -123,7 +123,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc31_12.1: %C = param b
-// CHECK:STDOUT:     @TestRef.%b: %C = bind_name b, %b.loc31_12.1
+// CHECK:STDOUT:     @TestRef.%b: %C = bind_runtime_name b, %b.loc31_12.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+26, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+28, unloaded
@@ -191,7 +191,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %C = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc32_15.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc32_16: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%struct]

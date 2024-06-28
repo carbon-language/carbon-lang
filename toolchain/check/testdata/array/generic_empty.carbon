@@ -45,7 +45,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %.loc13_16: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_17: type = array_type %.loc13_16, %T [symbolic = constants.%.3]
 // CHECK:STDOUT:   %arr.var: ref %.3 = var arr
-// CHECK:STDOUT:   %arr: ref %.3 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %arr: ref %.3 = bind_runtime_name arr, %arr.var
 // CHECK:STDOUT:   %.loc13_22.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc13_22.2: init %.3 = array_init () to %arr.var [symbolic = constants.%array]
 // CHECK:STDOUT:   %.loc13_23: init %.3 = converted %.loc13_22.1, %.loc13_22.2 [symbolic = constants.%array]

@@ -43,7 +43,7 @@ class C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc12_8.1: %C = param c
-// CHECK:STDOUT:     %c.loc12_8.2: %C = bind_name c, %c.loc12_8.1
+// CHECK:STDOUT:     %c.loc12_8.2: %C = bind_runtime_name c, %c.loc12_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32.loc12, %.loc12_17.1 [template = i32]

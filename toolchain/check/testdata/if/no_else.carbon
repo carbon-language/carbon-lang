@@ -48,7 +48,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %bool.make_type, %.loc14_10.1 [template = bool]
 // CHECK:STDOUT:     %b.loc14_7.1: bool = param b
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc14_7.1
+// CHECK:STDOUT:     @If.%b: bool = bind_runtime_name b, %b.loc14_7.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

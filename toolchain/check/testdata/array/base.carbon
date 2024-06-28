@@ -59,7 +59,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc11_9.2: type = converted %int.make_type_32, %.loc11_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc11_15: type = array_type %.loc11_14, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
-// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.3 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc12_9.1: i32 = int_literal 64 [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc12_9.1) [template = f64]
@@ -68,13 +68,13 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc12_9.3: type = converted %float.make_type, %.loc12_9.2 [template = f64]
 // CHECK:STDOUT:   %.loc12_15: type = array_type %.loc12_14, f64 [template = constants.%.9]
 // CHECK:STDOUT:   %b.var: ref %.9 = var b
-// CHECK:STDOUT:   %b: ref %.9 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.9 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %.loc13_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc13_13: i32 = int_literal 5 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %.loc13_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc13_14: type = array_type %.loc13_13, %.1 [template = constants.%.15]
 // CHECK:STDOUT:   %c.var: ref %.15 = var c
-// CHECK:STDOUT:   %c: ref %.15 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %.15 = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

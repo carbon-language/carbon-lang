@@ -50,7 +50,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %ptr.loc16_8.1: %.2 = param ptr
-// CHECK:STDOUT:     @Foo.%ptr: %.2 = bind_name ptr, %ptr.loc16_8.1
+// CHECK:STDOUT:     @Foo.%ptr: %.2 = bind_runtime_name ptr, %ptr.loc16_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,7 +58,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc12_13.1: %C = param self
-// CHECK:STDOUT:     %self.loc12_13.2: %C = bind_name self, %self.loc12_13.1
+// CHECK:STDOUT:     %self.loc12_13.2: %C = bind_runtime_name self, %self.loc12_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_15: type = ptr_type %C [template = constants.%.2]

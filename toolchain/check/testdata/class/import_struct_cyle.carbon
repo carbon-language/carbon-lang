@@ -53,7 +53,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_18: type = ptr_type %Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_19: type = struct_type {.b: %.1} [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.2 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

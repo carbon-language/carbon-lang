@@ -33,7 +33,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc12_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_16.2: init %.1 = tuple_init () to %x.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc12_17: init %.1 = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%tuple]

@@ -214,7 +214,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc8_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc8_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc8_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -238,7 +238,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc10_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc10_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc10_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -265,7 +265,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc10_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc10_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc10_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -289,7 +289,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc8_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc8_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc8_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -313,7 +313,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc10_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc10_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc10_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -340,7 +340,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc10_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc10_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc10_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,7 +368,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc8: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc8_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc8_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc8_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [template = constants.%.2] {}
 // CHECK:STDOUT: }
@@ -402,7 +402,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc10_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc10_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc10_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,7 +429,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %i.loc9_6.1: <error> = param i
-// CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc9_6.1
+// CHECK:STDOUT:     @F.%i: <error> = bind_runtime_name i, %i.loc9_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

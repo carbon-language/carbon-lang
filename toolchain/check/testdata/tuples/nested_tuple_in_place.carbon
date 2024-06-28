@@ -116,7 +116,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_43.15: type = converted %.loc14_42, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_43.16: type = converted %.loc14_43.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %v.var: ref %.5 = var v
-// CHECK:STDOUT:   %v: ref %.5 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.5 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_48: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_56.1: ref %.3 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %F.call.loc14_49: init %.3 = call %F.ref.loc14_48() to %.loc14_56.1
@@ -152,7 +152,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc18_36.12: type = converted %int.make_type_32.loc18_33, %.loc18_36.11 [template = i32]
 // CHECK:STDOUT:   %.loc18_36.13: type = converted %.loc18_36.1, constants.%.10 [template = constants.%.10]
 // CHECK:STDOUT:   %v.var: ref %.10 = var v
-// CHECK:STDOUT:   %v: ref %.10 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.10 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc18_41: i32 = int_literal 1 [template = constants.%.13]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc18_50.1: ref %.3 = tuple_access %v.var, element1

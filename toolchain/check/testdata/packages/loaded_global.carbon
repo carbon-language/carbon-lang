@@ -77,11 +77,11 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.1 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc6_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %.loc6_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_a.var: ref %.1 = var package_a
-// CHECK:STDOUT:   %package_a: ref %.1 = bind_name package_a, %package_a.var
+// CHECK:STDOUT:   %package_a: ref %.1 = bind_runtime_name package_a, %package_a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -137,11 +137,11 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref %.1 = var b
-// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.1 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %.loc8_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_b.var: ref %.1 = var package_b
-// CHECK:STDOUT:   %package_b: ref %.1 = bind_name package_b, %package_b.var
+// CHECK:STDOUT:   %package_b: ref %.1 = bind_runtime_name package_b, %package_b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();

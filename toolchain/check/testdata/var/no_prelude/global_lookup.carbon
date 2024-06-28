@@ -29,12 +29,12 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %.loc11_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: %.1} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.2 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc12_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_14.2: type = converted %.loc12_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12_15: type = struct_type {.v: %.1} [template = constants.%.2]
 // CHECK:STDOUT:   %y.var: ref %.2 = var y
-// CHECK:STDOUT:   %y: ref %.2 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %.2 = bind_runtime_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

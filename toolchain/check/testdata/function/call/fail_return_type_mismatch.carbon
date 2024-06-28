@@ -66,7 +66,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32, %.loc17_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
-// CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref i32 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
 // CHECK:STDOUT:   assign %x.var, <error>

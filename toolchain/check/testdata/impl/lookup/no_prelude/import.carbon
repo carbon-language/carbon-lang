@@ -129,7 +129,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %import_ref.6 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc4_6.1: %C = param c
-// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     @G.%c: %C = bind_runtime_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+5, unloaded

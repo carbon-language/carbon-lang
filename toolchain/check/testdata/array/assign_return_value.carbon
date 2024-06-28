@@ -72,7 +72,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc14_11.2: type = converted %int.make_type_32, %.loc14_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_17: type = array_type %.loc14_16, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %t.var: ref %.6 = var t
-// CHECK:STDOUT:   %t: ref %.6 = bind_name t, %t.var
+// CHECK:STDOUT:   %t: ref %.6 = bind_runtime_name t, %t.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.3 = call %F.ref()
 // CHECK:STDOUT:   %.loc14_22.1: ref %.3 = temporary_storage

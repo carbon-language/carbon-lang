@@ -94,12 +94,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     %.loc2_11.1: type = value_of_initializer %int.make_type_32.loc2_11 [template = i32]
 // CHECK:STDOUT:     %.loc2_11.2: type = converted %int.make_type_32.loc2_11, %.loc2_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_8.1: i32 = param a
-// CHECK:STDOUT:     @Mod.%a: i32 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     @Mod.%a: i32 = bind_runtime_name a, %a.loc2_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_19.1: type = value_of_initializer %int.make_type_32.loc2_19 [template = i32]
 // CHECK:STDOUT:     %.loc2_19.2: type = converted %int.make_type_32.loc2_19, %.loc2_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
-// CHECK:STDOUT:     @Mod.%b: i32 = bind_name b, %b.loc2_16.1
+// CHECK:STDOUT:     @Mod.%b: i32 = bind_runtime_name b, %b.loc2_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %int.make_type_32.loc2_27 [template = i32]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %int.make_type_32.loc2_27, %.loc2_27.1 [template = i32]
@@ -115,7 +115,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc4_25: type = array_type %int.smod, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %arr.var: ref %.5 = var arr
-// CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %arr: ref %.5 = bind_runtime_name arr, %arr.var
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 2 [template = constants.%.4]
@@ -131,12 +131,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_runtime_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
 // CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_runtime_name b, %b.loc7_24.1
 // CHECK:STDOUT:     %int.make_type_32.loc7_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
@@ -163,7 +163,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, file.%arr
 // CHECK:STDOUT:   %.loc5: %.6 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   %arr_p: %.6 = bind_runtime_name arr_p, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -206,12 +206,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4_11, %.loc4_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
-// CHECK:STDOUT:     @Mod.%a: i32 = bind_name a, %a.loc4_8.1
+// CHECK:STDOUT:     @Mod.%a: i32 = bind_runtime_name a, %a.loc4_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc4_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %int.make_type_32.loc4_19 [template = i32]
 // CHECK:STDOUT:     %.loc4_19.2: type = converted %int.make_type_32.loc4_19, %.loc4_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
-// CHECK:STDOUT:     @Mod.%b: i32 = bind_name b, %b.loc4_16.1
+// CHECK:STDOUT:     @Mod.%b: i32 = bind_runtime_name b, %b.loc4_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc4_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4_27 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4_27, %.loc4_27.1 [template = i32]
@@ -225,12 +225,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     %.loc5_11.1: type = value_of_initializer %int.make_type_32.loc5_11 [template = i32]
 // CHECK:STDOUT:     %.loc5_11.2: type = converted %int.make_type_32.loc5_11, %.loc5_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc5_8.1: i32 = param a
-// CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc5_8.1
+// CHECK:STDOUT:     @Sub.%a: i32 = bind_runtime_name a, %a.loc5_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc5_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_19.1: type = value_of_initializer %int.make_type_32.loc5_19 [template = i32]
 // CHECK:STDOUT:     %.loc5_19.2: type = converted %int.make_type_32.loc5_19, %.loc5_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc5_16.1: i32 = param b
-// CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc5_16.1
+// CHECK:STDOUT:     @Sub.%b: i32 = bind_runtime_name b, %b.loc5_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc5_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_27.1: type = value_of_initializer %int.make_type_32.loc5_27 [template = i32]
 // CHECK:STDOUT:     %.loc5_27.2: type = converted %int.make_type_32.loc5_27, %.loc5_27.1 [template = i32]
@@ -243,7 +243,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.2: type = converted %int.make_type_32.loc6_14, %.loc6_14.1 [template = i32]
 // CHECK:STDOUT:     %a.loc6_11.1: i32 = param a
-// CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:     @Negate.%a: i32 = bind_runtime_name a, %a.loc6_11.1
 // CHECK:STDOUT:     %int.make_type_32.loc6_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_22.1: type = value_of_initializer %int.make_type_32.loc6_22 [template = i32]
 // CHECK:STDOUT:     %.loc6_22.2: type = converted %int.make_type_32.loc6_22, %.loc6_22.1 [template = i32]
@@ -287,7 +287,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.smod.loc9: init i32 = call %Mod.ref.loc9(%.loc9_17.2, %.loc9_17.4) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_49.1: i32 = value_of_initializer %int.smod.loc9 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_49.2: i32 = converted %int.smod.loc9, %.loc9_49.1 [template = constants.%.6]
-// CHECK:STDOUT:   %a: i32 = bind_name a, %.loc9_49.2
+// CHECK:STDOUT:   %a: i32 = bind_runtime_name a, %.loc9_49.2
 // CHECK:STDOUT:   %Mod.ref.loc12: %Mod.type = name_ref Mod, file.%Mod.decl [template = constants.%Mod]
 // CHECK:STDOUT:   %Sub.ref.loc12: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
 // CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
@@ -303,7 +303,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.smod.loc12: init i32 = call %Mod.ref.loc12(%.loc12_17.2, %.loc12_47) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_49.1: i32 = value_of_initializer %int.smod.loc12 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_49.2: i32 = converted %int.smod.loc12, %.loc12_49.1 [template = constants.%.6]
-// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc12_49.2
+// CHECK:STDOUT:   %b: i32 = bind_runtime_name b, %.loc12_49.2
 // CHECK:STDOUT:   %Mod.ref.loc20: %Mod.type = name_ref Mod, file.%Mod.decl [template = constants.%Mod]
 // CHECK:STDOUT:   %Sub.ref.loc20: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
 // CHECK:STDOUT:   %Negate.ref.loc20_22: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
@@ -323,7 +323,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.smod.loc20: init i32 = call %Mod.ref.loc20(%.loc20_17.2, %.loc20_17.4) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc20_57.1: i32 = value_of_initializer %int.smod.loc20 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc20_57.2: i32 = converted %int.smod.loc20, %.loc20_57.1 [template = constants.%.6]
-// CHECK:STDOUT:   %c: i32 = bind_name c, %.loc20_57.2
+// CHECK:STDOUT:   %c: i32 = bind_runtime_name c, %.loc20_57.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,12 +355,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4_11, %.loc4_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
-// CHECK:STDOUT:     @Mod.%a: i32 = bind_name a, %a.loc4_8.1
+// CHECK:STDOUT:     @Mod.%a: i32 = bind_runtime_name a, %a.loc4_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc4_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %int.make_type_32.loc4_19 [template = i32]
 // CHECK:STDOUT:     %.loc4_19.2: type = converted %int.make_type_32.loc4_19, %.loc4_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
-// CHECK:STDOUT:     @Mod.%b: i32 = bind_name b, %b.loc4_16.1
+// CHECK:STDOUT:     @Mod.%b: i32 = bind_runtime_name b, %b.loc4_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc4_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4_27 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4_27, %.loc4_27.1 [template = i32]
@@ -388,14 +388,14 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.smod.loc12: init i32 = call %Mod.ref.loc12(%.loc12_18, %.loc12_21) [template = <error>]
 // CHECK:STDOUT:   %.loc12_23.1: i32 = value_of_initializer %int.smod.loc12 [template = <error>]
 // CHECK:STDOUT:   %.loc12_23.2: i32 = converted %int.smod.loc12, %.loc12_23.1 [template = <error>]
-// CHECK:STDOUT:   %a: i32 = bind_name a, %.loc12_23.2
+// CHECK:STDOUT:   %a: i32 = bind_runtime_name a, %.loc12_23.2
 // CHECK:STDOUT:   %Mod.ref.loc17: %Mod.type = name_ref Mod, file.%Mod.decl [template = constants.%Mod]
 // CHECK:STDOUT:   %.loc17_18: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc17_21: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %int.smod.loc17: init i32 = call %Mod.ref.loc17(%.loc17_18, %.loc17_21) [template = <error>]
 // CHECK:STDOUT:   %.loc17_23.1: i32 = value_of_initializer %int.smod.loc17 [template = <error>]
 // CHECK:STDOUT:   %.loc17_23.2: i32 = converted %int.smod.loc17, %.loc17_23.1 [template = <error>]
-// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc17_23.2
+// CHECK:STDOUT:   %b: i32 = bind_runtime_name b, %.loc17_23.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

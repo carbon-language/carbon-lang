@@ -57,7 +57,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]
 // CHECK:STDOUT:     %.loc2_18.2: type = converted %int.make_type_32.loc2_18, %.loc2_18.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_15.1: i32 = param a
-// CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %a.loc2_15.1
+// CHECK:STDOUT:     @Complement.%a: i32 = bind_runtime_name a, %a.loc2_15.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_26.1: type = value_of_initializer %int.make_type_32.loc2_26 [template = i32]
 // CHECK:STDOUT:     %.loc2_26.2: type = converted %int.make_type_32.loc2_26, %.loc2_26.1 [template = i32]
@@ -71,12 +71,12 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %.loc3_11.1: type = value_of_initializer %int.make_type_32.loc3_11 [template = i32]
 // CHECK:STDOUT:     %.loc3_11.2: type = converted %int.make_type_32.loc3_11, %.loc3_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc3_8.1: i32 = param a
-// CHECK:STDOUT:     @And.%a: i32 = bind_name a, %a.loc3_8.1
+// CHECK:STDOUT:     @And.%a: i32 = bind_runtime_name a, %a.loc3_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc3_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %int.make_type_32.loc3_19 [template = i32]
 // CHECK:STDOUT:     %.loc3_19.2: type = converted %int.make_type_32.loc3_19, %.loc3_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc3_16.1: i32 = param b
-// CHECK:STDOUT:     @And.%b: i32 = bind_name b, %b.loc3_16.1
+// CHECK:STDOUT:     @And.%b: i32 = bind_runtime_name b, %b.loc3_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc3_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_27.1: type = value_of_initializer %int.make_type_32.loc3_27 [template = i32]
 // CHECK:STDOUT:     %.loc3_27.2: type = converted %int.make_type_32.loc3_27, %.loc3_27.1 [template = i32]
@@ -96,7 +96,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %int.make_type_32.loc5, %.loc5_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_51: type = array_type %int.and, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %arr.var: ref %.6 = var arr
-// CHECK:STDOUT:   %arr: ref %.6 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %arr: ref %.6 = bind_runtime_name arr, %arr.var
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 15584169 [template = constants.%.5]
@@ -111,7 +111,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %.loc8_19.1: type = value_of_initializer %int.make_type_32.loc8_19 [template = i32]
 // CHECK:STDOUT:     %.loc8_19.2: type = converted %int.make_type_32.loc8_19, %.loc8_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc8_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc8_16.1
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_runtime_name a, %a.loc8_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc8_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32.loc8_27 [template = i32]
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
@@ -139,7 +139,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: ref %.6 = name_ref arr, file.%arr
 // CHECK:STDOUT:   %.loc6: %.7 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.7 = bind_name arr_p, %.loc6
+// CHECK:STDOUT:   %arr_p: %.7 = bind_runtime_name arr_p, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

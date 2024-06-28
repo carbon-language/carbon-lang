@@ -144,21 +144,21 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc15
+// CHECK:STDOUT:   %b: i32 = bind_runtime_name b, %.loc15
 // CHECK:STDOUT:   %.loc21: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %c: i32 = bind_name c, %.loc21
+// CHECK:STDOUT:   %c: i32 = bind_runtime_name c, %.loc21
 // CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %d: i32 = bind_name d, %.loc27
+// CHECK:STDOUT:   %d: i32 = bind_runtime_name d, %.loc27
 // CHECK:STDOUT:   %.loc33: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc33
+// CHECK:STDOUT:   %e: i32 = bind_runtime_name e, %.loc33
 // CHECK:STDOUT:   %.loc46: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %f: i32 = bind_name f, %.loc46
+// CHECK:STDOUT:   %f: i32 = bind_runtime_name f, %.loc46
 // CHECK:STDOUT:   %.loc59: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %g: i32 = bind_name g, %.loc59
+// CHECK:STDOUT:   %g: i32 = bind_runtime_name g, %.loc59
 // CHECK:STDOUT:   %.loc72: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %h: i32 = bind_name h, %.loc72
+// CHECK:STDOUT:   %h: i32 = bind_runtime_name h, %.loc72
 // CHECK:STDOUT:   %.loc84: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %i: i32 = bind_name i, %.loc84
+// CHECK:STDOUT:   %i: i32 = bind_runtime_name i, %.loc84
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -88,11 +88,11 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a: i32 = bind_name a, <error>
-// CHECK:STDOUT:   %b: i32 = bind_name b, <error>
-// CHECK:STDOUT:   %c: i32 = bind_name c, <error>
-// CHECK:STDOUT:   %d: f64 = bind_name d, <error>
-// CHECK:STDOUT:   %e: f64 = bind_name e, <error>
+// CHECK:STDOUT:   %a: i32 = bind_runtime_name a, <error>
+// CHECK:STDOUT:   %b: i32 = bind_runtime_name b, <error>
+// CHECK:STDOUT:   %c: i32 = bind_runtime_name c, <error>
+// CHECK:STDOUT:   %d: f64 = bind_runtime_name d, <error>
+// CHECK:STDOUT:   %e: f64 = bind_runtime_name e, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

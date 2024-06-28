@@ -50,11 +50,11 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %.loc19_24.3: type = converted %int.make_type_32, %.loc19_24.2 [template = i32]
 // CHECK:STDOUT:   %.loc19_24.4: type = converted %.loc19_24.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %t.var: ref <error> = var t
-// CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
+// CHECK:STDOUT:   %t: ref <error> = bind_runtime_name t, %t.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.4]
 // CHECK:STDOUT:   %p.var: ref %.4 = var p
-// CHECK:STDOUT:   %p: ref %.4 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %.4 = bind_runtime_name p, %p.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

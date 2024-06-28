@@ -89,7 +89,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @F() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %result: ref %C = bind_name result, %return
+// CHECK:STDOUT:   %result: ref %C = bind_runtime_name result, %return
 // CHECK:STDOUT:   %.loc17_34: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_42: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_43.1: %.3 = struct_literal (%.loc17_34, %.loc17_42)
@@ -109,7 +109,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc22_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc22_24.2: type = converted %int.make_type_32, %.loc22_24.1 [template = i32]
 // CHECK:STDOUT:   %result.var: ref i32 = var result
-// CHECK:STDOUT:   %result: ref i32 = bind_name result, %result.var
+// CHECK:STDOUT:   %result: ref i32 = bind_runtime_name result, %result.var
 // CHECK:STDOUT:   %.loc22_30: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   assign %result.var, %.loc22_30
 // CHECK:STDOUT:   %.loc22_16: i32 = bind_value %result

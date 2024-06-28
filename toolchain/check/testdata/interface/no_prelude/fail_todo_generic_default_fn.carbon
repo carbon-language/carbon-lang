@@ -53,7 +53,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %.loc22_24.1: type = facet_type_access %Self.ref.loc22_24 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc22_24.2: type = converted %Self.ref.loc22_24, %.loc22_24.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc22_18.1: %Self = param self
-// CHECK:STDOUT:     @.1.%self: %Self = bind_name self, %self.loc22_18.1
+// CHECK:STDOUT:     @.1.%self: %Self = bind_runtime_name self, %self.loc22_18.1
 // CHECK:STDOUT:     %Self.ref.loc22_35: %.2 = name_ref Self, @I.%Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc22_35.1: type = facet_type_access %Self.ref.loc22_35 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc22_35.2: type = converted %Self.ref.loc22_35, %.loc22_35.1 [symbolic = constants.%Self]
@@ -69,7 +69,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref.loc13_14 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref.loc13_14, %.loc13_14.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc13_8.1: %Self = param self
-// CHECK:STDOUT:     %self.loc13_8.2: %Self = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %self.loc13_8.2: %Self = bind_runtime_name self, %self.loc13_8.1
 // CHECK:STDOUT:     %Self.ref.loc13_25: %.2 = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc13_25.1: type = facet_type_access %Self.ref.loc13_25 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc13_25.2: type = converted %Self.ref.loc13_25, %.loc13_25.1 [symbolic = constants.%Self]

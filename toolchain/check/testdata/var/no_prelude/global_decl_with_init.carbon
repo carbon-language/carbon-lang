@@ -27,7 +27,7 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %.loc11_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: %.1} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.2 = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

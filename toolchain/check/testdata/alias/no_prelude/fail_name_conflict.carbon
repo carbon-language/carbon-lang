@@ -50,10 +50,10 @@ alias b = C;
 // CHECK:STDOUT:   %a.loc13: type = bind_alias a, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
-// CHECK:STDOUT:   %a.loc21: ref %C = bind_name a, %a.var
+// CHECK:STDOUT:   %a.loc21: ref %C = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %b.var: ref %C = var b
-// CHECK:STDOUT:   %b: ref %C = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %C = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %C.ref.loc30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc30: type = bind_alias <invalid>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }

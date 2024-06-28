@@ -62,12 +62,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc7_15.2: type = converted %Self.ref.loc7_15, %.loc7_15.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc7_9.1: %Self = param self
-// CHECK:STDOUT:     %self.loc7_9.2: %Self = bind_name self, %self.loc7_9.1
+// CHECK:STDOUT:     %self.loc7_9.2: %Self = bind_runtime_name self, %self.loc7_9.1
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %other.loc7_21.1: %Self = param other
-// CHECK:STDOUT:     %other.loc7_21.2: %Self = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %other.loc7_21.2: %Self = bind_runtime_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = constants.%Self]
@@ -146,7 +146,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_11.2: type = converted %int.make_type_32.loc10, %.loc10_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc10_21: type = array_type %int.sadd, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr.var: ref %.10 = var arr
-// CHECK:STDOUT:   %arr: ref %.10 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %arr: ref %.10 = bind_runtime_name arr, %arr.var
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -161,10 +161,10 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self
-// CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_name self, %self.loc7_9.1
+// CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_runtime_name self, %self.loc7_9.1
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %other.loc7_21.1: i32 = param other
-// CHECK:STDOUT:     %other.loc7_21.2: i32 = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %other.loc7_21.2: i32 = bind_runtime_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }

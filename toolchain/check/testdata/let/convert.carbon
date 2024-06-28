@@ -69,7 +69,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc12_24.7: type = converted %int.make_type_32.loc12_21, %.loc12_24.6 [template = i32]
 // CHECK:STDOUT:   %.loc12_24.8: type = converted %.loc12_24.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %v.var: ref %.3 = var v
-// CHECK:STDOUT:   %v: ref %.3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.3 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc12_29: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_32: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_35: i32 = int_literal 3 [template = constants.%.7]
@@ -103,7 +103,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc14_28.6: i32 = bind_value %.loc14_28.5
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc14_28.2, %.loc14_28.4, %.loc14_28.6)
 // CHECK:STDOUT:   %.loc14_29: %.3 = converted %v.ref, %tuple
-// CHECK:STDOUT:   %w: %.3 = bind_name w, %.loc14_29
+// CHECK:STDOUT:   %w: %.3 = bind_runtime_name w, %.loc14_29
 // CHECK:STDOUT:   %w.ref: %.3 = name_ref w, %w
 // CHECK:STDOUT:   %.loc15_12: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_13: i32 = tuple_index %w.ref, %.loc15_12

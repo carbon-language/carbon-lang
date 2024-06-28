@@ -45,7 +45,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %bool.make_type, %.loc11_16.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_13.1: bool = param b
-// CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc11_13.1
+// CHECK:STDOUT:     @VarScope.%b: bool = bind_runtime_name b, %b.loc11_13.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32, %.loc11_25.1 [template = i32]
@@ -68,7 +68,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32, %.loc13_12.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
-// CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref i32 = bind_runtime_name n, %n.var
 // CHECK:STDOUT:   %.loc13_18: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   assign %n.var, %.loc13_18
 // CHECK:STDOUT:   %n.ref.loc14: ref i32 = name_ref n, %n

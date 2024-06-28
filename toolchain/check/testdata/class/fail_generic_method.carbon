@@ -69,10 +69,10 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %N.loc32_10.2: i32 = bind_symbolic_name N 0, %N.loc32_10.1 [symbolic = constants.%N]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %self.loc32_21.1: <error> = param self
-// CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc32_21.1
+// CHECK:STDOUT:     @.1.%self: <error> = bind_runtime_name self, %self.loc32_21.1
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:     %n.loc32_33.1: <error> = param n
-// CHECK:STDOUT:     @.1.%n: <error> = bind_name n, %n.loc32_33.1
+// CHECK:STDOUT:     @.1.%n: <error> = bind_runtime_name n, %n.loc32_33.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,10 +83,10 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %self.loc13_8.1: %Class.2 = param self
-// CHECK:STDOUT:     %self.loc13_8.2: %Class.2 = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %self.loc13_8.2: %Class.2 = bind_runtime_name self, %self.loc13_8.1
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc13_20.1: %T = param n
-// CHECK:STDOUT:     %n.loc13_20.2: %T = bind_name n, %n.loc13_20.1
+// CHECK:STDOUT:     %n.loc13_20.2: %T = bind_runtime_name n, %n.loc13_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

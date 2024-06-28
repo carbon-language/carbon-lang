@@ -77,7 +77,7 @@ import library "var";
 // CHECK:STDOUT:   %.loc4_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %int.make_type_32, %.loc4_10.1 [template = i32]
 // CHECK:STDOUT:   %Foo.var: ref i32 = var Foo
-// CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
+// CHECK:STDOUT:   %Foo: ref i32 = bind_runtime_name Foo, %Foo.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

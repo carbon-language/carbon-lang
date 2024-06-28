@@ -38,11 +38,11 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc19: type = struct_type {.a: %Incomplete} [template = constants.%.1]
 // CHECK:STDOUT:   %s.var: ref <error> = var s
-// CHECK:STDOUT:   %s: ref <error> = bind_name s, %s.var
+// CHECK:STDOUT:   %s: ref <error> = bind_runtime_name s, %s.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref %.2 = var p
-// CHECK:STDOUT:   %p: ref %.2 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %.2 = bind_runtime_name p, %p.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

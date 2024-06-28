@@ -41,7 +41,7 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_14 [template = i32]
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32.loc11_14, %.loc11_14.1 [template = i32]
 // CHECK:STDOUT:     %n.loc11_11.1: i32 = param n
-// CHECK:STDOUT:     @Negate.%n: i32 = bind_name n, %n.loc11_11.1
+// CHECK:STDOUT:     @Negate.%n: i32 = bind_runtime_name n, %n.loc11_11.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_22.1: type = value_of_initializer %int.make_type_32.loc11_22 [template = i32]
 // CHECK:STDOUT:     %.loc11_22.2: type = converted %int.make_type_32.loc11_22, %.loc11_22.1 [template = i32]
@@ -56,7 +56,7 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:   %.loc16_9.2: type = converted %int.make_type_32.loc16, %.loc16_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_23: type = array_type %int.snegate, i32 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref <error> = bind_runtime_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

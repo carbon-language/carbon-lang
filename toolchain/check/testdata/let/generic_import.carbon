@@ -69,10 +69,10 @@ var b: T = *a;
 // CHECK:STDOUT:   %T.ref.loc4: type = name_ref T, %import_ref [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc4: type = ptr_type %T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.1 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %T.ref.loc5: type = name_ref T, %import_ref [symbolic = constants.%T]
 // CHECK:STDOUT:   %b.var: ref %T = var b
-// CHECK:STDOUT:   %b: ref %T = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %T = bind_runtime_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

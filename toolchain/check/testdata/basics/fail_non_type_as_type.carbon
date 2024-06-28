@@ -26,7 +26,7 @@ var x: type = 42;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %x.var: ref type = var x
-// CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref type = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

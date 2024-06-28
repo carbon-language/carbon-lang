@@ -52,7 +52,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_32.loc11_23, %.loc11_23.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:     %s.loc11_6.1: %.2 = param s
-// CHECK:STDOUT:     @G.%s: %.2 = bind_name s, %s.loc11_6.1
+// CHECK:STDOUT:     @G.%s: %.2 = bind_runtime_name s, %s.loc11_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -60,7 +60,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
 // CHECK:STDOUT:     %cond.loc13_6.1: bool = param cond
-// CHECK:STDOUT:     @F.%cond: bool = bind_name cond, %cond.loc13_6.1
+// CHECK:STDOUT:     @F.%cond: bool = bind_runtime_name cond, %cond.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -82,7 +82,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc14_24.2: type = converted %int.make_type_32.loc14_24, %.loc14_24.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.2 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc14_37: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_45: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_46.1: %.2 = struct_literal (%.loc14_37, %.loc14_45)

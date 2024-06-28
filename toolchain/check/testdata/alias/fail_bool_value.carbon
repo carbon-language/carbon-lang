@@ -43,7 +43,7 @@ let a_test: bool = a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [template = <error>]
-// CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
+// CHECK:STDOUT:   %a_test: bool = bind_runtime_name a_test, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

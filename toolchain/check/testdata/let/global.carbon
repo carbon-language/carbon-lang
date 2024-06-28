@@ -54,7 +54,7 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc11
+// CHECK:STDOUT:   %n: i32 = bind_runtime_name n, %.loc11
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

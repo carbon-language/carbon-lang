@@ -233,7 +233,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir2, inst+3, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -274,7 +274,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+6, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -315,7 +315,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir2, inst+6, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -357,7 +357,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
@@ -408,7 +408,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+7, unloaded

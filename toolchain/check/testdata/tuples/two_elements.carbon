@@ -68,7 +68,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.3 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc15_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -80,7 +80,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc15_17.5: type = converted %int.make_type_32.loc15_14, %.loc15_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc15_17.6: type = converted %.loc15_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %y.var: ref %.3 = var y
-// CHECK:STDOUT:   %y: ref %.3 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %.3 = bind_runtime_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -92,9 +92,9 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc11_28: %.3 = tuple_literal (%.loc11_22, %.loc11_25)
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc11_22, %.loc11_25) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_29: %.3 = converted %.loc11_28, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %v: %.3 = bind_name v, %.loc11_29
+// CHECK:STDOUT:   %v: %.3 = bind_runtime_name v, %.loc11_29
 // CHECK:STDOUT:   %v.ref: %.3 = name_ref v, %v
-// CHECK:STDOUT:   %w: %.3 = bind_name w, %v.ref
+// CHECK:STDOUT:   %w: %.3 = bind_runtime_name w, %v.ref
 // CHECK:STDOUT:   %.loc14_22: i32 = int_literal 4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_25: i32 = int_literal 102 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_28.1: %.3 = tuple_literal (%.loc14_22, %.loc14_25)

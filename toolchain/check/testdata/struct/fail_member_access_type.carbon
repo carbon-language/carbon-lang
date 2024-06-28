@@ -42,13 +42,13 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
 // CHECK:STDOUT:   %.loc11_16: type = struct_type {.a: f64} [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.3 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32, %.loc15_8.1 [template = i32]
 // CHECK:STDOUT:   %y.var: ref i32 = var y
-// CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref i32 = bind_runtime_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";

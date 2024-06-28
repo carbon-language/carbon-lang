@@ -127,7 +127,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc8_10.2: type = bind_symbolic_name T 0, %T.loc8_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc8_25: type = name_ref T, %T.loc8_10.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc8_22.1: %T = param n
-// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc8_22.1
+// CHECK:STDOUT:     @F.%n: %T = bind_runtime_name n, %n.loc8_22.1
 // CHECK:STDOUT:     %T.ref.loc8_31: type = name_ref T, %T.loc8_10.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
 // CHECK:STDOUT:   }
@@ -138,7 +138,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc5_8.1: %T = param n
-// CHECK:STDOUT:     %n.loc5_8.2: %T = bind_name n, %n.loc5_8.1
+// CHECK:STDOUT:     %n.loc5_8.2: %T = bind_runtime_name n, %n.loc5_8.1
 // CHECK:STDOUT:     %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return.var: ref %T = var <return slot>
 // CHECK:STDOUT:   }
@@ -191,10 +191,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %N.loc10_18.2: %T = bind_symbolic_name N 1, %N.loc10_18.1 [symbolic = constants.%N]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %self.loc10_27.1: %B.2 = param self
-// CHECK:STDOUT:     @F.%self: %B.2 = bind_name self, %self.loc10_27.1
+// CHECK:STDOUT:     @F.%self: %B.2 = bind_runtime_name self, %self.loc10_27.1
 // CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10_6.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %a.loc10_39.1: %T = param a
-// CHECK:STDOUT:     @F.%a: %T = bind_name a, %a.loc10_39.1
+// CHECK:STDOUT:     @F.%a: %T = bind_runtime_name a, %a.loc10_39.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,10 +216,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %self.loc6_10.1: %B.2 = param self
-// CHECK:STDOUT:     %self.loc6_10.2: %B.2 = bind_name self, %self.loc6_10.1
+// CHECK:STDOUT:     %self.loc6_10.2: %B.2 = bind_runtime_name self, %self.loc6_10.1
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %a.loc6_22.1: %T = param a
-// CHECK:STDOUT:     %a.loc6_22.2: %T = bind_name a, %a.loc6_22.1
+// CHECK:STDOUT:     %a.loc6_22.2: %T = bind_runtime_name a, %a.loc6_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

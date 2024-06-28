@@ -81,7 +81,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc29_11.1: %Derived = param d
-// CHECK:STDOUT:     @Access.%d: %Derived = bind_name d, %d.loc29_11.1
+// CHECK:STDOUT:     @Access.%d: %Derived = bind_runtime_name d, %d.loc29_11.1
 // CHECK:STDOUT:     %int.make_type_32.loc29_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc29_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_35.1: %.14 = tuple_literal (%int.make_type_32.loc29_27, %int.make_type_32.loc29_32)

@@ -67,7 +67,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type, %.loc4_23.1 [template = bool]
 // CHECK:STDOUT:     %x.loc4_20.1: bool = param x
-// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc4_20.1
+// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_runtime_name x, %x.loc4_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
@@ -103,7 +103,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref <error> = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc14_13: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_19.1: bool = not %.loc14_13 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_19.2: bool = bool_literal true [template = constants.%.2]
@@ -131,7 +131,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !if.expr.result.loc14:
 // CHECK:STDOUT:   %.loc14_10: type = block_arg !if.expr.result.loc14
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref <error> = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,7 +159,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type, %.loc4_41.1 [template = bool]
 // CHECK:STDOUT:     %x.loc4_38.1: bool = param x
-// CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_name x, %x.loc4_38.1
+// CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_runtime_name x, %x.loc4_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
@@ -195,7 +195,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !if.expr.result.loc11:
 // CHECK:STDOUT:   %.loc11_10: type = block_arg !if.expr.result.loc11
 // CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref <error> = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %x.ref.loc15: bool = name_ref x, %x
 // CHECK:STDOUT:   %.loc15_15.1: bool = not %x.ref.loc15
 // CHECK:STDOUT:   %.loc15_15.2: bool = bool_literal true [template = constants.%.3]
@@ -223,7 +223,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !if.expr.result.loc15:
 // CHECK:STDOUT:   %.loc15_10: type = block_arg !if.expr.result.loc15
 // CHECK:STDOUT:   %d.var: ref <error> = var d
-// CHECK:STDOUT:   %d: ref <error> = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref <error> = bind_runtime_name d, %d.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -89,7 +89,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc16_23.6: ref %C = temporary %.loc16_23.2, %.loc16_23.5
 // CHECK:STDOUT:   %.loc16_24.1: ref %C = converted %.loc16_23.1, %.loc16_23.6
 // CHECK:STDOUT:   %.loc16_24.2: %C = bind_value %.loc16_24.1
-// CHECK:STDOUT:   %b: %C = bind_name b, %.loc16_24.2
+// CHECK:STDOUT:   %b: %C = bind_runtime_name b, %.loc16_24.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

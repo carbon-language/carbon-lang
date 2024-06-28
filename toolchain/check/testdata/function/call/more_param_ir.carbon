@@ -48,12 +48,12 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
-// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc11_8.1
+// CHECK:STDOUT:     @Foo.%a: i32 = bind_runtime_name a, %a.loc11_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
-// CHECK:STDOUT:     @Foo.%b: i32 = bind_name b, %b.loc11_16.1
+// CHECK:STDOUT:     @Foo.%b: i32 = bind_runtime_name b, %b.loc11_16.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -74,7 +74,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_15.3: type = converted %int.make_type_32, %.loc14_15.2 [template = i32]
 // CHECK:STDOUT:   %.loc14_15.4: type = converted %.loc14_15.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.3 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc14_20: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_22.1: %.3 = tuple_literal (%.loc14_20)
 // CHECK:STDOUT:   %.loc14_22.2: init %.3 = tuple_init (%.loc14_20) to %x.var [template = constants.%tuple]

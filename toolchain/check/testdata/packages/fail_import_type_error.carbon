@@ -56,19 +56,19 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var a_ref
-// CHECK:STDOUT:   %a_ref: ref <error> = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref <error> = bind_runtime_name a_ref, %a_ref.var
 // CHECK:STDOUT:   %x.ref.loc13: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc13: <error> = struct_literal (%x.ref.loc13)
 // CHECK:STDOUT:   %b_ref.var: ref <error> = var b_ref
-// CHECK:STDOUT:   %b_ref: ref <error> = bind_name b_ref, %b_ref.var
+// CHECK:STDOUT:   %b_ref: ref <error> = bind_runtime_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %x.ref.loc18: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc18: <error> = tuple_literal (%x.ref.loc18)
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var c_ref
-// CHECK:STDOUT:   %c_ref: ref <error> = bind_name c_ref, %c_ref.var
+// CHECK:STDOUT:   %c_ref: ref <error> = bind_runtime_name c_ref, %c_ref.var
 // CHECK:STDOUT:   %x.ref.loc22: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc22: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var d_ref
-// CHECK:STDOUT:   %d_ref: ref <error> = bind_name d_ref, %d_ref.var
+// CHECK:STDOUT:   %d_ref: ref <error> = bind_runtime_name d_ref, %d_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -101,25 +101,25 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_8.2: type = converted %int.make_type_32.loc6, %.loc6_8.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref i32 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
-// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref i32 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_8.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_8.2: type = converted %int.make_type_32.loc8, %.loc8_8.1 [template = i32]
 // CHECK:STDOUT:   %c.var: ref i32 = var c
-// CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref i32 = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
 // CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32.loc9, %.loc9_8.1 [template = i32]
 // CHECK:STDOUT:   %d.var: ref i32 = var d
-// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref i32 = bind_runtime_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

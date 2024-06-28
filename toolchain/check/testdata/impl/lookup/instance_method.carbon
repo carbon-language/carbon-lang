@@ -63,7 +63,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc23_6.1: %C = param c
-// CHECK:STDOUT:     @F.3.%c: %C = bind_name c, %c.loc23_6.1
+// CHECK:STDOUT:     @F.3.%c: %C = bind_runtime_name c, %c.loc23_6.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc23_15.2: type = converted %int.make_type_32, %.loc23_15.1 [template = i32]
@@ -78,7 +78,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc14_8.1: %Self = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %Self = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %self.loc14_8.2: %Self = bind_runtime_name self, %self.loc14_8.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
@@ -96,7 +96,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc19_10.1: %C = param self
-// CHECK:STDOUT:     %self.loc19_10.2: %C = bind_name self, %self.loc19_10.1
+// CHECK:STDOUT:     %self.loc19_10.2: %C = bind_runtime_name self, %self.loc19_10.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_27.2: type = converted %int.make_type_32, %.loc19_27.1 [template = i32]

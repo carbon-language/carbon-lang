@@ -247,7 +247,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -290,7 +290,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -333,7 +333,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -370,7 +370,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+11, unloaded
 // CHECK:STDOUT:   %D.ref: <error> = name_ref D, <error> [template = <error>]
 // CHECK:STDOUT:   %d.var: ref <error> = var d
-// CHECK:STDOUT:   %d: ref <error> = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref <error> = bind_runtime_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -402,7 +402,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -452,12 +452,12 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir5, inst+12, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir5, inst+16, unloaded
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.2 [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref %D = var d
-// CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %D = bind_runtime_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -41,7 +41,7 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_19: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %n: i32 = bind_name n, <error>
+// CHECK:STDOUT:   %n: i32 = bind_runtime_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

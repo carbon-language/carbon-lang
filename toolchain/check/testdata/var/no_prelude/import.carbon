@@ -34,7 +34,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:   %.loc4_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_13.2: type = converted %.loc4_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a_ref.var: ref %.1 = var a_ref
-// CHECK:STDOUT:   %a_ref: ref %.1 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref %.1 = bind_runtime_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -62,7 +62,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.1 = bind_runtime_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -120,7 +120,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %.loc45_13.2: type = converted %int.make_type_32.loc45, %.loc45_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc45_16: type = struct_type {.a: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.3 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc53_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc53_13.1: type = value_of_initializer %int.make_type_32.loc53_13 [template = i32]
@@ -131,7 +131,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %.loc53_22.2: type = converted %int.make_type_32.loc53_22, %.loc53_22.1 [template = i32]
 // CHECK:STDOUT:   %.loc53_25: type = struct_type {.b: i32, .c: i32} [template = constants.%.5]
 // CHECK:STDOUT:   %y.var: ref %.5 = var y
-// CHECK:STDOUT:   %y: ref %.5 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %.5 = bind_runtime_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -142,10 +142,10 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc27_35: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc27_36: %.3 = struct_literal (%.loc27_35)
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
+// CHECK:STDOUT:   %v: <error> = bind_runtime_name v, <error>
 // CHECK:STDOUT:   %.loc36_22: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc36_32: i32 = int_literal 2 [template = constants.%.4]
-// CHECK:STDOUT:   %w: i32 = bind_name w, <error>
+// CHECK:STDOUT:   %w: i32 = bind_runtime_name w, <error>
 // CHECK:STDOUT:   %.loc45_26: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc45_34: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   assign file.%x.var, <error>

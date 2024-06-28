@@ -65,7 +65,7 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc14_31.11: type = converted %.loc14_30, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_31.12: type = converted %.loc14_31.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %x.var: ref %.5 = var x
-// CHECK:STDOUT:   %x: ref %.5 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.5 = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

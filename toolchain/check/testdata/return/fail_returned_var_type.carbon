@@ -57,7 +57,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc18_19.1) [template = f64]
 // CHECK:STDOUT:   %.loc18_19.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc18_19.3: type = converted %float.make_type, %.loc18_19.2 [template = f64]
-// CHECK:STDOUT:   %v: f64 = bind_name v, <error>
+// CHECK:STDOUT:   %v: f64 = bind_runtime_name v, <error>
 // CHECK:STDOUT:   %.loc18_25: f64 = float_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>

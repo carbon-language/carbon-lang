@@ -70,7 +70,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_24.2: type = converted %int.make_type_32.loc12_24, %.loc12_24.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %s.var: ref %.2 = var s
-// CHECK:STDOUT:   %s: ref %.2 = bind_name s, %s.var
+// CHECK:STDOUT:   %s: ref %.2 = bind_runtime_name s, %s.var
 // CHECK:STDOUT:   %.loc12_37: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_45: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_46.1: %.2 = struct_literal (%.loc12_37, %.loc12_45)
@@ -90,7 +90,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_28: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:   %p.var: ref %.3 = var p
-// CHECK:STDOUT:   %p: ref %.3 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %.3 = bind_runtime_name p, %p.var
 // CHECK:STDOUT:   %s.ref.loc14: ref %.2 = name_ref s, %s
 // CHECK:STDOUT:   %.loc14_32: %.3 = addr_of %s.ref.loc14
 // CHECK:STDOUT:   assign %p.var, %.loc14_32
@@ -99,7 +99,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_13.2: type = converted %int.make_type_32.loc15, %.loc15_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc15_13.3: type = ptr_type i32 [template = constants.%.6]
 // CHECK:STDOUT:   %q.var: ref %.6 = var q
-// CHECK:STDOUT:   %q: ref %.6 = bind_name q, %q.var
+// CHECK:STDOUT:   %q: ref %.6 = bind_runtime_name q, %q.var
 // CHECK:STDOUT:   %s.ref.loc15: ref %.2 = name_ref s, %s
 // CHECK:STDOUT:   %.loc15_19: ref i32 = struct_access %s.ref.loc15, element0
 // CHECK:STDOUT:   %.loc15_17: %.6 = addr_of %.loc15_19
@@ -109,7 +109,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_13.2: type = converted %int.make_type_32.loc16, %.loc16_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_13.3: type = ptr_type i32 [template = constants.%.6]
 // CHECK:STDOUT:   %r.var: ref %.6 = var r
-// CHECK:STDOUT:   %r: ref %.6 = bind_name r, %r.var
+// CHECK:STDOUT:   %r: ref %.6 = bind_runtime_name r, %r.var
 // CHECK:STDOUT:   %s.ref.loc16: ref %.2 = name_ref s, %s
 // CHECK:STDOUT:   %.loc16_19: ref i32 = struct_access %s.ref.loc16, element1
 // CHECK:STDOUT:   %.loc16_17: %.6 = addr_of %.loc16_19
@@ -123,7 +123,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_19.5: type = converted %int.make_type_32.loc18_16, %.loc18_19.4 [template = i32]
 // CHECK:STDOUT:   %.loc18_19.6: type = converted %.loc18_19.1, constants.%.8 [template = constants.%.8]
 // CHECK:STDOUT:   %t.var: ref %.8 = var t
-// CHECK:STDOUT:   %t: ref %.8 = bind_name t, %t.var
+// CHECK:STDOUT:   %t: ref %.8 = bind_runtime_name t, %t.var
 // CHECK:STDOUT:   %.loc18_24: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc18_27: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc18_28.1: %.8 = tuple_literal (%.loc18_24, %.loc18_27)
@@ -139,7 +139,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_14.2: type = converted %int.make_type_32.loc19, %.loc19_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc19_14.3: type = ptr_type i32 [template = constants.%.6]
 // CHECK:STDOUT:   %t0.var: ref %.6 = var t0
-// CHECK:STDOUT:   %t0: ref %.6 = bind_name t0, %t0.var
+// CHECK:STDOUT:   %t0: ref %.6 = bind_runtime_name t0, %t0.var
 // CHECK:STDOUT:   %t.ref.loc19: ref %.8 = name_ref t, %t
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 0 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc19_22: ref i32 = tuple_index %t.ref.loc19, %.loc19_21
@@ -150,7 +150,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc20_14.2: type = converted %int.make_type_32.loc20, %.loc20_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc20_14.3: type = ptr_type i32 [template = constants.%.6]
 // CHECK:STDOUT:   %t1.var: ref %.6 = var t1
-// CHECK:STDOUT:   %t1: ref %.6 = bind_name t1, %t1.var
+// CHECK:STDOUT:   %t1: ref %.6 = bind_runtime_name t1, %t1.var
 // CHECK:STDOUT:   %t.ref.loc20: ref %.8 = name_ref t, %t
 // CHECK:STDOUT:   %.loc20_21: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc20_22: ref i32 = tuple_index %t.ref.loc20, %.loc20_21

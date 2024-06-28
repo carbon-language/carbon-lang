@@ -60,7 +60,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc6_12.2: type = converted %int.make_type_32.loc6, %.loc6_12.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_12.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a_ref.var: ref %.2 = var a_ref
-// CHECK:STDOUT:   %a_ref: ref %.2 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref %.2 = bind_runtime_name a_ref, %a_ref.var
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
@@ -68,7 +68,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc7_16.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_25: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:   %a_ptr_ref.var: ref %.3 = var a_ptr_ref
-// CHECK:STDOUT:   %a_ptr_ref: ref %.3 = bind_name a_ptr_ref, %a_ptr_ref.var
+// CHECK:STDOUT:   %a_ptr_ref: ref %.3 = bind_runtime_name a_ptr_ref, %a_ptr_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -116,7 +116,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc6_8.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc6_17: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
-// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.3 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_12.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
@@ -124,7 +124,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc7_12.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_21: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:   %a_ptr.var: ref %.3 = var a_ptr
-// CHECK:STDOUT:   %a_ptr: ref %.3 = bind_name a_ptr, %a_ptr.var
+// CHECK:STDOUT:   %a_ptr: ref %.3 = bind_runtime_name a_ptr, %a_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

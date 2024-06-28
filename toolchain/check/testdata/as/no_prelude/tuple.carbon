@@ -89,7 +89,7 @@ fn Var() {
 // CHECK:STDOUT:   %.loc19_32.3: %X = bind_value %.loc19_32.2
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc19_24.3, %.loc19_32.3)
 // CHECK:STDOUT:   %.loc19_45: %.4 = converted %.loc19_34, %tuple
-// CHECK:STDOUT:   %a: %.4 = bind_name a, %.loc19_45
+// CHECK:STDOUT:   %a: %.4 = bind_runtime_name a, %.loc19_45
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,7 +100,7 @@ fn Var() {
 // CHECK:STDOUT:   %.loc24_15.1: %.3 = tuple_literal (%X.ref.loc24_11, %X.ref.loc24_14)
 // CHECK:STDOUT:   %.loc24_15.2: type = converted %.loc24_15.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %b.var: ref %.4 = var b
-// CHECK:STDOUT:   %b: ref %.4 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.4 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %Make.ref.loc24_20: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc24_34.1: ref %X = tuple_access %b.var, element0
 // CHECK:STDOUT:   %Make.call.loc24_24: init %X = call %Make.ref.loc24_20() to %.loc24_34.1

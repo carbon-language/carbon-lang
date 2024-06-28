@@ -51,7 +51,7 @@ fn Constant() {
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11_11 [template = bool]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11_11, %.loc11_11.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_8.1: bool = param b
-// CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc11_8.1
+// CHECK:STDOUT:     @Not.%b: bool = bind_runtime_name b, %b.loc11_8.1
 // CHECK:STDOUT:     %bool.make_type.loc11_20: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %bool.make_type.loc11_20 [template = bool]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %bool.make_type.loc11_20, %.loc11_20.1 [template = bool]
@@ -99,7 +99,7 @@ fn Constant() {
 // CHECK:STDOUT: !if.expr.result.loc19:
 // CHECK:STDOUT:   %.loc19_10: type = block_arg !if.expr.result.loc19 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.1 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc19_43.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_43.2: init %.1 = tuple_init () to %a.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc19_44: init %.1 = converted %.loc19_43.1, %.loc19_43.2 [template = constants.%tuple]
@@ -122,7 +122,7 @@ fn Constant() {
 // CHECK:STDOUT: !if.expr.result.loc20:
 // CHECK:STDOUT:   %.loc20_10: type = block_arg !if.expr.result.loc20 [template = bool]
 // CHECK:STDOUT:   %b.var: ref bool = var b
-// CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref bool = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %.loc20_43: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   assign %b.var, %.loc20_43
 // CHECK:STDOUT:   return
@@ -132,10 +132,10 @@ fn Constant() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_26: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_22: bool = not %.loc15_26 [template = constants.%.3]
-// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc15_22
+// CHECK:STDOUT:   %not_true: bool = bind_runtime_name not_true, %.loc15_22
 // CHECK:STDOUT:   %.loc16_27: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   %.loc16_23: bool = not %.loc16_27 [template = constants.%.2]
-// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc16_23
+// CHECK:STDOUT:   %not_false: bool = bind_runtime_name not_false, %.loc16_23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

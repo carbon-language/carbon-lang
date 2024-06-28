@@ -45,7 +45,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_25: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %a.loc14_15.1: <error> = param a
-// CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc14_15.1
+// CHECK:STDOUT:     @F.%a: <error> = bind_runtime_name a, %a.loc14_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

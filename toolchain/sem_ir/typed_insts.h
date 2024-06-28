@@ -256,7 +256,7 @@ struct BindAlias {
 struct BindRuntimeName {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
-      InstKind::BindRuntimeName.Define<Parse::NodeId>("bind_name");
+      InstKind::BindRuntimeName.Define<Parse::NodeId>("bind_runtime_name");
 
   TypeId type_id;
   BindNameId bind_name_id;

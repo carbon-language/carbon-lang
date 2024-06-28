@@ -78,23 +78,23 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %.loc23_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc23_9.2: type = converted %.loc23_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.1 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc37_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc37_10.2: type = converted %.loc37_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x2.var: ref %.1 = var x2
-// CHECK:STDOUT:   %x2: ref %.1 = bind_name x2, %x2.var
+// CHECK:STDOUT:   %x2: ref %.1 = bind_runtime_name x2, %x2.var
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type.loc47: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc47_8.1: type = value_of_initializer %bool.make_type.loc47 [template = bool]
 // CHECK:STDOUT:   %.loc47_8.2: type = converted %bool.make_type.loc47, %.loc47_8.1 [template = bool]
 // CHECK:STDOUT:   %y.var: ref bool = var y
-// CHECK:STDOUT:   %y: ref bool = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref bool = bind_runtime_name y, %y.var
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type.loc56: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc56_9.1: type = value_of_initializer %bool.make_type.loc56 [template = bool]
 // CHECK:STDOUT:   %.loc56_9.2: type = converted %bool.make_type.loc56, %.loc56_9.1 [template = bool]
 // CHECK:STDOUT:   %y2.var: ref bool = var y2
-// CHECK:STDOUT:   %y2: ref bool = bind_name y2, %y2.var
+// CHECK:STDOUT:   %y2: ref bool = bind_runtime_name y2, %y2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

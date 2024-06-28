@@ -324,7 +324,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.loc6_27.1: type = value_of_initializer %.loc6_23.3 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %.loc6_27.2: type = converted %.loc6_23.3, %.loc6_27.1 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
-// CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc6: %F.type.1 = name_ref F, file.%import_ref.3 [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc6_7: ref %CompleteClass.3 = splice_block %v.var {}
 // CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.3 = call %F.ref.loc6() to %.loc6_7
@@ -405,7 +405,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.loc6_27.1: type = value_of_initializer %.loc6_23.3 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %.loc6_27.2: type = converted %.loc6_23.3, %.loc6_27.1 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
-// CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.3 [template = constants.%F]
 // CHECK:STDOUT:   %.loc6_7: ref %CompleteClass.3 = splice_block %v.var {}
 // CHECK:STDOUT:   %F.call: init %CompleteClass.3 = call %F.ref() to %.loc6_7
@@ -476,7 +476,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.loc11_28.1: type = value_of_initializer %.loc11_23 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %.loc11_28.2: type = converted %.loc11_23, %.loc11_28.1 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
-// CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%import_ref.3 [template = constants.%F]
 // CHECK:STDOUT:   %.loc11_33: ref %CompleteClass.4 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %CompleteClass.4 = call %F.ref() to %.loc11_33

@@ -95,7 +95,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc14_50.8: type = converted %.loc14_50.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_51: type = struct_type {.a: %.3, .b: %.3} [template = constants.%.4]
 // CHECK:STDOUT:   %v.var: ref %.4 = var v
-// CHECK:STDOUT:   %v: ref %.4 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.4 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_61: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_74.1: ref %.3 = struct_access %v.var, element0
 // CHECK:STDOUT:   %F.call.loc14_62: init %.3 = call %F.ref.loc14_61() to %.loc14_74.1

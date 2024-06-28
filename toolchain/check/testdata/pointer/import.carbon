@@ -43,14 +43,14 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %.loc4_13.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_13.2: type = converted %int.make_type_32.loc4, %.loc4_13.1 [template = i32]
 // CHECK:STDOUT:   %a_orig.var: ref i32 = var a_orig
-// CHECK:STDOUT:   %a_orig: ref i32 = bind_name a_orig, %a_orig.var
+// CHECK:STDOUT:   %a_orig: ref i32 = bind_runtime_name a_orig, %a_orig.var
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_15.2: type = converted %int.make_type_32.loc5, %.loc5_15.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_15.3: type = ptr_type i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a_ref.var: ref %.3 = var a_ref
-// CHECK:STDOUT:   %a_ref: ref %.3 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref %.3 = bind_runtime_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -90,7 +90,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32, %.loc4_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.3: type = ptr_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.2 = bind_runtime_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

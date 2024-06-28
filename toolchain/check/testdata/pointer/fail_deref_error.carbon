@@ -49,10 +49,10 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc15: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15: ref <error> = deref <error>
-// CHECK:STDOUT:   %n: i32 = bind_name n, <error>
+// CHECK:STDOUT:   %n: i32 = bind_runtime_name n, <error>
 // CHECK:STDOUT:   %undeclared.ref.loc19: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc19: ref <error> = deref <error>
-// CHECK:STDOUT:   %n2: i32 = bind_name n2, <error>
+// CHECK:STDOUT:   %n2: i32 = bind_runtime_name n2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

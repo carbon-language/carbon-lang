@@ -29,6 +29,6 @@ var a: [1; 1];
 // CHECK:STDOUT:   %.loc14_12: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_13: type = array_type %.loc14_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref <error> = bind_runtime_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

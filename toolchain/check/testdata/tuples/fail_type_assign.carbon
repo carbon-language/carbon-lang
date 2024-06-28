@@ -36,7 +36,7 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:   %.loc14_14.3: type = converted %int.make_type_32, %.loc14_14.2 [template = i32]
 // CHECK:STDOUT:   %.loc14_14.4: type = converted %.loc14_14.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.3 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

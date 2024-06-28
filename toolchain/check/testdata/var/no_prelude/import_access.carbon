@@ -69,7 +69,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %.loc4_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v.var: ref %.1 = var v
-// CHECK:STDOUT:   %v: ref %.1 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.1 = bind_runtime_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -94,7 +94,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2
-// CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
+// CHECK:STDOUT:   %v2: ref %.1 = bind_runtime_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -117,7 +117,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2
-// CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
+// CHECK:STDOUT:   %v2: ref %.1 = bind_runtime_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -142,7 +142,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2
-// CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
+// CHECK:STDOUT:   %v2: ref %.1 = bind_runtime_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

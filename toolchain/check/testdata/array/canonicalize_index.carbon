@@ -47,12 +47,12 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
-// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc11_8.1
+// CHECK:STDOUT:     @Add.%a: i32 = bind_runtime_name a, %a.loc11_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
-// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc11_16.1
+// CHECK:STDOUT:     @Add.%b: i32 = bind_runtime_name b, %b.loc11_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %int.make_type_32.loc11_27 [template = i32]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %int.make_type_32.loc11_27, %.loc11_27.1 [template = i32]
@@ -68,7 +68,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc13_9.2: type = converted %int.make_type_32.loc13, %.loc13_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_23: type = array_type %int.sadd, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %a.var: ref %.5 = var a
-// CHECK:STDOUT:   %a.loc13: ref %.5 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.loc13: ref %.5 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_14: i32 = int_literal 3 [template = constants.%.4]
@@ -102,7 +102,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   assign file.%a.var, %.loc13_36
 // CHECK:STDOUT:   %a.ref: ref %.5 = name_ref a, file.%a.loc13
 // CHECK:STDOUT:   %.loc14: %.6 = addr_of %a.ref
-// CHECK:STDOUT:   %b: %.6 = bind_name b, %.loc14
+// CHECK:STDOUT:   %b: %.6 = bind_runtime_name b, %.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -93,14 +93,14 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc13_27: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc13_27
 // CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
-// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref i32 = bind_runtime_name w, %w.var
 // CHECK:STDOUT:   %.loc21_27: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %w.var, %.loc21_27
 // CHECK:STDOUT:   br !if.else
@@ -120,7 +120,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc28_21.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:   %.loc28_21.2: type = converted %int.make_type_32.loc28, %.loc28_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc28_27: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc28_27
 // CHECK:STDOUT:   %.loc29: bool = bool_literal true [template = constants.%.2]
@@ -131,7 +131,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc36_23.1: type = value_of_initializer %int.make_type_32.loc36 [template = i32]
 // CHECK:STDOUT:   %.loc36_23.2: type = converted %int.make_type_32.loc36, %.loc36_23.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
-// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref i32 = bind_runtime_name w, %w.var
 // CHECK:STDOUT:   %.loc36_29: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %w.var, %.loc36_29
 // CHECK:STDOUT:   br !if.else.loc29

@@ -44,7 +44,7 @@ let c_var: c = d;
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref %D = var d
-// CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %D = bind_runtime_name d, %d.var
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,7 +65,7 @@ let c_var: c = d;
 // CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14
 // CHECK:STDOUT:   %d.ref: ref %D = name_ref d, file.%d
-// CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
+// CHECK:STDOUT:   %c_var: %C = bind_runtime_name c_var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

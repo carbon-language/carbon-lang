@@ -98,7 +98,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_32.loc12, %.loc12_12.1 [template = i32]
 // CHECK:STDOUT:     %a.loc12_9.1: i32 = param a
-// CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %a.loc12_9.1
+// CHECK:STDOUT:     @Run1.%a: i32 = bind_runtime_name a, %a.loc12_9.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -107,12 +107,12 @@ fn Main() {
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_32.loc13_12 [template = i32]
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %int.make_type_32.loc13_12, %.loc13_12.1 [template = i32]
 // CHECK:STDOUT:     %a.loc13_9.1: i32 = param a
-// CHECK:STDOUT:     @Run2.%a: i32 = bind_name a, %a.loc13_9.1
+// CHECK:STDOUT:     @Run2.%a: i32 = bind_runtime_name a, %a.loc13_9.1
 // CHECK:STDOUT:     %int.make_type_32.loc13_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_32.loc13_20 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_32.loc13_20, %.loc13_20.1 [template = i32]
 // CHECK:STDOUT:     %b.loc13_17.1: i32 = param b
-// CHECK:STDOUT:     @Run2.%b: i32 = bind_name b, %b.loc13_17.1
+// CHECK:STDOUT:     @Run2.%b: i32 = bind_runtime_name b, %b.loc13_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }

@@ -43,7 +43,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_32, %.loc15_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
-// CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref i32 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %.loc15_16: String = string_literal "hello" [template = constants.%.3]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return

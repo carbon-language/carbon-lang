@@ -63,7 +63,7 @@ let b: B = C.base;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %base.ref: %.4 = name_ref base, @C.%.loc14 [template = @C.%.loc14]
-// CHECK:STDOUT:   %b: %B = bind_name b, <error>
+// CHECK:STDOUT:   %b: %B = bind_runtime_name b, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

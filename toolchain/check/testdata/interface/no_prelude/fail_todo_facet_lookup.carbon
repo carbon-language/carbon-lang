@@ -62,7 +62,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %x.loc21_29.1: %T = param x
-// CHECK:STDOUT:     @CallFacet.%x: %T = bind_name x, %x.loc21_29.1
+// CHECK:STDOUT:     @CallFacet.%x: %T = bind_runtime_name x, %x.loc21_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

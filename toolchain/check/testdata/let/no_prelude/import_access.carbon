@@ -75,7 +75,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   %.loc4_22: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc4_23: %.1 = converted %.loc4_22, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %v: %.1 = bind_name v, %.loc4_23
+// CHECK:STDOUT:   %v: %.1 = bind_runtime_name v, %.loc4_23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,7 +96,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
-// CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   %v2: %.1 = bind_runtime_name v2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
-// CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   %v2: %.1 = bind_runtime_name v2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +141,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, file.%Test [template = file.%Test]
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
-// CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   %v2: %.1 = bind_runtime_name v2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -64,7 +64,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
-// CHECK:STDOUT:   %or_: ref <error> = bind_name or_, %or_.var
+// CHECK:STDOUT:   %or_: ref <error> = bind_runtime_name or_, %or_.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

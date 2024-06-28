@@ -98,7 +98,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %.loc14_19.5: type = converted %int.make_type_32.loc14_16, %.loc14_19.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_19.6: type = converted %.loc14_19.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %v.var: ref %.3 = var v
-// CHECK:STDOUT:   %v: ref %.3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %.3 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_7: ref %.3 = splice_block %v.var {}
 // CHECK:STDOUT:   %F.call.loc14: init %.3 = call %F.ref.loc14() to %.loc14_7

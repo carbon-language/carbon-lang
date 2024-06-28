@@ -47,7 +47,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc14_12.2: type = converted %.loc14_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %NS.var: ref %.1 = var NS
-// CHECK:STDOUT:   %NS: ref %.1 = bind_name NS, %NS.var
+// CHECK:STDOUT:   %NS: ref %.1 = bind_runtime_name NS, %NS.var
 // CHECK:STDOUT:   %.loc14_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc14_17.2: init %.1 = tuple_init () to %NS.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc14_18: init %.1 = converted %.loc14_17.1, %.loc14_17.2 [template = constants.%tuple]
@@ -60,7 +60,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc17_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc17_11.2: type = converted %.loc17_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var.loc17: ref %.1 = var x
-// CHECK:STDOUT:   %x.loc17: ref %.1 = bind_name x, %x.var.loc17
+// CHECK:STDOUT:   %x.loc17: ref %.1 = bind_runtime_name x, %x.var.loc17
 // CHECK:STDOUT:   %.loc17_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc17_16.2: init %.1 = tuple_init () to %x.var.loc17 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc17_17: init %.1 = converted %.loc17_16.1, %.loc17_16.2 [template = constants.%tuple]
@@ -72,7 +72,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc19_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: type = converted %.loc19_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var.loc19: ref %.1 = var x
-// CHECK:STDOUT:   %x.loc19: ref %.1 = bind_name x, %x.var.loc19
+// CHECK:STDOUT:   %x.loc19: ref %.1 = bind_runtime_name x, %x.var.loc19
 // CHECK:STDOUT:   %.loc19_18.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_18.2: init %.1 = tuple_init () to %x.var.loc19 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc19_19: init %.1 = converted %.loc19_18.1, %.loc19_18.2 [template = constants.%tuple]

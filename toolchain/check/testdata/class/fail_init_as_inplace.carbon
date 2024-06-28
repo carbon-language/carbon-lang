@@ -61,7 +61,7 @@ fn F() {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc16_6.1: %.4 = param p
-// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc16_6.1
+// CHECK:STDOUT:     @G.%p: %.4 = bind_runtime_name p, %p.loc16_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
@@ -90,7 +90,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc25_10: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
-// CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %Class = bind_runtime_name c, %c.var
 // CHECK:STDOUT:   %.loc25_24: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc25_32: i32 = int_literal 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc25_33.1: %.3 = struct_literal (%.loc25_24, %.loc25_32)

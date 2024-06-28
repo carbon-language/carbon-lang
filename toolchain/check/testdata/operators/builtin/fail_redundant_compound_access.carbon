@@ -69,7 +69,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_32, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref i32 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc14_16: i32 = int_literal 3 [template = constants.%.3]
 // CHECK:STDOUT:   assign %a.var, %.loc14_16
 // CHECK:STDOUT:   %a.ref.loc19_3: ref i32 = name_ref a, %a

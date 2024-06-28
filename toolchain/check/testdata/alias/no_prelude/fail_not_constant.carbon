@@ -39,7 +39,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %.1 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc12_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_16.2: init %.1 = tuple_init () to %a.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc12_17: init %.1 = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%tuple]
@@ -48,7 +48,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_12.1: type = converted %.loc13_11, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc13_12.2: type = ptr_type %.1 [template = constants.%.2]
 // CHECK:STDOUT:   %b.var: ref %.2 = var b
-// CHECK:STDOUT:   %b: ref %.2 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %.2 = bind_runtime_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref %.1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc13_16: %.2 = addr_of %a.ref
 // CHECK:STDOUT:   assign %b.var, %.loc13_16

@@ -137,7 +137,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc29_10.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:   %.loc29_10.2: type = converted %int.make_type_32.loc29, %.loc29_10.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
-// CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref i32 = bind_runtime_name n, %n.var
 // CHECK:STDOUT:   %.loc29_16: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   assign %n.var, %.loc29_16
 // CHECK:STDOUT:   %n.ref.loc34_4: ref i32 = name_ref n, %n
@@ -197,7 +197,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc52_10.1: type = value_of_initializer %int.make_type_32.loc52 [template = i32]
 // CHECK:STDOUT:   %.loc52_10.2: type = converted %int.make_type_32.loc52, %.loc52_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref i32 = bind_runtime_name a, %a.var
 // CHECK:STDOUT:   %.loc56_7: bool = bool_literal true [template = constants.%.12]
 // CHECK:STDOUT:   if %.loc56_7 br !if.expr.then.loc56 else br !if.expr.else.loc56
 // CHECK:STDOUT:

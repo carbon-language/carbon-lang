@@ -147,11 +147,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %D: type = bind_alias D, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
-// CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
+// CHECK:STDOUT:   %b_val: ref %C = bind_runtime_name b_val, %b_val.var
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:   %.loc9: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %b_ptr.var: ref %.4 = var b_ptr
-// CHECK:STDOUT:   %b_ptr: ref %.4 = bind_name b_ptr, %b_ptr.var
+// CHECK:STDOUT:   %b_ptr: ref %.4 = bind_runtime_name b_ptr, %b_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -197,11 +197,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %E: type = bind_alias E, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
-// CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
+// CHECK:STDOUT:   %c_val: ref %C = bind_runtime_name c_val, %c_val.var
 // CHECK:STDOUT:   %E.ref: type = name_ref E, %E [template = constants.%C]
 // CHECK:STDOUT:   %.loc9: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %c_ptr.var: ref %.4 = var c_ptr
-// CHECK:STDOUT:   %c_ptr: ref %.4 = bind_name c_ptr, %c_ptr.var
+// CHECK:STDOUT:   %c_ptr: ref %.4 = bind_runtime_name c_ptr, %c_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -250,11 +250,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_runtime_name val, %val.var
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %.4 = bind_runtime_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -303,11 +303,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_runtime_name val, %val.var
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %.4 = bind_runtime_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -360,11 +360,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_runtime_name val, %val.var
 // CHECK:STDOUT:   %E.ref: type = name_ref E, %import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %.4 = bind_runtime_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -417,11 +417,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+6, unloaded
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_runtime_name val, %val.var
 // CHECK:STDOUT:   %E.ref: type = name_ref E, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %.4 = bind_runtime_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

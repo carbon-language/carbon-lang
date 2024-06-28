@@ -48,13 +48,13 @@ class Class {
 // CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc16_13.1: %.1 = param a
-// CHECK:STDOUT:     %a.loc16_13.2: %.1 = bind_name a, %a.loc16_13.1
+// CHECK:STDOUT:     %a.loc16_13.2: %.1 = bind_runtime_name a, %a.loc16_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %b.loc21_13.1: %.1 = param b
-// CHECK:STDOUT:     %b.loc21_13.2: %.1 = bind_name b, %b.loc21_13.1
+// CHECK:STDOUT:     %b.loc21_13.2: %.1 = bind_runtime_name b, %b.loc21_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

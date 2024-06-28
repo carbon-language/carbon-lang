@@ -41,7 +41,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_32, %.loc15_10.1 [template = i32]
 // CHECK:STDOUT:   %y.var: ref i32 = var y
-// CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref i32 = bind_runtime_name y, %y.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   assign %y.var, <error>

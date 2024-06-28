@@ -34,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %.loc11_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: %.1} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %.2 = bind_runtime_name x, %x.var
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,7 +44,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_16.2: type = converted %.loc14_16.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_17: type = struct_type {.v: %.1} [template = constants.%.2]
 // CHECK:STDOUT:   %y.var: ref %.2 = var y
-// CHECK:STDOUT:   %y: ref %.2 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %.2 = bind_runtime_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref %.2 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc14_21.1: ref %.1 = struct_access %x.ref, element0
 // CHECK:STDOUT:   %.loc14_21.2: ref %.1 = struct_access %y.var, element0

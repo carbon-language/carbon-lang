@@ -226,7 +226,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc8_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -251,7 +251,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -278,7 +278,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -304,7 +304,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc8_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -329,7 +329,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -356,7 +356,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -385,7 +385,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc8_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -416,7 +416,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -443,7 +443,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc9_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %.1 = bind_runtime_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

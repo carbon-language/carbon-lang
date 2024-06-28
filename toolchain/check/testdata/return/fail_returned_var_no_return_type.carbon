@@ -40,7 +40,7 @@ fn Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc18_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc18_20.2: type = converted %.loc18_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %v: %.1 = bind_name v, <error>
+// CHECK:STDOUT:   %v: %.1 = bind_runtime_name v, <error>
 // CHECK:STDOUT:   %.loc18_25: %.1 = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return

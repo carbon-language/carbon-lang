@@ -109,7 +109,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %PartiallyConstant.decl: %PartiallyConstant.type = fn_decl @PartiallyConstant [template = constants.%PartiallyConstant] {
 // CHECK:STDOUT:     %t.loc28_22.1: type = param t
-// CHECK:STDOUT:     @PartiallyConstant.%t: type = bind_name t, %t.loc28_22.1
+// CHECK:STDOUT:     @PartiallyConstant.%t: type = bind_runtime_name t, %t.loc28_22.1
 // CHECK:STDOUT:     %int.make_type_32.loc28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc28_34.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:     %.loc28_34.2: type = converted %int.make_type_32.loc28, %.loc28_34.1 [template = i32]
@@ -202,7 +202,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.result.loc23:
 // CHECK:STDOUT:   %.loc23_10: type = block_arg !if.expr.result.loc23 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc23_39: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc23_39
 // CHECK:STDOUT:   %.loc24_13: bool = bool_literal false [template = constants.%.5]
@@ -224,7 +224,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.result.loc24:
 // CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [template = constants.%.6]
 // CHECK:STDOUT:   %w.var: ref %.6 = var w
-// CHECK:STDOUT:   %w: ref %.6 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %.6 = bind_runtime_name w, %w.var
 // CHECK:STDOUT:   %v.ref: ref i32 = name_ref v, %v
 // CHECK:STDOUT:   %.loc24_40: %.6 = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %.loc24_40
@@ -253,7 +253,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.result.loc29:
 // CHECK:STDOUT:   %.loc29_10: type = block_arg !if.expr.result.loc29 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
-// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref i32 = bind_runtime_name v, %v.var
 // CHECK:STDOUT:   %.loc29_36: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc29_36
 // CHECK:STDOUT:   %.loc30_13: bool = bool_literal false [template = constants.%.5]
@@ -273,7 +273,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.result.loc30:
 // CHECK:STDOUT:   %.loc30_10: type = block_arg !if.expr.result.loc30 [template = constants.%.6]
 // CHECK:STDOUT:   %w.var: ref %.6 = var w
-// CHECK:STDOUT:   %w: ref %.6 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %.6 = bind_runtime_name w, %w.var
 // CHECK:STDOUT:   %v.ref: ref i32 = name_ref v, %v
 // CHECK:STDOUT:   %.loc30_38: %.6 = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %.loc30_38

@@ -29,6 +29,6 @@ var x: (1, );
 // CHECK:STDOUT:   %.loc14_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_12: %.2 = tuple_literal (%.loc14_9)
 // CHECK:STDOUT:   %x.var: ref <error> = var x
-// CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref <error> = bind_runtime_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

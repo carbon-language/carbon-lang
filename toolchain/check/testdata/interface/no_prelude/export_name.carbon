@@ -102,7 +102,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:     %i.loc6_13.1: %.1 = param i
-// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_name i, %i.loc6_13.1
+// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_runtime_name i, %i.loc6_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
