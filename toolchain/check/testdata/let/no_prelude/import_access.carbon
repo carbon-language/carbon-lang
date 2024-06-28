@@ -22,14 +22,10 @@ private let v: () = ();
 // Test files
 // ============================================================================
 
-// --- fail_todo_def.impl.carbon
+// --- def.impl.carbon
 
 impl package Test library "def";
 
-// CHECK:STDERR: fail_todo_def.impl.carbon:[[@LINE+4]]:14: ERROR: Name `v` not found.
-// CHECK:STDERR: let v2: () = v;
-// CHECK:STDERR:              ^
-// CHECK:STDERR:
 let v2: () = v;
 
 // --- fail_local_def.carbon
@@ -79,7 +75,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -87,16 +83,18 @@ let v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .v [private] = %import_ref
 // CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref: %.1 = import_ref ir0, inst+4, loaded
+// CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
-// CHECK:STDOUT:   %v2: %.1 = bind_name v2, <error>
+// CHECK:STDOUT:   %v.ref: %.1 = name_ref v, file.%import_ref
+// CHECK:STDOUT:   %v2: %.1 = bind_name v2, %v.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
