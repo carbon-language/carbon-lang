@@ -523,12 +523,12 @@ class ImportRefResolver {
           AddImportIRInst(param_id), {.type_id = type_id, .name_id = name_id});
       if (bind_inst) {
         switch (bind_inst->kind) {
-          case SemIR::BindName::Kind: {
+          case SemIR::BindRuntimeName::Kind: {
             auto bind_name_id = context_.bind_names().Add(
                 {.name_id = name_id,
                  .parent_scope_id = SemIR::NameScopeId::Invalid,
                  .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-            new_param_id = context_.AddInstInNoBlock<SemIR::BindName>(
+            new_param_id = context_.AddInstInNoBlock<SemIR::BindRuntimeName>(
                 AddImportIRInst(bind_id), {.type_id = type_id,
                                            .bind_name_id = bind_name_id,
                                            .value_id = new_param_id});
@@ -693,7 +693,7 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::BindAlias inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::BindName inst): {
+      case CARBON_KIND(SemIR::BindRuntimeName inst): {
         // TODO: This always returns `ConstantId::NotConstant`.
         return {.const_id = TryEvalInst(context_, inst_id, inst)};
       }

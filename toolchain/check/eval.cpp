@@ -1238,7 +1238,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::AdaptDecl::Kind:
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
-    case SemIR::BindName::Kind:
+    case SemIR::BindRuntimeName::Kind:
     case SemIR::BlockArg::Kind:
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:

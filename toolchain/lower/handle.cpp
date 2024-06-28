@@ -98,8 +98,8 @@ auto HandleExportDecl(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
-auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
-                    SemIR::BindName inst) -> void {
+auto HandleBindRuntimeName(FunctionContext& context, SemIR::InstId inst_id,
+                           SemIR::BindRuntimeName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 

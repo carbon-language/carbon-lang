@@ -435,7 +435,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case BaseDecl::Kind:
-      case BindName::Kind:
+      case BindRuntimeName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
@@ -609,7 +609,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return value_category;
       }
 
-      case CARBON_KIND(BindName inst): {
+      case CARBON_KIND(BindRuntimeName inst): {
         inst_id = inst.value_id;
         continue;
       }

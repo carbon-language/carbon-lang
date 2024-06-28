@@ -54,7 +54,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: bindName0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: Param, arg0: name2, type: type1}
-// CHECK:STDOUT:     'inst+6':          {kind: BindName, arg0: bindName1, arg1: inst+5, type: type1}
+// CHECK:STDOUT:     'inst+6':          {kind: BindRuntimeName, arg0: bindName1, arg1: inst+5, type: type1}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+9':          {kind: TupleLiteral, arg0: empty, type: type2}

@@ -46,7 +46,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+2':          {kind: TupleLiteral, arg0: empty, type: type1}
 // CHECK:STDOUT:     'inst+3':          {kind: Converted, arg0: inst+2, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: Param, arg0: name1, type: type1}
-// CHECK:STDOUT:     'inst+5':          {kind: BindName, arg0: bindName0, arg1: inst+4, type: type1}
+// CHECK:STDOUT:     'inst+5':          {kind: BindRuntimeName, arg0: bindName0, arg1: inst+4, type: type1}
 // CHECK:STDOUT:     'inst+6':          {kind: TupleLiteral, arg0: empty, type: type1}
 // CHECK:STDOUT:     'inst+7':          {kind: TupleLiteral, arg0: empty, type: type1}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}

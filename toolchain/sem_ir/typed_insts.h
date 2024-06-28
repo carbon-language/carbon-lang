@@ -222,7 +222,8 @@ struct BaseDecl {
 // Common representation for both kinds of `bind*name` node.
 struct AnyBindName {
   // TODO: Also handle BindTemplateName once it exists.
-  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
+  static constexpr InstKind Kinds[] = {InstKind::BindAlias,
+                                       InstKind::BindRuntimeName,
                                        InstKind::BindSymbolicName};
 
   InstKind kind;
@@ -233,9 +234,9 @@ struct AnyBindName {
 
 struct AnyBindNameOrExportDecl {
   // TODO: Also handle BindTemplateName once it exists.
-  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
-                                       InstKind::BindSymbolicName,
-                                       InstKind::ExportDecl};
+  static constexpr InstKind Kinds[] = {
+      InstKind::BindAlias, InstKind::BindRuntimeName,
+      InstKind::BindSymbolicName, InstKind::ExportDecl};
 
   InstKind kind;
   TypeId type_id;
@@ -252,10 +253,10 @@ struct BindAlias {
   InstId value_id;
 };
 
-struct BindName {
+struct BindRuntimeName {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
-      InstKind::BindName.Define<Parse::NodeId>("bind_name");
+      InstKind::BindRuntimeName.Define<Parse::NodeId>("bind_name");
 
   TypeId type_id;
   BindNameId bind_name_id;
