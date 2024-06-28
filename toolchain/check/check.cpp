@@ -117,7 +117,9 @@ static auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
         // node_id, such as a LocId.
         {.node_id = is_local ? import.names.node_id : Parse::InvalidNodeId(),
          .sem_ir = &direct_ir,
-         .is_export = import.names.is_export});
+         // Only tag exports in API files, ignoring the value in implementation
+         // files.
+         .is_export = is_local && import.names.is_export});
   }
 }
 
@@ -210,10 +212,14 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
 static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
                                 int total_ir_count,
                                 SemIR::TypeId namespace_type_id) -> void {
-  // For each package, the index into the API's package_imports. If this is not
-  // imported by the impl, the IdentifierId is the name of the package being
-  // imported. This is initially the size of the implementation's imports, even
-  // when there is no API, for simplicity in iteration.
+  // api_imports_list is initially the size of the current file's imports,
+  // including for API files, for simplicity in iteration. It's only really used
+  // when processing an implementation file, in order to combine the API file
+  // imports.
+  //
+  // For packages imported by the API file, the IdentifierId is the package name
+  // and the index is into the API's import list. Otherwise, the initial
+  // {Invalid, -1} state remains.
   llvm::SmallVector<std::pair<IdentifierId, int32_t>> api_imports_list;
   api_imports_list.resize(unit_info.package_imports.size(),
                           {IdentifierId::Invalid, -1});
@@ -269,7 +275,11 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
     if (api_imports_entry.second != -1) {
       api_imports =
           &unit_info.api_for_impl->package_imports[api_imports_entry.second];
-      package_id = api_imports_entry.first;
+      if (!package_id.is_valid()) {
+        package_id = api_imports_entry.first;
+      } else {
+        CARBON_CHECK(package_id == api_imports_entry.first);
+      }
       has_load_error |= api_imports->has_load_error;
     }
 
@@ -284,7 +294,7 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
 // Add imports to the root block.
 // TODO: Should this be importing all namespaces before anything else, including
 // for imports from other packages? Otherwise, name conflict resolution
-// involving something sudch as `fn F() -> Other.NS.A`, wherein `Other.NS`
+// involving something such as `fn F() -> Other.NS.A`, wherein `Other.NS`
 // hasn't been imported yet (before `Other.NS` had a constant assigned), could
 // result in an inconsistent scoping for `Other.NS.A` versus if it were imported
 // as part of scanning `Other.NS` (after `Other.NS` had a constant assigned).

@@ -577,7 +577,7 @@ class ImportRefResolver {
   // unresolved constants to the work stack.
   auto GetLocalNameScopeId(SemIR::NameScopeId name_scope_id)
       -> SemIR::NameScopeId {
-    // Get the instruction that create the scope.
+    // Get the instruction that created the scope.
     auto [inst_id, inst] =
         import_ir_.name_scopes().GetInstIfValid(name_scope_id);
     if (!inst) {
