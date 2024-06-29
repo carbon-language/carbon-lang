@@ -442,7 +442,10 @@ class BaseImpl {
       : view_impl_(alloc_size, nullptr),
         growth_budget_(growth_budget),
         small_alloc_size_(small_alloc_size) {}
-  ~BaseImpl();
+
+  // Destruction must be handled by the table where it can destroy entries in
+  // any small buffer, so make the base destructor protected but defaulted here.
+  ~BaseImpl() = default;
 
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
   operator ViewImplT() const { return view_impl(); }
@@ -575,6 +578,7 @@ class TableImpl : public InputBaseT {
   TableImpl(TableImpl&& arg) noexcept;
   auto operator=(const TableImpl& arg) -> TableImpl&;
   auto operator=(TableImpl&& arg) noexcept -> TableImpl&;
+  ~TableImpl();
 
   // Resets the hashtable to its initial state, clearing all entries and
   // releasing all memory. If the hashtable had an SSO buffer, that is restored
@@ -839,11 +843,6 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeMetricsImpl(
     metrics.probe_avg_distance /= metrics.key_count;
   }
   return metrics;
-}
-
-template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::~BaseImpl() {
-  Destroy();
 }
 
 // TODO: Evaluate whether it is worth forcing this out-of-line given the
@@ -1594,6 +1593,11 @@ auto TableImpl<InputBaseT, SmallSize>::operator=(TableImpl&& arg) noexcept
   this->growth_budget_ = arg.growth_budget_;
   this->MoveFrom(std::move(arg), small_storage());
   return *this;
+}
+
+template <typename InputBaseT, ssize_t SmallSize>
+TableImpl<InputBaseT, SmallSize>::~TableImpl() {
+  this->Destroy();
 }
 
 // Reset a table to its original state, including releasing any allocated
