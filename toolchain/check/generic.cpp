@@ -12,8 +12,8 @@ auto StartGenericDecl(Context& context) -> void {
   context.generic_region_stack().Push();
 }
 
-auto StartGenericDefinition(Context& context,
-                            SemIR::GenericId /*generic_id*/) -> void {
+auto StartGenericDefinition(Context& context, SemIR::GenericId /*generic_id*/)
+    -> void {
   // Push a generic region even if we don't have a generic_id. We might still
   // have locally-introduced generic parameters to track:
   //
@@ -49,9 +49,9 @@ auto FinishGenericRedecl(Context& context, SemIR::InstId /*decl_id*/,
   context.generic_region_stack().Pop();
 }
 
-auto FinishGenericDefinition(Context& context,
-                             SemIR::GenericId generic_id) -> void {
-    if (!generic_id.is_valid()) {
+auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
+    -> void {
+  if (!generic_id.is_valid()) {
     // TODO: We can have symbolic constants in a context that had a non-generic
     // declaration, for example if there's a local generic let binding in a
     // function definition. Handle this case somehow -- perhaps by forming

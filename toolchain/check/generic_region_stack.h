@@ -5,9 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_GENERIC_REGION_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_GENERIC_REGION_STACK_H_
 
-#include "toolchain/sem_ir/ids.h"
-
 #include "llvm/ADT/BitmaskEnum.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -21,7 +20,7 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 // TODO: For now we're just tracking symbolic constants.
 //
 // We split a generic into two regions -- declaration and definition -- because
-// these are in general intrduced separately, and substituted into separately.
+// these are in general introduced separately, and substituted into separately.
 // For example, for `class C(T:! type, N:! T) { var x: T; }`, a use such as
 // `C(i32, 0)*` substitutes into just the declaration, whereas a use such as
 // `var x: C(i32, 0) = {.x = 0};` also substitutes into the definition.
@@ -32,7 +31,8 @@ class GenericRegionStack {
     None = 0x0,
     // The type of the instruction depends on a checked generic parameter.
     SymbolicType = 0x1,
-    // The constant value of the instruction depends on a checked generic parameter.
+    // The constant value of the instruction depends on a checked generic
+    // parameter.
     SymbolicConstant = 0x2,
     Template = 0x4,
     LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Template)
