@@ -16,7 +16,6 @@
 
 #include "common/check.h"
 #include "common/hashing.h"
-#include "common/hashtable_key_context.h"
 #include "common/raw_hashtable_metadata_group.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
@@ -301,8 +300,7 @@ struct Metrics {
 struct Storage {};
 
 // Forward declaration to support friending, see the definition below.
-template <typename KeyT, typename ValueT = void,
-          typename InputKeyContextT = DefaultKeyContext>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 class BaseImpl;
 
 // Implementation helper for defining a read-only view type for a hashtable.
@@ -326,8 +324,7 @@ class BaseImpl;
 // Some methods are used by other parts of the raw hashtable implementation.
 // Those are kept `private` and where necessary the other components of the raw
 // hashtable implementation are friended to give access to them.
-template <typename InputKeyT, typename InputValueT = void,
-          typename InputKeyContextT = DefaultKeyContext>
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 class ViewImpl {
  protected:
   using KeyT = InputKeyT;

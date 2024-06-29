@@ -86,20 +86,17 @@ struct FixedHashKeyContext : DefaultKeyContext {
 };
 
 template <typename T>
-class IndexKeyContext {
+class IndexKeyContext : public TranslatingKeyContext<IndexKeyContext<T>> {
+  using Base = TranslatingKeyContext<IndexKeyContext>;
+
  public:
   explicit IndexKeyContext(llvm::ArrayRef<T> array) : array_(array) {}
 
-  auto HashKey(const T& value, uint64_t seed) const -> HashCode {
-    return HashValue(value, seed);
-  }
-  auto HashKey(ssize_t index, uint64_t seed) const -> HashCode {
-    return HashKey(array_[index], seed);
-  }
+  auto TranslateKey(ssize_t index) const -> const T& { return array_[index]; }
 
-  auto KeyEq(const T& lhs, ssize_t rhs_index) const -> bool {
-    return lhs == array_[rhs_index];
-  }
+  // Override the CRTP approach when we have two indices as we can optimize that
+  // approach.
+  using Base::KeyEq;
   auto KeyEq(ssize_t lhs_index, ssize_t rhs_index) const -> bool {
     // No need to compare the elements, if the indices are equal, the values
     // must be.
