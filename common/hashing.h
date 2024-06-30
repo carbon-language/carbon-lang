@@ -13,6 +13,8 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -443,6 +445,11 @@ class Hasher {
 // public API. They should not be used directly by client code.
 namespace InternalHashDispatch {
 
+// Forward declare the dispatch function so we can re-do dispatch with a
+// different type if needed.
+template <typename T>
+inline auto DispatchImpl(const T& value, uint64_t seed) -> HashCode;
+
 inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
@@ -474,6 +481,63 @@ inline auto CarbonHashValue(const llvm::SmallString<Length>& value,
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
+// Support types that are array like by building an `llvm::ArrayRef` out of
+// them. We can't do this by accepting any type convertible to an `ArrayRef`
+// because that type supports building a synthetic array out of any single
+// element. These need to go back through the dispatch implementation though to
+// pick up the full space of hash overloads for `T`.
+template <typename T>
+inline auto CarbonHashValue(const std::vector<T>& arg, uint64_t seed)
+    -> HashCode {
+  return DispatchImpl(llvm::ArrayRef(arg), seed);
+}
+template <typename T>
+inline auto CarbonHashValue(const llvm::SmallVectorImpl<T>& arg, uint64_t seed)
+    -> HashCode {
+  return DispatchImpl(llvm::ArrayRef(arg), seed);
+}
+template <typename T, size_t N>
+inline auto CarbonHashValue(const std::array<T, N>& arg, uint64_t seed)
+    -> HashCode {
+  return DispatchImpl(llvm::ArrayRef(arg), seed);
+}
+template <typename T, size_t N>
+inline auto CarbonHashValue(const T (&arg)[N], uint64_t seed) -> HashCode {
+  return DispatchImpl(llvm::ArrayRef(arg), seed);
+}
+
+inline auto CarbonHashValue(llvm::APInt value, uint64_t seed) -> HashCode {
+  Hasher hasher(seed);
+  if (LLVM_LIKELY(value.isSingleWord())) {
+    hasher.Hash(value.getBitWidth(), value.getZExtValue());
+  } else {
+    hasher.Hash(value.getBitWidth());
+    hasher.HashSizedBytes(
+        llvm::ArrayRef(value.getRawData(), value.getNumWords()));
+  }
+  return static_cast<HashCode>(hasher);
+}
+
+inline auto CarbonHashValue(llvm::APFloat value, uint64_t seed) -> HashCode {
+  Hasher hasher(seed);
+  // Hashing floating point numbers is complex and depends on the specific
+  // internal semantics of `APFloat`, so delegate to the LLVM hashing framework
+  // here. We re-hash the result to mix in our seed. All of this is a bit
+  // inefficient, and we can revisit this to provide a dedicated implementation
+  // if it becomes a bottleneck.
+  using llvm::hash_value;
+  hasher.Hash(hash_value(value));
+  return static_cast<HashCode>(hasher);
+}
+
+// Implementation detail predicate to test for types hashable with
+// `CarbonHashValue`. Should find all of the above direct overloads as well as
+// ADL-provided overloads.
+template <typename T>
+concept HasCustomCarbonHashValue = requires(T t) {
+  { CarbonHashValue(t, static_cast<uint64_t>(0)) } -> std::same_as<HashCode>;
+};
+
 // C++ guarantees this is true for the unsigned variants, but we require it for
 // signed variants and pointers.
 static_assert(std::has_unique_object_representations_v<int8_t>);
@@ -482,67 +546,110 @@ static_assert(std::has_unique_object_representations_v<int32_t>);
 static_assert(std::has_unique_object_representations_v<int64_t>);
 static_assert(std::has_unique_object_representations_v<void*>);
 
-// C++ uses `std::nullptr_t` but unfortunately doesn't make it have a unique
-// object representation. To address that, we need a function that converts
-// `nullptr` back into a `void*` that will have a unique object representation.
-// And this needs to be done by-value as we need to build a temporary object to
-// return, which requires a separate overload rather than just using a type
-// function that could be used in parallel in the predicate below. Instead, we
-// build the predicate independently of the mapping overload, but together they
-// should produce the correct result.
+// Overloaded function to provide mappings or conversions required to types that
+// should be hashed as plain data but where can't directly examine the storage.
+//
+// For example, C++ uses `std::nullptr_t` but unfortunately doesn't make it have
+// a unique object representation. To address that, we need a function that
+// converts `nullptr` back into a `void*` that will have a unique object
+// representation. And this needs to be done by-value as we need to build a
+// temporary object to return, which requires a separate overload rather than
+// just using a type function that could be used in parallel in the predicate
+// below. Instead, we build the predicate independently of the mapping overload,
+// but together they should produce the correct result.
 template <typename T>
-inline auto MapNullPtrToVoidPtr(const T& value) -> const T& {
+inline auto MapToRawDataType(const T& value) -> const T& {
   // This overload should never be selected for `std::nullptr_t`, so
   // static_assert to get some better compiler error messages.
   static_assert(!std::same_as<T, std::nullptr_t>);
   return value;
 }
-inline auto MapNullPtrToVoidPtr(std::nullptr_t /*value*/) -> const void* {
+inline auto MapToRawDataType(std::nullptr_t /*value*/) -> const void* {
   return nullptr;
 }
 
-// Implementation detail predicate to be used in conjunction with a `nullptr`
-// mapping routine like the above.
+// Implementation detail predicate to detect if we should has a type as raw
+// data. When used, it should be combined with our mapping function
+// `MapToRawDataType` to handle any necessary edge cases that don't directly
+// work.
 template <typename T>
-concept NullPtrOrHasUniqueObjectRepresentations =
-    std::same_as<T, std::nullptr_t> ||
-    std::has_unique_object_representations_v<T>;
+concept HashAsRawDataType = std::same_as<T, std::nullptr_t> ||
+                            (std::has_unique_object_representations_v<T> &&
+                             !HasCustomCarbonHashValue<T>);
 
+// We don't use `HashAsRawDataType` here and directly query for unique object
+// representation because we need to take the *address* of the storage here and
+// so can't do any mapping.
 template <typename T>
-  requires NullPtrOrHasUniqueObjectRepresentations<T>
-inline auto CarbonHashValue(const T& value, uint64_t seed) -> HashCode {
-  Hasher hasher(seed);
-  hasher.Hash(MapNullPtrToVoidPtr(value));
-  return static_cast<HashCode>(hasher);
-}
-
-template <typename... Ts>
-  requires(... && NullPtrOrHasUniqueObjectRepresentations<Ts>)
-inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
-  std::apply(
-      [&](const auto&... args) { hasher.Hash(MapNullPtrToVoidPtr(args)...); },
-      value);
-  return static_cast<HashCode>(hasher);
-}
-
-template <typename T, typename U>
-  requires NullPtrOrHasUniqueObjectRepresentations<T> &&
-           NullPtrOrHasUniqueObjectRepresentations<U> &&
-           (sizeof(T) <= sizeof(uint64_t) && sizeof(U) <= sizeof(uint64_t))
-inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
-    -> HashCode {
-  return CarbonHashValue(std::tuple(value.first, value.second), seed);
-}
-
-template <typename T>
-  requires std::has_unique_object_representations_v<T>
+  requires(std::has_unique_object_representations_v<T> &&
+           !HasCustomCarbonHashValue<T>)
 inline auto CarbonHashValue(llvm::ArrayRef<T> objs, uint64_t seed) -> HashCode {
   return CarbonHashValue(
       llvm::ArrayRef(reinterpret_cast<const std::byte*>(objs.data()),
                      objs.size() * sizeof(T)),
       seed);
+}
+
+template <typename T>
+  requires HashAsRawDataType<T>
+inline auto CarbonHashValue(const T& value, uint64_t seed) -> HashCode {
+  Hasher hasher(seed);
+  hasher.Hash(MapToRawDataType(value));
+  return static_cast<HashCode>(hasher);
+}
+
+template <typename... Ts>
+  requires(... && HashAsRawDataType<Ts>)
+inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
+    -> HashCode {
+  Hasher hasher(seed);
+  std::apply(
+      [&](const auto&... args) { hasher.Hash(MapToRawDataType(args)...); },
+      value);
+  return static_cast<HashCode>(hasher);
+}
+
+template <typename T, typename U>
+  requires HashAsRawDataType<T> && HashAsRawDataType<U>
+inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
+    -> HashCode {
+  Hasher hasher(seed);
+  hasher.Hash(MapToRawDataType(value.first), MapToRawDataType(value.second));
+  return static_cast<HashCode>(hasher);
+}
+
+template <typename T>
+  requires HasCustomCarbonHashValue<T>
+inline auto CarbonHashValue(llvm::ArrayRef<T> objs, uint64_t seed) -> HashCode {
+  Hasher hasher(seed);
+  // Just use a simple loop. This isn't an especially optimized approach and we
+  // can enhance this if it ever proves important.
+  for (const T& obj : objs) {
+    hasher.Hash(HashValue(obj));
+  }
+  hasher.Hash(objs.size());
+  return static_cast<HashCode>(hasher);
+}
+
+template <typename... Ts>
+  requires(... && HasCustomCarbonHashValue<Ts>)
+inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
+    -> HashCode {
+  Hasher hasher(seed);
+  // No need to propagate the seed below as we've already incorporated it.
+  std::apply([&](const auto&... args) { hasher.Hash(HashValue(args)...); },
+             value);
+  return static_cast<HashCode>(hasher);
+}
+
+template <typename T, typename U>
+  requires HasCustomCarbonHashValue<T> && HasCustomCarbonHashValue<U>
+inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
+    -> HashCode {
+  Hasher hasher(seed);
+  // No need to propagate the seed below as we've already incorporated it.
+  hasher.Hash(HashValue(value.first), HashValue(value.second));
+  return static_cast<HashCode>(hasher);
 }
 
 template <typename T>
