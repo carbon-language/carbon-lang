@@ -557,16 +557,6 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   // An explicitly invalid ID.
   static const TypeId Invalid;
 
-  // The first index reserved for substituted types. These are types used in a
-  // generic that will be substituted for other types in each use of the
-  // generic.
-  static const int32_t FirstSubstitutedTypeIndex;
-
-  // Returns whether this is a substituted type.
-  auto is_substituted() const -> bool {
-    return index <= FirstSubstitutedTypeIndex;
-  }
-
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
@@ -580,7 +570,6 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   }
 };
 
-constexpr int32_t TypeId::FirstSubstitutedTypeIndex = InvalidIndex - 3;
 constexpr TypeId TypeId::TypeType = TypeId(InvalidIndex - 2);
 constexpr TypeId TypeId::Error = TypeId(InvalidIndex - 1);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
