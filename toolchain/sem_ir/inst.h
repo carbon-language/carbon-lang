@@ -139,7 +139,6 @@ class Inst : public Printable<Inst> {
     } else {
       kind_ = TypedInst::Kind.AsInt();
     }
-    CARBON_CHECK(kind_ >= 0) << "Unexpected negative kind value.";
     if constexpr (Internal::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }

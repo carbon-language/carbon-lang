@@ -451,8 +451,9 @@ static auto ConvertStructToStructOrClass(Context& context,
     // Find the matching source field.
     auto src_field_index = i;
     if (src_type.fields_id != dest_type.fields_id) {
-      auto src_field_lookup = src_field_indexes.Lookup(dest_field.name_id);
-      if (!src_field_lookup) {
+      if (auto lookup = src_field_indexes.Lookup(dest_field.name_id)) {
+        src_field_index = lookup.value();
+      } else {
         if (literal_elems_id.is_valid()) {
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
@@ -471,7 +472,6 @@ static auto ConvertStructToStructOrClass(Context& context,
         }
         return SemIR::InstId::BuiltinError;
       }
-      src_field_index = src_field_lookup.value();
     }
     auto src_field = sem_ir.insts().GetAs<SemIR::StructTypeField>(
         src_elem_fields[src_field_index]);
