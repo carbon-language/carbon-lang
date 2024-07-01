@@ -147,19 +147,17 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
           context_->AddExport(target_id);
         }
 
-        bool success =
-            name_scope.name_map
-                .Insert(name_context.unresolved_name_id,
-                        [&] {
-                          int index = name_scope.names.size();
-                          name_scope.names.push_back(
-                              {.name_id = name_context.unresolved_name_id,
-                               .inst_id = target_id,
-                               .access_kind = access_kind});
-                          return index;
-                        })
-                .is_inserted();
-        CARBON_CHECK(success)
+        auto add_scope = [&] {
+          int index = name_scope.names.size();
+          name_scope.names.push_back(
+              {.name_id = name_context.unresolved_name_id,
+               .inst_id = target_id,
+               .access_kind = access_kind});
+          return index;
+        };
+        auto result = name_scope.name_map.Insert(
+            name_context.unresolved_name_id, add_scope);
+        CARBON_CHECK(result.is_inserted())
             << "Duplicate names should have been resolved previously: "
             << name_context.unresolved_name_id << " in "
             << name_context.parent_scope_id;

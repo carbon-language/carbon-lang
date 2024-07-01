@@ -1039,14 +1039,14 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
   }
 
   // Get the package imports, or create them if this is the first.
-  // auto [package_imports_map_it, is_inserted] =
+  auto create_imports = [&]() -> int32_t {
+    int32_t index = unit_info.package_imports.size();
+    unit_info.package_imports.push_back(
+        UnitInfo::PackageImports(import.package_id, import.node_id));
+    return index;
+  };
   auto insert_result =
-      unit_info.package_imports_map.Insert(import.package_id, [&]() -> int32_t {
-        int32_t index = unit_info.package_imports.size();
-        unit_info.package_imports.push_back(
-            UnitInfo::PackageImports(import.package_id, import.node_id));
-        return index;
-      });
+      unit_info.package_imports_map.Insert(import.package_id, create_imports);
   UnitInfo::PackageImports& package_imports =
       unit_info.package_imports[insert_result.value()];
 

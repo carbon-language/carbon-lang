@@ -212,8 +212,12 @@ class CanonicalValueStore {
 
   // Reserves space.
   auto Reserve(size_t size) -> void {
+    // Compute the resulting new insert count using the size of values -- the
+    // set doesn't have a fast to compute current size.
+    if (size > values_.size()) {
+      set_.GrowForInsertCount(size - values_.size(), KeyContext(values_));
+    }
     values_.Reserve(size);
-    // map_.reserve(size);
   }
 
   // These are to support printable structures, and are not guaranteed.
@@ -227,17 +231,17 @@ class CanonicalValueStore {
   auto size() const -> size_t { return values_.size(); }
 
  private:
-  class IdSetContext;
+  class KeyContext;
 
   ValueStore<IdT> values_;
-  Set<IdT, /*SmallSize=*/0, IdSetContext> set_;
+  Set<IdT, /*SmallSize=*/0, KeyContext> set_;
 };
 
 template <typename IdT>
-class CanonicalValueStore<IdT>::IdSetContext
-    : public TranslatingKeyContext<IdSetContext> {
+class CanonicalValueStore<IdT>::KeyContext
+    : public TranslatingKeyContext<KeyContext> {
  public:
-  explicit IdSetContext(llvm::ArrayRef<ValueType> values) : values_(values) {}
+  explicit KeyContext(llvm::ArrayRef<ValueType> values) : values_(values) {}
 
   // Note that it is safe to return a `const` reference here as the underlying
   // object's lifetime is provided by the `store_`.
@@ -251,11 +255,8 @@ class CanonicalValueStore<IdT>::IdSetContext
 
 template <typename IdT>
 auto CanonicalValueStore<IdT>::Add(const ValueType& value) -> IdT {
-  return set_
-      .Insert(
-          value, [&] { return IdT(values_.Add(value)); },
-          IdSetContext(values_.array_ref()))
-      .key();
+  auto make_key = [&] { return IdT(values_.Add(value)); };
+  return set_.Insert(value, make_key, KeyContext(values_.array_ref())).key();
 }
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is
@@ -288,18 +289,18 @@ class CanonicalValueStore<StringId>
   auto size() const -> size_t { return values_.size(); }
 
  private:
-  class IdSetContext;
+  class KeyContext;
 
   // Set inline sizes to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  Set<StringId, /*SmallSize=*/0, IdSetContext> set_;
+  Set<StringId, /*SmallSize=*/0, KeyContext> set_;
   llvm::SmallVector<llvm::StringRef, 0> values_;
 };
 
-class CanonicalValueStore<StringId>::IdSetContext
-    : public TranslatingKeyContext<IdSetContext> {
+class CanonicalValueStore<StringId>::KeyContext
+    : public TranslatingKeyContext<KeyContext> {
  public:
-  explicit IdSetContext(llvm::ArrayRef<llvm::StringRef> values)
+  explicit KeyContext(llvm::ArrayRef<llvm::StringRef> values)
       : values_(values) {}
 
   auto TranslateKey(StringId id) const -> llvm::StringRef {
@@ -312,22 +313,18 @@ class CanonicalValueStore<StringId>::IdSetContext
 
 inline auto CanonicalValueStore<StringId>::Add(llvm::StringRef value)
     -> StringId {
-  return set_
-      .Insert(
-          value,
-          [&] {
-            auto id = static_cast<StringId>(values_.size());
-            CARBON_CHECK(id.index >= 0) << "Too many unique strings";
-            values_.push_back(value);
-            return id;
-          },
-          IdSetContext(values_))
-      .key();
+  auto make_key = [&] {
+    auto id = static_cast<StringId>(values_.size());
+    CARBON_CHECK(id.index >= 0) << "Too many unique strings";
+    values_.push_back(value);
+    return id;
+  };
+  return set_.Insert(value, make_key, KeyContext(values_)).key();
 }
 
 inline auto CanonicalValueStore<StringId>::Lookup(llvm::StringRef value) const
     -> StringId {
-  if (auto result = set_.Lookup(value, IdSetContext(values_))) {
+  if (auto result = set_.Lookup(value, KeyContext(values_))) {
     return result.key();
   }
   return StringId::Invalid;
