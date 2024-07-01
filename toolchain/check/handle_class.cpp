@@ -300,7 +300,7 @@ auto HandleClassDefinitionStart(Context& context,
 
   // Enter the class scope.
   context.scope_stack().Push(class_decl_id, class_info.scope_id);
-  StartGenericDefinition(context, class_info.generic_id);
+  StartGenericDefinition(context);
 
   // Introduce `Self`.
   context.name_scopes().AddRequiredName(

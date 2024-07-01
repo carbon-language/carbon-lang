@@ -12,8 +12,7 @@ auto StartGenericDecl(Context& context) -> void {
   context.generic_region_stack().Push();
 }
 
-auto StartGenericDefinition(Context& context, SemIR::GenericId /*generic_id*/)
-    -> void {
+auto StartGenericDefinition(Context& context) -> void {
   // Push a generic region even if we don't have a generic_id. We might still
   // have locally-introduced generic parameters to track:
   //
