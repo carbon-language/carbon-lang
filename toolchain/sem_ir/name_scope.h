@@ -48,16 +48,14 @@ struct NameScope : Printable<NameScope> {
 
   // Adds a name to the scope that must not already exist.
   auto AddRequired(Entry name_entry) -> void {
-    bool success = name_map
-                       .Insert(name_entry.name_id,
-                               [&] {
-                                 int index = names.size();
-                                 names.push_back(name_entry);
-                                 return index;
-                               })
-                       .is_inserted();
-    CARBON_CHECK(success) << "Failed to add required name: "
-                          << name_entry.name_id;
+    auto add_name = [&] {
+      int index = names.size();
+      names.push_back(name_entry);
+      return index;
+    };
+    auto result = name_map.Insert(name_entry.name_id, add_name);
+    CARBON_CHECK(result.is_inserted())
+        << "Failed to add required name: " << name_entry.name_id;
   }
 
   // Names in the scope. We store both an insertion-ordered vector for iterating
