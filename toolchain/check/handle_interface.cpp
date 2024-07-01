@@ -142,7 +142,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
 
   // Enter the interface scope.
   context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
-  StartGenericDefinition(context, interface_info.generic_id);
+  StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);

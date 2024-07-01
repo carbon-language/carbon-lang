@@ -55,6 +55,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
+        "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_kind",
@@ -141,6 +142,21 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "generic_region_stack",
+    srcs = ["generic_region_stack.cpp"],
+    hdrs = ["generic_region_stack.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "@llvm-project//llvm:Support",
     ],
 )
 

@@ -238,7 +238,7 @@ class Inst : public Printable<Inst> {
   auto arg1() const -> int32_t { return arg1_; }
 
   // Sets the type of this instruction.
-  auto SetType(TypeId type_id) { type_id_ = type_id; }
+  auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
 
   // Sets the arguments of this instruction.
   auto SetArgs(int32_t arg0, int32_t arg1) {

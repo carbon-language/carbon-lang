@@ -13,6 +13,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/merge.h"
@@ -53,6 +54,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
   type_ids_for_type_constants_.insert(
       {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
        SemIR::TypeId::TypeType});
+
+  // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
+  // in the right places.
+  generic_region_stack().Push();
 }
 
 auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
@@ -72,18 +77,45 @@ auto Context::VerifyOnFinish() -> void {
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
+// Finish producing an instruction. Set its constant value, and register it in
+// any applicable instruction lists.
+auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
+  GenericRegionStack::DependencyKind dep_kind =
+      GenericRegionStack::DependencyKind::None;
+
+  // If the instruction has a symbolic constant type, track that we need to
+  // substitute into it.
+  if (types().GetConstantId(inst.type_id()).is_symbolic()) {
+    dep_kind |= GenericRegionStack::DependencyKind::SymbolicType;
+  }
+
+  // If the instruction has a constant value, compute it.
+  auto const_id = TryEvalInst(*this, inst_id, inst);
+  constant_values().Set(inst_id, const_id);
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << inst << " -> "
+                  << constant_values().GetInstId(const_id) << "\n";
+
+    // If the constant value is symbolic, track that we need to substitute into
+    // it.
+    if (const_id.is_symbolic()) {
+      dep_kind |= GenericRegionStack::DependencyKind::SymbolicConstant;
+    }
+  }
+
+  // Keep track of dependent instructions.
+  if (dep_kind != GenericRegionStack::DependencyKind::None) {
+    // TODO: Also check for template-dependent instructions.
+    generic_region_stack().AddDependentInst(
+        {.inst_id = inst_id, .kind = dep_kind});
+  }
+}
+
 auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG() << "AddInst: " << loc_id_and_inst.inst << "\n";
-
-  auto const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
-  if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
-    constant_values().Set(inst_id, const_id);
-  }
-
+  FinishInst(inst_id, loc_id_and_inst.inst);
   return inst_id;
 }
 
@@ -118,36 +150,16 @@ auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
 auto Context::ReplaceLocIdAndInstBeforeConstantUse(
     SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
   sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
-
   CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << loc_id_and_inst.inst
                 << "\n";
-
-  // Redo evaluation. This is only safe to do if this instruction has not
-  // already been used as a constant, which is the caller's responsibility to
-  // ensure.
-  auto const_id = TryEvalInst(*this, inst_id, loc_id_and_inst.inst);
-  if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
-  }
-  constant_values().Set(inst_id, const_id);
+  FinishInst(inst_id, loc_id_and_inst.inst);
 }
 
 auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
                                            SemIR::Inst inst) -> void {
   sem_ir().insts().Set(inst_id, inst);
-
   CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << inst << "\n";
-
-  // Redo evaluation. This is only safe to do if this instruction has not
-  // already been used as a constant, which is the caller's responsibility to
-  // ensure.
-  auto const_id = TryEvalInst(*this, inst_id, inst);
-  if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << inst << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
-  }
-  constant_values().Set(inst_id, const_id);
+  FinishInst(inst_id, inst);
 }
 
 auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)

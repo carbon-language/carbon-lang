@@ -11,6 +11,7 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
@@ -362,6 +363,10 @@ class Context {
     return scope_stack().break_continue_stack();
   }
 
+  auto generic_region_stack() -> GenericRegionStack& {
+    return generic_region_stack_;
+  }
+
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -436,6 +441,10 @@ class Context {
     SemIR::TypeId type_id_;
   };
 
+  // Finish producing an instruction. Set its constant value, and register it in
+  // any applicable instruction lists.
+  auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
+
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
 
@@ -475,6 +484,9 @@ class Context {
 
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;
+
+  // The stack of generic regions we are currently within.
+  GenericRegionStack generic_region_stack_;
 
   // Cache of reverse mapping from type constants to types.
   //

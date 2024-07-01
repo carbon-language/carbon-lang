@@ -338,7 +338,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
   context.scope_stack().Push(decl_id);
-  StartGenericDefinition(context, function.generic_id);
+  StartGenericDefinition(context);
   context.AddCurrentCodeBlockToFunction();
 
   // Check the return type is complete.

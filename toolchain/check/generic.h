@@ -11,11 +11,10 @@
 namespace Carbon::Check {
 
 // Start processing a declaration or definition that might be a generic entity.
-auto StartGenericDecl(Context& /*context*/) -> void;
+auto StartGenericDecl(Context& context) -> void;
 
 // Start processing a declaration or definition that might be a generic entity.
-auto StartGenericDefinition(Context& /*context*/,
-                            SemIR::GenericId /*generic_id*/) -> void;
+auto StartGenericDefinition(Context& context) -> void;
 
 // Finish processing a potentially generic declaration and produce a
 // corresponding generic object. Returns SemIR::GenericId::Invalid if this
