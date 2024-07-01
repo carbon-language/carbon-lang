@@ -13,7 +13,9 @@
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        builtin_insts.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   import_irs_size: 1
+// CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     ir0:             {node_id: <invalid>, is_export: false}
+// CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   bind_names:      {}

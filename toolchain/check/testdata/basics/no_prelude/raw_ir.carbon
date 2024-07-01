@@ -19,12 +19,14 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        raw_ir.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   import_irs_size: 1
+// CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     ir0:             {node_id: <invalid>, is_export: false}
+// CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+16}}
 // CHECK:STDOUT:   bind_names:
-// CHECK:STDOUT:     bindName0:       {name: name1, parent_scope: name_scope<invalid>, index: compTimeBind0}
-// CHECK:STDOUT:     bindName1:       {name: name2, parent_scope: name_scope<invalid>, index: compTimeBind<invalid>}
+// CHECK:STDOUT:     bind_name0:      {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind0}
+// CHECK:STDOUT:     bind_name1:      {name: name2, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block4, return_storage: inst+15, return_slot: present, body: [block8]}
 // CHECK:STDOUT:   classes:         {}
@@ -40,28 +42,28 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     type5:           {constant: template inst+17, value_rep: {kind: none, type: type2}}
 // CHECK:STDOUT:     type6:           {constant: symbolic inst+19, value_rep: {kind: copy, type: type6}}
 // CHECK:STDOUT:   type_blocks:
-// CHECK:STDOUT:     typeBlock0:      {}
-// CHECK:STDOUT:     typeBlock1:
+// CHECK:STDOUT:     type_block0:     {}
+// CHECK:STDOUT:     type_block1:
 // CHECK:STDOUT:       0:               typeTypeType
 // CHECK:STDOUT:       1:               type2
-// CHECK:STDOUT:     typeBlock2:
+// CHECK:STDOUT:     type_block2:
 // CHECK:STDOUT:       0:               type1
 // CHECK:STDOUT:       1:               type2
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:     'inst+1':          {kind: Param, arg0: name1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: bindName0, arg1: inst+1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: bindName0, arg1: inst<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: bind_name0, arg1: inst+1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: bind_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: Param, arg0: name2, type: type1}
-// CHECK:STDOUT:     'inst+6':          {kind: BindName, arg0: bindName1, arg1: inst+5, type: type1}
+// CHECK:STDOUT:     'inst+6':          {kind: BindName, arg0: bind_name1, arg1: inst+5, type: type1}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
-// CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+9':          {kind: TupleLiteral, arg0: empty, type: type2}
-// CHECK:STDOUT:     'inst+10':         {kind: TupleType, arg0: typeBlock1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+10':         {kind: TupleType, arg0: type_block1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: TupleLiteral, arg0: block5, type: type3}
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+9, arg1: inst+8, type: typeTypeType}
-// CHECK:STDOUT:     'inst+13':         {kind: TupleType, arg0: typeBlock2, type: typeTypeType}
+// CHECK:STDOUT:     'inst+13':         {kind: TupleType, arg0: type_block2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: Converted, arg0: inst+11, arg1: inst+13, type: typeTypeType}
 // CHECK:STDOUT:     'inst+15':         {kind: VarStorage, arg0: nameReturnSlot, type: type4}
 // CHECK:STDOUT:     'inst+16':         {kind: FunctionDecl, arg0: function0, arg1: block6, type: type5}
