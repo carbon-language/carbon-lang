@@ -144,10 +144,12 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %float.make_type.loc9: init type = call constants.%Float(%.loc9_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc9_8.2: type = value_of_initializer %float.make_type.loc9 [template = f64]
 // CHECK:STDOUT:   %.loc9_8.3: type = converted %float.make_type.loc9, %.loc9_8.2 [template = f64]
+// CHECK:STDOUT:   %.loc9_5: f64 = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT:   %.loc10_8.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:   %float.make_type.loc10: init type = call constants.%Float(%.loc10_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc10_8.2: type = value_of_initializer %float.make_type.loc10 [template = f64]
 // CHECK:STDOUT:   %.loc10_8.3: type = converted %float.make_type.loc10, %.loc10_8.2 [template = f64]
+// CHECK:STDOUT:   %.loc10_5: f64 = binding_pattern c, @__global_init.%c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";

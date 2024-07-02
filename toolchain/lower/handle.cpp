@@ -213,6 +213,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
   }
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::BindingPattern /*inst*/) -> void {
+  // Patterns are not lowered.
+  return;
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlock(inst.block_id);

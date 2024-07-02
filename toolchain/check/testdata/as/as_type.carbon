@@ -40,6 +40,7 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:     .t = @__global_init.%t
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %.loc11: type = binding_pattern t, @__global_init.%t
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

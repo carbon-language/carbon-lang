@@ -101,6 +101,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc14_24.6: type = value_of_initializer %int.make_type_32.loc14_21 [template = i32]
 // CHECK:STDOUT:   %.loc14_24.7: type = converted %int.make_type_32.loc14_21, %.loc14_24.6 [template = i32]
 // CHECK:STDOUT:   %.loc14_24.8: type = converted %.loc14_24.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_7: %.3 = binding_pattern w, %w
 // CHECK:STDOUT:   %v.ref: ref %.3 = name_ref v, %v
 // CHECK:STDOUT:   %.loc14_28.1: ref i32 = tuple_access %v.ref, element0
 // CHECK:STDOUT:   %.loc14_28.2: i32 = bind_value %.loc14_28.1

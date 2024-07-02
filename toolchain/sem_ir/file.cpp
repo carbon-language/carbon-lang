@@ -453,6 +453,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Param::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
+      case BindingPattern::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
@@ -517,6 +518,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
+      case BindingPattern::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:

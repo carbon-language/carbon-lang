@@ -59,6 +59,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc11_17.4: type = value_of_initializer %int.make_type_32.loc11_14 [template = i32]
 // CHECK:STDOUT:   %.loc11_17.5: type = converted %int.make_type_32.loc11_14, %.loc11_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc11_17.6: type = converted %.loc11_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_5: %.3 = binding_pattern v, @__global_init.%v
 // CHECK:STDOUT:   %int.make_type_32.loc12_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc12_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_17.1: %.2 = tuple_literal (%int.make_type_32.loc12_9, %int.make_type_32.loc12_14)
@@ -67,6 +68,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc12_17.4: type = value_of_initializer %int.make_type_32.loc12_14 [template = i32]
 // CHECK:STDOUT:   %.loc12_17.5: type = converted %int.make_type_32.loc12_14, %.loc12_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc12_17.6: type = converted %.loc12_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_5: %.3 = binding_pattern w, @__global_init.%w
 // CHECK:STDOUT:   %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_17.1: %.2 = tuple_literal (%int.make_type_32.loc14_9, %int.make_type_32.loc14_14)

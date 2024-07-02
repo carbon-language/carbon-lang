@@ -64,6 +64,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_13: %.1 = binding_pattern v, @__global_init.%v
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -94,6 +95,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_5: %.1 = binding_pattern v2, @__global_init.%v2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -116,6 +118,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_5: %.1 = binding_pattern v2, @__global_init.%v2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -145,6 +148,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_5: %.1 = binding_pattern v2, @__global_init.%v2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

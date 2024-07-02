@@ -40,6 +40,7 @@ let d: c = {};
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [template = constants.%C]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
+// CHECK:STDOUT:   %.loc15: %C = binding_pattern d, @__global_init.%d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -82,11 +82,13 @@ class Class {
 // CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc29_18.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:   %.loc29_18.2: type = converted %int.make_type_32.loc29, %.loc29_18.1 [template = i32]
+// CHECK:STDOUT:   %.loc29_15: i32 = binding_pattern l, %l
 // CHECK:STDOUT:   %.loc29_24: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc29_24
 // CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_16.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
 // CHECK:STDOUT:   %.loc34_16.2: type = converted %int.make_type_32.loc34, %.loc34_16.1 [template = i32]
+// CHECK:STDOUT:   %.loc34_13: i32 = binding_pattern m, %m
 // CHECK:STDOUT:   %.loc34_22: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_22
 // CHECK:STDOUT:

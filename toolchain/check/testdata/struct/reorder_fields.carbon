@@ -106,6 +106,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc15_24.2: type = value_of_initializer %float.make_type.loc15 [template = f64]
 // CHECK:STDOUT:   %.loc15_24.3: type = converted %float.make_type.loc15, %.loc15_24.2 [template = f64]
 // CHECK:STDOUT:   %.loc15_27: type = struct_type {.a: i32, .b: f64} [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_7: %.3 = binding_pattern x, %x
 // CHECK:STDOUT:   %MakeF64.ref: %MakeF64.type = name_ref MakeF64, file.%MakeF64.decl [template = constants.%MakeF64]
 // CHECK:STDOUT:   %MakeF64.call: init f64 = call %MakeF64.ref()
 // CHECK:STDOUT:   %MakeI32.ref: %MakeI32.type = name_ref MakeI32, file.%MakeI32.decl [template = constants.%MakeI32]
@@ -126,6 +127,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc16_24.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:   %.loc16_24.2: type = converted %int.make_type_32.loc16, %.loc16_24.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_27: type = struct_type {.b: f64, .a: i32} [template = constants.%.5]
+// CHECK:STDOUT:   %.loc16_7: %.5 = binding_pattern y, %y
 // CHECK:STDOUT:   %x.ref: %.3 = name_ref x, %x
 // CHECK:STDOUT:   %.loc16_31.1: f64 = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc16_31.2: i32 = struct_access %x.ref, element0

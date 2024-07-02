@@ -53,6 +53,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %p.var: ref @F.%.1 (%.2) = var p
 // CHECK:STDOUT:     %p: ref @F.%.1 (%.2) = bind_name p, %p.var
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc11 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %.loc16_7: @F.%U.1 (%U) = binding_pattern n, %n
 // CHECK:STDOUT:     %p.ref: ref @F.%.1 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc16_15: @F.%.1 (%.2) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc16_14: ref @F.%T.1 (%T) = deref %.loc16_15

@@ -85,6 +85,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_32.loc14, %.loc14_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_15: type = array_type %.loc14_14, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_16: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_5: %.6 = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -185,6 +185,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc42_21: type = ptr_type %Inner [template = constants.%.2]
+// CHECK:STDOUT:   %.loc42_7: %.2 = binding_pattern b, %b
 // CHECK:STDOUT:   %a.ref.loc42: %.4 = name_ref a, %a
 // CHECK:STDOUT:   %.loc42_26: ref %Outer = deref %a.ref.loc42
 // CHECK:STDOUT:   %pi.ref.loc42: %.8 = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]

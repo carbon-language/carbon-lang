@@ -76,7 +76,8 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc13_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_7: %T = binding_pattern x, %x
+// CHECK:STDOUT:   %.loc18_14: i32 = int_literal 5 [template = constants.%.2]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
 // CHECK:STDOUT:   return <error>

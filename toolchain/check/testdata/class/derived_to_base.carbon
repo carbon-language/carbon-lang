@@ -239,6 +239,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: fn @ConvertValue(%c: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc30_7: %A = binding_pattern a, %a
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc30_15.1: ref %B = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc30_15.2: ref %A = class_element_access %.loc30_15.1, element0
@@ -263,6 +264,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc38_7: %A = binding_pattern a, %a
 // CHECK:STDOUT:   %.loc38_38: i32 = int_literal 1 [template = constants.%.20]
 // CHECK:STDOUT:   %.loc38_39.1: %.3 = struct_literal (%.loc38_38)
 // CHECK:STDOUT:   %.loc38_47: i32 = int_literal 2 [template = constants.%.21]
