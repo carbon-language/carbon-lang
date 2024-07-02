@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_GENERIC_REGION_STACK_H_
 
 #include "llvm/ADT/BitmaskEnum.h"
+#include "toolchain/base/array_stack.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -58,22 +59,8 @@ class GenericRegionStack {
   auto PeekDependentInsts() -> llvm::ArrayRef<DependentInst>;
 
  private:
-  // Information about an enclosing generic region that has been pushed onto the
-  // stack.
-  struct RegionInfo {
-    // The size of `dependent_insts_` at the start of this region. Equivalently,
-    // this is the first index within `dependent_insts_` that belongs to this
-    // region or a region nested within it.
-    int32_t first_dependent_inst;
-  };
-
-  // The current set of enclosing generic regions.
-  llvm::SmallVector<RegionInfo> regions_;
-
-  // List of symbolic constants used in any of the enclosing generic regions. We
-  // keep a single vector rather than one vector per region in order to minimize
-  // heap allocations.
-  llvm::SmallVector<DependentInst> dependent_insts_;
+  // A stack of symbolic constants for enclosing generic regions.
+  ArrayStack<DependentInst> dependent_insts_stack_;
 };
 
 }  // namespace Carbon::Check

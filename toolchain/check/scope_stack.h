@@ -7,6 +7,7 @@
 
 #include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/array_stack.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/file.h"
@@ -126,7 +127,7 @@ class ScopeStack {
 
   // Pushes a compile-time binding into the current scope.
   auto PushCompileTimeBinding(SemIR::InstId bind_id) -> void {
-    compile_time_binding_stack_.push_back(bind_id);
+    compile_time_binding_stack_.PushValue(bind_id);
   }
 
   // Temporarily removes the top of the stack and its lexical lookup results.
@@ -146,7 +147,7 @@ class ScopeStack {
     return break_continue_stack_;
   }
 
-  auto compile_time_binding_stack() -> llvm::SmallVector<SemIR::InstId>& {
+  auto compile_time_bindings_stack() -> ArrayStack<SemIR::InstId>& {
     return compile_time_binding_stack_;
   }
 
@@ -210,7 +211,7 @@ class ScopeStack {
   llvm::SmallVector<NonLexicalScope> non_lexical_scope_stack_;
 
   // A stack of the current compile time bindings.
-  llvm::SmallVector<SemIR::InstId> compile_time_binding_stack_;
+  ArrayStack<SemIR::InstId> compile_time_binding_stack_;
 
   // The index of the next scope that will be pushed onto scope_stack_. The
   // first is always the package scope.
