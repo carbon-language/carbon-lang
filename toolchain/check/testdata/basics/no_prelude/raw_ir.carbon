@@ -35,12 +35,12 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {constant: symbolic inst+3, value_rep: {kind: copy, type: type1}}
+// CHECK:STDOUT:     type1:           {constant: symbolic 0, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:     type2:           {constant: template inst+8, value_rep: {kind: none, type: type2}}
 // CHECK:STDOUT:     type3:           {constant: template inst+10, value_rep: {kind: unknown, type: type<invalid>}}
-// CHECK:STDOUT:     type4:           {constant: symbolic inst+13, value_rep: {kind: pointer, type: type6}}
+// CHECK:STDOUT:     type4:           {constant: symbolic 1, value_rep: {kind: pointer, type: type6}}
 // CHECK:STDOUT:     type5:           {constant: template inst+17, value_rep: {kind: none, type: type2}}
-// CHECK:STDOUT:     type6:           {constant: symbolic inst+19, value_rep: {kind: copy, type: type6}}
+// CHECK:STDOUT:     type6:           {constant: symbolic 2, value_rep: {kind: copy, type: type6}}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:     type_block1:
@@ -84,19 +84,19 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+31':         {kind: ReturnExpr, arg0: inst+30, arg1: inst+15}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          template inst+0
-// CHECK:STDOUT:     'inst+2':          symbolic inst+3
-// CHECK:STDOUT:     'inst+3':          symbolic inst+3
-// CHECK:STDOUT:     'inst+4':          symbolic inst+3
-// CHECK:STDOUT:     'inst+7':          symbolic inst+3
+// CHECK:STDOUT:     'inst+2':          symbolic 0
+// CHECK:STDOUT:     'inst+3':          symbolic 0
+// CHECK:STDOUT:     'inst+4':          symbolic 0
+// CHECK:STDOUT:     'inst+7':          symbolic 0
 // CHECK:STDOUT:     'inst+8':          template inst+8
 // CHECK:STDOUT:     'inst+10':         template inst+10
 // CHECK:STDOUT:     'inst+12':         template inst+8
-// CHECK:STDOUT:     'inst+13':         symbolic inst+13
-// CHECK:STDOUT:     'inst+14':         symbolic inst+13
+// CHECK:STDOUT:     'inst+13':         symbolic 1
+// CHECK:STDOUT:     'inst+14':         symbolic 1
 // CHECK:STDOUT:     'inst+16':         template inst+18
 // CHECK:STDOUT:     'inst+17':         template inst+17
 // CHECK:STDOUT:     'inst+18':         template inst+18
-// CHECK:STDOUT:     'inst+19':         symbolic inst+19
+// CHECK:STDOUT:     'inst+19':         symbolic 2
 // CHECK:STDOUT:     'inst+26':         template inst+27
 // CHECK:STDOUT:     'inst+27':         template inst+27
 // CHECK:STDOUT:     'inst+28':         template inst+27
