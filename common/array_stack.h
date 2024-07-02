@@ -11,12 +11,24 @@
 
 namespace Carbon {
 
-// Provides arrays in a stack form. Only the top of the stack can have elements
-// added.
+// Provides a stack of arrays. Only the array at the top of the stack can have
+// elements added.
+//
+// Example usage:
+//   // Push to start.
+//   PushArray();
+//   // Add values.
+//   PushValue(3);
+//   // Look at values.
+//   PeekArray();
+//   // Pop when done.
+//   PopArray();
 //
 // By using a single vector for elements, the intent is that as arrays are
 // pushed and popped, the same storage will be reused. This should yield
-// efficiencies for heap allocations.
+// efficiencies for heap allocations. For example, in the toolchain we
+// frequently have an array per scope, and only add to the current scope's
+// array; this allows better reuse when entering and leaving scopes.
 template <typename ValueT>
 class ArrayStack {
  public:
@@ -30,14 +42,14 @@ class ArrayStack {
   }
 
   // Returns the top array from the stack.
-  auto PeekArray() -> llvm::ArrayRef<ValueT> {
+  auto PeekArray() const -> llvm::ArrayRef<ValueT> {
     CARBON_CHECK(!array_offsets_.empty());
     return llvm::ArrayRef(elements_).slice(array_offsets_.back());
   }
 
   // Returns the full set of values on the stack, regardless of whether any
   // arrays are pushed.
-  auto PeekAllValues() -> llvm::ArrayRef<ValueT> { return elements_; }
+  auto PeekAllValues() const -> llvm::ArrayRef<ValueT> { return elements_; }
 
   // Adds a value to the top array on the stack.
   auto PushValue(ValueT value) -> void {
@@ -47,7 +59,7 @@ class ArrayStack {
   }
 
   // Returns the current number of values in all arrays.
-  auto elements_size() -> size_t { return elements_.size(); }
+  auto elements_size() const -> size_t { return elements_.size(); }
 
  private:
   // For each pushed array, the start index in elements_.
