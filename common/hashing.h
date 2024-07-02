@@ -242,7 +242,7 @@ class Hasher {
   // incorporating that. However, it is optimized for relatively small numbers
   // of values and/or small elements. A large tree structure will be better
   // handled by a dedicated Merkle-tree decomposition rather than the ad-hoc one
-  // provided here. This routines decomposition is mostly useful for combining N
+  // provided here. This routine's decomposition is mostly useful for combining N
   // small bits of data with one recursively hashed entity.
   //
   // There is no guaranteed correspondence between the behavior of a single call
