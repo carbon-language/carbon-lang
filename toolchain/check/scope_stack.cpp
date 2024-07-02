@@ -179,7 +179,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
 
   // Move any compile-time bindings into the suspended scope.
   for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)
-                          .drop_back(remaining_compile_time_bindings)) {
+                          .drop_front(remaining_compile_time_bindings)) {
     result.suspended_items.push_back(
         {.index = SuspendedScope::ScopeItem::IndexForCompileTimeBinding,
          .inst_id = inst_id});
