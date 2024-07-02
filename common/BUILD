@@ -188,6 +188,18 @@ cc_library(
     hdrs = ["hashtable_key_context.h"],
     deps = [
         ":hashing",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "hashtable_key_context_test",
+    srcs = ["hashtable_key_context_test.cpp"],
+    deps = [
+        ":hashtable_key_context",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

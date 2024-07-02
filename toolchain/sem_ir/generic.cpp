@@ -6,7 +6,8 @@
 
 namespace Carbon::SemIR {
 
-class GenericInstanceStore::KeyContext {
+class GenericInstanceStore::KeyContext
+    : public TranslatingKeyContext<KeyContext> {
  public:
   // A lookup key for a generic instance.
   struct Key {
@@ -19,20 +20,9 @@ class GenericInstanceStore::KeyContext {
   explicit KeyContext(llvm::ArrayRef<GenericInstance> instances)
       : instances_(instances) {}
 
-  auto AsKey(GenericInstanceId id) const -> Key {
+  auto TranslateKey(GenericInstanceId id) const -> Key {
     const auto& instance = instances_[id.index];
     return {.generic_id = instance.generic_id, .args_id = instance.args_id};
-  }
-  static auto AsKey(Key key) -> Key { return key; }
-
-  template <typename KeyT>
-  auto HashKey(KeyT key, uint64_t seed) const -> HashCode {
-    return HashValue(AsKey(key), seed);
-  }
-
-  template <typename LHSKeyT, typename RHSKeyT>
-  auto KeyEq(const LHSKeyT& lhs_key, const RHSKeyT& rhs_key) const -> bool {
-    return AsKey(lhs_key) == AsKey(rhs_key);
   }
 
  private:
