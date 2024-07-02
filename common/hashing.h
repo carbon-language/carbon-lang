@@ -495,11 +495,10 @@ inline auto CarbonHashValue(const llvm::SmallString<Length>& value,
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
-// Support types that are array like by building an `llvm::ArrayRef` out of
+// Support types that are array-like by building an `llvm::ArrayRef` out of
 // them. We can't do this by accepting any type convertible to an `ArrayRef`
 // because that type supports building a synthetic array out of any single
-// element. These need to go back through the dispatch implementation though to
-// pick up the full space of hash overloads for `T`.
+// element.
 template <typename T>
 inline auto CarbonHashValue(const std::vector<T>& arg, uint64_t seed)
     -> HashCode {
