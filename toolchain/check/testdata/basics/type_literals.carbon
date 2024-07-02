@@ -125,6 +125,12 @@ var test_f128: f128;
 // CHECK:STDOUT:   %.7: type = int_type signed, %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -135,21 +141,18 @@ var test_f128: f128;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc3_14.1: i32 = int_literal 8 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc3: init type = call constants.%Int(%.loc3_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_signed.loc3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_signed.loc3, %.loc3_14.2 [template = constants.%.3]
 // CHECK:STDOUT:   %test_i8.var: ref %.3 = var test_i8
 // CHECK:STDOUT:   %test_i8: ref %.3 = bind_name test_i8, %test_i8.var
 // CHECK:STDOUT:   %.loc4_15.1: i32 = int_literal 16 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc4: init type = call constants.%Int(%.loc4_15.1) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_signed.loc4, %.loc4_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %test_i16.var: ref %.5 = var test_i16
 // CHECK:STDOUT:   %test_i16: ref %.5 = bind_name test_i16, %test_i16.var
 // CHECK:STDOUT:   %.loc5_15.1: i32 = int_literal 64 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%.loc5_15.1) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_signed.loc5, %.loc5_15.2 [template = constants.%.7]
@@ -172,6 +175,13 @@ var test_f128: f128;
 // CHECK:STDOUT:   %.6: i32 = int_literal 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.4: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -187,27 +197,23 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_i0.var: ref <error> = var test_i0
 // CHECK:STDOUT:   %test_i0: ref <error> = bind_name test_i0, %test_i0.var
 // CHECK:STDOUT:   %.loc12_14.1: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%.loc12_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_14.2: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_14.3: type = converted %int.make_type_signed.loc12, %.loc12_14.2 [template = constants.%.3]
 // CHECK:STDOUT:   %test_i1.var: ref %.3 = var test_i1
 // CHECK:STDOUT:   %test_i1: ref %.3 = bind_name test_i1, %test_i1.var
 // CHECK:STDOUT:   %.loc17_15.1: i32 = int_literal 15 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc17: init type = call constants.%Int(%.loc17_15.1) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_15.2: type = value_of_initializer %int.make_type_signed.loc17 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_15.3: type = converted %int.make_type_signed.loc17, %.loc17_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %test_i15.var: ref %.5 = var test_i15
 // CHECK:STDOUT:   %test_i15: ref %.5 = bind_name test_i15, %test_i15.var
 // CHECK:STDOUT:   %.loc22_23.1: i32 = int_literal 1000000000 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc22: init type = call constants.%Int(%.loc22_23.1) [template = <error>]
 // CHECK:STDOUT:   %.loc22_23.2: type = value_of_initializer %int.make_type_signed.loc22 [template = <error>]
 // CHECK:STDOUT:   %.loc22_23.3: type = converted %int.make_type_signed.loc22, %.loc22_23.2 [template = <error>]
 // CHECK:STDOUT:   %test_i1000000000.var: ref <error> = var test_i1000000000
 // CHECK:STDOUT:   %test_i1000000000: ref <error> = bind_name test_i1000000000, %test_i1000000000.var
-// CHECK:STDOUT:   %import_ref.4: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_signed.loc28: init type = call constants.%Int(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %.loc28_33.1: type = value_of_initializer %int.make_type_signed.loc28 [template = <error>]
 // CHECK:STDOUT:   %.loc28_33.2: type = converted %int.make_type_signed.loc28, %.loc28_33.1 [template = <error>]
@@ -231,6 +237,12 @@ var test_f128: f128;
 // CHECK:STDOUT:   %.7: type = int_type unsigned, %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -241,21 +253,18 @@ var test_f128: f128;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc3_14.1: i32 = int_literal 8 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc3: init type = call constants.%UInt(%.loc3_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_unsigned.loc3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_unsigned.loc3, %.loc3_14.2 [template = constants.%.3]
 // CHECK:STDOUT:   %test_u8.var: ref %.3 = var test_u8
 // CHECK:STDOUT:   %test_u8: ref %.3 = bind_name test_u8, %test_u8.var
 // CHECK:STDOUT:   %.loc4_15.1: i32 = int_literal 16 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc4: init type = call constants.%UInt(%.loc4_15.1) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_unsigned.loc4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_unsigned.loc4, %.loc4_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %test_u16.var: ref %.5 = var test_u16
 // CHECK:STDOUT:   %test_u16: ref %.5 = bind_name test_u16, %test_u16.var
 // CHECK:STDOUT:   %.loc5_15.1: i32 = int_literal 64 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc5: init type = call constants.%UInt(%.loc5_15.1) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_unsigned.loc5 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_unsigned.loc5, %.loc5_15.2 [template = constants.%.7]
@@ -278,6 +287,13 @@ var test_f128: f128;
 // CHECK:STDOUT:   %.6: i32 = int_literal 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.4: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -293,27 +309,23 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_u0.var: ref <error> = var test_u0
 // CHECK:STDOUT:   %test_u0: ref <error> = bind_name test_u0, %test_u0.var
 // CHECK:STDOUT:   %.loc12_14.1: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc12: init type = call constants.%UInt(%.loc12_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_14.2: type = value_of_initializer %int.make_type_unsigned.loc12 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_14.3: type = converted %int.make_type_unsigned.loc12, %.loc12_14.2 [template = constants.%.3]
 // CHECK:STDOUT:   %test_u1.var: ref %.3 = var test_u1
 // CHECK:STDOUT:   %test_u1: ref %.3 = bind_name test_u1, %test_u1.var
 // CHECK:STDOUT:   %.loc17_15.1: i32 = int_literal 15 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc17: init type = call constants.%UInt(%.loc17_15.1) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_15.2: type = value_of_initializer %int.make_type_unsigned.loc17 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_15.3: type = converted %int.make_type_unsigned.loc17, %.loc17_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %test_u15.var: ref %.5 = var test_u15
 // CHECK:STDOUT:   %test_u15: ref %.5 = bind_name test_u15, %test_u15.var
 // CHECK:STDOUT:   %.loc22_23.1: i32 = int_literal 1000000000 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc22: init type = call constants.%UInt(%.loc22_23.1) [template = <error>]
 // CHECK:STDOUT:   %.loc22_23.2: type = value_of_initializer %int.make_type_unsigned.loc22 [template = <error>]
 // CHECK:STDOUT:   %.loc22_23.3: type = converted %int.make_type_unsigned.loc22, %.loc22_23.2 [template = <error>]
 // CHECK:STDOUT:   %test_u1000000000.var: ref <error> = var test_u1000000000
 // CHECK:STDOUT:   %test_u1000000000: ref <error> = bind_name test_u1000000000, %test_u1000000000.var
-// CHECK:STDOUT:   %import_ref.4: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc28: init type = call constants.%UInt(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %.loc28_33.1: type = value_of_initializer %int.make_type_unsigned.loc28 [template = <error>]
 // CHECK:STDOUT:   %.loc28_33.2: type = converted %int.make_type_unsigned.loc28, %.loc28_33.1 [template = <error>]

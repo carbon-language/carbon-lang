@@ -42,6 +42,7 @@ class Formatter {
     out_ << "--- " << sem_ir_.filename() << "\n\n";
 
     FormatConstants();
+    FormatImportRefs();
 
     out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
     OpenBrace();
@@ -137,6 +138,20 @@ class Formatter {
     out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::Constants) << " ";
     OpenBrace();
     FormatCodeBlock(sem_ir_.constants().array_ref());
+    CloseBrace();
+    out_ << "\n\n";
+  }
+
+  auto FormatImportRefs() -> void {
+    auto import_refs = sem_ir_.inst_blocks().Get(InstBlockId::ImportRefs);
+    if (import_refs.empty()) {
+      return;
+    }
+
+    llvm::SaveAndRestore scope(scope_, InstNamer::ScopeId::ImportRefs);
+    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::ImportRefs) << " ";
+    OpenBrace();
+    FormatCodeBlock(import_refs);
     CloseBrace();
     out_ << "\n\n";
   }

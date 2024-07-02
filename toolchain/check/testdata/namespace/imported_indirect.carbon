@@ -136,6 +136,10 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: %D.type = import_ref ir1, inst+10, loaded [template = constants.%D]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
@@ -154,9 +158,8 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+8, loaded
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
-// CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:     .D = imports.%import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref ir1, inst+10, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc5_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
@@ -171,7 +174,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%B [template = file.%B]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%C [template = file.%C]
-// CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%import_ref.4 [template = constants.%D]
+// CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return

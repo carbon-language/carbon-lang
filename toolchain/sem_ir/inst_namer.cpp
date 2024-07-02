@@ -29,6 +29,10 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   // Build the constants scope.
   CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().array_ref());
 
+  // Build the ImportRef scope.
+  CollectNamesInBlock(ScopeId::ImportRefs,
+                      sem_ir.inst_blocks().Get(SemIR::InstBlockId::ImportRefs));
+
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
 
@@ -110,7 +114,7 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
     // These are treated as SemIR keywords.
     case ScopeId::File:
       return "file";
-    case ScopeId::ImportRef:
+    case ScopeId::ImportRefs:
       return "imports";
     case ScopeId::Constants:
       return "constants";
@@ -468,7 +472,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_.constant_values().GetInstId(const_id);
           if (!insts[const_inst_id.index].second) {
-            CollectNamesInBlock(ScopeId::ImportRef, const_inst_id);
+            CollectNamesInBlock(ScopeId::ImportRefs, const_inst_id);
           }
         }
         continue;

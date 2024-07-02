@@ -75,18 +75,21 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C2.2: type = class_type @C2, (%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref ir1, inst+4, loaded [template = constants.%C1.1]
+// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref ir1, inst+11, loaded [template = constants.%C2.1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = %C1
 // CHECK:STDOUT:     .C2 = %C2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref ir1, inst+4, loaded [template = constants.%C1.1]
-// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref ir1, inst+11, loaded [template = constants.%C2.1]
-// CHECK:STDOUT:   %C1: %C1.type = export C1, %import_ref.1 [template = constants.%C1.1]
+// CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%import_ref.1 [template = constants.%C1.1]
 // CHECK:STDOUT:   %T.loc11_11.1: type = param T
 // CHECK:STDOUT:   %T.loc11_11.2: type = bind_symbolic_name T 0, %T.loc11_11.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %C2: %C2.type = export C2, %import_ref.2 [template = constants.%C2.1]
+// CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.2 [template = constants.%C2.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1;

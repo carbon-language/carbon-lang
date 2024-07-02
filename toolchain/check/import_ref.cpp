@@ -67,9 +67,7 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   // somewhere, because it's referenced by other instructions and needs to be
   // visible in textual IR. Adding it to the file block is arbitrary but is the
   // best place we have right now.
-  //
-  // TODO: Consider adding a dedicated block for import_refs.
-  context.inst_block_stack().AddInstIdToFileBlock(import_ref_id);
+  context.import_ref_ids().push_back(import_ref_id);
   return import_ref_id;
 }
 

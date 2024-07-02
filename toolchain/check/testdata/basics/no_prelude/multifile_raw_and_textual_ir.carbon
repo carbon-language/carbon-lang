@@ -36,7 +36,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   generic_instances: {}
@@ -63,10 +63,11 @@ fn B() {
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
+// CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     block3:
-// CHECK:STDOUT:       0:               inst+5
 // CHECK:STDOUT:     block4:
+// CHECK:STDOUT:       0:               inst+5
+// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...
@@ -106,7 +107,7 @@ fn B() {
 // CHECK:STDOUT:   bind_names:
 // CHECK:STDOUT:     bind_name0:      {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
 // CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1, param_refs: empty}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
@@ -132,7 +133,7 @@ fn B() {
 // CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type3}
 // CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type3}
-// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block4, type: type2}
+// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type2}
 // CHECK:STDOUT:     'inst+14':         {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          template inst+0
@@ -151,19 +152,20 @@ fn B() {
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+3
+// CHECK:STDOUT:     import_refs:
+// CHECK:STDOUT:       0:               inst+8
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     block3:
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT:       1:               inst+12
 // CHECK:STDOUT:       2:               inst+13
 // CHECK:STDOUT:       3:               inst+14
-// CHECK:STDOUT:     block4:          {}
-// CHECK:STDOUT:     block5:
+// CHECK:STDOUT:     block5:          {}
+// CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT:       2:               inst+2
 // CHECK:STDOUT:       3:               inst+3
-// CHECK:STDOUT:       4:               inst+8
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -176,6 +178,10 @@ fn B() {
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir1, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
@@ -184,13 +190,12 @@ fn B() {
 // CHECK:STDOUT:   %A.import = import A
 // CHECK:STDOUT:   %A: <namespace> = namespace %A.import, [template] {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir1, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, file.%import_ref [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref.loc6_4()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

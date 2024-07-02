@@ -20,7 +20,7 @@ class InstNamer {
   enum class ScopeId : int32_t {
     None = -1,
     File = 0,
-    ImportRef = 1,
+    ImportRefs = 1,
     Constants = 2,
     FirstFunction = 3,
   };

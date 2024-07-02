@@ -292,10 +292,7 @@ class Context {
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
-  // Finalizes the list of exports on the IR.
-  auto FinalizeExports() -> void {
-    inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
-  }
+  auto Finalize() -> void;
 
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
@@ -427,6 +424,10 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
+  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
+    return import_ref_ids_;
+  }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -516,6 +517,15 @@ class Context {
 
   // State for global initialization.
   GlobalInit global_init_;
+
+  // A list of import refs which can't be inserted into their current context.
+  // They're typically added during name lookup or import ref resolution, where
+  // the current block on inst_block_stack_ is unrelated.
+  //
+  // These are instead added here because they're referenced by other
+  // instructions and needs to be visible in textual IR.
+  // FinalizeImportRefBlock() will produce an inst block for them.
+  llvm::SmallVector<SemIR::InstId> import_ref_ids_;
 };
 
 }  // namespace Carbon::Check
