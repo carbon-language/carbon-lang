@@ -5,9 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 
+#include "common/array_stack.h"
 #include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/base/array_stack.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/file.h"

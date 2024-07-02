@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_BASE_ARRAY_STACK_H_
-#define CARBON_TOOLCHAIN_BASE_ARRAY_STACK_H_
+#ifndef CARBON_COMMON_ARRAY_STACK_H_
+#define CARBON_COMMON_ARRAY_STACK_H_
 
 #include "common/check.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -59,4 +59,4 @@ class ArrayStack {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_BASE_ARRAY_STACK_H_
+#endif  // CARBON_COMMON_ARRAY_STACK_H_

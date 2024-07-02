@@ -5,8 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_GENERIC_REGION_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_GENERIC_REGION_STACK_H_
 
+#include "common/array_stack.h"
 #include "llvm/ADT/BitmaskEnum.h"
-#include "toolchain/base/array_stack.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
