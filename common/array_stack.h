@@ -47,6 +47,16 @@ class ArrayStack {
     return llvm::ArrayRef(values_).slice(array_offsets_.back());
   }
 
+  // Returns the array at a specific index.
+  auto PeekArrayAt(int index) const -> llvm::ArrayRef<ValueT> {
+    CARBON_CHECK(index < static_cast<int>(array_offsets_.size()));
+    auto ref = llvm::ArrayRef(values_).slice(array_offsets_[index]);
+    if (index + 1 < static_cast<int>(array_offsets_.size())) {
+      ref = ref.take_front(array_offsets_[index + 1] - array_offsets_[index]);
+    }
+    return ref;
+  }
+
   // Returns the full set of values on the stack, regardless of whether any
   // arrays are pushed.
   auto PeekAllValues() const -> llvm::ArrayRef<ValueT> { return values_; }
@@ -56,6 +66,13 @@ class ArrayStack {
     CARBON_CHECK(!array_offsets_.empty())
         << "Must call PushArray before PushValue.";
     values_.push_back(value);
+  }
+
+  // Adds multiple values to the top array on the stack.
+  auto AppendToTop(llvm::ArrayRef<ValueT> values) -> void {
+    CARBON_CHECK(!array_offsets_.empty())
+        << "Must call PushArray before PushValues.";
+    values_.append(values.begin(), values.end());
   }
 
   // Returns the current number of values in all arrays.
