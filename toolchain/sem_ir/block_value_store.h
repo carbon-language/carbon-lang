@@ -59,10 +59,11 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   // existing canonical block ID if the block was already added. The specified
   // block must not be modified after this point.
   auto MakeCanonical(IdT id) -> IdT {
-    return canonical_blocks_
-        .Insert(
-            Get(id), [id] { return id; }, KeyContext(this))
-        .key();
+    // Get the content first so that we don't have unnecessary translation of
+    // the `id` into the content during insertion.
+    auto result = canonical_blocks_.Insert(
+        Get(id), [id] { return id; }, KeyContext(this));
+    return result.key();
   }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
