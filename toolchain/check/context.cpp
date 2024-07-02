@@ -45,7 +45,8 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
-      scope_stack_(sem_ir_->identifiers()) {
+      scope_stack_(sem_ir_->identifiers()),
+      global_init_(this) {
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
@@ -630,31 +631,6 @@ auto Context::is_current_position_reachable() -> bool {
   const auto& last_inst = insts().Get(block_contents.back());
   return last_inst.kind().terminator_kind() !=
          SemIR::TerminatorKind::Terminator;
-}
-
-auto Context::FinalizeGlobalInit() -> void {
-  inst_block_stack().PushGlobalInit();
-  if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
-    AddInst<SemIR::Return>(Parse::NodeId::Invalid, {});
-    // Pop the GlobalInit block here to finalize it.
-    inst_block_stack().Pop();
-
-    // __global_init is only added if there are initialization instructions.
-    auto name_id = sem_ir().identifiers().Add("__global_init");
-    sem_ir().functions().Add(
-        {.name_id = SemIR::NameId::ForIdentifier(name_id),
-         .parent_scope_id = SemIR::NameScopeId::Package,
-         .decl_id = SemIR::InstId::Invalid,
-         .generic_id = SemIR::GenericId::Invalid,
-         .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
-         .param_refs_id = SemIR::InstBlockId::Empty,
-         .return_storage_id = SemIR::InstId::Invalid,
-         .is_extern = false,
-         .return_slot = SemIR::Function::ReturnSlot::Absent,
-         .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
-  } else {
-    inst_block_stack().PopGlobalInit();
-  }
 }
 
 namespace {

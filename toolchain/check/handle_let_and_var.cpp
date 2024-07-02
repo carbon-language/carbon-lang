@@ -43,7 +43,7 @@ auto HandleReturnedModifier(Context& context, Parse::ReturnedModifierId node_id)
 
 static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
   if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context.inst_block_stack().PushGlobalInit();
+    context.global_init().Resume();
   }
   context.node_stack().Push(node_id);
   return true;
@@ -155,7 +155,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     if (decl_info->init_id &&
         context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-      context.inst_block_stack().PopGlobalInit();
+      context.global_init().Suspend();
     }
     context.TODO(node_id, "tuple pattern in let/var");
     decl_info = std::nullopt;
@@ -250,7 +250,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
 
   if (decl_info->init_id &&
       context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context.inst_block_stack().PopGlobalInit();
+    context.global_init().Suspend();
   }
 
   return true;
@@ -288,7 +288,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
     }
 
     if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-      context.inst_block_stack().PopGlobalInit();
+      context.global_init().Suspend();
     }
   }
 
