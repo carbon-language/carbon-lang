@@ -159,9 +159,8 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
 
-  // Returns the instruction that describes this template constant value, or
-  // InstId::Invalid for a runtime value. This is not part of the public
-  // interface of `ConstantId`. Use `ConstantValueStore::GetInstId` to get the
+  // Returns the instruction that describes this template constant value.
+  // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
   constexpr auto template_inst_id() const -> InstId {
     CARBON_CHECK(is_template());
@@ -169,8 +168,7 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   }
 
   // Returns the symbolic constant index that describes this symbolic constant
-  // value.  Requires is_symbolic. This is not part of the public interface of
-  // `ConstantId`.
+  // value. Requires `is_symbolic()`.
   constexpr auto symbolic_index() const -> int32_t {
     CARBON_CHECK(is_symbolic());
     return FirstSymbolicIndex - index;

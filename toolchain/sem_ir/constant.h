@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 
-#include "llvm/ADT/FoldingSet.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -16,10 +15,12 @@ namespace Carbon::SemIR {
 struct SymbolicConstant {
   // The constant instruction that defines the value of this symbolic constant.
   InstId inst_id;
-  // The enclosing generic.
+  // The enclosing generic. If this is invalid, then this is an abstract
+  // symbolic constant, such as a constant instruction in the constants block,
+  // rather than one associated with a particular generic.
   GenericId generic_id;
   // The index of this symbolic constant within the generic's list of symbolic
-  // constants.
+  // constants, or invalid if `generic_id` is invalid.
   GenericInstIndex index;
 };
 
