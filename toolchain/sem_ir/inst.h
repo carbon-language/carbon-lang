@@ -458,7 +458,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 // See common/hashing.h.
 inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   Hasher hasher(seed);
-  hasher.Hash(value);
+  hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
 

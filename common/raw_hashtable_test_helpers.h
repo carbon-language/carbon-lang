@@ -51,8 +51,8 @@ struct TestKeyContext : DefaultKeyContext {
   auto HashKey(const KeyT& key, uint64_t seed) const -> HashCode {
     Hasher hash(seed);
     // Inject some other data to the hash.
-    hash.Hash(42);
-    hash.Hash(HashValue(key));
+    hash.HashRaw(42);
+    hash.HashRaw(HashValue(key));
     return static_cast<HashCode>(hash);
   }
 };

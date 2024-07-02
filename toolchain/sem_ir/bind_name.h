@@ -29,7 +29,7 @@ struct BindNameInfo : public Printable<BindNameInfo> {
 inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.Hash(value);
+  hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
 
