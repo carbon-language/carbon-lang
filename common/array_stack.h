@@ -42,7 +42,7 @@ class ArrayStack {
   // Adds a value to the top array on the stack.
   auto PushValue(ValueT value) -> void {
     CARBON_CHECK(!array_offsets_.empty())
-        << "Must call PushRegion before PushValue.";
+        << "Must call PushArray before PushValue.";
     elements_.push_back(value);
   }
 
