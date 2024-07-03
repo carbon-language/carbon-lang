@@ -15,14 +15,13 @@ auto ScopeStack::VerifyOnFinish() -> void {
 
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                       bool lexical_lookup_has_load_error) -> void {
+  compile_time_binding_stack_.PushArray();
   scope_stack_.push_back(
       {.index = next_scope_index_,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
-       .next_compile_time_bind_index =
-           scope_stack_.empty()
-               ? SemIR::CompileTimeBindIndex(0)
-               : scope_stack_.back().next_compile_time_bind_index,
+       .next_compile_time_bind_index = SemIR::CompileTimeBindIndex(
+           compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
   if (scope_id.is_valid()) {
@@ -57,15 +56,13 @@ auto ScopeStack::Pop() -> void {
     return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
   }
 
-  CARBON_CHECK(scope.next_compile_time_bind_index.index ==
-               static_cast<int32_t>(compile_time_binding_stack_.size()))
+  CARBON_CHECK(
+      scope.next_compile_time_bind_index.index ==
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
       << "Wrong number of entries in compile-time binding stack, have "
-      << compile_time_binding_stack_.size() << ", expected "
+      << compile_time_binding_stack_.all_values_size() << ", expected "
       << scope.next_compile_time_bind_index.index;
-  compile_time_binding_stack_.truncate(
-      scope_stack_.empty()
-          ? 0
-          : scope_stack_.back().next_compile_time_bind_index.index);
+  compile_time_binding_stack_.PopArray();
 }
 
 auto ScopeStack::PopTo(ScopeIndex index) -> void {
@@ -163,13 +160,9 @@ auto ScopeStack::Suspend() -> SuspendedScope {
     non_lexical_scope_stack_.pop_back();
   }
 
-  auto remaining_compile_time_bindings =
-      scope_stack_.empty()
-          ? 0
-          : scope_stack_.back().next_compile_time_bind_index.index;
+  auto peek_compile_time_bindings = compile_time_binding_stack_.PeekArray();
   result.suspended_items.reserve(result.entry.num_names +
-                                 compile_time_binding_stack_.size() -
-                                 remaining_compile_time_bindings);
+                                 peek_compile_time_bindings.size());
 
   result.entry.names.ForEach([&](SemIR::NameId name_id) {
     auto [index, inst_id] = lexical_lookup_.Suspend(name_id);
@@ -181,13 +174,12 @@ auto ScopeStack::Suspend() -> SuspendedScope {
                result.entry.num_names);
 
   // Move any compile-time bindings into the suspended scope.
-  for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)
-                          .drop_front(remaining_compile_time_bindings)) {
+  for (auto inst_id : peek_compile_time_bindings) {
     result.suspended_items.push_back(
         {.index = SuspendedScope::ScopeItem::IndexForCompileTimeBinding,
          .inst_id = inst_id});
   }
-  compile_time_binding_stack_.truncate(remaining_compile_time_bindings);
+  compile_time_binding_stack_.PopArray();
 
   // This would be easy to support if we had a need, but currently we do not.
   CARBON_CHECK(!result.entry.has_returned_var)
@@ -196,20 +188,22 @@ auto ScopeStack::Suspend() -> SuspendedScope {
 }
 
 auto ScopeStack::Restore(SuspendedScope scope) -> void {
+  compile_time_binding_stack_.PushArray();
   for (auto [index, inst_id] : scope.suspended_items) {
     if (index == SuspendedScope::ScopeItem::IndexForCompileTimeBinding) {
-      compile_time_binding_stack_.push_back(inst_id);
+      compile_time_binding_stack_.AppendToTop(inst_id);
     } else {
       lexical_lookup_.Restore({.index = index, .inst_id = inst_id},
                               scope.entry.index);
     }
   }
 
-  CARBON_CHECK(scope.entry.next_compile_time_bind_index.index ==
-               static_cast<int32_t>(compile_time_binding_stack_.size()))
+  CARBON_CHECK(
+      scope.entry.next_compile_time_bind_index.index ==
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
       << "Wrong number of entries in compile-time binding stack "
          "when restoring, have "
-      << compile_time_binding_stack_.size() << ", expected "
+      << compile_time_binding_stack_.all_values_size() << ", expected "
       << scope.entry.next_compile_time_bind_index.index;
 
   if (scope.entry.scope_id.is_valid()) {

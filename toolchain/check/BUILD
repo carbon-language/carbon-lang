@@ -152,6 +152,7 @@ cc_library(
     srcs = ["generic_region_stack.cpp"],
     hdrs = ["generic_region_stack.h"],
     deps = [
+        "//common:array_stack",
         "//common:check",
         "//common:ostream",
         "//common:vlog",
@@ -282,6 +283,7 @@ cc_library(
         "scope_stack.h",
     ],
     deps = [
+        "//common:array_stack",
         "//common:check",
         "//common:ostream",
         "//common:set",
