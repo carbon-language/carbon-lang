@@ -514,6 +514,7 @@ class Context {
   // end of the current source file.
   llvm::SmallVector<SemIR::InstId> definitions_required_;
 
+  // State for global initialization.
   GlobalInit global_init_;
 };
 
