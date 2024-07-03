@@ -21,9 +21,10 @@ auto InstBlockStack::Push(SemIR::InstBlockId id) -> void {
   ++size_;
 }
 
-auto InstBlockStack::PushGlobalInit() -> void {
-  Push(init_block_id_);
-  stack_[size_ - 1].content = std::move(init_block_);
+auto InstBlockStack::Push(SemIR::InstBlockId id,
+                          llvm::ArrayRef<SemIR::InstId> inst_ids) -> void {
+  Push(id);
+  stack_[size_ - 1].content = inst_ids;
 }
 
 auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
@@ -55,12 +56,6 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
     return SemIR::InstBlockId::Empty;
   }
   return back.id;
-}
-
-auto InstBlockStack::PopGlobalInit() -> void {
-  init_block_ = std::move(stack_[size_ - 1].content);
-  init_block_id_ = stack_[size_ - 1].id;
-  PopAndDiscard();
 }
 
 auto InstBlockStack::PopAndDiscard() -> void {

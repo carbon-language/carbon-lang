@@ -915,7 +915,7 @@ static auto CheckParseTree(
   sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
   context.scope_stack().Pop();
   context.FinalizeExports();
-  context.FinalizeGlobalInit();
+  context.global_init().Finalize();
 
   DiagnoseMissingDefinitions(context, emitter);
 

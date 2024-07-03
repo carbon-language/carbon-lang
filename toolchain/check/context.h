@@ -12,6 +12,7 @@
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
@@ -296,9 +297,6 @@ class Context {
     inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
   }
 
-  // Finalizes the initialization function (__global_init).
-  auto FinalizeGlobalInit() -> void;
-
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
   auto SetTotalIRCount(int num_irs) -> void {
@@ -427,6 +425,8 @@ class Context {
     return definitions_required_;
   }
 
+  auto global_init() -> GlobalInit& { return global_init_; }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -513,6 +513,9 @@ class Context {
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
   llvm::SmallVector<SemIR::InstId> definitions_required_;
+
+  // State for global initialization.
+  GlobalInit global_init_;
 };
 
 }  // namespace Carbon::Check
