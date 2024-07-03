@@ -625,50 +625,57 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
   lexer.LexFileEnd(source_text, position);
 }
 
+// Estimate an upper bound on the number of identifiers we will need to lex.
+//
+// When analyzing both Carbon and LLVM's C++ code, we have found a roughly
+// normal distribution of unique identifiers in the file centered at 0.5 *
+// lines, and in the vast majority of cases bounded below 1.0 * lines. For
+// example, here is LLVM's distribution computed with `scripts/source_stats.py`
+// and rendered in an ASCII-art histogram:
+//
+//   # Unique IDs per 10 lines ## (median: 5)
+//   1 ids   [  29]  ▍
+//   2 ids   [ 282]  ███▊
+//   3 ids   [1492]  ███████████████████▉
+//   4 ids   [2674]  ███████████████████████████████████▌
+//   5 ids   [3011]  ████████████████████████████████████████
+//   6 ids   [2267]  ██████████████████████████████▏
+//   7 ids   [1549]  ████████████████████▋
+//   8 ids   [ 817]  ██████████▉
+//   9 ids   [ 301]  ████
+//   10 ids  [  98]  █▎
+//
+//   (Trimmed to only cover 1 - 10 unique IDs per 10 lines of code.)
+//
+// We have checked this distribution with several large codebases (currently
+// those at Google, happy to cross check with others) that use a similar coding
+// style, and it appears to be very consistent. However, we suspect it may be
+// dependent on the column width style. Currently, Carbon's toolchain style
+// specifies 80-columns, but if we expect the lexer to routinely see files in
+// different styles we should re-compute this estimate.
+static auto EstimateUpperBoundOnNumIdentifiers(int line_count) -> int {
+  return line_count;
+}
+
 auto Lexer::Lex() && -> TokenizedBuffer {
   llvm::StringRef source_text = buffer_.source_->text();
 
   // First build up our line data structures.
   MakeLines(source_text);
 
-  // Once we have scanned the source text to build up our line data structures,
-  // and before we begin lexing, use the data about the line count in the source
-  // to make rough estimated reservations of memory in the hot data structures
-  // used by the lexer. In practice, scanning for lines is one of the easiest
-  // parts of the lexer to accelerate, and we can use its results to minimize
-  // the cost of incrementally growing data structures during the hot path of
-  // the lexer.
+  // Use the line count (and any other info needed from this scan) to make rough
+  // estimated reservations of memory in the hot data structures used by the
+  // lexer. In practice, scanning for lines is one of the easiest parts of the
+  // lexer to accelerate, and we can use its results to minimize the cost of
+  // incrementally growing data structures during the hot path of the lexer.
   //
-  // Hashtables are an especially useful data structure to reserve as they are
-  // particularly expensive to *grow*. However, we don't want to waste memory on
-  // small input files by over reserving. The far and away hottest hash table is
-  // for interning identifiers. Fortunately, when analyzing several C++
-  // codebases we have found a roughly normal distribution of unique identifiers
-  // in the file centered at 0.5 * lines, and in the vast majority of cases
-  // bounded below 1.0 * lines. For example, here is LLVM's distribution
-  // computed with `scripts/source_stats.py` and rendered in an ASCII-art
-  // histogram:
-  //
-  //   # Unique IDs per 10 lines ## (median: 5)
-  //   1 ids   [  29]  ▍
-  //   2 ids   [ 282]  ███▊
-  //   3 ids   [1492]  ███████████████████▉
-  //   4 ids   [2674]  ███████████████████████████████████▌
-  //   5 ids   [3011]  ████████████████████████████████████████
-  //   6 ids   [2267]  ██████████████████████████████▏
-  //   7 ids   [1549]  ████████████████████▋
-  //   8 ids   [ 817]  ██████████▉
-  //   9 ids   [ 301]  ████
-  //   10 ids  [  98]  █▎
-  //
-  //   (Trimmed to only cover 1 - 10 unique IDs per 10 lines of code.)
-  //
-  // Based on this distribution, we reserve space for as many identifiers as
-  // lines. This will typically reserve *more* than enough space due to the load
-  // factor and requirement to have a power-of-two size, but we expect this
-  // hashtable to be worth over-shooting and thus having a low load factor and
-  // lower latency for access even at the cost of memory.
-  buffer_.value_stores_->identifiers().Reserve(buffer_.line_infos_.size());
+  // Note that for hashtables we want estimates near the upper bound to minimize
+  // growth across the vast majority of inputs. They will also typically reserve
+  // more memory than we request due to load factor and rounding to power-of-two
+  // size. This overshoot is usually fine for hot parts of the lexer where
+  // latency is expected to be more important than minimizing memory usage.
+  buffer_.value_stores_->identifiers().Reserve(
+      EstimateUpperBoundOnNumIdentifiers(buffer_.line_infos_.size()));
 
   ssize_t position = 0;
   LexFileStart(source_text, position);
