@@ -132,8 +132,8 @@ static auto LookupInterfaceWitness(Context& context,
   // considering impls that are for the same interface we're querying. We can
   // also skip impls that mention any types that aren't part of our impl query.
   for (const auto& impl : context.impls().array_ref()) {
-    if (context.types().GetInstId(impl.self_id) !=
-        context.constant_values().GetInstId(type_const_id)) {
+    if (!context.constant_values().EqualAcrossDeclarations(
+            context.types().GetConstantId(impl.self_id), type_const_id)) {
       continue;
     }
     auto interface_type =

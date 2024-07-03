@@ -452,6 +452,7 @@ class Formatter {
         out_ << " = ";
         FormatInstName(
             sem_ir_.constant_values().GetInstId(pending_constant_value_));
+        // TODO: For a symbolic constant, include the generic and index.
       }
     } else {
       out_ << pending_constant_value_;
