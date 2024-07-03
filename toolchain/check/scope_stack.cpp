@@ -126,7 +126,7 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
         << "Name in scope but not in lexical lookups";
     return existing;
   }
-  scope_stack_.back().has_names = true;
+  ++scope_stack_.back().num_names;
 
   // TODO: Reject if we previously performed a failed lookup for this name
   // in this scope or a scope nested within it.
@@ -163,21 +163,22 @@ auto ScopeStack::Suspend() -> SuspendedScope {
     non_lexical_scope_stack_.pop_back();
   }
 
+  auto remaining_compile_time_bindings =
+      scope_stack_.empty()
+          ? 0
+          : scope_stack_.back().next_compile_time_bind_index.index;
+  result.suspended_items.reserve(result.entry.num_names +
+                                 compile_time_binding_stack_.size() -
+                                 remaining_compile_time_bindings);
+
   result.entry.names.ForEach([&](SemIR::NameId name_id) {
     auto [index, inst_id] = lexical_lookup_.Suspend(name_id);
     CARBON_CHECK(index !=
                  SuspendedScope::ScopeItem::IndexForCompileTimeBinding);
     result.suspended_items.push_back({.index = index, .inst_id = inst_id});
   });
-
-  // Now we can reserve the remaining space needed.
-  auto remaining_compile_time_bindings =
-      scope_stack_.empty()
-          ? 0
-          : scope_stack_.back().next_compile_time_bind_index.index;
-  result.suspended_items.reserve(result.suspended_items.size() +
-                                 compile_time_binding_stack_.size() -
-                                 remaining_compile_time_bindings);
+  CARBON_CHECK(static_cast<int>(result.suspended_items.size()) ==
+               result.entry.num_names);
 
   // Move any compile-time bindings into the suspended scope.
   for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)

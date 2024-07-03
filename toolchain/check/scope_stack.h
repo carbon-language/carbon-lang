@@ -64,7 +64,7 @@ class ScopeStack {
 
   // Pops the top scope from scope_stack_ if it contains no names.
   auto PopIfEmpty() -> void {
-    if (!scope_stack_.back().has_names) {
+    if (scope_stack_.back().num_names == 0) {
       Pop();
     }
   }
@@ -179,7 +179,7 @@ class ScopeStack {
     bool has_returned_var = false;
 
     // Whether there are any ids in the `names` set.
-    bool has_names = false;
+    int num_names = 0;
 
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.

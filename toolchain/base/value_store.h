@@ -205,7 +205,7 @@ class CanonicalValueStore {
   using ValueType = typename IdT::ValueType;
 
   // Stores a canonical copy of the value and returns an ID to reference it.
-  auto Add(const ValueType& value) -> IdT;
+  auto Add(ValueType value) -> IdT;
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> const ValueType& { return values_.Get(id); }
@@ -254,8 +254,8 @@ class CanonicalValueStore<IdT>::KeyContext
 };
 
 template <typename IdT>
-auto CanonicalValueStore<IdT>::Add(const ValueType& value) -> IdT {
-  auto make_key = [&] { return IdT(values_.Add(value)); };
+auto CanonicalValueStore<IdT>::Add(ValueType value) -> IdT {
+  auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
   return set_.Insert(value, make_key, KeyContext(values_.array_ref())).key();
 }
 
