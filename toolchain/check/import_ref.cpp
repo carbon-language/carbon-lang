@@ -61,7 +61,9 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
       SemIR::LocIdAndInst(import_ir_inst_id, inst));
 
-  // ImportRefs have a dedicated block.
+  // ImportRefs have a dedicated block because this may be called during
+  // processing where the instruction shouldn't be inserted in the current inst
+  // block.
   context.import_ref_ids().push_back(import_ref_id);
   return import_ref_id;
 }
