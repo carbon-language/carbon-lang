@@ -49,7 +49,6 @@ class ArrayStack {
 
   // Returns the array at a specific index.
   auto PeekArrayAt(int index) const -> llvm::ArrayRef<ValueT> {
-    CARBON_CHECK(index < static_cast<int>(array_offsets_.size()));
     auto ref = llvm::ArrayRef(values_).slice(array_offsets_[index]);
     if (index + 1 < static_cast<int>(array_offsets_.size())) {
       ref = ref.take_front(array_offsets_[index + 1] - array_offsets_[index]);
