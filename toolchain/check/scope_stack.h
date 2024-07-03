@@ -18,7 +18,7 @@ namespace Carbon::Check {
 // checking within.
 class ScopeStack {
  public:
-  explicit ScopeStack(const StringStoreWrapper<IdentifierId>& identifiers)
+  explicit ScopeStack(const CanonicalValueStore<IdentifierId>& identifiers)
       : lexical_lookup_(identifiers) {}
 
   // A scope in which `break` and `continue` can be used.
