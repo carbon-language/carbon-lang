@@ -207,8 +207,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref ir0, inst+6, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir0, inst+13, loaded [template = constants.%CompleteClass.1]
@@ -293,7 +293,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir1, inst+13, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type.1 = import_ref ir1, inst+51, loaded [template = constants.%F.1]
@@ -376,7 +376,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir1, inst+13, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+51, loaded [template = constants.%F]
@@ -456,7 +456,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir1, inst+13, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+51, loaded [template = constants.%F]
@@ -519,8 +519,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .F = %import_ref.3
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref ir0, inst+6, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+13, unloaded

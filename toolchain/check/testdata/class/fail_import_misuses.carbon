@@ -91,7 +91,7 @@ var a: Incomplete;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+6, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}

@@ -315,7 +315,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %import_ref
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %F.type = import_ref ir1, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT: }
@@ -463,7 +463,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}

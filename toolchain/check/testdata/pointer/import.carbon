@@ -83,7 +83,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.2: ref %.2 = import_ref ir0, inst+24, loaded

@@ -566,7 +566,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+22, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir1, inst+44, loaded [template = constants.%C]
@@ -680,7 +680,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+22, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir1, inst+44, loaded [template = constants.%C]
@@ -826,7 +826,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+22, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir1, inst+44, loaded [template = constants.%C]
@@ -971,7 +971,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+22, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir1, inst+44, loaded [template = constants.%C]
@@ -1089,7 +1089,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+22, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir1, inst+44, loaded [template = constants.%C]
@@ -1189,7 +1189,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+44, unloaded
@@ -1240,7 +1240,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+44, unloaded
@@ -1297,7 +1297,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+44, unloaded
@@ -1337,7 +1337,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+44, unloaded
@@ -1362,7 +1362,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+44, unloaded
@@ -1387,7 +1387,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+44, unloaded

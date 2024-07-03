@@ -233,7 +233,7 @@ fn D() {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+23, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir1, inst+47, loaded [template = constants.%C]
@@ -306,7 +306,7 @@ fn D() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir1, inst+23, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+47, unloaded
@@ -351,7 +351,7 @@ fn D() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %A.type = import_ref ir1, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {}
@@ -380,7 +380,7 @@ fn D() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+47, unloaded

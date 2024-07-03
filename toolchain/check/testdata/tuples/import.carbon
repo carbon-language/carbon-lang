@@ -252,7 +252,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1: ref %.3 = import_ref ir0, inst+17, loaded
 // CHECK:STDOUT:   %import_ref.2: ref %.9 = import_ref ir0, inst+61, loaded
@@ -394,7 +394,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+61, unloaded
@@ -464,7 +464,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+61, unloaded

@@ -60,7 +60,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir1, inst+4, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Bool.ref: %Bool.type = name_ref Bool, %import_ref [template = constants.%Bool]

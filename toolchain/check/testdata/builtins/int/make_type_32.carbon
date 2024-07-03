@@ -60,7 +60,7 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %Int.type = import_ref ir1, inst+4, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, %import_ref [template = constants.%Int]

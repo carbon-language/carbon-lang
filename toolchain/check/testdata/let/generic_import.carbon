@@ -66,7 +66,7 @@ var b: T = *a;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+3, loaded [symbolic = constants.%T]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}

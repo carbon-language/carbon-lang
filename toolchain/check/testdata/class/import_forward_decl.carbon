@@ -51,8 +51,8 @@ class ForwardDecl {
 // CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+3, loaded [template = constants.%ForwardDecl]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}

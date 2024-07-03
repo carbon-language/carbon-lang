@@ -132,7 +132,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .Symbolic = %Symbolic.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir1, inst+15, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -227,7 +227,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %Int.type = import_ref ir1, inst+15, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, %import_ref [template = constants.%Int]
@@ -263,7 +263,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .n = %n.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir1, inst+15, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir4, inst+4, loaded [template = constants.%Int32]
@@ -314,7 +314,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .m = %m
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %Int.type = import_ref ir1, inst+15, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, %import_ref [template = constants.%Int]

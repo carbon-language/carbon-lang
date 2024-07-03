@@ -101,7 +101,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     .Add = %import_ref.1
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3: %.4 = import_ref ir1, inst+24, loaded [template = constants.%.5]

@@ -154,14 +154,14 @@ library "import_conflict_reverse";
 
 import library "local_other";
 
-// --- import_conflict_reverse.impl.carbon
+// --- fail_import_conflict_reverse.impl.carbon
 
 impl library "import_conflict_reverse";
 
-// CHECK:STDERR: import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: import Other library "O1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: In import.
 // CHECK:STDERR: impl library "import_conflict_reverse";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: import_conflict_reverse.carbon:4:1: In import.
@@ -295,7 +295,7 @@ import Other library "O1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,8 +318,8 @@ import Other library "O1";
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:     .c2 = %c2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+1, loaded [template = constants.%C2]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
@@ -361,7 +361,7 @@ import Other library "O1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -380,8 +380,8 @@ import Other library "O1";
 // CHECK:STDOUT:     .C1 = %import_ref.1
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, %import_ref.1 [template = constants.%C1]
@@ -409,7 +409,7 @@ import Other library "O1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .C = %import_ref.2
@@ -432,8 +432,8 @@ import Other library "O1";
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir0, inst+3, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .C = %import_ref.2
@@ -488,8 +488,8 @@ import Other library "O1";
 // CHECK:STDOUT:     .o1 = %o1
 // CHECK:STDOUT:     .o2 = %o2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref.loc6: <namespace> = name_ref Other, %Other [template = %Other]
@@ -554,8 +554,8 @@ import Other library "O1";
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .o1 = %o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
@@ -596,8 +596,8 @@ import Other library "O1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc15_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc15_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc15_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc15_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
@@ -609,18 +609,18 @@ import Other library "O1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_conflict_reverse.impl.carbon
+// CHECK:STDOUT: --- fail_import_conflict_reverse.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %import_ref = import_ref ir0, inst+2, unloaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}

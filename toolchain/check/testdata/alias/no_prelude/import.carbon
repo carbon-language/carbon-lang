@@ -112,7 +112,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .c_alias_alias = %c_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
@@ -144,7 +144,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+8, unloaded
@@ -202,7 +202,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a_alias_alias = %a_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.2: ref %.1 = import_ref ir1, inst+12, loaded
 // CHECK:STDOUT:   %a_alias.ref: ref %.1 = name_ref a_alias, %import_ref.2
@@ -235,7 +235,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: ref %.1 = import_ref ir1, inst+6, loaded [template = <error>]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()

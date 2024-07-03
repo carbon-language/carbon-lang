@@ -26,7 +26,7 @@ struct ImportIR : public Printable<ImportIR> {
   const File* sem_ir;
 };
 
-static_assert(sizeof(ImportIR) == 16, "Unexpected size");
+static_assert(sizeof(ImportIR) == 8 + sizeof(uintptr_t), "Unexpected size");
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
 // LocId.

@@ -180,7 +180,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .UseForwardDeclaredF = %UseForwardDeclaredF
 // CHECK:STDOUT:     .f = %f.loc16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+20, loaded [template = constants.%.4]

@@ -80,7 +80,7 @@ export C2(T:! type);
 // CHECK:STDOUT:     .C1 = %C1
 // CHECK:STDOUT:     .C2 = %C2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref ir1, inst+4, loaded [template = constants.%C1.1]
 // CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref ir1, inst+11, loaded [template = constants.%C2.1]
 // CHECK:STDOUT:   %C1: %C1.type = export C1, %import_ref.1 [template = constants.%C1.1]

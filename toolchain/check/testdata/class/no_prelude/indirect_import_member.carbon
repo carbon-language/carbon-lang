@@ -136,7 +136,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,7 +151,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
@@ -170,7 +170,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,7 +187,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
@@ -215,7 +215,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .D = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,7 +234,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
@@ -276,7 +276,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
@@ -318,7 +318,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
@@ -361,7 +361,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .D = %import_ref.1
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%D]
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
@@ -413,7 +413,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .D = %import_ref.1
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+3, loaded [template = constants.%D]
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]

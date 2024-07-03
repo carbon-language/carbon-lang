@@ -217,7 +217,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref: %Def.type = import_ref ir0, inst+3, loaded [template = constants.%Def]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -249,7 +249,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
@@ -309,7 +309,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref ir0, inst+3, loaded [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -341,7 +341,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
@@ -401,7 +401,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref: %Forward.type = import_ref ir0, inst+3, loaded [template = constants.%Forward]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -437,7 +437,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]

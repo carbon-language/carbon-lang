@@ -46,7 +46,7 @@ impl package Implicit;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref = import_ref ir0, inst+3, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}

@@ -142,7 +142,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_ptr = %b_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unloaded
@@ -194,7 +194,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .c_ptr = %c_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unloaded
@@ -248,7 +248,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+15, unloaded
@@ -303,7 +303,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+25, unloaded
@@ -360,7 +360,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+25, unloaded
@@ -419,7 +419,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+25, unloaded

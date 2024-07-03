@@ -586,6 +586,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case ImportDecl::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case InterfaceWitness::Kind:
@@ -671,9 +672,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TemporaryStorage::Kind:
       case ValueAsRef::Kind:
         return ExprCategory::EphemeralRef;
-
-      case ImportDecl::Kind:
-        CARBON_FATAL() << "Not valid in an expression.";
     }
   }
 }

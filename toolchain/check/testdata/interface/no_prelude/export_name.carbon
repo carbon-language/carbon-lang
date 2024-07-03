@@ -71,7 +71,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %I: type = export I, %import_ref.1 [template = constants.%.1]
@@ -98,7 +98,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     .I = %import_ref.1
 // CHECK:STDOUT:     .UseEmpty = %UseEmpty.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {

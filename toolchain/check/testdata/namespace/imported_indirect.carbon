@@ -62,7 +62,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+3, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .B = %B
@@ -79,7 +79,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
@@ -106,7 +106,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
@@ -143,7 +143,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B

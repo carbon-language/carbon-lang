@@ -198,7 +198,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,7 +208,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +218,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir2, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,7 +228,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir2, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -238,7 +238,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -264,7 +264,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
@@ -308,8 +308,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
@@ -353,8 +353,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
@@ -398,7 +398,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
@@ -442,7 +442,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
@@ -486,7 +486,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
@@ -530,7 +530,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
@@ -574,7 +574,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
@@ -618,7 +618,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
@@ -652,7 +652,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Local = %Local
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %Local: <error> = bind_alias Local, <error> [template = <error>]
 // CHECK:STDOUT: }
@@ -673,7 +673,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
@@ -718,7 +718,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .C = %import_ref.2
 // CHECK:STDOUT:     .indirect_c = %indirect_c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded

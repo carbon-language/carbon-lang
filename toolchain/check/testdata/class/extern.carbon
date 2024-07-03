@@ -508,7 +508,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -522,7 +522,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -536,7 +536,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -550,7 +550,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
@@ -565,7 +565,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -583,7 +583,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
@@ -603,7 +603,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
@@ -624,7 +624,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unloaded
@@ -649,7 +649,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unloaded

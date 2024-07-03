@@ -454,7 +454,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         if (inst.package_id.is_valid()) {
           add_inst_name_id(inst.package_id, ".import");
         } else {
-          add_inst_name("<default>.import");
+          add_inst_name("default.import");
         }
         break;
       }

@@ -69,8 +69,8 @@ var b: i32 = a;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %<default>.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref.1: ref i32 = import_ref ir0, inst+13, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}

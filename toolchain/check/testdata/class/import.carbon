@@ -170,7 +170,7 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+6, loaded [template = constants.%Field]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+22, loaded [template = constants.%ForwardDeclared.1]

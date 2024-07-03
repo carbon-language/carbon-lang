@@ -74,7 +74,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .package_a = %package_a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+3, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
@@ -138,7 +138,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .package_b = %package_b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %B.type = import_ref ir1, inst+3, loaded [template = constants.%B]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()

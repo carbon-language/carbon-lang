@@ -98,7 +98,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .GetFloat = %GetFloat.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref ir1, inst+15, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, %import_ref.1 [template = constants.%Float]
@@ -161,7 +161,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .dyn = %dyn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref ir1, inst+15, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Float.ref.loc10: %Float.type = name_ref Float, %import_ref.1 [template = constants.%Float]

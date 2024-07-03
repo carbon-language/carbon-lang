@@ -91,7 +91,7 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2: ref %.3 = import_ref ir1, inst+13, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}

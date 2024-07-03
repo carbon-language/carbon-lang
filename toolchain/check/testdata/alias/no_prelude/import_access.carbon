@@ -91,7 +91,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+5, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir0, inst+2, unloaded
@@ -125,7 +125,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %<default>.import = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
