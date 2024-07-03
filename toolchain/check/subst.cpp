@@ -165,9 +165,8 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
 
 // Pops the operands of the specified instruction off the worklist and rebuilds
 // the instruction with the updated operands.
-template <typename RebuildInstFn>
 static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
-                    RebuildInstFn rebuild_inst) -> SemIR::InstId {
+                    SubstRebuildFn rebuild_inst) -> SemIR::InstId {
   auto inst = context.insts().Get(inst_id);
   auto kinds = inst.ArgKinds();
 
