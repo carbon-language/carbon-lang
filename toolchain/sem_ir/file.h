@@ -91,10 +91,10 @@ class File : public Printable<File> {
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
 
   // Directly expose SharedValueStores members.
-  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+  auto identifiers() const -> const CanonicalValueStore<IdentifierId>& {
     return value_stores_->identifiers();
   }
   auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
@@ -109,11 +109,11 @@ class File : public Printable<File> {
   auto floats() const -> const FloatValueStore& {
     return value_stores_->floats();
   }
-  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }
   auto string_literal_values() const
-      -> const StringStoreWrapper<StringLiteralValueId>& {
+      -> const CanonicalValueStore<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }
 
