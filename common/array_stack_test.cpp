@@ -25,8 +25,8 @@ TEST(ArrayStack, Basics) {
   EXPECT_THAT(stack.PeekAllValues(), IsEmpty());
 
   // Pushing a couple values works.
-  stack.PushValue(1);
-  stack.PushValue(2);
+  stack.AppendToTop(1);
+  stack.AppendToTop(2);
   EXPECT_THAT(stack.PeekArray(), ElementsAre(1, 2));
   EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2));
 
@@ -36,7 +36,7 @@ TEST(ArrayStack, Basics) {
   EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2));
 
   // The added value goes to the 2nd array.
-  stack.PushValue(3);
+  stack.AppendToTop(3);
   EXPECT_THAT(stack.PeekArray(), ElementsAre(3));
   EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 3));
 
@@ -48,7 +48,7 @@ TEST(ArrayStack, Basics) {
   // Push a couple arrays, then a value on the now-3rd array.
   stack.PushArray();
   stack.PushArray();
-  stack.PushValue(4);
+  stack.AppendToTop(4);
   EXPECT_THAT(stack.PeekArray(), ElementsAre(4));
   EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 4));
 
@@ -68,7 +68,7 @@ TEST(ArrayStack, Basics) {
 
   // Add a new 1st array.
   stack.PushArray();
-  stack.PushValue(5);
+  stack.AppendToTop(5);
   EXPECT_THAT(stack.PeekArray(), ElementsAre(5));
   EXPECT_THAT(stack.PeekAllValues(), ElementsAre(5));
 }

@@ -127,7 +127,7 @@ class ScopeStack {
 
   // Pushes a compile-time binding into the current scope.
   auto PushCompileTimeBinding(SemIR::InstId bind_id) -> void {
-    compile_time_binding_stack_.PushValue(bind_id);
+    compile_time_binding_stack_.AppendToTop(bind_id);
   }
 
   // Temporarily removes the top of the stack and its lexical lookup results.

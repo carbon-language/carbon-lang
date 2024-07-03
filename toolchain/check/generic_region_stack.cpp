@@ -11,7 +11,7 @@ auto GenericRegionStack::Push() -> void { dependent_insts_stack_.PushArray(); }
 auto GenericRegionStack::Pop() -> void { dependent_insts_stack_.PopArray(); }
 
 auto GenericRegionStack::AddDependentInst(DependentInst inst) -> void {
-  dependent_insts_stack_.PushValue(inst);
+  dependent_insts_stack_.AppendToTop(inst);
 }
 
 auto GenericRegionStack::PeekDependentInsts() -> llvm::ArrayRef<DependentInst> {

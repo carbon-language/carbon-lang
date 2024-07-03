@@ -21,7 +21,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
        .next_compile_time_bind_index = SemIR::CompileTimeBindIndex(
-           compile_time_binding_stack_.elements_size()),
+           compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
   if (scope_id.is_valid()) {
@@ -58,9 +58,9 @@ auto ScopeStack::Pop() -> void {
 
   CARBON_CHECK(
       scope.next_compile_time_bind_index.index ==
-      static_cast<int32_t>(compile_time_binding_stack_.elements_size()))
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
       << "Wrong number of entries in compile-time binding stack, have "
-      << compile_time_binding_stack_.elements_size() << ", expected "
+      << compile_time_binding_stack_.all_values_size() << ", expected "
       << scope.next_compile_time_bind_index.index;
   compile_time_binding_stack_.PopArray();
 }
@@ -191,7 +191,7 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
   compile_time_binding_stack_.PushArray();
   for (auto [index, inst_id] : scope.suspended_items) {
     if (index == SuspendedScope::ScopeItem::IndexForCompileTimeBinding) {
-      compile_time_binding_stack_.PushValue(inst_id);
+      compile_time_binding_stack_.AppendToTop(inst_id);
     } else {
       lexical_lookup_.Restore({.index = index, .inst_id = inst_id},
                               scope.entry.index);
@@ -200,10 +200,10 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
 
   CARBON_CHECK(
       scope.entry.next_compile_time_bind_index.index ==
-      static_cast<int32_t>(compile_time_binding_stack_.elements_size()))
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
       << "Wrong number of entries in compile-time binding stack "
          "when restoring, have "
-      << compile_time_binding_stack_.elements_size() << ", expected "
+      << compile_time_binding_stack_.all_values_size() << ", expected "
       << scope.entry.next_compile_time_bind_index.index;
 
   if (scope.entry.scope_id.is_valid()) {
