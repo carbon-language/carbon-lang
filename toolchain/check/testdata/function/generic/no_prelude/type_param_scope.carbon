@@ -9,14 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param_scope.carbon
 
 fn F(T:! type, n: T) -> T {
-  // CHECK:STDERR: type_param_scope.carbon:[[@LINE+4]]:3: ERROR: Cannot implicitly convert from `T` to `T`.
-  // CHECK:STDERR:   let m: T = n;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   let m: T = n;
-  // CHECK:STDERR: type_param_scope.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `T` to `T`.
-  // CHECK:STDERR:   return m;
-  // CHECK:STDERR:   ^~~~~~~~~
   return m;
 }
 
@@ -35,24 +28,22 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc11_16.1: %T = param n
-// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc11_16.1
-// CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T [symbolic = constants.%T]
-// CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %n.loc11_16.1: @F.%T (%T) = param n
+// CHECK:STDOUT:     @F.%n: @F.%T (%T) = bind_name n, %n.loc11_16.1
+// CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     @F.%return: ref @F.%T (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type, %n: %T) -> %T
-// CHECK:STDOUT:     generic [%T: type]{
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc11_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT: fn @F(%T: type, %n: @F.%T (%T)) -> @F.%T (%T)
+// CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
-// CHECK:STDOUT:   %m: %T = bind_name m, <error>
-// CHECK:STDOUT:   %m.ref: %T = name_ref m, %m
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %n.ref: @F.%T (%T) = name_ref n, %n
+// CHECK:STDOUT:   %m: @F.%T (%T) = bind_name m, %n.ref
+// CHECK:STDOUT:   %m.ref: @F.%T (%T) = name_ref m, %m
+// CHECK:STDOUT:   return %m.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

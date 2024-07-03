@@ -61,5 +61,5 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [@ForwardDeclared.%Self: %.2]{};
+// CHECK:STDOUT:     generic [@ForwardDeclared.%Self: %.2];
 // CHECK:STDOUT:

@@ -94,12 +94,12 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
 // CHECK:STDOUT:     %N.loc4_23.1: i32 = param N
-// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc6: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -125,10 +125,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
-// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -160,12 +157,12 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
 // CHECK:STDOUT:     %N.loc4_23.1: i32 = param N
-// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -181,10 +178,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
-// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -218,12 +212,12 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
 // CHECK:STDOUT:     %N.loc4_23.1: i32 = param N
-// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -241,10 +235,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
-// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -277,12 +268,12 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
 // CHECK:STDOUT:     %N.loc4_23.1: i32 = param N
-// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %.loc12_14: i32 = int_literal 5 [template = constants.%.3]
@@ -299,10 +290,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
-// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }

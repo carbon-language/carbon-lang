@@ -56,10 +56,10 @@ class A {
 // CHECK:STDOUT: interface @DefaultConstructible {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %return.var: ref @DefaultConstructible.%Self.ref (%Self) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_20: %.3 = assoc_entity element0, %Make.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -96,10 +96,8 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.1() -> %Self
-// CHECK:STDOUT:     generic [@DefaultConstructible.%Self: %.1]{
-// CHECK:STDOUT:   @DefaultConstructible.%Self.ref: %.1 = name_ref Self, @DefaultConstructible.%Self [symbolic = constants.%Self]
-// CHECK:STDOUT: };
+// CHECK:STDOUT: fn @Make.1() -> @DefaultConstructible.%Self.ref (%Self)
+// CHECK:STDOUT:     generic [@DefaultConstructible.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> @impl.%return.var: %C {
 // CHECK:STDOUT: !entry:

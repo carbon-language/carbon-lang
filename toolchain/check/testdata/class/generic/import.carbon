@@ -121,11 +121,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompleteClass.decl: %CompleteClass.type = class_decl @CompleteClass [template = constants.%CompleteClass.1] {
 // CHECK:STDOUT:     %T.loc6_21.1: type = param T
-// CHECK:STDOUT:     %T.loc6_21.2: type = bind_symbolic_name T 0, %T.loc6_21.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc6_21.2: type = bind_symbolic_name T 0, %T.loc6_21.1 [symbolic = %T.loc6_21.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -143,14 +143,10 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type]{
-// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT: };
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @CompleteClass
-// CHECK:STDOUT:     generic [file.%T.loc6_21.2: type]{
-// CHECK:STDOUT:   file.%T.loc6_21.2: type = bind_symbolic_name T 0, file.%T.loc6_21.1 [symbolic = constants.%T]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%T.loc6_21.2: type] {
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_32.loc7, %.loc7_10.1 [template = i32]
@@ -171,7 +167,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32
-// CHECK:STDOUT:     generic [file.%T.loc6_21.2: type]{} {
+// CHECK:STDOUT:     generic [file.%T.loc6_21.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc8
@@ -519,16 +515,14 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.loc9_13.1: type = param U
-// CHECK:STDOUT:     %U.loc9_13.2: type = bind_symbolic_name U 0, %U.loc9_13.1 [symbolic = constants.%U]
+// CHECK:STDOUT:     %U.loc9_13.2: type = bind_symbolic_name U 0, %U.loc9_13.1 [symbolic = %U.loc9_13.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%U.loc9_13.2: type]{
-// CHECK:STDOUT:   file.%U.loc9_13.2: type = bind_symbolic_name U 0, file.%U.loc9_13.1 [symbolic = constants.%U]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%U.loc9_13.2: type] {
 // CHECK:STDOUT:   %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc13: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:

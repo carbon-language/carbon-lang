@@ -144,7 +144,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc7_22.5: type = converted %int.make_type_32.loc7_19, %.loc7_22.4 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.6: type = converted %.loc7_22.1, constants.%.9 [template = constants.%.9]
 // CHECK:STDOUT:     %X.loc7_9.1: %.9 = param X
-// CHECK:STDOUT:     %X.loc7_9.2: %.9 = bind_symbolic_name X 0, %X.loc7_9.1 [symbolic = constants.%X]
+// CHECK:STDOUT:     %X.loc7_9.2: %.9 = bind_symbolic_name X 0, %X.loc7_9.1 [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
@@ -161,9 +161,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C
-// CHECK:STDOUT:     generic [file.%X.loc7_9.2: %.9]{
-// CHECK:STDOUT:   file.%X.loc7_9.2: %.9 = bind_symbolic_name X 0, file.%X.loc7_9.1 [symbolic = constants.%X]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%X.loc7_9.2: %.9] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C.2
 // CHECK:STDOUT: }

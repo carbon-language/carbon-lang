@@ -308,12 +308,8 @@ class Formatter {
     out_ << "generic [";
     FormatParamList(generic.bindings_id);
     out_ << "]";
-
-    if (generic.decl_block_id.is_valid()) {
-      OpenBrace();
-      FormatCodeBlock(generic.decl_block_id);
-      CloseBrace();
-    }
+    // TODO: Format at least the portions of the declaration and definition
+    // blocks that don't duplicate portions of the generic body.
   }
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {
@@ -458,9 +454,7 @@ class Formatter {
       out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
-        FormatInstName(
-            sem_ir_.constant_values().GetInstId(pending_constant_value_));
-        // TODO: For a symbolic constant, include the generic and index.
+        FormatConstant(pending_constant_value_);
       }
     } else {
       out_ << pending_constant_value_;
@@ -865,6 +859,35 @@ class Formatter {
 
   auto FormatImplName(ImplId id) -> void { out_ << inst_namer_.GetNameFor(id); }
 
+  auto FormatConstant(ConstantId id) -> void {
+    if (!id.is_valid()) {
+      out_ << "<not constant>";
+      return;
+    }
+
+    // For a symbolic constant in a generic, list the constant value in the
+    // generic first, and the canonical constant second.
+    if (id.is_symbolic()) {
+      const auto& symbolic_constant =
+          sem_ir_.constant_values().GetSymbolicConstant(id);
+      if (symbolic_constant.generic_id.is_valid()) {
+        CARBON_CHECK(symbolic_constant.index.region() ==
+                     GenericInstIndex::Region::Declaration)
+            << "TODO: implement formatting of definition constants";
+        const auto& generic =
+            sem_ir_.generics().Get(symbolic_constant.generic_id);
+        FormatInstName(sem_ir_.inst_blocks().Get(
+            generic.decl_block_id)[symbolic_constant.index.index()]);
+        out_ << " (";
+        FormatInstName(sem_ir_.constant_values().GetInstId(id));
+        out_ << ")";
+        return;
+      }
+    }
+
+    FormatInstName(sem_ir_.constant_values().GetInstId(id));
+  }
+
   auto FormatType(TypeId id) -> void {
     if (!id.is_valid()) {
       out_ << "invalid";
@@ -872,7 +895,7 @@ class Formatter {
       // Types are formatted in the `constants` scope because they only refer to
       // constants.
       llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-      FormatInstName(sem_ir_.types().GetInstId(id));
+      FormatConstant(sem_ir_.types().GetConstantId(id));
     }
   }
 

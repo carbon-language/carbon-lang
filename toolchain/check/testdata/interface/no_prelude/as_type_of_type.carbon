@@ -34,7 +34,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc13_6.1: %.1 = param T
-// CHECK:STDOUT:     @F.%T: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @F.%T: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -47,15 +47,13 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: %.1)
-// CHECK:STDOUT:     generic [%T: %.1]{
-// CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0, file.%T.loc13_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.var: ref %T = var x
-// CHECK:STDOUT:   %x: ref %T = bind_name x, %x.var
+// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %x.var: ref @F.%T (%T) = var x
+// CHECK:STDOUT:   %x: ref @F.%T (%T) = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

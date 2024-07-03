@@ -185,22 +185,12 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
   // TODO: Do we need to require this type to be complete?
   inst.SetType(SemIR::TypeId(type_id));
   inst.SetArgs(arg0, arg1);
-  return rebuild_inst(inst);
+  return rebuild_inst(inst_id, inst);
 }
 
-template <typename SubstituteInstFn, typename RebuildInstFn>
-static auto SubstImpl(Context& context, SemIR::ConstantId const_id,
-                      SubstituteInstFn substitute_inst,
-                      RebuildInstFn rebuild_inst)
-    -> SemIR::ConstantId {
-  CARBON_CHECK(const_id.is_constant()) << "Substituting into non-constant";
-
-  if (!const_id.is_symbolic()) {
-    // A template constant can't contain a reference to a symbolic binding.
-    return const_id;
-  }
-
-  Worklist worklist(context.constant_values().GetInstId(const_id));
+auto SubstInst(Context& context, SemIR::InstId inst_id, SubstInstFn subst_fn,
+               SubstRebuildFn rebuild_fn) -> SemIR::InstId {
+  Worklist worklist(inst_id);
 
   // For each instruction that forms part of the constant, we will visit it
   // twice:
@@ -221,19 +211,12 @@ static auto SubstImpl(Context& context, SemIR::ConstantId const_id,
     if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
       // worklist but does not reallocate, so does not invalidate `item`.
-      item.inst_id = Rebuild(context, worklist, item.inst_id, rebuild_inst);
+      item.inst_id = Rebuild(context, worklist, item.inst_id, rebuild_fn);
       index = item.next_index;
       continue;
     }
 
-    if (context.constant_values().Get(item.inst_id).is_template()) {
-      // This instruction is a template constant, so can't contain any
-      // bindings that need to be substituted.
-      index = item.next_index;
-      continue;
-    }
-
-    if (substitute_inst(item.inst_id)) {
+    if (subst_fn(item.inst_id)) {
       index = item.next_index;
       continue;
     }
@@ -259,19 +242,32 @@ static auto SubstImpl(Context& context, SemIR::ConstantId const_id,
 
   CARBON_CHECK(worklist.size() == 1)
       << "Unexpected data left behind in work list";
-  return context.constant_values().Get(worklist.back().inst_id);
+  return worklist.back().inst_id;
 }
 
 auto SubstConstant(Context& context, SemIR::ConstantId const_id,
                    Substitutions substitutions) -> SemIR::ConstantId {
+  CARBON_CHECK(const_id.is_constant()) << "Substituting into non-constant";
+
   if (substitutions.empty()) {
     // Nothing to substitute.
     return const_id;
   }
 
+  if (!const_id.is_symbolic()) {
+    // A template constant can't contain a reference to a symbolic binding.
+    return const_id;
+  }
+
   // Apply the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
-  auto substitute_inst = [&](SemIR::InstId& inst_id) -> bool {
+  auto subst_fn = [&](SemIR::InstId& inst_id) -> bool {
+    if (context.constant_values().Get(inst_id).is_template()) {
+      // This instruction is a template constant, so can't contain any
+      // bindings that need to be substituted.
+      return true;
+    }
+
     auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id);
     if (!bind) {
       return false;
@@ -295,54 +291,24 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
   };
 
   // Rebuild an instruction by building a new constant.
-  auto rebuild_inst = [&](SemIR::Inst inst) -> SemIR::InstId {
-    auto result_id = TryEvalInst(context, SemIR::InstId::Invalid, inst);
+  auto rebuild_fn = [&](SemIR::InstId /*old_inst_id*/,
+                        SemIR::Inst new_inst) -> SemIR::InstId {
+    auto result_id = TryEvalInst(context, SemIR::InstId::Invalid, new_inst);
     CARBON_CHECK(result_id.is_constant())
         << "Substitution into constant produced non-constant";
     return context.constant_values().GetInstId(result_id);
   };
 
-  return SubstImpl(context, const_id, substitute_inst, rebuild_inst);
+  auto subst_inst_id =
+      SubstInst(context, context.constant_values().GetInstId(const_id),
+                subst_fn, rebuild_fn);
+  return context.constant_values().Get(subst_inst_id);
 }
 
 auto SubstType(Context& context, SemIR::TypeId type_id,
                Substitutions substitutions) -> SemIR::TypeId {
   return context.GetTypeIdForTypeConstant(SubstConstant(
       context, context.types().GetConstantId(type_id), substitutions));
-}
-
-auto SubstAndRebuildTypeForGenericEvalBlock(
-    Context& context, SemIR::GenericId generic_id,
-    SemIR::GenericInstIndex::Region region,
-    Map<SemIR::InstId, SemIR::ConstantId>& constants_in_generic,
-    SemIR::TypeId type_id) -> SemIR::TypeId {
-  auto substitute_inst = [&](SemIR::InstId& inst_id) -> bool {
-    // If this instruction is in the map, return the known result.
-    if (auto result = constants_in_generic.Lookup(inst_id)) {
-      inst_id = context.constant_values().GetInstId(result.value());
-      CARBON_CHECK(inst_id.is_valid());
-      return true;
-    }
-    return false;
-  };
-
-  auto rebuild_inst = [&](SemIR::Inst inst) -> SemIR::InstId {
-    auto index = SemIR::GenericInstIndex(
-        region, context.inst_block_stack().PeekCurrentBlockContents().size());
-    auto inst_id = context.AddInst(SemIR::LocIdAndInst::NoLoc(inst));
-    auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
-    CARBON_CHECK(const_inst_id.is_valid())
-        << "Substitution into constant produced non-constant";
-    auto const_id = context.constant_values().AddSymbolicConstant(
-        {.inst_id = const_inst_id, .generic_id = generic_id, .index = index});
-    constants_in_generic.Insert(const_inst_id, const_id);
-    context.constant_values().Set(inst_id, const_id);
-    return inst_id;
-  };
-
-  return context.GetTypeIdForTypeConstant(
-      SubstImpl(context, context.types().GetConstantId(type_id),
-                substitute_inst, rebuild_inst));
 }
 
 }  // namespace Carbon::Check

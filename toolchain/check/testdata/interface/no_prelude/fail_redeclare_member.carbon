@@ -53,8 +53,8 @@ interface Interface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [@Interface.%Self: %.1]{};
+// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [@Interface.%Self: %.1]{};
+// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:

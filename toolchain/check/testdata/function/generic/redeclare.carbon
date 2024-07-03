@@ -14,7 +14,18 @@ library "redeclare";
 
 fn F(T:! type) -> T*;
 
+// CHECK:STDERR: redeclare.carbon:[[@LINE+7]]:1: ERROR: Function redeclaration differs because return type is `T*`.
+// CHECK:STDERR: fn F(T:! type) -> T* {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: redeclare.carbon:[[@LINE-5]]:1: Previously declared with return type `T*`.
+// CHECK:STDERR: fn F(T:! type) -> T*;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! type) -> T* {
+  // CHECK:STDERR: redeclare.carbon:[[@LINE+4]]:3: ERROR: Cannot implicitly convert from `T*` to `T*`.
+  // CHECK:STDERR:   return F(T);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   return F(T);
 }
 
@@ -109,42 +120,42 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F = %F.decl.loc4
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     %T.loc4_6.2: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc4: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT:     %return.var.loc4: ref %.1 = var <return slot>
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc4: type = ptr_type %T [symbolic = %.loc4 (constants.%.1)]
+// CHECK:STDOUT:     @F.%return: ref file.%.loc4 (%.1) = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc6: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.loc6_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc6_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, @F.%T [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc6: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:     %T.loc13_6.1: type = param T
+// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, @.1.%T [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc13: type = ptr_type %T [symbolic = %.loc13 (constants.%.1)]
+// CHECK:STDOUT:     @.1.%return: ref file.%.loc13 (%.1) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type) -> %.1
-// CHECK:STDOUT:     generic [file.%T.loc4_6.2: type]{
-// CHECK:STDOUT:   file.%T.loc4_6.2: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT: fn @F(%T: type) -> file.%.loc4 (%.1)
+// CHECK:STDOUT:     generic [%T: type];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1(%T: type) -> file.%.loc13 (%.1)
+// CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(%T.ref)
-// CHECK:STDOUT:   %.loc7_14.1: %.1 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc7_14.2: %.1 = converted %F.call, %.loc7_14.1
-// CHECK:STDOUT:   return %.loc7_14.2
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %F.call: init file.%.loc4 (%.1) = call %F.ref(%T.ref)
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_different_return_type.carbon
@@ -169,41 +180,33 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = param U
-// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = constants.%U]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @F.%T [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc4: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = @F.%U (constants.%U)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc4: type = ptr_type %T [symbolic = %.loc4 (constants.%.1)]
+// CHECK:STDOUT:     @F.%return: ref file.%.loc4 (%.1) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %T.loc13_6.1: type = param T
-// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %U.loc13_16.1: type = param U
-// CHECK:STDOUT:     @.1.%U: type = bind_symbolic_name U 1, %U.loc13_16.1 [symbolic = constants.%U]
-// CHECK:STDOUT:     %U.ref: type = name_ref U, @.1.%U [symbolic = constants.%U]
-// CHECK:STDOUT:     %.loc13: type = ptr_type %U [symbolic = constants.%.3]
-// CHECK:STDOUT:     @.1.%return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     @.1.%U: type = bind_symbolic_name U 1, %U.loc13_16.1 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %U.ref: type = name_ref U, @.1.%U [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %.loc13: type = ptr_type %U [symbolic = %.loc13 (constants.%.3)]
+// CHECK:STDOUT:     @.1.%return: ref file.%.loc13 (%.3) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:     generic [%T: type, %U: type]{
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc4_16.1 [symbolic = constants.%U]
-// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT: };
+// CHECK:STDOUT: fn @F(%T: type, %U: type) -> file.%.loc4 (%.1)
+// CHECK:STDOUT:     generic [%T: type, %U: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%T: type, %U: type) -> %.3
-// CHECK:STDOUT:     generic [%T: type, %U: type]{
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc13_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc13_16.1 [symbolic = constants.%U]
-// CHECK:STDOUT:   file.%.loc13: type = ptr_type %U [symbolic = constants.%.3]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT: fn @.1(%T: type, %U: type) -> file.%.loc13 (%.3)
+// CHECK:STDOUT:     generic [%T: type, %U: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %F.call: init file.%.loc4 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,41 +234,33 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T (constants.%T.1)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = param U
-// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = constants.%U.1]
-// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, @F.%T [symbolic = constants.%T.1]
-// CHECK:STDOUT:     %.loc4: type = ptr_type %T.1 [symbolic = constants.%.1]
-// CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = @F.%U (constants.%U.1)]
+// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T.1)]
+// CHECK:STDOUT:     %.loc4: type = ptr_type %T.1 [symbolic = %.loc4 (constants.%.1)]
+// CHECK:STDOUT:     @F.%return: ref file.%.loc4 (%.1) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %U.loc13_6.1: type = param U
-// CHECK:STDOUT:     @.1.%U: type = bind_symbolic_name U 0, %U.loc13_6.1 [symbolic = constants.%U.2]
+// CHECK:STDOUT:     @.1.%U: type = bind_symbolic_name U 0, %U.loc13_6.1 [symbolic = @.1.%U (constants.%U.2)]
 // CHECK:STDOUT:     %T.loc13_16.1: type = param T
-// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 1, %T.loc13_16.1 [symbolic = constants.%T.2]
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, @.1.%T [symbolic = constants.%T.2]
-// CHECK:STDOUT:     %.loc13: type = ptr_type %T.2 [symbolic = constants.%.3]
-// CHECK:STDOUT:     @.1.%return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 1, %T.loc13_16.1 [symbolic = @.1.%T (constants.%T.2)]
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, @.1.%T [symbolic = @.1.%T (constants.%T.2)]
+// CHECK:STDOUT:     %.loc13: type = ptr_type %T.2 [symbolic = %.loc13 (constants.%.3)]
+// CHECK:STDOUT:     @.1.%return: ref file.%.loc13 (%.3) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:     generic [%T: type, %U: type]{
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T.1]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc4_16.1 [symbolic = constants.%U.1]
-// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T.1 [symbolic = constants.%.1]
-// CHECK:STDOUT: };
+// CHECK:STDOUT: fn @F(%T: type, %U: type) -> file.%.loc4 (%.1)
+// CHECK:STDOUT:     generic [%T: type, %U: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%U: type, %T: type) -> %.3
-// CHECK:STDOUT:     generic [%U: type, %T: type]{
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0, file.%U.loc13_6.1 [symbolic = constants.%U.2]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 1, file.%T.loc13_16.1 [symbolic = constants.%T.2]
-// CHECK:STDOUT:   file.%.loc13: type = ptr_type %T.2 [symbolic = constants.%.3]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT: fn @.1(%U: type, %T: type) -> file.%.loc13 (%.3)
+// CHECK:STDOUT:     generic [%U: type, %T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T.2)]
+// CHECK:STDOUT:   %F.call: init file.%.loc4 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,41 +288,33 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T (constants.%T.1)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = param U
-// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = constants.%U.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @F.%T [symbolic = constants.%T.1]
-// CHECK:STDOUT:     %.loc4: type = ptr_type %T.1 [symbolic = constants.%.1]
-// CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = @F.%U (constants.%U.1)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T.1)]
+// CHECK:STDOUT:     %.loc4: type = ptr_type %T.1 [symbolic = %.loc4 (constants.%.1)]
+// CHECK:STDOUT:     @F.%return: ref file.%.loc4 (%.1) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %U.loc13_6.1: type = param U
-// CHECK:STDOUT:     @.1.%U: type = bind_symbolic_name U 0, %U.loc13_6.1 [symbolic = constants.%U.2]
+// CHECK:STDOUT:     @.1.%U: type = bind_symbolic_name U 0, %U.loc13_6.1 [symbolic = @.1.%U (constants.%U.2)]
 // CHECK:STDOUT:     %T.loc13_16.1: type = param T
-// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 1, %T.loc13_16.1 [symbolic = constants.%T.2]
-// CHECK:STDOUT:     %U.ref: type = name_ref U, @.1.%U [symbolic = constants.%U.2]
-// CHECK:STDOUT:     %.loc13: type = ptr_type %U.2 [symbolic = constants.%.3]
-// CHECK:STDOUT:     @.1.%return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 1, %T.loc13_16.1 [symbolic = @.1.%T (constants.%T.2)]
+// CHECK:STDOUT:     %U.ref: type = name_ref U, @.1.%U [symbolic = @.1.%U (constants.%U.2)]
+// CHECK:STDOUT:     %.loc13: type = ptr_type %U.2 [symbolic = %.loc13 (constants.%.3)]
+// CHECK:STDOUT:     @.1.%return: ref file.%.loc13 (%.3) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:     generic [%T: type, %U: type]{
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T.1]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc4_16.1 [symbolic = constants.%U.1]
-// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T.1 [symbolic = constants.%.1]
-// CHECK:STDOUT: };
+// CHECK:STDOUT: fn @F(%T: type, %U: type) -> file.%.loc4 (%.1)
+// CHECK:STDOUT:     generic [%T: type, %U: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%U: type, %T: type) -> %.3
-// CHECK:STDOUT:     generic [%U: type, %T: type]{
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0, file.%U.loc13_6.1 [symbolic = constants.%U.2]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 1, file.%T.loc13_16.1 [symbolic = constants.%T.2]
-// CHECK:STDOUT:   file.%.loc13: type = ptr_type %U.2 [symbolic = constants.%.3]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT: fn @.1(%U: type, %T: type) -> file.%.loc13 (%.3)
+// CHECK:STDOUT:     generic [%U: type, %T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T.2)]
+// CHECK:STDOUT:   %F.call: init file.%.loc4 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

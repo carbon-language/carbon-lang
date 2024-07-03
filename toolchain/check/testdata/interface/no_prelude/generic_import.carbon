@@ -48,14 +48,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = %T.loc4_19.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddWith
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type]{
-// CHECK:STDOUT:   file.%T.loc4_19.2: type = bind_symbolic_name T 0, file.%T.loc4_19.1 [symbolic = constants.%T]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
@@ -67,7 +65,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: %.2]{};
+// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: %.2];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
