@@ -91,14 +91,14 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/arithmetic, inst+25, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+19, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/arithmetic, inst+50, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+44, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+21, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/arithmetic, inst+54, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+48, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+48, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,17 +125,20 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
 // CHECK:STDOUT:     %C.ref.loc23_12: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_9.1: %C = param a
-// CHECK:STDOUT:     @Test.%a: %C = bind_name a, %a.loc23_9.1
+// CHECK:STDOUT:     @Test.%a: %C = binding_pattern a, %a.loc23_9.3
 // CHECK:STDOUT:     %D.ref.loc23: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc23_15.1: %D = param b
-// CHECK:STDOUT:     @Test.%b: %D = bind_name b, %b.loc23_15.1
+// CHECK:STDOUT:     @Test.%b: %D = binding_pattern b, %b.loc23_15.3
+// CHECK:STDOUT:     %a.loc23_9.3: %C = bind_name a, %a.loc23_9.1
+// CHECK:STDOUT:     %b.loc23_15.3: %D = bind_name b, %b.loc23_15.1
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @Test.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %D.ref.loc34: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc34_15.1: %D = param b
-// CHECK:STDOUT:     @TestAssign.%b: %D = bind_name b, %b.loc34_15.1
+// CHECK:STDOUT:     @TestAssign.%b: %D = binding_pattern b, %b.loc34_15.3
+// CHECK:STDOUT:     %b.loc34_15.3: %D = bind_name b, %b.loc34_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -157,10 +160,11 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %C.ref.loc17_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc17_9.1: %C = param self
-// CHECK:STDOUT:     %self.loc17_9.2: %C = bind_name self, %self.loc17_9.1
+// CHECK:STDOUT:     %self.loc17_9.2: %C = binding_pattern self, <unexpected>.inst+21.loc17_9
 // CHECK:STDOUT:     %C.ref.loc17_25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc17_18.1: %C = param other
-// CHECK:STDOUT:     %other.loc17_18.2: %C = bind_name other, %other.loc17_18.1
+// CHECK:STDOUT:     %other.loc17_18.2: %C = binding_pattern other, %other.loc17_18.3
+// CHECK:STDOUT:     %other.loc17_18.3: %C = bind_name other, %other.loc17_18.1
 // CHECK:STDOUT:     %C.ref.loc17_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -176,11 +180,12 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc20_21: type = ptr_type %C [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc20_14.1: %.6 = param self
-// CHECK:STDOUT:     %self.loc20_14.3: %.6 = bind_name self, %self.loc20_14.1
+// CHECK:STDOUT:     %self.loc20_14.3: %.6 = binding_pattern self, <unexpected>.inst+61.loc20_14
 // CHECK:STDOUT:     %.loc20_9: %.6 = addr_pattern %self.loc20_14.3
 // CHECK:STDOUT:     %C.ref.loc20_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc20_24.1: %C = param other
-// CHECK:STDOUT:     %other.loc20_24.2: %C = bind_name other, %other.loc20_24.1
+// CHECK:STDOUT:     %other.loc20_24.2: %C = binding_pattern other, %other.loc20_24.3
+// CHECK:STDOUT:     %other.loc20_24.3: %C = bind_name other, %other.loc20_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:
@@ -218,8 +223,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test(%a: %C, %b: %D) -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %C = name_ref a, file.%a.loc23_9.3
+// CHECK:STDOUT:   %b.ref: %D = name_ref b, file.%b.loc23_15.3
 // CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc31_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc31_12.2: ref %C = temporary_storage
@@ -237,7 +242,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc35_16: init %C = converted %.loc35_15.1, %.loc35_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc35_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: %D = name_ref b, file.%b.loc34_15.3
 // CHECK:STDOUT:   %.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc42_5: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc42_3: %.6 = addr_of %a.ref

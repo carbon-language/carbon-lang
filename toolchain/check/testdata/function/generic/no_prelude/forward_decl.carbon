@@ -25,11 +25,12 @@ fn F(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     @F.%T.loc11: type = binding_pattern T 0, %T.loc11_6.3 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_6.3: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc11: type) {
+// CHECK:STDOUT: generic fn @F(file.%T.loc11_6.3: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc11: type);

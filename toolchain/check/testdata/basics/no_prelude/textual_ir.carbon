@@ -36,7 +36,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc15_8.1: %.1 = param n
-// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.1
+// CHECK:STDOUT:     @Foo.%n: %.1 = binding_pattern n, %n.loc15_8.3
+// CHECK:STDOUT:     %n.loc15_8.3: %.1 = bind_name n, %n.loc15_8.1
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)
@@ -49,7 +50,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: %.1) -> %return: %.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, file.%n.loc15_8.3
 // CHECK:STDOUT:   %.loc16_15.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc16_16.1: %.2 = tuple_literal (%n.ref, %.loc16_15.1)
 // CHECK:STDOUT:   %.loc16_16.2: ref %.1 = tuple_access %return, element0

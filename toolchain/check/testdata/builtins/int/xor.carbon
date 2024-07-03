@@ -64,12 +64,14 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %.loc2_11.1: type = value_of_initializer %int.make_type_32.loc2_11 [template = i32]
 // CHECK:STDOUT:     %.loc2_11.2: type = converted %int.make_type_32.loc2_11, %.loc2_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_8.1: i32 = param a
-// CHECK:STDOUT:     @Xor.%a: i32 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     @Xor.%a: i32 = binding_pattern a, %a.loc2_8.3
 // CHECK:STDOUT:     %int.make_type_32.loc2_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_19.1: type = value_of_initializer %int.make_type_32.loc2_19 [template = i32]
 // CHECK:STDOUT:     %.loc2_19.2: type = converted %int.make_type_32.loc2_19, %.loc2_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
-// CHECK:STDOUT:     @Xor.%b: i32 = bind_name b, %b.loc2_16.1
+// CHECK:STDOUT:     @Xor.%b: i32 = binding_pattern b, %b.loc2_16.3
+// CHECK:STDOUT:     %a.loc2_8.3: i32 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     %b.loc2_16.3: i32 = bind_name b, %b.loc2_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %int.make_type_32.loc2_27 [template = i32]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %int.make_type_32.loc2_27, %.loc2_27.1 [template = i32]
@@ -91,18 +93,20 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc5_5: %.6 = binding_pattern arr_p, @__global_init.%arr_p
+// CHECK:STDOUT:   %arr_p: %.6 = binding_pattern arr_p, @__global_init.%arr_p
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = binding_pattern a, %a.loc7_16.3
 // CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
 // CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = binding_pattern b, %b.loc7_24.3
+// CHECK:STDOUT:     %a.loc7_16.3: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     %b.loc7_24.3: i32 = bind_name b, %b.loc7_24.1
 // CHECK:STDOUT:     %int.make_type_32.loc7_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
@@ -117,8 +121,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Xor.ref: %Xor.type = name_ref Xor, file.%Xor.decl [template = constants.%Xor]
-// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, file.%a.loc7_16.3
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, file.%b.loc7_24.3
 // CHECK:STDOUT:   %int.xor: init i32 = call %Xor.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.xor
 // CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.xor, %.loc8_19.1

@@ -83,10 +83,12 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.6]
 // CHECK:STDOUT:     %s.loc19_6.1: %.6 = param s
-// CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %s.loc19_6.1
+// CHECK:STDOUT:     @F.2.%s: %.6 = binding_pattern s, %s.loc19_6.3
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %b.loc19_18.1: %B = param b
-// CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %b.loc19_18.1
+// CHECK:STDOUT:     @F.2.%b: %B = binding_pattern b, %b.loc19_18.3
+// CHECK:STDOUT:     %s.loc19_6.3: %.6 = bind_name s, %s.loc19_6.1
+// CHECK:STDOUT:     %b.loc19_18.3: %B = bind_name b, %b.loc19_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,7 +97,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
-// CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
+// CHECK:STDOUT:     %self.loc12_13.3: %.1 = binding_pattern self, <unexpected>.inst+9.loc12_13
 // CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -117,12 +119,12 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: %.6, %b: %B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.ref: %.6 = name_ref s, %s
+// CHECK:STDOUT:   %s.ref: %.6 = name_ref s, file.%s.loc19_6.3
 // CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4, %F.ref.loc28
 // CHECK:STDOUT:   %F.call.loc28: init %.2 = call %.loc28_6(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: %B = name_ref b, file.%b.loc19_18.3
 // CHECK:STDOUT:   %a.ref: %.5 = name_ref a, @B.%.loc16 [template = @B.%.loc16]
 // CHECK:STDOUT:   %.loc38_4.1: ref %A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1

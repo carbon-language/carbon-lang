@@ -53,7 +53,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc14_17.4: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
 // CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_5: %.3 = binding_pattern n, @__global_init.%n
+// CHECK:STDOUT:   %n: %.3 = binding_pattern n, @__global_init.%n
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -58,7 +58,8 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc11_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_10.2: type = converted %bool.make_type, %.loc11_10.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_7.1: bool = param b
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc11_7.1
+// CHECK:STDOUT:     @If.%b: bool = binding_pattern b, %b.loc11_7.3
+// CHECK:STDOUT:     %b.loc11_7.3: bool = bind_name b, %b.loc11_7.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32, %.loc11_19.1 [template = i32]
@@ -72,7 +73,7 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, file.%b.loc11_7.3
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:

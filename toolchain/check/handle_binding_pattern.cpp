@@ -64,6 +64,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   auto push_bind_name = [&](SemIR::InstId bind_id) {
     context.node_stack().Push(node_id, bind_id);
     if (is_generic && !is_associated_constant) {
+      // TODO: this is a temporary workaround until bind_id has a more
+      // consistent kind.
+      if (auto binding_pattern =
+              context.insts().TryGetAs<SemIR::BindingPattern>(bind_id);
+          binding_pattern.has_value()) {
+        bind_id = binding_pattern->bind_inst_id;
+      }
       context.scope_stack().PushCompileTimeBinding(bind_id);
     }
   };
@@ -158,8 +165,15 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // parameters.
       auto param_id = context.AddInst<SemIR::Param>(
           name_node, {.type_id = cast_type_id, .name_id = name_id});
-      auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
-      push_bind_name(bind_id);
+      SemIR::LocIdAndInst bind_name = make_bind_name(cast_type_id, param_id);
+      auto bind_id = context.AddInstInNoBlock(bind_name);
+      SemIR::InstId pattern_id = context.AddInst<SemIR::BindingPattern>(
+          name_node,
+          {.type_id = cast_type_id,
+           .entity_name_id =
+               bind_name.inst.As<SemIR::AnyBindName>().entity_name_id,
+           .bind_inst_id = bind_id});
+      push_bind_name(pattern_id);
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
       context.AddNameToLookup(name_id, bind_id);
@@ -212,7 +226,7 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
-          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
+          context.insts().TryGetAs<SemIR::BindingPattern>(self_param_id);
       self_param &&
       context.entity_names().Get(self_param->entity_name_id).name_id ==
           SemIR::NameId::SelfValue) {

@@ -56,7 +56,7 @@ let b: B = C.base;
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc20: %B = binding_pattern b, @__global_init.%b
+// CHECK:STDOUT:   %b: %B = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {

@@ -58,7 +58,8 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     %.loc12_34: type = ptr_type %.4 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc12_9: type = const_type %.5 [template = constants.%.6]
 // CHECK:STDOUT:     %p.loc12_6.1: %.6 = param p
-// CHECK:STDOUT:     @F.%p: %.6 = bind_name p, %p.loc12_6.1
+// CHECK:STDOUT:     @F.%p: %.6 = binding_pattern p, %p.loc12_6.3
+// CHECK:STDOUT:     %p.loc12_6.3: %.6 = bind_name p, %p.loc12_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc12_47: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_41.1: type = value_of_initializer %int.make_type_32.loc12_47 [template = i32]
 // CHECK:STDOUT:     %.loc12_41.2: type = converted %int.make_type_32.loc12_47, %.loc12_41.1 [template = i32]
@@ -71,7 +72,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: %.6) -> %.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.6 = name_ref p, file.%p.loc12_6.3
 // CHECK:STDOUT:   %.loc13_11.1: ref %.4 = deref %p.ref
 // CHECK:STDOUT:   %.loc13_11.2: %.4 = bind_value %.loc13_11.1
 // CHECK:STDOUT:   %.loc13_10.1: ref %.2 = deref %.loc13_11.2

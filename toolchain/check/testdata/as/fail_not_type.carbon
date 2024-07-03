@@ -46,7 +46,7 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_8.2: type = converted %int.make_type_32, %.loc14_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_5: i32 = binding_pattern n, @__global_init.%n
+// CHECK:STDOUT:   %n: i32 = binding_pattern n, @__global_init.%n
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -855,6 +855,10 @@ class FormatterImpl {
     out_ << "}";
   }
 
+  auto FormatInstructionRHS(BindingPattern inst) -> void {
+    FormatArgs(inst.entity_name_id);
+  }
+
   auto FormatArgs() -> void {}
 
   template <typename... Args>

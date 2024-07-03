@@ -73,12 +73,12 @@ var or_: F(true or true);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref Core//prelude/types, inst+35, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block20> [template = constants.%.3]
-// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+60.loc42_10(%.loc42_17)
+// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+62.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
@@ -89,7 +89,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+13.loc12_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

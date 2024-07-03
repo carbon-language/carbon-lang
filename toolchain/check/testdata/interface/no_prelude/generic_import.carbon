@@ -48,11 +48,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.2: type = binding_pattern T 0, %T.loc4_19.3 [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.3: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.2: type) {
+// CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.3: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -75,7 +76,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(file.%T.loc4_19.2: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
+// CHECK:STDOUT: generic fn @F(file.%T.loc4_19.3: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -117,11 +118,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+4, loaded [template = constants.%AddWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.1) = import_ref Main//a, inst+12, loaded [symbolic = @AddWith.%F (constants.%F.1)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+5, loaded [template = constants.%AddWith]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.1) = import_ref Main//a, inst+13, loaded [symbolic = @AddWith.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

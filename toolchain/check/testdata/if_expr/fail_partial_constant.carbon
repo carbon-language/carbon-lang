@@ -79,7 +79,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %.loc4_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_30.2: type = converted %bool.make_type, %.loc4_30.1 [template = bool]
 // CHECK:STDOUT:     %b.loc4_27.1: bool = param b
-// CHECK:STDOUT:     @ConditionIsNonConstant.%b: bool = bind_name b, %b.loc4_27.1
+// CHECK:STDOUT:     @ConditionIsNonConstant.%b: bool = binding_pattern b, %b.loc4_27.3
+// CHECK:STDOUT:     %b.loc4_27.3: bool = bind_name b, %b.loc4_27.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,7 +88,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConditionIsNonConstant(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, file.%b.loc4_27.3
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -148,7 +149,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [template = constants.%ChosenBranchIsNonConstant] {
 // CHECK:STDOUT:     %t.loc4_30.1: type = param t
-// CHECK:STDOUT:     @ChosenBranchIsNonConstant.%t: type = bind_name t, %t.loc4_30.1
+// CHECK:STDOUT:     @ChosenBranchIsNonConstant.%t: type = binding_pattern t, %t.loc4_30.3
+// CHECK:STDOUT:     %t.loc4_30.3: type = bind_name t, %t.loc4_30.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,7 +160,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   if %.loc9_13 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
-// CHECK:STDOUT:   %t.ref.loc9: type = name_ref t, %t
+// CHECK:STDOUT:   %t.ref.loc9: type = name_ref t, file.%t.loc4_30.3
 // CHECK:STDOUT:   br !if.expr.result.loc9(%t.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
@@ -183,7 +185,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !if.expr.result.loc13(%.loc13_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc13:
-// CHECK:STDOUT:   %t.ref.loc13: type = name_ref t, %t
+// CHECK:STDOUT:   %t.ref.loc13: type = name_ref t, file.%t.loc4_30.3
 // CHECK:STDOUT:   br !if.expr.result.loc13(%t.ref.loc13)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc13:

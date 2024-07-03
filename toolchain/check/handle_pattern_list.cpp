@@ -44,6 +44,13 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   // make use of it.
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
+  // TODO: do this at full-pattern level
+  for (SemIR::InstId inst_id : context.inst_blocks().Get(refs_id)) {
+    // TODO: generalize for other pattern kinds.
+    auto binding_pattern =
+        context.insts().GetAs<SemIR::BindingPattern>(inst_id);
+    context.inst_block_stack().AddInstId(binding_pattern.bind_inst_id);
+  }
   context.node_stack().Push(node_id, refs_id);
   return true;
 }

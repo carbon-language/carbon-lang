@@ -143,7 +143,8 @@ fn D() {}
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
 // CHECK:STDOUT:     %b.loc5_6.1: i32 = param b
-// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_6.1
+// CHECK:STDOUT:     @B.%b: i32 = binding_pattern b, %b.loc5_6.3
+// CHECK:STDOUT:     %b.loc5_6.3: i32 = bind_name b, %b.loc5_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
@@ -156,7 +157,8 @@ fn D() {}
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:     %c.loc6_6.1: %.3 = param c
-// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_6.1
+// CHECK:STDOUT:     @C.%c: %.3 = binding_pattern c, %c.loc6_6.3
+// CHECK:STDOUT:     %c.loc6_6.3: %.3 = bind_name c, %c.loc6_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
@@ -175,13 +177,13 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, file.%b.loc5_6.3
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%c: %.3) -> %.4 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %.3 = name_ref c, file.%c.loc6_6.3
 // CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc6_46: i32 = tuple_index %c.ref, %.loc6_47
 // CHECK:STDOUT:   %.loc6_48: %.4 = struct_literal (%.loc6_46)
@@ -243,9 +245,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+44, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+46, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+58, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -330,9 +332,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+44, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+46, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+58, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -362,7 +364,8 @@ fn D() {}
 // CHECK:STDOUT:     %.loc27_9.1: type = value_of_initializer %int.make_type_32.loc27_9 [template = i32]
 // CHECK:STDOUT:     %.loc27_9.2: type = converted %int.make_type_32.loc27_9, %.loc27_9.1 [template = i32]
 // CHECK:STDOUT:     %b.loc27_6.1: i32 = param b
-// CHECK:STDOUT:     %b.loc27_6.2: i32 = bind_name b, %b.loc27_6.1
+// CHECK:STDOUT:     %b.loc27_6.2: i32 = binding_pattern b, %b.loc27_6.3
+// CHECK:STDOUT:     %b.loc27_6.3: i32 = bind_name b, %b.loc27_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc27_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc27_17.1: type = value_of_initializer %int.make_type_32.loc27_17 [template = i32]
 // CHECK:STDOUT:     %.loc27_17.2: type = converted %int.make_type_32.loc27_17, %.loc27_17.1 [template = i32]
@@ -426,9 +429,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//fns, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+44, unloaded
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//fns, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+46, unloaded
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//fns, inst+58, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

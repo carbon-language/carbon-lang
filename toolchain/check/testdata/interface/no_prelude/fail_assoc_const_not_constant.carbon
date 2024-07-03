@@ -50,7 +50,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %.loc19: <error> = binding_pattern a, <unexpected>.inst+5.loc19_7
+// CHECK:STDOUT:   %a: <error> = binding_pattern a, <unexpected>.inst+5.loc19_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

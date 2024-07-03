@@ -74,12 +74,14 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:     %.loc2_11.1: type = value_of_initializer %int.make_type_32.loc2_11 [template = i32]
 // CHECK:STDOUT:     %.loc2_11.2: type = converted %int.make_type_32.loc2_11, %.loc2_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_8.1: i32 = param a
-// CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     @Sub.%a: i32 = binding_pattern a, %a.loc2_8.3
 // CHECK:STDOUT:     %int.make_type_32.loc2_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_19.1: type = value_of_initializer %int.make_type_32.loc2_19 [template = i32]
 // CHECK:STDOUT:     %.loc2_19.2: type = converted %int.make_type_32.loc2_19, %.loc2_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
-// CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc2_16.1
+// CHECK:STDOUT:     @Sub.%b: i32 = binding_pattern b, %b.loc2_16.3
+// CHECK:STDOUT:     %a.loc2_8.3: i32 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     %b.loc2_16.3: i32 = bind_name b, %b.loc2_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %int.make_type_32.loc2_27 [template = i32]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %int.make_type_32.loc2_27, %.loc2_27.1 [template = i32]
@@ -101,18 +103,20 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc5_5: %.6 = binding_pattern arr_p, @__global_init.%arr_p
+// CHECK:STDOUT:   %arr_p: %.6 = binding_pattern arr_p, @__global_init.%arr_p
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = binding_pattern a, %a.loc7_16.3
 // CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
 // CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = binding_pattern b, %b.loc7_24.3
+// CHECK:STDOUT:     %a.loc7_16.3: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     %b.loc7_24.3: i32 = bind_name b, %b.loc7_24.1
 // CHECK:STDOUT:     %int.make_type_32.loc7_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
@@ -127,8 +131,8 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
-// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, file.%a.loc7_16.3
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, file.%b.loc7_24.3
 // CHECK:STDOUT:   %int.usub: init i32 = call %Sub.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.usub
 // CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.usub, %.loc8_19.1
@@ -187,12 +191,14 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4_11, %.loc4_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
-// CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc4_8.1
+// CHECK:STDOUT:     @Sub.%a: i32 = binding_pattern a, %a.loc4_8.3
 // CHECK:STDOUT:     %int.make_type_32.loc4_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %int.make_type_32.loc4_19 [template = i32]
 // CHECK:STDOUT:     %.loc4_19.2: type = converted %int.make_type_32.loc4_19, %.loc4_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
-// CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc4_16.1
+// CHECK:STDOUT:     @Sub.%b: i32 = binding_pattern b, %b.loc4_16.3
+// CHECK:STDOUT:     %a.loc4_8.3: i32 = bind_name a, %a.loc4_8.1
+// CHECK:STDOUT:     %b.loc4_16.3: i32 = bind_name b, %b.loc4_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc4_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4_27 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4_27, %.loc4_27.1 [template = i32]
@@ -201,15 +207,15 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_8.2: type = converted %int.make_type_32.loc6, %.loc6_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_5: i32 = binding_pattern a, @__global_init.%a
+// CHECK:STDOUT:   %a.loc6: i32 = binding_pattern a, @__global_init.%a
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc7_5: i32 = binding_pattern b, @__global_init.%b
+// CHECK:STDOUT:   %b.loc7: i32 = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_8.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_8.2: type = converted %int.make_type_32.loc8, %.loc8_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_5: i32 = binding_pattern c, @__global_init.%c
+// CHECK:STDOUT:   %c: i32 = binding_pattern c, @__global_init.%c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -59,7 +59,8 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc15_6.1: %Class = param c
-// CHECK:STDOUT:     @G.%c: %Class = bind_name c, %c.loc15_6.1
+// CHECK:STDOUT:     @G.%c: %Class = binding_pattern c, %c.loc15_6.3
+// CHECK:STDOUT:     %c.loc15_6.3: %Class = bind_name c, %c.loc15_6.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc15_19.2: type = converted %int.make_type_32, %.loc15_19.1 [template = i32]
@@ -82,7 +83,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: %Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %Class = name_ref c, file.%c.loc15_6.3
 // CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

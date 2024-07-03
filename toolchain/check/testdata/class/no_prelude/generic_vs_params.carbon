@@ -104,11 +104,13 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = class_decl @NotGenericButParams [template = constants.%NotGenericButParams.1] {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = class_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
 // CHECK:STDOUT:     %T.loc6_24.1: type = param T
-// CHECK:STDOUT:     %T.loc6_24.2: type = bind_symbolic_name T 0, %T.loc6_24.1 [symbolic = @GenericAndParams.1.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_24.2: type = binding_pattern T 0, %T.loc6_24.3 [symbolic = @GenericAndParams.1.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_24.3: type = bind_symbolic_name T 0, %T.loc6_24.1 [symbolic = @GenericAndParams.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %T.loc8_9.1: type = param T
-// CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T 0, %T.loc8_9.1 [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_9.2: type = binding_pattern T 0, %T.loc8_9.3 [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_9.3: type = bind_symbolic_name T 0, %T.loc8_9.1 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [template = constants.%NotGenericNoParams]
@@ -155,7 +157,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   .Self = constants.%NotGenericButParams.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @GenericAndParams.1(file.%T.loc6_24.2: type) {
+// CHECK:STDOUT: generic class @GenericAndParams.1(file.%T.loc6_24.3: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -166,7 +168,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(file.%T.loc8_9.2: type) {
+// CHECK:STDOUT: generic class @C(file.%T.loc8_9.3: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -175,7 +177,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [template = constants.%GenericNoParams.1] {}
 // CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = class_decl @GenericAndParams.2 [template = constants.%GenericAndParams.3] {
 // CHECK:STDOUT:       %U.loc10_26.1: type = param U
-// CHECK:STDOUT:       %U.loc10_26.2: type = bind_symbolic_name U 1, %U.loc10_26.1 [symbolic = @GenericAndParams.2.%U (constants.%U)]
+// CHECK:STDOUT:       %U.loc10_26.2: type = binding_pattern U 1, %U.loc10_26.3 [symbolic = @GenericAndParams.2.%U (constants.%U)]
+// CHECK:STDOUT:       %U.loc10_26.3: type = bind_symbolic_name U 1, %U.loc10_26.1 [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -185,7 +188,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @GenericNoParams(file.%T.loc8_9.2: type) {
+// CHECK:STDOUT: generic class @GenericNoParams(file.%T.loc8_9.3: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -194,7 +197,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @GenericAndParams.2(file.%T.loc8_9.2: type, @C.%U.loc10_26.2: type) {
+// CHECK:STDOUT: generic class @GenericAndParams.2(file.%T.loc8_9.3: type, @C.%U.loc10_26.3: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -283,7 +286,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %T.loc8_9.1: type = param T
-// CHECK:STDOUT:     %T.loc8_9.2: type = bind_name T, %T.loc8_9.1
+// CHECK:STDOUT:     %T.loc8_9.2: type = binding_pattern T, <unexpected>.inst+2.loc8_9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,11 +315,13 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %T.loc7_9.1: type = param T
-// CHECK:STDOUT:     %T.loc7_9.2: type = bind_name T, %T.loc7_9.1
+// CHECK:STDOUT:     %T.loc7_9.2: type = binding_pattern T, %T.loc7_9.3
+// CHECK:STDOUT:     %T.loc7_9.3: type = bind_name T, %T.loc7_9.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc10_6.1: type = param T
-// CHECK:STDOUT:     @F.%T.loc10: type = bind_symbolic_name T 0, %T.loc10_6.1 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     @F.%T.loc10: type = binding_pattern T 0, %T.loc10_6.3 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc10_6.3: type = bind_symbolic_name T 0, %T.loc10_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,7 +330,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   .Self = constants.%A.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc10: type) {
+// CHECK:STDOUT: generic fn @F(file.%T.loc10_6.3: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -333,7 +338,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   fn(%T.loc10: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc10_6.3 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11: init type = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

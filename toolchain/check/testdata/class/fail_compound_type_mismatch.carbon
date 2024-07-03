@@ -68,7 +68,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %AccessBInA.decl: %AccessBInA.type = fn_decl @AccessBInA [template = constants.%AccessBInA] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %a.loc19_15.1: %A = param a
-// CHECK:STDOUT:     @AccessBInA.%a: %A = bind_name a, %a.loc19_15.1
+// CHECK:STDOUT:     @AccessBInA.%a: %A = binding_pattern a, %a.loc19_15.3
+// CHECK:STDOUT:     %a.loc19_15.3: %A = bind_name a, %a.loc19_15.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_24.2: type = converted %int.make_type_32, %.loc19_24.1 [template = i32]
@@ -102,7 +103,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBInA(%a: %A) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %A = name_ref a, file.%a.loc19_15.3
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %.4 = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
 // CHECK:STDOUT:   %.loc23: i32 = class_element_access <error>, element0 [template = <error>]

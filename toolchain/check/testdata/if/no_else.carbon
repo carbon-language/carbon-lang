@@ -61,7 +61,8 @@ fn If(b: bool) {
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %bool.make_type, %.loc14_10.1 [template = bool]
 // CHECK:STDOUT:     %b.loc14_7.1: bool = param b
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc14_7.1
+// CHECK:STDOUT:     @If.%b: bool = binding_pattern b, %b.loc14_7.3
+// CHECK:STDOUT:     %b.loc14_7.3: bool = bind_name b, %b.loc14_7.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,7 +80,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, file.%b.loc14_7.3
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:

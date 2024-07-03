@@ -80,7 +80,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type, %.loc4_23.1 [template = bool]
 // CHECK:STDOUT:     %x.loc4_20.1: bool = param x
-// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc4_20.1
+// CHECK:STDOUT:     @PartialConstant.%x: bool = binding_pattern x, %x.loc4_20.3
+// CHECK:STDOUT:     %x.loc4_20.3: bool = bind_name x, %x.loc4_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -93,7 +94,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc9_13 br !and.rhs else br !and.result(%.loc9_18.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %x.ref.loc9: bool = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc9: bool = name_ref x, file.%x.loc4_20.3
 // CHECK:STDOUT:   br !and.result(%x.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
@@ -121,7 +122,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc14_19.1 br !or.rhs else br !or.result(%.loc14_19.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %x.ref.loc14: bool = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc14: bool = name_ref x, file.%x.loc4_20.3
 // CHECK:STDOUT:   br !or.result(%x.ref.loc14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:
@@ -183,7 +184,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type, %.loc4_41.1 [template = bool]
 // CHECK:STDOUT:     %x.loc4_38.1: bool = param x
-// CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_name x, %x.loc4_38.1
+// CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = binding_pattern x, %x.loc4_38.3
+// CHECK:STDOUT:     %x.loc4_38.3: bool = bind_name x, %x.loc4_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -191,7 +193,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, file.%x.loc4_38.3
 // CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   if %x.ref.loc11 br !and.rhs else br !and.result(%.loc11_15.1)
 // CHECK:STDOUT:
@@ -218,7 +220,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %.loc11_10: type = block_arg !if.expr.result.loc11
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
-// CHECK:STDOUT:   %x.ref.loc15: bool = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc15: bool = name_ref x, file.%x.loc4_38.3
 // CHECK:STDOUT:   %.loc15_15.1: bool = not %x.ref.loc15
 // CHECK:STDOUT:   %.loc15_15.2: bool = bool_literal true [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc15_15.1 br !or.rhs else br !or.result(%.loc15_15.2)

@@ -122,7 +122,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc25_20: type = ptr_type %C [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc25_16.1: %.14 = param p
-// CHECK:STDOUT:     @ConvertCToB.%p: %.14 = bind_name p, %p.loc25_16.1
+// CHECK:STDOUT:     @ConvertCToB.%p: %.14 = binding_pattern p, %p.loc25_16.3
+// CHECK:STDOUT:     %p.loc25_16.3: %.14 = bind_name p, %p.loc25_16.1
 // CHECK:STDOUT:     %B.ref.loc25: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc25_27: type = ptr_type %B [template = constants.%.15]
 // CHECK:STDOUT:     @ConvertCToB.%return: ref %.15 = var <return slot>
@@ -131,7 +132,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %B.ref.loc26: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc26_20: type = ptr_type %B [template = constants.%.15]
 // CHECK:STDOUT:     %p.loc26_16.1: %.15 = param p
-// CHECK:STDOUT:     @ConvertBToA.%p: %.15 = bind_name p, %p.loc26_16.1
+// CHECK:STDOUT:     @ConvertBToA.%p: %.15 = binding_pattern p, %p.loc26_16.3
+// CHECK:STDOUT:     %p.loc26_16.3: %.15 = bind_name p, %p.loc26_16.1
 // CHECK:STDOUT:     %A.ref.loc26: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc26_27: type = ptr_type %A [template = constants.%.19]
 // CHECK:STDOUT:     @ConvertBToA.%return: ref %.19 = var <return slot>
@@ -140,7 +142,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc27_20: type = ptr_type %C [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc27_16.1: %.14 = param p
-// CHECK:STDOUT:     @ConvertCToA.%p: %.14 = bind_name p, %p.loc27_16.1
+// CHECK:STDOUT:     @ConvertCToA.%p: %.14 = binding_pattern p, %p.loc27_16.3
+// CHECK:STDOUT:     %p.loc27_16.3: %.14 = bind_name p, %p.loc27_16.1
 // CHECK:STDOUT:     %A.ref.loc27: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc27_27: type = ptr_type %A [template = constants.%.19]
 // CHECK:STDOUT:     @ConvertCToA.%return: ref %.19 = var <return slot>
@@ -148,13 +151,15 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [template = constants.%ConvertValue] {
 // CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc29_17.1: %C = param c
-// CHECK:STDOUT:     @ConvertValue.%c: %C = bind_name c, %c.loc29_17.1
+// CHECK:STDOUT:     @ConvertValue.%c: %C = binding_pattern c, %c.loc29_17.3
+// CHECK:STDOUT:     %c.loc29_17.3: %C = bind_name c, %c.loc29_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [template = constants.%ConvertRef] {
 // CHECK:STDOUT:     %C.ref.loc33: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc33_19: type = ptr_type %C [template = constants.%.14]
 // CHECK:STDOUT:     %c.loc33_15.1: %.14 = param c
-// CHECK:STDOUT:     @ConvertRef.%c: %.14 = bind_name c, %c.loc33_15.1
+// CHECK:STDOUT:     @ConvertRef.%c: %.14 = binding_pattern c, %c.loc33_15.3
+// CHECK:STDOUT:     %c.loc33_15.3: %.14 = bind_name c, %c.loc33_15.1
 // CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc33_26: type = ptr_type %A [template = constants.%.19]
 // CHECK:STDOUT:     @ConvertRef.%return: ref %.19 = var <return slot>
@@ -207,7 +212,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p: %.14) -> %.15 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, file.%p.loc25_16.3
 // CHECK:STDOUT:   %.loc25_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc25_39.2: ref %B = class_element_access %.loc25_39.1, element0
 // CHECK:STDOUT:   %.loc25_39.3: %.15 = addr_of %.loc25_39.2
@@ -217,7 +222,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p: %.15) -> %.19 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.15 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.15 = name_ref p, file.%p.loc26_16.3
 // CHECK:STDOUT:   %.loc26_39.1: ref %B = deref %p.ref
 // CHECK:STDOUT:   %.loc26_39.2: ref %A = class_element_access %.loc26_39.1, element0
 // CHECK:STDOUT:   %.loc26_39.3: %.19 = addr_of %.loc26_39.2
@@ -227,7 +232,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p: %.14) -> %.19 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, file.%p.loc27_16.3
 // CHECK:STDOUT:   %.loc27_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc27_39.2: ref %B = class_element_access %.loc27_39.1, element0
 // CHECK:STDOUT:   %.loc27_39.3: ref %A = class_element_access %.loc27_39.2, element0
@@ -239,19 +244,19 @@ fn ConvertInit() {
 // CHECK:STDOUT: fn @ConvertValue(%c: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc30_7: %A = binding_pattern a, %a
-// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %a.loc30_7.1: %A = binding_pattern a, %a.loc30_7.2
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c.loc29_17.3
 // CHECK:STDOUT:   %.loc30_15.1: ref %B = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc30_15.2: ref %A = class_element_access %.loc30_15.1, element0
 // CHECK:STDOUT:   %.loc30_15.3: ref %A = converted %c.ref, %.loc30_15.2
 // CHECK:STDOUT:   %.loc30_15.4: %A = bind_value %.loc30_15.3
-// CHECK:STDOUT:   %a: %A = bind_name a, %.loc30_15.4
+// CHECK:STDOUT:   %a.loc30_7.2: %A = bind_name a, %.loc30_15.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertRef(%c: %.14) -> %.19 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %.14 = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %.14 = name_ref c, file.%c.loc33_15.3
 // CHECK:STDOUT:   %.loc34_12: ref %C = deref %c.ref
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc34_15.1: ref %B = class_element_access %.loc34_12, element0
@@ -264,7 +269,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc38_7: %A = binding_pattern a, %a
+// CHECK:STDOUT:   %a.loc38_7.1: %A = binding_pattern a, %a.loc38_7.2
 // CHECK:STDOUT:   %.loc38_38: i32 = int_literal 1 [template = constants.%.20]
 // CHECK:STDOUT:   %.loc38_39.1: %.3 = struct_literal (%.loc38_38)
 // CHECK:STDOUT:   %.loc38_47: i32 = int_literal 2 [template = constants.%.21]
@@ -292,7 +297,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc38_63.2: ref %A = class_element_access %.loc38_63.1, element0
 // CHECK:STDOUT:   %.loc38_63.3: ref %A = converted %.loc38_59, %.loc38_63.2
 // CHECK:STDOUT:   %.loc38_63.4: %A = bind_value %.loc38_63.3
-// CHECK:STDOUT:   %a: %A = bind_name a, %.loc38_63.4
+// CHECK:STDOUT:   %a.loc38_7.2: %A = bind_name a, %.loc38_63.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -297,6 +297,10 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       bind_name_id = addr->inner_id;
     }
     auto bind_name = sem_ir().insts().Get(bind_name_id);
+    if (auto pattern = bind_name.TryAs<SemIR::BindingPattern>()) {
+      bind_name_id = pattern->bind_inst_id;
+      bind_name = sem_ir().insts().Get(bind_name_id);
+    }
     // TODO: Should we stop passing compile-time bindings at runtime?
     CARBON_CHECK(bind_name.Is<SemIR::AnyBindName>());
     function_lowering.SetLocal(bind_name_id, param_value);

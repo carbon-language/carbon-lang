@@ -193,6 +193,17 @@ static auto CheckRedeclParam(Context& context,
     }
   }
 
+  if (new_param_ref.Is<SemIR::BindingPattern>()) {
+    new_param_ref = context.insts().Get(
+        new_param_ref.As<SemIR::BindingPattern>().bind_inst_id);
+    prev_param_ref = context.insts().Get(
+        prev_param_ref.As<SemIR::BindingPattern>().bind_inst_id);
+    if (new_param_ref.kind() != prev_param_ref.kind()) {
+      diagnose();
+      return false;
+    }
+  }
+
   if (new_param_ref.Is<SemIR::AnyBindName>()) {
     new_param_ref =
         context.insts().Get(new_param_ref.As<SemIR::AnyBindName>().value_id);

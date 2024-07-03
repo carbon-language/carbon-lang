@@ -416,6 +416,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             sem_ir_.entity_names().Get(inst.entity_name_id).name_id);
         continue;
       }
+      case CARBON_KIND(BindingPattern inst): {
+        add_inst_name_id(
+            sem_ir_.entity_names().Get(inst.entity_name_id).name_id);
+        continue;
+      }
       case CARBON_KIND(Call inst): {
         auto callee_function =
             SemIR::GetCalleeFunction(sem_ir_, inst.callee_id);

@@ -657,6 +657,12 @@ class ImportRefResolver {
         bind_id = addr->inner_id;
         bind_inst = import_ir_.insts().Get(bind_id);
       }
+
+      if (auto pattern = bind_inst.TryAs<SemIR::BindingPattern>()) {
+        bind_id = pattern->bind_inst_id;
+        bind_inst = import_ir_.insts().Get(bind_id);
+      }
+
       auto bind_const_id = bind_inst.Is<SemIR::BindSymbolicName>()
                                ? GetLocalConstantId(bind_id)
                                : SemIR::ConstantId::Invalid;
@@ -684,11 +690,20 @@ class ImportRefResolver {
       auto inst = import_ir_.insts().Get(ref_id);
       auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
 
+      auto pattern_id = ref_id;
       auto bind_id = ref_id;
       auto param_id = ref_id;
 
       if (addr_inst) {
-        bind_id = addr_inst->inner_id;
+        pattern_id = addr_inst->inner_id;
+        bind_id = pattern_id;
+        param_id = pattern_id;
+        inst = import_ir_.insts().Get(bind_id);
+      }
+
+      auto binding_pattern = inst.TryAs<SemIR::BindingPattern>();
+      if (binding_pattern) {
+        bind_id = binding_pattern->bind_inst_id;
         param_id = bind_id;
         inst = import_ir_.insts().Get(bind_id);
       }
@@ -739,6 +754,16 @@ class ImportRefResolver {
             CARBON_FATAL() << "Unexpected kind: " << bind_inst->kind;
           }
         }
+      }
+      if (binding_pattern) {
+        SemIR::EntityNameId new_name_id =
+            context_.insts()
+                .GetAs<SemIR::AnyBindName>(new_param_id)
+                .entity_name_id;
+        new_param_id = context_.AddInstInNoBlock<SemIR::BindingPattern>(
+            AddImportIRInst(pattern_id), {.type_id = type_id,
+                                          .entity_name_id = new_name_id,
+                                          .bind_inst_id = new_param_id});
       }
       if (addr_inst) {
         new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(
@@ -983,6 +1008,9 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::BindSymbolicName inst): {
         return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::BindingPattern inst): {
+        return TryResolveInst(inst.bind_inst_id, const_id);
       }
       case CARBON_KIND(SemIR::ClassDecl inst): {
         return TryResolveTypedInst(inst, const_id);

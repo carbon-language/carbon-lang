@@ -74,7 +74,8 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_9.2: type = converted %bool.make_type, %.loc14_9.1 [template = bool]
 // CHECK:STDOUT:     %b.loc14_6.1: bool = param b
-// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc14_6.1
+// CHECK:STDOUT:     @F.%b: bool = binding_pattern b, %b.loc14_6.3
+// CHECK:STDOUT:     %b.loc14_6.3: bool = bind_name b, %b.loc14_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_18.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:     %.loc14_18.2: type = converted %int.make_type_32.loc14, %.loc14_18.1 [template = i32]
@@ -100,7 +101,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, file.%b.loc14_6.3
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

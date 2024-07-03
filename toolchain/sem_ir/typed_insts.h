@@ -302,7 +302,7 @@ struct BindValue {
   InstId value_id;
 };
 
-// Represents a runtime binding pattern value with name `entity_name_id`.
+// Represents a binding pattern value with name `entity_name_id`.
 // `bind_inst_id` is the instruction which actually binds the value.
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(

@@ -62,12 +62,13 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.2: type = converted %Self.ref.loc7_15, %.loc7_15.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc7_9.1: @Op.%Self (%Self) = param self
-// CHECK:STDOUT:     %self.loc7_9.2: @Op.%Self (%Self) = bind_name self, %self.loc7_9.1
+// CHECK:STDOUT:     %self.loc7_9.2: @Op.%Self (%Self) = binding_pattern self, <unexpected>.inst+14.loc7_9
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %other.loc7_21.1: @Op.%Self (%Self) = param other
-// CHECK:STDOUT:     %other.loc7_21.2: @Op.%Self (%Self) = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %other.loc7_21.2: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.3
+// CHECK:STDOUT:     %other.loc7_21.3: @Op.%Self (%Self) = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]
@@ -131,9 +132,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref Core//default, inst+29, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+24, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref Core//default, inst+31, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+26, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+26, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -173,10 +174,11 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self
-// CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_name self, %self.loc7_9.1
+// CHECK:STDOUT:     %self.loc7_9.2: i32 = binding_pattern self, <unexpected>.inst+24.loc7_9
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %other.loc7_21.1: i32 = param other
-// CHECK:STDOUT:     %other.loc7_21.2: i32 = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %other.loc7_21.2: i32 = binding_pattern other, %other.loc7_21.3
+// CHECK:STDOUT:     %other.loc7_21.3: i32 = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }

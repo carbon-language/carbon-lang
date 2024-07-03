@@ -46,7 +46,8 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %.loc15_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc15_6.1: %.1 = param n
-// CHECK:STDOUT:     @A.%n: %.1 = bind_name n, %n.loc15_6.1
+// CHECK:STDOUT:     @A.%n: %.1 = binding_pattern n, %n.loc15_6.3
+// CHECK:STDOUT:     %n.loc15_6.3: %.1 = bind_name n, %n.loc15_6.1
 // CHECK:STDOUT:     %.loc15_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_17.2: type = converted %.loc15_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @A.%return: ref %.1 = var <return slot>
@@ -55,7 +56,8 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %.loc19_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_12.2: type = converted %.loc19_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc19_6.1: %.1 = param n
-// CHECK:STDOUT:     @B.%n: %.1 = bind_name n, %n.loc19_6.1
+// CHECK:STDOUT:     @B.%n: %.1 = binding_pattern n, %n.loc19_6.3
+// CHECK:STDOUT:     %n.loc19_6.3: %.1 = bind_name n, %n.loc19_6.1
 // CHECK:STDOUT:     %.loc19_19.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_19.2: type = converted %.loc19_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @B.%return: ref %.1 = var <return slot>
@@ -64,7 +66,8 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %.loc23_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_13.2: type = converted %.loc23_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %if.loc23_6.1: %.1 = param r#if
-// CHECK:STDOUT:     @C.%if: %.1 = bind_name r#if, %if.loc23_6.1
+// CHECK:STDOUT:     @C.%if: %.1 = binding_pattern r#if, %if.loc23_6.3
+// CHECK:STDOUT:     %if.loc23_6.3: %.1 = bind_name r#if, %if.loc23_6.1
 // CHECK:STDOUT:     %.loc23_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_20.2: type = converted %.loc23_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @C.%return: ref %.1 = var <return slot>
@@ -73,19 +76,19 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%n: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, file.%n.loc15_6.3
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%n: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, file.%n.loc19_6.3
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%if: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %if.ref: %.1 = name_ref r#if, %if
+// CHECK:STDOUT:   %if.ref: %.1 = name_ref r#if, file.%if.loc23_6.3
 // CHECK:STDOUT:   return %if.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

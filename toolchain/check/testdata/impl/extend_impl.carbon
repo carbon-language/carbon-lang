@@ -68,7 +68,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc21_6.1: %C = param c
-// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc21_6.1
+// CHECK:STDOUT:     @G.%c: %C = binding_pattern c, %c.loc21_6.3
+// CHECK:STDOUT:     %c.loc21_6.3: %C = bind_name c, %c.loc21_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,7 +119,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %F.ref.loc22: %.3 = name_ref F, @HasF.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc22: init %.2 = call %.1()
-// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c.loc21_6.3
 // CHECK:STDOUT:   %F.ref.loc23: %.3 = name_ref F, @HasF.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   %.2: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc23: init %.2 = call %.2()

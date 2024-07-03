@@ -63,7 +63,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc21_12.1: %Class = param self
-// CHECK:STDOUT:     @F.%self: %Class = bind_name self, %self.loc21_12.1
+// CHECK:STDOUT:     @F.%self: %Class = binding_pattern self, <unexpected>.inst+51.loc21_12
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_29.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc21_29.2: type = converted %int.make_type_32, %.loc21_29.1 [template = i32]
@@ -75,7 +75,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc12_8.1: %Class = param self
-// CHECK:STDOUT:     %self.loc12_8.2: %Class = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %self.loc12_8.2: %Class = binding_pattern self, <unexpected>.inst+7.loc12_8
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %int.make_type_32, %.loc12_25.1 [template = i32]
@@ -100,7 +100,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: %Class]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self
+// CHECK:STDOUT:   %self.ref: %Class = name_ref self, <unexpected>.inst+51.loc21_12
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, @Class.%.loc18_8 [template = @Class.%.loc18_8]
 // CHECK:STDOUT:   %.loc22_16.1: ref %.2 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc22_16.2: %.2 = bind_value %.loc22_16.1

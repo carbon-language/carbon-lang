@@ -96,7 +96,8 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, %B2.decl [template = constants.%B2]
 // CHECK:STDOUT:     %.loc28_26: type = ptr_type %B2 [template = constants.%.9]
 // CHECK:STDOUT:     %p.loc28_21.1: %.9 = param p
-// CHECK:STDOUT:     @ConvertUnrelated.%p: %.9 = bind_name p, %p.loc28_21.1
+// CHECK:STDOUT:     @ConvertUnrelated.%p: %.9 = binding_pattern p, %p.loc28_21.3
+// CHECK:STDOUT:     %p.loc28_21.3: %.9 = bind_name p, %p.loc28_21.1
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, %A1.decl [template = constants.%A1]
 // CHECK:STDOUT:     %.loc28_34: type = ptr_type %A1 [template = constants.%.10]
 // CHECK:STDOUT:     @ConvertUnrelated.%return: ref %.10 = var <return slot>
@@ -106,7 +107,8 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %.loc35_35: type = ptr_type %Incomplete [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc35_22.1: %.14 = param p
-// CHECK:STDOUT:     @ConvertIncomplete.%p: %.14 = bind_name p, %p.loc35_22.1
+// CHECK:STDOUT:     @ConvertIncomplete.%p: %.14 = binding_pattern p, %p.loc35_22.3
+// CHECK:STDOUT:     %p.loc35_22.3: %.14 = bind_name p, %p.loc35_22.1
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, %A2.decl [template = constants.%A2]
 // CHECK:STDOUT:     %.loc35_43: type = ptr_type %A2 [template = constants.%.15]
 // CHECK:STDOUT:     @ConvertIncomplete.%return: ref %.15 = var <return slot>
@@ -156,13 +158,13 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertUnrelated(%p: %.9) -> %.10 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.9 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.9 = name_ref p, file.%p.loc28_21.3
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertIncomplete(%p: %.14) -> %.15 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, file.%p.loc35_22.3
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

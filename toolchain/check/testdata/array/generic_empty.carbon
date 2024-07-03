@@ -46,11 +46,12 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @G.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @G.%T.1 (constants.%T)]
+// CHECK:STDOUT:     @G.%T.loc11: type = binding_pattern T 0, %T.loc11_6.3 [symbolic = @G.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_6.3: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc11: type) {
+// CHECK:STDOUT: generic fn @G(file.%T.loc11_6.3: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -59,7 +60,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc11: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_6.3 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc13_16: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc13_17: type = array_type %.loc13_16, %T [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:     %arr.var: ref @G.%.1 (%.3) = var arr
