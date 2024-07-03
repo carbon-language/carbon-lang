@@ -252,14 +252,24 @@ Fraction IDs: {stats.identifiers / tokens}
         keys = [column_format % k for k in range(key_min, key_max)]
         total = sum(values)
         median = key_min
+        p90 = key_min
+        p95 = key_min
+        p99 = key_min
         count = total
         for k in range(key_min, key_max):
             count -= data.get(k, 0)
-            if count <= total / 2:
+            if median == key_min and count <= total / 2:
                 median = k
-                break
+            if p90 == key_min and count <= total / 10:
+                p90 = k
+            if p95 == key_min and count <= total / 20:
+                p95 = k
+            if p99 == key_min and count <= total / 100:
+                p99 = k
 
-        print(title + f" (median: {median})")
+        print(
+            title + f" (median: {median}, p90: {p90}, p95: {p95}, p99: {p99})"
+        )
         fig = tpl.figure()
         fig.barh(values, keys)
         fig.show()
