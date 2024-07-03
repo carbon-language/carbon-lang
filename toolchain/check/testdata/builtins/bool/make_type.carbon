@@ -53,17 +53,20 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir1, inst+4, loaded [template = constants.%Bool]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Bool = %import_ref
+// CHECK:STDOUT:     .Bool = imports.%import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir1, inst+4, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
-// CHECK:STDOUT:   %Bool.ref: %Bool.type = name_ref Bool, %import_ref [template = constants.%Bool]
+// CHECK:STDOUT:   %Bool.ref: %Bool.type = name_ref Bool, imports.%import_ref [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]

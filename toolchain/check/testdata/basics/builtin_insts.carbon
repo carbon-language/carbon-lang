@@ -51,7 +51,8 @@
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}
+// CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     block3:
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...

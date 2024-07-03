@@ -567,9 +567,13 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   // 0-index block.
   static const InstBlockId Empty;
 
-  // Exported instructions. Always the 1-index block. Empty until the File is
-  // fully checked; intermediate state is in the Check::Context.
+  // Exported instructions. Empty until the File is fully checked; intermediate
+  // state is in the Check::Context.
   static const InstBlockId Exports;
+
+  // ImportRef instructions. Empty until the File is fully checked; intermediate
+  // state is in the Check::Context.
+  static const InstBlockId ImportRefs;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
@@ -590,6 +594,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
       out << "empty";
     } else if (*this == Exports) {
       out << "exports";
+    } else if (*this == ImportRefs) {
+      out << "import_refs";
     } else if (*this == GlobalInit) {
       out << "global_init";
     } else {
@@ -601,9 +607,10 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
+constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
+constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
-constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(2);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {

@@ -911,11 +911,7 @@ static auto CheckParseTree(
     return;
   }
 
-  // Pop information for the file-level scope.
-  sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
-  context.scope_stack().Pop();
-  context.FinalizeExports();
-  context.global_init().Finalize();
+  context.Finalize();
 
   DiagnoseMissingDefinitions(context, emitter);
 

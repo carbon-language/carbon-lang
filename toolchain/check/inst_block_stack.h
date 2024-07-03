@@ -56,14 +56,6 @@ class InstBlockStack {
     stack_[size_ - 1].content.push_back(inst_id);
   }
 
-  // Adds the given instruction ID to the block at the bottom of the stack.
-  //
-  // TODO: We shouldn't need to do this.
-  auto AddInstIdToFileBlock(SemIR::InstId inst_id) -> void {
-    CARBON_CHECK(!empty()) << "no current block";
-    stack_[0].content.push_back(inst_id);
-  }
-
   // Returns whether the current block is statically reachable.
   auto is_current_block_reachable() -> bool {
     return size_ != 0 &&

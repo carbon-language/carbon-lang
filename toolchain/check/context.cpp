@@ -633,6 +633,19 @@ auto Context::is_current_position_reachable() -> bool {
          SemIR::TerminatorKind::Terminator;
 }
 
+auto Context::Finalize() -> void {
+  // Pop information for the file-level scope.
+  sem_ir().set_top_inst_block_id(inst_block_stack().Pop());
+  scope_stack().Pop();
+
+  // Finalizes the list of exports on the IR.
+  inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
+  // Finalizes the ImportRef inst block.
+  inst_blocks().Set(SemIR::InstBlockId::ImportRefs, import_ref_ids_);
+  // Finalizes __global_init.
+  global_init_.Finalize();
+}
+
 namespace {
 // Worklist-based type completion mechanism.
 //

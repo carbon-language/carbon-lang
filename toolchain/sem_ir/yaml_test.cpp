@@ -92,10 +92,11 @@ TEST(SemIRTest, YAML) {
            Yaml::Mapping(ElementsAre(
                Pair("empty", Yaml::Mapping(IsEmpty())),
                Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("import_refs", Yaml::Mapping(IsEmpty())),
                Pair("global_init", Yaml::Mapping(IsEmpty())),
-               Pair("block3", Yaml::Mapping(Each(Pair(_, inst_id)))),
                Pair("block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("block5", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+               Pair("block5", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("block6", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));

@@ -84,14 +84,17 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir0, inst+5, loaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .v [private] = %import_ref
+// CHECK:STDOUT:     .v [private] = imports.%import_ref
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir0, inst+5, loaded
 // CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2
@@ -100,7 +103,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %.1 = name_ref v, file.%import_ref
+// CHECK:STDOUT:   %v.ref: ref %.1 = name_ref v, imports.%import_ref
 // CHECK:STDOUT:   %.loc4_14: init %.1 = tuple_init () to file.%v2.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc4_15: init %.1 = converted %v.ref, %.loc4_14 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%v2.var, %.loc4_15

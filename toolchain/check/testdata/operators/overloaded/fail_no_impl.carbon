@@ -55,7 +55,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Negate, %Op.type.1 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, file.%import_ref.5 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [template]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @Add [template]
@@ -63,7 +63,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type @Add, %Op.type.2 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT:   %TestRef.type: type = fn_type @TestRef [template]
 // CHECK:STDOUT:   %TestRef: %TestRef.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
@@ -73,14 +73,37 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, %Op.type.3 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, file.%import_ref.15 [template]
+// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.15 [template]
 // CHECK:STDOUT:   %.14: type = interface_type @Inc [template]
 // CHECK:STDOUT:   %Self.4: %.14 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.15: type = ptr_type %Self.4 [symbolic]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.16: type = assoc_entity_type @Inc, %Op.type.4 [template]
-// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, file.%import_ref.20 [template]
+// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, imports.%import_ref.20 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir4, inst+84, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir4, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir4, inst+1, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir4, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.8: %.8 = import_ref ir4, inst+24, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir4, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+26, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.13: %.12 = import_ref ir4, inst+47, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.14 = import_ref ir4, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref ir4, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir4, inst+49, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.17 = import_ref ir4, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.18: %.16 = import_ref ir4, inst+65, loaded [template = constants.%.17]
+// CHECK:STDOUT:   %import_ref.19 = import_ref ir4, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref ir4, inst+61, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -101,11 +124,6 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestUnary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir4, inst+84, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir4, inst+80, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_15.1: %C = param a
@@ -116,54 +134,39 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir4, inst+1, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir4, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8: %.8 = import_ref ir4, inst+24, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir4, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+19, unloaded
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc31_12.1: %C = param b
 // CHECK:STDOUT:     @TestRef.%b: %C = bind_name b, %b.loc31_12.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+26, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.13: %.12 = import_ref ir4, inst+47, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir4, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref ir4, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref ir4, inst+49, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.17 = import_ref ir4, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.18: %.16 = import_ref ir4, inst+65, loaded [template = constants.%.17]
-// CHECK:STDOUT:   %import_ref.19 = import_ref ir4, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref ir4, inst+61, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .Op = file.%import_ref.3
-// CHECK:STDOUT:   witness = (file.%import_ref.4)
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Op = imports.%import_ref.3
+// CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.7
-// CHECK:STDOUT:   .Op = file.%import_ref.8
-// CHECK:STDOUT:   witness = (file.%import_ref.9)
+// CHECK:STDOUT:   .Self = imports.%import_ref.7
+// CHECK:STDOUT:   .Op = imports.%import_ref.8
+// CHECK:STDOUT:   witness = (imports.%import_ref.9)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.12
-// CHECK:STDOUT:   .Op = file.%import_ref.13
-// CHECK:STDOUT:   witness = (file.%import_ref.14)
+// CHECK:STDOUT:   .Self = imports.%import_ref.12
+// CHECK:STDOUT:   .Op = imports.%import_ref.13
+// CHECK:STDOUT:   witness = (imports.%import_ref.14)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.17
-// CHECK:STDOUT:   .Op = file.%import_ref.18
-// CHECK:STDOUT:   witness = (file.%import_ref.19)
+// CHECK:STDOUT:   .Self = imports.%import_ref.17
+// CHECK:STDOUT:   .Op = imports.%import_ref.18
+// CHECK:STDOUT:   witness = (imports.%import_ref.19)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -291,12 +291,15 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_current_package.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C1 = %import_ref
+// CHECK:STDOUT:     .C1 = imports.%import_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_current_package.impl.carbon
@@ -311,35 +314,38 @@ import Other library "O1";
 // CHECK:STDOUT:   %struct.2: %C2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C1]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+1, loaded [template = constants.%C2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C1 = %import_ref.1
-// CHECK:STDOUT:     .C2 = %import_ref.2
+// CHECK:STDOUT:     .C1 = imports.%import_ref.1
+// CHECK:STDOUT:     .C2 = imports.%import_ref.2
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:     .c2 = %c2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C1]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+1, loaded [template = constants.%C2]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %C1.ref: type = name_ref C1, %import_ref.1 [template = constants.%C1]
+// CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%import_ref.1 [template = constants.%C1]
 // CHECK:STDOUT:   %c1.var: ref %C1 = var c1
 // CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %C2.ref: type = name_ref C2, %import_ref.2 [template = constants.%C2]
+// CHECK:STDOUT:   %C2.ref: type = name_ref C2, imports.%import_ref.2 [template = constants.%C2]
 // CHECK:STDOUT:   %c2.var: ref %C2 = var c2
 // CHECK:STDOUT:   %c2: ref %C2 = bind_name c2, %c2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -357,12 +363,15 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_c1.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C1 = %import_ref
+// CHECK:STDOUT:     .C1 = imports.%import_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_c1.impl.carbon
@@ -375,23 +384,26 @@ import Other library "O1";
 // CHECK:STDOUT:   %struct: %C1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C1 = %import_ref.1
+// CHECK:STDOUT:     .C1 = imports.%import_ref.1
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+2, loaded [template = constants.%C1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %C1.ref: type = name_ref C1, %import_ref.1 [template = constants.%C1]
+// CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%import_ref.1 [template = constants.%C1]
 // CHECK:STDOUT:   %c1.var: ref %C1 = var c1
 // CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -405,16 +417,19 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_ns.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:     .C = imports.%import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_ns.impl.carbon
@@ -427,6 +442,11 @@ import Other library "O1";
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+4, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
@@ -434,21 +454,19 @@ import Other library "O1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir0, inst+3, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir0, inst+3, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:     .C = imports.%import_ref.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+4, loaded [template = constants.%C]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -482,6 +500,13 @@ import Other library "O1";
 // CHECK:STDOUT:   %struct.2: %O2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%O1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+1, loaded [template = constants.%O2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
@@ -493,27 +518,23 @@ import Other library "O1";
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref.loc6: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%O1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %O1.ref: type = name_ref O1, %import_ref.1 [template = constants.%O1]
+// CHECK:STDOUT:   %O1.ref: type = name_ref O1, imports.%import_ref.1 [template = constants.%O1]
 // CHECK:STDOUT:   %o1.var: ref %O1 = var o1
 // CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+1, loaded [template = constants.%O2]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %O2.ref: type = name_ref O2, %import_ref.3 [template = constants.%O2]
+// CHECK:STDOUT:   %O2.ref: type = name_ref O2, imports.%import_ref.3 [template = constants.%O2]
 // CHECK:STDOUT:   %o2.var: ref %O2 = var o2
 // CHECK:STDOUT:   %o2: ref %O2 = bind_name o2, %o2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O2 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -549,6 +570,11 @@ import Other library "O1";
 // CHECK:STDOUT:   %struct: %O1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%O1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
@@ -559,16 +585,14 @@ import Other library "O1";
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%O1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %O1.ref: type = name_ref O1, %import_ref.1 [template = constants.%O1]
+// CHECK:STDOUT:   %O1.ref: type = name_ref O1, imports.%import_ref.1 [template = constants.%O1]
 // CHECK:STDOUT:   %o1.var: ref %O1 = var o1
 // CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -592,28 +616,38 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_conflict.impl.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc15_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc15_6.2 = import <invalid>
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_conflict_reverse.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %import_ref
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Other = imports.%import_ref
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_conflict_reverse.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
@@ -622,7 +656,6 @@ import Other library "O1";
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %import_ref = import_ref ir0, inst+2, unloaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
