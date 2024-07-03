@@ -38,7 +38,10 @@ cc_library(
 cc_library(
     name = "benchmark_main",
     srcs = ["benchmark_main.cpp"],
+    hdrs = ["benchmark_main.h"],
     deps = [
+        ":check",
+        ":exe_path",
         ":init_llvm",
         "@abseil-cpp//absl/flags:parse",
         "@google_benchmark//:benchmark",

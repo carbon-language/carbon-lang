@@ -52,6 +52,24 @@ cc_test(
     ],
 )
 
+cc_binary(
+    name = "compile_benchmark",
+    testonly = 1,
+    srcs = ["compile_benchmark.cpp"],
+    deps = [
+        ":driver",
+        "//common:benchmark_main",
+        "//testing/base:source_gen_lib",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "compile_benchmark_test",
+    srcs = ["compile_benchmark_test.sh"],
+    data = [":compile_benchmark"],
+)
+
 cc_library(
     name = "driver",
     srcs = ["driver.cpp"],
