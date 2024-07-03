@@ -218,14 +218,7 @@ class CanonicalValueStore {
   auto Lookup(ValueType value) const -> IdT;
 
   // Reserves space.
-  auto Reserve(size_t size) -> void {
-    // Compute the resulting new insert count using the size of values -- the
-    // set doesn't have a fast to compute current size.
-    if (size > values_.size()) {
-      set_.GrowForInsertCount(size - values_.size(), KeyContext(values_));
-    }
-    values_.Reserve(size);
-  }
+  auto Reserve(size_t size) -> void;
 
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
@@ -272,6 +265,17 @@ auto CanonicalValueStore<IdT>::Lookup(ValueType value) const -> IdT {
     return result.key();
   }
   return IdT::Invalid;
+}
+
+template <typename IdT>
+auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
+  // Compute the resulting new insert count using the size of values -- the
+  // set doesn't have a fast to compute current size.
+  if (size > values_.size()) {
+    set_.GrowForInsertCount(size - values_.size(),
+                            KeyContext(values_.array_ref()));
+  }
+  values_.Reserve(size);
 }
 
 using FloatValueStore = CanonicalValueStore<FloatId>;

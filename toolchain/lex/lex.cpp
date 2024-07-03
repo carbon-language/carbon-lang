@@ -631,6 +631,45 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   // First build up our line data structures.
   MakeLines(source_text);
 
+  // Once we have scanned the source text to build up our line data structures,
+  // and before we begin lexing, use the data about the line count in the source
+  // to make rough estimated reservations of memory in the hot data structures
+  // used by the lexer. In practice, scanning for lines is one of the easiest
+  // parts of the lexer to accelerate, and we can use its results to minimize
+  // the cost of incrementally growing data structures during the hot path of
+  // the lexer.
+  //
+  // Hashtables are an especially useful data structure to reserve as they are
+  // particularly expensive to *grow*. However, we don't want to waste memory on
+  // small input files by over reserving. The far and away hottest hash table is
+  // for interning identifiers. Fortunately, when analyzing several C++
+  // codebases we have found a roughly normal distribution of unique identifiers
+  // in the file centered at 0.5 * lines, and in the vast majority of cases
+  // bounded below 1.0 * lines. For example, here is LLVM's distribution
+  // computed with `scripts/source_stats.py` and rendered in an ASCII-art
+  // histogram:
+  //
+  //   # Unique IDs per 10 lines ## (median: 5)
+  //   1 ids   [  29]  ▍
+  //   2 ids   [ 282]  ███▊
+  //   3 ids   [1492]  ███████████████████▉
+  //   4 ids   [2674]  ███████████████████████████████████▌
+  //   5 ids   [3011]  ████████████████████████████████████████
+  //   6 ids   [2267]  ██████████████████████████████▏
+  //   7 ids   [1549]  ████████████████████▋
+  //   8 ids   [ 817]  ██████████▉
+  //   9 ids   [ 301]  ████
+  //   10 ids  [  98]  █▎
+  //
+  //   (Trimmed to only cover 1 - 10 unique IDs per 10 lines of code.)
+  //
+  // Based on this distribution, we reserve space for as many identifiers as
+  // lines. This will typically reserve *more* than enough space due to the load
+  // factor and requirement to have a power-of-two size, but we expect this
+  // hashtable to be worth over-shooting and thus having a low load factor and
+  // lower latency for access even at the cost of memory.
+  buffer_.value_stores_->identifiers().Reserve(buffer_.line_infos_.size());
+
   ssize_t position = 0;
   LexFileStart(source_text, position);
 
