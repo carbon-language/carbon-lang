@@ -73,5 +73,35 @@ TEST(ArrayStack, Basics) {
   EXPECT_THAT(stack.PeekAllValues(), ElementsAre(5));
 }
 
+TEST(ArrayStack, AppendArray) {
+  ArrayStack<int> stack;
+
+  stack.PushArray();
+  stack.AppendToTop(llvm::ArrayRef<int>());
+  EXPECT_THAT(stack.PeekArray(), IsEmpty());
+  stack.AppendToTop({1, 2});
+  EXPECT_THAT(stack.PeekArray(), ElementsAre(1, 2));
+}
+
+TEST(ArrayStack, PeekArrayAt) {
+  ArrayStack<int> stack;
+
+  // Verify behavior with a single array.
+  stack.PushArray();
+  stack.AppendToTop(1);
+  stack.AppendToTop(2);
+
+  EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(1, 2));
+
+  // Verify behavior with a couple more arrays.
+  stack.PushArray();
+  stack.PushArray();
+  stack.AppendToTop(3);
+
+  EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(1, 2));
+  EXPECT_THAT(stack.PeekArrayAt(1), IsEmpty());
+  EXPECT_THAT(stack.PeekArrayAt(2), ElementsAre(3));
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
