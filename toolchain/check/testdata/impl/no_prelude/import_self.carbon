@@ -65,7 +65,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc5_37: %.1 = name_ref Self, %Self [symbolic = %Self.ref.loc5_15 (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = %Self.ref.loc5_15 (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = %Self.ref.loc5_15 (constants.%Self)]
-// CHECK:STDOUT:     %return.var: ref @Add.%Self.ref.loc5_15 (%Self) = var <return slot>
+// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -75,7 +75,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   witness = (%Op.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op[@Add.%self.loc5_9.2: @Add.%Self.ref.loc5_15 (%Self)](@Add.%other.loc5_21.2: @Add.%Self.ref.loc5_15 (%Self)) -> @Add.%Self.ref.loc5_15 (%Self)
+// CHECK:STDOUT: fn @Op[@Add.%self.loc5_9.2: @Add.%Self.ref.loc5_15 (%Self)](@Add.%other.loc5_21.2: @Add.%Self.ref.loc5_15 (%Self)) -> %Self
 // CHECK:STDOUT:     generic [@Add.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon

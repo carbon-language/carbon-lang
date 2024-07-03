@@ -10,10 +10,6 @@
 
 class Class(T:! type) {
   fn Get[addr self: Self*]() -> T* {
-    // CHECK:STDERR: fail_todo_use.carbon:[[@LINE+4]]:5: ERROR: Cannot implicitly convert from `T*` to `T*`.
-    // CHECK:STDERR:     return &self->k;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     return &self->k;
   }
 
@@ -34,7 +30,7 @@ fn Run() -> i32 {
   // CHECK:STDERR: fail_todo_use.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `Class*` to `Class*`.
   // CHECK:STDERR:   return v.Get();
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE-25]]:15: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE-21]]:15: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn Get[addr self: Self*]() -> T* {
   // CHECK:STDERR:               ^~~~
   return v.Get();
@@ -79,8 +75,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc24_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc24_13.2: type = converted %int.make_type_32, %.loc24_13.1 [template = i32]
+// CHECK:STDOUT:     %.loc20_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc20_13.2: type = converted %int.make_type_32, %.loc20_13.1 [template = i32]
 // CHECK:STDOUT:     @Run.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
@@ -96,26 +92,26 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %.loc12_10: @Class.%.loc12_25 (%.2) = addr_pattern %self.loc12_15.3
 // CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12 (constants.%T)]
 // CHECK:STDOUT:     %.loc12_34: type = ptr_type file.%T.loc11_13.2 (%T) [symbolic = %.loc12_34 (constants.%.3)]
-// CHECK:STDOUT:     %return.var: ref @Class.%.loc12_34 (%.3) = var <return slot>
+// CHECK:STDOUT:     %return.var: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc20: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc20: %.4 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:   %.loc16: %.4 = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT:   .Get = %Get.decl
-// CHECK:STDOUT:   .k = %.loc20
+// CHECK:STDOUT:   .k = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: @Class.%.loc12_25 (%.2)]() -> @Class.%.loc12_34 (%.3)
+// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: @Class.%.loc12_25 (%.2)]() -> %.3
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: @Class.%.loc12_25 (%.2) = name_ref self, @Class.%self.loc12_15.3
-// CHECK:STDOUT:   %.loc17_17.1: ref %Class.2 = deref %self.ref
-// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc20 [template = @Class.%.loc20]
-// CHECK:STDOUT:   %.loc17_17.2: ref file.%T.loc11_13.2 (%T) = class_element_access %.loc17_17.1, element0
-// CHECK:STDOUT:   %.loc17_12: %.3 = addr_of %.loc17_17.2
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_15.3
+// CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref
+// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
+// CHECK:STDOUT:   %.loc13_17.2: ref file.%T.loc11_13.2 (%T) = class_element_access %.loc13_17.1, element0
+// CHECK:STDOUT:   %.loc13_12: %.3 = addr_of %.loc13_17.2
+// CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -124,21 +120,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc29_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc29_15.2: type = converted %int.make_type_32, %.loc29_15.1 [template = i32]
-// CHECK:STDOUT:   %.loc29_15.3: init type = call %Class.ref(%.loc29_15.2) [template = constants.%Class.3]
-// CHECK:STDOUT:   %.loc29_19.1: type = value_of_initializer %.loc29_15.3 [template = constants.%Class.3]
-// CHECK:STDOUT:   %.loc29_19.2: type = converted %.loc29_15.3, %.loc29_19.1 [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc25_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc25_15.2: type = converted %int.make_type_32, %.loc25_15.1 [template = i32]
+// CHECK:STDOUT:   %.loc25_15.3: init type = call %Class.ref(%.loc25_15.2) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc25_19.1: type = value_of_initializer %.loc25_15.3 [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc25_19.2: type = converted %.loc25_15.3, %.loc25_19.1 [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
 // CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc29_29: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc29_30: %.8 = struct_literal (%.loc29_29)
+// CHECK:STDOUT:   %.loc25_29: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_30: %.8 = struct_literal (%.loc25_29)
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %v.ref: ref %Class.3 = name_ref v, %v
 // CHECK:STDOUT:   %Get.ref: %Get.type = name_ref Get, @Class.%Get.decl [template = constants.%Get]
-// CHECK:STDOUT:   %.loc40_11: <bound method> = bound_method %v.ref, %Get.ref
-// CHECK:STDOUT:   %.loc40_10: %.9 = addr_of %v.ref
-// CHECK:STDOUT:   %Get.call: init @Class.%.loc12_34 (%.3) = call %.loc40_11(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc36_11: <bound method> = bound_method %v.ref, %Get.ref
+// CHECK:STDOUT:   %.loc36_10: %.9 = addr_of %v.ref
+// CHECK:STDOUT:   %Get.call: init %.3 = call %.loc36_11(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

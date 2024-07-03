@@ -70,6 +70,13 @@ class TypeStore : public ValueStore<TypeId> {
     return GetAsInst(type_id).TryAs<InstT>();
   }
 
+  // Returns whether two type IDs represent the same type. This includes the
+  // case where they might be in different generics and thus might have
+  // different ConstantIds, but are still symbolically equal.
+  auto EqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
+    return GetInstId(a) == GetInstId(b);
+  }
+
   // Gets the value representation to use for a type. This returns an
   // invalid type if the given type is not complete.
   auto GetValueRepr(TypeId type_id) const -> ValueRepr {

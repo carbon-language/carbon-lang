@@ -13,17 +13,10 @@ interface GenericInterface(T:! type) {
 }
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+4]]:3: ERROR: Cannot `extend` a parameterized `impl`.
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:3: ERROR: Cannot `extend` a parameterized `impl`.
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR:
   extend impl forall [T:! type] as GenericInterface(T) {
-    // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+6]]:10: ERROR: Redeclaration differs at parameter 1.
-    // CHECK:STDERR:     fn F(x: T) {}
-    // CHECK:STDERR:          ^
-    // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE-12]]:8: Previous declaration's corresponding parameter here.
-    // CHECK:STDERR:   fn F(x: T);
-    // CHECK:STDERR:        ^
     fn F(x: T) {}
   }
 }
@@ -44,7 +37,8 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.6: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,11 +73,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.2 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc20_23.2 [symbolic = %T.ref (constants.%T)]
-// CHECK:STDOUT:     %x.loc27_10.1: @impl.%T.ref (%T) = param x
-// CHECK:STDOUT:     %x.loc27_10.2: @impl.%T.ref (%T) = bind_name x, %x.loc27_10.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:     %x.loc20_10.1: @impl.%T.ref (%T) = param x
+// CHECK:STDOUT:     %x.loc20_10.2: @impl.%T.ref (%T) = bind_name x, %x.loc20_10.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -91,14 +85,14 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc20_54.1: type = value_of_initializer %.loc20_52 [symbolic = constants.%.2]
-// CHECK:STDOUT:   %.loc20_54.2: type = converted %.loc20_52, %.loc20_54.1 [symbolic = constants.%.2]
+// CHECK:STDOUT:   %.loc19_54.1: type = value_of_initializer %.loc19_52 [symbolic = constants.%.2]
+// CHECK:STDOUT:   %.loc19_54.2: type = converted %.loc19_52, %.loc19_54.1 [symbolic = constants.%.2]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %T.loc20_23.1: type = param T
-// CHECK:STDOUT:     %T.loc20_23.2: type = bind_symbolic_name T 0, %T.loc20_23.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc19_23.1: type = param T
+// CHECK:STDOUT:     %T.loc19_23.2: type = bind_symbolic_name T 0, %T.loc19_23.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc20_23.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc20_52: init type = call %GenericInterface.ref(%T.ref) [symbolic = constants.%.2]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc19_52: init type = call %GenericInterface.ref(%T.ref) [symbolic = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -109,8 +103,8 @@ class C {
 // CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: @GenericInterface.%T.ref (%T))
 // CHECK:STDOUT:     generic [file.%T.loc11_28.2: type, @GenericInterface.%Self: %.2];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(@impl.%x.loc27_10.2: @impl.%T.ref (%T))
-// CHECK:STDOUT:     generic [@C.%T.loc20_23.2: type] {
+// CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: @impl.%T.ref (%T))
+// CHECK:STDOUT:     generic [@C.%T.loc19_23.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

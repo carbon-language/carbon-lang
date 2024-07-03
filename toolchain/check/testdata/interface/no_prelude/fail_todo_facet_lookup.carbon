@@ -91,7 +91,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: fn @CallFacet(%T: %.1, %x: @CallFacet.%T (%T))
 // CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: @CallFacet.%T (%T) = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

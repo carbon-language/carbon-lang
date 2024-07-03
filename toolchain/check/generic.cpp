@@ -222,4 +222,27 @@ auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
   return MakeGenericInstance(context, generic_id, args_id);
 }
 
+auto GetTypeInInstance(Context& context,
+                       SemIR::GenericInstanceId /*instance_id*/,
+                       SemIR::TypeId type_id) -> SemIR::TypeId {
+  auto const_id = context.types().GetConstantId(type_id);
+  if (!const_id.is_symbolic()) {
+    // Type does not depend on a generic parameter.
+    return type_id;
+  }
+
+  const auto& symbolic =
+      context.constant_values().GetSymbolicConstant(const_id);
+  if (!symbolic.generic_id.is_valid()) {
+    // Type refers to an abstract symbolic constant, not an instance-specific
+    // one.
+    return type_id;
+  }
+
+  // TODO: Look up the value in the generic instance. For now, return the type
+  // corresponding to the canonical version of the constant.
+  return context.GetTypeIdForTypeInst(
+      context.constant_values().GetInstId(const_id));
+}
+
 }  // namespace Carbon::Check

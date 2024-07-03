@@ -91,7 +91,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = %Self.ref.loc12_14 (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %return.var: ref @I.%Self.ref.loc12_14 (%Self) = var <return slot>
+// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_40: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -125,7 +125,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc12_8.2: @I.%Self.ref.loc12_14 (%Self)](@I.%other.loc12_20.2: @I.%Self.ref.loc12_14 (%Self)) -> @I.%Self.ref.loc12_14 (%Self)
+// CHECK:STDOUT: fn @F.1[@I.%self.loc12_8.2: @I.%Self.ref.loc12_14 (%Self)](@I.%other.loc12_20.2: @I.%Self.ref.loc12_14 (%Self)) -> %Self
 // CHECK:STDOUT:     generic [@I.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -14,14 +14,7 @@ class Class(T:! type) {
   fn MakeSelf() -> Self;
   fn MakeClass() -> Class(T);
   fn F() {
-    // CHECK:STDERR: self.carbon:[[@LINE+4]]:5: ERROR: Cannot implicitly convert from `Class` to `Class`.
-    // CHECK:STDERR:     var c: Class(T) = MakeSelf();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     var c: Class(T) = MakeSelf();
-    // CHECK:STDERR: self.carbon:[[@LINE+3]]:5: ERROR: Cannot implicitly convert from `Class` to `Class`.
-    // CHECK:STDERR:     var s: Self = MakeClass();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
     var s: Self = MakeClass();
   }
 }
@@ -60,7 +53,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %MakeSelf.decl: %MakeSelf.type = fn_decl @MakeSelf [template = constants.%MakeSelf] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref (constants.%Class.2)]
-// CHECK:STDOUT:     %return.var.loc14: ref @Class.%Self.ref (%Class.2) = var <return slot>
+// CHECK:STDOUT:     %return.var.loc14: ref %Class.2 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeClass.decl: %MakeClass.type = fn_decl @MakeClass [template = constants.%MakeClass] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
@@ -68,7 +61,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %.loc15_26: init type = call %Class.ref(%T.ref) [symbolic = %.loc15_26 (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc15_28.1: type = value_of_initializer %.loc15_26 [symbolic = %.loc15_26 (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc15_28.2: type = converted %.loc15_26, %.loc15_28.1 [symbolic = %.loc15_26 (constants.%Class.2)]
-// CHECK:STDOUT:     %return.var.loc15: ref @Class.%.loc15_26 (%Class.2) = var <return slot>
+// CHECK:STDOUT:     %return.var.loc15: ref %Class.2 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:
@@ -79,10 +72,10 @@ class Class(T:! type) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeSelf() -> @Class.%Self.ref (%Class.2)
+// CHECK:STDOUT: fn @MakeSelf() -> %Class.2
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeClass() -> @Class.%.loc15_26 (%Class.2)
+// CHECK:STDOUT: fn @MakeClass() -> %Class.2
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
@@ -90,22 +83,22 @@ class Class(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc21_17: init type = call %Class.ref(%T.ref) [symbolic = constants.%Class.2]
-// CHECK:STDOUT:   %.loc21_19.1: type = value_of_initializer %.loc21_17 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:   %.loc21_19.2: type = converted %.loc21_17, %.loc21_19.1 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   %.loc17_17: init type = call %Class.ref(%T.ref) [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   %.loc17_19.1: type = value_of_initializer %.loc17_17 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   %.loc17_19.2: type = converted %.loc17_17, %.loc17_19.1 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:   %c.var: ref %Class.2 = var c
 // CHECK:STDOUT:   %c: ref %Class.2 = bind_name c, %c.var
 // CHECK:STDOUT:   %MakeSelf.ref: %MakeSelf.type = name_ref MakeSelf, @Class.%MakeSelf.decl [template = constants.%MakeSelf]
-// CHECK:STDOUT:   %.loc21_31: ref @Class.%Self.ref (%Class.2) = temporary_storage
-// CHECK:STDOUT:   %MakeSelf.call: init @Class.%Self.ref (%Class.2) = call %MakeSelf.ref() to %.loc21_31
-// CHECK:STDOUT:   assign %c.var, <error>
+// CHECK:STDOUT:   %.loc17_9: ref %Class.2 = splice_block %c.var {}
+// CHECK:STDOUT:   %MakeSelf.call: init %Class.2 = call %MakeSelf.ref() to %.loc17_9
+// CHECK:STDOUT:   assign %c.var, %MakeSelf.call
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:   %s.var: ref %Class.2 = var s
 // CHECK:STDOUT:   %s: ref %Class.2 = bind_name s, %s.var
 // CHECK:STDOUT:   %MakeClass.ref: %MakeClass.type = name_ref MakeClass, @Class.%MakeClass.decl [template = constants.%MakeClass]
-// CHECK:STDOUT:   %.loc25: ref @Class.%.loc15_26 (%Class.2) = temporary_storage
-// CHECK:STDOUT:   %MakeClass.call: init @Class.%.loc15_26 (%Class.2) = call %MakeClass.ref() to %.loc25
-// CHECK:STDOUT:   assign %s.var, <error>
+// CHECK:STDOUT:   %.loc18: ref %Class.2 = splice_block %s.var {}
+// CHECK:STDOUT:   %MakeClass.call: init %Class.2 = call %MakeClass.ref() to %.loc18
+// CHECK:STDOUT:   assign %s.var, %MakeClass.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

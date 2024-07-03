@@ -429,7 +429,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = %Self.ref.loc188_12 (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = %Self.ref.loc188_12 (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_52: type = array_type %.loc188_51, %Self.3 [symbolic = %.loc188_52 (constants.%.15)]
-// CHECK:STDOUT:     %return.var: ref @SelfNested.%.loc188_52 (%.15) = var <return slot>
+// CHECK:STDOUT:     %return.var: ref %.15 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc188_53: %.16 = assoc_entity element0, %F.decl [template = constants.%.17]
 // CHECK:STDOUT:
@@ -876,7 +876,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc188_8.2: @SelfNested.%.loc188_38.2 (%.13)) -> @SelfNested.%.loc188_52 (%.15)
+// CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc188_8.2: @SelfNested.%.loc188_38.2 (%.13)) -> %.15
 // CHECK:STDOUT:     generic [@SelfNested.%Self: %.9];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: %.20) -> %.21;

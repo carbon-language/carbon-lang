@@ -175,8 +175,9 @@ static auto CheckRedeclParam(Context& context,
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
-      new_param_ref.type_id() !=
-          SubstType(context, prev_param_ref.type_id(), substitutions)) {
+      !context.types().EqualAcrossDeclarations(
+          new_param_ref.type_id(),
+          SubstType(context, prev_param_ref.type_id(), substitutions))) {
     diagnose();
     return false;
   }

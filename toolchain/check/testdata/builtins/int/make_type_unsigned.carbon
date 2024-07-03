@@ -181,7 +181,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
-// CHECK:STDOUT:     @Symbolic.%return: ref file.%int.make_type_unsigned.loc14_29 (%.6) = var <return slot>
+// CHECK:STDOUT:     @Symbolic.%return: ref %.6 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -201,10 +201,10 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: file.%int.make_type_unsigned.loc14_29 (%.6)) -> file.%int.make_type_unsigned.loc14_29 (%.6)
+// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: file.%int.make_type_unsigned.loc14_29 (%.6)) -> %.6
 // CHECK:STDOUT:     generic [%N: i32] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: file.%int.make_type_unsigned.loc14_29 (%.6) = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %.6 = name_ref x, %x
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

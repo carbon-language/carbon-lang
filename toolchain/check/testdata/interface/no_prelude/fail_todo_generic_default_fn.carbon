@@ -57,7 +57,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %Self.ref.loc22_35: <unexpected instref inst+38> (%.2) = name_ref Self, @I.%Self [symbolic = %Self.ref.loc22_24 (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_35.1: type = facet_type_access %Self.ref.loc22_35 [symbolic = %Self.ref.loc22_24 (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_35.2: type = converted %Self.ref.loc22_35, %.loc22_35.1 [symbolic = %Self.ref.loc22_24 (constants.%Self)]
-// CHECK:STDOUT:     @.1.%return: ref file.%Self.ref.loc22_24 (%Self) = var <return slot>
+// CHECK:STDOUT:     @.1.%return: ref %Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,7 +73,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %Self.ref.loc13_25: %.2 = name_ref Self, %Self [symbolic = %Self.ref.loc13_14 (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_25.1: type = facet_type_access %Self.ref.loc13_25 [symbolic = %Self.ref.loc13_14 (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_25.2: type = converted %Self.ref.loc13_25, %.loc13_25.1 [symbolic = %Self.ref.loc13_14 (constants.%Self)]
-// CHECK:STDOUT:     %return.var: ref @I.%Self.ref.loc13_14 (%Self) = var <return slot>
+// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_29: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -83,13 +83,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@I.%self.loc13_8.2: @I.%Self.ref.loc13_14 (%Self)]() -> @I.%Self.ref.loc13_14 (%Self)
+// CHECK:STDOUT: fn @F[@I.%self.loc13_8.2: @I.%Self.ref.loc13_14 (%Self)]() -> %Self
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type, @I.%Self: %.2];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%self: file.%Self.ref.loc22_24 (%Self)]() -> file.%Self.ref.loc22_24 (%Self)
+// CHECK:STDOUT: fn @.1[%self: file.%Self.ref.loc22_24 (%Self)]() -> %Self
 // CHECK:STDOUT:     generic [file.%T.loc22_6.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: file.%Self.ref.loc22_24 (%Self) = name_ref self, %self
+// CHECK:STDOUT:   %self.ref: %Self = name_ref self, %self
 // CHECK:STDOUT:   return %self.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
