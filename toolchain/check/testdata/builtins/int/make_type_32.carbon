@@ -35,7 +35,8 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Int = %Int.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
 // CHECK:STDOUT:     @Int.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
@@ -58,8 +59,10 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref ir1, inst+3, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref ir1, inst+4, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, %import_ref [template = constants.%Int]
 // CHECK:STDOUT:   %int.make_type_32: init type = call %Int.ref() [template = i32]
 // CHECK:STDOUT:   %.loc6_12.1: type = value_of_initializer %int.make_type_32 [template = i32]

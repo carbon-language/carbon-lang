@@ -20,7 +20,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: filename:        raw_and_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {node_id: <invalid>, is_export: false}
+// CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}

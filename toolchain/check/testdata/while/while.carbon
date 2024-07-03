@@ -49,7 +49,8 @@ fn While() {
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Cond.decl: %Cond.type = fn_decl @Cond [template = constants.%Cond] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]

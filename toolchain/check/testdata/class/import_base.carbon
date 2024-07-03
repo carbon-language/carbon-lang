@@ -61,10 +61,11 @@ fn Run() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Child = %Child.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %Child.decl: type = class_decl @Child [template = constants.%Child] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,17 +145,19 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+37, loaded [template = constants.%Child]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+38, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir1, inst+7, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref ir1, inst+26, loaded [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir1, inst+8, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref ir1, inst+27, loaded [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+34, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+43, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {

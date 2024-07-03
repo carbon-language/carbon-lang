@@ -37,7 +37,8 @@ fn Test() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Test = %Test.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

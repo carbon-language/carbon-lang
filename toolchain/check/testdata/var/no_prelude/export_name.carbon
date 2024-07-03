@@ -73,6 +73,7 @@ var w: () = v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir1, inst+5, loaded
 // CHECK:STDOUT:   %v: ref %.1 = export v, %import_ref
 // CHECK:STDOUT: }
@@ -89,7 +90,8 @@ var w: () = v;
 // CHECK:STDOUT:     .v = %import_ref
 // CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir1, inst+3, loaded [template = <error>]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir1, inst+4, loaded [template = <error>]
 // CHECK:STDOUT:   %.loc15_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %w.var: ref %.1 = var w

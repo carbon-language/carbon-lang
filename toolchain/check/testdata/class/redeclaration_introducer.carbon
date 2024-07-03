@@ -32,7 +32,8 @@ abstract class C {}
 // CHECK:STDOUT:     .B = %B.decl.loc12
 // CHECK:STDOUT:     .C = %C.decl.loc13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C.decl.loc13: type = class_decl @C [template = constants.%C] {}

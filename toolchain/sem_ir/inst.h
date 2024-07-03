@@ -310,6 +310,11 @@ struct LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
   }
 
+  template <typename InstT>
+  static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
+    return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
+  }
+
   // Construction for the common case with a typed node.
   template <typename InstT>
     requires(Internal::HasNodeId<InstT>)

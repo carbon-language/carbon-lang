@@ -507,6 +507,11 @@ auto HandleImplDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   FatalErrorIfEncountered(inst);
 }
 
+auto HandleImportDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                      SemIR::ImportDecl inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
 auto HandleImportRefUnloaded(FunctionContext& /*context*/,
                              SemIR::InstId /*inst_id*/,
                              SemIR::ImportRefUnloaded inst) -> void {

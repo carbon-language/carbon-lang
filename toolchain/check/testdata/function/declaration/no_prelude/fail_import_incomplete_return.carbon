@@ -181,6 +181,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     .Call = %import_ref.7
 // CHECK:STDOUT:     .CallFAndGIncomplete = %CallFAndGIncomplete.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3: %ReturnCUnused.type = import_ref ir1, inst+7, loaded [template = constants.%ReturnCUnused]

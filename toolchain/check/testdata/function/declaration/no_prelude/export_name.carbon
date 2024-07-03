@@ -67,6 +67,7 @@ var f: () = F();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref: %F.type = import_ref ir1, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT:   %F: %F.type = export F, %import_ref [template = constants.%F]
 // CHECK:STDOUT: }
@@ -86,7 +87,8 @@ var f: () = F();
 // CHECK:STDOUT:     .F = %import_ref
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref ir1, inst+6, loaded [template = constants.%F]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref ir1, inst+7, loaded [template = constants.%F]
 // CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f

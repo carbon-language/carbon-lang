@@ -548,6 +548,15 @@ struct ImplDecl {
   InstBlockId decl_block_id;
 };
 
+// An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
+// correspondence with actual `import`s isn't guaranteed.
+struct ImportDecl {
+  static constexpr auto Kind =
+      InstKind::ImportDecl.Define<Parse::ImportDeclId>("import");
+
+  NameId package_id;
+};
+
 // Common representation for all kinds of `ImportRef*` node.
 struct AnyImportRef {
   static constexpr InstKind Kinds[] = {InstKind::ImportRefUnloaded,

@@ -74,7 +74,8 @@ var y2: bool = false or true;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:     .y2 = %y2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc23_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc23_9.2: type = converted %.loc23_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x

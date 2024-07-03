@@ -92,6 +92,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+12, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+14, loaded [template = constants.%C]

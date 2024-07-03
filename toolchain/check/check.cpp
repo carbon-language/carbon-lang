@@ -53,6 +53,8 @@ struct UnitInfo {
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
     Parse::ImportDeclId node_id;
+    // The associated `import` instruction. Only valid once a file is checked.
+    SemIR::InstId import_decl_id = SemIR::InstId::Invalid;
     // Whether there's an import that failed to load.
     bool has_load_error = false;
     // The list of valid imports.
@@ -101,6 +103,7 @@ struct UnitInfo {
 // Collects direct imports, for CollectTransitiveImports.
 static auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
                                  llvm::MutableArrayRef<int> ir_to_result_index,
+                                 SemIR::InstId import_decl_id,
                                  const UnitInfo::PackageImports& imports,
                                  bool is_local) -> void {
   for (const auto& import : imports.imports) {
@@ -112,22 +115,18 @@ static auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
       continue;
     }
     index = results.size();
-    results.push_back(
-        // TODO: For !is_local, should this use something valid that points at
-        // the API's import? That would probably require something other than a
-        // node_id, such as a LocId.
-        {.node_id = is_local ? import.names.node_id : Parse::InvalidNodeId(),
-         .sem_ir = &direct_ir,
-         // Only tag exports in API files, ignoring the value in implementation
-         // files.
-         .is_export = is_local && import.names.is_export});
+    results.push_back({.decl_id = import_decl_id,
+                       // Only tag exports in API files, ignoring the value in
+                       // implementation files.
+                       .is_export = is_local && import.names.is_export,
+                       .sem_ir = &direct_ir});
   }
 }
 
 // Collects transitive imports, handling deduplication. These will be unified
 // between local_imports and api_imports.
 static auto CollectTransitiveImports(
-    const UnitInfo::PackageImports* local_imports,
+    SemIR::InstId import_decl_id, const UnitInfo::PackageImports* local_imports,
     const UnitInfo::PackageImports* api_imports, int total_ir_count)
     -> llvm::SmallVector<SemIR::ImportIR> {
   llvm::SmallVector<SemIR::ImportIR> results;
@@ -140,11 +139,13 @@ static auto CollectTransitiveImports(
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
   if (local_imports) {
-    CollectDirectImports(results, ir_to_result_index, *local_imports,
+    CollectDirectImports(results, ir_to_result_index, import_decl_id,
+                         *local_imports,
                          /*is_local=*/true);
   }
   if (api_imports) {
-    CollectDirectImports(results, ir_to_result_index, *api_imports,
+    CollectDirectImports(results, ir_to_result_index, import_decl_id,
+                         *api_imports,
                          /*is_local=*/false);
   }
 
@@ -167,9 +168,9 @@ static auto CollectTransitiveImports(
         // TODO: In the case of a recursive `export import`, this only points at
         // the outermost import. May want something that better reflects the
         // recursion.
-        results.push_back({.node_id = results[direct_index].node_id,
-                           .sem_ir = indirect_ir.sem_ir,
-                           .is_export = is_export});
+        results.push_back({.decl_id = results[direct_index].decl_id,
+                           .is_export = is_export,
+                           .sem_ir = indirect_ir.sem_ir});
       } else if (is_export) {
         results[indirect_index].is_export = true;
       }
@@ -201,8 +202,8 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
 
   ImportLibrariesFromCurrentPackage(
       context, namespace_type_id,
-      CollectTransitiveImports(&self_import, /*api_imports=*/nullptr,
-                               total_ir_count));
+      CollectTransitiveImports(self_import.import_decl_id, &self_import,
+                               /*api_imports=*/nullptr, total_ir_count));
 
   context.scope_stack().Push(
       package_inst_id, SemIR::NameScopeId::Package,
@@ -253,40 +254,49 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
 
   for (auto [i, api_imports_entry] : llvm::enumerate(api_imports_list)) {
     // These variables are updated after figuring out which imports are present.
-    Parse::ImportDeclId node_id = Parse::InvalidNodeId();
+    auto import_decl_id = SemIR::InstId::Invalid;
     IdentifierId package_id = IdentifierId::Invalid;
     bool has_load_error = false;
 
     // Identify the local package imports if present.
-    const UnitInfo::PackageImports* local_imports = nullptr;
+    UnitInfo::PackageImports* local_imports = nullptr;
     if (i < unit_info.package_imports.size()) {
       local_imports = &unit_info.package_imports[i];
       if (!local_imports->package_id.is_valid()) {
         // Skip the current package.
         continue;
       }
-      node_id = local_imports->node_id;
+      import_decl_id = local_imports->import_decl_id;
+
       package_id = local_imports->package_id;
       has_load_error |= local_imports->has_load_error;
     }
 
     // Identify the API package imports if present.
-    const UnitInfo::PackageImports* api_imports = nullptr;
+    UnitInfo::PackageImports* api_imports = nullptr;
     if (api_imports_entry.second != -1) {
       api_imports =
           &unit_info.api_for_impl->package_imports[api_imports_entry.second];
-      if (!package_id.is_valid()) {
-        package_id = api_imports_entry.first;
-      } else {
+
+      if (local_imports) {
         CARBON_CHECK(package_id == api_imports_entry.first);
+      } else {
+        auto import_ir_inst_id = context.import_ir_insts().Add(
+            {.ir_id = SemIR::ImportIRId::ApiForImpl,
+             .inst_id = api_imports->import_decl_id});
+        import_decl_id = context.AddInst<SemIR::ImportDecl>(
+            import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
+                                    api_imports_entry.first)});
+        package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;
     }
 
     // Do the actual import.
     ImportLibrariesFromOtherPackage(
-        context, namespace_type_id, node_id, package_id,
-        CollectTransitiveImports(local_imports, api_imports, total_ir_count),
+        context, namespace_type_id, import_decl_id, package_id,
+        CollectTransitiveImports(import_decl_id, local_imports, api_imports,
+                                 total_ir_count),
         has_load_error);
   }
 }
@@ -338,14 +348,33 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   // If there is an implicit `api` import, set it first so that it uses the
   // ImportIRId::ApiForImpl when processed for imports.
   if (unit_info.api_for_impl) {
-    auto node_id = context.parse_tree().packaging_decl()->names.node_id;
-    const auto& api_sem_ir = **unit_info.api_for_impl->unit->sem_ir;
-    ImportApiFile(context, namespace_type_id, node_id, api_sem_ir);
+    const auto& names = context.parse_tree().packaging_decl()->names;
+    auto import_decl_id = context.AddInst<SemIR::ImportDecl>(
+        names.node_id,
+        {.package_id = SemIR::NameId::ForIdentifier(names.package_id)});
+    SetApiImportIR(context,
+                   {.decl_id = import_decl_id,
+                    .is_export = false,
+                    .sem_ir = &**unit_info.api_for_impl->unit->sem_ir});
   } else {
     SetApiImportIR(context,
-                   {.node_id = Parse::InvalidNodeId(), .sem_ir = nullptr});
+                   {.decl_id = SemIR::InstId::Invalid, .sem_ir = nullptr});
   }
 
+  // Add import instructions for everything directly imported. Implicit imports
+  // are handled separately.
+  for (auto& package_imports : unit_info.package_imports) {
+    CARBON_CHECK(!package_imports.import_decl_id.is_valid());
+    package_imports.import_decl_id = context.AddInst<SemIR::ImportDecl>(
+        package_imports.node_id, {.package_id = SemIR::NameId::ForIdentifier(
+                                      package_imports.package_id)});
+  }
+
+  // Process the imports.
+  if (unit_info.api_for_impl) {
+    ImportApiFile(context, namespace_type_id,
+                  **unit_info.api_for_impl->unit->sem_ir);
+  }
   ImportCurrentPackage(context, unit_info, total_ir_count, package_inst_id,
                        namespace_type_id);
   CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);

@@ -75,7 +75,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+13> [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+14> [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_type @AddWith, (%C) [template]
@@ -91,6 +91,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %import_ref.1
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded

@@ -26,7 +26,8 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .UnknownBuiltin = %UnknownBuiltin.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %UnknownBuiltin.decl: %UnknownBuiltin.type = fn_decl @UnknownBuiltin [template = constants.%UnknownBuiltin] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

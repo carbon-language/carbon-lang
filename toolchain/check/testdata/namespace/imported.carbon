@@ -43,7 +43,8 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ChildNS = %ChildNS
 // CHECK:STDOUT:     .A = %A.decl
@@ -78,18 +79,21 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     .package_a = %package_a
 // CHECK:STDOUT:     .package_b = %package_b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir0, inst+2, loaded
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir0, inst+3, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = %import_ref.2
 // CHECK:STDOUT:     .ChildNS = %ChildNS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref ir0, inst+4, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir0, inst+3, loaded
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref ir0, inst+5, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir0, inst+4, loaded
 // CHECK:STDOUT:   %ChildNS: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .B = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: %B.type = import_ref ir0, inst+8, loaded [template = constants.%B]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref.4: %B.type = import_ref ir0, inst+9, loaded [template = constants.%B]
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a

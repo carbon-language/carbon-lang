@@ -55,7 +55,8 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .CallA = %CallA.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %OuterN: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .InnerN = %InnerN
 // CHECK:STDOUT:     .B = %B.decl

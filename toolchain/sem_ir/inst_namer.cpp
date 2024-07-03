@@ -450,6 +450,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         break;
       }
+      case CARBON_KIND(ImportDecl inst): {
+        if (inst.package_id.is_valid()) {
+          add_inst_name_id(inst.package_id, ".import");
+        } else {
+          add_inst_name("default.import");
+        }
+        break;
+      }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
         add_inst_name("import_ref");

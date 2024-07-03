@@ -53,7 +53,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     .HasF = %HasF.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
@@ -121,22 +122,24 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     .Impl = %Impl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir8, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir8, inst+11, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir8, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir8, inst+22, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir8, inst+13, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Impl.import = import Impl
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Impl: <namespace> = namespace %Impl.import, [template] {}
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir8, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir8, inst+12, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir8, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir8, inst+23, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir8, inst+14, loaded [template = constants.%C]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %import_ref.6 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc4_6.1: %C = param c
 // CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir8, inst+2, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir8, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir8, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir8, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {

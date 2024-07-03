@@ -1244,6 +1244,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ImplDecl::Kind:
+    case SemIR::ImportDecl::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
@@ -1254,7 +1255,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
 
     case SemIR::ImportRefUnloaded::Kind:
       CARBON_FATAL()
-          << "ImportRefUnloaded should be loaded before TryEvalInst.";
+          << "ImportRefUnloaded should be loaded before TryEvalInst: " << inst;
   }
   return SemIR::ConstantId::NotConstant;
 }

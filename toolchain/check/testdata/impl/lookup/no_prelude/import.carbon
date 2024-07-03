@@ -118,7 +118,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     .Impl = %Impl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Impl.import = import Impl
+// CHECK:STDOUT:   %Impl: <namespace> = namespace %Impl.import, [template] {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir1, inst+10, loaded [template = constants.%.6]
