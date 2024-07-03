@@ -61,12 +61,7 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
       SemIR::LocIdAndInst(import_ir_inst_id, inst));
 
-  // We can't insert this instruction into whatever block we happen to be in,
-  // because this function is typically called by name lookup in the middle of
-  // an otherwise unknown checking step. But we need to add the instruction
-  // somewhere, because it's referenced by other instructions and needs to be
-  // visible in textual IR. Adding it to the file block is arbitrary but is the
-  // best place we have right now.
+  // ImportRefs have a dedicated block.
   context.import_ref_ids().push_back(import_ref_id);
   return import_ref_id;
 }
