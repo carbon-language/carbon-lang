@@ -217,8 +217,6 @@ struct CompileTimeBindIndex : public IndexBase,
 
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
-// Note that InvalidIndex - 1 and InvalidIndex - 2 are used by
-// DenseMapInfo<BindNameInfo>.
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -738,25 +736,5 @@ struct LocId : public IdBase, public Printable<LocId> {
 constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 
 }  // namespace Carbon::SemIR
-
-// Support use of Id types as DenseMap/DenseSet keys.
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::ConstantId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::ConstantId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::InstBlockId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NameId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NameId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::TypeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::TypeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

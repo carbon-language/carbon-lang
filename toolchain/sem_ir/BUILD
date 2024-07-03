@@ -19,6 +19,7 @@ cc_library(
     hdrs = ["block_value_store.h"],
     deps = [
         "//common:hashing",
+        "//common:set",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",
@@ -117,6 +118,7 @@ cc_library(
         "//common:enum_base",
         "//common:error",
         "//common:hashing",
+        "//common:map",
         "//common:set",
         "//toolchain/base:kind_switch",
         "//toolchain/base:value_store",

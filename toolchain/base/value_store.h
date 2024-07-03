@@ -8,11 +8,10 @@
 #include <type_traits>
 
 #include "common/check.h"
-#include "common/hashing.h"
 #include "common/ostream.h"
+#include "common/set.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -76,26 +75,6 @@ struct FloatId : public IdBase, public Printable<FloatId> {
   }
 };
 constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
-
-// DenseMapInfo for llvm::APFloat, for use in the canonical float value store.
-// LLVM has an implementation of this but it strangely lives in the non-public
-// header lib/IR/LLVMContextImpl.h, so we use our own.
-// TODO: Remove this once our new hash table is available.
-struct APFloatDenseMapInfo {
-  static auto getEmptyKey() -> llvm::APFloat {
-    return llvm::APFloat(llvm::APFloat::Bogus(), 1);
-  }
-  static auto getTombstoneKey() -> llvm::APFloat {
-    return llvm::APFloat(llvm::APFloat::Bogus(), 2);
-  }
-  static auto getHashValue(const llvm::APFloat& val) -> unsigned {
-    return hash_value(val);
-  }
-  static auto isEqual(const llvm::APFloat& lhs, const llvm::APFloat& rhs)
-      -> bool {
-    return lhs.bitwiseIsEqual(rhs);
-  }
-};
 
 // Corresponds to a Real value.
 struct RealId : public IdBase, public Printable<RealId> {
@@ -220,28 +199,25 @@ class ValueStore
 // to later retrieve the value.
 //
 // IdT::ValueType must represent the type being indexed.
-template <typename IdT,
-          typename DenseMapInfoT = llvm::DenseMapInfo<typename IdT::ValueType>>
+template <typename IdT>
 class CanonicalValueStore {
  public:
   using ValueType = typename IdT::ValueType;
 
   // Stores a canonical copy of the value and returns an ID to reference it.
-  auto Add(ValueType value) -> IdT {
-    auto [it, added] = map_.insert({value, IdT::Invalid});
-    if (added) {
-      it->second = values_.Add(value);
-    }
-    return it->second;
-  }
+  auto Add(ValueType value) -> IdT;
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> const ValueType& { return values_.Get(id); }
 
   // Reserves space.
   auto Reserve(size_t size) -> void {
+    // Compute the resulting new insert count using the size of values -- the
+    // set doesn't have a fast to compute current size.
+    if (size > values_.size()) {
+      set_.GrowForInsertCount(size - values_.size(), KeyContext(values_));
+    }
     values_.Reserve(size);
-    map_.reserve(size);
   }
 
   // These are to support printable structures, and are not guaranteed.
@@ -255,17 +231,33 @@ class CanonicalValueStore {
   auto size() const -> size_t { return values_.size(); }
 
  private:
-  // We store two copies of each value: one in the ValueStore for fast mapping
-  // from IdT to value, and another in the DenseMap for the reverse mapping.
-  //
-  // We could avoid this by storing the map instead as a DenseSet<IdT>, but
-  // there's no way to provide a DenseMapInfo that looks the IDs up in the
-  // vector.
-  //
-  // TODO: Switch to a better representation that avoids the duplication.
+  class KeyContext;
+
   ValueStore<IdT> values_;
-  llvm::DenseMap<ValueType, IdT, DenseMapInfoT> map_;
+  Set<IdT, /*SmallSize=*/0, KeyContext> set_;
 };
+
+template <typename IdT>
+class CanonicalValueStore<IdT>::KeyContext
+    : public TranslatingKeyContext<KeyContext> {
+ public:
+  explicit KeyContext(llvm::ArrayRef<ValueType> values) : values_(values) {}
+
+  // Note that it is safe to return a `const` reference here as the underlying
+  // object's lifetime is provided by the `store_`.
+  auto TranslateKey(IdT id) const -> const ValueType& {
+    return values_[id.index];
+  }
+
+ private:
+  llvm::ArrayRef<ValueType> values_;
+};
+
+template <typename IdT>
+auto CanonicalValueStore<IdT>::Add(ValueType value) -> IdT {
+  auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
+  return set_.Insert(value, make_key, KeyContext(values_.array_ref())).key();
+}
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is
 // allocated.
@@ -275,14 +267,7 @@ class CanonicalValueStore<StringId>
  public:
   // Returns an ID to reference the value. May return an existing ID if the
   // string was previously added.
-  auto Add(llvm::StringRef value) -> StringId {
-    auto [it, inserted] = map_.insert({value, StringId(values_.size())});
-    if (inserted) {
-      CARBON_CHECK(it->second.index >= 0) << "Too many unique strings";
-      values_.push_back(value);
-    }
-    return it->second;
-  }
+  auto Add(llvm::StringRef value) -> StringId;
 
   // Returns the value for an ID.
   auto Get(StringId id) const -> llvm::StringRef {
@@ -291,12 +276,7 @@ class CanonicalValueStore<StringId>
   }
 
   // Returns an ID for the value, or Invalid if not found.
-  auto Lookup(llvm::StringRef value) const -> StringId {
-    if (auto it = map_.find(value); it != map_.end()) {
-      return it->second;
-    }
-    return StringId::Invalid;
-  }
+  auto Lookup(llvm::StringRef value) const -> StringId;
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
@@ -309,11 +289,46 @@ class CanonicalValueStore<StringId>
   auto size() const -> size_t { return values_.size(); }
 
  private:
-  llvm::DenseMap<llvm::StringRef, StringId> map_;
-  // Set inline size to 0 because these will typically be too large for the
+  class KeyContext;
+
+  // Set inline sizes to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
+  Set<StringId, /*SmallSize=*/0, KeyContext> set_;
   llvm::SmallVector<llvm::StringRef, 0> values_;
 };
+
+class CanonicalValueStore<StringId>::KeyContext
+    : public TranslatingKeyContext<KeyContext> {
+ public:
+  explicit KeyContext(llvm::ArrayRef<llvm::StringRef> values)
+      : values_(values) {}
+
+  auto TranslateKey(StringId id) const -> llvm::StringRef {
+    return values_[id.index];
+  }
+
+ private:
+  llvm::ArrayRef<llvm::StringRef> values_;
+};
+
+inline auto CanonicalValueStore<StringId>::Add(llvm::StringRef value)
+    -> StringId {
+  auto make_key = [&] {
+    auto id = static_cast<StringId>(values_.size());
+    CARBON_CHECK(id.index >= 0) << "Too many unique strings";
+    values_.push_back(value);
+    return id;
+  };
+  return set_.Insert(value, make_key, KeyContext(values_)).key();
+}
+
+inline auto CanonicalValueStore<StringId>::Lookup(llvm::StringRef value) const
+    -> StringId {
+  if (auto result = set_.Lookup(value, KeyContext(values_))) {
+    return result.key();
+  }
+  return StringId::Invalid;
+}
 
 // A thin wrapper around a `ValueStore<StringId>` that provides a different IdT,
 // while using a unified storage for values. This avoids potentially
@@ -344,7 +359,7 @@ class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
   CanonicalValueStore<StringId>* values_;
 };
 
-using FloatValueStore = CanonicalValueStore<FloatId, APFloatDenseMapInfo>;
+using FloatValueStore = CanonicalValueStore<FloatId>;
 
 // Stores that will be used across compiler phases for a given compilation unit.
 // This is provided mainly so that they don't need to be passed separately.
@@ -403,15 +418,5 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
 };
 
 }  // namespace Carbon
-
-// Support use of IdentifierId as DenseMap/DenseSet keys.
-// TODO: Remove once NameId is used in checking.
-template <>
-struct llvm::DenseMapInfo<Carbon::IdentifierId>
-    : public Carbon::IndexMapInfo<Carbon::IdentifierId> {};
-// Support use of StringId as DenseMap/DenseSet keys.
-template <>
-struct llvm::DenseMapInfo<Carbon::StringId>
-    : public Carbon::IndexMapInfo<Carbon::StringId> {};
 
 #endif  // CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_

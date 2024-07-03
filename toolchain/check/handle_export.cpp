@@ -78,8 +78,8 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
   // diagnostic and so that cross-package imports can find it easily.
   auto bind_name = context.bind_names().Get(import_ref->bind_name_id);
   auto& parent_scope = context.name_scopes().Get(bind_name.parent_scope_id);
-  auto it = parent_scope.name_map.find(bind_name.name_id);
-  auto& scope_inst_id = parent_scope.names[it->second].inst_id;
+  auto lookup = parent_scope.name_map.Lookup(bind_name.name_id);
+  auto& scope_inst_id = parent_scope.names[lookup.value()].inst_id;
   CARBON_CHECK(scope_inst_id == inst_id);
   scope_inst_id = export_id;
 

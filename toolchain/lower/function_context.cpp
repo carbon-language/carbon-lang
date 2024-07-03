@@ -21,20 +21,19 @@ FunctionContext::FunctionContext(FileContext& file_context,
 
 auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
     -> llvm::BasicBlock* {
-  llvm::BasicBlock*& entry = blocks_[block_id];
-  if (!entry) {
+  auto result = blocks_.Insert(block_id, [&] {
     llvm::StringRef label_name;
     if (const auto* inst_namer = file_context_->inst_namer()) {
       label_name = inst_namer->GetUnscopedLabelFor(block_id);
     }
-    entry = llvm::BasicBlock::Create(llvm_context(), label_name, function_);
-  }
-  return entry;
+    return llvm::BasicBlock::Create(llvm_context(), label_name, function_);
+  });
+  return result.value();
 }
 
 auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
                                       llvm::BasicBlock* block) -> bool {
-  if (!blocks_.insert({block_id, block}).second) {
+  if (!blocks_.Insert(block_id, block).is_inserted()) {
     return false;
   }
   if (block == synthetic_block_) {

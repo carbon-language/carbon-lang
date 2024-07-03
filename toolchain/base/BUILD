@@ -40,6 +40,7 @@ cc_library(
         "//common:check",
         "//common:hashing",
         "//common:ostream",
+        "//common:set",
         "@llvm-project//llvm:Support",
     ],
 )

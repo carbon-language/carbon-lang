@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 
-#include "llvm/ADT/DenseMap.h"
+#include "common/map.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -58,13 +58,10 @@ class ImplStore {
   // `Impl` if none exists.
   // TODO: Handle parameters.
   auto LookupOrAdd(TypeId self_id, TypeId constraint_id) -> ImplId {
-    auto [it, added] =
-        lookup_.insert({{self_id, constraint_id}, ImplId::Invalid});
-    if (added) {
-      it->second =
-          values_.Add({.self_id = self_id, .constraint_id = constraint_id});
-    }
-    return it->second;
+    auto result = lookup_.Insert(std::pair{self_id, constraint_id}, [&]() {
+      return values_.Add({.self_id = self_id, .constraint_id = constraint_id});
+    });
+    return result.value();
   }
 
   // Returns a mutable value for an ID.
@@ -82,7 +79,7 @@ class ImplStore {
 
  private:
   ValueStore<ImplId> values_;
-  llvm::DenseMap<std::pair<TypeId, TypeId>, ImplId> lookup_;
+  Map<std::pair<TypeId, TypeId>, ImplId> lookup_;
 };
 
 }  // namespace Carbon::SemIR

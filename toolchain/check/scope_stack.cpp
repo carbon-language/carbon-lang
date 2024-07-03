@@ -39,12 +39,12 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
 auto ScopeStack::Pop() -> void {
   auto scope = scope_stack_.pop_back_val();
 
-  for (const auto& str_id : scope.names) {
+  scope.names.ForEach([&](SemIR::NameId str_id) {
     auto& lexical_results = lexical_lookup_.Get(str_id);
     CARBON_CHECK(lexical_results.back().scope_index == scope.index)
         << "Inconsistent scope index for name " << str_id;
     lexical_results.pop_back();
-  }
+  });
 
   if (scope.scope_id.is_valid()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
@@ -120,12 +120,13 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
 
 auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
     -> SemIR::InstId {
-  if (!scope_stack_.back().names.insert(name_id).second) {
+  if (!scope_stack_.back().names.Insert(name_id).is_inserted()) {
     auto existing = lexical_lookup_.Get(name_id).back().inst_id;
     CARBON_CHECK(existing.is_valid())
         << "Name in scope but not in lexical lookups";
     return existing;
   }
+  ++scope_stack_.back().num_names;
 
   // TODO: Reject if we previously performed a failed lookup for this name
   // in this scope or a scope nested within it.
@@ -166,16 +167,18 @@ auto ScopeStack::Suspend() -> SuspendedScope {
       scope_stack_.empty()
           ? 0
           : scope_stack_.back().next_compile_time_bind_index.index;
-
-  result.suspended_items.reserve(result.entry.names.size() +
+  result.suspended_items.reserve(result.entry.num_names +
                                  compile_time_binding_stack_.size() -
                                  remaining_compile_time_bindings);
-  for (auto name_id : result.entry.names) {
+
+  result.entry.names.ForEach([&](SemIR::NameId name_id) {
     auto [index, inst_id] = lexical_lookup_.Suspend(name_id);
     CARBON_CHECK(index !=
                  SuspendedScope::ScopeItem::IndexForCompileTimeBinding);
     result.suspended_items.push_back({.index = index, .inst_id = inst_id});
-  }
+  });
+  CARBON_CHECK(static_cast<int>(result.suspended_items.size()) ==
+               result.entry.num_names);
 
   // Move any compile-time bindings into the suspended scope.
   for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)
