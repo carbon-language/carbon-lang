@@ -633,7 +633,7 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
 // example, here is LLVM's distribution computed with `scripts/source_stats.py`
 // and rendered in an ASCII-art histogram:
 //
-//   # Unique IDs per 10 lines ## (median: 5)
+//   ## Unique IDs per 10 lines ## (median: 5, p90: 8, p95: 9, p99: 14)
 //   1 ids   [  29]  ▍
 //   2 ids   [ 282]  ███▊
 //   3 ids   [1492]  ███████████████████▉
@@ -645,7 +645,8 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
 //   9 ids   [ 301]  ████
 //   10 ids  [  98]  █▎
 //
-//   (Trimmed to only cover 1 - 10 unique IDs per 10 lines of code.)
+//   (Trimmed to only cover 1 - 10 unique IDs per 10 lines of code, 272 files
+//    with more unique IDs in the tail.)
 //
 // We have checked this distribution with several large codebases (currently
 // those at Google, happy to cross check with others) that use a similar coding
