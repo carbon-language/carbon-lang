@@ -28,6 +28,13 @@ struct Generic : public Printable<Generic> {
   // The index in this block will match the `bind_index` in the name binding
   // instruction's `BindNameInfo`.
   InstBlockId bindings_id;
+
+  // The following members are set at the end of the corresponding region of the
+  // generic.
+
+  // A block of instructions that should be evaluated to compute the values and
+  // instructions needed by the declaration of the generic.
+  InstBlockId decl_block_id = InstBlockId::Invalid;
 };
 
 // An instance of a generic entity, such as an instance of a generic function.
@@ -43,6 +50,14 @@ struct GenericInstance : Printable<GenericInstance> {
   GenericId generic_id;
   // Argument values, corresponding to the bindings in `Generic::bindings_id`.
   InstBlockId args_id;
+
+  // The following members are set when the corresponding region of the generic
+  // instance is resolved.
+
+  // The values and instructions produced by evaluating the decl block of the
+  // generic. These are the constant values and types and the instantiated
+  // template-dependent instructions needed by the declaration of this instance.
+  InstBlockId decl_block_id = InstBlockId::Invalid;
 };
 
 // Provides storage for deduplicated instances of generics.

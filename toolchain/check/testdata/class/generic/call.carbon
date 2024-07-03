@@ -125,7 +125,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
+// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -178,7 +181,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
+// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -235,7 +241,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
+// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }
@@ -290,7 +299,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32] {
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32]{
+// CHECK:STDOUT:   file.%T.loc4_13.2: type = bind_symbolic_name T 0, file.%T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%N.loc4_23.2: i32 = bind_symbolic_name N 1, file.%N.loc4_23.1 [symbolic = constants.%N]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT: }

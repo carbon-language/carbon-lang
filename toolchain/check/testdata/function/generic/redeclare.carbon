@@ -134,7 +134,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type) -> %.1
-// CHECK:STDOUT:     generic [file.%T.loc4_6.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc4_6.2: type]{
+// CHECK:STDOUT:   file.%T.loc4_6.2: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T [symbolic = constants.%.1]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -185,10 +188,18 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:     generic [%T: type, %U: type];
+// CHECK:STDOUT:     generic [%T: type, %U: type]{
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc4_16.1 [symbolic = constants.%U]
+// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T [symbolic = constants.%.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%T: type, %U: type) -> %.3
-// CHECK:STDOUT:     generic [%T: type, %U: type] {
+// CHECK:STDOUT:     generic [%T: type, %U: type]{
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc13_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc13_16.1 [symbolic = constants.%U]
+// CHECK:STDOUT:   file.%.loc13: type = ptr_type %U [symbolic = constants.%.3]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -239,10 +250,18 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:     generic [%T: type, %U: type];
+// CHECK:STDOUT:     generic [%T: type, %U: type]{
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc4_16.1 [symbolic = constants.%U.1]
+// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T.1 [symbolic = constants.%.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%U: type, %T: type) -> %.3
-// CHECK:STDOUT:     generic [%U: type, %T: type] {
+// CHECK:STDOUT:     generic [%U: type, %T: type]{
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0, file.%U.loc13_6.1 [symbolic = constants.%U.2]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 1, file.%T.loc13_16.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:   file.%.loc13: type = ptr_type %T.2 [symbolic = constants.%.3]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]
@@ -293,10 +312,18 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) -> %.1
-// CHECK:STDOUT:     generic [%T: type, %U: type];
+// CHECK:STDOUT:     generic [%T: type, %U: type]{
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc4_6.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc4_16.1 [symbolic = constants.%U.1]
+// CHECK:STDOUT:   file.%.loc4: type = ptr_type %T.1 [symbolic = constants.%.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%U: type, %T: type) -> %.3
-// CHECK:STDOUT:     generic [%U: type, %T: type] {
+// CHECK:STDOUT:     generic [%U: type, %T: type]{
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0, file.%U.loc13_6.1 [symbolic = constants.%U.2]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 1, file.%T.loc13_16.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:   file.%.loc13: type = ptr_type %U.2 [symbolic = constants.%.3]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]

@@ -47,7 +47,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%N: i32)
-// CHECK:STDOUT:     generic [%N: i32] {
+// CHECK:STDOUT:     generic [%N: i32]{
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0, file.%N.loc12_6.1 [symbolic = constants.%N]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %N.ref: i32 = name_ref N, %N [symbolic = constants.%N]

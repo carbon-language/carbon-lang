@@ -66,8 +66,12 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(@I.%T.loc12_8.2: type)
-// CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc12_8.2: type];
+// CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc12_8.2: type]{
+// CHECK:STDOUT:   @I.%T.loc12_8.2: type = bind_symbolic_name T 1, @I.%T.loc12_8.1 [symbolic = constants.%T]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(@I.%T.loc16_8.2: type)
-// CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc16_8.2: type];
+// CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc16_8.2: type]{
+// CHECK:STDOUT:   @I.%T.loc16_8.2: type = bind_symbolic_name T 1, @I.%T.loc16_8.1 [symbolic = constants.%T]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:

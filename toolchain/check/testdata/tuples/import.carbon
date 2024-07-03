@@ -161,7 +161,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C
-// CHECK:STDOUT:     generic [file.%X.loc7_9.2: %.9] {
+// CHECK:STDOUT:     generic [file.%X.loc7_9.2: %.9]{
+// CHECK:STDOUT:   file.%X.loc7_9.2: %.9 = bind_symbolic_name X 0, file.%X.loc7_9.1 [symbolic = constants.%X]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C.2
 // CHECK:STDOUT: }

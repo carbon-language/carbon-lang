@@ -122,7 +122,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: %Self]() -> i32
-// CHECK:STDOUT:     generic [@I.%Self: %.1];
+// CHECK:STDOUT:     generic [@I.%Self: %.1]{
+// CHECK:STDOUT:   @I.%Self.ref: %.1 = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc19_10.2: %C]() -> i32;
 // CHECK:STDOUT:

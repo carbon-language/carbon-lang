@@ -76,7 +76,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op[@Add.%self.loc5_9.2: %Self](@Add.%other.loc5_21.2: %Self) -> %Self
-// CHECK:STDOUT:     generic [@Add.%Self: %.1];
+// CHECK:STDOUT:     generic [@Add.%Self: %.1]{
+// CHECK:STDOUT:   @Add.%Self.ref.loc5_15: %.1 = name_ref Self, @Add.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

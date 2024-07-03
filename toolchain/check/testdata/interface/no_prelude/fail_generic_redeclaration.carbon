@@ -91,7 +91,9 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: interface @NotGeneric;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1
-// CHECK:STDOUT:     generic [file.%T.loc19_22.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc19_22.2: type]{
+// CHECK:STDOUT:   file.%T.loc19_22.2: type = bind_symbolic_name T 0, file.%T.loc19_22.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -100,7 +102,9 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Generic
-// CHECK:STDOUT:     generic [file.%T.loc21_19.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc21_19.2: type]{
+// CHECK:STDOUT:   file.%T.loc21_19.2: type = bind_symbolic_name T 0, file.%T.loc21_19.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
@@ -111,10 +115,14 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @DifferentParams
-// CHECK:STDOUT:     generic [file.%T.loc31_27.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc31_27.2: type]{
+// CHECK:STDOUT:   file.%T.loc31_27.2: type = bind_symbolic_name T 0, file.%T.loc31_27.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.3
-// CHECK:STDOUT:     generic [file.%T.loc38_27.2: %.2] {
+// CHECK:STDOUT:     generic [file.%T.loc38_27.2: %.2]{
+// CHECK:STDOUT:   file.%T.loc38_27.2: %.2 = bind_symbolic_name T 0, file.%T.loc38_27.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

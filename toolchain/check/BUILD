@@ -52,6 +52,7 @@ cc_library(
     deps = [
         ":node_stack",
         "//common:check",
+        "//common:map",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",

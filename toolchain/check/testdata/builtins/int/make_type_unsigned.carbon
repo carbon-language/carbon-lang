@@ -202,7 +202,10 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Symbolic(%N: i32, %x: %.6) -> %.6
-// CHECK:STDOUT:     generic [%N: i32] {
+// CHECK:STDOUT:     generic [%N: i32]{
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0, file.%N.loc14_13.1 [symbolic = constants.%N]
+// CHECK:STDOUT:   file.%int.make_type_unsigned.loc14_29: init type = call file.%UInt.ref.loc14_25(file.%N.ref.loc14_30) [symbolic = constants.%.6]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %.6 = name_ref x, %x
 // CHECK:STDOUT:   return %x.ref

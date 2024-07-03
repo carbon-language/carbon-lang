@@ -50,7 +50,9 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   file.%T.loc11_13.2: type = bind_symbolic_name T 0, file.%T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %MakeSelf.decl: %MakeSelf.type = fn_decl @MakeSelf [template = constants.%MakeSelf] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %return.var.loc14: ref %Class.2 = var <return slot>
@@ -73,13 +75,18 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeSelf() -> %Class.2
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   @Class.%Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeClass() -> %Class.2
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   @Class.%T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   @Class.%.loc15_26: init type = call @Class.%Class.ref(@Class.%T.ref) [symbolic = constants.%Class.2]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]

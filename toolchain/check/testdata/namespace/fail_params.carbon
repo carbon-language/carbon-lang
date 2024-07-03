@@ -92,7 +92,9 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [file.%T.loc39_6.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc39_6.2: type]{
+// CHECK:STDOUT:   file.%T.loc39_6.2: type = bind_symbolic_name T 0, file.%T.loc39_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

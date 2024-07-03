@@ -77,7 +77,9 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   file.%T.loc11_13.2: type = bind_symbolic_name T 0, file.%T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -96,12 +98,17 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: %Class.2](@Class.%n.loc13_20.2: %T)
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   @Class.%Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   @Class.%T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[%self: <error>](%n: <error>)
-// CHECK:STDOUT:     generic [file.%N.loc32_10.2: i32] {
+// CHECK:STDOUT:     generic [file.%N.loc32_10.2: i32]{
+// CHECK:STDOUT:   file.%N.loc32_10.2: i32 = bind_symbolic_name N 0, file.%N.loc32_10.1 [symbolic = constants.%N]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

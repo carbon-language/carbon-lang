@@ -40,7 +40,10 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type)
-// CHECK:STDOUT:     generic [%T: type, %U: type] {
+// CHECK:STDOUT:     generic [%T: type, %U: type]{
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, file.%T.loc11_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1, file.%U.loc11_16.1 [symbolic = constants.%U]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: type = ptr_type %T [symbolic = constants.%.2]

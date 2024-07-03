@@ -83,7 +83,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   file.%T.loc11_13.2: type = bind_symbolic_name T 0, file.%T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %Get.decl: %Get.type = fn_decl @Get [template = constants.%Get] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = constants.%.2]
@@ -104,7 +106,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: %.2]() -> %.3
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   @Class.%Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   @Class.%.loc12_25: type = ptr_type %Class.2 [symbolic = constants.%.2]
+// CHECK:STDOUT:   @Class.%T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   @Class.%.loc12_34: type = ptr_type %T [symbolic = constants.%.3]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_15.3
 // CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref

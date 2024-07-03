@@ -62,7 +62,9 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   file.%T.loc11_13.2: type = bind_symbolic_name T 0, file.%T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc13_14: %.2 = name_ref Self, %Self [symbolic = constants.%Self]
@@ -84,10 +86,15 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[@I.%self.loc13_8.2: %Self]() -> %Self
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type, @I.%Self: %.2];
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type, @I.%Self: %.2]{
+// CHECK:STDOUT:   @I.%Self.ref.loc13_14: %.2 = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[%self: %Self]() -> %Self
-// CHECK:STDOUT:     generic [file.%T.loc22_6.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc22_6.2: type]{
+// CHECK:STDOUT:   file.%T.loc22_6.2: type = bind_symbolic_name T 0, file.%T.loc22_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%Self.ref.loc22_24: %.2 = name_ref Self, @I.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Self = name_ref self, %self
 // CHECK:STDOUT:   return %self.ref

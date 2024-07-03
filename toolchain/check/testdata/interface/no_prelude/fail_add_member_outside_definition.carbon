@@ -80,7 +80,7 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inner
-// CHECK:STDOUT:     generic [@Outer.%Self: %.3] {
+// CHECK:STDOUT:     generic [@Outer.%Self: %.3]{} {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {}
 // CHECK:STDOUT:
@@ -96,8 +96,8 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [@Outer.%Self: %.3, @Inner.%Self: %.4];
+// CHECK:STDOUT:     generic [@Outer.%Self: %.3, @Inner.%Self: %.4]{};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2()
-// CHECK:STDOUT:     generic [@Outer.%Self: %.3];
+// CHECK:STDOUT:     generic [@Outer.%Self: %.3]{};
 // CHECK:STDOUT:

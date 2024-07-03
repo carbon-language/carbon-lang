@@ -67,7 +67,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
+// CHECK:STDOUT:     generic [@Interface.%Self: %.1]{};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:

@@ -114,7 +114,9 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Generic
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type]{
+// CHECK:STDOUT:   file.%T.loc4_15.2: type = bind_symbolic_name T 0, file.%T.loc4_15.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Generic.2
 // CHECK:STDOUT: }
@@ -147,7 +149,9 @@ class E(U:! type) {}
 // CHECK:STDOUT: class @A;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type]{
+// CHECK:STDOUT:   file.%T.loc12_9.2: type = bind_symbolic_name T 0, file.%T.loc12_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -194,10 +198,15 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B
-// CHECK:STDOUT:     generic [file.%N.loc4_9.2: i32];
+// CHECK:STDOUT:     generic [file.%N.loc4_9.2: i32]{
+// CHECK:STDOUT:   file.%N.loc4_9.2: i32 = bind_symbolic_name N 0, file.%N.loc4_9.1 [symbolic = constants.%N.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type, file.%N.loc12_19.2: %T] {
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type, file.%N.loc12_19.2: %T]{
+// CHECK:STDOUT:   file.%T.loc12_9.2: type = bind_symbolic_name T 0, file.%T.loc12_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%N.loc12_19.2: %T = bind_symbolic_name N 1, file.%N.loc12_19.1 [symbolic = constants.%N.2]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -244,10 +253,15 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type]{
+// CHECK:STDOUT:   file.%T.loc4_9.2: type = bind_symbolic_name T 0, file.%T.loc4_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type, file.%U.loc12_19.2: i32] {
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: type, file.%U.loc12_19.2: i32]{
+// CHECK:STDOUT:   file.%T.loc12_9.2: type = bind_symbolic_name T 0, file.%T.loc12_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   file.%U.loc12_19.2: i32 = bind_symbolic_name U 1, file.%U.loc12_19.1 [symbolic = constants.%U]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -292,10 +306,14 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type]{
+// CHECK:STDOUT:   file.%T.loc4_9.2: type = bind_symbolic_name T 0, file.%T.loc4_9.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%T.loc12_9.2: i32] {
+// CHECK:STDOUT:     generic [file.%T.loc12_9.2: i32]{
+// CHECK:STDOUT:   file.%T.loc12_9.2: i32 = bind_symbolic_name T 0, file.%T.loc12_9.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
@@ -334,10 +352,14 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type];
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type]{
+// CHECK:STDOUT:   file.%T.loc4_9.2: type = bind_symbolic_name T 0, file.%T.loc4_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%U.loc11_9.2: type] {
+// CHECK:STDOUT:     generic [file.%U.loc11_9.2: type]{
+// CHECK:STDOUT:   file.%U.loc11_9.2: type = bind_symbolic_name U 0, file.%U.loc11_9.1 [symbolic = constants.%U]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }

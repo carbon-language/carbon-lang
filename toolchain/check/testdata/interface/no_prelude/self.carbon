@@ -53,5 +53,7 @@ interface UseSelf {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[@UseSelf.%self.loc12_8.2: %Self]() -> %Self
-// CHECK:STDOUT:     generic [@UseSelf.%Self: %.1];
+// CHECK:STDOUT:     generic [@UseSelf.%Self: %.1]{
+// CHECK:STDOUT:   @UseSelf.%Self.ref.loc12_14: %.1 = name_ref Self, @UseSelf.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:

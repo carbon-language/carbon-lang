@@ -97,7 +97,9 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.1[@Simple.%self.loc12_8.2: %Self]()
-// CHECK:STDOUT:     generic [@Simple.%Self: %.1];
+// CHECK:STDOUT:     generic [@Simple.%Self: %.1]{
+// CHECK:STDOUT:   @Simple.%Self.ref: %.1 = name_ref Self, @Simple.%Self [symbolic = constants.%Self]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

@@ -302,10 +302,18 @@ class Formatter {
   }
 
   auto FormatGeneric(GenericId generic_id) -> void {
+    const auto& generic = sem_ir_.generics().Get(generic_id);
+
     WrapLine();
     out_ << "generic [";
-    FormatParamList(sem_ir_.generics().Get(generic_id).bindings_id);
+    FormatParamList(generic.bindings_id);
     out_ << "]";
+
+    if (generic.decl_block_id.is_valid()) {
+      OpenBrace();
+      FormatCodeBlock(generic.decl_block_id);
+      CloseBrace();
+    }
   }
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {

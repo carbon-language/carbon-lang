@@ -845,7 +845,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@I.%Self: %.1];
+// CHECK:STDOUT:     generic [@I.%Self: %.1]{};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PossiblyF();
 // CHECK:STDOUT:
@@ -858,7 +858,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5[@J.%self.loc93_20.2: bool](@J.%b.loc93_32.2: bool) -> bool
-// CHECK:STDOUT:     generic [@J.%Self: %.6];
+// CHECK:STDOUT:     generic [@J.%Self: %.6]{};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.6[@impl.7.%self.loc104_10.2: bool]() -> bool;
 // CHECK:STDOUT:
@@ -877,7 +877,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc188_8.2: %.13) -> %.15
-// CHECK:STDOUT:     generic [@SelfNested.%Self: %.9];
+// CHECK:STDOUT:     generic [@SelfNested.%Self: %.9]{
+// CHECK:STDOUT:   @SelfNested.%Self.ref.loc188_12: %.9 = name_ref Self, @SelfNested.%Self [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   @SelfNested.%.loc188_16.3: type = ptr_type %Self.3 [symbolic = constants.%.10]
+// CHECK:STDOUT:   @SelfNested.%.loc188_37: type = struct_type {.x: %Self.3, .y: i32} [symbolic = constants.%.11]
+// CHECK:STDOUT:   @SelfNested.%.loc188_38.2: type = converted @SelfNested.%.loc188_38.1, constants.%.13 [symbolic = constants.%.13]
+// CHECK:STDOUT:   @SelfNested.%.loc188_52: type = array_type @SelfNested.%.loc188_51, %Self.3 [symbolic = constants.%.15]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: %.20) -> %.21;
 // CHECK:STDOUT:

@@ -56,7 +56,9 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface
-// CHECK:STDOUT:     generic [file.%T.loc11_28.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_28.2: type]{
+// CHECK:STDOUT:   file.%T.loc11_28.2: type = bind_symbolic_name T 0, file.%T.loc11_28.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = constants.%T]
@@ -101,10 +103,14 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: %T)
-// CHECK:STDOUT:     generic [file.%T.loc11_28.2: type, @GenericInterface.%Self: %.2];
+// CHECK:STDOUT:     generic [file.%T.loc11_28.2: type, @GenericInterface.%Self: %.2]{
+// CHECK:STDOUT:   @GenericInterface.%T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = constants.%T]
+// CHECK:STDOUT: };
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: %T)
-// CHECK:STDOUT:     generic [@C.%T.loc19_23.2: type] {
+// CHECK:STDOUT:     generic [@C.%T.loc19_23.2: type]{
+// CHECK:STDOUT:   @impl.%T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

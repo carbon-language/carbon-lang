@@ -51,7 +51,7 @@ interface I {
 // CHECK:STDOUT: impl @impl: %C as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C
-// CHECK:STDOUT:     generic [@I.%Self: %.1] {
+// CHECK:STDOUT:     generic [@I.%Self: %.1]{} {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }

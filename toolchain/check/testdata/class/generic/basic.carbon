@@ -15,6 +15,9 @@ class Class(T:! type) {
 
   // TODO: Should this work? T is not necessarily copyable.
   fn GetValue[self: Self]() -> T {
+    // CHECK:STDERR: basic.carbon:[[@LINE+3]]:5: ERROR: Cannot implicitly convert from `T` to `T`.
+    // CHECK:STDERR:     return self.k;
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~
     return self.k;
   }
 
@@ -54,7 +57,9 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   file.%T.loc11_13.2: type = bind_symbolic_name T 0, file.%T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT:   %GetAddr.decl: %GetAddr.type = fn_decl @GetAddr [template = constants.%GetAddr] {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = constants.%.2]
@@ -72,34 +77,42 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc21: %.4 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc24: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc24: %.4 = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT:   .GetAddr = %GetAddr.decl
 // CHECK:STDOUT:   .GetValue = %GetValue.decl
-// CHECK:STDOUT:   .k = %.loc21
+// CHECK:STDOUT:   .k = %.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: %.2]() -> %.3
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   @Class.%Self.ref.loc12: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   @Class.%.loc12_29: type = ptr_type %Class.2 [symbolic = constants.%.2]
+// CHECK:STDOUT:   @Class.%T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   @Class.%.loc12_38: type = ptr_type %T [symbolic = constants.%.3]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_19.3
 // CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref
-// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc24 [template = @Class.%.loc24]
 // CHECK:STDOUT:   %.loc13_17.2: ref %T = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:   %.loc13_12: %.3 = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: %Class.2]() -> %T
-// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
+// CHECK:STDOUT:     generic [file.%T.loc11_13.2: type]{
+// CHECK:STDOUT:   @Class.%Self.ref.loc17: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:   @Class.%T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class.2 = name_ref self, @Class.%self.loc17_15.2
-// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
-// CHECK:STDOUT:   %.loc18_16.1: ref %T = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc18_16.2: %T = bind_value %.loc18_16.1
-// CHECK:STDOUT:   return %.loc18_16.2
+// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc24 [template = @Class.%.loc24]
+// CHECK:STDOUT:   %.loc21_16.1: ref %T = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc21_16.2: %T = bind_value %.loc21_16.1
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -107,7 +107,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [@I.%Self: %.1] {
+// CHECK:STDOUT:     generic [@I.%Self: %.1]{} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -115,5 +115,5 @@ interface I {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(@I.%a.loc14_8.2: i32, @I.%b.loc14_16.2: i32) -> i32 = "int.sadd"
-// CHECK:STDOUT:     generic [@I.%Self: %.1];
+// CHECK:STDOUT:     generic [@I.%Self: %.1]{};
 // CHECK:STDOUT:

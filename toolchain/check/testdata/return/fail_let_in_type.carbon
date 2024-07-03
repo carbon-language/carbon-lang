@@ -55,7 +55,9 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> %y
-// CHECK:STDOUT:     generic [<unexpected instref inst+20>: type] {
+// CHECK:STDOUT:     generic [<unexpected instref inst+20>: type]{
+// CHECK:STDOUT:   <unexpected instref inst+26>: type = name_ref y, <unexpected instref inst+20> [symbolic = constants.%y]
+// CHECK:STDOUT: } {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
