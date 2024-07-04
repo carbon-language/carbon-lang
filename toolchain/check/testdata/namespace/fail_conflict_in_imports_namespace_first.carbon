@@ -25,19 +25,19 @@ fn NS() {}
 
 package Example library "namespace_then_fn";
 
-import library "namespace";
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: import library "namespace";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fn.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn NS() {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import library "namespace";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+import library "namespace";
 import library "fn";
 
 fn NS.Bar() {}
@@ -55,7 +55,8 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
@@ -80,7 +81,8 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %NS.decl: %NS.type = fn_decl @NS [template = constants.%NS] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -97,19 +99,24 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .Foo = %import_ref.2
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+3, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:     .Foo = imports.%import_ref.1
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

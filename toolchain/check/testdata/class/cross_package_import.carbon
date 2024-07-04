@@ -64,19 +64,19 @@ var c: Other.C = {};
 
 library "merge_define_extern";
 
-import Other library "define";
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "extern";
+// CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
+import Other library "define";
 import Other library "extern";
 
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
@@ -89,19 +89,19 @@ var c: Other.C = {};
 
 library "conflict";
 
-import Other library "define";
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "conflict";
+// CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
+import Other library "define";
 import Other library "conflict";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: In name lookup for `C`.
@@ -121,7 +121,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +142,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,7 +162,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,25 +182,30 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir8, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+4, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir8, inst+2, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+3, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -216,17 +224,22 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: type = import_ref ir8, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref: type = import_ref ir8, inst+2, loaded [template = constants.%C]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -250,26 +263,31 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir8, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir9, inst+3, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir8, inst+2, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir9, inst+2, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -291,26 +309,31 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir8, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir9, inst+3, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir8, inst+2, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir9, inst+2, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -39,7 +39,8 @@ class Class {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

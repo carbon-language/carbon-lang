@@ -29,7 +29,9 @@ var a: () = A();
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.loc7_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a

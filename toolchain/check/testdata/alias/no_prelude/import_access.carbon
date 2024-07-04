@@ -84,23 +84,28 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     .A [private] = %import_ref.2
-// CHECK:STDOUT:     .inst = %inst
-// CHECK:STDOUT:   }
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+5, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir0, inst+2, unloaded
-// CHECK:STDOUT:   %A.ref: type = name_ref A, %import_ref.2 [template = constants.%C]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .A [private] = imports.%import_ref.2
+// CHECK:STDOUT:     .inst = %inst
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
 // CHECK:STDOUT:   %inst: ref %C = bind_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -118,12 +123,16 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = imports.%import_ref
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
@@ -147,7 +156,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst

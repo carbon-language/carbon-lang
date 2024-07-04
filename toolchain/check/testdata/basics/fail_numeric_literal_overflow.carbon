@@ -48,6 +48,14 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: %Float.type = import_ref ir3, inst+32, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.5: %Float.type = import_ref ir3, inst+32, loaded [template = constants.%Float]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -57,26 +65,22 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     .d = @__global_init.%d
 // CHECK:STDOUT:     .e = @__global_init.%e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_8.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_8.2: type = converted %int.make_type_32.loc21, %.loc21_8.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc27_8.1: type = value_of_initializer %int.make_type_32.loc27 [template = i32]
 // CHECK:STDOUT:   %.loc27_8.2: type = converted %int.make_type_32.loc27, %.loc27_8.1 [template = i32]
 // CHECK:STDOUT:   %.loc33_8.1: i32 = int_literal 64 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.4: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %float.make_type.loc33: init type = call constants.%Float(%.loc33_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc33_8.2: type = value_of_initializer %float.make_type.loc33 [template = f64]
 // CHECK:STDOUT:   %.loc33_8.3: type = converted %float.make_type.loc33, %.loc33_8.2 [template = f64]
 // CHECK:STDOUT:   %.loc38_8.1: i32 = int_literal 64 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.5: %Float.type = import_ref ir3, inst+31, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %float.make_type.loc38: init type = call constants.%Float(%.loc38_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc38_8.2: type = value_of_initializer %float.make_type.loc38 [template = f64]
 // CHECK:STDOUT:   %.loc38_8.3: type = converted %float.make_type.loc38, %.loc38_8.2 [template = f64]

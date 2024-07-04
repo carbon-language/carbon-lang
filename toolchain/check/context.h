@@ -5,13 +5,14 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
-#include "llvm/ADT/DenseMap.h"
+#include "common/map.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
@@ -291,13 +292,7 @@ class Context {
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
-  // Finalizes the list of exports on the IR.
-  auto FinalizeExports() -> void {
-    inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
-  }
-
-  // Finalizes the initialization function (__global_init).
-  auto FinalizeGlobalInit() -> void;
+  auto Finalize() -> void;
 
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
@@ -374,13 +369,13 @@ class Context {
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
-  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
     return sem_ir().identifiers();
   }
   auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto floats() -> FloatValueStore& { return sem_ir().floats(); }
-  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
   auto bind_names() -> SemIR::BindNameStore& { return sem_ir().bind_names(); }
@@ -425,6 +420,12 @@ class Context {
 
   auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
     return definitions_required_;
+  }
+
+  auto global_init() -> GlobalInit& { return global_init_; }
+
+  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
+    return import_ref_ids_;
   }
 
  private:
@@ -496,7 +497,7 @@ class Context {
   // not clear whether that would result in more or fewer lookups.
   //
   // TODO: Should this be part of the `TypeStore`?
-  llvm::DenseMap<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
+  Map<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
@@ -513,6 +514,18 @@ class Context {
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
   llvm::SmallVector<SemIR::InstId> definitions_required_;
+
+  // State for global initialization.
+  GlobalInit global_init_;
+
+  // A list of import refs which can't be inserted into their current context.
+  // They're typically added during name lookup or import ref resolution, where
+  // the current block on inst_block_stack_ is unrelated.
+  //
+  // These are instead added here because they're referenced by other
+  // instructions and needs to be visible in textual IR.
+  // FinalizeImportRefBlock() will produce an inst block for them.
+  llvm::SmallVector<SemIR::InstId> import_ref_ids_;
 };
 
 }  // namespace Carbon::Check

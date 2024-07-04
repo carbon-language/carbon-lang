@@ -70,18 +70,22 @@ export C.n;
 // CHECK:STDOUT:   %.2: type = struct_type {.n: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:   }
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .n = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .n = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

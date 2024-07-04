@@ -24,7 +24,8 @@ var x: type = 42;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT: }

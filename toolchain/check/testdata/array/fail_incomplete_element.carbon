@@ -37,7 +37,8 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 1 [template = constants.%.1]

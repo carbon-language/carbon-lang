@@ -41,22 +41,26 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:     .InstanceCall = %InstanceCall.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_32.loc15, %.loc15_6.1 [template = i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [template = constants.%InstanceCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]

@@ -31,7 +31,8 @@ fn B() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -53,7 +54,8 @@ fn B() {}
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

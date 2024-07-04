@@ -5,7 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 
-#include "llvm/ADT/DenseSet.h"
+#include "common/array_stack.h"
+#include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/scope_index.h"
@@ -18,7 +19,7 @@ namespace Carbon::Check {
 // checking within.
 class ScopeStack {
  public:
-  explicit ScopeStack(const StringStoreWrapper<IdentifierId>& identifiers)
+  explicit ScopeStack(const CanonicalValueStore<IdentifierId>& identifiers)
       : lexical_lookup_(identifiers) {}
 
   // A scope in which `break` and `continue` can be used.
@@ -64,7 +65,7 @@ class ScopeStack {
 
   // Pops the top scope from scope_stack_ if it contains no names.
   auto PopIfEmpty() -> void {
-    if (scope_stack_.back().names.empty()) {
+    if (scope_stack_.back().num_names == 0) {
       Pop();
     }
   }
@@ -126,7 +127,7 @@ class ScopeStack {
 
   // Pushes a compile-time binding into the current scope.
   auto PushCompileTimeBinding(SemIR::InstId bind_id) -> void {
-    compile_time_binding_stack_.push_back(bind_id);
+    compile_time_binding_stack_.AppendToTop(bind_id);
   }
 
   // Temporarily removes the top of the stack and its lexical lookup results.
@@ -146,7 +147,7 @@ class ScopeStack {
     return break_continue_stack_;
   }
 
-  auto compile_time_binding_stack() -> llvm::SmallVector<SemIR::InstId>& {
+  auto compile_time_bindings_stack() -> ArrayStack<SemIR::InstId>& {
     return compile_time_binding_stack_;
   }
 
@@ -178,9 +179,12 @@ class ScopeStack {
     // unregistered when the scope ends.
     bool has_returned_var = false;
 
+    // Whether there are any ids in the `names` set.
+    int num_names = 0;
+
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
-    llvm::DenseSet<SemIR::NameId> names = {};
+    Set<SemIR::NameId> names = {};
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -207,7 +211,7 @@ class ScopeStack {
   llvm::SmallVector<NonLexicalScope> non_lexical_scope_stack_;
 
   // A stack of the current compile time bindings.
-  llvm::SmallVector<SemIR::InstId> compile_time_binding_stack_;
+  ArrayStack<SemIR::InstId> compile_time_binding_stack_;
 
   // The index of the next scope that will be pushed onto scope_stack_. The
   // first is always the package scope.

@@ -217,8 +217,6 @@ struct CompileTimeBindIndex : public IndexBase,
 
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
-// Note that InvalidIndex - 1 and InvalidIndex - 2 are used by
-// DenseMapInfo<BindNameInfo>.
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -569,9 +567,13 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   // 0-index block.
   static const InstBlockId Empty;
 
-  // Exported instructions. Always the 1-index block. Empty until the File is
-  // fully checked; intermediate state is in the Check::Context.
+  // Exported instructions. Empty until the File is fully checked; intermediate
+  // state is in the Check::Context.
   static const InstBlockId Exports;
+
+  // ImportRef instructions. Empty until the File is fully checked; intermediate
+  // state is in the Check::Context.
+  static const InstBlockId ImportRefs;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
@@ -592,6 +594,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
       out << "empty";
     } else if (*this == Exports) {
       out << "exports";
+    } else if (*this == ImportRefs) {
+      out << "import_refs";
     } else if (*this == GlobalInit) {
       out << "global_init";
     } else {
@@ -603,9 +607,10 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
+constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
+constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
-constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(2);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
@@ -738,25 +743,5 @@ struct LocId : public IdBase, public Printable<LocId> {
 constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 
 }  // namespace Carbon::SemIR
-
-// Support use of Id types as DenseMap/DenseSet keys.
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::ConstantId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::ConstantId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::InstBlockId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NameId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NameId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::TypeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::TypeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

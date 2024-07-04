@@ -153,19 +153,19 @@ import Other library "conflict";
 
 library "fail_conflict_on_export_import";
 
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+6]]:1: In import.
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "export_import";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: base.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
-import Other library "export_import";
 // CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "conflict";
+// CHECK:STDERR: import Other library "export_import";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: conflict.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
+import Other library "export_import";
 import Other library "conflict";
 
 // CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:11: In name lookup for `C`.
@@ -178,14 +178,13 @@ alias C = Other.C;
 
 library "fail_conflict_on_export_name";
 
-import Other library "export_name";
 // CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+15]]:1: In import.
-// CHECK:STDERR: import Other library "conflict";
+// CHECK:STDERR: import Other library "export_name";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+9]]:1: In import.
 // CHECK:STDERR: import Other library "export_name";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: export_name.carbon:4:1: In import.
@@ -194,6 +193,7 @@ import Other library "export_name";
 // CHECK:STDERR: base.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
+import Other library "export_name";
 import Other library "conflict";
 
 // CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: In name lookup for `C`.
@@ -249,29 +249,41 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = imports.%import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import_copy.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = imports.%import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import_indirect.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir2, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = imports.%import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir2, inst+1, unloaded
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name.carbon
@@ -282,20 +294,24 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_copy.carbon
@@ -306,20 +322,24 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_indirect.carbon
@@ -330,20 +350,24 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import.carbon
@@ -357,25 +381,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -402,25 +430,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -447,25 +479,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+7, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -492,25 +528,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -537,25 +577,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -582,25 +626,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -627,25 +675,29 @@ alias C = Other.C;
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+10, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+9, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -667,7 +719,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unused_conflict_on_export_name.carbon
@@ -676,7 +729,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict_on_export_import.carbon
@@ -687,17 +741,21 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref ir2, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+1, unloaded
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %C: %C.type = bind_alias C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C: %C.type = bind_alias C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();
@@ -710,24 +768,28 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+1, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %C: type = bind_alias C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C: type = bind_alias C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .x = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .x = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

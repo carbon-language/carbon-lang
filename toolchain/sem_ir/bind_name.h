@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
 
 #include "common/hashing.h"
+#include "common/set.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -15,6 +16,11 @@ struct BindNameInfo : public Printable<BindNameInfo> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index << "}";
+  }
+
+  friend auto CarbonHashtableEq(const BindNameInfo& lhs,
+                                const BindNameInfo& rhs) -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(BindNameInfo)) == 0;
   }
 
   // The name.
@@ -29,32 +35,9 @@ struct BindNameInfo : public Printable<BindNameInfo> {
 inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.Hash(value);
+  hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
-
-// DenseMapInfo for BindNameInfo.
-struct BindNameInfoDenseMapInfo {
-  static auto getEmptyKey() -> BindNameInfo {
-    return BindNameInfo{.name_id = NameId::Invalid,
-                        .parent_scope_id = NameScopeId::Invalid,
-                        .bind_index = CompileTimeBindIndex(
-                            CompileTimeBindIndex::InvalidIndex - 1)};
-  }
-  static auto getTombstoneKey() -> BindNameInfo {
-    return BindNameInfo{.name_id = NameId::Invalid,
-                        .parent_scope_id = NameScopeId::Invalid,
-                        .bind_index = CompileTimeBindIndex(
-                            CompileTimeBindIndex::InvalidIndex - 2)};
-  }
-  static auto getHashValue(const BindNameInfo& val) -> unsigned {
-    return static_cast<uint64_t>(HashValue(val));
-  }
-  static auto isEqual(const BindNameInfo& lhs, const BindNameInfo& rhs)
-      -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(BindNameInfo)) == 0;
-  }
-};
 
 // Value store for BindNameInfo. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for BindNameInfos.
@@ -62,14 +45,31 @@ struct BindNameStore : public ValueStore<BindNameId> {
  public:
   // Convert an ID to a canonical ID. All calls to this with equivalent
   // `BindNameInfo`s will return the same `BindNameId`.
-  auto MakeCanonical(BindNameId id) -> BindNameId {
-    return canonical_ids_.insert({Get(id), id}).first->second;
+  auto MakeCanonical(BindNameId id) -> BindNameId;
+
+ private:
+  class KeyContext;
+
+  Set<BindNameId, /*SmallSize=*/0, KeyContext> canonical_ids_;
+};
+
+class BindNameStore::KeyContext : public TranslatingKeyContext<KeyContext> {
+ public:
+  explicit KeyContext(const BindNameStore* store) : store_(store) {}
+
+  // Note that it is safe to return a `const` reference here as the underlying
+  // object's lifetime is provided by the `store_`.
+  auto TranslateKey(BindNameId id) const -> const BindNameInfo& {
+    return store_->Get(id);
   }
 
  private:
-  llvm::DenseMap<BindNameInfo, BindNameId, BindNameInfoDenseMapInfo>
-      canonical_ids_;
+  const BindNameStore* store_;
 };
+
+inline auto BindNameStore::MakeCanonical(BindNameId id) -> BindNameId {
+  return canonical_ids_.Insert(id, KeyContext(this)).key();
+}
 
 }  // namespace Carbon::SemIR
 

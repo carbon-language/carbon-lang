@@ -139,8 +139,6 @@ class Inst : public Printable<Inst> {
     } else {
       kind_ = TypedInst::Kind.AsInt();
     }
-    CARBON_CHECK(kind_ >= 0)
-        << "Negative kind values are reserved for DenseMapInfo.";
     if constexpr (Internal::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
@@ -248,14 +246,17 @@ class Inst : public Printable<Inst> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
+  friend auto operator==(Inst lhs, Inst rhs) -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;
+  }
+
  private:
   friend class InstTestHelper;
-  friend struct llvm::DenseMapInfo<Carbon::SemIR::Inst>;
 
   // Table mapping instruction kinds to their argument kinds.
   static const std::pair<IdKind, IdKind> ArgKindTable[];
 
-  // Raw constructor, used for testing and by DenseMapInfo.
+  // Raw constructor, used for testing.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : Inst(kind.AsInt(), type_id, arg0, arg1) {}
   explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
@@ -307,6 +308,11 @@ struct LocIdAndInst {
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
+  }
+
+  template <typename InstT>
+  static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
+    return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
   }
 
   // Construction for the common case with a typed node.
@@ -439,13 +445,15 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(empty_id == InstBlockId::Empty);
     auto exports_id = AddDefaultValue();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
+    auto import_refs_id = AddDefaultValue();
+    CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
     auto global_init_id = AddDefaultValue();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
-    BlockValueStore<InstBlockId>::Set(block_id, content);
+    BlockValueStore<InstBlockId>::SetContent(block_id, content);
   }
 
   // Returns the contents of the specified block, or an empty array if the block
@@ -458,27 +466,10 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 // See common/hashing.h.
 inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   Hasher hasher(seed);
-  hasher.Hash(value);
+  hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
 
 }  // namespace Carbon::SemIR
-
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::Inst> {
-  using Inst = Carbon::SemIR::Inst;
-  static auto getEmptyKey() -> Inst {
-    return Inst(-1, Carbon::SemIR::TypeId::Invalid, 0, 0);
-  }
-  static auto getTombstoneKey() -> Inst {
-    return Inst(-2, Carbon::SemIR::TypeId::Invalid, 0, 0);
-  }
-  static auto getHashValue(const Inst& val) -> unsigned {
-    return static_cast<uint64_t>(Carbon::HashValue(val));
-  }
-  static auto isEqual(const Inst& lhs, const Inst& rhs) -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;
-  }
-};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

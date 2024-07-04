@@ -37,7 +37,8 @@ class AdaptIncomplete {
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:     .AdaptIncomplete = %AdaptIncomplete.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %AdaptIncomplete.decl: type = class_decl @AdaptIncomplete [template = constants.%AdaptIncomplete] {}
 // CHECK:STDOUT: }

@@ -35,7 +35,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc13
 // CHECK:STDOUT:   }

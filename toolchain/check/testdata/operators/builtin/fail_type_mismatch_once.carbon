@@ -36,22 +36,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Add, %Op.type [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, file.%import_ref.6 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Main = %Main.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32, %.loc11_14.1 [template = i32]
-// CHECK:STDOUT:     @Main.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir4, inst+1, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir4, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.4: %.5 = import_ref ir4, inst+24, loaded [template = constants.%.6]
@@ -60,11 +49,26 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir4, inst+1, loaded [template = constants.%.4]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Main = %Main.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32, %.loc11_14.1 [template = i32]
+// CHECK:STDOUT:     @Main.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
-// CHECK:STDOUT:   .Op = file.%import_ref.4
-// CHECK:STDOUT:   witness = (file.%import_ref.5)
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .Op = imports.%import_ref.4
+// CHECK:STDOUT:   witness = (imports.%import_ref.5)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

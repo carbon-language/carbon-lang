@@ -8,6 +8,26 @@ load("//bazel/version:rules.bzl", "expand_version_build_info")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "array_stack",
+    hdrs = ["array_stack.h"],
+    deps = [
+        ":check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "array_stack_test",
+    size = "small",
+    srcs = ["array_stack_test.cpp"],
+    deps = [
+        ":array_stack",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "bazel_working_dir",
     hdrs = ["bazel_working_dir.h"],
     deps = [
@@ -188,6 +208,18 @@ cc_library(
     hdrs = ["hashtable_key_context.h"],
     deps = [
         ":hashing",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "hashtable_key_context_test",
+    srcs = ["hashtable_key_context_test.cpp"],
+    deps = [
+        ":hashtable_key_context",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

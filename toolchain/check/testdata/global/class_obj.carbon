@@ -27,7 +27,8 @@ var a: A = {};
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a

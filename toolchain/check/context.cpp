@@ -45,15 +45,16 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
-      scope_stack_(sem_ir_->identifiers()) {
+      scope_stack_(sem_ir_->identifiers()),
+      global_init_(this) {
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
-  type_ids_for_type_constants_.insert(
-      {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinError),
-       SemIR::TypeId::Error});
-  type_ids_for_type_constants_.insert(
-      {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
-       SemIR::TypeId::TypeType});
+  type_ids_for_type_constants_.Insert(
+      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinError),
+      SemIR::TypeId::Error);
+  type_ids_for_type_constants_.Insert(
+      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
+      SemIR::TypeId::TypeType);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
   // in the right places.
@@ -329,12 +330,12 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
     // Look up the name in the import scope.
     const auto& import_scope =
         import_ir.sem_ir->name_scopes().Get(import_scope_id);
-    auto it = import_scope.name_map.find(import_name_id);
-    if (it == import_scope.name_map.end()) {
+    auto lookup = import_scope.name_map.Lookup(import_name_id);
+    if (!lookup) {
       // Name doesn't exist in the import scope.
       continue;
     }
-    const auto& import_scope_entry = import_scope.names[it->second];
+    const auto& import_scope_entry = import_scope.names[lookup.value()];
     auto import_inst =
         import_ir.sem_ir->insts().Get(import_scope_entry.inst_id);
     if (import_inst.Is<SemIR::AnyImportRef>()) {
@@ -378,8 +379,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
-  if (auto it = scope.name_map.find(name_id); it != scope.name_map.end()) {
-    auto inst_id = scope.names[it->second].inst_id;
+  if (auto lookup = scope.name_map.Lookup(name_id)) {
+    auto inst_id = scope.names[lookup.value()].inst_id;
     LoadImportRef(*this, inst_id);
     return inst_id;
   }
@@ -632,29 +633,17 @@ auto Context::is_current_position_reachable() -> bool {
          SemIR::TerminatorKind::Terminator;
 }
 
-auto Context::FinalizeGlobalInit() -> void {
-  inst_block_stack().PushGlobalInit();
-  if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
-    AddInst<SemIR::Return>(Parse::NodeId::Invalid, {});
-    // Pop the GlobalInit block here to finalize it.
-    inst_block_stack().Pop();
+auto Context::Finalize() -> void {
+  // Pop information for the file-level scope.
+  sem_ir().set_top_inst_block_id(inst_block_stack().Pop());
+  scope_stack().Pop();
 
-    // __global_init is only added if there are initialization instructions.
-    auto name_id = sem_ir().identifiers().Add("__global_init");
-    sem_ir().functions().Add(
-        {.name_id = SemIR::NameId::ForIdentifier(name_id),
-         .parent_scope_id = SemIR::NameScopeId::Package,
-         .decl_id = SemIR::InstId::Invalid,
-         .generic_id = SemIR::GenericId::Invalid,
-         .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
-         .param_refs_id = SemIR::InstBlockId::Empty,
-         .return_storage_id = SemIR::InstId::Invalid,
-         .is_extern = false,
-         .return_slot = SemIR::Function::ReturnSlot::Absent,
-         .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
-  } else {
-    inst_block_stack().PopGlobalInit();
-  }
+  // Finalizes the list of exports on the IR.
+  inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
+  // Finalizes the ImportRef inst block.
+  inst_blocks().Set(SemIR::InstBlockId::ImportRefs, import_ref_ids_);
+  // Finalizes __global_init.
+  global_init_.Finalize();
 }
 
 namespace {
@@ -1058,12 +1047,9 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   CARBON_CHECK(constant_id.is_constant())
       << "Canonicalizing non-constant type: " << constant_id;
 
-  auto [it, added] = type_ids_for_type_constants_.insert(
-      {constant_id, SemIR::TypeId::Invalid});
-  if (added) {
-    it->second = types().Add({.constant_id = constant_id});
-  }
-  return it->second;
+  auto result = type_ids_for_type_constants_.Insert(
+      constant_id, [&]() { return types().Add({.constant_id = constant_id}); });
+  return result.value();
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.

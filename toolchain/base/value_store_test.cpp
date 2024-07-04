@@ -77,34 +77,55 @@ TEST(ValueStore, Float) {
               Eq(llvm::APFloatBase::cmpEqual));
 }
 
-TEST(ValueStore, String) {
+TEST(ValueStore, Identifiers) {
   std::string a = "a";
   std::string b = "b";
   SharedValueStores value_stores;
+
   auto a_id = value_stores.identifiers().Add(a);
+  auto b_id = value_stores.identifiers().Add(b);
+
+  ASSERT_TRUE(a_id.is_valid());
+  ASSERT_TRUE(b_id.is_valid());
+  EXPECT_THAT(a_id, Not(Eq(b_id)));
+
+  EXPECT_THAT(value_stores.identifiers().Get(a_id), Eq(a));
+  EXPECT_THAT(value_stores.identifiers().Get(b_id), Eq(b));
+
+  EXPECT_THAT(value_stores.identifiers().Lookup(a), Eq(a_id));
+  EXPECT_THAT(value_stores.identifiers().Lookup("c"),
+              Eq(IdentifierId::Invalid));
+}
+
+TEST(ValueStore, StringLiterals) {
+  std::string a = "a";
+  std::string b = "b";
+  SharedValueStores value_stores;
+
+  auto a_id = value_stores.string_literal_values().Add(a);
   auto b_id = value_stores.string_literal_values().Add(b);
 
   ASSERT_TRUE(a_id.is_valid());
   ASSERT_TRUE(b_id.is_valid());
+  EXPECT_THAT(a_id, Not(Eq(b_id)));
 
-  EXPECT_THAT(a_id.index, Not(Eq(b_id.index)));
-  EXPECT_THAT(value_stores.identifiers().Get(a_id), Eq(a));
+  EXPECT_THAT(value_stores.string_literal_values().Get(a_id), Eq(a));
   EXPECT_THAT(value_stores.string_literal_values().Get(b_id), Eq(b));
 
-  // Adding the same string again, even with a different Id type, should return
-  // the same id.
-  EXPECT_THAT(value_stores.string_literal_values().Add(a).index,
-              Eq(a_id.index));
-  EXPECT_THAT(value_stores.identifiers().Add(b).index, Eq(b_id.index));
+  EXPECT_THAT(value_stores.string_literal_values().Lookup(a), Eq(a_id));
+  EXPECT_THAT(value_stores.string_literal_values().Lookup("c"),
+              Eq(StringLiteralValueId::Invalid));
 }
 
 auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> ints,
                        testing::Matcher<Yaml::MappingValue> reals,
+                       testing::Matcher<Yaml::MappingValue> identifiers,
                        testing::Matcher<Yaml::MappingValue> strings) -> auto {
   return Yaml::IsYaml(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(Pair(
       "shared_values",
       Yaml::Mapping(ElementsAre(Pair("ints", Yaml::Mapping(ints)),
                                 Pair("reals", Yaml::Mapping(reals)),
+                                Pair("identifiers", Yaml::Mapping(identifiers)),
                                 Pair("strings", Yaml::Mapping(strings))))))))));
 }
 
@@ -113,7 +134,7 @@ TEST(ValueStore, PrintEmpty) {
   TestRawOstream out;
   value_stores.Print(out);
   EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
-              MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty()));
+              MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty(), IsEmpty()));
 }
 
 TEST(ValueStore, PrintVals) {
@@ -122,15 +143,17 @@ TEST(ValueStore, PrintVals) {
   value_stores.ints().Add(apint);
   value_stores.reals().Add(
       Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
+  value_stores.identifiers().Add("a");
   value_stores.string_literal_values().Add("foo'\"baz");
   TestRawOstream out;
   value_stores.Print(out);
 
-  EXPECT_THAT(
-      Yaml::Value::FromText(out.TakeStr()),
-      MatchSharedValues(ElementsAre(Pair("int0", Yaml::Scalar("8"))),
-                        ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))),
-                        ElementsAre(Pair("str0", Yaml::Scalar("foo'\"baz")))));
+  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
+              MatchSharedValues(
+                  ElementsAre(Pair("int0", Yaml::Scalar("8"))),
+                  ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))),
+                  ElementsAre(Pair("identifier0", Yaml::Scalar("a"))),
+                  ElementsAre(Pair("string0", Yaml::Scalar("foo'\"baz")))));
 }
 
 }  // namespace

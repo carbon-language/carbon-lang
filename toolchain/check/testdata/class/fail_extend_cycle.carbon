@@ -51,7 +51,8 @@ base class A {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.6] {}

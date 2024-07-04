@@ -81,19 +81,24 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: %.1 = import_ref ir0, inst+4, loaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .v [private] = %import_ref
+// CHECK:STDOUT:     .v [private] = imports.%import_ref
 // CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %.1 = import_ref ir0, inst+4, loaded
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: %.1 = name_ref v, file.%import_ref
+// CHECK:STDOUT:   %v.ref: %.1 = name_ref v, imports.%import_ref
 // CHECK:STDOUT:   %v2: %.1 = bind_name v2, %v.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -108,6 +113,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
@@ -130,7 +136,8 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
 // CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }

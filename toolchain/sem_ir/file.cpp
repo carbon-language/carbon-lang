@@ -455,6 +455,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
@@ -585,6 +586,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case ImportDecl::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case InterfaceWitness::Kind:

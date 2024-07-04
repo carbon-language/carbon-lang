@@ -42,7 +42,16 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Negate, %Op.type.2 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, file.%import_ref.6 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref ir4, inst+84, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+80, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+67, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,16 +60,13 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref ir4, inst+84, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+80, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, %import_ref.1 [template = constants.%.2]
+// CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, %C.decl [template = constants.%C]
@@ -69,15 +75,13 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+67, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .Op = file.%import_ref.3
-// CHECK:STDOUT:   witness = (file.%import_ref.4)
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Op = imports.%import_ref.3
+// CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.2 {

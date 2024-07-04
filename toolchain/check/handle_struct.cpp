@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "common/map.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
@@ -74,12 +75,12 @@ static auto DiagnoseDuplicateNames(Context& context,
                                    llvm::StringRef construct) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
-  llvm::SmallDenseMap<SemIR::NameId, SemIR::InstId> names;
+  Map<SemIR::NameId, SemIR::InstId> names;
   auto& insts = sem_ir.insts();
   for (SemIR::InstId field_inst_id : fields) {
     auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
-    auto [it, added] = names.insert({field_inst.name_id, field_inst_id});
-    if (!added) {
+    auto result = names.Insert(field_inst.name_id, field_inst_id);
+    if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Duplicated field name `{1}` in {0}.", std::string,
                         SemIR::NameId);
@@ -88,7 +89,7 @@ static auto DiagnoseDuplicateNames(Context& context,
       context.emitter()
           .Build(field_inst_id, StructNameDuplicate, construct.str(),
                  field_inst.name_id)
-          .Note(it->second, StructNamePrevious)
+          .Note(result.value(), StructNamePrevious)
           .Emit();
       return true;
     }

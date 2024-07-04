@@ -58,7 +58,8 @@ class D {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [template = constants.%B1] {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}

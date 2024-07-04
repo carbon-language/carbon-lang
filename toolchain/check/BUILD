@@ -21,6 +21,7 @@ cc_library(
         "eval.cpp",
         "function.cpp",
         "generic.cpp",
+        "global_init.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
         "merge.cpp",
@@ -38,6 +39,7 @@ cc_library(
         "eval.h",
         "function.h",
         "generic.h",
+        "global_init.h",
         "import_ref.h",
         "inst_block_stack.h",
         "keyword_modifier_set.h",
@@ -51,6 +53,7 @@ cc_library(
     ],
     deps = [
         ":node_stack",
+        "//common:array_stack",
         "//common:check",
         "//common:map",
         "//common:vlog",
@@ -96,6 +99,7 @@ cc_library(
         ":sem_ir_diagnostic_converter",
         "//common:check",
         "//common:error",
+        "//common:map",
         "//common:ostream",
         "//common:variant_helpers",
         "//common:vlog",
@@ -151,6 +155,7 @@ cc_library(
     srcs = ["generic_region_stack.cpp"],
     hdrs = ["generic_region_stack.h"],
     deps = [
+        "//common:array_stack",
         "//common:check",
         "//common:ostream",
         "//common:vlog",
@@ -184,6 +189,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//common:map",
         "//toolchain/base:kind_switch",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:file",
@@ -280,8 +286,10 @@ cc_library(
         "scope_stack.h",
     ],
     deps = [
+        "//common:array_stack",
         "//common:check",
         "//common:ostream",
+        "//common:set",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/sem_ir:file",

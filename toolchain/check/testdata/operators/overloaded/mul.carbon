@@ -58,11 +58,26 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type @Mul, %Op.type.2 [template]
-// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
 // CHECK:STDOUT:   %.12: type = assoc_entity_type @MulAssign, %Op.type.4 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.12 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+151, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+153, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref ir4, inst+173, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+169, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+175, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+177, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref ir4, inst+196, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref ir4, inst+192, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir4, inst+151, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+169, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+175, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+192, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,25 +87,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     .TestOp = %TestOp.decl
 // CHECK:STDOUT:     .TestAssign = %TestAssign.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+151, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+153, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref ir4, inst+173, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+169, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc17: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Mul.ref: type = name_ref Mul, %import_ref.1 [template = constants.%.2]
+// CHECK:STDOUT:     %Mul.ref: type = name_ref Mul, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+175, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+177, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref ir4, inst+196, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref ir4, inst+192, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %MulAssign.ref: type = name_ref MulAssign, %import_ref.5 [template = constants.%.6]
+// CHECK:STDOUT:     %MulAssign.ref: type = name_ref MulAssign, imports.%import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, %C.decl [template = constants.%C]
@@ -102,8 +110,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir4, inst+151, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+169, unloaded
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc30: type = ptr_type %C [template = constants.%.7]
@@ -113,22 +119,20 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %b.loc30_22.1: %C = param b
 // CHECK:STDOUT:     @TestAssign.%b: %C = bind_name b, %b.loc30_22.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+175, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+192, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Mul {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .Op = file.%import_ref.3
-// CHECK:STDOUT:   witness = (file.%import_ref.4)
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Op = imports.%import_ref.3
+// CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @MulAssign {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.6
-// CHECK:STDOUT:   .Op = file.%import_ref.7
-// CHECK:STDOUT:   witness = (file.%import_ref.8)
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   .Op = imports.%import_ref.7
+// CHECK:STDOUT:   witness = (imports.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {

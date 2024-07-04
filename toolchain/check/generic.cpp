@@ -146,7 +146,10 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 
 auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
-  if (context.scope_stack().compile_time_binding_stack().empty()) {
+  auto all_bindings =
+      context.scope_stack().compile_time_bindings_stack().PeekAllValues();
+
+  if (all_bindings.empty()) {
     CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty())
         << "Have dependent instructions but no compile time bindings are in "
            "scope.";
@@ -154,8 +157,7 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
     return SemIR::GenericId::Invalid;
   }
 
-  auto bindings_id = context.inst_blocks().Add(
-      context.scope_stack().compile_time_binding_stack());
+  auto bindings_id = context.inst_blocks().Add(all_bindings);
   auto generic_id = context.generics().Add(
       SemIR::Generic{.decl_id = decl_id, .bindings_id = bindings_id});
 

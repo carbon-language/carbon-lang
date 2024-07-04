@@ -47,7 +47,8 @@ fn Derived.H() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {}

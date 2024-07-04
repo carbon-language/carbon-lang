@@ -139,19 +139,24 @@ private import PrivateImport;
 // CHECK:STDOUT:     .BaseImport = %BaseImport
 // CHECK:STDOUT:     .PrivateImport = %PrivateImport
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplImport: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %ImplImport.import = import ImplImport
+// CHECK:STDOUT:   %ExtendImport.import = import ExtendImport
+// CHECK:STDOUT:   %VirtualImport.import = import VirtualImport
+// CHECK:STDOUT:   %BaseImport.import = import BaseImport
+// CHECK:STDOUT:   %PrivateImport.import = import PrivateImport
+// CHECK:STDOUT:   %ImplImport: <namespace> = namespace %ImplImport.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace %ExtendImport.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace %VirtualImport.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %BaseImport: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %BaseImport: <namespace> = namespace %BaseImport.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace %PrivateImport.import, [template] {
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

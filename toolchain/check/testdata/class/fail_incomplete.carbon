@@ -168,6 +168,11 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %CallReturnIncomplete: %CallReturnIncomplete.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -184,7 +189,8 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     .CallTakeIncomplete = %CallTakeIncomplete.decl
 // CHECK:STDOUT:     .CallReturnIncomplete = %CallReturnIncomplete.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT:   %CallClassFunction.decl: %CallClassFunction.type = fn_decl @CallClassFunction [template = constants.%CallClassFunction] {}
@@ -195,7 +201,6 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %Class.ref.loc49: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ConvertFromStruct.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref.loc51: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc51_14: type = ptr_type %Class [template = constants.%.4]
@@ -206,7 +211,6 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %.loc51_20.2: type = converted %int.make_type_32.loc51, %.loc51_20.1 [template = i32]
 // CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %MemberAccess.decl: %MemberAccess.type = fn_decl @MemberAccess [template = constants.%MemberAccess] {
 // CHECK:STDOUT:     %Class.ref.loc62: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc62_25: type = ptr_type %Class [template = constants.%.4]
