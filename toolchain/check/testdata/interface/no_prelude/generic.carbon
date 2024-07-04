@@ -232,7 +232,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     generic [%T: %.7] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
-// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T [symbolic = %T (constants.%T.2)]
+// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T [symbolic = constants.%T.2]
 // CHECK:STDOUT:   %Receive.call: init %.1 = call %Receive.ref(%T.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -319,7 +319,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     generic [%T: %.5] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = %T (constants.%T.3)]
+// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = constants.%T.3]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

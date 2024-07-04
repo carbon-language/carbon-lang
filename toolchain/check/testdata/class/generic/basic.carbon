@@ -15,9 +15,6 @@ class Class(T:! type) {
 
   // TODO: Should this work? T is not necessarily copyable.
   fn GetValue[self: Self]() -> T {
-    // CHECK:STDERR: basic.carbon:[[@LINE+3]]:5: ERROR: Cannot implicitly convert from `T` to `T`.
-    // CHECK:STDERR:     return self.k;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~
     return self.k;
   }
 
@@ -34,13 +31,13 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T) [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type %Class.2 [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type file.%T.loc11_13.2 (%T) [symbolic]
+// CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr [template]
 // CHECK:STDOUT:   %GetAddr: %GetAddr.type = struct_value () [template]
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue [template]
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, file.%T.loc11_13.2 (%T) [symbolic]
-// CHECK:STDOUT:   %.5: type = struct_type {.k: file.%T.loc11_13.2 (%T)} [symbolic]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
+// CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,7 +62,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %self.loc12_19.3: @Class.%.loc12_29 (%.2) = bind_name self, %self.loc12_19.1
 // CHECK:STDOUT:     %.loc12_14: @Class.%.loc12_29 (%.2) = addr_pattern %self.loc12_19.3
 // CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12 (constants.%T)]
-// CHECK:STDOUT:     %.loc12_38: type = ptr_type file.%T.loc11_13.2 (%T) [symbolic = %.loc12_38 (constants.%.3)]
+// CHECK:STDOUT:     %.loc12_38: type = ptr_type %T [symbolic = %.loc12_38 (constants.%.3)]
 // CHECK:STDOUT:     %return.var.loc12: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
@@ -75,7 +72,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc17 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc24: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc24: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc24: %.4 = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -91,7 +88,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_19.3
 // CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref
 // CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc24 [template = @Class.%.loc24]
-// CHECK:STDOUT:   %.loc13_17.2: ref file.%T.loc11_13.2 (%T) = class_element_access %.loc13_17.1, element0
+// CHECK:STDOUT:   %.loc13_17.2: ref %T = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:   %.loc13_12: %.3 = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
@@ -101,8 +98,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class.2 = name_ref self, @Class.%self.loc17_15.2
 // CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc24 [template = @Class.%.loc24]
-// CHECK:STDOUT:   %.loc21_16.1: ref file.%T.loc11_13.2 (%T) = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc21_16.2: file.%T.loc11_13.2 (%T) = bind_value %.loc21_16.1
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.loc21_16.1: ref %T = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc21_16.2: %T = bind_value %.loc21_16.1
+// CHECK:STDOUT:   return %.loc21_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

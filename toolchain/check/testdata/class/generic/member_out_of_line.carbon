@@ -163,14 +163,13 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.2: type = class_type @A, (%T) [symbolic]
-// CHECK:STDOUT:   %N.1: file.%T.loc4_9.2 (%T) = bind_symbolic_name N 1 [symbolic]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %B.type: type = generic_class_type @B [template]
 // CHECK:STDOUT:   %B.1: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %B.2: type = class_type @B, (%T, %N.1) [symbolic]
+// CHECK:STDOUT:   %B.2: type = class_type @B, (%T, %N) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %N.2: %T = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,7 +188,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc10_6.2: type = bind_symbolic_name T 0, %T.loc10_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10_6.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %N.loc10_18.1: %T = param N
-// CHECK:STDOUT:     %N.loc10_18.2: %T = bind_symbolic_name N 1, %N.loc10_18.1 [symbolic = constants.%N.2]
+// CHECK:STDOUT:     %N.loc10_18.2: %T = bind_symbolic_name N 1, %N.loc10_18.1 [symbolic = constants.%N]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %self.loc10_27.1: %B.2 = param self
 // CHECK:STDOUT:     @F.%self: %B.2 = bind_name self, %self.loc10_27.1
@@ -204,7 +203,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = %T.ref (constants.%T)]
 // CHECK:STDOUT:     %N.loc5_11.1: @A.%T.ref (%T) = param N
-// CHECK:STDOUT:     %N.loc5_11.2: @A.%T.ref (%T) = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = %N.loc5_11.2 (constants.%N.1)]
+// CHECK:STDOUT:     %N.loc5_11.2: @A.%T.ref (%T) = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = %N.loc5_11.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

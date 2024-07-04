@@ -9,9 +9,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param_scope.carbon
 
 fn F(T:! type, n: T) -> T {
-  // CHECK:STDERR: type_param_scope.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `T` to `T`.
-  // CHECK:STDERR:   let m: T = n;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
   let m: T = n;
   return m;
 }
@@ -43,10 +40,10 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: fn @F(%T: type, %n: @F.%T (%T)) -> %T
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
-// CHECK:STDOUT:   %m: @F.%T (%T) = bind_name m, <error>
+// CHECK:STDOUT:   %m: %T = bind_name m, %n.ref
 // CHECK:STDOUT:   %m.ref: %T = name_ref m, %m
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return %m.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
