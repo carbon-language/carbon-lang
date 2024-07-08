@@ -10,6 +10,34 @@
 
 namespace Carbon::Check {
 
+// Callbacks used by SubstInst to recursively substitute into and rebuild an
+// instruction.
+class SubstInstCallbacks {
+ public:
+  // Performs any needed substitution into an instruction. The instruction ID
+  // should be updated as necessary to represent the new instruction. Returns
+  // true if the resulting instruction ID is fully-substituted, or false if the
+  // operands of the instruction should be recursively substituted.
+  virtual auto Subst(SemIR::InstId& inst_id) const -> bool = 0;
+
+  // Rebuilds an instruction whose operands were changed by substitution.
+  // `orig_inst_id` is the instruction prior to substitution, and `new_inst` is
+  // the substituted instruction. Returns the new instruction ID to use to refer
+  // to `new_inst`.
+  virtual auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst) const
+      -> SemIR::InstId = 0;
+};
+
+// Performs substitution into `inst_id` and its operands recursively, using
+// `callbacks` to process each instruction. For each instruction encountered,
+// calls `Subst` to perform substitution on that instruction.
+//
+// If `Subst` returns false, the instruction is decomposed into its operands,
+// which are substituted recursively, and if any of them change then `Rebuild`
+// is used to build a new instruction with the substituted operands.
+auto SubstInst(Context& context, SemIR::InstId inst_id,
+               const SubstInstCallbacks& callbacks) -> SemIR::InstId;
+
 // A substitution that is being performed.
 struct Substitution {
   // The index of a `BindSymbolicName` instruction that is being replaced.
@@ -19,24 +47,6 @@ struct Substitution {
 };
 
 using Substitutions = llvm::ArrayRef<Substitution>;
-
-// A function that performs any needed substitution into an instruction, as part
-// of substituting into a symbolic instruction sequence. The instruction ID
-// should be updated as necessary to represent the new instruction. If the
-// function returns true, the instruction is treated as fully-substituted; if it
-// returns false, the instruction will be decomposed and substitution will be
-// performed recursively into its operands.
-using SubstInstFn = llvm::function_ref<auto(SemIR::InstId& inst_id)->bool>;
-
-// A function that rebuilds an instruction after substitution. `orig_inst_id` is
-// the instruction prior to substitution, and `new_inst` is the substituted
-// instruction. Returns the new instruction ID to use to refer to `new_inst`.
-using SubstRebuildFn = llvm::function_ref<
-    auto(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)->SemIR::InstId>;
-
-// Performs substitution into `inst_id` and its operands recursively.
-auto SubstInst(Context& context, SemIR::InstId inst_id, SubstInstFn subst_fn,
-               SubstRebuildFn rebuild_fn) -> SemIR::InstId;
 
 // Replaces the `BindSymbolicName` instruction `bind_id` with `replacement_id`
 // throughout the constant `const_id`, and returns the substituted value.

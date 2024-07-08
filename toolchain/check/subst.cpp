@@ -166,7 +166,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
 // Pops the operands of the specified instruction off the worklist and rebuilds
 // the instruction with the updated operands if it has changed.
 static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
-                    SubstRebuildFn rebuild_inst) -> SemIR::InstId {
+                    const SubstInstCallbacks& callbacks) -> SemIR::InstId {
   auto inst = context.insts().Get(inst_id);
   auto kinds = inst.ArgKinds();
 
@@ -184,11 +184,11 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
   // TODO: Do we need to require this type to be complete?
   inst.SetType(SemIR::TypeId(type_id));
   inst.SetArgs(arg0, arg1);
-  return rebuild_inst(inst_id, inst);
+  return callbacks.Rebuild(inst_id, inst);
 }
 
-auto SubstInst(Context& context, SemIR::InstId inst_id, SubstInstFn subst_fn,
-               SubstRebuildFn rebuild_fn) -> SemIR::InstId {
+auto SubstInst(Context& context, SemIR::InstId inst_id,
+               const SubstInstCallbacks& callbacks) -> SemIR::InstId {
   Worklist worklist(inst_id);
 
   // For each instruction that forms part of the constant, we will visit it
@@ -210,12 +210,12 @@ auto SubstInst(Context& context, SemIR::InstId inst_id, SubstInstFn subst_fn,
     if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
       // worklist but does not reallocate, so does not invalidate `item`.
-      item.inst_id = Rebuild(context, worklist, item.inst_id, rebuild_fn);
+      item.inst_id = Rebuild(context, worklist, item.inst_id, callbacks);
       index = item.next_index;
       continue;
     }
 
-    if (subst_fn(item.inst_id)) {
+    if (callbacks.Subst(item.inst_id)) {
       index = item.next_index;
       continue;
     }
@@ -234,7 +234,8 @@ auto SubstInst(Context& context, SemIR::InstId inst_id, SubstInstFn subst_fn,
       worklist.back().next_index = index;
       index = first_operand;
     } else {
-      // No need to rebuild this instruction.
+      // No need to rebuild this instruction: its operands can't be changed by
+      // substitution because it has none.
       index = next_index;
     }
   }
@@ -243,6 +244,60 @@ auto SubstInst(Context& context, SemIR::InstId inst_id, SubstInstFn subst_fn,
       << "Unexpected data left behind in work list";
   return worklist.back().inst_id;
 }
+
+namespace {
+// Callbacks for performing substitution of a set of Substitutions into a
+// symbolic constant.
+class SubstConstantCallbacks : public SubstInstCallbacks {
+ public:
+  SubstConstantCallbacks(Context& context, Substitutions substitutions)
+      : context_(context), substitutions_(substitutions) {}
+
+  // Applies the given Substitutions to an instruction, in order to replace
+  // BindSymbolicName instructions with the value of the binding.
+  auto Subst(SemIR::InstId& inst_id) const -> bool override {
+    if (context_.constant_values().Get(inst_id).is_template()) {
+      // This instruction is a template constant, so can't contain any
+      // bindings that need to be substituted.
+      return true;
+    }
+
+    auto bind = context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id);
+    if (!bind) {
+      return false;
+    }
+
+    // This is a symbolic binding. Check if we're substituting it.
+    // TODO: Consider building a hash map for substitutions. We might have a
+    // lot of them.
+    for (auto [bind_index, replacement_id] : substitutions_) {
+      if (context_.bind_names().Get(bind->bind_name_id).bind_index ==
+          bind_index) {
+        // This is the binding we're replacing. Perform substitution.
+        inst_id = context_.constant_values().GetInstId(replacement_id);
+        return true;
+      }
+    }
+
+    // If it's not being substituted, don't look through it. Its constant
+    // value doesn't depend on its operand.
+    return true;
+  }
+
+  // Rebuilds an instruction by building a new constant.
+  auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
+      -> SemIR::InstId override {
+    auto result_id = TryEvalInst(context_, SemIR::InstId::Invalid, new_inst);
+    CARBON_CHECK(result_id.is_constant())
+        << "Substitution into constant produced non-constant";
+    return context_.constant_values().GetInstId(result_id);
+  }
+
+ private:
+  Context& context_;
+  Substitutions substitutions_;
+};
+}  // namespace
 
 auto SubstConstant(Context& context, SemIR::ConstantId const_id,
                    Substitutions substitutions) -> SemIR::ConstantId {
@@ -258,49 +313,9 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     return const_id;
   }
 
-  // Apply the given Substitutions to an instruction, in order to replace
-  // BindSymbolicName instructions with the value of the binding.
-  auto subst_fn = [&](SemIR::InstId& inst_id) -> bool {
-    if (context.constant_values().Get(inst_id).is_template()) {
-      // This instruction is a template constant, so can't contain any
-      // bindings that need to be substituted.
-      return true;
-    }
-
-    auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id);
-    if (!bind) {
-      return false;
-    }
-
-    // This is a symbolic binding. Check if we're substituting it.
-    // TODO: Consider building a hash map for substitutions. We might have a
-    // lot of them.
-    for (auto [bind_index, replacement_id] : substitutions) {
-      if (context.bind_names().Get(bind->bind_name_id).bind_index ==
-          bind_index) {
-        // This is the binding we're replacing. Perform substitution.
-        inst_id = context.constant_values().GetInstId(replacement_id);
-        return true;
-      }
-    }
-
-    // If it's not being substituted, don't look through it. Its constant
-    // value doesn't depend on its operand.
-    return true;
-  };
-
-  // Rebuild an instruction by building a new constant.
-  auto rebuild_fn = [&](SemIR::InstId /*old_inst_id*/,
-                        SemIR::Inst new_inst) -> SemIR::InstId {
-    auto result_id = TryEvalInst(context, SemIR::InstId::Invalid, new_inst);
-    CARBON_CHECK(result_id.is_constant())
-        << "Substitution into constant produced non-constant";
-    return context.constant_values().GetInstId(result_id);
-  };
-
   auto subst_inst_id =
       SubstInst(context, context.constant_values().GetInstId(const_id),
-                subst_fn, rebuild_fn);
+                SubstConstantCallbacks(context, substitutions));
   return context.constant_values().Get(subst_inst_id);
 }
 
