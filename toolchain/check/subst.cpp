@@ -146,7 +146,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       return new_type_block.GetCanonical().index;
     }
     case SemIR::IdKind::For<SemIR::GenericInstanceId>: {
-      auto instance_id = static_cast<SemIR::GenericInstanceId>(arg);
+      auto instance_id = SemIR::GenericInstanceId(arg);
       if (!instance_id.is_valid()) {
         return arg;
       }
@@ -155,7 +155,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
           PopOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
                      instance.args_id.index);
       return MakeGenericInstance(context, instance.generic_id,
-                                 static_cast<SemIR::InstBlockId>(args_id))
+                                 SemIR::InstBlockId(args_id))
           .index;
     }
     default:
@@ -164,7 +164,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
 }
 
 // Pops the operands of the specified instruction off the worklist and rebuilds
-// the instruction with the updated operands.
+// the instruction with the updated operands if it has changed.
 static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
                     SubstRebuildFn rebuild_inst) -> SemIR::InstId {
   auto inst = context.insts().Get(inst_id);

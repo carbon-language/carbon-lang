@@ -73,7 +73,7 @@ class TypeStore : public ValueStore<TypeId> {
   // Returns whether two type IDs represent the same type. This includes the
   // case where they might be in different generics and thus might have
   // different ConstantIds, but are still symbolically equal.
-  auto EqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
+  auto AreEqualAcrossDeclarations(TypeId a, TypeId b) const -> bool {
     return GetInstId(a) == GetInstId(b);
   }
 

@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_SUBST_H_
 #define CARBON_TOOLCHAIN_CHECK_SUBST_H_
 
-#include "common/map.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
