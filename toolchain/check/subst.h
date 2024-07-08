@@ -16,8 +16,8 @@ class SubstInstCallbacks {
  public:
   // Performs any needed substitution into an instruction. The instruction ID
   // should be updated as necessary to represent the new instruction. Returns
-  // true if the resulting instruction ID is fully-substituted, or false if the
-  // operands of the instruction should be recursively substituted.
+  // true if the resulting instruction ID is fully-substituted, or false if
+  // substitution may be needed into operands of the instruction.
   virtual auto Subst(SemIR::InstId& inst_id) const -> bool = 0;
 
   // Rebuilds an instruction whose operands were changed by substitution.
