@@ -43,7 +43,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc12_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc12_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc12_6.1 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

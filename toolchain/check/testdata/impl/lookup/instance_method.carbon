@@ -78,11 +78,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc14_8.1: %Self = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %Self = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %self.loc14_8.1: @I.%Self.ref (%Self) = param self
+// CHECK:STDOUT:     %self.loc14_8.2: @I.%Self.ref (%Self) = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
@@ -125,7 +125,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: %Self]() -> i32
+// CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: @I.%Self.ref (%Self)]() -> i32
 // CHECK:STDOUT:     generic [@I.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc19_10.2: %C]() -> i32;

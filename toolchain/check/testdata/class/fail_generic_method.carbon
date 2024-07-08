@@ -63,14 +63,14 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
 // CHECK:STDOUT:     %N.loc32_10.1: i32 = param N
-// CHECK:STDOUT:     %N.loc32_10.2: i32 = bind_symbolic_name N 0, %N.loc32_10.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %N.loc32_10.2: i32 = bind_symbolic_name N 0, %N.loc32_10.1 [symbolic = %N.loc32_10.2 (constants.%N)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %self.loc32_21.1: <error> = param self
 // CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc32_21.1
@@ -85,12 +85,12 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %self.loc13_8.1: %Class.2 = param self
-// CHECK:STDOUT:     %self.loc13_8.2: %Class.2 = bind_name self, %self.loc13_8.1
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc13_20.1: %T = param n
-// CHECK:STDOUT:     %n.loc13_20.2: %T = bind_name n, %n.loc13_20.1
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc13_8.1: @Class.%Self.ref (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: @Class.%Self.ref (%Class.2) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc13 (constants.%T)]
+// CHECK:STDOUT:     %n.loc13_20.1: @Class.%T.ref.loc13 (%T) = param n
+// CHECK:STDOUT:     %n.loc13_20.2: @Class.%T.ref.loc13 (%T) = bind_name n, %n.loc13_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -99,7 +99,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: %Class.2](@Class.%n.loc13_20.2: %T)
+// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: @Class.%Self.ref (%Class.2)](@Class.%n.loc13_20.2: @Class.%T.ref.loc13 (%T))
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

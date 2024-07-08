@@ -50,27 +50,27 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %GetAddr.decl: %GetAddr.type = fn_decl @GetAddr [template = constants.%GetAddr] {
-// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = constants.%.2]
-// CHECK:STDOUT:     %self.loc12_19.1: %.2 = param self
-// CHECK:STDOUT:     %self.loc12_19.3: %.2 = bind_name self, %self.loc12_19.1
-// CHECK:STDOUT:     %.loc12_14: %.2 = addr_pattern %self.loc12_19.3
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc12_38: type = ptr_type %T [symbolic = constants.%.3]
+// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref.loc12 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = %.loc12_29 (constants.%.2)]
+// CHECK:STDOUT:     %self.loc12_19.1: @Class.%.loc12_29 (%.2) = param self
+// CHECK:STDOUT:     %self.loc12_19.3: @Class.%.loc12_29 (%.2) = bind_name self, %self.loc12_19.1
+// CHECK:STDOUT:     %.loc12_14: @Class.%.loc12_29 (%.2) = addr_pattern %self.loc12_19.3
+// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12 (constants.%T)]
+// CHECK:STDOUT:     %.loc12_38: type = ptr_type %T [symbolic = %.loc12_38 (constants.%.3)]
 // CHECK:STDOUT:     %return.var.loc12: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
-// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %self.loc17_15.1: %Class.2 = param self
-// CHECK:STDOUT:     %self.loc17_15.2: %Class.2 = bind_name self, %self.loc17_15.1
-// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref.loc17 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc17_15.1: @Class.%Self.ref.loc17 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc17_15.2: @Class.%Self.ref.loc17 (%Class.2) = bind_name self, %self.loc17_15.1
+// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc17 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
@@ -83,7 +83,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   .k = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: %.2]() -> %.3
+// CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: @Class.%.loc12_29 (%.2)]() -> %.3
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_19.3
@@ -94,7 +94,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: %Class.2]() -> %T
+// CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: @Class.%Self.ref.loc17 (%Class.2)]() -> %T
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class.2 = name_ref self, @Class.%self.loc17_15.2

@@ -30,7 +30,8 @@ auto CheckFunctionTypeMatches(Context& context,
     prev_return_type_id =
         SubstType(context, prev_return_type_id, substitutions);
   }
-  if (new_return_type_id != prev_return_type_id) {
+  if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
+                                                  prev_return_type_id)) {
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
         "Function redeclaration differs because return type is `{0}`.",

@@ -76,7 +76,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -89,13 +89,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Get.decl: %Get.type = fn_decl @Get [template = constants.%Get] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = constants.%.2]
-// CHECK:STDOUT:     %self.loc12_15.1: %.2 = param self
-// CHECK:STDOUT:     %self.loc12_15.3: %.2 = bind_name self, %self.loc12_15.1
-// CHECK:STDOUT:     %.loc12_10: %.2 = addr_pattern %self.loc12_15.3
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc12_34: type = ptr_type %T [symbolic = constants.%.3]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = %.loc12_25 (constants.%.2)]
+// CHECK:STDOUT:     %self.loc12_15.1: @Class.%.loc12_25 (%.2) = param self
+// CHECK:STDOUT:     %self.loc12_15.3: @Class.%.loc12_25 (%.2) = bind_name self, %self.loc12_15.1
+// CHECK:STDOUT:     %.loc12_10: @Class.%.loc12_25 (%.2) = addr_pattern %self.loc12_15.3
+// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12 (constants.%T)]
+// CHECK:STDOUT:     %.loc12_34: type = ptr_type %T [symbolic = %.loc12_34 (constants.%.3)]
 // CHECK:STDOUT:     %return.var: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
@@ -107,7 +107,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .k = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: %.2]() -> %.3
+// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: @Class.%.loc12_25 (%.2)]() -> %.3
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_15.3

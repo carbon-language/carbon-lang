@@ -46,22 +46,22 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %MakeSelf.decl: %MakeSelf.type = fn_decl @MakeSelf [template = constants.%MakeSelf] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref (constants.%Class.2)]
 // CHECK:STDOUT:     %return.var.loc14: ref %Class.2 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeClass.decl: %MakeClass.type = fn_decl @MakeClass [template = constants.%MakeClass] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc15_26: init type = call %Class.ref(%T.ref) [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %.loc15_28.1: type = value_of_initializer %.loc15_26 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %.loc15_28.2: type = converted %.loc15_26, %.loc15_28.1 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:     %.loc15_26: init type = call %Class.ref(%T.ref) [symbolic = %.loc15_26 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc15_28.1: type = value_of_initializer %.loc15_26 [symbolic = %.loc15_26 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc15_28.2: type = converted %.loc15_26, %.loc15_28.1 [symbolic = %.loc15_26 (constants.%Class.2)]
 // CHECK:STDOUT:     %return.var.loc15: ref %Class.2 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}

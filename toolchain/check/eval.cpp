@@ -1184,7 +1184,12 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return context.constant_values().Get(typed_inst.value_id);
     }
     case CARBON_KIND(SemIR::NameRef typed_inst): {
-      return context.constant_values().Get(typed_inst.value_id);
+      // Map from an instance-specific constant value to the canonical value.
+      // TODO: Remove this once we properly model instructions with
+      // instance-dependent constant values.
+      return GetConstantInInstance(
+          context, SemIR::GenericInstanceId::Invalid,
+          context.constant_values().Get(typed_inst.value_id));
     }
     case CARBON_KIND(SemIR::Converted typed_inst): {
       return context.constant_values().Get(typed_inst.result_id);

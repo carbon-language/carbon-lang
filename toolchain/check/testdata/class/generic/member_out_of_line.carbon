@@ -121,7 +121,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc8_10.1: type = param T
@@ -137,10 +137,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc5_8.1: %T = param n
-// CHECK:STDOUT:     %n.loc5_8.2: %T = bind_name n, %n.loc5_8.1
-// CHECK:STDOUT:     %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = %T.ref.loc5_11 (constants.%T)]
+// CHECK:STDOUT:     %n.loc5_8.1: @Class.%T.ref.loc5_11 (%T) = param n
+// CHECK:STDOUT:     %n.loc5_8.2: @Class.%T.ref.loc5_11 (%T) = bind_name n, %n.loc5_8.1
+// CHECK:STDOUT:     %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = %T.ref.loc5_11 (constants.%T)]
 // CHECK:STDOUT:     %return.var: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -183,7 +183,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
-// CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc10_6.1: type = param T
@@ -203,9 +203,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: class @A
 // CHECK:STDOUT:     generic [file.%T.loc4_9.2: type] {
 // CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %N.loc5_11.1: %T = param N
-// CHECK:STDOUT:     %N.loc5_11.2: %T = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:     %N.loc5_11.1: @A.%T.ref (%T) = param N
+// CHECK:STDOUT:     %N.loc5_11.2: @A.%T.ref (%T) = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = %N.loc5_11.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -214,14 +214,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: %T] {
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @A.%T.ref (%T)] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = constants.%B.2]
-// CHECK:STDOUT:     %self.loc6_10.1: %B.2 = param self
-// CHECK:STDOUT:     %self.loc6_10.2: %B.2 = bind_name self, %self.loc6_10.1
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %a.loc6_22.1: %T = param a
-// CHECK:STDOUT:     %a.loc6_22.2: %T = bind_name a, %a.loc6_22.1
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = %Self.ref (constants.%B.2)]
+// CHECK:STDOUT:     %self.loc6_10.1: @B.%Self.ref (%B.2) = param self
+// CHECK:STDOUT:     %self.loc6_10.2: @B.%Self.ref (%B.2) = bind_name self, %self.loc6_10.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:     %a.loc6_22.1: @B.%T.ref (%T) = param a
+// CHECK:STDOUT:     %a.loc6_22.2: @B.%T.ref (%T) = bind_name a, %a.loc6_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -230,7 +230,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: %B.2](%a: %T)
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: %T] {
+// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @A.%T.ref (%T)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -258,7 +258,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %NotGeneric.decl: type = class_decl @NotGeneric [template = constants.%NotGeneric] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.loc15_15.1: type = param T
-// CHECK:STDOUT:     %T.loc15_15.2: type = bind_symbolic_name T 0, %T.loc15_15.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc15_15.2: type = bind_symbolic_name T 0, %T.loc15_15.1 [symbolic = %T.loc15_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -302,7 +302,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
-// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT: }
@@ -349,13 +349,13 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
-// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.loc15_12.1: type = param T
-// CHECK:STDOUT:     %T.loc15_12.2: type = bind_symbolic_name T 0, %T.loc15_12.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc15_12.2: type = bind_symbolic_name T 0, %T.loc15_12.1 [symbolic = %T.loc15_12.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc15_22.1: type = param U
-// CHECK:STDOUT:     %U.loc15_22.2: type = bind_symbolic_name U 1, %U.loc15_22.1 [symbolic = constants.%U]
+// CHECK:STDOUT:     %U.loc15_22.2: type = bind_symbolic_name U 1, %U.loc15_22.1 [symbolic = %U.loc15_22.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -402,13 +402,13 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
-// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = constants.%T.1]
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = %T.loc4_15.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %.loc14_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc14_12.1: %.1 = param T
-// CHECK:STDOUT:     %T.loc14_12.2: %.1 = bind_symbolic_name T 0, %T.loc14_12.1 [symbolic = constants.%T.2]
+// CHECK:STDOUT:     %T.loc14_12.2: %.1 = bind_symbolic_name T 0, %T.loc14_12.1 [symbolic = %T.loc14_12.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

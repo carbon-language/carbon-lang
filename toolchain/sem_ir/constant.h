@@ -78,7 +78,7 @@ class ConstantValueStore {
   // Returns whether two constant IDs represent the same constant value. This
   // includes the case where they might be in different generics and thus might
   // have different ConstantIds, but are still symbolically equal.
-  auto EqualAcrossDeclarations(ConstantId a, ConstantId b) const -> bool {
+  auto AreEqualAcrossDeclarations(ConstantId a, ConstantId b) const -> bool {
     return GetInstId(a) == GetInstId(b);
   }
 

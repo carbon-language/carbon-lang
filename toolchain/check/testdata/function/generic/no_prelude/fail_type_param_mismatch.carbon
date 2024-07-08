@@ -33,9 +33,9 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:     %U.loc11_16.1: type = param U
-// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc11_16.1 [symbolic = constants.%U]
+// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U 1, %U.loc11_16.1 [symbolic = @F.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
