@@ -133,10 +133,12 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   // TODO: Add `BindSymbolicName` instructions for enclosing generics to the
   // map.
 
-  // TODO: See if we can ensure that the generic region stack is unchanged
-  // throughout this work. If so, we can use a range-based loop here instead.
-  for (size_t i = 0;
-       i != context.generic_region_stack().PeekDependentInsts().size(); ++i) {
+  // The work done in this loop might invalidate iterators into the generic
+  // region stack, but shouldn't add new dependent instructions to the current
+  // region.
+  auto num_dependent_insts =
+      context.generic_region_stack().PeekDependentInsts().size();
+  for (auto i : llvm::seq(num_dependent_insts)) {
     auto [inst_id, dep_kind] =
         context.generic_region_stack().PeekDependentInsts()[i];
 
@@ -168,6 +170,13 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       context.constant_values().Set(inst_id, const_id);
     }
   }
+
+  CARBON_CHECK(num_dependent_insts ==
+               context.generic_region_stack().PeekDependentInsts().size())
+      << "Building eval block added new dependent insts, for example "
+      << context.insts().Get(context.generic_region_stack()
+                                 .PeekDependentInsts()[num_dependent_insts]
+                                 .inst_id);
 
   return context.inst_block_stack().Pop();
 }
