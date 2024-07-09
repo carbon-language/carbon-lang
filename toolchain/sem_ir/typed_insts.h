@@ -372,7 +372,8 @@ struct BranchWithArg {
   InstId arg_id;
 };
 
-// A builtin instruction. These are special and listed in `builtin_kind.def`.
+// A builtin instruction, corresponding to instructions like
+// InstId::BuiltinTypeType.
 struct Builtin {
   // Builtins don't have a parse node associated with them.
   static constexpr auto Kind =
