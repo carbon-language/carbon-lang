@@ -883,7 +883,8 @@ struct TemporaryStorage {
   TypeId type_id;
 };
 
-// Access to a tuple member. Versus `TupleIndex`, this handles indirect access,
+// Access to a tuple member. Versus `TupleIndex`, this handles access where
+// the index was inferred rather than being specified as an expression,
 // such as `var tuple: (i32, i32) = (0, 1)` needing to access the `i32` values
 // for assignment.
 struct TupleAccess {
