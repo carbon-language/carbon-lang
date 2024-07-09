@@ -313,7 +313,7 @@ static auto BuildFunctionDecl(Context& context,
         !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
         (return_type_id.is_valid() &&
          return_type_id !=
-             context.GetBuiltinType(SemIR::BuiltinKind::IntType) &&
+             context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
          return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
@@ -474,7 +474,7 @@ static auto LookupBuiltinFunctionKind(Context& context,
 }
 
 // Returns whether `function` is a valid declaration of the builtin
-// `builtin_kind`.
+// `builtin_inst_kind`.
 static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
@@ -514,7 +514,7 @@ auto HandleBuiltinFunctionDefinition(
   if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
     auto& function = context.functions().Get(function_id);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
-      function.builtin_kind = builtin_kind;
+      function.builtin_function_kind = builtin_kind;
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
                         "Invalid signature for builtin function \"{0}\".",

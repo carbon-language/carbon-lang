@@ -14,7 +14,7 @@
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/sem_ir/block_value_store.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -264,7 +264,7 @@ class Inst : public Printable<Inst> {
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
-  static constexpr auto ToRaw(BuiltinKind kind) -> int32_t {
+  static constexpr auto ToRaw(BuiltinInstKind kind) -> int32_t {
     return kind.AsInt();
   }
 
@@ -274,8 +274,8 @@ class Inst : public Printable<Inst> {
     return T(raw);
   }
   template <>
-  constexpr auto FromRaw<BuiltinKind>(int32_t raw) -> BuiltinKind {
-    return BuiltinKind::FromInt(raw);
+  constexpr auto FromRaw<BuiltinInstKind>(int32_t raw) -> BuiltinInstKind {
+    return BuiltinInstKind::FromInt(raw);
   }
 
   int32_t kind_;

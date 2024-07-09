@@ -21,7 +21,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -835,20 +835,21 @@ class TypeCompleter {
   }
 
   auto BuildBuiltinValueRepr(SemIR::TypeId type_id,
-                             SemIR::Builtin builtin) const -> SemIR::ValueRepr {
-    switch (builtin.builtin_kind) {
-      case SemIR::BuiltinKind::TypeType:
-      case SemIR::BuiltinKind::Error:
-      case SemIR::BuiltinKind::Invalid:
-      case SemIR::BuiltinKind::BoolType:
-      case SemIR::BuiltinKind::IntType:
-      case SemIR::BuiltinKind::FloatType:
-      case SemIR::BuiltinKind::NamespaceType:
-      case SemIR::BuiltinKind::BoundMethodType:
-      case SemIR::BuiltinKind::WitnessType:
+                             SemIR::BuiltinInst builtin) const
+      -> SemIR::ValueRepr {
+    switch (builtin.builtin_inst_kind) {
+      case SemIR::BuiltinInstKind::TypeType:
+      case SemIR::BuiltinInstKind::Error:
+      case SemIR::BuiltinInstKind::Invalid:
+      case SemIR::BuiltinInstKind::BoolType:
+      case SemIR::BuiltinInstKind::IntType:
+      case SemIR::BuiltinInstKind::FloatType:
+      case SemIR::BuiltinInstKind::NamespaceType:
+      case SemIR::BuiltinInstKind::BoundMethodType:
+      case SemIR::BuiltinInstKind::WitnessType:
         return MakeCopyValueRepr(type_id);
 
-      case SemIR::BuiltinKind::StringType:
+      case SemIR::BuiltinInstKind::StringType:
         // TODO: Decide on string value semantics. This should probably be a
         // custom value representation carrying a pointer and size or
         // similar.
@@ -994,7 +995,7 @@ class TypeCompleter {
         // - For an unbound element, we could use an index or offset.
         return MakeEmptyValueRepr();
       }
-      case CARBON_KIND(SemIR::Builtin builtin): {
+      case CARBON_KIND(SemIR::BuiltinInst builtin): {
         return BuildBuiltinValueRepr(type_id, builtin);
       }
 
@@ -1091,8 +1092,8 @@ auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
                                                   entity_type_id);
 }
 
-auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
-  CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
+auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
+  CARBON_CHECK(kind != SemIR::BuiltinInstKind::Invalid);
   auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);

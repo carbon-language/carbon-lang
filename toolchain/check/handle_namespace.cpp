@@ -30,7 +30,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
-      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType),
       SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));

@@ -7,10 +7,10 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "builtin_kind",
-    srcs = ["builtin_kind.cpp"],
-    hdrs = ["builtin_kind.h"],
-    textual_hdrs = ["builtin_kind.def"],
+    name = "builtin_inst_kind",
+    srcs = ["builtin_inst_kind.cpp"],
+    hdrs = ["builtin_inst_kind.h"],
+    textual_hdrs = ["builtin_inst_kind.def"],
     deps = ["//common:enum_base"],
 )
 
@@ -39,7 +39,7 @@ cc_library(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:builtin_kind",
+        "//toolchain/sem_ir:builtin_inst_kind",
     ],
 )
 
@@ -54,7 +54,7 @@ cc_library(
     deps = [
         "//common:enum_base",
         "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:builtin_kind",
+        "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
     ],
@@ -66,7 +66,7 @@ cc_library(
     hdrs = ["inst.h"],
     deps = [
         ":block_value_store",
-        ":builtin_kind",
+        ":builtin_inst_kind",
         ":ids",
         ":inst_kind",
         "//common:check",
@@ -109,7 +109,7 @@ cc_library(
     ],
     deps = [
         ":block_value_store",
-        ":builtin_kind",
+        ":builtin_inst_kind",
         ":ids",
         ":inst",
         ":inst_kind",

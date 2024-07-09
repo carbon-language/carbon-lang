@@ -130,7 +130,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
 
   // Don't lower builtins.
-  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+  if (function.builtin_function_kind != SemIR::BuiltinFunctionKind::None) {
     return nullptr;
   }
 
@@ -315,28 +315,28 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       return llvm::ArrayType::get(GetType(inst.element_type_id),
                                   sem_ir_->GetArrayBoundValue(inst.bound_id));
     }
-    case CARBON_KIND(SemIR::Builtin inst): {
-      switch (inst.builtin_kind) {
-        case SemIR::BuiltinKind::Invalid:
-        case SemIR::BuiltinKind::Error:
+    case CARBON_KIND(SemIR::BuiltinInst inst): {
+      switch (inst.builtin_inst_kind) {
+        case SemIR::BuiltinInstKind::Invalid:
+        case SemIR::BuiltinInstKind::Error:
           CARBON_FATAL() << "Unexpected builtin type in lowering.";
-        case SemIR::BuiltinKind::TypeType:
+        case SemIR::BuiltinInstKind::TypeType:
           return GetTypeType();
-        case SemIR::BuiltinKind::FloatType:
+        case SemIR::BuiltinInstKind::FloatType:
           return llvm::Type::getDoubleTy(*llvm_context_);
-        case SemIR::BuiltinKind::IntType:
+        case SemIR::BuiltinInstKind::IntType:
           return llvm::Type::getInt32Ty(*llvm_context_);
-        case SemIR::BuiltinKind::BoolType:
+        case SemIR::BuiltinInstKind::BoolType:
           // TODO: We may want to have different representations for `bool`
           // storage
           // (`i8`) versus for `bool` values (`i1`).
           return llvm::Type::getInt1Ty(*llvm_context_);
-        case SemIR::BuiltinKind::StringType:
+        case SemIR::BuiltinInstKind::StringType:
           // TODO: Decide how we want to represent `StringType`.
           return llvm::PointerType::get(*llvm_context_, 0);
-        case SemIR::BuiltinKind::BoundMethodType:
-        case SemIR::BuiltinKind::NamespaceType:
-        case SemIR::BuiltinKind::WitnessType:
+        case SemIR::BuiltinInstKind::BoundMethodType:
+        case SemIR::BuiltinInstKind::NamespaceType:
+        case SemIR::BuiltinInstKind::WitnessType:
           // Return an empty struct as a placeholder.
           return llvm::StructType::get(*llvm_context_);
       }

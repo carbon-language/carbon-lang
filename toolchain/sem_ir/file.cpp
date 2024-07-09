@@ -11,7 +11,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -72,20 +72,21 @@ File::File(CheckIRId check_ir_id, SharedValueStores& value_stores,
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
-  insts_.Reserve(BuiltinKind::ValidCount);
+  insts_.Reserve(BuiltinInstKind::ValidCount);
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the
 // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                                 \
-  insts_.AddInNoBlock(LocIdAndInst::NoLoc<Builtin>(                           \
-      {.type_id = BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
-                                                          : TypeId::TypeType, \
-       .builtin_kind = BuiltinKind::Name}));
-#include "toolchain/sem_ir/builtin_kind.def"
-  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
-      << "Builtins should produce " << BuiltinKind::ValidCount
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...)                \
+  insts_.AddInNoBlock(LocIdAndInst::NoLoc<BuiltinInst>(           \
+      {.type_id = BuiltinInstKind::Name == BuiltinInstKind::Error \
+                      ? TypeId::Error                             \
+                      : TypeId::TypeType,                         \
+       .builtin_inst_kind = BuiltinInstKind::Name}));
+#include "toolchain/sem_ir/builtin_inst_kind.def"
+  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount)
+      << "Builtins should produce " << BuiltinInstKind::ValidCount
       << " insts, actual: " << insts_.size();
-  for (auto i : llvm::seq(BuiltinKind::ValidCount)) {
+  for (auto i : llvm::seq(BuiltinInstKind::ValidCount)) {
     auto builtin_id = SemIR::InstId(i);
     constant_values_.Set(builtin_id,
                          SemIR::ConstantId::ForTemplateConstant(builtin_id));
@@ -145,18 +146,19 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("generic_instances", generic_instances_.OutputYaml());
           map.Add("types", types_.OutputYaml());
           map.Add("type_blocks", type_blocks_.OutputYaml());
-          map.Add("insts",
-                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
-                    for (int i : llvm::seq(start, insts_.size())) {
-                      auto id = InstId(i);
-                      map.Add(PrintToString(id),
-                              Yaml::OutputScalar(insts_.Get(id)));
-                    }
-                  }));
+          map.Add(
+              "insts", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                int start = include_builtins ? 0 : BuiltinInstKind::ValidCount;
+                for (int i : llvm::seq(start, insts_.size())) {
+                  auto id = InstId(i);
+                  map.Add(PrintToString(id),
+                          Yaml::OutputScalar(insts_.Get(id)));
+                }
+              }));
           map.Add("constant_values",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
+                    int start =
+                        include_builtins ? 0 : BuiltinInstKind::ValidCount;
                     for (int i : llvm::seq(start, insts_.size())) {
                       auto id = InstId(i);
                       auto value = constant_values_.Get(id);
@@ -178,7 +180,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayType::Kind:
     case AssociatedEntityType::Kind:
     case BindSymbolicName::Kind:
-    case Builtin::Kind:
+    case BuiltinInst::Kind:
     case ClassType::Kind:
     case FloatType::Kind:
     case FunctionType::Kind:
@@ -235,7 +237,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
 
     // Builtins have designated labels.
     if (step.inst_id.is_builtin()) {
-      out << step.inst_id.builtin_kind().label();
+      out << step.inst_id.builtin_inst_kind().label();
       continue;
     }
 
@@ -444,7 +446,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
-      case Builtin::Kind:
+      case BuiltinInst::Kind:
       case Call::Kind:
       case ClassDecl::Kind:
       case ClassElementAccess::Kind:
@@ -604,8 +606,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ValueOfInitializer::Kind:
         return value_category;
 
-      case CARBON_KIND(Builtin inst): {
-        if (inst.builtin_kind == BuiltinKind::Error) {
+      case CARBON_KIND(BuiltinInst inst): {
+        if (inst.builtin_inst_kind == BuiltinInstKind::Error) {
           return ExprCategory::Error;
         }
         return value_category;
