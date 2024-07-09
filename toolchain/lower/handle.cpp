@@ -18,20 +18,6 @@
 
 namespace Carbon::Lower {
 
-template <typename InstT>
-static auto FatalErrorIfEncountered(InstT inst) -> void {
-  CARBON_FATAL()
-      << "Encountered an instruction that isn't expected to lower. It's "
-         "possible that logic needs to be changed in order to stop "
-         "showing this instruction in lowered contexts. Instruction: "
-      << inst;
-}
-
-auto HandleAdaptDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::AdaptDecl inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleAddrOf(FunctionContext& context, SemIR::InstId inst_id,
                   SemIR::AddrOf inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
@@ -70,12 +56,6 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
                   SemIR::Assign inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.lhs_id).type_id();
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
-}
-
-auto HandleAssociatedConstantDecl(FunctionContext& /*context*/,
-                                  SemIR::InstId /*inst_id*/,
-                                  SemIR::AssociatedConstantDecl inst) -> void {
-  FatalErrorIfEncountered(inst);
 }
 
 auto HandleBindAlias(FunctionContext& context, SemIR::InstId inst_id,
@@ -180,55 +160,10 @@ auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
-auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                        SemIR::FunctionDecl inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleImplDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                    SemIR::ImplDecl inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleImportDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                      SemIR::ImportDecl inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleImportRefUnloaded(FunctionContext& /*context*/,
-                             SemIR::InstId /*inst_id*/,
-                             SemIR::ImportRefUnloaded inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleImportRefLoaded(FunctionContext& /*context*/,
-                           SemIR::InstId /*inst_id*/,
-                           SemIR::ImportRefLoaded inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
-}
-
-auto HandleInterfaceDecl(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::InterfaceDecl inst)
-    -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleInterfaceWitness(FunctionContext& /*context*/,
-                            SemIR::InstId /*inst_id*/,
-                            SemIR::InterfaceWitness inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleInterfaceWitnessAccess(FunctionContext& /*context*/,
-                                  SemIR::InstId /*inst_id*/,
-                                  SemIR::InterfaceWitnessAccess inst) -> void {
-  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,

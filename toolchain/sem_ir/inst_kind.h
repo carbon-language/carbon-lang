@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "common/check.h"
 #include "common/enum_base.h"
 #include "llvm/ADT/FoldingSet.h"
 
@@ -82,6 +83,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
       TerminatorKind terminator_kind = TerminatorKind::NotTerminator) const
       -> Definition<TypedNodeId>;
 
+  // As above, but for instructions which are not lowered; `Define(ir_name)`
+  // should be used instead of specifying `is_lowered = true`.
+  template <typename TypedNodeId>
+  constexpr auto Define(llvm::StringLiteral ir_name, bool is_lowered) const
+      -> Definition<TypedNodeId>;
+
   using EnumBase::AsInt;
   using EnumBase::Make;
 
@@ -136,22 +143,39 @@ class InstKind::Definition : public InstKind {
     return terminator_kind_;
   }
 
+  // Returns true if the instruction is lowered.
+  constexpr auto is_lowered() const -> bool { return is_lowered_; }
+
  private:
   friend class InstKind;
 
   constexpr Definition(InstKind kind, llvm::StringLiteral ir_name,
-                       TerminatorKind terminator_kind)
-      : InstKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
+                       TerminatorKind terminator_kind, bool is_lowered)
+      : InstKind(kind),
+        ir_name_(ir_name),
+        terminator_kind_(terminator_kind),
+        is_lowered_(is_lowered) {}
 
   llvm::StringLiteral ir_name_;
   TerminatorKind terminator_kind_;
+  bool is_lowered_;
 };
 
 template <typename TypedNodeId>
 constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
                                 TerminatorKind terminator_kind) const
     -> Definition<TypedNodeId> {
-  return Definition<TypedNodeId>(*this, ir_name, terminator_kind);
+  return Definition<TypedNodeId>(*this, ir_name, terminator_kind,
+                                 /*is_lowered=*/true);
+}
+
+template <typename TypedNodeId>
+constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
+                                bool is_lowered) const
+    -> Definition<TypedNodeId> {
+  CARBON_CHECK(!is_lowered) << "Use Define(ir_name) instead";
+  return Definition<TypedNodeId>(*this, ir_name, TerminatorKind::NotTerminator,
+                                 /*is_lowered=*/is_lowered);
 }
 
 }  // namespace Carbon::SemIR
