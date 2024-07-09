@@ -982,8 +982,9 @@ struct ValueAsRef {
   InstId value_id;
 };
 
-// In an initializing expression, when the initializing value can be directly
-// used, tracking for the value.
+// Converts an initializing expression to a value expression, in the case
+// where the initializing representation is the same as the value
+// representation.
 struct ValueOfInitializer {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
