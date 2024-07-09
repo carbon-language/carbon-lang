@@ -205,18 +205,6 @@ static auto EmitNamespaceAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitRealLiteralAsConstant(ConstantContext& context,
-                                      SemIR::RealLiteral inst)
-    -> llvm::Constant* {
-  const Real& real = context.sem_ir().reals().Get(inst.real_id);
-  // TODO: This will probably have overflow issues, and should be fixed.
-  double val =
-      real.mantissa.getZExtValue() *
-      std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
-  llvm::APFloat llvm_val(val);
-  return llvm::ConstantFP::get(context.GetType(inst.type_id), llvm_val);
-}
-
 static auto EmitStringLiteralAsConstant(ConstantContext& /*context*/,
                                         SemIR::StringLiteral inst)
     -> llvm::Constant* {

@@ -703,14 +703,6 @@ struct PointerType {
   TypeId pointee_id;
 };
 
-struct RealLiteral {
-  static constexpr auto Kind =
-      InstKind::RealLiteral.Define<Parse::RealLiteralId>("real_literal");
-
-  TypeId type_id;
-  RealId real_id;
-};
-
 struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,

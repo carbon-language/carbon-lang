@@ -1134,7 +1134,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BoolLiteral::Kind:
     case SemIR::FloatLiteral::Kind:
     case SemIR::IntLiteral::Kind:
-    case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
       // TODO: Convert literals into a canonical form. Currently we can form two
