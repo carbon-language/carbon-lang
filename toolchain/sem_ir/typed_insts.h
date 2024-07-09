@@ -779,7 +779,7 @@ struct ReturnExpr {
 // constructing from aggregates we may figure out which conversions are required
 // late, and splice parts together.
 struct SpliceBlock {
-  // TODO: Make Parse::NodeId more specific.
+  // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind =
       InstKind::SpliceBlock.Define<Parse::NodeId>("splice_block");
 
