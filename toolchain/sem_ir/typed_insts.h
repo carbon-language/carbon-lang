@@ -743,7 +743,7 @@ struct Param {
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
-// `x: i32*`, where `pointee_id` is `i32` and `type_id` is `i32*`.
+// `x: i32*`, where `pointee_id` is `i32` and `type_id` is `type`.
 struct PointerType {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
