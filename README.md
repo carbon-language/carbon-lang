@@ -328,32 +328,7 @@ Learn more about the Carbon project:
 
 ## Conference talks
 
-Past Carbon focused talks from the community:
-
-### 2022
-
--   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
-    CppNorth
--   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
-    Core C++
-
-### 2023
-
--   [Carbon’s Successor Strategy: From C++ interop to memory safety](https://www.youtube.com/watch?v=1ZTJ9omXOQ0),
-    C++Now
--   Definition-Checked Generics
-    ([Part 1](https://www.youtube.com/watch?v=FKC8WACSMP0),
-    [Part 2](https://www.youtube.com/watch?v=VxQ3PwxiSzk)), C++Now
--   [Modernizing Compiler Design for Carbon’s Toolchain](https://www.youtube.com/watch?v=ZI198eFghJk),
-    C++Now
-
-### 2024
-
--   [Carbon: An experiment in different tradeoffs](https://llvm.swoogo.com/2024eurollvm/session/2086974/carbon-an-experiment-in-different-tradeoffs),
-    panel session at EuroLLVM 2024
-    -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
--   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
-    C++Now
+Carbon focused talks from the community:
 
 ### Upcoming
 
@@ -361,6 +336,32 @@ Past Carbon focused talks from the community:
     CppNorth, July 21-24
 -   [The Carbon Language: Road to 0.1](https://ndctechtown.com/agenda/the-carbon-language-road-to-01-0sqv/0526yb03a59),
     NDC {TechTown}, Sept. 11
+
+### 2024
+
+-   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
+    C++Now
+-   [Carbon: An experiment in different tradeoffs](https://youtu.be/Za_KWj5RMR8)
+    panel session, EuroLLVM
+    -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
+-   [Carbon's high-level semantic IR](https://youtu.be/vIWT4RhUcyw) lightning
+    talk, EuroLLVM
+
+### 2023
+
+-   [Carbon’s Successor Strategy: From C++ interop to memory safety](https://youtu.be/1ZTJ9omXOQ0),
+    C++Now
+-   Definition-Checked Generics ([Part 1](https://youtu.be/FKC8WACSMP0),
+    [Part 2](https://youtu.be/VxQ3PwxiSzk)), C++Now
+-   [Modernizing Compiler Design for Carbon’s Toolchain](https://youtu.be/ZI198eFghJk),
+    C++Now
+
+### 2022
+
+-   [Carbon Language: Syntax and trade-offs](https://youtu.be/9Y2ivB8VaIs), Core
+    C++
+-   [Carbon Language: An experimental successor to C++](https://youtu.be/omrY53kbVoA),
+    CppNorth
 
 ## Join us
 
