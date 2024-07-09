@@ -972,8 +972,10 @@ struct UnboundElementType {
   TypeId element_type_id;
 };
 
-// An ephemeral reference to a value. For example, when indexing an array, a
-// reference to the accessed element.
+// Converts from a value expression to an ephemeral reference expression, in
+// the case where the value representation of the type is a pointer. For
+// example, when indexing a value expression of array type, this is used to
+// form a reference to the array object.
 struct ValueAsRef {
   static constexpr auto Kind =
       InstKind::ValueAsRef.Define<Parse::IndexExprId>("value_as_ref");
