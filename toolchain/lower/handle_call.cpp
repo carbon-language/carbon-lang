@@ -290,7 +290,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
   CARBON_FATAL() << "Unsupported builtin call.";
 }
 
-auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Call inst) -> void {
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
