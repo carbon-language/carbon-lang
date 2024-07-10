@@ -23,6 +23,7 @@
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
@@ -1136,6 +1137,10 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   inst_block_stack_.PrintForStackDump(output);
   param_and_arg_refs_stack_.PrintForStackDump(output);
   args_type_info_stack_.PrintForStackDump(output);
+}
+
+auto Context::DumpFormattedFile() const -> void {
+  FormatFile(*tokens_, *parse_tree_, *sem_ir_, llvm::errs());
 }
 
 }  // namespace Carbon::Check
