@@ -46,6 +46,9 @@ class ScopeStack {
 
     // The corresponding name scope.
     SemIR::NameScopeId name_scope_id;
+
+    // The corresponding generic instance.
+    SemIR::GenericInstanceId instance_id;
   };
 
   // Information about a scope that has been temporarily removed from the stack.
@@ -55,9 +58,11 @@ class ScopeStack {
   // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
   // given namespace may contain a mix of both successful and failed name
   // imports.
-  auto Push(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-            SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-            bool lexical_lookup_has_load_error = false) -> void;
+  auto Push(
+      SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
+      SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
+      SemIR::GenericInstanceId instance_id = SemIR::GenericInstanceId::Invalid,
+      bool lexical_lookup_has_load_error = false) -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from
   // lexical_lookup_.
@@ -167,6 +172,9 @@ class ScopeStack {
 
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
+
+    // The generic instance associated with this entry, if any.
+    SemIR::GenericInstanceId instance_id;
 
     // The next compile-time binding index to allocate in this scope.
     SemIR::CompileTimeBindIndex next_compile_time_bind_index;

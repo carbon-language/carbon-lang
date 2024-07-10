@@ -196,13 +196,19 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
 
   auto bindings_id = context.inst_blocks().Add(all_bindings);
   auto generic_id = context.generics().Add(
-      SemIR::Generic{.decl_id = decl_id, .bindings_id = bindings_id});
+      SemIR::Generic{.decl_id = decl_id,
+                     .bindings_id = bindings_id,
+                     .self_instance_id = SemIR::GenericInstanceId::Invalid});
 
   auto decl_block_id = MakeGenericEvalBlock(
       context, generic_id, SemIR::GenericInstIndex::Region::Declaration);
   context.generic_region_stack().Pop();
 
-  context.generics().Get(generic_id).decl_block_id = decl_block_id;
+  auto self_instance_id = MakeGenericSelfInstance(context, generic_id);
+
+  auto& generic_info = context.generics().Get(generic_id);
+  generic_info.decl_block_id = decl_block_id;
+  generic_info.self_instance_id = self_instance_id;
   return generic_id;
 }
 
@@ -238,7 +244,6 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
 
 auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
     -> SemIR::GenericInstanceId {
-  // TODO: Remove this once we import generics properly.
   if (!generic_id.is_valid()) {
     return SemIR::GenericInstanceId::Invalid;
   }

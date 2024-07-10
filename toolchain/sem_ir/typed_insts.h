@@ -642,7 +642,7 @@ struct InitializeFrom {
 };
 
 // Given an instruction with a constant value that depends on a generic
-// parameter, selects an instance of that instruction with the constant value 
+// parameter, selects an instance of that instruction with the constant value
 // corresponding to a particular instance of the generic.
 struct InstanceConstant {
   static constexpr auto Kind =

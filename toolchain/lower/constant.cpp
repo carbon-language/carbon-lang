@@ -194,8 +194,9 @@ static auto EmitInterfaceWitnessAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitInstanceConstantAsConstant(
-    ConstantContext& context, SemIR::InstanceConstant inst) -> llvm::Constant* {
+static auto EmitInstanceConstantAsConstant(ConstantContext& context,
+                                           SemIR::InstanceConstant inst)
+    -> llvm::Constant* {
   return context.GetConstant(SemIR::GetConstantValueInInstance(
       context.sem_ir(), inst.instance_id, inst.inst_id));
 }

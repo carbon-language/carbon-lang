@@ -44,7 +44,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc16_10.1: type = param T
 // CHECK:STDOUT:     %T.loc16_10.2: type = bind_symbolic_name T 0, %T.loc16_10.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %.loc16: type = instance_constant constants.%Class.2, (constants.%T) [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc16 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %self.loc16_22.1: %Class.2 = param self
 // CHECK:STDOUT:     @F.%self: %Class.2 = bind_name self, %self.loc16_22.1
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_10.2 [symbolic = constants.%T]
@@ -58,9 +59,10 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc13_8.1: @Class.%Self.ref (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc13_8.2: @Class.%Self.ref (%Class.2) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %.loc13: type = instance_constant constants.%Class.2, (constants.%T) [symbolic = %.loc13 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = %.loc13 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc13_8.1: @Class.%.loc13 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: @Class.%.loc13 (%Class.2) = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc13 (constants.%T)]
 // CHECK:STDOUT:     %n.loc13_20.1: @Class.%T.ref.loc13 (%T) = param n
 // CHECK:STDOUT:     %n.loc13_20.2: @Class.%T.ref.loc13 (%T) = bind_name n, %n.loc13_20.1

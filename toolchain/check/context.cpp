@@ -272,15 +272,11 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
       scope_stack().LookupInLexicalScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
-  for (auto [index, lookup_scope_id] : llvm::reverse(non_lexical_scopes)) {
-    // Enclosing non-lexical scopes cannot correspond to an instance of a
-    // generic, so it's always OK to pass an invalid generic instance here.
-    // Note that the lookup result might still be found in an extended scope, so
-    // it can be in a generic instance.
+  for (auto [index, lookup_scope_id, instance_id] :
+       llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result = LookupQualifiedName(
             node_id, name_id,
-            {.name_scope_id = lookup_scope_id,
-             .instance_id = SemIR::GenericInstanceId::Invalid},
+            {.name_scope_id = lookup_scope_id, .instance_id = instance_id},
             /*required=*/false);
         non_lexical_result.inst_id.is_valid()) {
       return non_lexical_result;

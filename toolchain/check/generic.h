@@ -41,7 +41,8 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
     -> SemIR::GenericInstanceId;
 
 // Builds the generic instance corresponding to the generic itself. For example,
-// for a generic `G(T:! type)`, this is `G(T)`.
+// for a generic `G(T:! type)`, this is `G(T)`. For an invalid `generic_id`,
+// returns an invalid instance ID.
 auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
     -> SemIR::GenericInstanceId;
 

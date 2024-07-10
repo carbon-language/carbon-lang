@@ -14,19 +14,28 @@ auto ScopeStack::VerifyOnFinish() -> void {
 }
 
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
+                      SemIR::GenericInstanceId instance_id,
                       bool lexical_lookup_has_load_error) -> void {
   compile_time_binding_stack_.PushArray();
   scope_stack_.push_back(
       {.index = next_scope_index_,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
+       .instance_id = instance_id,
        .next_compile_time_bind_index = SemIR::CompileTimeBindIndex(
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
   if (scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back(
-        {.scope_index = next_scope_index_, .name_scope_id = scope_id});
+    non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
+                                        .name_scope_id = scope_id,
+                                        .instance_id = instance_id});
+  } else {
+    // For lexical lookups, unqualified lookup doesn't know how to find the
+    // associated generic instance, so if we start adding lexical scopes with
+    // generic instances, we'll need to somehow track them in lookup.
+    CARBON_CHECK(!instance_id.is_valid())
+        << "Lexical scope should not have an associated generic instance.";
   }
 
   // TODO: Handle this case more gracefully.
@@ -207,8 +216,10 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
       << scope.entry.next_compile_time_bind_index.index;
 
   if (scope.entry.scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back({.scope_index = scope.entry.index,
-                                        .name_scope_id = scope.entry.scope_id});
+    non_lexical_scope_stack_.push_back(
+        {.scope_index = scope.entry.index,
+         .name_scope_id = scope.entry.scope_id,
+         .instance_id = scope.entry.instance_id});
   }
   scope_stack_.push_back(std::move(scope.entry));
 }
