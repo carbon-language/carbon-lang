@@ -13,7 +13,7 @@ namespace Carbon::Check {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id node_id) -> bool;
+  auto HandleParseNode(Context& context, Parse::Name##Id node_id) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 // Handle suspending the definition of a function. This is used for inline

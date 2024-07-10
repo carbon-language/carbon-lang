@@ -7,21 +7,20 @@
 
 namespace Carbon::Check {
 
-auto HandleTupleLiteralStart(Context& context,
-                             Parse::TupleLiteralStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::TupleLiteralStartId node_id)
+    -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
   return true;
 }
 
-auto HandleTupleLiteralComma(Context& context,
-                             Parse::TupleLiteralCommaId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::TupleLiteralCommaId /*node_id*/)
+    -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::TupleLiteralId node_id) -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TupleLiteralStart);
 

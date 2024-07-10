@@ -13,15 +13,15 @@
 
 namespace Carbon::Check {
 
-auto HandleExportIntroducer(Context& context,
-                            Parse::ExportIntroducerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
+    -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
   // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();

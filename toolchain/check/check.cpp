@@ -864,7 +864,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
-    if (!Check::Handle##Name(context, Parse::Name##Id(node_id))) {           \
+    if (!HandleParseNode(context, Parse::Name##Id(node_id))) {               \
       CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \
       return false;                                                          \
