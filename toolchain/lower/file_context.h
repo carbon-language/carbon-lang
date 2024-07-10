@@ -49,6 +49,15 @@ class FileContext {
   // Returns a global value for the given instruction.
   auto GetGlobal(SemIR::InstId inst_id) -> llvm::Value*;
 
+  // Returns the empty LLVM struct type used to represent the type `type`.
+  auto GetTypeType() -> llvm::StructType* {
+    if (!type_type_) {
+      // `type` is lowered to an empty LLVM StructType.
+      type_type_ = llvm::StructType::create(*llvm_context_, {}, "type");
+    }
+    return type_type_;
+  }
+
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
@@ -66,15 +75,6 @@ class FileContext {
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
-
-  // Returns the empty LLVM struct type used to represent the type `type`.
-  auto GetTypeType() -> llvm::StructType* {
-    if (!type_type_) {
-      // `type` is lowered to an empty LLVM StructType.
-      type_type_ = llvm::StructType::create(*llvm_context_, {}, "type");
-    }
-    return type_type_;
-  }
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;

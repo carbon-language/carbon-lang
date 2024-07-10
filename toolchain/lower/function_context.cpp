@@ -60,6 +60,17 @@ static auto FatalErrorIfEncountered(InstT inst) -> void {
       << inst;
 }
 
+// For instructions that are always of type `type`, produce the trivial runtime
+// representation of type `type`.
+static auto SetTrivialType(FunctionContext& context, SemIR::InstId inst_id)
+    -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
+}
+
+// TODO: Consider renaming Handle##Name, instead relying on typed_inst overload
+// resolution. That would allow putting the nonexistent handler implementations
+// in `requires`-style overloads.
+// NOLINTNEXTLINE(readability-function-size): The define confuses lint.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
   if (sem_ir().constant_values().Get(inst_id).is_constant()) {
@@ -69,25 +80,30 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   auto inst = sem_ir().insts().Get(inst_id);
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
-  CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
-#define CARBON_SEM_IR_INST_KIND(Name)               \
-  case CARBON_KIND(SemIR::Name typed_inst): {       \
-    if constexpr (SemIR::Name::Kind.is_lowered()) { \
-      Handle##Name(*this, inst_id, typed_inst);     \
-    } else {                                        \
-      FatalErrorIfEncountered(typed_inst);          \
-    }                                               \
-    break;                                          \
+
+  CARBON_KIND_SWITCH(inst){
+#define CARBON_SEM_IR_INST_KIND(Name)                                      \
+  case CARBON_KIND(SemIR::Name typed_inst): {                              \
+    if constexpr (!SemIR::Name::Kind.is_lowered()) {                       \
+      FatalErrorIfEncountered(typed_inst);                                 \
+    } else if constexpr (SemIR::Name::Kind.constant_kind() ==              \
+                         SemIR::InstConstantKind::Always) {                \
+      CARBON_FATAL() << "Missing constant value for constant instruction " \
+                     << inst;                                              \
+    } else if constexpr (SemIR::Name::Kind.is_type() ==                    \
+                         SemIR::InstIsType::Always) {                      \
+      SetTrivialType(*this, inst_id);                                      \
+    } else {                                                               \
+      Handle##Name(*this, inst_id, typed_inst);                            \
+    }                                                                      \
+    break;                                                                 \
   }
 #include "toolchain/sem_ir/inst_kind.def"
-
-    default:
-      CARBON_FATAL() << "Missing constant value for constant instruction "
-                     << inst;
   }
-  builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
-}  // namespace Carbon::Lower
+
+  builder_.getInserter()
+      .SetCurrentInstId(SemIR::InstId::Invalid);
+}
 
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
                                   SemIR::TypeId type_id) -> llvm::PHINode* {
