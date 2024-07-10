@@ -81,7 +81,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
 
-  CARBON_KIND_SWITCH(inst){
+  CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                                      \
   case CARBON_KIND(SemIR::Name typed_inst): {                              \
     if constexpr (!SemIR::Name::Kind.is_lowered()) {                       \
@@ -101,8 +101,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
-  builder_.getInserter()
-      .SetCurrentInstId(SemIR::InstId::Invalid);
+  builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
 }
 
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,

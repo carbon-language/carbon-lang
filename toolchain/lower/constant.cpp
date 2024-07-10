@@ -234,7 +234,7 @@ auto LowerConstants(FileContext& file_context,
 
     auto inst = file_context.sem_ir().insts().Get(inst_id);
     llvm::Constant* value = nullptr;
-    CARBON_KIND_SWITCH(inst){
+    CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)            \
   case CARBON_KIND(SemIR::Name const_inst): {    \
     value = EmitAsConstant(context, const_inst); \
