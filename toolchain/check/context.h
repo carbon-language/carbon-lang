@@ -26,6 +26,24 @@
 
 namespace Carbon::Check {
 
+// Information about a scope in which we can perform name lookup.
+struct LookupScope {
+  // The name scope in which names are searched.
+  SemIR::NameScopeId name_scope_id;
+  // The generic instance for the name scope, or `Invalid` if the name scope is
+  // not an instance of a generic.
+  SemIR::GenericInstanceId instance_id;
+};
+
+// A result produced by name lookup.
+struct LookupResult {
+  // The generic instance in which the lookup result was found. `Invalid` if the
+  // result was not found in a generic instance.
+  SemIR::GenericInstanceId instance_id;
+  // The declaration that was found by name lookup.
+  SemIR::InstId inst_id;
+};
+
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
@@ -122,7 +140,7 @@ class Context {
 
   // Performs an unqualified name lookup, returning the referenced instruction.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
-      -> SemIR::InstId;
+      -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
@@ -134,8 +152,8 @@ class Context {
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
   auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                           SemIR::NameScopeId scope_id, bool required = true)
-      -> SemIR::InstId;
+                           LookupScope scope, bool required = true)
+      -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
   // BuiltinError if not found.
@@ -235,6 +253,17 @@ class Context {
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
   auto TryToCompleteType(
+      SemIR::TypeId type_id,
+      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
+          std::nullopt) -> bool;
+
+  // Attempts to complete and define the type `type_id`. Returns `true` if the
+  // type is defined, or `false` if no definition is available. A defined type
+  // has known members.
+  //
+  // This is the same as `TryToCompleteType` except for interfaces, which are
+  // complete before they are fully defined.
+  auto TryToDefineType(
       SemIR::TypeId type_id,
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;

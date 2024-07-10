@@ -30,7 +30,8 @@ class Class {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,7 +83,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc17: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

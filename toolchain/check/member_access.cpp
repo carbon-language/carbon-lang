@@ -8,54 +8,57 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
-// Returns the name scope corresponding to base_id, or nullopt if not a scope.
+// Returns the lookup scope corresponding to base_id, or nullopt if not a scope.
 // On invalid scopes, prints a diagnostic and still returns the scope.
-static auto GetAsNameScope(Context& context, Parse::NodeId node_id,
-                           SemIR::ConstantId base_const_id)
-    -> std::optional<SemIR::NameScopeId> {
+static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
+                             SemIR::ConstantId base_const_id)
+    -> std::optional<LookupScope> {
   auto base_id = context.constant_values().GetInstId(base_const_id);
   auto base = context.insts().Get(base_id);
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
-    return base_as_namespace->name_scope_id;
+    return LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
+                       .instance_id = SemIR::GenericInstanceId::Invalid};
   }
   // TODO: Consider refactoring the near-identical class and interface support
   // below.
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+    context.TryToDefineType(
+        context.GetTypeIdForTypeConstant(base_const_id), [&] {
+          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
+                            "Member access into incomplete class `{0}`.",
+                            std::string);
+          return context.emitter().Build(
+              node_id, QualifiedExprInIncompleteClassScope,
+              context.sem_ir().StringifyType(base_const_id));
+        });
     auto& class_info = context.classes().Get(base_as_class->class_id);
-    if (!class_info.is_defined()) {
-      CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
-                        "Member access into incomplete class `{0}`.",
-                        std::string);
-      auto builder = context.emitter().Build(
-          node_id, QualifiedExprInIncompleteClassScope,
-          context.sem_ir().StringifyType(base_const_id));
-      context.NoteIncompleteClass(base_as_class->class_id, builder);
-      builder.Emit();
-    }
-    return class_info.scope_id;
+    return LookupScope{.name_scope_id = class_info.scope_id,
+                       .instance_id = base_as_class->instance_id};
   }
   if (auto base_as_interface = base.TryAs<SemIR::InterfaceType>()) {
+    context.TryToDefineType(
+        context.GetTypeIdForTypeConstant(base_const_id), [&] {
+          CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
+                            "Member access into undefined interface `{0}`.",
+                            std::string);
+          return context.emitter().Build(
+              node_id, QualifiedExprInUndefinedInterfaceScope,
+              context.sem_ir().StringifyType(base_const_id));
+        });
     auto& interface_info =
         context.interfaces().Get(base_as_interface->interface_id);
-    if (!interface_info.is_defined()) {
-      CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                        "Member access into undefined interface `{0}`.",
-                        std::string);
-      auto builder = context.emitter().Build(
-          node_id, QualifiedExprInUndefinedInterfaceScope,
-          context.sem_ir().StringifyType(base_const_id));
-      context.NoteUndefinedInterface(base_as_interface->interface_id, builder);
-      builder.Emit();
-    }
-    return interface_info.scope_id;
+    return LookupScope{.name_scope_id = interface_info.scope_id,
+                       .instance_id = base_as_interface->instance_id};
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
@@ -96,11 +99,10 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-// Returns whether `name_scope_id` is a scope for which impl lookup should be
-// performed if we find an associated entity.
-static auto ScopeNeedsImplLookup(Context& context,
-                                 SemIR::NameScopeId name_scope_id) -> bool {
-  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
+// Returns whether `scope` is a scope for which impl lookup should be performed
+// if we find an associated entity.
+static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
+  auto [_, inst] = context.name_scopes().GetInstIfValid(scope.name_scope_id);
   if (!inst) {
     return false;
   }
@@ -214,17 +216,20 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
                                     SemIR::InstId /*base_id*/,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
-                                    SemIR::NameScopeId name_scope_id)
-    -> SemIR::InstId {
-  auto inst_id = name_scope_id.is_valid() ? context.LookupQualifiedName(
-                                                node_id, name_id, name_scope_id)
-                                          : SemIR::InstId::BuiltinError;
-  auto inst = context.insts().Get(inst_id);
+                                    LookupScope lookup_scope) -> SemIR::InstId {
+  LookupResult result = {.instance_id = SemIR::GenericInstanceId::Invalid,
+                         .inst_id = SemIR::InstId::BuiltinError};
+  if (lookup_scope.name_scope_id.is_valid()) {
+    result = context.LookupQualifiedName(node_id, name_id, lookup_scope);
+  }
+
+  auto inst = context.insts().Get(result.inst_id);
+  auto type_id = GetTypeInInstance(context, result.instance_id, inst.type_id());
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
   auto member_id = context.AddInst<SemIR::NameRef>(
       node_id,
-      {.type_id = inst.type_id(), .name_id = name_id, .value_id = inst_id});
+      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
 
   // If member name lookup finds an associated entity name, and the scope is not
   // a facet type, perform impl lookup.
@@ -234,7 +239,7 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   // impl member is not supposed to be treated as ambiguous.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           inst.type_id())) {
-    if (ScopeNeedsImplLookup(context, name_scope_id)) {
+    if (ScopeNeedsImplLookup(context, lookup_scope)) {
       member_id = PerformImplLookup(context, node_id, name_scope_const_id,
                                     *assoc_type, member_id);
     }
@@ -303,9 +308,9 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
-    if (auto name_scope_id = GetAsNameScope(context, node_id, base_const_id)) {
+    if (auto lookup_scope = GetAsLookupScope(context, node_id, base_const_id)) {
       return LookupMemberNameInScope(context, node_id, base_id, name_id,
-                                     base_const_id, *name_scope_id);
+                                     base_const_id, *lookup_scope);
     }
   }
 
@@ -327,8 +332,8 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
   // Find the scope corresponding to the base type.
-  auto name_scope_id = GetAsNameScope(context, node_id, base_type_const_id);
-  if (!name_scope_id) {
+  auto lookup_scope = GetAsLookupScope(context, node_id, base_type_const_id);
+  if (!lookup_scope) {
     // The base type is not a name scope. Try some fallback options.
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
             context.constant_values().GetInstId(base_type_const_id))) {
@@ -364,7 +369,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
 
   // Perform lookup into the base type.
   auto member_id = LookupMemberNameInScope(context, node_id, base_id, name_id,
-                                           base_type_const_id, *name_scope_id);
+                                           base_type_const_id, *lookup_scope);
 
   // Perform instance binding if we found an instance member.
   member_id = PerformInstanceBinding(context, node_id, base_id, member_id);
