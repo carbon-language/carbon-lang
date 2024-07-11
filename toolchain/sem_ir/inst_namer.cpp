@@ -152,7 +152,15 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (!inst_name) {
     // This should not happen in valid IR.
     std::string str;
-    llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
+    llvm::raw_string_ostream str_stream(str);
+    str_stream << "unexpected." << inst_id;
+    auto loc_id = sem_ir_.insts().GetLocId(inst_id);
+    // TODO: Consider handling inst_id cases.
+    if (loc_id.is_node_id()) {
+      auto token = parse_tree_.node_token(loc_id.node_id());
+      str_stream << ".loc" << tokenized_buffer_.GetLineNumber(token) << "_"
+                 << tokenized_buffer_.GetColumnNumber(token);
+    }
     return str;
   }
   if (inst_scope == scope_id) {

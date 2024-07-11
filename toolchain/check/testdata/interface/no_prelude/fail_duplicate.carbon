@@ -76,7 +76,7 @@ interface Class { }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected instref inst+3>
+// CHECK:STDOUT:   .Self = unexpected.inst+3
 // CHECK:STDOUT:   .F = <error>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

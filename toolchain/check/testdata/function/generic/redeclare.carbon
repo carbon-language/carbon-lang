@@ -200,7 +200,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %F.call: init <unexpected instref inst+32> (%.1) = call %F.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %F.call: init unexpected.inst+32 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

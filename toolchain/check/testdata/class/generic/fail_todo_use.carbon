@@ -101,7 +101,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %return.var: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc16: <unexpected instref inst+32> (%.4) = field_decl k, element0 [template]
+// CHECK:STDOUT:   %.loc16: unexpected.inst+32 (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -114,7 +114,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: @Class.%.loc12_25 (%.2) = name_ref self, @Class.%self.loc12_15.3
 // CHECK:STDOUT:   %.loc13_17.1: ref @Class.%.loc12_21 (%Class.2) = deref %self.ref
-// CHECK:STDOUT:   %k.ref: <unexpected instref inst+40> (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
+// CHECK:STDOUT:   %k.ref: unexpected.inst+40 (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc13_17.2: ref @Class.%T.ref.loc12 (%T) = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:   %.loc13_12: @Class.%.loc12_34 (%.3) = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
@@ -149,9 +149,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.2
-// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.4
-// CHECK:STDOUT:   <unexpected instref inst+28> => <unexpected instref inst+29>
+// CHECK:STDOUT:   unexpected.inst+31 => constants.%Class.2
+// CHECK:STDOUT:   unexpected.inst+32 => constants.%.4
+// CHECK:STDOUT:   unexpected.inst+28.loc16_8 => unexpected.inst+29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%Get.decl(constants.%T) {
@@ -172,8 +172,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.3
-// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.7
-// CHECK:STDOUT:   <unexpected instref inst+28> => <unexpected instref inst+29>
+// CHECK:STDOUT:   unexpected.inst+31 => constants.%Class.3
+// CHECK:STDOUT:   unexpected.inst+32 => constants.%.7
+// CHECK:STDOUT:   unexpected.inst+28.loc16_8 => unexpected.inst+29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

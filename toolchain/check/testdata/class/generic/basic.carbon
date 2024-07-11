@@ -76,7 +76,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc21: <unexpected instref inst+41> (%.4) = field_decl k, element0 [template]
+// CHECK:STDOUT:   %.loc21: unexpected.inst+41 (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -90,7 +90,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: @Class.%.loc12_29 (%.2) = name_ref self, @Class.%self.loc12_19.3
 // CHECK:STDOUT:   %.loc13_17.1: ref @Class.%.loc12_25 (%Class.2) = deref %self.ref
-// CHECK:STDOUT:   %k.ref: <unexpected instref inst+49> (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:   %k.ref: unexpected.inst+49 (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
 // CHECK:STDOUT:   %.loc13_17.2: ref @Class.%T.ref.loc12 (%T) = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:   %.loc13_12: @Class.%.loc12_38 (%.3) = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
@@ -100,7 +100,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: @Class.%.loc17 (%Class.2) = name_ref self, @Class.%self.loc17_15.2
-// CHECK:STDOUT:   %k.ref: <unexpected instref inst+55> (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:   %k.ref: unexpected.inst+55 (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
 // CHECK:STDOUT:   %.loc18_16.1: ref @Class.%T.ref.loc17 (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc18_16.2: @Class.%T.ref.loc17 (%T) = bind_value %.loc18_16.1
 // CHECK:STDOUT:   return %.loc18_16.2
@@ -111,9 +111,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+40> => constants.%Class.2
-// CHECK:STDOUT:   <unexpected instref inst+41> => constants.%.4
-// CHECK:STDOUT:   <unexpected instref inst+37> => <unexpected instref inst+38>
+// CHECK:STDOUT:   unexpected.inst+40 => constants.%Class.2
+// CHECK:STDOUT:   unexpected.inst+41 => constants.%.4
+// CHECK:STDOUT:   unexpected.inst+37.loc21_8 => unexpected.inst+38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%GetAddr.decl(constants.%T) {
