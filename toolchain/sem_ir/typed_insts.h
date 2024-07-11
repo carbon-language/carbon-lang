@@ -46,8 +46,8 @@ namespace Carbon::SemIR {
 
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
-  static constexpr auto Kind =
-      InstKind::AdaptDecl.Define<Parse::AdaptDeclId>("adapt_decl");
+  static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
+      "adapt_decl", /*is_lowered=*/false);
 
   // No type_id; this is not a value.
   TypeId adapted_type_id;
@@ -181,7 +181,7 @@ struct Assign {
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl.Define<Parse::NodeId>(
-          "assoc_const_decl");
+          "assoc_const_decl", /*is_lowered=*/false);
 
   TypeId type_id;
   NameId name_id;
@@ -532,7 +532,8 @@ struct FloatType {
 // A function declaration.
 struct FunctionDecl {
   static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>("fn_decl");
+      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
+          "fn_decl", /*is_lowered=*/false);
 
   TypeId type_id;
   FunctionId function_id;
@@ -576,8 +577,8 @@ struct GenericInterfaceType {
 
 // An `impl` declaration.
 struct ImplDecl {
-  static constexpr auto Kind =
-      InstKind::ImplDecl.Define<Parse::AnyImplDeclId>("impl_decl");
+  static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
+      "impl_decl", /*is_lowered=*/false);
 
   // No type: an impl declaration is not a value.
   ImplId impl_id;
@@ -589,8 +590,8 @@ struct ImplDecl {
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
 // correspondence with actual `import`s isn't guaranteed.
 struct ImportDecl {
-  static constexpr auto Kind =
-      InstKind::ImportDecl.Define<Parse::ImportDeclId>("import");
+  static constexpr auto Kind = InstKind::ImportDecl.Define<Parse::ImportDeclId>(
+      "import", /*is_lowered=*/false);
 
   NameId package_id;
 };
@@ -611,7 +612,8 @@ struct AnyImportRef {
 struct ImportRefUnloaded {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
-      InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>("import_ref");
+      InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>(
+          "import_ref", /*is_lowered=*/false);
 
   ImportIRInstId import_ir_inst_id;
   BindNameId bind_name_id;
@@ -621,7 +623,8 @@ struct ImportRefUnloaded {
 struct ImportRefLoaded {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
-      InstKind::ImportRefLoaded.Define<Parse::InvalidNodeId>("import_ref");
+      InstKind::ImportRefLoaded.Define<Parse::InvalidNodeId>(
+          "import_ref", /*is_lowered=*/false);
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
@@ -645,7 +648,7 @@ struct InitializeFrom {
 struct InterfaceDecl {
   static constexpr auto Kind =
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
-          "interface_decl");
+          "interface_decl", /*is_lowered=*/false);
 
   TypeId type_id;
   // TODO: For a generic interface declaration, the name of the interface
@@ -671,7 +674,7 @@ struct InterfaceType {
 struct InterfaceWitness {
   static constexpr auto Kind =
       InstKind::InterfaceWitness.Define<Parse::InvalidNodeId>(
-          "interface_witness");
+          "interface_witness", /*is_lowered=*/false);
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -681,7 +684,7 @@ struct InterfaceWitness {
 struct InterfaceWitnessAccess {
   static constexpr auto Kind =
       InstKind::InterfaceWitnessAccess.Define<Parse::InvalidNodeId>(
-          "interface_witness_access");
+          "interface_witness_access", /*is_lowered=*/false);
 
   TypeId type_id;
   InstId witness_id;

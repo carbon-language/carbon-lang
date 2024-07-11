@@ -51,6 +51,15 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   }
 }
 
+template <typename InstT>
+static auto FatalErrorIfEncountered(InstT inst) -> void {
+  CARBON_FATAL()
+      << "Encountered an instruction that isn't expected to lower. It's "
+         "possible that logic needs to be changed in order to stop "
+         "showing this instruction in lowered contexts. Instruction: "
+      << inst;
+}
+
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
   if (sem_ir().constant_values().Get(inst_id).is_constant()) {
@@ -62,10 +71,15 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(inst_id);
   CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
-#define CARBON_SEM_IR_INST_KIND(Name)         \
-  case CARBON_KIND(SemIR::Name typed_inst):   \
-    Handle##Name(*this, inst_id, typed_inst); \
-    break;
+#define CARBON_SEM_IR_INST_KIND(Name)               \
+  case CARBON_KIND(SemIR::Name typed_inst): {       \
+    if constexpr (SemIR::Name::Kind.is_lowered()) { \
+      Handle##Name(*this, inst_id, typed_inst);     \
+    } else {                                        \
+      FatalErrorIfEncountered(typed_inst);          \
+    }                                               \
+    break;                                          \
+  }
 #include "toolchain/sem_ir/inst_kind.def"
 
     default:
@@ -73,7 +87,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
                      << inst;
   }
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
-}
+}  // namespace Carbon::Lower
 
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
                                   SemIR::TypeId type_id) -> llvm::PHINode* {
