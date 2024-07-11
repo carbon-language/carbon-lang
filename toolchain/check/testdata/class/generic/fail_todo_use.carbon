@@ -89,7 +89,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Get.decl: %Get.type = fn_decl @Get [template = constants.%Get] {
-// CHECK:STDOUT:     %.loc12_21: type = instance_constant constants.%Class.2, (constants.%T) [symbolic = %.loc12_21 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc12_21: type = specific_constant constants.%Class.2, (constants.%T) [symbolic = %.loc12_21 (constants.%Class.2)]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc12_21 [symbolic = %.loc12_21 (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = %.loc12_25 (constants.%.2)]
 // CHECK:STDOUT:     %self.loc12_15.1: @Class.%.loc12_25 (%.2) = param self

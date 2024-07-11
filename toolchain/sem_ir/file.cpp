@@ -459,7 +459,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
-      case InstanceConstant::Kind:
+      case SpecificConstant::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
@@ -566,7 +566,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case CARBON_KIND(InstanceConstant inst): {
+      case CARBON_KIND(SpecificConstant inst): {
         inst_id = inst.inst_id;
         continue;
       }

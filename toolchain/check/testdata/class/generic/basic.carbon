@@ -57,7 +57,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %GetAddr.decl: %GetAddr.type = fn_decl @GetAddr [template = constants.%GetAddr] {
-// CHECK:STDOUT:     %.loc12_25: type = instance_constant constants.%Class.2, (constants.%T) [symbolic = %.loc12_25 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc12_25: type = specific_constant constants.%Class.2, (constants.%T) [symbolic = %.loc12_25 (constants.%Class.2)]
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, %.loc12_25 [symbolic = %.loc12_25 (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = %.loc12_29 (constants.%.2)]
 // CHECK:STDOUT:     %self.loc12_19.1: @Class.%.loc12_29 (%.2) = param self
@@ -68,7 +68,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %return.var.loc12: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
-// CHECK:STDOUT:     %.loc17: type = instance_constant constants.%Class.2, (constants.%T) [symbolic = %.loc17 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc17: type = specific_constant constants.%Class.2, (constants.%T) [symbolic = %.loc17 (constants.%Class.2)]
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, %.loc17 [symbolic = %.loc17 (constants.%Class.2)]
 // CHECK:STDOUT:     %self.loc17_15.1: @Class.%.loc17 (%Class.2) = param self
 // CHECK:STDOUT:     %self.loc17_15.2: @Class.%.loc17 (%Class.2) = bind_name self, %self.loc17_15.1

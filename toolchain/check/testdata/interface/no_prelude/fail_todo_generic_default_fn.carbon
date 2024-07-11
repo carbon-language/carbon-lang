@@ -49,13 +49,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {
 // CHECK:STDOUT:     %T.loc22_6.1: type = param T
 // CHECK:STDOUT:     %T.loc22_6.2: type = bind_symbolic_name T 0, %T.loc22_6.1 [symbolic = %T.loc22_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc22_24.1: <unexpected instref inst+42> (%.2) = instance_constant @I.%Self, (constants.%T) [symbolic = %.loc22_24.1 (constants.%Self)]
+// CHECK:STDOUT:     %.loc22_24.1: <unexpected instref inst+42> (%.2) = specific_constant @I.%Self, (constants.%T) [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc22_24: <unexpected instref inst+42> (%.2) = name_ref Self, %.loc22_24.1 [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_24.2: type = facet_type_access %Self.ref.loc22_24 [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_24.3: type = converted %Self.ref.loc22_24, %.loc22_24.2 [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %self.loc22_18.1: file.%.loc22_24.1 (%Self) = param self
 // CHECK:STDOUT:     @.1.%self: file.%.loc22_24.1 (%Self) = bind_name self, %self.loc22_18.1
-// CHECK:STDOUT:     %.loc22_35.1: <unexpected instref inst+42> (%.2) = instance_constant @I.%Self, (constants.%T) [symbolic = %.loc22_24.1 (constants.%Self)]
+// CHECK:STDOUT:     %.loc22_35.1: <unexpected instref inst+42> (%.2) = specific_constant @I.%Self, (constants.%T) [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc22_35: <unexpected instref inst+42> (%.2) = name_ref Self, %.loc22_35.1 [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_35.2: type = facet_type_access %Self.ref.loc22_35 [symbolic = %.loc22_24.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_35.3: type = converted %Self.ref.loc22_35, %.loc22_35.2 [symbolic = %.loc22_24.1 (constants.%Self)]
@@ -67,13 +67,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc13_14.1: %.2 = instance_constant %Self, (constants.%T) [symbolic = %.loc13_14.1 (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_14.1: %.2 = specific_constant %Self, (constants.%T) [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc13_14: %.2 = name_ref Self, %.loc13_14.1 [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.2: type = facet_type_access %Self.ref.loc13_14 [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.3: type = converted %Self.ref.loc13_14, %.loc13_14.2 [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %self.loc13_8.1: @I.%.loc13_14.1 (%Self) = param self
 // CHECK:STDOUT:     %self.loc13_8.2: @I.%.loc13_14.1 (%Self) = bind_name self, %self.loc13_8.1
-// CHECK:STDOUT:     %.loc13_25.1: %.2 = instance_constant %Self, (constants.%T) [symbolic = %.loc13_14.1 (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_25.1: %.2 = specific_constant %Self, (constants.%T) [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc13_25: %.2 = name_ref Self, %.loc13_25.1 [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_25.2: type = facet_type_access %Self.ref.loc13_25 [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_25.3: type = converted %Self.ref.loc13_25, %.loc13_25.2 [symbolic = %.loc13_14.1 (constants.%Self)]

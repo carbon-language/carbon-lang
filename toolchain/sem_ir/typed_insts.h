@@ -641,22 +641,6 @@ struct InitializeFrom {
   InstId dest_id;
 };
 
-// Given an instruction with a constant value that depends on a generic
-// parameter, selects an instance of that instruction with the constant value
-// corresponding to a particular instance of the generic.
-//
-// TODO: We only form these as the instruction referenced by a `NameRef`.
-// Consider merging an `InstanceConstant` + `NameRef` into a new form of
-// instruction in order to give a more compact representation.
-struct InstanceConstant {
-  static constexpr auto Kind =
-      InstKind::InstanceConstant.Define<Parse::NodeId>("instance_constant");
-
-  TypeId type_id;
-  InstId inst_id;
-  GenericInstanceId instance_id;
-};
-
 // An interface declaration.
 struct InterfaceDecl {
   static constexpr auto Kind =
@@ -789,6 +773,22 @@ struct ReturnExpr {
   InstId expr_id;
   // The return slot, if any. Invalid if we're not returning through memory.
   InstId dest_id;
+};
+
+// Given an instruction with a constant value that depends on a generic
+// parameter, selects an instance of that instruction with the constant value
+// corresponding to a particular specific.
+//
+// TODO: We only form these as the instruction referenced by a `NameRef`.
+// Consider merging an `SpecificConstant` + `NameRef` into a new form of
+// instruction in order to give a more compact representation.
+struct SpecificConstant {
+  static constexpr auto Kind =
+      InstKind::SpecificConstant.Define<Parse::NodeId>("specific_constant");
+
+  TypeId type_id;
+  InstId inst_id;
+  GenericInstanceId instance_id;
 };
 
 // Splices a block into the location where this appears. This may be an

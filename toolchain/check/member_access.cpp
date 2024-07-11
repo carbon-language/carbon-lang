@@ -232,7 +232,7 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   // instance, store the instance too.
   if (result.instance_id.is_valid() &&
       context.constant_values().Get(result.inst_id).is_symbolic()) {
-    result.inst_id = context.AddInst<SemIR::InstanceConstant>(
+    result.inst_id = context.AddInst<SemIR::SpecificConstant>(
         node_id, {.type_id = type_id,
                   .inst_id = result.inst_id,
                   .instance_id = result.instance_id});
