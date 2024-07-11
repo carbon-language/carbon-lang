@@ -111,14 +111,14 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
       avg_lines, benchmark::Counter::kIsIterationInvariantRate);
 }
 BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Lex>)
-    ->RangeMultiplier(2)
-    ->Range(256, 256 * 1024);
+    ->RangeMultiplier(4)
+    ->Range(256, static_cast<int64_t>(256 * 1024));
 BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Parse>)
-    ->RangeMultiplier(2)
-    ->Range(256, 256 * 1024);
+    ->RangeMultiplier(4)
+    ->Range(256, static_cast<int64_t>(256 * 1024));
 BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Check>)
-    ->RangeMultiplier(2)
-    ->Range(256, 256 * 1024);
+    ->RangeMultiplier(4)
+    ->Range(256, static_cast<int64_t>(256 * 1024));
 
 }  // namespace
 }  // namespace Carbon::Testing
