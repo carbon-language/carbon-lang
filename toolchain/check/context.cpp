@@ -856,7 +856,7 @@ class TypeCompleter {
     return value_rep;
   }
 
-  auto BuildBuiltinValueRepr(SemIR::TypeId type_id,
+  auto BuildValueReprForInst(SemIR::TypeId type_id,
                              SemIR::BuiltinInst builtin) const
       -> SemIR::ValueRepr {
     switch (builtin.builtin_inst_kind) {
@@ -901,8 +901,8 @@ class TypeCompleter {
     return MakePointerValueRepr(elementwise_rep, aggregate_kind);
   }
 
-  auto BuildStructTypeValueRepr(SemIR::TypeId type_id,
-                                SemIR::StructType struct_type) const
+  auto BuildValueReprForInst(SemIR::TypeId type_id,
+                             SemIR::StructType struct_type) const
       -> SemIR::ValueRepr {
     // TODO: Share more code with tuples.
     auto fields = context_.inst_blocks().Get(struct_type.fields_id);
@@ -935,8 +935,8 @@ class TypeCompleter {
                                        same_as_object_rep);
   }
 
-  auto BuildTupleTypeValueRepr(SemIR::TypeId type_id,
-                               SemIR::TupleType tuple_type) const
+  auto BuildValueReprForInst(SemIR::TypeId type_id,
+                             SemIR::TupleType tuple_type) const
       -> SemIR::ValueRepr {
     // TODO: Share more code with structs.
     auto elements = context_.type_blocks().Get(tuple_type.elements_id);
@@ -964,78 +964,91 @@ class TypeCompleter {
                                        same_as_object_rep);
   }
 
+  auto BuildValueReprForInst(SemIR::TypeId type_id,
+                             SemIR::ArrayType /*inst*/) const
+      -> SemIR::ValueRepr {
+    // For arrays, it's convenient to always use a pointer representation,
+    // even when the array has zero or one element, in order to support
+    // indexing.
+    return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
+  }
+
+  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/,
+                             SemIR::ClassType inst) const -> SemIR::ValueRepr {
+    auto& class_info = context_.classes().Get(inst.class_id);
+    // The value representation of an adapter is the value representation of
+    // its adapted type.
+    if (class_info.adapt_id.is_valid()) {
+      return GetNestedValueRepr(class_info.object_repr_id);
+    }
+    // Otherwise, the value representation for a class is a pointer to the
+    // object representation.
+    // TODO: Support customized value representations for classes.
+    // TODO: Pick a better value representation when possible.
+    return MakePointerValueRepr(class_info.object_repr_id,
+                                SemIR::ValueRepr::ObjectAggregate);
+  }
+
+  template <typename InstT>
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AssociatedEntityType, SemIR::FunctionType,
+             SemIR::GenericClassType, SemIR::GenericInterfaceType,
+             SemIR::InterfaceType, SemIR::UnboundElementType>())
+  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
+      -> SemIR::ValueRepr {
+    // These types have no runtime operations, so we use an empty value
+    // representation.
+    //
+    // TODO: There is information we could model here:
+    // - For an interface, we could use a witness.
+    // - For an associated entity, we could use an index into the witness.
+    // - For an unbound element, we could use an index or offset.
+    return MakeEmptyValueRepr();
+  }
+
+  template <typename InstT>
+    requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
+                                          SemIR::InterfaceWitnessAccess>())
+  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
+      -> SemIR::ValueRepr {
+    // For symbolic types, we arbitrarily pick a copy representation.
+    return MakeCopyValueRepr(type_id);
+  }
+
+  template <typename InstT>
+    requires(InstT::Kind.template IsAnyOf<SemIR::FloatType, SemIR::IntType,
+                                          SemIR::PointerType>())
+  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
+      -> SemIR::ValueRepr {
+    return MakeCopyValueRepr(type_id);
+  }
+
+  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/,
+                             SemIR::ConstType inst) const -> SemIR::ValueRepr {
+    // The value representation of `const T` is the same as that of `T`.
+    // Objects are not modifiable through their value representations.
+    return GetNestedValueRepr(inst.inner_id);
+  }
+
+  template <typename InstT>
+    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
+  auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
+      -> SemIR::ValueRepr {
+    CARBON_FATAL() << "Type refers to non-type inst " << inst;
+  }
+
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
+    // Use overload resolution to select the implementation, producing compile
+    // errors when BuildTypeForInst isn't defined for a given instruction.
     CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
-#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
-#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
+#define CARBON_SEM_IR_INST_KIND(Name)                  \
+  case CARBON_KIND(SemIR::Name typed_inst): {          \
+    return BuildValueReprForInst(type_id, typed_inst); \
+  }
 #include "toolchain/sem_ir/inst_kind.def"
-      CARBON_FATAL() << "Type refers to non-type inst " << inst;
-
-      case SemIR::ArrayType::Kind: {
-        // For arrays, it's convenient to always use a pointer representation,
-        // even when the array has zero or one element, in order to support
-        // indexing.
-        return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
-      }
-
-      case CARBON_KIND(SemIR::StructType struct_type): {
-        return BuildStructTypeValueRepr(type_id, struct_type);
-      }
-      case CARBON_KIND(SemIR::TupleType tuple_type): {
-        return BuildTupleTypeValueRepr(type_id, tuple_type);
-      }
-      case CARBON_KIND(SemIR::ClassType class_type): {
-        auto& class_info = context_.classes().Get(class_type.class_id);
-        // The value representation of an adapter is the value representation of
-        // its adapted type.
-        if (class_info.adapt_id.is_valid()) {
-          return GetNestedValueRepr(class_info.object_repr_id);
-        }
-        // Otherwise, the value representation for a class is a pointer to the
-        // object representation.
-        // TODO: Support customized value representations for classes.
-        // TODO: Pick a better value representation when possible.
-        return MakePointerValueRepr(class_info.object_repr_id,
-                                    SemIR::ValueRepr::ObjectAggregate);
-      }
-      case SemIR::AssociatedEntityType::Kind:
-      case SemIR::FunctionType::Kind:
-      case SemIR::GenericClassType::Kind:
-      case SemIR::GenericInterfaceType::Kind:
-      case SemIR::InterfaceType::Kind:
-      case SemIR::UnboundElementType::Kind: {
-        // These types have no runtime operations, so we use an empty value
-        // representation.
-        //
-        // TODO: There is information we could model here:
-        // - For an interface, we could use a witness.
-        // - For an associated entity, we could use an index into the witness.
-        // - For an unbound element, we could use an index or offset.
-        return MakeEmptyValueRepr();
-      }
-      case CARBON_KIND(SemIR::BuiltinInst builtin): {
-        return BuildBuiltinValueRepr(type_id, builtin);
-      }
-
-      case SemIR::BindSymbolicName::Kind:
-      case SemIR::InterfaceWitnessAccess::Kind:
-        // For symbolic types, we arbitrarily pick a copy representation.
-        return MakeCopyValueRepr(type_id);
-
-      case SemIR::FloatType::Kind:
-      case SemIR::IntType::Kind:
-      case SemIR::PointerType::Kind:
-        return MakeCopyValueRepr(type_id);
-
-      case CARBON_KIND(SemIR::ConstType const_type): {
-        // The value representation of `const T` is the same as that of `T`.
-        // Objects are not modifiable through their value representations.
-        return GetNestedValueRepr(const_type.inner_id);
-      }
     }
   }
 

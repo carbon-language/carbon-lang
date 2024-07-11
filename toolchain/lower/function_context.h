@@ -159,9 +159,8 @@ class FunctionContext {
   Map<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemIR::File instruction that is not always
-// constant.
-#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
+// Declare handlers for each SemIR::File instruction. Note that these aren't all
+// defined.
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
                     SemIR::Name inst) -> void;

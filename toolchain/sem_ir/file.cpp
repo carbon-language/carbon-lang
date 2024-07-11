@@ -176,34 +176,15 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  switch (kind) {
-    case ArrayType::Kind:
-    case AssociatedEntityType::Kind:
-    case BindSymbolicName::Kind:
-    case BuiltinInst::Kind:
-    case ClassType::Kind:
-    case FloatType::Kind:
-    case FunctionType::Kind:
-    case GenericClassType::Kind:
-    case GenericInterfaceType::Kind:
-    case InterfaceType::Kind:
-    case InterfaceWitnessAccess::Kind:
-    case IntType::Kind:
-    case StructType::Kind:
-    case TupleType::Kind:
-    case UnboundElementType::Kind:
-      return 0;
-    case ConstType::Kind:
-      return -1;
-    case PointerType::Kind:
-      return -2;
-
-#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
-#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
-#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
-#include "toolchain/sem_ir/inst_kind.def"
-      CARBON_FATAL() << "GetTypePrecedence for non-type inst kind " << kind;
+  CARBON_CHECK(kind.is_type() != InstIsType::Never)
+      << "Only called for kinds which can define a type.";
+  if (kind == ConstType::Kind) {
+    return -1;
   }
+  if (kind == PointerType::Kind) {
+    return -2;
+  }
+  return 0;
 }
 
 // Implements File::StringifyTypeExpr. Static to prevent accidental use of
