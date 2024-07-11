@@ -51,10 +51,10 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   }
 }
 
-// Handles typed instructions for LowerInst. We don't use HandleInst
-// overloads for the "if" cases because it's hard to get the overload behavior
-// we want when declarations for all `InstT` types are pre-declared (which is
-// hard to avoid with the macro declarations).
+// Handles typed instructions for LowerInst. Although this could be structured
+// as HandleInst overloads for all cases, eliminating LowerInstHelper, it would
+// be complex to get overload resolution to choose the right declaration because
+// there are forward declarations for all `InstT` types, not only the used ones.
 template <typename InstT>
 static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
                             InstT inst) {
