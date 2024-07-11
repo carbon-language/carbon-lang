@@ -54,11 +54,10 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
 // Handles typed instructions for LowerInst. Many instructions lower using
 // HandleInst, but others are unsupported or have trivial lowering.
 //
-// A different approach would be to have the logic below instead done through
-// HandleInst overloads. However, forward declarations of HandleInst exist for
-// all `InstT` types, which would make getting the right overload resolution
-// complex. This only calls HandleInst for versions that should have
-// implementations.
+// This only calls HandleInst for versions that should have implementations. A
+// different approach would be to have the logic below implemented as HandleInst
+// overloads. However, forward declarations of HandleInst exist for all `InstT`
+// types, which would make getting the right overload resolution complex.
 template <typename InstT>
 static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
                             InstT inst) {
