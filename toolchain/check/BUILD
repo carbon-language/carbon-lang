@@ -69,6 +69,7 @@ cc_library(
         "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
