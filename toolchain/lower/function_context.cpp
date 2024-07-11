@@ -51,20 +51,33 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   }
 }
 
+// Handles typed instructions for LowerInst. Many instructions lower using
+// HandleInst, but others are unsupported or have trivial lowering.
+//
+// This only calls HandleInst for versions that should have implementations. A
+// different approach would be to have the logic below implemented as HandleInst
+// overloads. However, forward declarations of HandleInst exist for all `InstT`
+// types, which would make getting the right overload resolution complex.
 template <typename InstT>
-static auto FatalErrorIfEncountered(InstT inst) -> void {
-  CARBON_FATAL()
-      << "Encountered an instruction that isn't expected to lower. It's "
-         "possible that logic needs to be changed in order to stop "
-         "showing this instruction in lowered contexts. Instruction: "
-      << inst;
-}
-
-// For instructions that are always of type `type`, produce the trivial runtime
-// representation of type `type`.
-static auto SetTrivialType(FunctionContext& context, SemIR::InstId inst_id)
-    -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
+static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
+                            InstT inst) {
+  if constexpr (!InstT::Kind.is_lowered()) {
+    CARBON_FATAL()
+        << "Encountered an instruction that isn't expected to lower. It's "
+           "possible that logic needs to be changed in order to stop "
+           "showing this instruction in lowered contexts. Instruction: "
+        << inst;
+  } else if constexpr (InstT::Kind.constant_kind() ==
+                       SemIR::InstConstantKind::Always) {
+    CARBON_FATAL() << "Missing constant value for constant instruction "
+                   << inst;
+  } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
+    // For instructions that are always of type `type`, produce the trivial
+    // runtime representation of type `type`.
+    context.SetLocal(inst_id, context.GetTypeAsValue());
+  } else {
+    HandleInst(context, inst_id, inst);
+  }
 }
 
 // TODO: Consider renaming Handle##Name, instead relying on typed_inst overload
@@ -82,21 +95,10 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(inst_id);
 
   CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(Name)                                      \
-  case CARBON_KIND(SemIR::Name typed_inst): {                              \
-    if constexpr (!SemIR::Name::Kind.is_lowered()) {                       \
-      FatalErrorIfEncountered(typed_inst);                                 \
-    } else if constexpr (SemIR::Name::Kind.constant_kind() ==              \
-                         SemIR::InstConstantKind::Always) {                \
-      CARBON_FATAL() << "Missing constant value for constant instruction " \
-                     << inst;                                              \
-    } else if constexpr (SemIR::Name::Kind.is_type() ==                    \
-                         SemIR::InstIsType::Always) {                      \
-      SetTrivialType(*this, inst_id);                                      \
-    } else {                                                               \
-      Handle##Name(*this, inst_id, typed_inst);                            \
-    }                                                                      \
-    break;                                                                 \
+#define CARBON_SEM_IR_INST_KIND(Name)            \
+  case CARBON_KIND(SemIR::Name typed_inst): {    \
+    LowerInstHelper(*this, inst_id, typed_inst); \
+    break;                                       \
   }
 #include "toolchain/sem_ir/inst_kind.def"
   }
