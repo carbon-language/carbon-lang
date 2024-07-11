@@ -644,6 +644,10 @@ struct InitializeFrom {
 // Given an instruction with a constant value that depends on a generic
 // parameter, selects an instance of that instruction with the constant value
 // corresponding to a particular instance of the generic.
+//
+// TODO: We only form these as the instruction referenced by a `NameRef`.
+// Consider merging an `InstanceConstant` + `NameRef` into a new form of
+// instruction in order to give a more compact representation.
 struct InstanceConstant {
   static constexpr auto Kind =
       InstKind::InstanceConstant.Define<Parse::NodeId>("instance_constant");
