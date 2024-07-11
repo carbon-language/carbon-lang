@@ -11,7 +11,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::SemIR {
 
@@ -37,16 +37,17 @@ struct InstId : public IdBase, public Printable<InstId> {
   // An explicitly invalid ID.
   static const InstId Invalid;
 
-// Builtin instruction IDs.
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const InstId Builtin##Name;
-#include "toolchain/sem_ir/builtin_kind.def"
+// BuiltinInst IDs.
+#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name) \
+  static const InstId Builtin##Name;
+#include "toolchain/sem_ir/builtin_inst_kind.def"
 
   // The namespace for a `package` expression.
   static const InstId PackageNamespace;
 
   // Returns the instruction ID for a builtin. This relies on File guarantees
   // for builtin placement.
-  static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
+  static constexpr auto ForBuiltin(BuiltinInstKind kind) -> InstId {
     return InstId(kind.AsInt());
   }
 
@@ -55,13 +56,13 @@ struct InstId : public IdBase, public Printable<InstId> {
   // Returns true if the instruction is a builtin. Requires is_valid.
   auto is_builtin() const -> bool {
     CARBON_CHECK(is_valid());
-    return index < BuiltinKind::ValidCount;
+    return index < BuiltinInstKind::ValidCount;
   }
 
-  // Returns the BuiltinKind. Requires is_builtin.
-  auto builtin_kind() const -> BuiltinKind {
+  // Returns the BuiltinInstKind. Requires is_builtin.
+  auto builtin_inst_kind() const -> BuiltinInstKind {
     CARBON_CHECK(is_builtin());
-    return BuiltinKind::FromInt(index);
+    return BuiltinInstKind::FromInt(index);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -69,24 +70,24 @@ struct InstId : public IdBase, public Printable<InstId> {
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_builtin()) {
-      out << builtin_kind();
+      out << builtin_inst_kind();
     } else {
       // Use the `+` as a small reminder that this is a delta, rather than an
       // absolute index.
-      out << "+" << index - BuiltinKind::ValidCount;
+      out << "+" << index - BuiltinInstKind::ValidCount;
     }
   }
 };
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
-  constexpr InstId InstId::Builtin##Name =    \
-      InstId::ForBuiltin(BuiltinKind::Name);
-#include "toolchain/sem_ir/builtin_kind.def"
+#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name) \
+  constexpr InstId InstId::Builtin##Name =         \
+      InstId::ForBuiltin(BuiltinInstKind::Name);
+#include "toolchain/sem_ir/builtin_inst_kind.def"
 
 // The package namespace will be the instruction after builtins.
-constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
+constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 
 // The ID of a constant value of an expression. An expression is either:
 //

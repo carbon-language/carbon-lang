@@ -12,16 +12,18 @@ namespace Carbon::Check {
 auto HandleBoolLiteralFalse(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
-      node_id, {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
-                .value = SemIR::BoolValue::False});
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BoolType),
+       .value = SemIR::BoolValue::False});
   return true;
 }
 
 auto HandleBoolLiteralTrue(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
-      node_id, {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
-                .value = SemIR::BoolValue::True});
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BoolType),
+       .value = SemIR::BoolValue::True});
   return true;
 }
 
@@ -41,8 +43,9 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
   // Literals are always represented as unsigned, so zero-extend if needed.
   auto i32_val = val.zextOrTrunc(32);
   return context.AddInst<SemIR::IntLiteral>(
-      node_id, {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::IntType),
-                .int_id = context.ints().Add(i32_val)});
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
+       .int_id = context.ints().Add(i32_val)});
 }
 
 auto HandleIntLiteral(Context& context, Parse::IntLiteralId node_id) -> bool {
@@ -94,7 +97,7 @@ auto HandleRealLiteral(Context& context, Parse::RealLiteralId node_id) -> bool {
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
   context.AddInstAndPush<SemIR::FloatLiteral>(
       node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::FloatType),
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::FloatType),
        .float_id = float_id});
   return true;
 }
@@ -103,7 +106,7 @@ auto HandleStringLiteral(Context& context, Parse::StringLiteralId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::StringLiteral>(
       node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::StringType),
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::StringType),
        .string_literal_id = context.tokens().GetStringLiteralValue(
            context.parse_tree().node_token(node_id))});
   return true;

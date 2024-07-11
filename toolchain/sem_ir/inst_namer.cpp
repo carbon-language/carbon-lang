@@ -141,7 +141,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
 
   // Check for a builtin.
   if (inst_id.is_builtin()) {
-    return inst_id.builtin_kind().label().str();
+    return inst_id.builtin_inst_kind().label().str();
   }
 
   if (inst_id == InstId::PackageNamespace) {
@@ -411,10 +411,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function =
             sem_ir_.functions().Get(callee_function.function_id);
         // Name the call's result based on the callee.
-        if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+        if (function.builtin_function_kind !=
+            SemIR::BuiltinFunctionKind::None) {
           // For a builtin, use the builtin name. Otherwise, we'd typically pick
           // the name `Op` below, which is probably not very useful.
-          add_inst_name(function.builtin_kind.name().str());
+          add_inst_name(function.builtin_function_kind.name().str());
           continue;
         }
 

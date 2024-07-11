@@ -234,8 +234,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All instructions. The first entries will always be Builtin insts, at
-  // indices matching BuiltinKind ordering.
+  // All instructions. The first entries will always be BuiltinInsts, at
+  // indices matching BuiltinInstKind ordering.
   InstStore insts_;
 
   // Storage for name scopes.

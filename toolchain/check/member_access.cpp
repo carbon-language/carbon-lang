@@ -289,7 +289,7 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
       if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
         return context.AddInst<SemIR::BoundMethod>(
             node_id, {.type_id = context.GetBuiltinType(
-                          SemIR::BuiltinKind::BoundMethodType),
+                          SemIR::BuiltinInstKind::BoundMethodType),
                       .object_id = base_id,
                       .function_id = member_id});
       }

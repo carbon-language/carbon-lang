@@ -115,8 +115,8 @@ class TypeEnum {
 
 // An enum of all the ID types used as instruction operands.
 using IdKind = TypeEnum<
-    // From sem_ir/builtin_kind.h.
-    BuiltinKind,
+    // From sem_ir/builtin_inst_kind.h.
+    BuiltinInstKind,
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/id.h.

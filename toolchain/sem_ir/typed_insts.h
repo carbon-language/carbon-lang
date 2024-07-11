@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
@@ -374,13 +374,13 @@ struct BranchWithArg {
 
 // A builtin instruction, corresponding to instructions like
 // InstId::BuiltinTypeType.
-struct Builtin {
-  // Builtins don't have a parse node associated with them.
+struct BuiltinInst {
+  // Builtin instructions don't have a parse node associated with them.
   static constexpr auto Kind =
-      InstKind::Builtin.Define<Parse::InvalidNodeId>("builtin");
+      InstKind::BuiltinInst.Define<Parse::InvalidNodeId>("builtin");
 
   TypeId type_id;
-  BuiltinKind builtin_kind;
+  BuiltinInstKind builtin_inst_kind;
 };
 
 // An abstract `callee(args)` call, where the callee may be a function, but

@@ -302,7 +302,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   if (auto builtin_kind = context.sem_ir()
                               .functions()
                               .Get(callee_function.function_id)
-                              .builtin_kind;
+                              .builtin_function_kind;
       builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;

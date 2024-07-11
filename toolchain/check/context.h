@@ -285,7 +285,7 @@ class Context {
                                SemIR::TypeId entity_type_id) -> SemIR::TypeId;
 
   // Gets a builtin type. The returned type will be complete.
-  auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
+  auto GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId;
