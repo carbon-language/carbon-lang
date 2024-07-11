@@ -857,7 +857,8 @@ class TypeCompleter {
   }
 
   auto BuildValueReprForInst(SemIR::TypeId type_id,
-                             SemIR::BuiltinInst builtin) const -> SemIR::ValueRepr {
+                             SemIR::BuiltinInst builtin) const
+      -> SemIR::ValueRepr {
     switch (builtin.builtin_inst_kind) {
       case SemIR::BuiltinInstKind::TypeType:
       case SemIR::BuiltinInstKind::Error:
