@@ -1122,10 +1122,11 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           Phase::Template);
     }
 
-    case CARBON_KIND(SemIR::InstanceConstant instance):
+    case CARBON_KIND(SemIR::InstanceConstant instance): {
       // Pull the instance-specific constant value out of the generic instance.
       return SemIR::GetConstantValueInInstance(
           context.sem_ir(), instance.instance_id, instance.inst_id);
+    }
 
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
