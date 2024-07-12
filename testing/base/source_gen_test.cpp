@@ -55,10 +55,7 @@ TEST(SourceGenTest, UniqueIds) {
 
   // Check length constraints have the desired effect.
   unique = gen.GetShuffledUniqueIds(1000, /*min_length=*/10, /*max_length=*/20);
-  for (llvm::StringRef id : unique) {
-    EXPECT_THAT(id.size(), Ge(10)) << "Too short id: " << id;
-    EXPECT_THAT(id.size(), Le(20)) << "Too long id: " << id;
-  }
+  EXPECT_THAT(unique, Each(SizeIs(AllOf(Ge(10), Le(20)))));
 
   // Check that uniform id length results in exact coverage of each possible
   // length for an easy case.
