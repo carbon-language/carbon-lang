@@ -869,9 +869,7 @@ class Formatter {
     out_ << ')';
   }
 
-  auto FormatArg(GenericInstanceId id) -> void {
-    FormatSpecificName(id);
-  }
+  auto FormatArg(GenericInstanceId id) -> void { FormatSpecificName(id); }
 
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
