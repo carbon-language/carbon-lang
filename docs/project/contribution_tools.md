@@ -273,7 +273,7 @@ Pass `-c dbg` to `bazel build` in order to compile with debugging enabled. For
 example:
 
 ```shell
-bazel build -c dbg //toolchain:carbon
+bazel build -c dbg //toolchain
 ```
 
 Then debugging works with GDB:
@@ -301,7 +301,7 @@ for more information. To workaround, provide the `--spawn_strategy=local` option
 to Bazel for the debug build, like:
 
 ```shell
-bazel build --spawn_strategy=local -c dbg //toolchain:carbon
+bazel build --spawn_strategy=local -c dbg //toolchain
 ```
 
 You should then be able to debug with `lldb`.

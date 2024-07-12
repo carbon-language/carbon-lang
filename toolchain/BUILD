@@ -5,6 +5,6 @@
 # A convenience target for running the toolchain with the full prelude
 # available.
 alias(
-    name = "carbon",
+    name = "toolchain",
     actual = "//toolchain/install:prefix_root/bin/carbon",
 )
