@@ -288,7 +288,6 @@ sudo apt update
 
 # Install tools.
 sudo apt install \
-  bazel \
   clang \
   libc++-dev \
   libc++abi-dev \
@@ -303,7 +302,7 @@ Then you can build and run the explorer:
 
 ```shell
 # Build and run the explorer.
-$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
+$ ./scripts/run_bazelisk.py run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
 And you can try out our toolchain which has a very early-stage compiler for
@@ -311,7 +310,7 @@ Carbon:
 
 ```shell
 # Build and run the toolchain's help to get documentation on the command line.
-$ bazel run //toolchain -- help
+$ ./scripts/run_bazelisk.py run //toolchain -- help
 ```
 
 For complete instructions, including installing dependencies on various
