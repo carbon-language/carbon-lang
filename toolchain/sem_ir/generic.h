@@ -71,12 +71,11 @@ struct GenericInstance : Printable<GenericInstance> {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
 
-  // Returns the value block for this instance of the specified region of the
-  // generic. This is a block containing values and instructions produced by
-  // evaluating the corresponding eval block of the generic within the context
-  // of this instance. These are the constant values and types and the
-  // instantiated template-dependent instructions that are used in this region
-  // of the instance.
+  // Returns the value block for this region of the specific. This is a block
+  // containing values and instructions produced by evaluating the corresponding
+  // eval block of the generic within the context of this specific. These are
+  // the constant values and types and the instantiated template-dependent
+  // instructions that are used in this region of the specific.
   auto GetValueBlock(GenericInstIndex::Region region) const -> InstBlockId {
     return region == GenericInstIndex::Region::Declaration
                ? decl_block_id
@@ -88,12 +87,12 @@ struct GenericInstance : Printable<GenericInstance> {
   // Argument values, corresponding to the bindings in `Generic::bindings_id`.
   InstBlockId args_id;
 
-  // The following members are set when the corresponding region of the generic
-  // instance is resolved.
+  // The following members are set when the corresponding region of the specific
+  // is resolved.
 
-  // The value block for the declaration region of the generic.
+  // The value block for the declaration region of the specific.
   InstBlockId decl_block_id = InstBlockId::Invalid;
-  // The value block for the definition region of the generic.
+  // The value block for the definition region of the specific.
   InstBlockId definition_block_id = InstBlockId::Invalid;
 };
 

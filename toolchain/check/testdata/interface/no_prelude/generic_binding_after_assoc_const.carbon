@@ -71,12 +71,12 @@ interface I {
 // CHECK:STDOUT: fn @G(@I.%T.loc16_8.2: type)
 // CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc16_8.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%F.decl(constants.%Self, constants.%T) {
+// CHECK:STDOUT: specific @I.%F.decl(constants.%Self, constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%T.loc12_8.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%G.decl(constants.%Self, constants.%T) {
+// CHECK:STDOUT: specific @I.%G.decl(constants.%Self, constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%T.loc16_8.2 => constants.%T
 // CHECK:STDOUT: }

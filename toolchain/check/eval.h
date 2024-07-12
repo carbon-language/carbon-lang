@@ -17,10 +17,11 @@ namespace Carbon::Check {
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId;
 
-// Evaluates each instruction in the specified block in turn. Produces a block
-// containing the evaluated constant values of the instructions.
-auto TryEvalBlockForGenericInstance(
-    Context& context, SemIR::GenericInstanceId instance_id,
+// Evaluates the eval block for a region of a specific. Produces a block
+// containing the evaluated constant values of the instructions in the eval
+// block.
+auto TryEvalBlockForSpecific(
+    Context& context, SemIR::GenericInstanceId specific_id,
     SemIR::GenericInstIndex::Region region) -> SemIR::InstBlockId;
 
 }  // namespace Carbon::Check

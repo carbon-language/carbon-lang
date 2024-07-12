@@ -106,12 +106,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   return %.loc18_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Class.%GetAddr.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class.%GetAddr.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%.loc12_25 => constants.%Class.2
 // CHECK:STDOUT:   @Class.%.loc12_29 => constants.%.2
@@ -119,7 +119,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   @Class.%.loc12_38 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Class.%GetValue.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class.%GetValue.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%.loc17 => constants.%Class.2
 // CHECK:STDOUT:   @Class.%T.ref.loc17 => constants.%T

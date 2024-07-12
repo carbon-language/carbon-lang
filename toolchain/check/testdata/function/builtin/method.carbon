@@ -136,7 +136,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%Self.ref.loc12_14 => constants.%Self
 // CHECK:STDOUT: }

@@ -54,7 +54,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%G.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%G.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T => constants.%T
 // CHECK:STDOUT: }

@@ -113,12 +113,12 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   return %.loc9_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%G.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%G.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T => constants.%T
 // CHECK:STDOUT:   file.%.loc8_24 => constants.%Class.2
@@ -223,22 +223,22 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(i32) {
+// CHECK:STDOUT: specific file.%Class.decl(i32) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%U) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%H.decl(constants.%U) {
+// CHECK:STDOUT: specific file.%H.decl(constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @H.%U => constants.%U
 // CHECK:STDOUT:   file.%.loc18_24 => constants.%Class.4

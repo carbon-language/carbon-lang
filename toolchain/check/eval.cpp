@@ -18,10 +18,9 @@
 namespace Carbon::Check {
 
 namespace {
-// Information about an eval block of a generic instance that we are currently
-// building.
-struct GenericInstanceEvalBlockInfo {
-  // The region within the generic instance whose eval block we are building.
+// Information about an eval block of a specific that we are currently building.
+struct SpecificEvalInfo {
+  // The region within the specific whose eval block we are building.
   SemIR::GenericInstIndex::Region region;
   // The work-in-progress contents of the eval block.
   llvm::ArrayRef<SemIR::InstId> values;
@@ -34,19 +33,18 @@ struct EvalContext {
       return const_id;
     }
 
-    // While resolving a generic instance, map from previous instructions in the
-    // eval block into their evaluated values. These values won't be present on
-    // the instance itself yet, so `GetConstantInInstance` won't be able to find
+    // While resolving a specific, map from previous instructions in the eval
+    // block into their evaluated values. These values won't be present on the
+    // instance itself yet, so `GetConstantInInstance` won't be able to find
     // them.
-    if (instance_eval_block_info) {
+    if (specific_eval_info) {
       const auto& symbolic_info =
           context.constant_values().GetSymbolicConstant(const_id);
       if (symbolic_info.index.is_valid() &&
           symbolic_info.generic_id ==
-              context.generic_instances().Get(instance_id).generic_id &&
-          symbolic_info.index.region() == instance_eval_block_info->region) {
-        auto inst_id =
-            instance_eval_block_info->values[symbolic_info.index.index()];
+              context.generic_instances().Get(specific_id).generic_id &&
+          symbolic_info.index.region() == specific_eval_info->region) {
+        auto inst_id = specific_eval_info->values[symbolic_info.index.index()];
         CARBON_CHECK(inst_id.is_valid())
             << "Forward reference in eval block: index "
             << symbolic_info.index.index() << " referenced before evaluation";
@@ -54,8 +52,8 @@ struct EvalContext {
       }
     }
 
-    // Map from an instance-specific constant value to the canonical value.
-    return GetConstantInInstance(context.sem_ir(), instance_id, const_id);
+    // Map from a specific constant value to the canonical value.
+    return GetConstantInInstance(context.sem_ir(), specific_id, const_id);
   }
 
   // Gets the constant value of the specified instruction in this context.
@@ -111,11 +109,11 @@ struct EvalContext {
   // A cached reference to the file, to avoid a double indirection when
   // accessing its value stores.
   SemIR::File& file = context.sem_ir();
-  // The generic instance that we are evaluating within.
-  SemIR::GenericInstanceId instance_id;
-  // If we are currently building the eval block for `instance_id`, information
-  // about that eval block.
-  GenericInstanceEvalBlockInfo* instance_eval_block_info;
+  // The specific that we are evaluating within.
+  SemIR::GenericInstanceId specific_id;
+  // If we are currently evaluating an eval block for `specific_id`, information
+  // about that evaluation.
+  SpecificEvalInfo* specific_eval_info;
 };
 }  // namespace
 
@@ -150,7 +148,6 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
     return Phase::Template;
   } else {
     CARBON_CHECK(constant_id.is_symbolic());
-    // TODO: Get the constant value in the current instance.
     return Phase::Symbolic;
   }
 }
@@ -1239,7 +1236,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     }
 
     case CARBON_KIND(SemIR::SpecificConstant instance): {
-      // Pull the instance-specific constant value out of the generic instance.
+      // Pull the constant value out of the specific.
       return SemIR::GetConstantValueInInstance(
           eval_context.sem_ir(), instance.instance_id, instance.inst_id);
     }
@@ -1294,10 +1291,10 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       // argument of that instance, its constant value is the corresponding
       // argument value.
       if (bind_name.bind_index.is_valid() &&
-          eval_context.instance_id.is_valid()) {
-        const auto& instance =
-            eval_context.generic_instances().Get(eval_context.instance_id);
-        auto args = eval_context.inst_blocks().Get(instance.args_id);
+          eval_context.specific_id.is_valid()) {
+        const auto& specific =
+            eval_context.generic_instances().Get(eval_context.specific_id);
+        auto args = eval_context.inst_blocks().Get(specific.args_id);
         CARBON_CHECK(static_cast<size_t>(bind_name.bind_index.index) <
                      args.size())
             << "Use of binding " << bind_name.bind_index
@@ -1406,30 +1403,30 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id,
                  SemIR::Inst inst) -> SemIR::ConstantId {
   EvalContext eval_context = {
       .context = context,
-      .instance_id = SemIR::GenericInstanceId::Invalid,
-      .instance_eval_block_info = nullptr,
+      .specific_id = SemIR::GenericInstanceId::Invalid,
+      .specific_eval_info = nullptr,
   };
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
-auto TryEvalBlockForGenericInstance(
-    Context& context, SemIR::GenericInstanceId instance_id,
+auto TryEvalBlockForSpecific(
+    Context& context, SemIR::GenericInstanceId specific_id,
     SemIR::GenericInstIndex::Region region) -> SemIR::InstBlockId {
-  auto generic_id = context.generic_instances().Get(instance_id).generic_id;
+  auto generic_id = context.generic_instances().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 
   llvm::SmallVector<SemIR::InstId> result;
   result.resize(eval_block.size(), SemIR::InstId::Invalid);
 
-  GenericInstanceEvalBlockInfo eval_block_info = {
+  SpecificEvalInfo eval_info = {
       .region = region,
       .values = result,
   };
   EvalContext eval_context = {
       .context = context,
-      .instance_id = instance_id,
-      .instance_eval_block_info = &eval_block_info,
+      .specific_id = specific_id,
+      .specific_eval_info = &eval_info,
   };
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {

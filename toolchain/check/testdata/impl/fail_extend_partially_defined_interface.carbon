@@ -62,7 +62,7 @@ interface I {
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%C.decl(constants.%Self) {
+// CHECK:STDOUT: specific @I.%C.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

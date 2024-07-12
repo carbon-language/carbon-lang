@@ -179,21 +179,21 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%CompleteClass.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%CompleteClass.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc6_21.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @CompleteClass.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @CompleteClass.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%CompleteClass.decl(i32) {
+// CHECK:STDOUT: specific file.%CompleteClass.decl(i32) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc6_21.2 => i32
 // CHECK:STDOUT: }
@@ -288,9 +288,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return %.loc9_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%T);
+// CHECK:STDOUT: specific <invalid>(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(i32);
+// CHECK:STDOUT: specific <invalid>(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_foo.carbon
 // CHECK:STDOUT:
@@ -379,9 +379,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%T);
+// CHECK:STDOUT: specific <invalid>(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(i32);
+// CHECK:STDOUT: specific <invalid>(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_foo.carbon
 // CHECK:STDOUT:
@@ -465,9 +465,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %CompleteClass.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%T);
+// CHECK:STDOUT: specific <invalid>(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(i32);
+// CHECK:STDOUT: specific <invalid>(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_arg_mismatch.carbon
 // CHECK:STDOUT:
@@ -544,11 +544,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %CompleteClass.4;
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%T);
+// CHECK:STDOUT: specific <invalid>(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%.3);
+// CHECK:STDOUT: specific <invalid>(constants.%.3);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(i32);
+// CHECK:STDOUT: specific <invalid>(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_foo.impl.carbon
 // CHECK:STDOUT:
@@ -599,9 +599,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   .x = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%T);
+// CHECK:STDOUT: specific <invalid>(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%U) {
+// CHECK:STDOUT: specific file.%.decl(constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%U.loc9_13.2 => constants.%U
 // CHECK:STDOUT: }

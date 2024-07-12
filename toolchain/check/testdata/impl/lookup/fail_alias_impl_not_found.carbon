@@ -96,7 +96,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

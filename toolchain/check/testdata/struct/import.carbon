@@ -189,12 +189,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%C.decl(constants.%S) {
+// CHECK:STDOUT: specific file.%C.decl(constants.%S) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%S.loc8_9.2 => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%C.decl(constants.%struct.4) {
+// CHECK:STDOUT: specific file.%C.decl(constants.%struct.4) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%S.loc8_9.2 => constants.%struct.4
 // CHECK:STDOUT: }
@@ -337,9 +337,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%S);
+// CHECK:STDOUT: specific <invalid>(constants.%S);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%struct);
+// CHECK:STDOUT: specific <invalid>(constants.%struct);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_type.impl.carbon
 // CHECK:STDOUT:
@@ -410,9 +410,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%S);
+// CHECK:STDOUT: specific <invalid>(constants.%S);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%struct);
+// CHECK:STDOUT: specific <invalid>(constants.%struct);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_value.impl.carbon
 // CHECK:STDOUT:
@@ -488,9 +488,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%S);
+// CHECK:STDOUT: specific <invalid>(constants.%S);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%struct.1);
+// CHECK:STDOUT: specific <invalid>(constants.%struct.1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%struct.2);
+// CHECK:STDOUT: specific <invalid>(constants.%struct.2);
 // CHECK:STDOUT:

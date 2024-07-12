@@ -62,12 +62,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Class.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T.ref.loc12_11 => constants.%T
 // CHECK:STDOUT: }

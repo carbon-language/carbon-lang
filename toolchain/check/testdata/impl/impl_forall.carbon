@@ -77,11 +77,11 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Simple.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @Simple.%F.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @impl.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @impl.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

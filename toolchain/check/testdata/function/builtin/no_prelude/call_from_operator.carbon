@@ -86,7 +86,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: fn @Op[@Add.%self.loc7_9.2: @Add.%Self.ref.loc7_15 (%Self)](@Add.%other.loc7_21.2: @Add.%Self.ref.loc7_15 (%Self)) -> %Self
 // CHECK:STDOUT:     generic [@Add.%Self: %.2];
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Add.%Op.decl(constants.%Self) {
+// CHECK:STDOUT: specific @Add.%Op.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Add.%Self.ref.loc7_15 => constants.%Self
 // CHECK:STDOUT: }

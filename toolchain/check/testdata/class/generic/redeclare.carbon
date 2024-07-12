@@ -120,7 +120,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%Generic.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl.loc4(constants.%T) {
+// CHECK:STDOUT: specific file.%Generic.decl.loc4(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_15.2 => constants.%T
 // CHECK:STDOUT: }
@@ -159,7 +159,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T
 // CHECK:STDOUT: }
@@ -220,12 +220,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%B.decl(constants.%N.1) {
+// CHECK:STDOUT: specific file.%B.decl(constants.%N.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%N.loc4_9.2 => constants.%N.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T, constants.%N.2) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%N.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T
 // CHECK:STDOUT:   file.%N.loc12_19.2 => constants.%N.2
@@ -285,12 +285,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%C.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%C.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T
 // CHECK:STDOUT:   file.%U.loc12_19.2 => constants.%U
@@ -348,12 +348,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%D.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%D.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T.2) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T.2
 // CHECK:STDOUT: }
@@ -399,12 +399,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%E.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%E.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%U) {
+// CHECK:STDOUT: specific file.%.decl(constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%U.loc11_9.2 => constants.%U
 // CHECK:STDOUT: }

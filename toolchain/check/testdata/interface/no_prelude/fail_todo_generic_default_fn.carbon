@@ -97,22 +97,22 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   return %self.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%I.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%I.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%F.decl(constants.%T, constants.%Self) {
+// CHECK:STDOUT: specific @I.%F.decl(constants.%T, constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%.loc13_14.1 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%I.decl(file.%T.loc22_6.2) {
+// CHECK:STDOUT: specific file.%I.decl(file.%T.loc22_6.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc22_6.2 => constants.%T
 // CHECK:STDOUT:   <unexpected instref inst+42> => constants.%.2

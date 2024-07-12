@@ -237,42 +237,42 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Simple.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%Simple.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_18.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%WithAssocFn.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%WithAssocFn.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc8_23.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @WithAssocFn.%F.decl(constants.%T.1, constants.%Self.2) {
+// CHECK:STDOUT: specific @WithAssocFn.%F.decl(constants.%T.1, constants.%Self.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Simple.decl(constants.%C) {
+// CHECK:STDOUT: specific file.%Simple.decl(constants.%C) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_18.2 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%WithAssocFn.decl(constants.%C) {
+// CHECK:STDOUT: specific file.%WithAssocFn.decl(constants.%C) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc8_23.2 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%WithImplicitArgs.decl(constants.%T.1, constants.%N) {
+// CHECK:STDOUT: specific file.%WithImplicitArgs.decl(constants.%T.1, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc22_28.2 => constants.%T.1
 // CHECK:STDOUT:   file.%N.loc22_38.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Receive.decl(constants.%T.2) {
+// CHECK:STDOUT: specific file.%Receive.decl(constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Receive.%T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Pass.decl(constants.%T.2) {
+// CHECK:STDOUT: specific file.%Pass.decl(constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Pass.%T => constants.%T.2
 // CHECK:STDOUT: }
@@ -364,27 +364,27 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%A) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%A) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl(constants.%T.2) {
+// CHECK:STDOUT: specific file.%F.decl(constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%B) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%B) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%G.decl(constants.%T.3) {
+// CHECK:STDOUT: specific file.%G.decl(constants.%T.3) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T => constants.%T.3
 // CHECK:STDOUT: }

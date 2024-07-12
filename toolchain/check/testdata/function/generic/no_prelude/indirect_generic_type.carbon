@@ -50,7 +50,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   return %.loc12_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT:   file.%.loc11_20 => constants.%.1

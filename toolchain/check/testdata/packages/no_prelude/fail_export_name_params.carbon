@@ -62,12 +62,12 @@ export C2(T:! type);
 // CHECK:STDOUT: class @C2
 // CHECK:STDOUT:     generic [file.%T.loc5_10.2: type];
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%C1.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%C1.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_10.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%C2.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%C2.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc5_10.2 => constants.%T
 // CHECK:STDOUT: }
@@ -106,5 +106,5 @@ export C2(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance <invalid>(constants.%T);
+// CHECK:STDOUT: specific <invalid>(constants.%T);
 // CHECK:STDOUT:

@@ -122,22 +122,22 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl.loc19(constants.%T.1) {
+// CHECK:STDOUT: specific file.%.decl.loc19(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc21_19.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%DifferentParams.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%DifferentParams.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc31_27.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl.loc38(constants.%T.2) {
+// CHECK:STDOUT: specific file.%.decl.loc38(constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }

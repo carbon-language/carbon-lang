@@ -110,17 +110,17 @@ class C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%GenericInterface.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%GenericInterface.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_28.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @GenericInterface.%F.decl(constants.%T, constants.%Self) {
+// CHECK:STDOUT: specific @GenericInterface.%F.decl(constants.%T, constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @GenericInterface.%T.ref => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @impl.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @impl.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @impl.%T.ref => constants.%T
 // CHECK:STDOUT: }

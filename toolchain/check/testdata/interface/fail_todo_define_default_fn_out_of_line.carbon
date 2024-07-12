@@ -141,11 +141,11 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.2(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Interface.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @Interface.%F.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Interface.%G.decl(constants.%Self) {
+// CHECK:STDOUT: specific @Interface.%G.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

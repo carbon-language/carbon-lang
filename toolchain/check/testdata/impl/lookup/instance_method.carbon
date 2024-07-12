@@ -142,7 +142,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   return %.loc24_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%Self.ref => constants.%Self
 // CHECK:STDOUT: }

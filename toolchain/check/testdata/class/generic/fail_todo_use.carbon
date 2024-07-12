@@ -143,12 +143,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Class.%Get.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class.%Get.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%.loc12_21 => constants.%Class.2
 // CHECK:STDOUT:   @Class.%.loc12_25 => constants.%.2
@@ -156,7 +156,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   @Class.%.loc12_34 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(i32) {
+// CHECK:STDOUT: specific file.%Class.decl(i32) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => i32
 // CHECK:STDOUT: }

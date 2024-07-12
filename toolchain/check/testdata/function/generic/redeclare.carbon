@@ -145,7 +145,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   return %.loc7_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl.loc4(constants.%T) {
+// CHECK:STDOUT: specific file.%F.decl.loc4(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_6.2 => constants.%T
 // CHECK:STDOUT:   file.%.loc4 => constants.%.1
@@ -204,14 +204,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific file.%F.decl(constants.%T, constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT:   @F.%U => constants.%U
 // CHECK:STDOUT:   file.%.loc4 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%T => constants.%T
 // CHECK:STDOUT:   @.1.%U => constants.%U
@@ -273,14 +273,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl(constants.%T.1, constants.%U.1) {
+// CHECK:STDOUT: specific file.%F.decl(constants.%T.1, constants.%U.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T.1
 // CHECK:STDOUT:   @F.%U => constants.%U.1
 // CHECK:STDOUT:   file.%.loc4 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%U.2, constants.%T.2) {
+// CHECK:STDOUT: specific file.%.decl(constants.%U.2, constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%U => constants.%U.2
 // CHECK:STDOUT:   @.1.%T => constants.%T.2
@@ -342,14 +342,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl(constants.%T.1, constants.%U.1) {
+// CHECK:STDOUT: specific file.%F.decl(constants.%T.1, constants.%U.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T.1
 // CHECK:STDOUT:   @F.%U => constants.%U.1
 // CHECK:STDOUT:   file.%.loc4 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%U.2, constants.%T.2) {
+// CHECK:STDOUT: specific file.%.decl(constants.%U.2, constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%U => constants.%U.2
 // CHECK:STDOUT:   @.1.%T => constants.%T.2

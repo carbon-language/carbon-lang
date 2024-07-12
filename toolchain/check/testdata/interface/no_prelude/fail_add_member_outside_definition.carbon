@@ -101,15 +101,15 @@ interface Outer {
 // CHECK:STDOUT: fn @F.2()
 // CHECK:STDOUT:     generic [@Outer.%Self: %.3];
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Outer.%Inner.decl(constants.%Self.2) {
+// CHECK:STDOUT: specific @Outer.%Inner.decl(constants.%Self.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Inner.%.decl(constants.%Self.2, constants.%Self.3) {
+// CHECK:STDOUT: specific @Inner.%.decl(constants.%Self.2, constants.%Self.3) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Outer.%F.decl(constants.%Self.2) {
+// CHECK:STDOUT: specific @Outer.%F.decl(constants.%Self.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -275,12 +275,12 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.6(@impl.4.%x.loc36_8.2: %.22);
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @UseSelf.%F.decl(constants.%Self.1) {
+// CHECK:STDOUT: specific @UseSelf.%F.decl(constants.%Self.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @UseSelf.%Self.ref.loc12_14 => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @SelfNested.%F.decl(constants.%Self.2) {
+// CHECK:STDOUT: specific @SelfNested.%F.decl(constants.%Self.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @SelfNested.%Self.ref.loc28_12 => constants.%Self.2
 // CHECK:STDOUT:   @SelfNested.%.loc28_16.3 => constants.%.10

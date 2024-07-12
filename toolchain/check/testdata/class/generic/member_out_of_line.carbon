@@ -156,12 +156,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Class.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T.ref.loc5_11 => constants.%T
 // CHECK:STDOUT: }
@@ -247,18 +247,18 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%A.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%A.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @A.%B.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific @A.%B.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @A.%T.ref => constants.%T
 // CHECK:STDOUT:   @A.%N.loc5_11.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @B.%F.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific @B.%F.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @B.%.loc6 => constants.%B.2
 // CHECK:STDOUT:   @B.%T.ref => constants.%T
@@ -307,7 +307,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc15_15.2 => constants.%T
 // CHECK:STDOUT: }
@@ -358,12 +358,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_15.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Generic.%TooFew.decl(constants.%T) {
+// CHECK:STDOUT: specific @Generic.%TooFew.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -420,16 +420,16 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_15.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Generic.%TooMany.decl(constants.%T) {
+// CHECK:STDOUT: specific @Generic.%TooMany.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%U) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc15_12.2 => constants.%T
 // CHECK:STDOUT:   file.%U.loc15_22.2 => constants.%U
@@ -488,16 +488,16 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_15.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance @Generic.%WrongType.decl(constants.%T.1) {
+// CHECK:STDOUT: specific @Generic.%WrongType.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%.decl(constants.%T.2) {
+// CHECK:STDOUT: specific file.%.decl(constants.%T.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc14_12.2 => constants.%T.2
 // CHECK:STDOUT: }

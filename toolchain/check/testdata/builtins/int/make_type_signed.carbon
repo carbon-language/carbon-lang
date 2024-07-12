@@ -217,7 +217,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Symbolic.decl(constants.%N) {
+// CHECK:STDOUT: specific file.%Symbolic.decl(constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Symbolic.%N => constants.%N
 // CHECK:STDOUT:   file.%int.make_type_signed.loc14_28 => constants.%.6

@@ -136,19 +136,19 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%.3, constants.%.4) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%.3, constants.%.4) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%.3
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%.1, constants.%.6) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%.1, constants.%.6) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%.1
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%.6
@@ -211,7 +211,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
@@ -278,7 +278,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
@@ -343,7 +343,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N

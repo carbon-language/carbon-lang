@@ -47,7 +47,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   return %m.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: instance file.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific file.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT: }
