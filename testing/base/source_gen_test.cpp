@@ -15,9 +15,9 @@ namespace Carbon::Testing {
 namespace {
 
 using ::testing::AllOf;
-using ::testing::Each;
 using ::testing::ContainerEq;
 using ::testing::Contains;
+using ::testing::Each;
 using ::testing::Eq;
 using ::testing::Ge;
 using ::testing::Le;

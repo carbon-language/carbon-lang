@@ -157,7 +157,7 @@ class SourceGen {
 
   // Returns a collection of un-shuffled unique identifiers, otherwise the same
   // as `GetShuffledUniqueIds`.
-  // 
+  //
   // Usually, benchmarks should use the shuffled version. However, this is
   // useful when there is already a post-processing step to shuffle things.
   auto GetUniqueIds(int number, int min_length = 1, int max_length = 64,
