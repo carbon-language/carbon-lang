@@ -55,3 +55,8 @@ interface UseSelf {
 // CHECK:STDOUT: fn @F[@UseSelf.%self.loc12_8.2: @UseSelf.%Self.ref.loc12_14 (%Self)]() -> %Self
 // CHECK:STDOUT:     generic [@UseSelf.%Self: %.1];
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance @UseSelf.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @UseSelf.%Self.ref.loc12_14 => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

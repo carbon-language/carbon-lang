@@ -14,10 +14,14 @@ namespace Carbon::Check {
 // Determines the phase of the instruction `inst`, and returns its constant
 // value if it has constant phase. If it has runtime phase, returns
 // `SemIR::ConstantId::NotConstant`.
-//
-// TODO: Support symbolic phase.
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId;
+
+// Evaluates each instruction in the specified block in turn. Produces a block
+// containing the evaluated constant values of the instructions.
+auto TryEvalBlockForGenericInstance(
+    Context& context, SemIR::GenericInstanceId instance_id,
+    SemIR::GenericInstIndex::Region region) -> SemIR::InstBlockId;
 
 }  // namespace Carbon::Check
 

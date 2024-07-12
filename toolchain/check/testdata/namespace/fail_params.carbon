@@ -101,3 +101,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc39_6.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

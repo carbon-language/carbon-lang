@@ -117,3 +117,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance @Simple.%G.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Simple.%Self.ref => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

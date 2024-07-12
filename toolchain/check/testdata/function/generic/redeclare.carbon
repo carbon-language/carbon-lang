@@ -145,6 +145,12 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   return %.loc7_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%F.decl.loc4(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   file.%.loc4 => constants.%.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_different_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -196,6 +202,20 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%F.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   @F.%U => constants.%U
+// CHECK:STDOUT:   file.%.loc4 => constants.%.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @.1.%T => constants.%T
+// CHECK:STDOUT:   @.1.%U => constants.%U
+// CHECK:STDOUT:   file.%.loc13 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_reorder.carbon
@@ -253,6 +273,20 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%F.decl(constants.%T.1, constants.%U.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T.1
+// CHECK:STDOUT:   @F.%U => constants.%U.1
+// CHECK:STDOUT:   file.%.loc4 => constants.%.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%.decl(constants.%U.2, constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @.1.%U => constants.%U.2
+// CHECK:STDOUT:   @.1.%T => constants.%T.2
+// CHECK:STDOUT:   file.%.loc13 => constants.%.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_rename.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -306,5 +340,19 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.2]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%F.decl(constants.%T.1, constants.%U.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T.1
+// CHECK:STDOUT:   @F.%U => constants.%U.1
+// CHECK:STDOUT:   file.%.loc4 => constants.%.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%.decl(constants.%U.2, constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @.1.%U => constants.%U.2
+// CHECK:STDOUT:   @.1.%T => constants.%T.2
+// CHECK:STDOUT:   file.%.loc13 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

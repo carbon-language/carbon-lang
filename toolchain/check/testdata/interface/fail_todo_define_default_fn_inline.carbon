@@ -95,3 +95,11 @@ interface Interface {
 // CHECK:STDOUT: fn @G(@Interface.%a.loc21_16.2: i32, @Interface.%b.loc21_24.2: i32) -> i32 = "int.sadd"
 // CHECK:STDOUT:     generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance @Interface.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance @Interface.%G.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

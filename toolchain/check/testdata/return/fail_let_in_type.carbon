@@ -61,3 +61,8 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance <unexpected instref inst+29>(constants.%y) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   <unexpected instref inst+27> => constants.%y
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

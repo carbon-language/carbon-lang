@@ -74,6 +74,10 @@ class Formatter {
       FormatFunction(FunctionId(i));
     }
 
+    for (int i : llvm::seq(sem_ir_.generic_instances().size())) {
+      FormatGenericInstance(GenericInstanceId(i));
+    }
+
     // End-of-file newline.
     out_ << "\n";
   }
@@ -325,6 +329,56 @@ class Formatter {
     out_ << "]";
     // TODO: Format at least the portions of the declaration and definition
     // blocks that don't duplicate portions of the generic body.
+  }
+
+  auto FormatGenericInstanceRegion(const Generic& generic,
+                                   const GenericInstance& instance,
+                                   GenericInstIndex::Region region,
+                                   llvm::StringRef region_name) -> void {
+    if (!instance.GetValueBlock(region).is_valid()) {
+      return;
+    }
+
+    IndentLabel();
+    out_ << region_name << ":\n";
+    for (auto [generic_inst_id, instance_inst_id] :
+         llvm::zip(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(region)),
+                   sem_ir_.inst_blocks().Get(instance.GetValueBlock(region)))) {
+      Indent();
+      FormatInstName(generic_inst_id);
+      out_ << " => ";
+      FormatInstName(instance_inst_id);
+      out_ << "\n";
+    }
+  }
+
+  auto FormatGenericInstance(GenericInstanceId id) -> void {
+    const auto& instance = sem_ir_.generic_instances().Get(id);
+
+    out_ << "\n";
+
+    out_ << "instance ";
+    FormatArg(id);
+
+    // TODO: Remove once we stop forming generic instances with no generic
+    // during import.
+    if (!instance.generic_id.is_valid()) {
+      out_ << ";\n";
+      return;
+    }
+    out_ << ' ';
+
+    const auto& generic = sem_ir_.generics().Get(instance.generic_id);
+
+    OpenBrace();
+    FormatGenericInstanceRegion(generic, instance,
+                                GenericInstIndex::Region::Declaration,
+                                "declaration");
+    FormatGenericInstanceRegion(
+        generic, instance, GenericInstIndex::Region::Definition, "definition");
+    CloseBrace();
+
+    out_ << '\n';
   }
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {
@@ -818,6 +872,15 @@ class Formatter {
 
   auto FormatArg(GenericInstanceId id) -> void {
     const auto& instance = sem_ir_.generic_instances().Get(id);
+    // TODO: We don't yet import generics properly, and instead form generic
+    // instances with an invalid generic ID. In this case, just print a
+    // placeholder for now. Once import works, we can remove this code.
+    if (!instance.generic_id.is_valid()) {
+      out_ << "<invalid>";
+    } else {
+      const Generic& generic = sem_ir_.generics().Get(instance.generic_id);
+      FormatInstName(generic.decl_id);
+    }
     FormatArg(instance.args_id);
   }
 

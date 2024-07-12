@@ -35,10 +35,10 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
-// CHECK:STDOUT:   %C1.2: type = class_type @C1, (%T) [symbolic]
+// CHECK:STDOUT:   %C1.2: type = class_type @C1, file.%C1.decl(%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
-// CHECK:STDOUT:   %C2.2: type = class_type @C2, (%T) [symbolic]
+// CHECK:STDOUT:   %C2.2: type = class_type @C2, file.%C2.decl(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,6 +62,16 @@ export C2(T:! type);
 // CHECK:STDOUT: class @C2
 // CHECK:STDOUT:     generic [file.%T.loc5_10.2: type];
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%C1.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_10.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%C2.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc5_10.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -69,10 +79,10 @@ export C2(T:! type);
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+18> [symbolic]
-// CHECK:STDOUT:   %C1.2: type = class_type @C1, (%T) [symbolic]
+// CHECK:STDOUT:   %C1.2: type = class_type @C1, <invalid>(%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
-// CHECK:STDOUT:   %C2.2: type = class_type @C2, (%T) [symbolic]
+// CHECK:STDOUT:   %C2.2: type = class_type @C2, <invalid>(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -95,4 +105,6 @@ export C2(T:! type);
 // CHECK:STDOUT: class @C1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2;
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%T);
 // CHECK:STDOUT:

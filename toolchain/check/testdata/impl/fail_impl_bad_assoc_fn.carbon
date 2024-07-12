@@ -887,3 +887,21 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.15(@impl.15.%x.loc212_10.2: %.26) -> %.21;
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance @I.%F.decl(constants.%Self.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance @J.%F.decl(constants.%Self.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance @SelfNested.%F.decl(constants.%Self.3) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @SelfNested.%Self.ref.loc188_12 => constants.%Self.3
+// CHECK:STDOUT:   @SelfNested.%.loc188_16.3 => constants.%.10
+// CHECK:STDOUT:   <unexpected instref inst+267> => <unexpected instref inst+268>
+// CHECK:STDOUT:   @SelfNested.%.loc188_37 => constants.%.11
+// CHECK:STDOUT:   @SelfNested.%.loc188_38.2 => constants.%.13
+// CHECK:STDOUT:   @SelfNested.%.loc188_52 => constants.%.15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

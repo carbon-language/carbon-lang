@@ -95,3 +95,17 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance @Interface.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%CallStatic.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @CallStatic.%T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%CallFacet.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @CallFacet.%T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

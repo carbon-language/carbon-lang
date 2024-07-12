@@ -54,3 +54,9 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%F.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   @F.%U => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

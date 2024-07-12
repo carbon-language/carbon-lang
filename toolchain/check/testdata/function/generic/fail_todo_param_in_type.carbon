@@ -58,3 +58,8 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT: fn @F(%N: i32, %a: <error>)
 // CHECK:STDOUT:     generic [%N: i32];
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%F.decl(constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%N => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

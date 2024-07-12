@@ -81,10 +81,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X: %.9 = bind_symbolic_name X 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
+// CHECK:STDOUT:   %C.2: type = class_type @C, file.%C.decl(%X) [symbolic]
 // CHECK:STDOUT:   %.18: type = struct_type {} [template]
 // CHECK:STDOUT:   %tuple.5: %.9 = tuple_value (%.15, %.16) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, (%tuple.5) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, file.%C.decl(%tuple.5) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -211,6 +211,16 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%C.decl(constants.%X) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%X.loc7_9.2 => constants.%X
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance file.%C.decl(constants.%tuple.5) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%X.loc7_9.2 => constants.%tuple.5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -233,11 +243,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.14: type = struct_type {} [template]
 // CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0, <unexpected instref inst+105> [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
+// CHECK:STDOUT:   %C.2: type = class_type @C, <invalid>(%X) [symbolic]
 // CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.16: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %tuple: %.8 = tuple_value (%.15, %.16) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, (%tuple) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, <invalid>(%tuple) [template]
 // CHECK:STDOUT:   %.17: type = ptr_type %.14 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -368,6 +378,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%X);
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%tuple);
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_type.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -377,14 +391,14 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected instref inst+17> [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
+// CHECK:STDOUT:   %C.2: type = class_type @C, <invalid>(%X) [symbolic]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4, %.5) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, (%tuple) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, <invalid>(%tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.2 [template]
@@ -439,6 +453,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%X);
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%tuple);
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_value.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -448,17 +466,17 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected instref inst+17> [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, (%X) [symbolic]
+// CHECK:STDOUT:   %C.2: type = class_type @C, <invalid>(%X) [symbolic]
 // CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 4 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %tuple.1: %.3 = tuple_value (%.4, %.5) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, (%tuple.1) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, <invalid>(%tuple.1) [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %tuple.2: %.3 = tuple_value (%.9, %.8) [template]
-// CHECK:STDOUT:   %C.4: type = class_type @C, (%tuple.2) [template]
+// CHECK:STDOUT:   %C.4: type = class_type @C, <invalid>(%tuple.2) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -512,4 +530,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%X);
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%tuple.1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: instance <invalid>(constants.%tuple.2);
 // CHECK:STDOUT:
