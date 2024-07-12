@@ -830,7 +830,7 @@ struct ReturnExpr {
 // instruction in order to give a more compact representation.
 struct SpecificConstant {
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
-      {.ir_name = "specific_constant"});
+      {.ir_name = "specific_constant", .is_lowered = false});
 
   TypeId type_id;
   InstId inst_id;

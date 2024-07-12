@@ -210,11 +210,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
   }
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::SpecificConstant /*inst*/) -> void {
-  CARBON_FATAL() << "Should not lower instruction with constant value";
-}
-
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlock(inst.block_id);
