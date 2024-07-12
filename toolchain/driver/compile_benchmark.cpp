@@ -14,6 +14,9 @@ namespace Carbon::Testing {
 namespace {
 
 // Helper used to benchmark compilation across different phases.
+//
+// Handles setting up the compiler's driver, locating the prelude, and managing
+// a VFS in which the compilations occur.
 class CompileBenchmark {
  public:
   CompileBenchmark()
@@ -35,6 +38,9 @@ class CompileBenchmark {
     }
   }
 
+  // Setup a set of source files in the VFS for the driver. Each string input is
+  // materialized into a virtual file and a list of the virtual filenames is
+  // returned.
   auto SetUpFiles(llvm::ArrayRef<std::string> sources)
       -> llvm::OwningArrayRef<std::string> {
     llvm::OwningArrayRef<std::string> file_names(sources.size());
@@ -57,12 +63,15 @@ class CompileBenchmark {
   SourceGen gen_;
 };
 
+// An enumerator used to select compilation phases to benchmark.
 enum class Phase {
   Lex,
   Parse,
   Check,
 };
 
+// Maps the enumerator for a compilation phase into a specific `compile` command
+// line flag.
 static auto PhaseFlag(Phase phase) -> llvm::StringRef {
   switch (phase) {
     case Phase::Lex:
@@ -74,11 +83,34 @@ static auto PhaseFlag(Phase phase) -> llvm::StringRef {
   }
 }
 
+// Benchmark on multiple files of the same size but with different source code
+// in order to avoid branch prediction perfectly learning a particular file's
+// structure and shape, and to get closer to a cache-cold benchmark number which
+// is what we generally expect to care about in practice. We enforce an upper
+// bound to avoid excessive benchmark time and a lower bound to avoid anchoring
+// on a single source file that may have unrepresentative content.
+//
+// For simplicity, we compute a number of files from the target line count as a
+// heuristic.
+static auto ComputeFileCount(int target_lines) -> int {
+#ifndef NDEBUG
+  // Use a smaller number of files in debug builds where compiles are slower.
+  return std::max(1, std::min(8, (1024 * 1024) / target_lines));
+#else
+  return std::max(8, std::min(1024, (1024 * 1024) / target_lines));
+#endif
+}
+
 template <Phase P>
 static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
   CompileBenchmark bench;
   int target_lines = state.range(0);
-  llvm::OwningArrayRef<std::string> sources(NumFiles);
+  int num_files = ComputeFileCount(target_lines);
+  llvm::OwningArrayRef<std::string> sources(num_files);
+
+  // Create a collection of random source files. Average the actual number of
+  // lines resulting so we can use that to compute the compilation speed as a
+  // line-rate counter.
   double avg_lines = 0.0;
   for (std::string& source : sources) {
     source = bench.gen().GenAPIFileDenseDecls(target_lines,
@@ -86,10 +118,15 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
     avg_lines += llvm::count(source, '\n');
   }
   avg_lines /= sources.size();
+
+  // Setup the sources as files for compilation.
   llvm::OwningArrayRef<std::string> file_names = bench.SetUpFiles(sources);
-  CARBON_CHECK(file_names.size() == NumFiles);
-  while (state.KeepRunningBatch(NumFiles)) {
-    for (ssize_t i = 0; i < NumFiles;) {
+  CARBON_CHECK(static_cast<int>(file_names.size()) == num_files);
+
+  // We benchmark in batches of files to avoid benchmarking any peculiarities of
+  // a single file.
+  while (state.KeepRunningBatch(num_files)) {
+    for (ssize_t i = 0; i < num_files;) {
       // We block optimizing `i` as that has proven both more effective at
       // blocking the loop from being optimized away and avoiding disruption of
       // the generated code that we're benchmarking.
@@ -100,15 +137,21 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
                          .success;
       CARBON_DCHECK(success);
 
-      // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup. This doesn't fully allow us to measure
-      // latency rather than throughput, as noted above.
+      // We use the compilation success to step through the file names,
+      // establishing a dependency between each lookup. This doesn't fully allow
+      // us to measure latency rather than throughput, but minimizes any skew in
+      // measurements from speculating the start of the next compilation.
       i += static_cast<ssize_t>(success);
     }
   }
+
+  // Compute the line-rate of these compilations.
   state.counters["Lines"] = benchmark::Counter(
       avg_lines, benchmark::Counter::kIsIterationInvariantRate);
 }
+
+// Benchmark from 256-line test cases through 256k line test cases, and for each
+// phase of compilation.
 BENCHMARK(BM_CompileAPIFileDenseDecls<Phase::Lex>)
     ->RangeMultiplier(4)
     ->Range(256, static_cast<int64_t>(256 * 1024));

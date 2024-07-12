@@ -6,8 +6,8 @@
 
 BENCHMARK="$TEST_SRCDIR/$TEST_WORKSPACE/toolchain/driver/compile_benchmark"
 
-# Run the benchmark with a couple of the fastest sizes and a single iteration to
-# make sure it doesn't hit errors.
+# Run the benchmark with the fastest size and a single iteration to make sure it
+# doesn't hit errors.
 exec "$BENCHMARK" \
   --benchmark_min_time=1x \
-  --benchmark_filter='/(256|512)$'
+  --benchmark_filter='/256$'
