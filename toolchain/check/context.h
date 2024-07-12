@@ -419,9 +419,7 @@ class Context {
     return sem_ir().interfaces();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
-  auto generics() -> ValueStore<SemIR::GenericId>& {
-    return sem_ir().generics();
-  }
+  auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto generic_instances() -> SemIR::GenericInstanceStore& {
     return sem_ir().generic_instances();
   }

@@ -223,8 +223,21 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
     result = context.LookupQualifiedName(node_id, name_id, lookup_scope);
   }
 
+  // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
   auto inst = context.insts().Get(result.inst_id);
   auto type_id = GetTypeInInstance(context, result.instance_id, inst.type_id());
+  CARBON_CHECK(type_id.is_valid()) << "Missing type for member " << inst;
+
+  // If the named entity has a constant value that depends on its generic
+  // instance, store the instance too.
+  if (result.instance_id.is_valid() &&
+      context.constant_values().Get(result.inst_id).is_symbolic()) {
+    result.inst_id = context.AddInst<SemIR::SpecificConstant>(
+        node_id, {.type_id = type_id,
+                  .inst_id = result.inst_id,
+                  .instance_id = result.instance_id});
+  }
+
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
   auto member_id = context.AddInst<SemIR::NameRef>(

@@ -28,6 +28,10 @@ struct Generic : public Printable<Generic> {
   // The index in this block will match the `bind_index` in the name binding
   // instruction's `BindNameInfo`.
   InstBlockId bindings_id;
+  // The self instance of this generic, which is an instance where every generic
+  // parameter's argument is that same parameter. For example, the self instance
+  // of `Vector(T:! type)` is `Vector(T)`.
+  GenericInstanceId self_instance_id;
 
   // The following members are set at the end of the corresponding region of the
   // generic.
@@ -35,6 +39,17 @@ struct Generic : public Printable<Generic> {
   // A block of instructions that should be evaluated to compute the values and
   // instructions needed by the declaration of the generic.
   InstBlockId decl_block_id = InstBlockId::Invalid;
+};
+
+// Provides storage for generics.
+class GenericStore : public ValueStore<GenericId> {
+ public:
+  // Get the self-instance for a generic, or an invalid instance for an invalid
+  // generic ID.
+  auto GetSelfInstance(GenericId id) -> GenericInstanceId {
+    return id.is_valid() ? Get(id).self_instance_id
+                         : GenericInstanceId::Invalid;
+  }
 };
 
 // An instance of a generic entity, such as an instance of a generic function.
@@ -91,6 +106,19 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
   ValueStore<GenericInstanceId> generic_instances_;
   Carbon::Set<GenericInstanceId, 0, KeyContext> lookup_table_;
 };
+
+// Gets the substituted value of a constant within a specified instance of a
+// generic. Note that this does not perform substitution, and will return
+// `Invalid` if the substituted constant value is not yet known.
+auto GetConstantInInstance(const File& sem_ir, GenericInstanceId instance_id,
+                           ConstantId const_id) -> ConstantId;
+
+// Gets the substituted constant value of an instruction within a specified
+// instance of a generic. Note that this does not perform substitution, and will
+// return `Invalid` if the substituted constant value is not yet known.
+auto GetConstantValueInInstance(const File& sem_ir,
+                                GenericInstanceId instance_id, InstId inst_id)
+    -> ConstantId;
 
 }  // namespace Carbon::SemIR
 

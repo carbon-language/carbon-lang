@@ -191,7 +191,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10_6.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %N.loc10_18.1: %T = param N
 // CHECK:STDOUT:     %N.loc10_18.2: %T = bind_symbolic_name N 1, %N.loc10_18.1 [symbolic = constants.%N]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = constants.%B.2]
+// CHECK:STDOUT:     %.loc10: type = specific_constant constants.%B.2, (constants.%T, constants.%N) [symbolic = constants.%B.2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc10 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %self.loc10_27.1: %B.2 = param self
 // CHECK:STDOUT:     @F.%self: %B.2 = bind_name self, %self.loc10_27.1
 // CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10_6.2 [symbolic = constants.%T]
@@ -216,9 +217,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: class @B
 // CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @A.%T.ref (%T)] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B.2 [symbolic = %Self.ref (constants.%B.2)]
-// CHECK:STDOUT:     %self.loc6_10.1: @B.%Self.ref (%B.2) = param self
-// CHECK:STDOUT:     %self.loc6_10.2: @B.%Self.ref (%B.2) = bind_name self, %self.loc6_10.1
+// CHECK:STDOUT:     %.loc6: type = specific_constant constants.%B.2, (constants.%T, constants.%N) [symbolic = %.loc6 (constants.%B.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc6 [symbolic = %.loc6 (constants.%B.2)]
+// CHECK:STDOUT:     %self.loc6_10.1: @B.%.loc6 (%B.2) = param self
+// CHECK:STDOUT:     %self.loc6_10.2: @B.%.loc6 (%B.2) = bind_name self, %self.loc6_10.1
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = %T.ref (constants.%T)]
 // CHECK:STDOUT:     %a.loc6_22.1: @B.%T.ref (%T) = param a
 // CHECK:STDOUT:     %a.loc6_22.2: @B.%T.ref (%T) = bind_name a, %a.loc6_22.1

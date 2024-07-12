@@ -10,6 +10,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -1122,6 +1123,12 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           Phase::Template);
     }
 
+    case CARBON_KIND(SemIR::SpecificConstant instance): {
+      // Pull the instance-specific constant value out of the generic instance.
+      return SemIR::GetConstantValueInInstance(
+          context.sem_ir(), instance.instance_id, instance.inst_id);
+    }
+
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
     // TODO: This doesn't properly handle redeclarations. Consider adding a
@@ -1187,9 +1194,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // Map from an instance-specific constant value to the canonical value.
       // TODO: Remove this once we properly model instructions with
       // instance-dependent constant values.
-      return GetConstantInInstance(
-          context, SemIR::GenericInstanceId::Invalid,
-          context.constant_values().Get(typed_inst.value_id));
+      return GetConstantValueInInstance(context.sem_ir(),
+                                        SemIR::GenericInstanceId::Invalid,
+                                        typed_inst.value_id);
     }
     case CARBON_KIND(SemIR::Converted typed_inst): {
       return context.constant_values().Get(typed_inst.result_id);

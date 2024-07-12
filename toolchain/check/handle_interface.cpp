@@ -141,7 +141,9 @@ auto HandleInterfaceDefinitionStart(Context& context,
   }
 
   // Enter the interface scope.
-  context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
+  context.scope_stack().Push(
+      interface_decl_id, interface_info.scope_id,
+      context.generics().GetSelfInstance(interface_info.generic_id));
   StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
@@ -155,7 +157,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
     SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
     if (interface_info.is_generic()) {
       auto instance_id =
-          MakeGenericSelfInstance(context, interface_info.generic_id);
+          context.generics().GetSelfInstance(interface_info.generic_id);
       self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,

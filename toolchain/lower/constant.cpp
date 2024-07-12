@@ -5,11 +5,11 @@
 #include "toolchain/lower/constant.h"
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {

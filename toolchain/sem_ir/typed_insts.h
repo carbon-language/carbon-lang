@@ -821,6 +821,22 @@ struct ReturnExpr {
   InstId dest_id;
 };
 
+// Given an instruction with a constant value that depends on a generic
+// parameter, selects an instance of that instruction with the constant value
+// corresponding to a particular specific.
+//
+// TODO: We only form these as the instruction referenced by a `NameRef`.
+// Consider merging an `SpecificConstant` + `NameRef` into a new form of
+// instruction in order to give a more compact representation.
+struct SpecificConstant {
+  static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
+      {.ir_name = "specific_constant", .is_lowered = false});
+
+  TypeId type_id;
+  InstId inst_id;
+  GenericInstanceId instance_id;
+};
+
 // Splices a block into the location where this appears. This may be an
 // expression, producing a result with a given type. For example, when
 // constructing from aggregates we may figure out which conversions are required

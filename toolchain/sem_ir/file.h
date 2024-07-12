@@ -129,8 +129,8 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
-  auto generics() -> ValueStore<GenericId>& { return generics_; }
-  auto generics() const -> const ValueStore<GenericId>& { return generics_; }
+  auto generics() -> GenericStore& { return generics_; }
+  auto generics() const -> const GenericStore& { return generics_; }
   auto generic_instances() -> GenericInstanceStore& {
     return generic_instances_;
   }
@@ -218,7 +218,7 @@ class File : public Printable<File> {
   ImplStore impls_;
 
   // Storage for generics.
-  ValueStore<GenericId> generics_;
+  GenericStore generics_;
 
   // Storage for instances of generics.
   GenericInstanceStore generic_instances_;

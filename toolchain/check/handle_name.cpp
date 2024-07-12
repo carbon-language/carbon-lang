@@ -86,6 +86,16 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
       GetTypeInInstance(context, result.instance_id, value.type_id());
   CARBON_CHECK(type_id.is_valid()) << "Missing type for " << value;
 
+  // If the named entity has a constant value that depends on its generic
+  // instance, store the instance too.
+  if (result.instance_id.is_valid() &&
+      context.constant_values().Get(result.inst_id).is_symbolic()) {
+    result.inst_id = context.AddInst<SemIR::SpecificConstant>(
+        node_id, {.type_id = type_id,
+                  .inst_id = result.inst_id,
+                  .instance_id = result.instance_id});
+  }
+
   context.AddInstAndPush<SemIR::NameRef>(
       node_id,
       {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});

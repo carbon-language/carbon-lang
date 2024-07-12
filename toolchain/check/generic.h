@@ -41,27 +41,10 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
     -> SemIR::GenericInstanceId;
 
 // Builds the generic instance corresponding to the generic itself. For example,
-// for a generic `G(T:! type)`, this is `G(T)`.
+// for a generic `G(T:! type)`, this is `G(T)`. For an invalid `generic_id`,
+// returns an invalid instance ID.
 auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
     -> SemIR::GenericInstanceId;
-
-// Gets the substituted value of a constant within a specified instance of a
-// generic. Note that this does not perform substitution, and will return
-// `Invalid` if the substituted constant value is not yet known.
-//
-// TODO: Move this to sem_ir so that lowering can use it.
-auto GetConstantInInstance(Context& context,
-                           SemIR::GenericInstanceId instance_id,
-                           SemIR::ConstantId const_id) -> SemIR::ConstantId;
-
-// Gets the substituted constant value of an instruction within a specified
-// instance of a generic. Note that this does not perform substitution, and will
-// return `Invalid` if the substituted constant value is not yet known.
-//
-// TODO: Move this to sem_ir so that lowering can use it.
-auto GetConstantValueInInstance(Context& context,
-                                SemIR::GenericInstanceId instance_id,
-                                SemIR::InstId inst_id) -> SemIR::ConstantId;
 
 // Gets the substituted value of a type within a specified instance of a
 // generic. Note that this does not perform substitution, and will return

@@ -85,9 +85,10 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class.2 [symbolic = %Self.ref (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc13_8.1: @Class.%Self.ref (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc13_8.2: @Class.%Self.ref (%Class.2) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, (constants.%T) [symbolic = %.loc13 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = %.loc13 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc13_8.1: @Class.%.loc13 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: @Class.%.loc13 (%Class.2) = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc13 (constants.%T)]
 // CHECK:STDOUT:     %n.loc13_20.1: @Class.%T.ref.loc13 (%T) = param n
 // CHECK:STDOUT:     %n.loc13_20.2: @Class.%T.ref.loc13 (%T) = bind_name n, %n.loc13_20.1
@@ -99,7 +100,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: @Class.%Self.ref (%Class.2)](@Class.%n.loc13_20.2: @Class.%T.ref.loc13 (%T))
+// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: @Class.%.loc13 (%Class.2)](@Class.%n.loc13_20.2: @Class.%T.ref.loc13 (%T))
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
