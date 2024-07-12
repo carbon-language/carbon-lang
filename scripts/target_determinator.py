@@ -81,8 +81,9 @@ def main() -> None:
 
     scripts_utils.chdir_repo_root()
     bazel = Path(scripts_utils.locate_bazel())
-    target_determinator = scripts_utils.get_target_determinator()
-
+    target_determinator = scripts_utils.get_release(
+        scripts_utils.Release.TARGET_DETERMINATOR
+    )
     p = subprocess.run(
         [
             target_determinator,
