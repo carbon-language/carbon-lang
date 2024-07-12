@@ -250,8 +250,8 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
   if (!context.generic_instances().Get(instance_id).decl_block_id.is_valid()) {
     auto decl_block_id = TryEvalBlockForSpecific(
         context, instance_id, SemIR::GenericInstIndex::Region::Declaration);
-    // Note that TryEvalBlockForGenericInstance may reallocate the list of
-    // generic instances, so re-lookup the instance here.
+    // Note that TryEvalBlockForSpecific may reallocate the list of generic
+    // instances, so re-lookup the instance here.
     context.generic_instances().Get(instance_id).decl_block_id = decl_block_id;
   }
 
