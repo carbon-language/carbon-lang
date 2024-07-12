@@ -401,7 +401,7 @@ auto MakeIntTypeResult(Context& context, SemIRLoc loc, SemIR::IntKind int_kind,
                        SemIR::InstId width_id, Phase phase)
     -> SemIR::ConstantId {
   auto result = SemIR::IntType{
-      .type_id = context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+      .type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::TypeType),
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc, result)) {
@@ -890,8 +890,9 @@ static auto MakeConstantForCall(Context& context, SemIRLoc loc,
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
   if (callee_function.function_id.is_valid()) {
     // Calls to builtins might be constant.
-    builtin_kind =
-        context.functions().Get(callee_function.function_id).builtin_kind;
+    builtin_kind = context.functions()
+                       .Get(callee_function.function_id)
+                       .builtin_function_kind;
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
@@ -1069,7 +1070,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
 
     case SemIR::AssociatedEntity::Kind:
-    case SemIR::Builtin::Kind:
+    case SemIR::BuiltinInst::Kind:
     case SemIR::FunctionType::Kind:
     case SemIR::GenericClassType::Kind:
     case SemIR::GenericInterfaceType::Kind:

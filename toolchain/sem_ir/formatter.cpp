@@ -286,9 +286,9 @@ class Formatter {
       FormatType(sem_ir_.insts().Get(fn.return_storage_id).type_id());
     }
 
-    if (fn.builtin_kind != BuiltinFunctionKind::None) {
+    if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
       out_ << " = \"";
-      out_.write_escaped(fn.builtin_kind.name(),
+      out_.write_escaped(fn.builtin_function_kind.name(),
                          /*UseHexEscapes=*/true);
       out_ << "\"";
     }
@@ -742,7 +742,7 @@ class Formatter {
 
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
-  auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
+  auto FormatArg(BuiltinInstKind kind) -> void { out_ << kind.label(); }
 
   auto FormatArg(BindNameId id) -> void {
     const auto& info = sem_ir_.bind_names().Get(id);

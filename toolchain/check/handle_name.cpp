@@ -152,7 +152,7 @@ auto HandleNameQualifier(Context& context, Parse::NameQualifierId /*node_id*/)
 auto HandlePackageExpr(Context& context, Parse::PackageExprId node_id) -> bool {
   context.AddInstAndPush<SemIR::NameRef>(
       node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType),
        .name_id = SemIR::NameId::PackageNamespace,
        .value_id = SemIR::InstId::PackageNamespace});
   return true;

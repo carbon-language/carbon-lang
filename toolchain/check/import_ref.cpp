@@ -220,7 +220,7 @@ class ImportRefResolver {
 
     if (import_type_inst_id.is_builtin()) {
       // Builtins don't require constant resolution; we can use them directly.
-      return context_.GetBuiltinType(import_type_inst_id.builtin_kind());
+      return context_.GetBuiltinType(import_type_inst_id.builtin_inst_kind());
     } else {
       return context_.GetTypeIdForTypeConstant(Resolve(import_type_inst_id));
     }
@@ -1150,7 +1150,7 @@ class ImportRefResolver {
          .return_storage_id = new_return_storage,
          .is_extern = function.is_extern,
          .return_slot = function.return_slot,
-         .builtin_kind = function.builtin_kind,
+         .builtin_function_kind = function.builtin_function_kind,
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id
                               : SemIR::InstId::Invalid});
@@ -1387,7 +1387,8 @@ class ImportRefResolver {
 
     auto elements_id = GetLocalCanonicalInstBlockId(inst.elements_id, elements);
     return ResolveAs<SemIR::InterfaceWitness>(
-        {.type_id = context_.GetBuiltinType(SemIR::BuiltinKind::WitnessType),
+        {.type_id =
+             context_.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
          .elements_id = elements_id});
   }
 

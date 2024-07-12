@@ -54,7 +54,7 @@ class TypeStore : public ValueStore<TypeId> {
   // to be a particular kind of instruction.
   template <typename InstT>
   auto GetAs(TypeId type_id) const -> InstT {
-    if constexpr (std::is_same_v<InstT, Builtin>) {
+    if constexpr (std::is_same_v<InstT, BuiltinInst>) {
       return GetAsInst(type_id).As<InstT>();
     } else {
       // The type is not a builtin, so no need to check for special values.

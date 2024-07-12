@@ -159,12 +159,13 @@ class FunctionContext {
   Map<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemIR::File instruction that is not always
-// constant.
-#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
-#define CARBON_SEM_IR_INST_KIND(Name)                                \
-  auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
-                    SemIR::Name inst) -> void;
+// Provides handlers for instructions that occur in a FunctionContext. Although
+// this is declared for all instructions, it should only be defined for
+// instructions which are non-constant and not always typed. See
+// `FunctionContext::LowerInst` for how this is used.
+#define CARBON_SEM_IR_INST_KIND(Name)                              \
+  auto HandleInst(FunctionContext& context, SemIR::InstId inst_id, \
+                  SemIR::Name inst) -> void;
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower

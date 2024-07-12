@@ -107,7 +107,7 @@ struct Function : public Printable<Function> {
   // The following members are set at the end of a builtin function definition.
 
   // If this is a builtin function, the corresponding builtin kind.
-  BuiltinFunctionKind builtin_kind = BuiltinFunctionKind::None;
+  BuiltinFunctionKind builtin_function_kind = BuiltinFunctionKind::None;
 
   // The following members are set at the `{` of the function definition.
 

@@ -8,43 +8,43 @@
 // at the end of this file.
 //
 // Supported x-macros are:
-// - CARBON_SEM_IR_BUILTIN_KIND_NAME(Name)
+// - CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name)
 //   Used as a fallback if other macros are missing. Used directly by Invalid
 //   only, which is defined last.
-//   - CARBON_SEM_IR_BUILTIN_KIND(Name, Label)
+//   - CARBON_SEM_IR_BUILTIN_INST_KIND(Name, Label)
 //     Defines a non-Invalid builtin type. The label is used for stringifying
 //     types.
 //
 // This tree represents the subset relationship between these macros, where if a
 // specific x-macro isn't defined, it'll fall back to the parent macro.
 
-#if !(defined(CARBON_SEM_IR_BUILTIN_KIND_NAME) || \
-      defined(CARBON_SEM_IR_BUILTIN_KIND))
+#if !(defined(CARBON_SEM_IR_BUILTIN_INST_KIND_NAME) || \
+      defined(CARBON_SEM_IR_BUILTIN_INST_KIND))
 #error \
-    "Must define CARBON_SEM_IR_BUILTIN_KIND family x-macros to use this file."
+    "Must define CARBON_SEM_IR_BUILTIN_INST_KIND family x-macros to use this file."
 #endif
 
-// If CARBON_SEM_IR_BUILTIN_KIND_NAME is undefined, ignore calls.
-#ifndef CARBON_SEM_IR_BUILTIN_KIND_NAME
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name)
+// If CARBON_SEM_IR_BUILTIN_INST_KIND_NAME is undefined, ignore calls.
+#ifndef CARBON_SEM_IR_BUILTIN_INST_KIND_NAME
+#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name)
 #endif
 
-// If CARBON_SEM_IR_BUILTIN_KIND is undefined, delegate calls to
-// CARBON_SEM_IR_BUILTIN_KIND_NAME.
-#ifndef CARBON_SEM_IR_BUILTIN_KIND
-#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...) \
-  CARBON_SEM_IR_BUILTIN_KIND_NAME(Name)
+// If CARBON_SEM_IR_BUILTIN_INST_KIND is undefined, delegate calls to
+// CARBON_SEM_IR_BUILTIN_INST_KIND_NAME.
+#ifndef CARBON_SEM_IR_BUILTIN_INST_KIND
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
+  CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name)
 #endif
 
 // Tracks expressions which are valid as types.
 // This has a deliberately self-referential type.
-CARBON_SEM_IR_BUILTIN_KIND(TypeType, "type")
+CARBON_SEM_IR_BUILTIN_INST_KIND(TypeType, "type")
 
 // Used when a semantic error has been detected, and a SemIR InstId is still
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-CARBON_SEM_IR_BUILTIN_KIND(Error, "<error>")
+CARBON_SEM_IR_BUILTIN_INST_KIND(Error, "<error>")
 
 // -----------------------------------------------------------------------------
 // TODO: Below types are all placeholders. While the above may last, the below
@@ -53,29 +53,29 @@ CARBON_SEM_IR_BUILTIN_KIND(Error, "<error>")
 // -----------------------------------------------------------------------------
 
 // The type of bool literals and branch conditions, bool.
-CARBON_SEM_IR_BUILTIN_KIND(BoolType, "bool")
+CARBON_SEM_IR_BUILTIN_INST_KIND(BoolType, "bool")
 
 // The type of integer values and integer literals, currently always i32.
-CARBON_SEM_IR_BUILTIN_KIND(IntType, "i32")
+CARBON_SEM_IR_BUILTIN_INST_KIND(IntType, "i32")
 
 // The type of floating point values and real literals, currently always f64.
-CARBON_SEM_IR_BUILTIN_KIND(FloatType, "f64")
+CARBON_SEM_IR_BUILTIN_INST_KIND(FloatType, "f64")
 
 // The type of string values and String literals.
-CARBON_SEM_IR_BUILTIN_KIND(StringType, "String")
+CARBON_SEM_IR_BUILTIN_INST_KIND(StringType, "String")
 
 // The type of bound method values.
-CARBON_SEM_IR_BUILTIN_KIND(BoundMethodType, "<bound method>")
+CARBON_SEM_IR_BUILTIN_INST_KIND(BoundMethodType, "<bound method>")
 
 // The type of namespace and imported package names.
-CARBON_SEM_IR_BUILTIN_KIND(NamespaceType, "<namespace>")
+CARBON_SEM_IR_BUILTIN_INST_KIND(NamespaceType, "<namespace>")
 
 // The type of witnesses.
-CARBON_SEM_IR_BUILTIN_KIND(WitnessType, "<witness>")
+CARBON_SEM_IR_BUILTIN_INST_KIND(WitnessType, "<witness>")
 
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
-CARBON_SEM_IR_BUILTIN_KIND_NAME(Invalid)
+CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Invalid)
 
-#undef CARBON_SEM_IR_BUILTIN_KIND_NAME
-#undef CARBON_SEM_IR_BUILTIN_KIND
+#undef CARBON_SEM_IR_BUILTIN_INST_KIND_NAME
+#undef CARBON_SEM_IR_BUILTIN_INST_KIND
