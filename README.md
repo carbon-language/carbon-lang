@@ -311,7 +311,7 @@ Carbon:
 
 ```shell
 # Build and run the toolchain's help to get documentation on the command line.
-$ bazel run //toolchain/driver:carbon -- help
+$ bazel run //toolchain -- help
 ```
 
 For complete instructions, including installing dependencies on various
