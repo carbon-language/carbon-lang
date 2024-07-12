@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto HandleBoolLiteralFalse(Context& context, Parse::BoolLiteralFalseId node_id)
+auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
       node_id,
@@ -18,7 +18,7 @@ auto HandleBoolLiteralFalse(Context& context, Parse::BoolLiteralFalseId node_id)
   return true;
 }
 
-auto HandleBoolLiteralTrue(Context& context, Parse::BoolLiteralTrueId node_id)
+auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
       node_id,
@@ -48,7 +48,7 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
        .int_id = context.ints().Add(i32_val)});
 }
 
-auto HandleIntLiteral(Context& context, Parse::IntLiteralId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
   // Convert the literal to i32.
   // TODO: Form an integer literal value and a corresponding type here instead.
   auto int_literal_id = MakeI32Literal(
@@ -58,7 +58,7 @@ auto HandleIntLiteral(Context& context, Parse::IntLiteralId node_id) -> bool {
   return true;
 }
 
-auto HandleRealLiteral(Context& context, Parse::RealLiteralId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
   // Convert the real literal to an llvm::APFloat and add it to the floats
   // ValueStore. In the future this would use an arbitrary precision Rational
   // type.
@@ -102,8 +102,7 @@ auto HandleRealLiteral(Context& context, Parse::RealLiteralId node_id) -> bool {
   return true;
 }
 
-auto HandleStringLiteral(Context& context, Parse::StringLiteralId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
   context.AddInstAndPush<SemIR::StringLiteral>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::StringType),
@@ -112,7 +111,7 @@ auto HandleStringLiteral(Context& context, Parse::StringLiteralId node_id)
   return true;
 }
 
-auto HandleBoolTypeLiteral(Context& context, Parse::BoolTypeLiteralId node_id)
+auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
   auto fn_inst_id = context.LookupNameInCore(node_id, "Bool");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
@@ -142,7 +141,7 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
   return true;
 }
 
-auto HandleIntTypeLiteral(Context& context, Parse::IntTypeLiteralId node_id)
+auto HandleParseNode(Context& context, Parse::IntTypeLiteralId node_id)
     -> bool {
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
@@ -158,8 +157,7 @@ auto HandleIntTypeLiteral(Context& context, Parse::IntTypeLiteralId node_id)
                                            SemIR::IntKind::Signed, size_id);
 }
 
-auto HandleUnsignedIntTypeLiteral(Context& context,
-                                  Parse::UnsignedIntTypeLiteralId node_id)
+auto HandleParseNode(Context& context, Parse::UnsignedIntTypeLiteralId node_id)
     -> bool {
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
@@ -167,7 +165,7 @@ auto HandleUnsignedIntTypeLiteral(Context& context,
                                            SemIR::IntKind::Unsigned, size_id);
 }
 
-auto HandleFloatTypeLiteral(Context& context, Parse::FloatTypeLiteralId node_id)
+auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
     -> bool {
   auto text =
       context.tokens().GetTokenText(context.parse_tree().node_token(node_id));
@@ -183,19 +181,19 @@ auto HandleFloatTypeLiteral(Context& context, Parse::FloatTypeLiteralId node_id)
   return true;
 }
 
-auto HandleStringTypeLiteral(Context& context,
-                             Parse::StringTypeLiteralId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
+    -> bool {
   context.node_stack().Push(node_id, SemIR::InstId::BuiltinStringType);
   return true;
 }
 
-auto HandleTypeTypeLiteral(Context& context, Parse::TypeTypeLiteralId node_id)
+auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
     -> bool {
   context.node_stack().Push(node_id, SemIR::InstId::BuiltinTypeType);
   return true;
 }
 
-auto HandleAutoTypeLiteral(Context& context, Parse::AutoTypeLiteralId node_id)
+auto HandleParseNode(Context& context, Parse::AutoTypeLiteralId node_id)
     -> bool {
   return context.TODO(node_id, "HandleAutoTypeLiteral");
 }

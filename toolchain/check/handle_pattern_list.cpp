@@ -7,16 +7,15 @@
 
 namespace Carbon::Check {
 
-auto HandleImplicitParamListStart(Context& context,
-                                  Parse::ImplicitParamListStartId node_id)
+auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
   return true;
 }
 
-auto HandleImplicitParamList(Context& context,
-                             Parse::ImplicitParamListId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
+    -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::ImplicitParamListStart);
   context.node_stack()
@@ -27,21 +26,20 @@ auto HandleImplicitParamList(Context& context,
   return true;
 }
 
-auto HandleTuplePatternStart(Context& context,
-                             Parse::TuplePatternStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
+    -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
   return true;
 }
 
-auto HandlePatternListComma(Context& context,
-                            Parse::PatternListCommaId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
+    -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleTuplePattern(Context& context, Parse::TuplePatternId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
   context.node_stack()

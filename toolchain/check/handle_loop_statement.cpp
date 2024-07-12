@@ -11,8 +11,8 @@ namespace Carbon::Check {
 // `while`
 // -------
 
-auto HandleWhileConditionStart(Context& context,
-                               Parse::WhileConditionStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
+    -> bool {
   // Branch to the loop header block. Note that we create a new block here even
   // if the current block is empty; this ensures that the loop always has a
   // preheader block.
@@ -27,7 +27,7 @@ auto HandleWhileConditionStart(Context& context,
   return true;
 }
 
-auto HandleWhileCondition(Context& context, Parse::WhileConditionId node_id)
+auto HandleParseNode(Context& context, Parse::WhileConditionId node_id)
     -> bool {
   auto cond_value_id = context.node_stack().PopExpr();
   auto loop_header_id =
@@ -50,7 +50,7 @@ auto HandleWhileCondition(Context& context, Parse::WhileConditionId node_id)
   return true;
 }
 
-auto HandleWhileStatement(Context& context, Parse::WhileStatementId node_id)
+auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
     -> bool {
   auto loop_exit_id =
       context.node_stack().Pop<Parse::NodeKind::WhileCondition>();
@@ -71,30 +71,29 @@ auto HandleWhileStatement(Context& context, Parse::WhileStatementId node_id)
 // `for`
 // -----
 
-auto HandleForHeaderStart(Context& context, Parse::ForHeaderStartId node_id)
+auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
   return context.TODO(node_id, "HandleForHeaderStart");
 }
 
-auto HandleForIn(Context& context, Parse::ForInId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
   return context.TODO(node_id, "HandleForIn");
 }
 
-auto HandleForHeader(Context& context, Parse::ForHeaderId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   return context.TODO(node_id, "HandleForHeader");
 }
 
-auto HandleForStatement(Context& context, Parse::ForStatementId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
   return context.TODO(node_id, "HandleForStatement");
 }
 
 // `break`
 // -------
 
-auto HandleBreakStatementStart(Context& context,
-                               Parse::BreakStatementStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
+    -> bool {
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
     CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
@@ -110,16 +109,15 @@ auto HandleBreakStatementStart(Context& context,
   return true;
 }
 
-auto HandleBreakStatement(Context& /*context*/,
-                          Parse::BreakStatementId /*node_id*/) -> bool {
+auto HandleParseNode(Context& /*context*/, Parse::BreakStatementId /*node_id*/)
+    -> bool {
   return true;
 }
 
 // `continue`
 // ----------
 
-auto HandleContinueStatementStart(Context& context,
-                                  Parse::ContinueStatementStartId node_id)
+auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
     -> bool {
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
@@ -136,8 +134,8 @@ auto HandleContinueStatementStart(Context& context,
   return true;
 }
 
-auto HandleContinueStatement(Context& /*context*/,
-                             Parse::ContinueStatementId /*node_id*/) -> bool {
+auto HandleParseNode(Context& /*context*/,
+                     Parse::ContinueStatementId /*node_id*/) -> bool {
   return true;
 }
 

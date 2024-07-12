@@ -191,18 +191,17 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-auto HandleBindingPattern(Context& context, Parse::BindingPatternId node_id)
+auto HandleParseNode(Context& context, Parse::BindingPatternId node_id)
     -> bool {
   return HandleAnyBindingPattern(context, node_id, /*is_generic=*/false);
 }
 
-auto HandleCompileTimeBindingPattern(Context& context,
-                                     Parse::CompileTimeBindingPatternId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::CompileTimeBindingPatternId node_id) -> bool {
   return HandleAnyBindingPattern(context, node_id, /*is_generic=*/true);
 }
 
-auto HandleAddr(Context& context, Parse::AddrId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
@@ -222,7 +221,7 @@ auto HandleAddr(Context& context, Parse::AddrId node_id) -> bool {
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::TemplateId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::TemplateId node_id) -> bool {
   return context.TODO(node_id, "HandleTemplate");
 }
 

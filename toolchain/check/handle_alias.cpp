@@ -12,19 +12,19 @@
 
 namespace Carbon::Check {
 
-auto HandleAliasIntroducer(Context& context,
-                           Parse::AliasIntroducerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
+    -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleAliasInitializer(Context& /*context*/,
-                            Parse::AliasInitializerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& /*context*/,
+                     Parse::AliasInitializerId /*node_id*/) -> bool {
   return true;
 }
 
-auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
   auto name_context = context.decl_name_stack().FinishName(

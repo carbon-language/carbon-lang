@@ -22,8 +22,8 @@
 
 namespace Carbon::Check {
 
-auto HandleFunctionIntroducer(Context& context,
-                              Parse::FunctionIntroducerId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
+    -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -37,7 +37,7 @@ auto HandleFunctionIntroducer(Context& context,
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id);
@@ -329,8 +329,7 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   BuildFunctionDecl(context, node_id, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
@@ -400,8 +399,7 @@ auto HandleFunctionDefinitionResume(Context& context,
       context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
 }
 
-auto HandleFunctionDefinitionStart(Context& context,
-                                   Parse::FunctionDefinitionStartId node_id)
+auto HandleParseNode(Context& context, Parse::FunctionDefinitionStartId node_id)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -411,8 +409,8 @@ auto HandleFunctionDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context,
-                              Parse::FunctionDefinitionId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
+    -> bool {
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
@@ -441,8 +439,8 @@ auto HandleFunctionDefinition(Context& context,
   return true;
 }
 
-auto HandleBuiltinFunctionDefinitionStart(
-    Context& context, Parse::BuiltinFunctionDefinitionStartId node_id) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::BuiltinFunctionDefinitionStartId node_id) -> bool {
   // Process the declaration portion of the function.
   auto [function_id, _] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/true);
@@ -450,7 +448,7 @@ auto HandleBuiltinFunctionDefinitionStart(
   return true;
 }
 
-auto HandleBuiltinName(Context& context, Parse::BuiltinNameId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::BuiltinNameId node_id) -> bool {
   context.node_stack().Push(node_id);
   return true;
 }
@@ -502,8 +500,8 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                   return_type_id);
 }
 
-auto HandleBuiltinFunctionDefinition(
-    Context& context, Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
   auto name_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::BuiltinName>();
   auto [fn_node_id, function_id] =

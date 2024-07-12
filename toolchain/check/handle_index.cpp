@@ -10,8 +10,8 @@
 
 namespace Carbon::Check {
 
-auto HandleIndexExprStart(Context& /*context*/,
-                          Parse::IndexExprStartId /*node_id*/) -> bool {
+auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
+    -> bool {
   // Leave the expression on the stack for IndexExpr.
   return true;
 }
@@ -36,7 +36,7 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
   return &index_val;
 }
 
-auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
