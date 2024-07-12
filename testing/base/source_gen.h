@@ -102,42 +102,73 @@ class SourceGen {
     ClassParams class_params = {};
   };
 
+  // Access a global instance of this type for use in benchmarks, tests, or
+  // other places where sharing a common instance is useful. Note that there is
+  // nothing thread safe about this instance or type.
   static auto Global() -> SourceGen&;
 
+  // Construct a source generator for the provided language, by default Carbon.
   explicit SourceGen(Language language = Language::Carbon);
 
-  // Generate an API file with dense forward declarations.
+  // Generate an API file with dense classes containing function forward
+  // declarations.
   auto GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
       -> std::string;
 
+  // Get some number of randomly shuffled identifiers.
+  //
+  // The identifiers start with a character [A-Za-z], other characters may also
+  // include [0-9_]. Both Carbon and C++ keywords are excluded along with any
+  // other non-identifier syntaxes that overlap to ensure all of these can be
+  // used as identifiers.
+  //
+  // The order will be different for each call to this function, but the
+  // specific identifiers may remain the same in order to reduce the cost of
+  // repeated calls. However, the sum of the identifier sizes returned is
+  // guaranteed to be the same for every call with the same number of
+  // identifiers so that benchmarking all of these identifiers has predictable
+  // and stable cost.
+  //
+  // Optionally, callers can request a minimum and maximum length. By default,
+  // the length distribution used across the identifiers will mirror the
+  // observed distribution of identifiers in C++ source code and our expectation
+  // of them in Carbon source code. The maximum length in this default
+  // distribution cannot be more than 64.
+  //
+  // Callers can request a uniform distribution across [min_length, max_length],
+  // and when it is requested there is no limit on `max_length`.
   auto GetShuffledIds(int number, int min_length = 1, int max_length = 64,
                       bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
 
+  // Same as `GetShuffledIds`, but ensures there are no collisions.
   auto GetShuffledUniqueIds(int number, int min_length = 4, int max_length = 64,
                             bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
 
-  // Returns a collection of un-shuffled identifiers.
+  // Returns a collection of un-shuffled identifiers, otherwise the same as
+  // `GetShuffledIds`.
   //
-  // Usually, benchmarks should use the shuffled versions. However, this is
-  // useful when there is already a post-processing step to shuffle things.
+  // Usually, benchmarks should use the shuffled version. However, this is
+  // useful when there is already a post-processing step to shuffle things as it
+  // is *dramatically* more efficient, especially in debug builds .
   auto GetIds(int number, int min_length = 1, int max_length = 64,
               bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
 
-  // Returns a collection of un-shuffled unique identifiers.
-  //
-  // Usually, benchmarks should use the shuffled versions. However, this is
+  // Returns a collection of un-shuffled unique identifiers, otherwise the same
+  // as `GetShuffledUniqueIds`.
+  // 
+  // Usually, benchmarks should use the shuffled version. However, this is
   // useful when there is already a post-processing step to shuffle things.
   auto GetUniqueIds(int number, int min_length = 1, int max_length = 64,
                     bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a shared collection of random identifiers of a specific length.
   //
-  // For a single, exact length, we have a significantly cheaper routine to
-  // return access to a shared collection of identifiers. The order of these is
-  // a single fixed random order for a given execution. The returned array
-  // reference is only valid until the next call to this generator's API.
+  // For a single, exact length, we have an even cheaper routine to return
+  // access to a shared collection of identifiers. The order of these is a
+  // single fixed random order for a given execution. The returned array
+  // reference is only valid until the next call any method on this generator.
   auto GetSingleLengthIds(int length, int number)
       -> llvm::ArrayRef<llvm::StringRef>;
 

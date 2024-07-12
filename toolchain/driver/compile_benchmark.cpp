@@ -13,8 +13,7 @@
 namespace Carbon::Testing {
 namespace {
 
-constexpr ssize_t NumFiles = 20;
-
+// Helper used to benchmark compilation across different phases.
 class CompileBenchmark {
  public:
   CompileBenchmark()

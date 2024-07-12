@@ -28,8 +28,8 @@ namespace {
 constexpr int NumTokens = 100'000;
 
 // Compute a random sequence of just identifiers.
-auto RandomIdentifierSeq(int min_length = 1, int max_length = 64,
-                         bool uniform = false, llvm::StringRef separator = " ")
+static auto RandomIdentifierSeq(int min_length, int max_length, bool uniform,
+                                llvm::StringRef separator = " ")
     -> std::string {
   auto& gen = Testing::SourceGen::Global();
   llvm::SmallVector<llvm::StringRef> ids =
