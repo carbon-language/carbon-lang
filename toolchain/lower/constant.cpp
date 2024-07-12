@@ -191,12 +191,6 @@ static auto EmitAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitConstant(ConstantContext& context,
-                         SemIR::SpecificConstant inst) -> llvm::Constant* {
-  return context.GetConstant(SemIR::GetConstantValueInInstance(
-      context.sem_ir(), inst.instance_id, inst.inst_id));
-}
-
 static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)
     -> llvm::Constant* {
   return llvm::ConstantInt::get(context.GetType(inst.type_id),
