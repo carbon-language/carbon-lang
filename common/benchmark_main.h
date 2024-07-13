@@ -14,7 +14,7 @@
 
 namespace Carbon::Testing {
 
-// The executable path of the benchmark binary.
+// Returns the executable path of the benchmark binary.
 auto GetBenchmarkExePath() -> llvm::StringRef;
 
 }  // namespace Carbon::Testing
