@@ -173,6 +173,11 @@ class SourceGen {
       -> llvm::ArrayRef<llvm::StringRef>;
 
  private:
+  // The shuffled state used to generate some number of classes.
+  //
+  // This state encodes all the shuffled entropy used for generating a number of
+  // class definitions. While generating definitions, the state here will be
+  // consumed until empty.
   struct ClassGenState {
     llvm::SmallVector<int> public_function_param_counts;
     llvm::SmallVector<int> public_method_param_counts;
@@ -201,11 +206,10 @@ class SourceGen {
   auto GetClassGenState(int number, ClassParams params) -> ClassGenState;
 
   auto GenerateFunctionDecl(llvm::StringRef name, bool is_private,
-                            bool is_method,
-                            llvm::SmallVectorImpl<int>& param_counts,
+                            bool is_method, int param_count,
+                            llvm::StringRef indent,
                             llvm::SmallVectorImpl<llvm::StringRef>& param_names,
-                            llvm::raw_ostream& os, llvm::StringRef indent = "")
-      -> void;
+                            llvm::raw_ostream& os) -> void;
   auto GenerateClassDef(const ClassParams& params, ClassGenState& state,
                         llvm::raw_ostream& os) -> void;
 

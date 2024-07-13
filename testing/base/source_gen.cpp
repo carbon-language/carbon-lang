@@ -22,6 +22,7 @@ auto SourceGen::Global() -> SourceGen& {
 
 SourceGen::SourceGen(Language language) : language_(language) {}
 
+// Some heuristic numbers used when formatting generated code.
 constexpr static int NumSingleLineFunctionParams = 3;
 constexpr static int NumSingleLineMethodParams = 2;
 constexpr static int MaxParamsPerLine = 4;
@@ -38,6 +39,7 @@ static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params)
   }
   return 1.0 + static_cast<double>(param_lines) / (params.max_params + 1);
 }
+
 static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params)
     -> double {
   // Currently model a uniform distribution [0, max] parameters. Assume a line
@@ -131,6 +133,11 @@ auto SourceGen::GetShuffledUniqueIds(int number, int min_length, int max_length,
   return ids;
 }
 
+// An array of the counts that should be used for each identifier length to
+// produce our desired distribution.
+//
+// Note that the zero-based index corresponds to a 1-based length, so the count
+// for identifiers of length 1 is at index 0.
 static constexpr std::array<int, 64> IdLengthCounts = [] {
   std::array<int, 64> id_length_counts;
   // For non-uniform distribution, we simulate a distribution roughly based on
@@ -190,11 +197,22 @@ static constexpr std::array<int, 64> IdLengthCounts = [] {
   return id_length_counts;
 }();
 
+// A helper to sum elements of a range.
 template <typename T>
 static auto Sum(const T& range) -> int {
   return std::accumulate(range.begin(), range.end(), 0);
 }
 
+// A template function that implements the common logic of `GetIds` and
+// `GetUniqueIds`. Most parameters correspond to the parameters of those
+// functions. Additionally, an `AppendIds` callable is provided to implement the
+// appending operation.
+//
+// The main functionality provided here is collecting the correct number of
+// identifiers from each of the lengths in the range [min_length, max_length]
+// and either in our default representative distribution or a uniform
+// distribution.
+//
 // Note that this template must be defined prior to its use below.
 template <typename AppendIds>
 auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
@@ -312,8 +330,15 @@ constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
     "new", "signed", "try",    "unix",  "unsigned", "xor",
 };
 
-// Generates a random identifier string of the specified length using the
-// provided RNG BitGen.
+// Returns a random identifier string of the specified length.
+//
+// Ensures this is a valid identifier, avoiding any overlapping syntaxes or
+// keywords both in Carbon and C++.
+//
+// This routine is somewhat expensive and so is useful to cache and reduce the
+// frequency of calls. However, each time it is called it computes a completely
+// new random identifier and so can be useful to eventually find a distinct
+// identifier when needed.
 auto SourceGen::GenerateRandomIdentifier(int length) -> std::string {
   llvm::ArrayRef<char> start_chars = IdentifierStartChars();
   llvm::ArrayRef<char> chars = IdentifierChars();
@@ -347,18 +372,36 @@ auto SourceGen::GenerateRandomIdentifier(int length) -> std::string {
   return id_result;
 }
 
+// Appends a number of unique, random identifiers with a particular length to
+// the provided destination vector.
+//
+// Uses, and when necessary grows, a cached sequence of random identifiers with
+// the specified length. Because these are cached, this is efficient to call
+// repeatedly, but will not produce a different sequence of identifiers.
 auto SourceGen::AppendUniqueIdentifiers(
     int length, int number, llvm::SmallVectorImpl<llvm::StringRef>& dest)
     -> void {
   auto& [count, unique_ids] = unique_ids_by_length.Insert(length, {}).value();
 
+  // See if we need to grow our pool of unique identifiers with the requested
+  // length.
   if (count < number) {
+    // We'll need to insert exactly the requested new unique identifiers. All
+    // our other inserts will find an existing entry.
     unique_ids.GrowForInsertCount(count - number);
+
+    // Generate the needed number of identifiers.
     for ([[maybe_unused]] int i : llvm::seq<int>(count, number)) {
+      // Allocate stable storage for the identifier so we can form stable
+      // `StringRef`s to it.
       char* id_storage = reinterpret_cast<char*>(
           storage.Allocate(/*Size=*/length, /*Alignment=*/1));
+      // Repeatedly generate novel identifiers of this length until we find a
+      // new unique one.
       for (;;) {
         std::string new_id_tmp = GenerateRandomIdentifier(length);
+        // Copy the new identifier into our stable storage before trying to
+        // insert it into the set so the inserted string ref is stable.
         memcpy(id_storage, new_id_tmp.data(), length);
         llvm::StringRef new_id(id_storage, length);
         auto result = unique_ids.Insert(new_id);
@@ -369,6 +412,13 @@ auto SourceGen::AppendUniqueIdentifiers(
     }
     count = number;
   }
+  // Append all the identifiers directly out of the set. We make no guarantees
+  // about the relative order so we just use the non-deterministic order of the
+  // set and avoid additional storage.
+  //
+  // TODO: It's awkward the `ForEach` here can't early-exit. This just walks the
+  // whole set which is harmless if inefficient. We should add early exiting
+  // the loop support to `Set` and update this code.
   unique_ids.ForEach([&](llvm::StringRef id) {
     if (number > 0) {
       dest.push_back(id);
@@ -378,6 +428,11 @@ auto SourceGen::AppendUniqueIdentifiers(
   CARBON_CHECK(number == 0);
 }
 
+// Returns a shuffled sequence of integers in the range [min, max].
+//
+// These order of the returned integers is random, but the distribution is
+// computed by appending numbers in round robin over the range up to the
+// requested number.
 auto SourceGen::GetShuffledInts(int number, int min, int max)
     -> llvm::SmallVector<int> {
   llvm::SmallVector<int> ints;
@@ -396,6 +451,12 @@ auto SourceGen::GetShuffledInts(int number, int min, int max)
   return ints;
 }
 
+// Given a number of class definitions and the params with which to generate
+// them, builds the state that will be used while generating that many classes.
+//
+// We build the state first and across all the class definitions that will be
+// generated so that we can distribute random components across all the
+// definitions.
 auto SourceGen::GetClassGenState(int number, ClassParams params)
     -> ClassGenState {
   ClassGenState state;
@@ -426,12 +487,41 @@ auto SourceGen::GetClassGenState(int number, ClassParams params)
   return state;
 }
 
+// A helper to pop series of unique IDs off a sequence of random IDs that may
+// have duplicates.
+//
+// This is particularly designed to work with the sequences of non-unique IDs
+// produced by `GetShuffledIds` with the important property that while popping
+// off unique IDs found in the shuffled list, we don't change the distribution
+// of ID lengths.
+//
+// The uniqueness is only per-instance of the class, and so an instance can be
+// used to extract a series of names that share a scope.
+//
+// It works by scanning the sequence to extract each unique ID found, swapping
+// it to the back and popping it off the list. This does shuffle the order, but
+// it isn't expected to do so in an interesting way.
+//
+// It also provides a fallback path in case there are no unique identifiers left
+// which computes fresh, random identifiers with the same length as the next one
+// in the sequence until a unique one is found.
+//
+// For simplicity of the fallback path, the lifetime of the identifiers produced
+// is bound to the lifetime of the popper instance, and not the generator as a
+// whole. If this is ever a problematic constraint, we can start copying
+// fallback IDs into the generator's storage.
 class SourceGen::UniqueIdPopper {
  public:
   explicit UniqueIdPopper(SourceGen& gen,
                           llvm::SmallVectorImpl<llvm::StringRef>& data)
       : gen_(&gen), data_(&data), it_(data_->rbegin()) {}
 
+  // Pop the next unique identifier that can be found in the data, or synthesize
+  // one with a valid length. Always consumes exactly one identifier from the
+  // data.
+  //
+  // Note that the lifetime of the underlying identifier is that of the popper
+  // and not the underlying data.
   auto Pop() -> llvm::StringRef {
     for (auto end = data_->rend(); it_ != end; ++it_) {
       auto insert = set_.Insert(*it_);
@@ -470,11 +560,18 @@ class SourceGen::UniqueIdPopper {
   Set<llvm::StringRef> set_;
 };
 
+// Generates a function declaration and writes it to the provided stream.
+//
+// The declaration can be configured with a function name, private modifier,
+// whether it is a method, the parameter count, an how indented it is.
+//
+// This is also provided a collection of identifiers to consume as parameter
+// names -- it will use a unique popper to extract unique parameter names from
+// this collection.
 auto SourceGen::GenerateFunctionDecl(
-    llvm::StringRef name, bool is_private, bool is_method,
-    llvm::SmallVectorImpl<int>& param_counts,
-    llvm::SmallVectorImpl<llvm::StringRef>& param_names, llvm::raw_ostream& os,
-    llvm::StringRef indent) -> void {
+    llvm::StringRef name, bool is_private, bool is_method, int param_count,
+    llvm::StringRef indent, llvm::SmallVectorImpl<llvm::StringRef>& param_names,
+    llvm::raw_ostream& os) -> void {
   os << indent << "// TODO: make better comment text\n";
   if (!IsCpp()) {
     os << indent << (is_private ? "private " : "") << "fn " << name;
@@ -492,13 +589,12 @@ auto SourceGen::GenerateFunctionDecl(
 
   os << "(";
 
-  int param_count = param_counts.pop_back_val();
   if (param_count >
       (is_method ? NumSingleLineMethodParams : NumSingleLineFunctionParams)) {
     os << "\n" << indent << "    ";
   }
   UniqueIdPopper unique_param_names(*this, param_names);
-  for (int i : llvm::seq(0, param_count)) {
+  for (int i : llvm::seq(param_count)) {
     if (i > 0) {
       if ((i % MaxParamsPerLine) == 0) {
         os << ",\n" << indent << "    ";
@@ -515,6 +611,11 @@ auto SourceGen::GenerateFunctionDecl(
 
   os << ")" << (IsCpp() ? " -> void" : "") << ";\n";
 }
+
+// Generate a class definition and write it to the provided stream.
+//
+// The structure of the definition is guided by the `params` provided, and it
+// consumes the provided state.
 auto SourceGen::GenerateClassDef(const ClassParams& params,
                                  ClassGenState& state, llvm::raw_ostream& os)
     -> void {
@@ -526,17 +627,19 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
 
   UniqueIdPopper unique_member_names(*this, state.member_names);
   llvm::ListSeparator line_sep("\n");
-  for ([[maybe_unused]] int i : llvm::seq(0, params.public_function_decls)) {
-    os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/false, /*is_method=*/false,
-        state.public_function_param_counts, state.param_names, os, "  ");
-  }
-  for ([[maybe_unused]] int i : llvm::seq(0, params.public_method_decls)) {
+  for ([[maybe_unused]] int i : llvm::seq(params.public_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
-                         /*is_method=*/true, state.public_method_param_counts,
-                         state.param_names, os, "  ");
+                         /*is_method=*/false,
+                         state.public_function_param_counts.pop_back_val(),
+                         /*indent=*/"  ", state.param_names, os);
+  }
+  for ([[maybe_unused]] int i : llvm::seq(params.public_method_decls)) {
+    os << line_sep;
+    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
+                         /*is_method=*/true,
+                         state.public_method_param_counts.pop_back_val(),
+                         /*indent=*/"  ", state.param_names, os);
   }
 
   if (IsCpp()) {
@@ -545,20 +648,22 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     line_sep = llvm::ListSeparator("\n");
   }
 
-  for ([[maybe_unused]] int i : llvm::seq(0, params.private_function_decls)) {
-    os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/true, /*is_method=*/false,
-        state.private_function_param_counts, state.param_names, os, "  ");
-  }
-  for ([[maybe_unused]] int i : llvm::seq(0, params.private_method_decls)) {
+  for ([[maybe_unused]] int i : llvm::seq(params.private_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
-                         /*is_method=*/true, state.private_method_param_counts,
-                         state.param_names, os, "  ");
+                         /*is_method=*/false,
+                         state.private_function_param_counts.pop_back_val(),
+                         /*indent=*/"  ", state.param_names, os);
+  }
+  for ([[maybe_unused]] int i : llvm::seq(params.private_method_decls)) {
+    os << line_sep;
+    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
+                         /*is_method=*/true,
+                         state.private_method_param_counts.pop_back_val(),
+                         /*indent=*/"  ", state.param_names, os);
   }
   os << line_sep;
-  for ([[maybe_unused]] int i : llvm::seq(0, params.private_field_decls)) {
+  for ([[maybe_unused]] int i : llvm::seq(params.private_field_decls)) {
     if (!IsCpp()) {
       os << "  private var " << unique_member_names.Pop() << ": i32;\n";
     } else {
