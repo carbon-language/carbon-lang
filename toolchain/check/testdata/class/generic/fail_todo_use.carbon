@@ -99,8 +99,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %.loc12_34: type = ptr_type %T [symbolic = %.loc12_34 (constants.%.3)]
 // CHECK:STDOUT:     %return.var: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc16: %.4 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc16 (constants.%T)]
+// CHECK:STDOUT:   %.loc16: <unexpected instref inst+32> (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -154,6 +154,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   @Class.%.loc12_25 => constants.%.2
 // CHECK:STDOUT:   @Class.%T.ref.loc12 => constants.%T
 // CHECK:STDOUT:   @Class.%.loc12_34 => constants.%.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref.loc16) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(i32) {

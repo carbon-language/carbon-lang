@@ -65,7 +65,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc13_14.1: %.2 = specific_constant %Self, file.%I.decl(constants.%T) [symbolic = %.loc13_14.1 (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc13_14: %.2 = name_ref Self, %.loc13_14.1 [symbolic = %.loc13_14.1 (constants.%Self)]

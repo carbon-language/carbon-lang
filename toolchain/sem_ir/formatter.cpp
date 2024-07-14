@@ -956,13 +956,11 @@ class Formatter {
       const auto& symbolic_constant =
           sem_ir_.constant_values().GetSymbolicConstant(id);
       if (symbolic_constant.generic_id.is_valid()) {
-        CARBON_CHECK(symbolic_constant.index.region() ==
-                     GenericInstIndex::Region::Declaration)
-            << "TODO: implement formatting of definition constants";
         const auto& generic =
             sem_ir_.generics().Get(symbolic_constant.generic_id);
-        FormatInstName(sem_ir_.inst_blocks().Get(
-            generic.decl_block_id)[symbolic_constant.index.index()]);
+        FormatInstName(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(
+            symbolic_constant.index
+                .region()))[symbolic_constant.index.index()]);
         out_ << " (";
         FormatInstName(sem_ir_.constant_values().GetInstId(id));
         out_ << ")";

@@ -95,8 +95,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc2_13.2: type] {
-// CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc2_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc3: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc2_13.2 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %.loc3: <unexpected instref inst+18> (%.2) = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -114,6 +114,11 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
 // CHECK:STDOUT: }
@@ -196,8 +201,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc2_13.2: type] {
-// CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc2_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc3: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc2_13.2 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %.loc3: <unexpected instref inst+18> (%.2) = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -224,6 +229,11 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
 // CHECK:STDOUT: }
