@@ -139,7 +139,7 @@ fixes can still be disruptive and so we work to hold a high bar for them:
 
 -   They must be in some way fixing a _regressions_ for users from a previous
     release, not merely a missing feature.
-    -   Can even be a regression the overall cohesion or reliability of the
+    -   Can even be a regression in the overall cohesion or reliability of the
         language or tools, which a bug in a new feature might erode.
     -   Key is that we motivate any patch fix through the lens of a regression
         fix and stabilization rather than fixing forward.
@@ -262,7 +262,7 @@ in-flight edits and all manner of other variations.
 Mechanically, we prefix the `dev` pre-release version component with `0` in the
 same way as `nightly` is prefixed to ensure effective ordering. We don't add any
 additional information to keep the mechanics of development builds simple --
-there is no easy way to extract the date of the build . The exact timestamp of
+for example, there is no easy way to extract the date of the build. The exact timestamp of
 the build may be available but doesn't participate for simplicity and minimizing
 cache impact.
 
