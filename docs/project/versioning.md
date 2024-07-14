@@ -37,11 +37,13 @@ tools released by the main Carbon project.
 The scheme conforms to and is closely based on Semantic Versioning (SemVer):
 
 -   Carbon versions: `MAJOR.MINOR.PATCH`
--   `MAJOR` increments on backwards incompatible changes, including a
-    deprecation that might trigger a build-breaking warning.
--   `MINOR` increments only expected during early development with a major
-    version of `0`.
--   `PATCH` increments represent bug fixes only.
+-   Releases with backwards incompatible changes, including a
+    deprecation that might trigger a build-breaking warning,
+    increment `MAJOR` after reaching the `1.0` milestone, and
+    increment `MINOR` before then.
+-   Releases with only backwards compatible changes are not
+    expected to happen.
+-   Releases containing only bug fixes increment `PATCH`.
 -   Pre-release suffixes:
     -   `MAJOR.MINOR.PATCH-rc.N`: The N-th potentially viable candidate for a
         release.
