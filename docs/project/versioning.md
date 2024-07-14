@@ -34,15 +34,14 @@ Carbon uses a single versioning scheme across both the language itself and
 toolchain, including the standard library, compiler, linker, and all development
 tools released by the main Carbon project.
 
-The scheme conforms to and is closely based on Semantic Versioning (SemVer):
+The scheme conforms to and is closely based on Semantic Versioning
+(https://semver.org/ -- version 2.0.0):
 
 -   Carbon versions: `MAJOR.MINOR.PATCH`
--   Releases with backwards incompatible changes, including a
-    deprecation that might trigger a build-breaking warning,
-    increment `MAJOR` after reaching the `1.0` milestone, and
-    increment `MINOR` before then.
--   Releases with only backwards compatible changes are not
-    expected to happen.
+-   Releases with backwards incompatible changes, including a deprecation that
+    might trigger a build-breaking warning, increment `MAJOR` after reaching the
+    `1.0` milestone, and increment `MINOR` before then.
+-   Releases with only backwards compatible changes are not expected to happen.
 -   Releases containing only bug fixes increment `PATCH`.
 -   Pre-release suffixes:
     -   `MAJOR.MINOR.PATCH-rc.N`: The N-th potentially viable candidate for a
@@ -68,8 +67,8 @@ reached a stable version.
 Subsequent increments are expected to be done with a time-based release
 strategy. Features (or breaking changes) ready to ship will do so, and others
 will wait for the next major release. The exact cadence used is future work and
-should be determined based on discussions with customers in the ramp up to and
-after reaching the 1.0 milestone.
+should be determined based on discussions with Carbon's users in the ramp up to
+and after reaching the 1.0 milestone.
 
 However, just because we increment the major version for a major release and
 _can_ make breaking changes doesn't mean we _will_ or _should_. Breaking
@@ -102,8 +101,8 @@ version, or the presence or absence of features and as a consequence can be
 non-breaking. We don't want adding features to be considered a breaking change
 and so exclude code that specifically detects such additions.
 
-Also excludes breaking changes to incorrect code unless it was accepted and
-functioning in some useful, and typically widespread, way despite its bugs.
+Carbon also excludes breaking changes to incorrect code unless it was accepted
+and functioning in some useful, and typically widespread, way despite its bugs.
 
 ## Minor version increments
 
@@ -261,10 +260,10 @@ in-flight edits and all manner of other variations.
 
 Mechanically, we prefix the `dev` pre-release version component with `0` in the
 same way as `nightly` is prefixed to ensure effective ordering. We don't add any
-additional information to keep the mechanics of development builds simple --
-for example, there is no easy way to extract the date of the build. The exact timestamp of
-the build may be available but doesn't participate for simplicity and minimizing
-cache impact.
+additional information to keep the mechanics of development builds simple -- for
+example, there is no easy way to extract the date of the build. The exact
+timestamp of the build may be available but doesn't participate for simplicity
+and minimizing cache impact.
 
 ## Relevant proposal
 
