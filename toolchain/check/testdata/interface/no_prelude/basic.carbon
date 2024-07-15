@@ -63,3 +63,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT: fn @F()
 // CHECK:STDOUT:     generic [@ForwardDeclared.%Self: %.2];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared.%F.decl(constants.%Self.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

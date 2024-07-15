@@ -58,3 +58,11 @@ interface Interface {
 // CHECK:STDOUT: fn @.1()
 // CHECK:STDOUT:     generic [@Interface.%Self: %.1];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface.%.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

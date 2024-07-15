@@ -63,3 +63,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%G.decl(constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @G.%N => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

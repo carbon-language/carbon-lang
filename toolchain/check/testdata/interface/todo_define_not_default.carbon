@@ -121,3 +121,11 @@ interface I {
 // CHECK:STDOUT: fn @G(@I.%a.loc14_8.2: i32, @I.%b.loc14_16.2: i32) -> i32 = "int.sadd"
 // CHECK:STDOUT:     generic [@I.%Self: %.1];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.%G.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

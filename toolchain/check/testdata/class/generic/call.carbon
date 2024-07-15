@@ -73,14 +73,14 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T, %N) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T, %N) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 5 [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, (%.3, %.4) [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, file.%Class.decl(%.3, %.4) [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %Class.4: type = class_type @Class, (%.1, %.6) [template]
+// CHECK:STDOUT:   %Class.4: type = class_type @Class, file.%Class.decl(%.1, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -136,6 +136,24 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%.3, constants.%.4) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%.3
+// CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%.1, constants.%.6) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%.1
+// CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_too_few.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -146,7 +164,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T, %N) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T, %N) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
@@ -193,6 +211,12 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_too_many.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -203,7 +227,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T, %N) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T, %N) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
@@ -254,6 +278,12 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -264,7 +294,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T, %N) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T, %N) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
@@ -312,4 +342,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%N
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
