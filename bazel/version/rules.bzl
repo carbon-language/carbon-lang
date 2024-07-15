@@ -116,8 +116,6 @@ expand_version_build_info_internal = rule(
         "template": attr.label(
             allow_single_file = True,
         ),
-        "_alpha_number_flag": attr.label(default = ":alpha_number"),
-        "_beta_number_flag": attr.label(default = ":beta_number"),
         "_gen_tmpl_tool": attr.label(
             default = Label("//bazel/version:gen_tmpl"),
             allow_files = True,
