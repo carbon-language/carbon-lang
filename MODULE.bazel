@@ -43,6 +43,17 @@ archive_override(
     urls = ["https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-{0}.tar.gz".format(libpfm_version)],
 )
 
+# The registry has a snapshot, but upstream is active and not regularly marking
+# releases. We start with the BCR snapshot to avoid a miss and then override it
+# with a more recent commit.
+bazel_dep(name = "tcmalloc", version = "0.0.0-20240411-5ed309d", dev_dependency = True)
+git_override(
+    module_name = "tcmalloc",
+    # HEAD as of 2024-07-14.
+    commit = "923df94c922e0cd2d0512c1662d374f63c2c0c96",
+    remote = "https://github.com/google/tcmalloc.git",
+)
+
 bazel_dep(name = "rules_bison", version = "0.2.2")
 bazel_dep(name = "rules_flex", version = "0.2.1")
 bazel_dep(name = "rules_m4", version = "0.2.3")
