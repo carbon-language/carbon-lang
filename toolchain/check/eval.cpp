@@ -28,6 +28,10 @@ struct SpecificEvalInfo {
 
 // Information about the context within which we are performing evaluation.
 struct EvalContext {
+  // Given a constant value from the SemIR we're evaluating, finds the
+  // corresponding constant value to use in the context of this evaluation.
+  // This can be different if the original SemIR is for a generic and we are
+  // evaluating with specific arguments for the generic parameters.
   auto GetInContext(SemIR::ConstantId const_id) -> SemIR::ConstantId {
     if (!const_id.is_symbolic()) {
       return const_id;
@@ -68,8 +72,7 @@ struct EvalContext {
 
   // Gets the instruction describing the constant value of the specified type in
   // this context.
-  template <typename IdT>
-  auto GetConstantValueAsInst(IdT id) -> SemIR::Inst {
+  auto GetConstantValueAsInst(SemIR::TypeId id) -> SemIR::Inst {
     return insts().Get(
         context.constant_values().GetInstId(GetConstantValue(id)));
   }
@@ -98,20 +101,17 @@ struct EvalContext {
     return sem_ir().inst_blocks();
   }
 
-  auto sem_ir() -> SemIR::File& { return file; }
+  auto sem_ir() -> SemIR::File& { return context.sem_ir(); }
 
   auto emitter() -> Context::DiagnosticEmitter& { return context.emitter(); }
 
   // The type-checking context in which we're performing evaluation.
   Context& context;
-  // A cached reference to the file, to avoid a double indirection when
-  // accessing its value stores.
-  SemIR::File& file = context.sem_ir();
   // The specific that we are evaluating within.
   SemIR::GenericInstanceId specific_id;
   // If we are currently evaluating an eval block for `specific_id`, information
   // about that evaluation.
-  SpecificEvalInfo* specific_eval_info;
+  std::optional<SpecificEvalInfo> specific_eval_info;
 };
 }  // namespace
 
@@ -1406,7 +1406,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
   EvalContext eval_context = {
       .context = context,
       .specific_id = SemIR::GenericInstanceId::Invalid,
-      .specific_eval_info = nullptr,
+      .specific_eval_info = std::nullopt,
   };
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
@@ -1422,14 +1422,14 @@ auto TryEvalBlockForSpecific(Context& context,
   llvm::SmallVector<SemIR::InstId> result;
   result.resize(eval_block.size(), SemIR::InstId::Invalid);
 
-  SpecificEvalInfo eval_info = {
-      .region = region,
-      .values = result,
-  };
   EvalContext eval_context = {
       .context = context,
       .specific_id = specific_id,
-      .specific_eval_info = &eval_info,
+      .specific_eval_info =
+          SpecificEvalInfo{
+              .region = region,
+              .values = result,
+          },
   };
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
