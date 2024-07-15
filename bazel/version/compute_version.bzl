@@ -39,8 +39,6 @@ def compute_version(ctx):
     if not ctx.attr._release_flag[BuildSettingInfo].value:
         pre_release = ctx.attr._pre_release_flag[BuildSettingInfo].value
         pre_release_numbers = {
-            "alpha": ctx.attr._alpha_number_flag[BuildSettingInfo].value,
-            "beta": ctx.attr._beta_number_flag[BuildSettingInfo].value,
             "rc": ctx.attr._rc_number_flag[BuildSettingInfo].value,
         }
         if pre_release in pre_release_numbers:
@@ -60,8 +58,6 @@ def compute_version(ctx):
     return version
 
 VERSION_ATTRS = {
-    "_alpha_number_flag": attr.label(default = ":alpha_number"),
-    "_beta_number_flag": attr.label(default = ":beta_number"),
     "_nightly_date_flag": attr.label(default = ":nightly_date"),
     "_pre_release_flag": attr.label(default = ":pre_release"),
     "_rc_number_flag": attr.label(default = ":rc_number"),
