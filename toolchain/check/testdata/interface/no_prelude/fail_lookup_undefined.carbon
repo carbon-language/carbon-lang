@@ -113,3 +113,11 @@ interface BeingDefined {
 // CHECK:STDOUT: fn @.2()
 // CHECK:STDOUT:     generic [@BeingDefined.%Self: %.4];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @BeingDefined.%H.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @BeingDefined.%.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

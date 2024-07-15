@@ -93,7 +93,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic.1: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, (%T) [symbolic]
+// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, file.%Generic.decl.loc4(%T) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,6 +120,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%Generic.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Generic.decl.loc4(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_15.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_list.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -128,7 +133,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, (%T) [symbolic]
+// CHECK:STDOUT:   %.3: type = class_type @.1, file.%.decl(%T) [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,6 +159,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -163,12 +173,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic]
 // CHECK:STDOUT:   %B.type: type = generic_class_type @B [template]
 // CHECK:STDOUT:   %B.1: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %B.2: type = class_type @B, (%N.1) [symbolic]
+// CHECK:STDOUT:   %B.2: type = class_type @B, file.%B.decl(%N.1) [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %N.2: %T = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, (%T, %N.2) [symbolic]
+// CHECK:STDOUT:   %.3: type = class_type @.1, file.%.decl(%T, %N.2) [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,6 +220,17 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%B.decl(constants.%N.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%N.loc4_9.2 => constants.%N.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%N.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   file.%N.loc12_19.2 => constants.%N.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -217,13 +238,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, (%T) [symbolic]
+// CHECK:STDOUT:   %C.2: type = class_type @C, file.%C.decl(%T) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %U: i32 = bind_symbolic_name U 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, (%T, %U) [symbolic]
+// CHECK:STDOUT:   %.3: type = class_type @.1, file.%.decl(%T, %U) [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -264,6 +285,17 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%C.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   file.%U.loc12_19.2 => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -271,13 +303,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
-// CHECK:STDOUT:   %D.2: type = class_type @D, (%T.1) [symbolic]
+// CHECK:STDOUT:   %D.2: type = class_type @D, file.%D.decl(%T.1) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %T.2: i32 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, (%T.2) [symbolic]
+// CHECK:STDOUT:   %.3: type = class_type @.1, file.%.decl(%T.2) [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,6 +348,16 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%D.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl(constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc12_9.2 => constants.%T.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -323,11 +365,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %E.type: type = generic_class_type @E [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %E.1: %E.type = struct_value () [template]
-// CHECK:STDOUT:   %E.2: type = class_type @E, (%T) [symbolic]
+// CHECK:STDOUT:   %E.2: type = class_type @E, file.%E.decl(%T) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, (%U) [symbolic]
+// CHECK:STDOUT:   %.3: type = class_type @.1, file.%.decl(%U) [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,5 +397,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     generic [file.%U.loc11_9.2: type] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%E.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl(constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%U.loc11_9.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

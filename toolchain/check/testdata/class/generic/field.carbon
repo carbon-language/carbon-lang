@@ -58,7 +58,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T) [symbolic]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -113,6 +113,17 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   return %.loc9_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%G.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @G.%T => constants.%T
+// CHECK:STDOUT:   file.%.loc8_24 => constants.%Class.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -120,17 +131,17 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T) [symbolic]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, (i32) [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, file.%Class.decl(i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic]
-// CHECK:STDOUT:   %Class.4: type = class_type @Class, (%U) [symbolic]
+// CHECK:STDOUT:   %Class.4: type = class_type @Class, file.%Class.decl(%U) [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -210,5 +221,26 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:   %.loc26: %T = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(i32) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc2_13.2 => i32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc2_13.2 => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%H.decl(constants.%U) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @H.%U => constants.%U
+// CHECK:STDOUT:   file.%.loc18_24 => constants.%Class.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

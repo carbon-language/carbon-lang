@@ -217,6 +217,12 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Symbolic.decl(constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Symbolic.%N => constants.%N
+// CHECK:STDOUT:   file.%int.make_type_unsigned.loc14_29 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

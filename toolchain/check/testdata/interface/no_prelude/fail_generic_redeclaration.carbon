@@ -45,7 +45,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %.type.1: type = generic_interface_type @.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: %.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = interface_type @.1, (%T.1) [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @.1, file.%.decl.loc19(%T.1) [symbolic]
 // CHECK:STDOUT:   %Self.1: %.4 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_interface_type @Generic [template]
 // CHECK:STDOUT:   %Generic: %Generic.type = struct_value () [template]
@@ -56,7 +56,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.2: %.2 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.type.2: type = generic_interface_type @.3 [template]
 // CHECK:STDOUT:   %.6: %.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = interface_type @.3, (%T.2) [symbolic]
+// CHECK:STDOUT:   %.7: type = interface_type @.3, file.%.decl.loc38(%T.2) [symbolic]
 // CHECK:STDOUT:   %Self.3: %.7 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,5 +120,25 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl.loc19(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc19_22.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc21_19.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%DifferentParams.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc31_27.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl.loc38(constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

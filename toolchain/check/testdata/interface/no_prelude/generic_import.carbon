@@ -34,7 +34,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @AddWith, (%T) [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @AddWith, file.%AddWith.decl(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -67,6 +67,15 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: fn @F()
 // CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: %.2];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%AddWith.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddWith.%F.decl(constants.%T, constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -76,9 +85,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected instref inst+14> [symbolic]
-// CHECK:STDOUT:   %.3: type = interface_type @AddWith, (%T) [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @AddWith, <invalid>(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @AddWith, (%C) [template]
+// CHECK:STDOUT:   %.4: type = interface_type @AddWith, <invalid>(%C) [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -137,4 +146,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific <invalid>(constants.%C);
 // CHECK:STDOUT:

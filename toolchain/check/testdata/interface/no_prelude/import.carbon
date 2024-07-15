@@ -132,6 +132,14 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @F.2()
 // CHECK:STDOUT:     generic [@ForwardDeclared.%Self: %.8];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Basic.%F.decl(constants.%Self.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared.%F.decl(constants.%Self.3) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
