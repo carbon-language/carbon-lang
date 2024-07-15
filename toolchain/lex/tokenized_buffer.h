@@ -337,10 +337,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   llvm::SmallVector<LineInfo> line_infos_;
 
-  // Stores the computed value of string literals so that StringRefs are
-  // durable.
-  llvm::SmallVector<std::unique_ptr<std::string>> computed_strings_;
-
   // The number of parse tree nodes that we expect to be created for the tokens
   // in this buffer.
   int expected_parse_tree_size_ = 0;
