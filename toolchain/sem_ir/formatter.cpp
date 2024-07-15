@@ -366,7 +366,7 @@ class Formatter {
       out_ << ";\n";
       return;
     }
-    out_ << ' ';
+    out_ << " ";
 
     const auto& generic = sem_ir_.generics().Get(specific.generic_id);
 
@@ -377,7 +377,7 @@ class Formatter {
                          GenericInstIndex::Region::Definition, "definition");
     CloseBrace();
 
-    out_ << '\n';
+    out_ << "\n";
   }
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {
