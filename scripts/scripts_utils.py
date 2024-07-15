@@ -21,6 +21,7 @@ import urllib.request
 
 # The tools we track releases for.
 class Release(Enum):
+    BAZELISK = "bazelisk"
     BUILDIFIER = "buildifier"
     BUILDOZER = "buildozer"
     TARGET_DETERMINATOR = "target-determinator"
@@ -39,6 +40,9 @@ _BAZEL_TOOLS_URL = (
 
 # Structured information per release tool.
 _RELEASES = {
+    Release.BAZELISK: ReleaseInfo(
+        "https://github.com/bazelbuild/bazelisk/releases/download/v1.20.0/", "-"
+    ),
     Release.BUILDIFIER: ReleaseInfo(_BAZEL_TOOLS_URL, "-"),
     Release.BUILDOZER: ReleaseInfo(_BAZEL_TOOLS_URL, "-"),
     Release.TARGET_DETERMINATOR: ReleaseInfo(
@@ -54,6 +58,13 @@ _RELEASES = {
 # `calculate_release_shas.py`. This is maintained separate from _RELEASES just
 # to make copy-paste updates simpler.
 _RELEASE_SHAS = {
+    Release.BAZELISK: {
+        "darwin-amd64": "51a6228d51704c656df9fceacad18d64f265b973905b3efdcf8a504b687545bf",  # noqa: E501
+        "darwin-arm64": "29753341c0ddc35931fb240e247fbba0b83ef81bccc2433dd075363ec02a67a6",  # noqa: E501
+        "linux-amd64": "d9af1fa808c0529753c3befda75123236a711d971d3485a390507122148773a3",  # noqa: E501
+        "linux-arm64": "467ec3821aca5e278c8570b7c25e0dfc1a061d2873be89e4a266aaf488148426",  # noqa: E501
+        "windows-amd64.exe": "4175ce7ef4b552fb17e93ce49a245679dc26a35cf2fbc7c3146daca6ffc7a81e",  # noqa: E501
+    },
     Release.BUILDIFIER: {
         "darwin-amd64": "687c49c318fb655970cf716eed3c7bfc9caeea4f2931a2fd36593c458de0c537",  # noqa: E501
         "darwin-arm64": "d0909b645496608fd6dfc67f95d9d3b01d90736d7b8c8ec41e802cb0b7ceae7c",  # noqa: E501
@@ -216,8 +227,11 @@ def calculate_release_shas() -> None:
 def locate_bazel() -> str:
     """Returns the bazel command.
 
-    We use the `BAZEL` environment variable if present. If not, then we try to
-    use `bazelisk` and then `bazel`.
+    In order, try:
+    1. The `BAZEL` environment variable.
+    2. `bazelisk`
+    3. `bazel`
+    4. `run_bazelisk.py`
     """
     bazel = os.environ.get("BAZEL")
     if bazel:
@@ -228,4 +242,4 @@ def locate_bazel() -> str:
         if target:
             return target
 
-    exit("Unable to run Bazel")
+    return str(Path(__file__).parent / "run_bazelisk.py")

@@ -15,6 +15,8 @@ contributions.
 
 -   [Setup commands](#setup-commands)
     -   [Debian or Ubuntu](#debian-or-ubuntu)
+        -   [Installing Bazelisk](#installing-bazelisk)
+        -   [Old `clang` versions](#old-clang-versions)
     -   [macOS](#macos)
 -   [Tools](#tools)
     -   [Main tools](#main-tools)
@@ -48,7 +50,6 @@ apt-cache show clang | grep 'Version:'
 
 # Install tools.
 sudo apt install \
-  bazel \
   clang \
   gh \
   libc++-dev \
@@ -67,8 +68,18 @@ cd carbon-lang
 pre-commit install
 
 # Run tests.
-bazel test //...:all
+./scripts/run_bazelisk.py test //...:all
 ```
+
+#### Installing Bazelisk
+
+Although the `run_bazelisk` script can make it easy to get started, if you're
+frequently building Carbon, it can be a bit much to type. Consider either
+aliasing `bazel` to the `run_bazelisk.py` script, or
+[downloading a bazelisk release](https://github.com/bazelbuild/bazelisk) and
+adding it to your `$PATH`.
+
+#### Old `clang` versions
 
 If the version of `clang` is earlier than 16, you may still have version 16
 available. You can use the following install instead:
@@ -89,9 +100,6 @@ echo "build --repo_env=CC=$(readlink -f $(which clang-16))" >> user.bazelrc
 
 > NOTE: Most LLVM 16+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
-
-> NOTE: If you don't have a `bazel` package, see
-> [Bazel's install instructions](https://bazel.build/install) for help.
 
 ### macOS
 
