@@ -18,6 +18,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_index.h"
@@ -202,6 +203,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Prints a description of a single token.  See `Print` for details on the
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token) const
+      -> void;
+
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
   // Returns true if the buffer has errors that were detected at lexing time.

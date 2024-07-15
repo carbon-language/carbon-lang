@@ -53,6 +53,10 @@ class File : public Printable<File> {
   }
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return ints()

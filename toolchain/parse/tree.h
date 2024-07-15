@@ -232,6 +232,10 @@ class Tree : public Printable<Tree> {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
   // The following `Extract*` function provide an alternative way of accessing
   // the nodes of a tree. It is intended to be more convenient and type-safe,
   // but slower and can't be used on nodes that are marked as having an error.

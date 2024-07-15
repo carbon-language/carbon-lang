@@ -161,6 +161,12 @@ class NameScopeStore {
     return values_.OutputYaml();
   }
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Collect(label, values_);
+  }
+
  private:
   InstStore* insts_;
   ValueStore<NameScopeId> values_;
