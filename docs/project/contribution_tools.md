@@ -15,7 +15,7 @@ contributions.
 
 -   [Setup commands](#setup-commands)
     -   [Debian or Ubuntu](#debian-or-ubuntu)
-        -   [Bazelisk](#bazelisk)
+        -   [Installing Bazelisk](#installing-bazelisk)
         -   [Old `clang` versions](#old-clang-versions)
     -   [macOS](#macos)
 -   [Tools](#tools)
