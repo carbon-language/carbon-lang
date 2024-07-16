@@ -19,7 +19,7 @@ namespace Carbon {
 
 // Helps track memory usage for a compile.
 //
-// Uses will mix `Add` and `Collect` calls, using `ConcatLabel` to label
+// Users will mix `Add` and `Collect` calls, using `ConcatLabel` to label
 // allocation sources. Typically we'll collect stats for growable, potentially
 // large data types (such as `SmallVector`), ignoring small fixed-size members
 // (such as pointers or `int32_t`).
