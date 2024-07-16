@@ -24,7 +24,6 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %.3: type = array_type %.2, %T [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT:   %array: %.3 = tuple_value () [symbolic]
-// CHECK:STDOUT:   %.5: type = ptr_type @G.%.loc13_17 (%.3) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
