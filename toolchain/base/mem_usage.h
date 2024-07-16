@@ -17,41 +17,61 @@
 
 namespace Carbon {
 
-// Types supporting memory usage tracking should define a method:
+// Helps track memory usage for a compile.
 //
-//   // Collects memory usage of members.
+// Uses will mix `Add` and `Collect` calls, using `ConcatLabel` to label
+// allocation sources. Typically we'll collect stats for growable, potentially
+// large data types (such as `SmallVector`), ignoring small fixed-size members
+// (such as pointers or `int32_t`).
+//
+// For example:
+//
 //   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-//       -> void;
-//
-// The label should be concatenated with any child labels using MemUsageLabel in
-// order to reflect allocation structure.
-//
-// The arguments for AddMemUsageFn are the label and byte size. It should be
-// called once per tracked size.
+//       -> void {
+//     // Explicit tracking.
+//     mem_usage.Add(MemUsage::ConcatLabel(label, "data_"), data_.used_bytes(),
+//                   data_.reserved_bytes());
+//     // Common library types like `Map` and `llvm::SmallVector` have
+//     // type-specific support.
+//     mem_usage.Add(MemUsage::Concat(label, "array_"), array_);
+//     // Implementing `CollectMemUsage` allows use with the same interface.
+//     mem_usage.Collect(MemUsage::Concat(label, "obj_"), obj_);
+//   }
 class MemUsage {
  public:
-  auto Add(std::string label, int64_t used, int64_t reserved) -> void {
-    mem_usage_.push_back({std::move(label), used, reserved});
+  // Adds tracking for used and reserved bytes, paired with the given label.
+  auto Add(std::string label, int64_t used_bytes, int64_t reserved_bytes)
+      -> void {
+    mem_usage_.push_back({.label = std::move(label),
+                          .used_bytes = used_bytes,
+                          .reserved_bytes = reserved_bytes});
   }
 
+  // Adds usage tracking for an allocator.
   auto Add(std::string label, const llvm::BumpPtrAllocator& allocator) -> void {
-    mem_usage_.push_back({std::move(label), allocator.getBytesAllocated(),
-                          allocator.getTotalMemory()});
+    Add(std::move(label), allocator.getBytesAllocated(),
+        allocator.getTotalMemory());
   }
 
+  // Adds usage tracking for a map.
   template <typename KeyT, typename ValueT, ssize_t SmallSize,
             typename KeyContextT>
   auto Add(std::string label, Map<KeyT, ValueT, SmallSize, KeyContextT> map,
            KeyContextT key_context = KeyContextT()) -> void {
+    // These don't track used bytes, so we set the same value for used and
+    // reserved bytes.
     auto bytes = map.ComputeMetrics(key_context).storage_bytes;
-    mem_usage_.push_back({std::move(label), bytes, bytes});
+    Add(std::move(label), bytes, bytes);
   }
 
+  // Adds usage tracking for a set.
   template <typename KeyT, ssize_t SmallSize, typename KeyContextT>
   auto Add(std::string label, Set<KeyT, SmallSize, KeyContextT> set,
            KeyContextT key_context = KeyContextT()) -> void {
+    // These don't track used bytes, so we set the same value for used and
+    // reserved bytes.
     auto bytes = set.ComputeMetrics(key_context).storage_bytes;
-    mem_usage_.push_back({std::move(label), bytes, bytes});
+    Add(std::move(label), bytes, bytes);
   }
 
   // Adds memory usage of an array's data. This ignores the possible overhead of
@@ -65,6 +85,10 @@ class MemUsage {
     Add(std::move(label), array.size_in_bytes(), array.capacity_in_bytes());
   }
 
+  // Adds memory usage for an object that provides `CollectMemUsage`.
+  //
+  // The expected signature of `CollectMemUsage` is above, in MemUsage class
+  // comments.
   template <typename T>
   auto Collect(llvm::StringRef label, const T& arg) -> void {
     arg.CollectMemUsage(*this, label);
@@ -87,25 +111,31 @@ class MemUsage {
       map.Add("filename", filename);
       int64_t total_used = 0;
       int64_t total_reserved = 0;
-      for (auto [label, used, reserved] : mem_usage_) {
-        total_used += used;
-        total_reserved += reserved;
-        map.Add(label,
+      for (const auto& entry : mem_usage_) {
+        total_used += entry.used_bytes;
+        total_reserved += entry.reserved_bytes;
+        map.Add(entry.label,
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map byte_map) {
-                  byte_map.Add("used", used);
-                  byte_map.Add("reserved", reserved);
+                  byte_map.Add("used_bytes", entry.used_bytes);
+                  byte_map.Add("reserved_bytes", entry.reserved_bytes);
                 }));
       }
       map.Add("Total",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map byte_map) {
-                byte_map.Add("used", total_used);
-                byte_map.Add("reserved", total_reserved);
+                byte_map.Add("used_bytes", total_used);
+                byte_map.Add("reserved_bytes", total_reserved);
               }));
     });
   }
 
  private:
-  llvm::SmallVector<std::tuple<std::string, int64_t, int64_t>> mem_usage_;
+  struct Entry {
+    std::string label;
+    int64_t used_bytes;
+    int64_t reserved_bytes;
+  };
+
+  llvm::SmallVector<Entry> mem_usage_;
 };
 
 }  // namespace Carbon
