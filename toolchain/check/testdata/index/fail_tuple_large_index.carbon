@@ -94,11 +94,11 @@ var d: i32 = b[0x7FFF_FFFF];
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_18
 // CHECK:STDOUT:   %b.ref.loc17: ref %.3 = name_ref b, file.%b
 // CHECK:STDOUT:   %.loc17_16: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc17_17: ref <error> = tuple_index %b.ref.loc17, <error>
+// CHECK:STDOUT:   %.loc17_17: ref <error> = tuple_index %b.ref.loc17, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %b.ref.loc21: ref %.3 = name_ref b, file.%b
 // CHECK:STDOUT:   %.loc21_16: i32 = int_literal 2147483647 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc21_27: ref <error> = tuple_index %b.ref.loc21, <error>
+// CHECK:STDOUT:   %.loc21_27: ref <error> = tuple_index %b.ref.loc21, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

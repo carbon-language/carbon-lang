@@ -32,7 +32,6 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.9: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.10: type = array_type %.9, %T [symbolic]
 // CHECK:STDOUT:   %.11: type = ptr_type %.10 [symbolic]
-// CHECK:STDOUT:   %.12: type = ptr_type @F.%.loc15_15 (%.10) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

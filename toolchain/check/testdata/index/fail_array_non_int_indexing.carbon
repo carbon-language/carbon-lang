@@ -71,7 +71,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_24
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15_16: f64 = float_literal 2.6000000000000001 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_19.1: ref i32 = array_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc15_19.1: ref i32 = array_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15_19.2: i32 = bind_value %.loc15_19.1
 // CHECK:STDOUT:   assign file.%b.var, %.loc15_19.2
 // CHECK:STDOUT:   return

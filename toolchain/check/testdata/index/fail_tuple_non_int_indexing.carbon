@@ -76,7 +76,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15_16: f64 = float_literal 2.6000000000000001 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_19: ref <error> = tuple_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc15_19: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
