@@ -1329,7 +1329,11 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
-    auto self_param_id = GetLocalConstantInstId(import_interface.self_param_id);
+
+    std::optional<SemIR::InstId> self_param_id;
+    if (import_interface.is_defined()) {
+      self_param_id = GetLocalConstantInstId(import_interface.self_param_id);
+    }
 
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry(interface_const_id);
@@ -1343,7 +1347,8 @@ class ImportRefResolver {
         GetLocalParamRefsId(import_interface.param_refs_id, param_const_ids);
 
     if (import_interface.is_defined()) {
-      AddInterfaceDefinition(import_interface, new_interface, self_param_id);
+      CARBON_CHECK(self_param_id);
+      AddInterfaceDefinition(import_interface, new_interface, *self_param_id);
     }
     return {.const_id = interface_const_id};
   }
