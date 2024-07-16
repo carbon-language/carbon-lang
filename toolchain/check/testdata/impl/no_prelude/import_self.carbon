@@ -78,6 +78,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: fn @Op[@Add.%self.loc5_9.2: @Add.%Self.ref.loc5_15 (%Self)](@Add.%other.loc5_21.2: @Add.%Self.ref.loc5_15 (%Self)) -> %Self
 // CHECK:STDOUT:     generic [@Add.%Self: %.1];
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add.%Op.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Add.%Self.ref.loc5_15 => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

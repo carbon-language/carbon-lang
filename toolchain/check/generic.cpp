@@ -5,6 +5,7 @@
 #include "toolchain/check/generic.h"
 
 #include "common/map.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
@@ -130,8 +131,6 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 
   Map<SemIR::InstId, SemIR::InstId> constants_in_generic;
   // TODO: For the definition region, populate constants from the declaration.
-  // TODO: Add `BindSymbolicName` instructions for enclosing generics to the
-  // map.
 
   // The work done in this loop might invalidate iterators into the generic
   // region stack, but shouldn't add new dependent instructions to the current
@@ -146,8 +145,16 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
     if ((dep_kind & GenericRegionStack::DependencyKind::SymbolicType) !=
         GenericRegionStack::DependencyKind::None) {
       auto inst = context.insts().Get(inst_id);
-      inst.SetType(AddGenericTypeToEvalBlock(
-          context, generic_id, region, constants_in_generic, inst.type_id()));
+      auto type_id = AddGenericTypeToEvalBlock(
+          context, generic_id, region, constants_in_generic, inst.type_id());
+      // TODO: Eventually, completeness requirements should be modeled as
+      // constraints on the generic rather than properties of the type. For now,
+      // require the transformed type to be complete if the original was.
+      // TODO: We'll also need to do this when evaluating the eval block.
+      if (context.types().IsComplete(inst.type_id())) {
+        context.TryToCompleteType(type_id);
+      }
+      inst.SetType(type_id);
       context.sem_ir().insts().Set(inst_id, inst);
     }
 
@@ -194,6 +201,10 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
     return SemIR::GenericId::Invalid;
   }
 
+  // Build the new Generic object. Note that we intentionally do not hold a
+  // persistent reference to it throughout this function, because the `generics`
+  // collection can have items added to it by import resolution while we are
+  // building this generic.
   auto bindings_id = context.inst_blocks().Add(all_bindings);
   auto generic_id = context.generics().Add(
       SemIR::Generic{.decl_id = decl_id,
@@ -203,12 +214,10 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
   auto decl_block_id = MakeGenericEvalBlock(
       context, generic_id, SemIR::GenericInstIndex::Region::Declaration);
   context.generic_region_stack().Pop();
+  context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
   auto self_instance_id = MakeGenericSelfInstance(context, generic_id);
-
-  auto& generic_info = context.generics().Get(generic_id);
-  generic_info.decl_block_id = decl_block_id;
-  generic_info.self_instance_id = self_instance_id;
+  context.generics().Get(generic_id).self_instance_id = self_instance_id;
   return generic_id;
 }
 
@@ -230,7 +239,10 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     return;
   }
 
-  // TODO: Track the list of dependent instructions in this region.
+  auto definition_block_id = MakeGenericEvalBlock(
+      context, generic_id, SemIR::GenericInstIndex::Region::Definition);
+  context.generics().Get(generic_id).definition_block_id = definition_block_id;
+
   context.generic_region_stack().Pop();
 }
 
@@ -238,7 +250,22 @@ auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
                          SemIR::InstBlockId args_id)
     -> SemIR::GenericInstanceId {
   auto instance_id = context.generic_instances().GetOrAdd(generic_id, args_id);
-  // TODO: Perform substitution into the generic declaration if needed.
+
+  // TODO: Remove this once we import generics properly.
+  if (!generic_id.is_valid()) {
+    return instance_id;
+  }
+
+  // If this is the first time we've formed this instance, evaluate its decl
+  // block to form information about the instance.
+  if (!context.generic_instances().Get(instance_id).decl_block_id.is_valid()) {
+    auto decl_block_id = TryEvalBlockForSpecific(
+        context, instance_id, SemIR::GenericInstIndex::Region::Declaration);
+    // Note that TryEvalBlockForSpecific may reallocate the list of generic
+    // instances, so re-lookup the instance here.
+    context.generic_instances().Get(instance_id).decl_block_id = decl_block_id;
+  }
+
   return instance_id;
 }
 

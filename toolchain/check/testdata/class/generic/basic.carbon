@@ -29,7 +29,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, (%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T) [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type %Class.2 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr [template]
@@ -57,7 +57,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %GetAddr.decl: %GetAddr.type = fn_decl @GetAddr [template = constants.%GetAddr] {
-// CHECK:STDOUT:     %.loc12_25: type = specific_constant constants.%Class.2, (constants.%T) [symbolic = %.loc12_25 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc12_25: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc12_25 (constants.%Class.2)]
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, %.loc12_25 [symbolic = %.loc12_25 (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = %.loc12_29 (constants.%.2)]
 // CHECK:STDOUT:     %self.loc12_19.1: @Class.%.loc12_29 (%.2) = param self
@@ -68,15 +68,15 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %return.var.loc12: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
-// CHECK:STDOUT:     %.loc17: type = specific_constant constants.%Class.2, (constants.%T) [symbolic = %.loc17 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc17: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc17 (constants.%Class.2)]
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, %.loc17 [symbolic = %.loc17 (constants.%Class.2)]
 // CHECK:STDOUT:     %self.loc17_15.1: @Class.%.loc17 (%Class.2) = param self
 // CHECK:STDOUT:     %self.loc17_15.2: @Class.%.loc17 (%Class.2) = bind_name self, %self.loc17_15.1
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc17 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc21: %.4 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc21 (constants.%T)]
+// CHECK:STDOUT:   %.loc21: <unexpected instref inst+41> (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -104,5 +104,29 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %.loc18_16.1: ref %T = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc18_16.2: %T = bind_value %.loc18_16.1
 // CHECK:STDOUT:   return %.loc18_16.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class.%GetAddr.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Class.%.loc12_25 => constants.%Class.2
+// CHECK:STDOUT:   @Class.%.loc12_29 => constants.%.2
+// CHECK:STDOUT:   @Class.%T.ref.loc12 => constants.%T
+// CHECK:STDOUT:   @Class.%.loc12_38 => constants.%.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class.%GetValue.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Class.%.loc17 => constants.%Class.2
+// CHECK:STDOUT:   @Class.%T.ref.loc17 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref.loc21) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

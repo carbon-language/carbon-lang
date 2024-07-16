@@ -49,11 +49,16 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: fn @F(%T: %.1)
 // CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.var: ref %T = var x
-// CHECK:STDOUT:   %x: ref %T = bind_name x, %x.var
+// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %x.var: ref @F.%T.ref (%T) = var x
+// CHECK:STDOUT:   %x: ref @F.%T.ref (%T) = bind_name x, %x.var
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%F.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

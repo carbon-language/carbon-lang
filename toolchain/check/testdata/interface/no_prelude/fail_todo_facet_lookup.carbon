@@ -83,7 +83,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: fn @CallStatic(%T: %.1)
 // CHECK:STDOUT:     generic [%T: %.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = %T.ref (constants.%T)]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -93,5 +93,19 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%CallStatic.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @CallStatic.%T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%CallFacet.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @CallFacet.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

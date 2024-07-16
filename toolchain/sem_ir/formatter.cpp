@@ -74,6 +74,10 @@ class Formatter {
       FormatFunction(FunctionId(i));
     }
 
+    for (int i : llvm::seq(sem_ir_.generic_instances().size())) {
+      FormatSpecific(GenericInstanceId(i));
+    }
+
     // End-of-file newline.
     out_ << "\n";
   }
@@ -325,6 +329,55 @@ class Formatter {
     out_ << "]";
     // TODO: Format at least the portions of the declaration and definition
     // blocks that don't duplicate portions of the generic body.
+  }
+
+  auto FormatSpecificRegion(const Generic& generic,
+                            const GenericInstance& specific,
+                            GenericInstIndex::Region region,
+                            llvm::StringRef region_name) -> void {
+    if (!specific.GetValueBlock(region).is_valid()) {
+      return;
+    }
+
+    IndentLabel();
+    out_ << region_name << ":\n";
+    for (auto [generic_inst_id, specific_inst_id] :
+         llvm::zip(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(region)),
+                   sem_ir_.inst_blocks().Get(specific.GetValueBlock(region)))) {
+      Indent();
+      FormatInstName(generic_inst_id);
+      out_ << " => ";
+      FormatInstName(specific_inst_id);
+      out_ << "\n";
+    }
+  }
+
+  auto FormatSpecific(GenericInstanceId id) -> void {
+    const auto& specific = sem_ir_.generic_instances().Get(id);
+
+    out_ << "\n";
+
+    out_ << "specific ";
+    FormatSpecificName(id);
+
+    // TODO: Remove once we stop forming generic specifics with no generic
+    // during import.
+    if (!specific.generic_id.is_valid()) {
+      out_ << ";\n";
+      return;
+    }
+    out_ << " ";
+
+    const auto& generic = sem_ir_.generics().Get(specific.generic_id);
+
+    OpenBrace();
+    FormatSpecificRegion(generic, specific,
+                         GenericInstIndex::Region::Declaration, "declaration");
+    FormatSpecificRegion(generic, specific,
+                         GenericInstIndex::Region::Definition, "definition");
+    CloseBrace();
+
+    out_ << "\n";
   }
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {
@@ -816,10 +869,7 @@ class Formatter {
     out_ << ')';
   }
 
-  auto FormatArg(GenericInstanceId id) -> void {
-    const auto& instance = sem_ir_.generic_instances().Get(id);
-    FormatArg(instance.args_id);
-  }
+  auto FormatArg(GenericInstanceId id) -> void { FormatSpecificName(id); }
 
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
@@ -880,6 +930,20 @@ class Formatter {
 
   auto FormatImplName(ImplId id) -> void { out_ << inst_namer_.GetNameFor(id); }
 
+  auto FormatSpecificName(GenericInstanceId id) -> void {
+    const auto& specific = sem_ir_.generic_instances().Get(id);
+    // TODO: We don't yet import generics properly, and instead form specifics
+    // with an invalid generic ID. In this case, just print a placeholder for
+    // now. Once import works, we can remove this code.
+    if (!specific.generic_id.is_valid()) {
+      out_ << "<invalid>";
+    } else {
+      const Generic& generic = sem_ir_.generics().Get(specific.generic_id);
+      FormatInstName(generic.decl_id);
+    }
+    FormatArg(specific.args_id);
+  }
+
   auto FormatConstant(ConstantId id) -> void {
     if (!id.is_valid()) {
       out_ << "<not constant>";
@@ -892,13 +956,11 @@ class Formatter {
       const auto& symbolic_constant =
           sem_ir_.constant_values().GetSymbolicConstant(id);
       if (symbolic_constant.generic_id.is_valid()) {
-        CARBON_CHECK(symbolic_constant.index.region() ==
-                     GenericInstIndex::Region::Declaration)
-            << "TODO: implement formatting of definition constants";
         const auto& generic =
             sem_ir_.generics().Get(symbolic_constant.generic_id);
-        FormatInstName(sem_ir_.inst_blocks().Get(
-            generic.decl_block_id)[symbolic_constant.index.index()]);
+        FormatInstName(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(
+            symbolic_constant.index
+                .region()))[symbolic_constant.index.index()]);
         out_ << " (";
         FormatInstName(sem_ir_.constant_values().GetInstId(id));
         out_ << ")";

@@ -65,22 +65,22 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Simple.type: type = generic_interface_type @Simple [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Simple: %Simple.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @Simple, (%T.1) [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @Simple, file.%Simple.decl(%T.1) [symbolic]
 // CHECK:STDOUT:   %Self.1: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %WithAssocFn.type: type = generic_interface_type @WithAssocFn [template]
 // CHECK:STDOUT:   %WithAssocFn: %WithAssocFn.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = interface_type @WithAssocFn, (%T.1) [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @WithAssocFn, file.%WithAssocFn.decl(%T.1) [symbolic]
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @WithAssocFn, %F.type.1 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @WithAssocFn.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.7: type = interface_type @Simple, (%C) [template]
+// CHECK:STDOUT:   %.7: type = interface_type @Simple, file.%Simple.decl(%C) [template]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness () [template]
-// CHECK:STDOUT:   %.9: type = interface_type @WithAssocFn, (%C) [template]
+// CHECK:STDOUT:   %.9: type = interface_type @WithAssocFn, file.%WithAssocFn.decl(%C) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (%F.2) [template]
@@ -145,7 +145,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple
 // CHECK:STDOUT:     generic [file.%T.loc4_18.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -154,7 +154,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @WithAssocFn
 // CHECK:STDOUT:     generic [file.%T.loc8_23.2: type] {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return.var: ref %X = var <return slot>
@@ -232,9 +232,49 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     generic [%T: %.7] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
-// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T [symbolic = constants.%T.2]
+// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T [symbolic = %T.ref (constants.%T.2)]
 // CHECK:STDOUT:   %Receive.call: init %.1 = call %Receive.ref(%T.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Simple.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_18.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%WithAssocFn.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc8_23.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithAssocFn.%F.decl(constants.%T.1, constants.%Self.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Simple.decl(constants.%C) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_18.2 => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%WithAssocFn.decl(constants.%C) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc8_23.2 => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%WithImplicitArgs.decl(constants.%T.1, constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc22_28.2 => constants.%T.1
+// CHECK:STDOUT:   file.%N.loc22_38.2 => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Receive.decl(constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Receive.%T => constants.%T.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Pass.decl(constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Pass.%T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_args.carbon
@@ -244,16 +284,16 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Generic.type: type = generic_interface_type @Generic [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @Generic, (%T.1) [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @Generic, file.%Generic.decl(%T.1) [symbolic]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = interface_type @Generic, (%A) [template]
+// CHECK:STDOUT:   %.4: type = interface_type @Generic, file.%Generic.decl(%A) [template]
 // CHECK:STDOUT:   %T.2: %.4 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = interface_type @Generic, (%B) [template]
+// CHECK:STDOUT:   %.5: type = interface_type @Generic, file.%Generic.decl(%B) [template]
 // CHECK:STDOUT:   %T.3: %.5 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -295,7 +335,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Generic
 // CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -319,8 +359,33 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     generic [%T: %.5] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = constants.%T.3]
+// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = %T.ref (constants.%T.3)]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%A) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%A
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%F.decl(constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Generic.decl(constants.%B) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%B
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%G.decl(constants.%T.3) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @G.%T => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

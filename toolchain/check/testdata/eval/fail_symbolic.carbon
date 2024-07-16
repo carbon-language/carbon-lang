@@ -54,12 +54,17 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     generic [%N: i32] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %N.ref: i32 = name_ref N, %N [symbolic = constants.%N]
+// CHECK:STDOUT:   %N.ref: i32 = name_ref N, %N [symbolic = %N.ref (constants.%N)]
 // CHECK:STDOUT:   %.loc16_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc16_11.2: type = converted %int.make_type_32, %.loc16_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_17: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:   %k.var: ref <error> = var k
 // CHECK:STDOUT:   %k: ref <error> = bind_name k, %k.var
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%G.decl(constants.%N) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @G.%N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

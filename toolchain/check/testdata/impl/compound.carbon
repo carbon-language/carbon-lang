@@ -219,3 +219,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple.%G.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Simple.%Self.ref => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

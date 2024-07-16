@@ -107,3 +107,8 @@ class A {
 // CHECK:STDOUT:   return %.loc21_34 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @DefaultConstructible.%Make.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @DefaultConstructible.%Self.ref => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

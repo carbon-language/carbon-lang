@@ -19,6 +19,15 @@ struct Generic : public Printable<Generic> {
     out << "{decl: " << decl_id << ", bindings: " << bindings_id << "}";
   }
 
+  // Returns the eval block for the specified region of the generic. This is a
+  // block of instructions that should be evaluated to compute the values and
+  // instructions needed by that region of the generic.
+  auto GetEvalBlock(GenericInstIndex::Region region) const -> InstBlockId {
+    return region == GenericInstIndex::Region::Declaration
+               ? decl_block_id
+               : definition_block_id;
+  }
+
   // The following members always have values, and do not change throughout the
   // lifetime of the generic.
 
@@ -36,9 +45,10 @@ struct Generic : public Printable<Generic> {
   // The following members are set at the end of the corresponding region of the
   // generic.
 
-  // A block of instructions that should be evaluated to compute the values and
-  // instructions needed by the declaration of the generic.
+  // The eval block for the declaration region of the generic.
   InstBlockId decl_block_id = InstBlockId::Invalid;
+  // The eval block for the definition region of the generic.
+  InstBlockId definition_block_id = InstBlockId::Invalid;
 };
 
 // Provides storage for generics.
@@ -61,18 +71,29 @@ struct GenericInstance : Printable<GenericInstance> {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
 
+  // Returns the value block for this region of the specific. This is a block
+  // containing values and instructions produced by evaluating the corresponding
+  // eval block of the generic within the context of this specific. These are
+  // the constant values and types and the instantiated template-dependent
+  // instructions that are used in this region of the specific.
+  auto GetValueBlock(GenericInstIndex::Region region) const -> InstBlockId {
+    return region == GenericInstIndex::Region::Declaration
+               ? decl_block_id
+               : definition_block_id;
+  }
+
   // The generic that this is an instance of.
   GenericId generic_id;
   // Argument values, corresponding to the bindings in `Generic::bindings_id`.
   InstBlockId args_id;
 
-  // The following members are set when the corresponding region of the generic
-  // instance is resolved.
+  // The following members are set when the corresponding region of the specific
+  // is resolved.
 
-  // The values and instructions produced by evaluating the decl block of the
-  // generic. These are the constant values and types and the instantiated
-  // template-dependent instructions needed by the declaration of this instance.
+  // The value block for the declaration region of the specific.
   InstBlockId decl_block_id = InstBlockId::Invalid;
+  // The value block for the definition region of the specific.
+  InstBlockId definition_block_id = InstBlockId::Invalid;
 };
 
 // Provides storage for deduplicated instances of generics.
@@ -98,6 +119,11 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
   auto OutputYaml() const -> Yaml::OutputMapping {
     return generic_instances_.OutputYaml();
   }
+
+  auto array_ref() const -> llvm::ArrayRef<GenericInstance> {
+    return generic_instances_.array_ref();
+  }
+  auto size() const -> size_t { return generic_instances_.size(); }
 
  private:
   // Context for hashing keys.

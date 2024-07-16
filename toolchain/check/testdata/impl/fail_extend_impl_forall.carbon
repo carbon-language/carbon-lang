@@ -28,7 +28,7 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.type: type = generic_interface_type @GenericInterface [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %GenericInterface: %GenericInterface.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @GenericInterface, (%T) [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @GenericInterface, file.%GenericInterface.decl(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -58,7 +58,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface
 // CHECK:STDOUT:     generic [file.%T.loc11_28.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = %T.ref (constants.%T)]
 // CHECK:STDOUT:     %x.loc12_8.1: @GenericInterface.%T.ref (%T) = param x
@@ -108,5 +108,20 @@ class C {
 // CHECK:STDOUT:     generic [@C.%T.loc19_23.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%GenericInterface.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc11_28.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericInterface.%F.decl(constants.%T, constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @GenericInterface.%T.ref => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.%F.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @impl.%T.ref => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

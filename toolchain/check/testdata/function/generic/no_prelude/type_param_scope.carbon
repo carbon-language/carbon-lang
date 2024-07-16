@@ -40,10 +40,15 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: fn @F(%T: type, %n: @F.%T (%T)) -> %T
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
-// CHECK:STDOUT:   %m: %T = bind_name m, %n.ref
-// CHECK:STDOUT:   %m.ref: %T = name_ref m, %m
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %n.ref: @F.%T.ref (%T) = name_ref n, %n
+// CHECK:STDOUT:   %m: @F.%T.ref (%T) = bind_name m, %n.ref
+// CHECK:STDOUT:   %m.ref: @F.%T.ref (%T) = name_ref m, %m
 // CHECK:STDOUT:   return %m.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%F.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
