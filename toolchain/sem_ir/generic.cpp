@@ -53,8 +53,7 @@ auto GenericInstanceStore::CollectMemUsage(MemUsage& mem_usage,
                 KeyContext(generic_instances_.array_ref()));
 }
 
-auto GetConstantInInstance(const File& sem_ir,
-                           GenericInstanceId /*instance_id*/,
+auto GetConstantInInstance(const File& sem_ir, GenericInstanceId instance_id,
                            ConstantId const_id) -> ConstantId {
   if (!const_id.is_symbolic()) {
     // Type does not depend on a generic parameter.
@@ -67,9 +66,26 @@ auto GetConstantInInstance(const File& sem_ir,
     return const_id;
   }
 
-  // TODO: Look up the value in the generic instance. For now, return the
-  // canonical constant value.
-  return sem_ir.constant_values().Get(symbolic.inst_id);
+  if (!instance_id.is_valid()) {
+    // TODO: We have a generic constant but no instance. Investigate whether we
+    // can CHECK-fail here. For now, produce the canonical value of the
+    // constant.
+    return sem_ir.constant_values().Get(symbolic.inst_id);
+  }
+
+  const auto& specific = sem_ir.generic_instances().Get(instance_id);
+  if (specific.generic_id != symbolic.generic_id) {
+    // TODO: Given an instance for the wrong generic. If the symbolic constant
+    // is from an enclosing generic, take the value from the corresponding
+    // instance. Otherwise, CHECK-fail.
+    return sem_ir.constant_values().Get(symbolic.inst_id);
+  }
+
+  auto value_block_id = specific.GetValueBlock(symbolic.index.region());
+  CARBON_CHECK(value_block_id.is_valid())
+      << "Queried region of " << instance_id << " before it was resolved.";
+  return sem_ir.constant_values().Get(
+      sem_ir.inst_blocks().Get(value_block_id)[symbolic.index.index()]);
 }
 
 auto GetConstantValueInInstance(const File& sem_ir,

@@ -159,6 +159,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
@@ -250,6 +252,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific file.%A.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.%B.decl(constants.%T, constants.%N) {

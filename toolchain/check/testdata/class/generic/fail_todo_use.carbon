@@ -50,13 +50,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Get: %Get.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.6: type = unbound_element_type <unexpected instref inst+31> (%Class.2), file.%T.loc11_13.2 (%T) [symbolic]
-// CHECK:STDOUT:   %.7: type = ptr_type %.5 [symbolic]
+// CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, file.%Class.decl(i32) [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type %Class.3, i32 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.k: i32} [template]
 // CHECK:STDOUT:   %.10: type = ptr_type %Class.3 [template]
@@ -114,7 +114,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: @Class.%.loc12_25 (%.2) = name_ref self, @Class.%self.loc12_15.3
 // CHECK:STDOUT:   %.loc13_17.1: ref @Class.%.loc12_21 (%Class.2) = deref %self.ref
-// CHECK:STDOUT:   %k.ref: <unexpected instref inst+41> (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
+// CHECK:STDOUT:   %k.ref: <unexpected instref inst+40> (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc13_17.2: ref @Class.%T.ref.loc12 (%T) = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:   %.loc13_12: @Class.%.loc12_34 (%.3) = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
@@ -150,7 +150,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
 // CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.2
-// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.6
+// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.4
 // CHECK:STDOUT:   <unexpected instref inst+28> => <unexpected instref inst+29>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,8 +172,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.2
-// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.6
+// CHECK:STDOUT:   <unexpected instref inst+31> => constants.%Class.3
+// CHECK:STDOUT:   <unexpected instref inst+32> => constants.%.7
 // CHECK:STDOUT:   <unexpected instref inst+28> => <unexpected instref inst+29>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
