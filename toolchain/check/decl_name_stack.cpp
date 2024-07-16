@@ -206,7 +206,7 @@ static auto PushNameQualifierScope(Context& context,
   // parameter scope.
   context.scope_stack().PopIfEmpty();
 
-  // When declaring a member of a generic, resolve the specific self.
+  // When declaring a member of a generic, resolve the self specific.
   if (instance_id.is_valid()) {
     ResolveSpecificDefinition(context, instance_id);
   }
