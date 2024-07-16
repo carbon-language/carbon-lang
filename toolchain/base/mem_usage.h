@@ -129,12 +129,14 @@ class MemUsage {
   }
 
  private:
+  // Memory usage for a specific label.
   struct Entry {
     std::string label;
     int64_t used_bytes;
     int64_t reserved_bytes;
   };
 
+  // The accumulated data on memory usage.
   llvm::SmallVector<Entry> mem_usage_;
 };
 
