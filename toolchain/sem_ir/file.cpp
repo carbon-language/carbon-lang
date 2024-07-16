@@ -172,6 +172,32 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
   });
 }
 
+auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+    -> void {
+  mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "bind_names_"), bind_names_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "generics_"), generics_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "generic_instances_"),
+                    generic_instances_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
+                    import_ir_insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "type_blocks_"), type_blocks_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "name_scopes_"), name_scopes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "constant_values_"),
+                    constant_values_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_blocks_"), inst_blocks_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
+  mem_usage.Add(MemUsage::ConcatLabel(label, "complete_types_"),
+                complete_types_);
+}
+
 // Map an instruction kind representing a type into an integer describing the
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.

@@ -120,6 +120,10 @@ class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
     return generic_instances_.OutputYaml();
   }
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
   auto array_ref() const -> llvm::ArrayRef<GenericInstance> {
     return generic_instances_.array_ref();
   }
