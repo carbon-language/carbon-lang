@@ -222,7 +222,7 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   return eval_context.context.constant_values().GetInstId(const_id);
 }
 
-// Gets the type corresponding to the specified type in this evaluation context.
+// Given a type which may refer to a generic parameter, returns the corresponding type in the evaluation context.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
                              Phase* phase) -> SemIR::TypeId {
   auto const_id = eval_context.GetConstantValue(type_id);
