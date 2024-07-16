@@ -44,9 +44,9 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: fn @F(%T: type, %p: file.%.loc11_21 (%.2)) -> %.1
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc12_10.1: ref %.1 = deref %p.ref
-// CHECK:STDOUT:   %.loc12_10.2: %.1 = bind_value %.loc12_10.1
+// CHECK:STDOUT:   %p.ref: file.%.loc11_21 (%.2) = name_ref p, %p
+// CHECK:STDOUT:   %.loc12_10.1: ref file.%.loc11_20 (%.1) = deref %p.ref
+// CHECK:STDOUT:   %.loc12_10.2: file.%.loc11_20 (%.1) = bind_value %.loc12_10.1
 // CHECK:STDOUT:   return %.loc12_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

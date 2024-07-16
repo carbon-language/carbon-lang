@@ -152,7 +152,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: fn @F(%n: %T) -> %T
 // CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: @Class.%T.ref.loc5_11 (%T) = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

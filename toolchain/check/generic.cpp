@@ -130,7 +130,16 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   context.inst_block_stack().Push();
 
   Map<SemIR::InstId, SemIR::InstId> constants_in_generic;
-  // TODO: For the definition region, populate constants from the declaration.
+
+  // For the definition region, populate constants from the declaration.
+  if (region == SemIR::GenericInstIndex::Region::Definition) {
+    auto decl_eval_block = context.inst_blocks().Get(
+        context.generics().Get(generic_id).decl_block_id);
+    for (auto inst_id : decl_eval_block) {
+      constants_in_generic.Insert(
+          context.constant_values().GetConstantInstId(inst_id), inst_id);
+    }
+  }
 
   // The work done in this loop might invalidate iterators into the generic
   // region stack, but shouldn't add new dependent instructions to the current

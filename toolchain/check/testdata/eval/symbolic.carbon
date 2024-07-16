@@ -50,19 +50,19 @@ fn F(T:! type) {
 // CHECK:STDOUT: fn @F(%T: type)
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref.loc13_11: type = name_ref T, %T [symbolic = %T.ref.loc13_11 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc13_11: type = name_ref T, %T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc13_12: type = ptr_type %T [symbolic = %.loc13_12 (constants.%.2)]
-// CHECK:STDOUT:   %T.ref.loc13_21: type = name_ref T, %T [symbolic = %T.ref.loc13_11 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc13_21: type = name_ref T, %T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc13_15: type = const_type %T [symbolic = %.loc13_15 (constants.%.3)]
 // CHECK:STDOUT:   %.loc13_22.1: %.4 = tuple_literal (%.loc13_12, %.loc13_15)
 // CHECK:STDOUT:   %.loc13_22.2: type = converted %.loc13_22.1, constants.%.5 [symbolic = %.loc13_22.2 (constants.%.5)]
 // CHECK:STDOUT:   %u.var: ref @F.%.loc13_22.2 (%.5) = var u
 // CHECK:STDOUT:   %u: ref @F.%.loc13_22.2 (%.5) = bind_name u, %u.var
-// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = %T.ref.loc13_11 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc14: type = struct_type {.a: %T} [symbolic = %.loc14 (constants.%.8)]
 // CHECK:STDOUT:   %v.var: ref @F.%.loc14 (%.8) = var v
 // CHECK:STDOUT:   %v: ref @F.%.loc14 (%.8) = bind_name v, %v.var
-// CHECK:STDOUT:   %T.ref.loc15: type = name_ref T, %T [symbolic = %T.ref.loc13_11 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc15: type = name_ref T, %T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc15_14: i32 = int_literal 5 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc15_15: type = array_type %.loc15_14, %T [symbolic = %.loc15_15 (constants.%.10)]
 // CHECK:STDOUT:   %w.var: ref @F.%.loc15_15 (%.10) = var w

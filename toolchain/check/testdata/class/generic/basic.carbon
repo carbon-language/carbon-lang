@@ -38,7 +38,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.6: type = unbound_element_type <unexpected instref inst+40> (%Class.2), @Class.%T.ref.loc21 (%T) [symbolic]
+// CHECK:STDOUT:   %.6: type = unbound_element_type <unexpected instref inst+40> (%Class.2), file.%T.loc11_13.2 (%T) [symbolic]
 // CHECK:STDOUT:   %.7: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,7 +76,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc17 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc21 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   %.loc21: <unexpected instref inst+41> (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -89,21 +89,21 @@ class Class(T:! type) {
 // CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: @Class.%.loc12_29 (%.2)]() -> %.3
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %.2 = name_ref self, @Class.%self.loc12_19.3
-// CHECK:STDOUT:   %.loc13_17.1: ref %Class.2 = deref %self.ref
-// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
-// CHECK:STDOUT:   %.loc13_17.2: ref %T = class_element_access %.loc13_17.1, element0
-// CHECK:STDOUT:   %.loc13_12: %.3 = addr_of %.loc13_17.2
+// CHECK:STDOUT:   %self.ref: @Class.%.loc12_29 (%.2) = name_ref self, @Class.%self.loc12_19.3
+// CHECK:STDOUT:   %.loc13_17.1: ref @Class.%.loc12_25 (%Class.2) = deref %self.ref
+// CHECK:STDOUT:   %k.ref: <unexpected instref inst+50> (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:   %.loc13_17.2: ref @Class.%T.ref.loc12 (%T) = class_element_access %.loc13_17.1, element0
+// CHECK:STDOUT:   %.loc13_12: @Class.%.loc12_38 (%.3) = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: @Class.%.loc17 (%Class.2)]() -> %T
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %Class.2 = name_ref self, @Class.%self.loc17_15.2
-// CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
-// CHECK:STDOUT:   %.loc18_16.1: ref %T = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc18_16.2: %T = bind_value %.loc18_16.1
+// CHECK:STDOUT:   %self.ref: @Class.%.loc17 (%Class.2) = name_ref self, @Class.%self.loc17_15.2
+// CHECK:STDOUT:   %k.ref: <unexpected instref inst+56> (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:   %.loc18_16.1: ref @Class.%T.ref.loc17 (%T) = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc18_16.2: @Class.%T.ref.loc17 (%T) = bind_value %.loc18_16.1
 // CHECK:STDOUT:   return %.loc18_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +112,6 @@ class Class(T:! type) {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   @Class.%T.ref.loc21 => constants.%T
 // CHECK:STDOUT:   <unexpected instref inst+40> => constants.%Class.2
 // CHECK:STDOUT:   <unexpected instref inst+41> => constants.%.6
 // CHECK:STDOUT:   <unexpected instref inst+37> => <unexpected instref inst+38>
@@ -132,7 +131,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   @Class.%T.ref.loc17 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref.loc21) {
+// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }

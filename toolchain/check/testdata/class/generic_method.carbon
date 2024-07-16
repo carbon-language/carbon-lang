@@ -27,7 +27,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: %T} [symbolic]
-// CHECK:STDOUT:   %.4: type = unbound_element_type <unexpected instref inst+27> (%Class.2), @Class.%T.ref.loc12 (%T) [symbolic]
+// CHECK:STDOUT:   %.4: type = unbound_element_type <unexpected instref inst+27> (%Class.2), file.%T.loc11_13.2 (%T) [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,7 +57,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12 (constants.%T)]
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   %.loc12: <unexpected instref inst+28> (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc13 (constants.%Class.2)]
@@ -86,7 +86,6 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   @Class.%T.ref.loc12 => constants.%T
 // CHECK:STDOUT:   <unexpected instref inst+27> => constants.%Class.2
 // CHECK:STDOUT:   <unexpected instref inst+28> => constants.%.4
 // CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
@@ -98,7 +97,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   @Class.%T.ref.loc13 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref.loc12) {
+// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
