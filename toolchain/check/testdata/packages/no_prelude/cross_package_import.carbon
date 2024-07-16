@@ -354,29 +354,31 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     .F = %import_ref.1
+// CHECK:STDOUT:     .F2 = %import_ref.2
+// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//fn2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//fn2, inst+1, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn2
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, file.%Other [template = file.%Other]
+// CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
-// CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, file.%Other [template = file.%Other]
+// CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%import_ref.2 [template = constants.%F2]
 // CHECK:STDOUT:   %F2.call: init %.1 = call %F2.ref()
 // CHECK:STDOUT:   return
@@ -397,26 +399,27 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     .F = %import_ref.1
+// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//fn_extern
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Other//fn_extern, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_extern
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
+// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
 // CHECK:STDOUT:   return
@@ -426,15 +429,18 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     import Other//fn
 // CHECK:STDOUT:     import Other//fn_conflict
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Other = imports.%Other
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon
@@ -448,26 +454,27 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     .F = %import_ref.1
+// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//fn_conflict
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Other//fn_conflict, inst+6, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_conflict
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
+// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
 // CHECK:STDOUT:   return
@@ -484,19 +491,20 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//other_ns, inst+1, loaded
+// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .F = file.%F.decl
+// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Main//other_ns, inst+1, loaded
-// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref, [template] {
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -513,15 +521,18 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     .G = file.%G.decl
 // CHECK:STDOUT:     import Other//fn
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Other = imports.%Other
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %.loc13: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT: }
@@ -539,15 +550,18 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     .Nested = %Nested
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     .Nested = file.%Nested
 // CHECK:STDOUT:     import Other//fn
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Other = imports.%Other
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Nested: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
@@ -567,15 +581,18 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     .G = file.%G.decl
 // CHECK:STDOUT:     import Other//fn
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Other = imports.%Other
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -592,21 +609,24 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %UseF: %UseF.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
+// CHECK:STDOUT:     import Other//fn_use
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:     .UseF = %UseF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other: <namespace> = namespace %Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn_use
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseF.decl: %UseF.type = fn_decl @UseF [template = constants.%UseF] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
+// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

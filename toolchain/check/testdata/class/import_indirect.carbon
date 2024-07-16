@@ -107,13 +107,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -122,6 +117,14 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -143,20 +146,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .D = %D
-// CHECK:STDOUT:     .b_val = %b_val
-// CHECK:STDOUT:     .b_ptr = %b_ptr
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -165,6 +155,19 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .D = %D
+// CHECK:STDOUT:     .b_val = %b_val
+// CHECK:STDOUT:     .b_ptr = %b_ptr
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
@@ -206,20 +209,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .E = %E
-// CHECK:STDOUT:     .c_val = %c_val
-// CHECK:STDOUT:     .c_ptr = %c_ptr
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -228,6 +218,19 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .E = %E
+// CHECK:STDOUT:     .c_val = %c_val
+// CHECK:STDOUT:     .c_ptr = %c_ptr
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %E: type = bind_alias E, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
@@ -272,6 +275,15 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//b, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//b, inst+25, unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,21 +293,12 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .D = imports.%import_ref.2
 // CHECK:STDOUT:     .b_val = imports.%import_ref.3
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.4
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
@@ -338,6 +341,15 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//b, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+25, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,21 +359,12 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_val = imports.%import_ref.2
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.3
 // CHECK:STDOUT:     .C = imports.%import_ref.4
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
@@ -406,6 +409,15 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//c, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//c, inst+25, unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//b, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -417,21 +429,12 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .E = imports.%import_ref.4
 // CHECK:STDOUT:     .c_val = imports.%import_ref.5
 // CHECK:STDOUT:     .c_ptr = imports.%import_ref.6
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
@@ -476,6 +479,15 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//b, inst+10, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//b, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//b, inst+25, unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//b, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -487,21 +499,12 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .D = imports.%import_ref.4
 // CHECK:STDOUT:     .b_val = imports.%import_ref.5
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.6
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
