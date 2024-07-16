@@ -28,11 +28,57 @@ class FormatterImpl {
                          llvm::raw_ostream& out, int indent)
       : sem_ir_(sem_ir), inst_namer_(inst_namer), out_(out), indent_(indent) {}
 
-  // Prints the full SemIR.
-  auto Print() -> void { Format(); }
+  // Prints the SemIR.
+  //
+  // Constants are printed first and may be referenced by later sections,
+  // including file-scoped instructions. The file scope may contain entity
+  // declarations which are defined later, such as classes.
+  auto Format() -> void {
+    out_ << "--- " << sem_ir_.filename() << "\n\n";
+
+    FormatConstants();
+    FormatImportRefs();
+
+    out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::File) << " ";
+    OpenBrace();
+
+    // TODO: Handle the case where there are multiple top-level instruction
+    // blocks. For example, there may be branching in the initializer of a
+    // global or a type expression.
+    if (auto block_id = sem_ir_.top_inst_block_id(); block_id.is_valid()) {
+      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
+      FormatCodeBlock(block_id);
+    }
+
+    CloseBrace();
+    out_ << '\n';
+
+    for (int i : llvm::seq(sem_ir_.interfaces().size())) {
+      FormatInterface(InterfaceId(i));
+    }
+
+    for (int i : llvm::seq(sem_ir_.impls().size())) {
+      FormatImpl(ImplId(i));
+    }
+
+    for (int i : llvm::seq(sem_ir_.classes().size())) {
+      FormatClass(ClassId(i));
+    }
+
+    for (int i : llvm::seq(sem_ir_.functions().size())) {
+      FormatFunction(FunctionId(i));
+    }
+
+    for (int i : llvm::seq(sem_ir_.generic_instances().size())) {
+      FormatSpecific(GenericInstanceId(i));
+    }
+
+    // End-of-file newline.
+    out_ << "\n";
+  }
 
   // Prints a code block.
-  auto PrintPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
+  auto FormatPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
       -> void {
     out_ << ' ';
     OpenBrace();
@@ -48,8 +94,16 @@ class FormatterImpl {
     CloseBrace();
   }
 
-  // Prints a single string.
-  auto PrintInst(SemIR::InstId inst_id) -> void { FormatInstruction(inst_id); }
+  // Prints a single instruction.
+  auto FormatInstruction(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
+      Indent();
+      out_ << "invalid\n";
+      return;
+    }
+
+    FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
+  }
 
  private:
   enum class AddSpace : bool { Before, After };
@@ -103,55 +157,6 @@ class FormatterImpl {
   auto WrapLine() -> void {
     out_ << '\n';
     Indent(4);
-  }
-
-  // Prints the SemIR.
-  //
-  // Constants are printed first and may be referenced by later sections,
-  // including file-scoped instructions. The file scope may contain entity
-  // declarations which are defined later, such as classes.
-  auto Format() -> void {
-    out_ << "--- " << sem_ir_.filename() << "\n\n";
-
-    FormatConstants();
-    FormatImportRefs();
-
-    out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::File) << " ";
-    OpenBrace();
-
-    // TODO: Handle the case where there are multiple top-level instruction
-    // blocks. For example, there may be branching in the initializer of a
-    // global or a type expression.
-    if (auto block_id = sem_ir_.top_inst_block_id(); block_id.is_valid()) {
-      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
-      FormatCodeBlock(block_id);
-    }
-
-    CloseBrace();
-    out_ << '\n';
-
-    for (int i : llvm::seq(sem_ir_.interfaces().size())) {
-      FormatInterface(InterfaceId(i));
-    }
-
-    for (int i : llvm::seq(sem_ir_.impls().size())) {
-      FormatImpl(ImplId(i));
-    }
-
-    for (int i : llvm::seq(sem_ir_.classes().size())) {
-      FormatClass(ClassId(i));
-    }
-
-    for (int i : llvm::seq(sem_ir_.functions().size())) {
-      FormatFunction(FunctionId(i));
-    }
-
-    for (int i : llvm::seq(sem_ir_.generic_instances().size())) {
-      FormatSpecific(GenericInstanceId(i));
-    }
-
-    // End-of-file newline.
-    out_ << "\n";
   }
 
   auto FormatConstants() -> void {
@@ -481,16 +486,6 @@ class FormatterImpl {
       Indent();
       out_ << "has_error\n";
     }
-  }
-
-  auto FormatInstruction(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
-      Indent();
-      out_ << "invalid\n";
-      return;
-    }
-
-    FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
   auto FormatInstruction(InstId inst_id, Inst inst) -> void {
@@ -1046,20 +1041,20 @@ Formatter::~Formatter() = default;
 
 auto Formatter::Print(llvm::raw_ostream& out) -> void {
   FormatterImpl formatter(sem_ir_, &inst_namer_, out, /*indent=*/0);
-  formatter.Print();
+  formatter.Format();
 }
 
 auto Formatter::PrintPartialTrailingCodeBlock(
     llvm::ArrayRef<SemIR::InstId> block, int indent, llvm::raw_ostream& out)
     -> void {
   FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.PrintPartialTrailingCodeBlock(block);
+  formatter.FormatPartialTrailingCodeBlock(block);
 }
 
 auto Formatter::PrintInst(SemIR::InstId inst_id, int indent,
                           llvm::raw_ostream& out) -> void {
   FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.PrintInst(inst_id);
+  formatter.FormatInstruction(inst_id);
 }
 
 }  // namespace Carbon::SemIR
