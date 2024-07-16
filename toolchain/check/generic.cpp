@@ -145,8 +145,16 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
     if ((dep_kind & GenericRegionStack::DependencyKind::SymbolicType) !=
         GenericRegionStack::DependencyKind::None) {
       auto inst = context.insts().Get(inst_id);
-      inst.SetType(AddGenericTypeToEvalBlock(
-          context, generic_id, region, constants_in_generic, inst.type_id()));
+      auto type_id = AddGenericTypeToEvalBlock(
+          context, generic_id, region, constants_in_generic, inst.type_id());
+      // TODO: Eventually, completeness requirements should be modeled as
+      // constraints on the generic rather than properties of the type. For now,
+      // require the transformed type to be complete if the original was.
+      // TODO: We'll also need to do this when evaluating the eval block.
+      if (context.types().IsComplete(inst.type_id())) {
+        context.TryToCompleteType(type_id);
+      }
+      inst.SetType(type_id);
       context.sem_ir().insts().Set(inst_id, inst);
     }
 
@@ -231,7 +239,10 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     return;
   }
 
-  // TODO: Track the list of dependent instructions in this region.
+  auto definition_block_id = MakeGenericEvalBlock(
+      context, generic_id, SemIR::GenericInstIndex::Region::Definition);
+  context.generics().Get(generic_id).definition_block_id = definition_block_id;
+
   context.generic_region_stack().Pop();
 }
 

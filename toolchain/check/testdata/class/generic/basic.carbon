@@ -75,8 +75,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc17 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc21: %.4 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc21 (constants.%T)]
+// CHECK:STDOUT:   %.loc21: <unexpected instref inst+41> (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -123,5 +123,10 @@ class Class(T:! type) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%.loc17 => constants.%Class.2
 // CHECK:STDOUT:   @Class.%T.ref.loc17 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(@Class.%T.ref.loc21) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
