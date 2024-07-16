@@ -103,6 +103,11 @@ class TypeStore : public ValueStore<TypeId> {
     return int_type && int_type->int_kind.is_signed();
   }
 
+  // This has no direct storage, so there's no interesting memory usage to
+  // collect.
+  auto CollectMemUsage(MemUsage& /*mem_usage*/, llvm::StringRef /*label*/) const
+      -> void {}
+
  private:
   InstStore* insts_;
   ConstantValueStore* constants_;

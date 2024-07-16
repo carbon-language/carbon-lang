@@ -96,6 +96,14 @@ class ConstantValueStore {
     return symbolic_constants_[const_id.symbolic_index()];
   }
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Add(MemUsage::ConcatLabel(label, "values_"), values_);
+    mem_usage.Add(MemUsage::ConcatLabel(label, "symbolic_constants_"),
+                  symbolic_constants_);
+  }
+
   // Returns the constant values mapping as an ArrayRef whose keys are
   // instruction indexes. Some of the elements in this mapping may be Invalid or
   // NotConstant.
@@ -132,6 +140,13 @@ class ConstantStore {
   // This updates `sem_ir.insts()` and `sem_ir.constant_values()` if the
   // constant is new.
   auto GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId;
+
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Add(MemUsage::ConcatLabel(label, "map_"), map_);
+    mem_usage.Add(MemUsage::ConcatLabel(label, "constants_"), constants_);
+  }
 
   // Returns a copy of the constant IDs as a vector, in an arbitrary but
   // stable order. This should not be used anywhere performance-sensitive.

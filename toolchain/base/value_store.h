@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/mem_usage.h"
 #include "toolchain/base/yaml.h"
 
 namespace Carbon {
@@ -187,6 +188,12 @@ class ValueStore
     });
   }
 
+  // Collects memory usage of the values.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Add(label.str(), values_);
+  }
+
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
   auto size() const -> size_t { return values_.size(); }
 
@@ -236,6 +243,15 @@ class CanonicalValueStore {
     return values_.array_ref();
   }
   auto size() const -> size_t { return values_.size(); }
+
+  // Collects memory usage of the values and deduplication set.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
+    auto bytes =
+        set_.ComputeMetrics(KeyContext(values_.array_ref())).storage_bytes;
+    mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
+  }
 
  private:
   class KeyContext;
@@ -320,6 +336,18 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
                 map.Add("strings", string_literals_.OutputYaml());
               }));
     });
+  }
+
+  // Collects memory usage for the various shared stores.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "ints_"), ints_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "reals_"), reals_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "floats_"), floats_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "identifiers_"),
+                      identifiers_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "string_literals_"),
+                      string_literals_);
   }
 
  private:

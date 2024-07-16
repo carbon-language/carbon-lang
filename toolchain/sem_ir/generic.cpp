@@ -44,6 +44,15 @@ auto GenericInstanceStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
       .key();
 }
 
+auto GenericInstanceStore::CollectMemUsage(MemUsage& mem_usage,
+                                           llvm::StringRef label) const
+    -> void {
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "generic_instances_"),
+                    generic_instances_);
+  mem_usage.Add(MemUsage::ConcatLabel(label, "lookup_table_"), lookup_table_,
+                KeyContext(generic_instances_.array_ref()));
+}
+
 auto GetConstantInInstance(const File& sem_ir,
                            GenericInstanceId /*instance_id*/,
                            ConstantId const_id) -> ConstantId {

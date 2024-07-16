@@ -221,6 +221,7 @@ cc_library(
         "//common:ostream",
         "//common:string_helpers",
         "//toolchain/base:index_base",
+        "//toolchain/base:mem_usage",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
