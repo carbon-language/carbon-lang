@@ -58,7 +58,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface
 // CHECK:STDOUT:     generic [file.%T.loc11_28.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = %T.ref (constants.%T)]
 // CHECK:STDOUT:     %x.loc12_8.1: @GenericInterface.%T.ref (%T) = param x
