@@ -17,11 +17,11 @@
 
 namespace Carbon {
 
-// Types supporting memory usage tracking should implement:
+// Types supporting memory usage tracking should define a method:
 //
 //   // Collects memory usage of members.
-//   auto CollectMemUsage(llvm::StringRef label, AddMemUsageFn add_mem_usage)
-//       const -> void;
+//   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+//       -> void;
 //
 // The label should be concatenated with any child labels using MemUsageLabel in
 // order to reflect allocation structure.
@@ -48,9 +48,9 @@ class MemUsage {
   }
 
   template <typename KeyT, ssize_t SmallSize, typename KeyContextT>
-  auto Add(std::string label, Set<KeyT, SmallSize, KeyContextT> map,
+  auto Add(std::string label, Set<KeyT, SmallSize, KeyContextT> set,
            KeyContextT key_context = KeyContextT()) -> void {
-    auto bytes = map.ComputeMetrics(key_context).storage_bytes;
+    auto bytes = set.ComputeMetrics(key_context).storage_bytes;
     mem_usage_.push_back({std::move(label), bytes, bytes});
   }
 

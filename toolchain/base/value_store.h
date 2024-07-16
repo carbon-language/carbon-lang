@@ -244,7 +244,7 @@ class CanonicalValueStore {
   }
   auto size() const -> size_t { return values_.size(); }
 
-  // Collects memory usage the values and deduplication set.
+  // Collects memory usage of the values and deduplication set.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
