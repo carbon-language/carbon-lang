@@ -26,7 +26,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = unexpected.inst+3
+// CHECK:STDOUT:   .Self = <unexpected>.inst+3
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

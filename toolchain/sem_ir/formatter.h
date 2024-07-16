@@ -11,6 +11,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::SemIR {
 
@@ -21,17 +22,21 @@ class Formatter {
                      const Parse::Tree& parse_tree, const File& sem_ir);
   ~Formatter();
 
+  // Prints the full IR.
   auto Print(llvm::raw_ostream& out) -> void;
+  // Prints a single code block. Only prints the last several instructions of
+  // large blocks.
   auto PrintPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block,
                                      int indent, llvm::raw_ostream& out)
       -> void;
+  // Prints a single instruction.
   auto PrintInst(SemIR::InstId inst_id, int indent, llvm::raw_ostream& out)
       -> void;
 
  private:
-  class FormatterImpl;
-
-  std::unique_ptr<FormatterImpl> formatter_;
+  const File& sem_ir_;
+  // Caches naming between Print calls.
+  InstNamer inst_namer_;
 };
 
 }  // namespace Carbon::SemIR

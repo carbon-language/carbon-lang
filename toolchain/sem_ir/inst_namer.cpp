@@ -153,7 +153,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     // This should not happen in valid IR.
     std::string str;
     llvm::raw_string_ostream str_stream(str);
-    str_stream << "unexpected." << inst_id;
+    str_stream << "<unexpected>." << inst_id;
     auto loc_id = sem_ir_.insts().GetLocId(inst_id);
     // TODO: Consider handling inst_id cases.
     if (loc_id.is_node_id()) {
