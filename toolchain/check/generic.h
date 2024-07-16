@@ -47,8 +47,8 @@ auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
     -> SemIR::GenericInstanceId;
 
 // Attempts to resolve the definition of the given specific, by evaluating the
-// eval block of the corresponding generic. Returns false if a definition is
-// not available.
+// eval block of the corresponding generic and storing a corresponding value
+// block in the specific. Returns false if a definition is not available.
 auto ResolveSpecificDefinition(Context& context,
                                SemIR::GenericInstanceId specific_id) -> bool;
 
