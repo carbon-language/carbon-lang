@@ -43,17 +43,17 @@ fn B() {
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
-// CHECK:STDOUT:     type7:           {kind: copy, type: type7}
-// CHECK:STDOUT:     type11:          {kind: none, type: type12}
-// CHECK:STDOUT:     type12:          {kind: none, type: type12}
+// CHECK:STDOUT:     'type(instNamespaceType)': {kind: copy, type: type(instNamespaceType)}
+// CHECK:STDOUT:     'type(inst+2)':    {kind: none, type: type(inst+3)}
+// CHECK:STDOUT:     'type(inst+3)':    {kind: none, type: type(inst+3)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type7}
-// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type11}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
+// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type(inst+2)}
 // CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
-// CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type11}
+// CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type(inst+2)}
 // CHECK:STDOUT:     'inst+5':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          template inst+0
@@ -61,6 +61,7 @@ fn B() {
 // CHECK:STDOUT:     'inst+2':          template inst+2
 // CHECK:STDOUT:     'inst+3':          template inst+3
 // CHECK:STDOUT:     'inst+4':          template inst+4
+// CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -117,27 +118,27 @@ fn B() {
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
-// CHECK:STDOUT:     type7:           {kind: copy, type: type7}
-// CHECK:STDOUT:     type13:          {kind: none, type: type14}
-// CHECK:STDOUT:     type14:          {kind: none, type: type14}
-// CHECK:STDOUT:     type19:          {kind: none, type: type14}
+// CHECK:STDOUT:     'type(instNamespaceType)': {kind: copy, type: type(instNamespaceType)}
+// CHECK:STDOUT:     'type(inst+4)':    {kind: none, type: type(inst+5)}
+// CHECK:STDOUT:     'type(inst+5)':    {kind: none, type: type(inst+5)}
+// CHECK:STDOUT:     'type(inst+10)':   {kind: none, type: type(inst+5)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type7}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+1':          {kind: ImportDecl, arg0: name1}
-// CHECK:STDOUT:     'inst+2':          {kind: Namespace, arg0: name_scope1, arg1: inst+1, type: type7}
-// CHECK:STDOUT:     'inst+3':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type13}
+// CHECK:STDOUT:     'inst+2':          {kind: Namespace, arg0: name_scope1, arg1: inst+1, type: type(instNamespaceType)}
+// CHECK:STDOUT:     'inst+3':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type(inst+4)}
 // CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
-// CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type13}
-// CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type7}
-// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: bind_name0, type: type19}
-// CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type19}
+// CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type(inst+4)}
+// CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(instNamespaceType)}
+// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: bind_name0, type: type(inst+10)}
+// CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type19}
-// CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type19}
-// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type14}
+// CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type(inst+10)}
+// CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type(inst+10)}
+// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type(inst+5)}
 // CHECK:STDOUT:     'inst+14':         {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          template inst+0
@@ -152,6 +153,7 @@ fn B() {
 // CHECK:STDOUT:     'inst+10':         template inst+10
 // CHECK:STDOUT:     'inst+11':         template inst+11
 // CHECK:STDOUT:     'inst+12':         template inst+11
+// CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:

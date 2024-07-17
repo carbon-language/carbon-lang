@@ -141,11 +141,19 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
     return index >= 0;
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
+  // Prints this ID to the given output stream. `include_template_prefix`
+  // indicates whether template constants should be prefixed with "template " so
+  // that they aren't printed the same as an InstId. This can be set to false if
+  // there is no risk of ambiguity.
+  auto Print(llvm::raw_ostream& out, bool include_template_prefix = true) const
+      -> void {
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_template()) {
-      out << "template " << template_inst_id();
+      if (include_template_prefix) {
+        out << "template ";
+      }
+      out << template_inst_id();
     } else if (is_symbolic()) {
       out << "symbolic " << symbolic_index();
     } else {
@@ -637,7 +645,7 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   }
 
   // Returns the constant ID that defines the type.
-  auto AsConstantId() -> ConstantId { return ConstantId(index); }
+  auto AsConstantId() const -> ConstantId { return ConstantId(index); }
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
@@ -646,7 +654,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
     } else if (*this == Error) {
       out << "Error";
     } else {
-      IdBase::Print(out);
+      out << "(";
+      AsConstantId().Print(out, /*include_template_prefix=*/false);
+      out << ")";
     }
   }
 };

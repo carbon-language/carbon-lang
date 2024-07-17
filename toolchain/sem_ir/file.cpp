@@ -173,6 +173,16 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                       }
                     }
                   }));
+          map.Add(
+              "symbolic_constants",
+              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                for (const auto& [i, symbolic] :
+                     llvm::enumerate(constant_values().symbolic_constants())) {
+                  map.Add(
+                      PrintToString(ConstantId::ForSymbolicConstantIndex(i)),
+                      Yaml::OutputScalar(symbolic));
+                }
+              }));
           map.Add("inst_blocks", inst_blocks_.OutputYaml());
         }));
   });
