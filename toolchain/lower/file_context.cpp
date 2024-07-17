@@ -35,12 +35,12 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
 auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  // Lower all types that were required to be complete. Note that this may
-  // leave some entries in `types_` null, if those types were mentioned but not
-  // used.
-  types_.resize(sem_ir_->types().size());
-  for (auto type_id : sem_ir_->complete_types()) {
-    types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
+  // Lower all types that were required to be complete.
+  types_.resize(sem_ir_->insts().size());
+  for (auto type_id : sem_ir_->types().complete_types()) {
+    if (type_id.index >= 0) {
+      types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
+    }
   }
 
   // Lower function declarations.
@@ -122,9 +122,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
 
-  // Don't lower associated functions.
-  // TODO: We shouldn't lower any function that has generic parameters.
-  if (sem_ir().insts().Is<SemIR::InterfaceDecl>(
+  // Don't lower generic functions or associated functions.
+  // TODO: Associated functions have `Self` in scope so should be treated as
+  // generic functions.
+  if (function.generic_id.is_valid() ||
+      sem_ir().insts().Is<SemIR::InterfaceDecl>(
           sem_ir().name_scopes().Get(function.parent_scope_id).inst_id)) {
     return nullptr;
   }
@@ -240,6 +242,12 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 
   llvm::Function* llvm_function = GetFunction(function_id);
+  if (!llvm_function) {
+    // We chose not to lower this function at all, for example because it's a
+    // generic function.
+    return;
+  }
+
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   const bool has_return_slot = function.has_return_slot();
@@ -320,8 +328,10 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
     -> llvm::Type* {
   switch (inst.builtin_inst_kind) {
     case SemIR::BuiltinInstKind::Invalid:
-    case SemIR::BuiltinInstKind::Error:
       CARBON_FATAL() << "Unexpected builtin type in lowering.";
+    case SemIR::BuiltinInstKind::Error:
+      // This is a complete type but uses of it should never be lowered.
+      return nullptr;
     case SemIR::BuiltinInstKind::TypeType:
       return context.GetTypeType();
     case SemIR::BuiltinInstKind::FloatType:

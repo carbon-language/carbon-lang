@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 
 #include "common/map.h"
+#include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -13,7 +14,7 @@ namespace Carbon::SemIR {
 
 // Information about a symbolic constant value. These are indexed by
 // `ConstantId`s for which `is_symbolic` is true.
-struct SymbolicConstant {
+struct SymbolicConstant : Printable<SymbolicConstant> {
   // The constant instruction that defines the value of this symbolic constant.
   InstId inst_id;
   // The enclosing generic. If this is invalid, then this is an abstract
@@ -23,6 +24,11 @@ struct SymbolicConstant {
   // The index of this symbolic constant within the generic's list of symbolic
   // constants, or invalid if `generic_id` is invalid.
   GenericInstIndex index;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{inst: " << inst_id << ", generic: " << generic_id
+        << ", index: " << index << "}";
+  }
 };
 
 // Provides a ValueStore wrapper for tracking the constant values of
@@ -108,6 +114,12 @@ class ConstantValueStore {
   // instruction indexes. Some of the elements in this mapping may be Invalid or
   // NotConstant.
   auto array_ref() const -> llvm::ArrayRef<ConstantId> { return values_; }
+
+  // Returns the symbolic constants mapping as an ArrayRef whose keys are
+  // symbolic indexes of constants.
+  auto symbolic_constants() const -> llvm::ArrayRef<SymbolicConstant> {
+    return symbolic_constants_;
+  }
 
  private:
   const ConstantId default_;

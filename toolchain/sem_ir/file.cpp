@@ -58,8 +58,8 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
   out << ", type: " << type_id << "}";
 }
 
-auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
+auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
+  out << "{value_rep: " << value_repr << "}";
 }
 
 File::File(CheckIRId check_ir_id, SharedValueStores& value_stores,
@@ -72,6 +72,12 @@ File::File(CheckIRId check_ir_id, SharedValueStores& value_stores,
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
+  // `type` and the error type are both complete types.
+  types_.SetValueRepr(TypeId::TypeType,
+                      {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
+  types_.SetValueRepr(TypeId::Error,
+                      {.kind = ValueRepr::Copy, .type_id = TypeId::Error});
+
   insts_.Reserve(BuiltinInstKind::ValidCount);
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the
@@ -167,6 +173,16 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                       }
                     }
                   }));
+          map.Add(
+              "symbolic_constants",
+              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                for (const auto& [i, symbolic] :
+                     llvm::enumerate(constant_values().symbolic_constants())) {
+                  map.Add(
+                      PrintToString(ConstantId::ForSymbolicConstantIndex(i)),
+                      Yaml::OutputScalar(symbolic));
+                }
+              }));
           map.Add("inst_blocks", inst_blocks_.OutputYaml());
         }));
   });
@@ -194,8 +210,6 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_blocks_"), inst_blocks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "complete_types_"),
-                complete_types_);
 }
 
 // Map an instruction kind representing a type into an integer describing the
@@ -706,7 +720,8 @@ auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
 
     case ValueRepr::Unknown:
       CARBON_FATAL()
-          << "Attempting to perform initialization of incomplete type";
+          << "Attempting to perform initialization of incomplete type "
+          << file.types().GetAsInst(type_id);
   }
 }
 
