@@ -615,7 +615,6 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
-  using ValueType = TypeInfo;
   // StringifyType() is used for diagnostics.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
@@ -629,6 +628,17 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   static const TypeId Invalid;
 
   using IdBase::IdBase;
+
+  // Returns the ID of the type corresponding to the constant `const_id`, which
+  // must be of type `type`. As an exception, the type `Error` is of type
+  // `Error`.
+  static constexpr auto ForTypeConstant(ConstantId const_id) -> TypeId {
+    return TypeId(const_id.index);
+  }
+
+  // Returns the constant ID that defines the type.
+  auto AsConstantId() -> ConstantId { return ConstantId(index); }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
     if (*this == TypeType) {
@@ -641,8 +651,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   }
 };
 
-constexpr TypeId TypeId::TypeType = TypeId(InvalidIndex - 2);
-constexpr TypeId TypeId::Error = TypeId(InvalidIndex - 1);
+constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
+    ConstantId::ForTemplateConstant(InstId::BuiltinTypeType));
+constexpr TypeId TypeId::Error = TypeId::ForTypeConstant(ConstantId::Error);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.

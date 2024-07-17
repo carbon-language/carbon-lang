@@ -24,7 +24,9 @@
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   generic_instances: {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
+// CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
+// CHECK:STDOUT:     type7:           {kind: copy, type: type7}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: BuiltinInst, arg0: TypeType, type: typeTypeType}
@@ -36,7 +38,7 @@
 // CHECK:STDOUT:     instBoundMethodType: {kind: BuiltinInst, arg0: BoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: BuiltinInst, arg0: NamespaceType, type: typeTypeType}
 // CHECK:STDOUT:     instWitnessType: {kind: BuiltinInst, arg0: WitnessType, type: typeTypeType}
-// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type7}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
 // CHECK:STDOUT:     instError:       template instError

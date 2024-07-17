@@ -64,19 +64,6 @@ class File : public Printable<File> {
         .getZExtValue();
   }
 
-  // Marks a type as complete, and sets its value representation.
-  auto CompleteType(TypeId object_type_id, ValueRepr value_repr) -> void {
-    if (object_type_id.index < 0) {
-      // We already know our builtin types are complete.
-      return;
-    }
-    CARBON_CHECK(types().Get(object_type_id).value_repr.kind ==
-                 ValueRepr::Unknown)
-        << "Type " << object_type_id << " completed more than once";
-    types().Get(object_type_id).value_repr = value_repr;
-    complete_types_.push_back(object_type_id);
-  }
-
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
@@ -173,13 +160,6 @@ class File : public Printable<File> {
   auto constants() -> ConstantStore& { return constants_; }
   auto constants() const -> const ConstantStore& { return constants_; }
 
-  // A list of types that were completed in this file, in the order in which
-  // they were completed. Earlier types in this list cannot contain instances of
-  // later types.
-  auto complete_types() const -> llvm::ArrayRef<TypeId> {
-    return complete_types_;
-  }
-
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
@@ -261,9 +241,6 @@ class File : public Printable<File> {
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(&insts_, &constant_values_);
-
-  // Types that were completed in this file.
-  llvm::SmallVector<TypeId> complete_types_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md

@@ -733,7 +733,7 @@ class TypeCompleter {
 
       case Phase::BuildValueRepr: {
         auto value_rep = BuildValueRepr(type_id, inst);
-        context_.sem_ir().CompleteType(type_id, value_rep);
+        context_.types().SetValueRepr(type_id, value_rep);
         CARBON_CHECK(old_work_list_size == work_list_.size())
             << "BuildValueRepr should not change work items";
         work_list_.pop_back();
@@ -1102,10 +1102,16 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
     -> SemIR::TypeId {
   CARBON_CHECK(constant_id.is_constant())
       << "Canonicalizing non-constant type: " << constant_id;
+  auto type_id =
+      insts().Get(constant_values().GetInstId(constant_id)).type_id();
+  // TODO: For now, we allow values of facet type to be used as types.
+  CARBON_CHECK(type_id == SemIR::TypeId::TypeType ||
+               types().Is<SemIR::InterfaceType>(type_id) ||
+               constant_id == SemIR::ConstantId::Error)
+      << "Forming type ID for non-type constant of type "
+      << types().GetAsInst(type_id);
 
-  auto result = type_ids_for_type_constants_.Insert(
-      constant_id, [&]() { return types().Add({.constant_id = constant_id}); });
-  return result.value();
+  return SemIR::TypeId::ForTypeConstant(constant_id);
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.

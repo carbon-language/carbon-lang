@@ -62,12 +62,10 @@ struct ValueRepr : public Printable<ValueRepr> {
   TypeId type_id = TypeId::Invalid;
 };
 
-// Information stored about a TypeId.
-struct TypeInfo : public Printable<TypeInfo> {
+// Information stored about a TypeId corresponding to a complete type.
+struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // The constant type value that defines this type.
-  ConstantId constant_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
   ValueRepr value_repr = ValueRepr();
