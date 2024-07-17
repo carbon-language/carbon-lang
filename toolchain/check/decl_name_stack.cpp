@@ -206,6 +206,11 @@ static auto PushNameQualifierScope(Context& context,
   // parameter scope.
   context.scope_stack().PopIfEmpty();
 
+  // When declaring a member of a generic, resolve the self specific.
+  if (instance_id.is_valid()) {
+    ResolveSpecificDefinition(context, instance_id);
+  }
+
   context.scope_stack().Push(scope_inst_id, scope_id, instance_id, has_error);
 
   // Enter a parameter scope in case the qualified name itself has parameters.

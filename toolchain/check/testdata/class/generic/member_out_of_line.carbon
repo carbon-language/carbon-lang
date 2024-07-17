@@ -152,13 +152,15 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: fn @F(%n: %T) -> %T
 // CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: %T = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: @Class.%T.ref.loc5_11 (%T) = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
@@ -250,12 +252,16 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific file.%A.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_9.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.%B.decl(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @A.%T.ref => constants.%T
 // CHECK:STDOUT:   @A.%N.loc5_11.2 => constants.%N
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.%F.decl(constants.%T, constants.%N) {

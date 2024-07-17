@@ -154,7 +154,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_32.loc7, %.loc7_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc7_8: %.2 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc7_8: <unexpected instref inst+39> (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -193,6 +193,11 @@ class Class(U:! type) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%CompleteClass.decl(file.%T.loc6_21.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc6_21.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%CompleteClass.decl(i32) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc6_21.2 => i32
@@ -225,7 +230,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref ir0, inst+6, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir0, inst+13, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir0, inst+51, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir0, inst+53, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir0, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+26, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir0, inst+34, unloaded
@@ -316,7 +321,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir1, inst+13, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.1 = import_ref ir1, inst+51, loaded [template = constants.%F.1]
+// CHECK:STDOUT:   %import_ref.3: %F.type.1 = import_ref ir1, inst+53, loaded [template = constants.%F.1]
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir4, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+26, unloaded
@@ -406,7 +411,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir1, inst+13, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+51, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+53, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir4, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.6: %.4 = import_ref ir1, inst+26, loaded [template = %.1]
@@ -493,7 +498,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref ir1, inst+13, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+51, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref ir1, inst+53, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+26, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+34, unloaded
@@ -567,7 +572,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref ir0, inst+6, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir0, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir0, inst+53, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -42,15 +42,15 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: fn @F(%T: type, %U: type)
 // CHECK:STDOUT:     generic [%T: type, %U: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc12: type = ptr_type %T [symbolic = %.loc12 (constants.%.2)]
 // CHECK:STDOUT:   %p.var: ref @F.%.loc12 (%.2) = var p
 // CHECK:STDOUT:   %p: ref @F.%.loc12 (%.2) = bind_name p, %p.var
-// CHECK:STDOUT:   %U.ref: type = name_ref U, %U [symbolic = %U.ref (constants.%U)]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, %U [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %p.ref: ref @F.%.loc12 (%.2) = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_15: @F.%.loc12 (%.2) = bind_value %p.ref
-// CHECK:STDOUT:   %.loc16_14: ref @F.%T.ref (%T) = deref %.loc16_15
-// CHECK:STDOUT:   %n: @F.%U.ref (%U) = bind_name n, <error>
+// CHECK:STDOUT:   %.loc16_14: ref @F.%T (%T) = deref %.loc16_15
+// CHECK:STDOUT:   %n: @F.%U (%U) = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

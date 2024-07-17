@@ -92,7 +92,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1
 // CHECK:STDOUT:     generic [file.%T.loc19_22.2: type] {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: <unexpected instref inst+13> (%.4) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -115,7 +115,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.3
 // CHECK:STDOUT:     generic [file.%T.loc38_27.2: %.2] {
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: <unexpected instref inst+39> (%.7) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -123,6 +123,11 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%.decl.loc19(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc19_22.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl.loc19(file.%T.loc19_22.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT: }
@@ -138,6 +143,11 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%.decl.loc38(constants.%T.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc38_27.2 => constants.%T.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%.decl.loc38(file.%T.loc38_27.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }

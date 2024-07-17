@@ -54,7 +54,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddWith
 // CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: <unexpected instref inst+17> (%.2) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -65,7 +65,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: %.2];
+// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: <unexpected instref inst+17> (%.2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%AddWith.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
@@ -74,6 +74,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.%F.decl(constants.%T, constants.%Self) {
 // CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%AddWith.decl(file.%T.loc4_19.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
