@@ -248,7 +248,7 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
 namespace {
 // Callbacks for performing substitution of a set of Substitutions into a
 // symbolic constant.
-class SubstConstantCallbacks : public SubstInstCallbacks {
+class SubstConstantCallbacks final : public SubstInstCallbacks {
  public:
   SubstConstantCallbacks(Context& context, Substitutions substitutions)
       : context_(context), substitutions_(substitutions) {}
