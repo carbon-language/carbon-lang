@@ -225,7 +225,8 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
   auto inst = context.insts().Get(result.inst_id);
-  auto type_id = GetTypeInInstance(context, result.instance_id, inst.type_id());
+  auto type_id = SemIR::GetTypeInInstance(context.sem_ir(), result.instance_id,
+                                          inst.type_id());
   CARBON_CHECK(type_id.is_valid()) << "Missing type for member " << inst;
 
   // If the named entity has a constant value that depends on its generic

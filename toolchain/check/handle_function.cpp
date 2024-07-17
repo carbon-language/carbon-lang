@@ -279,8 +279,9 @@ static auto BuildFunctionDecl(Context& context,
   // substitution is ready.
   if (return_storage_id.is_valid()) {
     auto return_storage = context.insts().Get(return_storage_id);
-    return_storage.SetType(GetTypeInInstance(
-        context, SemIR::GenericInstanceId::Invalid, return_storage.type_id()));
+    return_storage.SetType(SemIR::GetTypeInInstance(
+        context.sem_ir(), SemIR::GenericInstanceId::Invalid,
+        return_storage.type_id()));
     context.sem_ir().insts().Set(return_storage_id, return_storage);
   }
 
