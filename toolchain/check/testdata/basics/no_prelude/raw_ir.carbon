@@ -44,6 +44,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'type(symbolicConstant1)': {kind: pointer, type: type(symbolicConstant4)}
 // CHECK:STDOUT:     'type(symbolicConstant4)': {kind: copy, type: type(symbolicConstant4)}
 // CHECK:STDOUT:     'type(symbolicConstant2)': {kind: copy, type: type(symbolicConstant2)}
+// CHECK:STDOUT:     'type(symbolicConstant3)': {kind: pointer, type: type(symbolicConstant4)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:     type_block1:
@@ -73,17 +74,17 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+17':         {kind: FunctionType, arg0: function0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: StructValue, arg0: empty, type: type(inst+17)}
 // CHECK:STDOUT:     'inst+19':         {kind: PointerType, arg0: type(symbolicConstant1), type: typeTypeType}
-// CHECK:STDOUT:     'inst+20':         {kind: NameRef, arg0: name2, arg1: inst+6, type: type(symbolicConstant0)}
+// CHECK:STDOUT:     'inst+20':         {kind: NameRef, arg0: name2, arg1: inst+6, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+21':         {kind: TupleLiteral, arg0: empty, type: type(inst+8)}
-// CHECK:STDOUT:     'inst+22':         {kind: TupleLiteral, arg0: block13, type: type(symbolicConstant1)}
-// CHECK:STDOUT:     'inst+23':         {kind: TupleAccess, arg0: inst+15, arg1: element0, type: type(symbolicConstant0)}
-// CHECK:STDOUT:     'inst+24':         {kind: InitializeFrom, arg0: inst+20, arg1: inst+23, type: type(symbolicConstant0)}
+// CHECK:STDOUT:     'inst+22':         {kind: TupleLiteral, arg0: block13, type: type(symbolicConstant3)}
+// CHECK:STDOUT:     'inst+23':         {kind: TupleAccess, arg0: inst+15, arg1: element0, type: type(symbolicConstant2)}
+// CHECK:STDOUT:     'inst+24':         {kind: InitializeFrom, arg0: inst+20, arg1: inst+23, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+25':         {kind: TupleAccess, arg0: inst+15, arg1: element1, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+26':         {kind: TupleInit, arg0: empty, arg1: inst+25, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+27':         {kind: TupleValue, arg0: block15, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+28':         {kind: Converted, arg0: inst+21, arg1: inst+26, type: type(inst+8)}
-// CHECK:STDOUT:     'inst+29':         {kind: TupleInit, arg0: block14, arg1: inst+15, type: type(symbolicConstant1)}
-// CHECK:STDOUT:     'inst+30':         {kind: Converted, arg0: inst+22, arg1: inst+29, type: type(symbolicConstant1)}
+// CHECK:STDOUT:     'inst+29':         {kind: TupleInit, arg0: block14, arg1: inst+15, type: type(symbolicConstant3)}
+// CHECK:STDOUT:     'inst+30':         {kind: Converted, arg0: inst+22, arg1: inst+29, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+31':         {kind: ReturnExpr, arg0: inst+30, arg1: inst+15}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)

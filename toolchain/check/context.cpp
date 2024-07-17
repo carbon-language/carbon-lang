@@ -13,6 +13,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
@@ -797,7 +798,9 @@ class TypeCompleter {
           }
           return false;
         }
-        // TODO: Trigger generic resolution here for a generic class.
+        if (inst.instance_id.is_valid()) {
+          ResolveSpecificDefinition(context_, inst.instance_id);
+        }
         Push(class_info.object_repr_id);
         break;
       }
@@ -1092,7 +1095,9 @@ auto Context::TryToDefineType(
       return false;
     }
 
-    // TODO: Trigger generic resolution here for a generic instance.
+    if (interface->instance_id.is_valid()) {
+      ResolveSpecificDefinition(*this, interface->instance_id);
+    }
   }
 
   return true;

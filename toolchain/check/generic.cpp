@@ -47,7 +47,7 @@ static auto AddGenericConstantToEvalBlock(
 namespace {
 // Substitution callbacks to rebuild a generic type in the eval block for a
 // generic region.
-class RebuildGenericTypeInEvalBlockCallbacks : public SubstInstCallbacks {
+class RebuildGenericTypeInEvalBlockCallbacks final : public SubstInstCallbacks {
  public:
   RebuildGenericTypeInEvalBlockCallbacks(
       Context& context, SemIR::GenericId generic_id,
@@ -130,7 +130,16 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   context.inst_block_stack().Push();
 
   Map<SemIR::InstId, SemIR::InstId> constants_in_generic;
-  // TODO: For the definition region, populate constants from the declaration.
+
+  // For the definition region, populate constants from the declaration.
+  if (region == SemIR::GenericInstIndex::Region::Definition) {
+    auto decl_eval_block = context.inst_blocks().Get(
+        context.generics().Get(generic_id).decl_block_id);
+    for (auto inst_id : decl_eval_block) {
+      constants_in_generic.Insert(
+          context.constant_values().GetConstantInstId(inst_id), inst_id);
+    }
+  }
 
   // The work done in this loop might invalidate iterators into the generic
   // region stack, but shouldn't add new dependent instructions to the current
@@ -291,6 +300,33 @@ auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
   // substitution here; we know we want identity mappings for all constants and
   // types. We could also consider not storing the mapping at all in this case.
   return MakeGenericInstance(context, generic_id, args_id);
+}
+
+auto ResolveSpecificDefinition(Context& context,
+                               SemIR::GenericInstanceId specific_id) -> bool {
+  auto& specific = context.generic_instances().Get(specific_id);
+  auto generic_id = specific.generic_id;
+
+  // TODO: Remove this once we import generics properly.
+  if (!generic_id.is_valid()) {
+    return true;
+  }
+
+  if (!specific.definition_block_id.is_valid()) {
+    // Evaluate the eval block for the definition of the generic.
+    auto& generic = context.generics().Get(generic_id);
+    if (!generic.definition_block_id.is_valid()) {
+      // The generic is not defined yet.
+      return false;
+    }
+    auto definition_block_id = TryEvalBlockForSpecific(
+        context, specific_id, SemIR::GenericInstIndex::Region::Definition);
+    // Note that TryEvalBlockForSpecific may reallocate the list of generic
+    // instances, so re-lookup the instance here.
+    context.generic_instances().Get(specific_id).definition_block_id =
+        definition_block_id;
+  }
+  return true;
 }
 
 auto GetTypeInInstance(Context& context, SemIR::GenericInstanceId instance_id,

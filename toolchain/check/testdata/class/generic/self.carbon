@@ -108,6 +108,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%MakeSelf.decl(constants.%T) {

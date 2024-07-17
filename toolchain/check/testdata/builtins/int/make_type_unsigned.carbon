@@ -213,7 +213,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: fn @Symbolic(%N: i32, %x: file.%int.make_type_unsigned.loc14_29 (%.6)) -> %.6
 // CHECK:STDOUT:     generic [%N: i32] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %.6 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: file.%int.make_type_unsigned.loc14_29 (%.6) = name_ref x, %x
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

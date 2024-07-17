@@ -138,10 +138,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     generic [file.%T.loc4_6.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T.ref (constants.%T)]
-// CHECK:STDOUT:   %F.call: init <unexpected instref inst+26> (%.1) = call %F.ref(%T.ref)
-// CHECK:STDOUT:   %.loc7_14.1: <unexpected instref inst+26> (%.1) = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc7_14.2: <unexpected instref inst+26> (%.1) = converted %F.call, %.loc7_14.1
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = file.%T.loc4_6.2 (constants.%T)]
+// CHECK:STDOUT:   %F.call: init file.%.loc4 (%.1) = call %F.ref(%T.ref)
+// CHECK:STDOUT:   %.loc7_14.1: file.%.loc4 (%.1) = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc7_14.2: file.%.loc4 (%.1) = converted %F.call, %.loc7_14.1
 // CHECK:STDOUT:   return %.loc7_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -199,7 +199,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     generic [%T: type, %U: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T.ref (constants.%T)]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %F.call: init <unexpected instref inst+32> (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -268,7 +268,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     generic [%U: type, %T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T.ref (constants.%T.2)]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -337,7 +337,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     generic [%U: type, %T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T.ref (constants.%T.2)]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
