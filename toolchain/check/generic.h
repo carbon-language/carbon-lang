@@ -52,14 +52,6 @@ auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
 auto ResolveSpecificDefinition(Context& context,
                                SemIR::GenericInstanceId specific_id) -> bool;
 
-// Gets the substituted value of a type within a specified instance of a
-// generic. Note that this does not perform substitution, and will return
-// `Invalid` if the substituted type is not yet known.
-//
-// TODO: Move this to sem_ir so that lowering can use it.
-auto GetTypeInInstance(Context& context, SemIR::GenericInstanceId instance_id,
-                       SemIR::TypeId type_id) -> SemIR::TypeId;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

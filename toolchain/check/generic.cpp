@@ -329,16 +329,4 @@ auto ResolveSpecificDefinition(Context& context,
   return true;
 }
 
-auto GetTypeInInstance(Context& context, SemIR::GenericInstanceId instance_id,
-                       SemIR::TypeId type_id) -> SemIR::TypeId {
-  auto const_id = context.types().GetConstantId(type_id);
-  auto inst_const_id =
-      GetConstantInInstance(context.sem_ir(), instance_id, const_id);
-  if (inst_const_id == const_id) {
-    // Common case: not an instance constant.
-    return type_id;
-  }
-  return context.GetTypeIdForTypeConstant(inst_const_id);
-}
-
 }  // namespace Carbon::Check

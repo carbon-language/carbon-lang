@@ -95,4 +95,10 @@ auto GetConstantValueInInstance(const File& sem_ir,
                                sem_ir.constant_values().Get(inst_id));
 }
 
+auto GetTypeInInstance(const File& sem_ir, GenericInstanceId instance_id,
+                       TypeId type_id) -> TypeId {
+  return TypeId::ForTypeConstant(GetConstantInInstance(
+      sem_ir, instance_id, sem_ir.types().GetConstantId(type_id)));
+}
+
 }  // namespace Carbon::SemIR
