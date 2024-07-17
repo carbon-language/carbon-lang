@@ -1193,14 +1193,22 @@ auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
-  node_stack_.PrintForStackDump(output);
-  inst_block_stack_.PrintForStackDump(output);
-  param_and_arg_refs_stack_.PrintForStackDump(output);
-  args_type_info_stack_.PrintForStackDump(output);
+  output << "Check::Context\n";
+
+  // In a stack dump, this is probably indented by a tab. We treat that as 8
+  // spaces then add a couple to indent past the Context label.
+  constexpr int Indent = 10;
+
+  SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+  node_stack_.PrintForStackDump(formatter, Indent, output);
+  inst_block_stack_.PrintForStackDump(formatter, Indent, output);
+  param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
+  args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
 }
 
 auto Context::DumpFormattedFile() const -> void {
-  FormatFile(*tokens_, *parse_tree_, *sem_ir_, llvm::errs());
+  SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+  formatter.Print(llvm::errs());
 }
 
 }  // namespace Carbon::Check

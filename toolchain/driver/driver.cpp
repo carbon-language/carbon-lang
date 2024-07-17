@@ -641,13 +641,16 @@ class Driver::CompilationUnit {
       }
     }
 
-    if (vlog_stream_) {
-      CARBON_VLOG() << "*** SemIR::File ***\n";
-      SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_, *vlog_stream_);
-    }
-    if (options_.dump_sem_ir && IncludeInDumps()) {
-      SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
-                        driver_->output_stream_);
+    bool print = options_.dump_sem_ir && IncludeInDumps();
+    if (vlog_stream_ || print) {
+      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+      if (vlog_stream_) {
+        CARBON_VLOG() << "*** SemIR::File ***\n";
+        formatter.Print(*vlog_stream_);
+      }
+      if (print) {
+        formatter.Print(driver_->output_stream_);
+      }
     }
     if (sem_ir_->has_errors()) {
       success_ = false;
