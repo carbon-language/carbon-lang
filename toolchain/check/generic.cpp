@@ -47,7 +47,7 @@ static auto AddGenericConstantToEvalBlock(
 namespace {
 // Substitution callbacks to rebuild a generic type in the eval block for a
 // generic region.
-class RebuildGenericTypeInEvalBlockCallbacks : public SubstInstCallbacks {
+class RebuildGenericTypeInEvalBlockCallbacks final : public SubstInstCallbacks {
  public:
   RebuildGenericTypeInEvalBlockCallbacks(
       Context& context, SemIR::GenericId generic_id,
