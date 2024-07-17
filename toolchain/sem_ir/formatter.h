@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 
-#include <memory>
-
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
