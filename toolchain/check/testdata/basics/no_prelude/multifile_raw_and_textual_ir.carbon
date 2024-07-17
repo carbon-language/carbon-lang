@@ -56,11 +56,11 @@ fn B() {
 // CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type(inst+2)}
 // CHECK:STDOUT:     'inst+5':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     'inst+0':          template inst+0
-// CHECK:STDOUT:     'inst+1':          template inst+4
-// CHECK:STDOUT:     'inst+2':          template inst+2
-// CHECK:STDOUT:     'inst+3':          template inst+3
-// CHECK:STDOUT:     'inst+4':          template inst+4
+// CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
+// CHECK:STDOUT:     'inst+1':          templateConstant(inst+4)
+// CHECK:STDOUT:     'inst+2':          templateConstant(inst+2)
+// CHECK:STDOUT:     'inst+3':          templateConstant(inst+3)
+// CHECK:STDOUT:     'inst+4':          templateConstant(inst+4)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
@@ -141,18 +141,18 @@ fn B() {
 // CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type(inst+5)}
 // CHECK:STDOUT:     'inst+14':         {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     'inst+0':          template inst+0
-// CHECK:STDOUT:     'inst+2':          template inst+2
-// CHECK:STDOUT:     'inst+3':          template inst+6
-// CHECK:STDOUT:     'inst+4':          template inst+4
-// CHECK:STDOUT:     'inst+5':          template inst+5
-// CHECK:STDOUT:     'inst+6':          template inst+6
-// CHECK:STDOUT:     'inst+7':          template inst+2
-// CHECK:STDOUT:     'inst+8':          template inst+11
-// CHECK:STDOUT:     'inst+9':          template inst+11
-// CHECK:STDOUT:     'inst+10':         template inst+10
-// CHECK:STDOUT:     'inst+11':         template inst+11
-// CHECK:STDOUT:     'inst+12':         template inst+11
+// CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
+// CHECK:STDOUT:     'inst+2':          templateConstant(inst+2)
+// CHECK:STDOUT:     'inst+3':          templateConstant(inst+6)
+// CHECK:STDOUT:     'inst+4':          templateConstant(inst+4)
+// CHECK:STDOUT:     'inst+5':          templateConstant(inst+5)
+// CHECK:STDOUT:     'inst+6':          templateConstant(inst+6)
+// CHECK:STDOUT:     'inst+7':          templateConstant(inst+2)
+// CHECK:STDOUT:     'inst+8':          templateConstant(inst+11)
+// CHECK:STDOUT:     'inst+9':          templateConstant(inst+11)
+// CHECK:STDOUT:     'inst+10':         templateConstant(inst+10)
+// CHECK:STDOUT:     'inst+11':         templateConstant(inst+11)
+// CHECK:STDOUT:     'inst+12':         templateConstant(inst+11)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}

@@ -40,16 +40,16 @@
 // CHECK:STDOUT:     instWitnessType: {kind: BuiltinInst, arg0: WitnessType, type: typeTypeType}
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     instTypeType:    template instTypeType
-// CHECK:STDOUT:     instError:       template instError
-// CHECK:STDOUT:     instBoolType:    template instBoolType
-// CHECK:STDOUT:     instIntType:     template instIntType
-// CHECK:STDOUT:     instFloatType:   template instFloatType
-// CHECK:STDOUT:     instStringType:  template instStringType
-// CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
-// CHECK:STDOUT:     instNamespaceType: template instNamespaceType
-// CHECK:STDOUT:     instWitnessType: template instWitnessType
-// CHECK:STDOUT:     'inst+0':          template inst+0
+// CHECK:STDOUT:     instTypeType:    templateConstant(instTypeType)
+// CHECK:STDOUT:     instError:       templateConstant(instError)
+// CHECK:STDOUT:     instBoolType:    templateConstant(instBoolType)
+// CHECK:STDOUT:     instIntType:     templateConstant(instIntType)
+// CHECK:STDOUT:     instFloatType:   templateConstant(instFloatType)
+// CHECK:STDOUT:     instStringType:  templateConstant(instStringType)
+// CHECK:STDOUT:     instBoundMethodType: templateConstant(instBoundMethodType)
+// CHECK:STDOUT:     instNamespaceType: templateConstant(instNamespaceType)
+// CHECK:STDOUT:     instWitnessType: templateConstant(instWitnessType)
+// CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}

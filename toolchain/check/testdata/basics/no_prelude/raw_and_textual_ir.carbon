@@ -78,25 +78,25 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+30':         {kind: Converted, arg0: inst+20, arg1: inst+28, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+31':         {kind: ReturnExpr, arg0: inst+30, arg1: inst+13}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     'inst+0':          template inst+0
-// CHECK:STDOUT:     'inst+1':          template inst+1
-// CHECK:STDOUT:     'inst+3':          template inst+1
-// CHECK:STDOUT:     'inst+8':          template inst+8
-// CHECK:STDOUT:     'inst+10':         template inst+1
-// CHECK:STDOUT:     'inst+11':         template inst+1
-// CHECK:STDOUT:     'inst+12':         template inst+8
-// CHECK:STDOUT:     'inst+14':         template inst+16
-// CHECK:STDOUT:     'inst+15':         template inst+15
-// CHECK:STDOUT:     'inst+16':         template inst+16
-// CHECK:STDOUT:     'inst+17':         template inst+17
-// CHECK:STDOUT:     'inst+22':         template inst+23
-// CHECK:STDOUT:     'inst+23':         template inst+23
-// CHECK:STDOUT:     'inst+24':         template inst+23
-// CHECK:STDOUT:     'inst+26':         template inst+23
-// CHECK:STDOUT:     'inst+27':         template inst+23
-// CHECK:STDOUT:     'inst+28':         template inst+29
-// CHECK:STDOUT:     'inst+29':         template inst+29
-// CHECK:STDOUT:     'inst+30':         template inst+29
+// CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
+// CHECK:STDOUT:     'inst+1':          templateConstant(inst+1)
+// CHECK:STDOUT:     'inst+3':          templateConstant(inst+1)
+// CHECK:STDOUT:     'inst+8':          templateConstant(inst+8)
+// CHECK:STDOUT:     'inst+10':         templateConstant(inst+1)
+// CHECK:STDOUT:     'inst+11':         templateConstant(inst+1)
+// CHECK:STDOUT:     'inst+12':         templateConstant(inst+8)
+// CHECK:STDOUT:     'inst+14':         templateConstant(inst+16)
+// CHECK:STDOUT:     'inst+15':         templateConstant(inst+15)
+// CHECK:STDOUT:     'inst+16':         templateConstant(inst+16)
+// CHECK:STDOUT:     'inst+17':         templateConstant(inst+17)
+// CHECK:STDOUT:     'inst+22':         templateConstant(inst+23)
+// CHECK:STDOUT:     'inst+23':         templateConstant(inst+23)
+// CHECK:STDOUT:     'inst+24':         templateConstant(inst+23)
+// CHECK:STDOUT:     'inst+26':         templateConstant(inst+23)
+// CHECK:STDOUT:     'inst+27':         templateConstant(inst+23)
+// CHECK:STDOUT:     'inst+28':         templateConstant(inst+29)
+// CHECK:STDOUT:     'inst+29':         templateConstant(inst+29)
+// CHECK:STDOUT:     'inst+30':         templateConstant(inst+29)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
