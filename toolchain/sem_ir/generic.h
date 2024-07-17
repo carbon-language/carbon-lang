@@ -150,6 +150,12 @@ auto GetConstantValueInInstance(const File& sem_ir,
                                 GenericInstanceId instance_id, InstId inst_id)
     -> ConstantId;
 
+// Gets the substituted value of a type within a specified instance of a
+// generic. Note that this does not perform substitution, and will return
+// `Invalid` if the substituted type is not yet known.
+auto GetTypeInInstance(const File& sem_ir, GenericInstanceId instance_id,
+                       TypeId type_id) -> TypeId;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_GENERIC_H_
