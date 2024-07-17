@@ -141,13 +141,23 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
     return index >= 0;
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
+  // Prints this ID to the given output stream. `disambiguate` indicates whether
+  // template constants should be wrapped with "templateConstant(...)" so that
+  // they aren't printed the same as an InstId. This can be set to false if
+  // there is no risk of ambiguity.
+  auto Print(llvm::raw_ostream& out, bool disambiguate = true) const -> void {
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_template()) {
-      out << "template " << template_inst_id();
+      if (disambiguate) {
+        out << "templateConstant(";
+      }
+      out << template_inst_id();
+      if (disambiguate) {
+        out << ")";
+      }
     } else if (is_symbolic()) {
-      out << "symbolic " << symbolic_index();
+      out << "symbolicConstant" << symbolic_index();
     } else {
       out << "runtime";
     }
@@ -615,7 +625,6 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
-  using ValueType = TypeInfo;
   // StringifyType() is used for diagnostics.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
@@ -629,6 +638,17 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   static const TypeId Invalid;
 
   using IdBase::IdBase;
+
+  // Returns the ID of the type corresponding to the constant `const_id`, which
+  // must be of type `type`. As an exception, the type `Error` is of type
+  // `Error`.
+  static constexpr auto ForTypeConstant(ConstantId const_id) -> TypeId {
+    return TypeId(const_id.index);
+  }
+
+  // Returns the constant ID that defines the type.
+  auto AsConstantId() const -> ConstantId { return ConstantId(index); }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
     if (*this == TypeType) {
@@ -636,13 +656,16 @@ struct TypeId : public IdBase, public Printable<TypeId> {
     } else if (*this == Error) {
       out << "Error";
     } else {
-      IdBase::Print(out);
+      out << "(";
+      AsConstantId().Print(out, /*disambiguate=*/false);
+      out << ")";
     }
   }
 };
 
-constexpr TypeId TypeId::TypeType = TypeId(InvalidIndex - 2);
-constexpr TypeId TypeId::Error = TypeId(InvalidIndex - 1);
+constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
+    ConstantId::ForTemplateConstant(InstId::BuiltinTypeType));
+constexpr TypeId TypeId::Error = TypeId::ForTypeConstant(ConstantId::Error);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.
