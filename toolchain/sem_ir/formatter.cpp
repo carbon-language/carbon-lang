@@ -22,16 +22,11 @@
 namespace Carbon::SemIR {
 
 // Formatter for printing textual Semantics IR.
-class Formatter {
+class FormatterImpl {
  public:
-  enum class AddSpace : bool { Before, After };
-
-  explicit Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
-                     const Parse::Tree& parse_tree, const File& sem_ir,
-                     llvm::raw_ostream& out)
-      : sem_ir_(sem_ir),
-        out_(out),
-        inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
+  explicit FormatterImpl(const File& sem_ir, InstNamer* inst_namer,
+                         llvm::raw_ostream& out, int indent)
+      : sem_ir_(sem_ir), inst_namer_(inst_namer), out_(out), indent_(indent) {}
 
   // Prints the SemIR.
   //
@@ -44,7 +39,7 @@ class Formatter {
     FormatConstants();
     FormatImportRefs();
 
-    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
+    out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::File) << " ";
     OpenBrace();
 
     // TODO: Handle the case where there are multiple top-level instruction
@@ -81,6 +76,37 @@ class Formatter {
     // End-of-file newline.
     out_ << "\n";
   }
+
+  // Prints a code block.
+  auto FormatPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
+      -> void {
+    out_ << ' ';
+    OpenBrace();
+    constexpr int NumPrintedOnSkip = 9;
+    // Avoid only skipping one item.
+    if (block.size() > NumPrintedOnSkip + 1) {
+      Indent();
+      out_ << "... skipping " << (block.size() - NumPrintedOnSkip)
+           << " insts ...\n";
+      block = block.take_back(NumPrintedOnSkip);
+    }
+    FormatCodeBlock(block);
+    CloseBrace();
+  }
+
+  // Prints a single instruction.
+  auto FormatInstruction(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
+      Indent();
+      out_ << "invalid\n";
+      return;
+    }
+
+    FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
+  }
+
+ private:
+  enum class AddSpace : bool { Before, After };
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -139,7 +165,7 @@ class Formatter {
     }
 
     llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
-    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::Constants) << " ";
+    out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::Constants) << " ";
     OpenBrace();
     FormatCodeBlock(sem_ir_.constants().array_ref());
     CloseBrace();
@@ -153,7 +179,7 @@ class Formatter {
     }
 
     llvm::SaveAndRestore scope(scope_, InstNamer::ScopeId::ImportRefs);
-    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::ImportRefs) << " ";
+    out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::ImportRefs) << " ";
     OpenBrace();
     FormatCodeBlock(import_refs);
     CloseBrace();
@@ -170,7 +196,7 @@ class Formatter {
       FormatGeneric(class_info.generic_id);
     }
 
-    llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (class_info.scope_id.is_valid()) {
       out_ << ' ';
@@ -194,7 +220,7 @@ class Formatter {
       FormatGeneric(interface_info.generic_id);
     }
 
-    llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (interface_info.scope_id.is_valid()) {
       out_ << ' ';
@@ -230,7 +256,7 @@ class Formatter {
     out_ << " as ";
     FormatType(impl_info.constraint_id);
 
-    llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (impl_info.scope_id.is_valid()) {
       out_ << ' ';
@@ -267,7 +293,7 @@ class Formatter {
     out_ << "fn ";
     FormatFunctionName(id);
 
-    llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (fn.implicit_param_refs_id.is_valid()) {
       out_ << "[";
@@ -460,16 +486,6 @@ class Formatter {
       Indent();
       out_ << "has_error\n";
     }
-  }
-
-  auto FormatInstruction(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
-      Indent();
-      out_ << "invalid\n";
-      return;
-    }
-
-    FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
   auto FormatInstruction(InstId inst_id, Inst inst) -> void {
@@ -909,26 +925,28 @@ class Formatter {
   }
 
   auto FormatInstName(InstId id) -> void {
-    out_ << inst_namer_.GetNameFor(scope_, id);
+    out_ << inst_namer_->GetNameFor(scope_, id);
   }
 
   auto FormatLabel(InstBlockId id) -> void {
-    out_ << inst_namer_.GetLabelFor(scope_, id);
+    out_ << inst_namer_->GetLabelFor(scope_, id);
   }
 
   auto FormatFunctionName(FunctionId id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
+    out_ << inst_namer_->GetNameFor(id);
   }
 
   auto FormatClassName(ClassId id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
+    out_ << inst_namer_->GetNameFor(id);
   }
 
   auto FormatInterfaceName(InterfaceId id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
+    out_ << inst_namer_->GetNameFor(id);
   }
 
-  auto FormatImplName(ImplId id) -> void { out_ << inst_namer_.GetNameFor(id); }
+  auto FormatImplName(ImplId id) -> void {
+    out_ << inst_namer_->GetNameFor(id);
+  }
 
   auto FormatSpecificName(GenericInstanceId id) -> void {
     const auto& specific = sem_ir_.generic_instances().Get(id);
@@ -982,10 +1000,11 @@ class Formatter {
     }
   }
 
- private:
   const File& sem_ir_;
+  InstNamer* const inst_namer_;
+
+  // The output stream. Set while formatting instructions.
   llvm::raw_ostream& out_;
-  InstNamer inst_namer_;
 
   // The current scope that we are formatting within. References to names in
   // this scope will not have a `@scope.` prefix added.
@@ -997,7 +1016,7 @@ class Formatter {
   bool in_terminator_sequence_ = false;
 
   // The indent depth to use for new instructions.
-  int indent_ = 0;
+  int indent_;
 
   // Whether we are currently formatting immediately after an open brace. If so,
   // a newline will be inserted before the next line indent.
@@ -1014,10 +1033,28 @@ class Formatter {
   bool pending_constant_value_is_self_ = false;
 };
 
-auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,
-                const Parse::Tree& parse_tree, const File& sem_ir,
-                llvm::raw_ostream& out) -> void {
-  Formatter(tokenized_buffer, parse_tree, sem_ir, out).Format();
+Formatter::Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
+                     const Parse::Tree& parse_tree, const File& sem_ir)
+    : sem_ir_(sem_ir), inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
+
+Formatter::~Formatter() = default;
+
+auto Formatter::Print(llvm::raw_ostream& out) -> void {
+  FormatterImpl formatter(sem_ir_, &inst_namer_, out, /*indent=*/0);
+  formatter.Format();
+}
+
+auto Formatter::PrintPartialTrailingCodeBlock(
+    llvm::ArrayRef<SemIR::InstId> block, int indent, llvm::raw_ostream& out)
+    -> void {
+  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
+  formatter.FormatPartialTrailingCodeBlock(block);
+}
+
+auto Formatter::PrintInst(SemIR::InstId inst_id, int indent,
+                          llvm::raw_ostream& out) -> void {
+  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
+  formatter.FormatInstruction(inst_id);
 }
 
 }  // namespace Carbon::SemIR

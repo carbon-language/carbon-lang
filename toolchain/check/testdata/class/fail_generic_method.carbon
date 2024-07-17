@@ -83,7 +83,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc12: <unexpected instref inst+28> (%.2) = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12: <unexpected>.inst+28 (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc13 (constants.%Class.2)]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = %.loc13 (constants.%Class.2)]

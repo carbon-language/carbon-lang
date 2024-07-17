@@ -115,7 +115,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc12: <unexpected instref inst+18> (%.2) = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc12: <unexpected>.inst+18 (%.2) = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -137,7 +137,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: file.%.loc19_24 (%Class.2) = name_ref c, %c
-// CHECK:STDOUT:   %x.ref: <unexpected instref inst+68> (%.2) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
+// CHECK:STDOUT:   %x.ref: <unexpected>.inst+68 (%.2) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc20_11.1: ref @G.%T (%T) = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc20_11.2: @G.%T (%T) = bind_value %.loc20_11.1
 // CHECK:STDOUT:   return %.loc20_11.2
@@ -147,7 +147,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     generic [%U: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: file.%.loc23_24 (%Class.4) = name_ref c, %c
-// CHECK:STDOUT:   %x.ref: <unexpected instref inst+91> (%.6) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
+// CHECK:STDOUT:   %x.ref: <unexpected>.inst+91 (%.6) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc24_11.1: ref @H.%U (%U) = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc24_11.2: @H.%U (%U) = bind_value %.loc24_11.1
 // CHECK:STDOUT:   return %.loc24_11.2
@@ -158,9 +158,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.2
-// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.2
-// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
+// CHECK:STDOUT:   <unexpected>.inst+17 => constants.%Class.2
+// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%.2
+// CHECK:STDOUT:   <unexpected>.inst+14.loc12_8 => <unexpected>.inst+15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
@@ -173,9 +173,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.3
-// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.4
-// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
+// CHECK:STDOUT:   <unexpected>.inst+17 => constants.%Class.3
+// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%.4
+// CHECK:STDOUT:   <unexpected>.inst+14.loc12_8 => <unexpected>.inst+15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%G.decl(constants.%T) {
@@ -189,9 +189,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%U
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected instref inst+17> => constants.%Class.4
-// CHECK:STDOUT:   <unexpected instref inst+18> => constants.%.6
-// CHECK:STDOUT:   <unexpected instref inst+14> => <unexpected instref inst+15>
+// CHECK:STDOUT:   <unexpected>.inst+17 => constants.%Class.4
+// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%.6
+// CHECK:STDOUT:   <unexpected>.inst+14.loc12_8 => <unexpected>.inst+15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%H.decl(constants.%U) {

@@ -8,6 +8,7 @@
 #include "common/array_stack.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/formatter.h"
 
 namespace Carbon::Check {
 
@@ -69,7 +70,8 @@ class InstBlockStack {
   }
 
   // Prints the stack for a stack dump.
-  auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+  auto PrintForStackDump(SemIR::Formatter& formatter, int indent,
+                         llvm::raw_ostream& output) const -> void;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {
