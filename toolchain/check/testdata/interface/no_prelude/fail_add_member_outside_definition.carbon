@@ -103,6 +103,9 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.%Inner.decl(constants.%Self.2) {
 // CHECK:STDOUT: declaration:
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   @Inner.%Self => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.%.decl(constants.%Self.2, constants.%Self.3) {

@@ -146,12 +146,16 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%.3
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%.1, constants.%.6) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%.1
 // CHECK:STDOUT:   file.%N.loc4_23.2 => constants.%.6
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_too_few.carbon

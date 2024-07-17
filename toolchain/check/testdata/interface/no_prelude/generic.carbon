@@ -145,7 +145,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple
 // CHECK:STDOUT:     generic [file.%T.loc4_18.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: <unexpected instref inst+11> (%.2) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -154,7 +154,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @WithAssocFn
 // CHECK:STDOUT:     generic [file.%T.loc8_23.2: type] {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: <unexpected instref inst+31> (%.4) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return.var: ref %X = var <return slot>
@@ -215,7 +215,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> %X
-// CHECK:STDOUT:     generic [file.%T.loc8_23.2: type, @WithAssocFn.%Self: %.4];
+// CHECK:STDOUT:     generic [file.%T.loc8_23.2: type, @WithAssocFn.%Self: <unexpected instref inst+31> (%.4)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> @impl.2.%return.var: %X {
 // CHECK:STDOUT: !entry:
@@ -232,12 +232,17 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     generic [%T: %.7] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
-// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T [symbolic = %T.ref (constants.%T.2)]
+// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:   %Receive.call: init %.1 = call %Receive.ref(%T.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Simple.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_18.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Simple.decl(file.%T.loc4_18.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_18.2 => constants.%T.1
 // CHECK:STDOUT: }
@@ -249,6 +254,11 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn.%F.decl(constants.%T.1, constants.%Self.2) {
 // CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%WithAssocFn.decl(file.%T.loc8_23.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc8_23.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Simple.decl(constants.%C) {
@@ -335,7 +345,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Generic
 // CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: <unexpected instref inst+11> (%.2) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -359,12 +369,17 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     generic [%T: %.5] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = %T.ref (constants.%T.3)]
+// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T [symbolic = %T (constants.%T.3)]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Generic.decl(file.%T.loc4_19.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T.1
 // CHECK:STDOUT: }

@@ -1332,12 +1332,16 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
         const auto& specific =
             eval_context.generic_instances().Get(eval_context.specific_id);
         auto args = eval_context.inst_blocks().Get(specific.args_id);
-        CARBON_CHECK(static_cast<size_t>(bind_name.bind_index.index) <
-                     args.size())
-            << "Use of binding " << bind_name.bind_index
-            << " with no corresponding value.";
-        return eval_context.context.constant_values().Get(
-            args[bind_name.bind_index.index]);
+        if (static_cast<size_t>(bind_name.bind_index.index) >= args.size()) {
+          // TODO: For now we don't provide a mapping for the `Self` type in an
+          // interface, and fall back to the canonical constant type.
+          CARBON_CHECK(bind_name.name_id == SemIR::NameId::SelfType)
+              << "Use of binding " << bind_name.bind_index
+              << " with no corresponding value.";
+        } else {
+          return eval_context.context.constant_values().Get(
+              args[bind_name.bind_index.index]);
+        }
       }
 
       // The constant form of a symbolic binding is an idealized form of the
