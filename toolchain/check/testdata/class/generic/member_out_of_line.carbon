@@ -14,10 +14,16 @@ library "basic";
 
 class Class(T:! type) {
   fn F(n: T) -> T;
+  fn G[self: Self]() -> T;
+  var n: T;
 }
 
 fn Class(T:! type).F(n: T) -> T {
   return n;
+}
+
+fn Class(T:! type).G[self: Self]() -> T {
+  return self.n;
 }
 
 // --- nested.carbon
@@ -109,7 +115,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
+// CHECK:STDOUT:   %.3: type = struct_type {.n: %T} [symbolic]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -124,13 +134,23 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.loc8_10.1: type = param T
-// CHECK:STDOUT:     %T.loc8_10.2: type = bind_symbolic_name T 0, %T.loc8_10.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc8_25: type = name_ref T, %T.loc8_10.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc8_22.1: %T = param n
-// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc8_22.1
-// CHECK:STDOUT:     %T.ref.loc8_31: type = name_ref T, %T.loc8_10.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc10_10.1: type = param T
+// CHECK:STDOUT:     %T.loc10_10.2: type = bind_symbolic_name T 0, %T.loc10_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10_10.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %n.loc10_22.1: %T = param n
+// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc10_22.1
+// CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10_10.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %T.loc14_10.1: type = param T
+// CHECK:STDOUT:     %T.loc14_10.2: type = bind_symbolic_name T 0, %T.loc14_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc14: type = specific_constant constants.%Class.2, %Class.decl(constants.%T) [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc14 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %self.loc14_22.1: %Class.2 = param self
+// CHECK:STDOUT:     @G.%self: %Class.2 = bind_name self, %self.loc14_22.1
+// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc14_10.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     @G.%return: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,12 +161,24 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %n.loc5_8.1: @Class.%T.ref.loc5_11 (%T) = param n
 // CHECK:STDOUT:     %n.loc5_8.2: @Class.%T.ref.loc5_11 (%T) = bind_name n, %n.loc5_8.1
 // CHECK:STDOUT:     %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = %T.ref.loc5_11 (constants.%T)]
-// CHECK:STDOUT:     %return.var: ref %T = var <return slot>
+// CHECK:STDOUT:     %return.var.loc5: ref %T = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc6: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc6 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc6 [symbolic = %.loc6 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc6_8.1: @Class.%.loc6 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc6_8.2: @Class.%.loc6 (%Class.2) = bind_name self, %self.loc6_8.1
+// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, file.%T.loc4_13.2 [symbolic = %T.ref.loc6 (constants.%T)]
+// CHECK:STDOUT:     %return.var.loc6: ref %T = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %T.ref.loc7: type = name_ref T, file.%T.loc4_13.2 [symbolic = file.%T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:   %.loc7: <unexpected>.inst+35 (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   .n = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n: %T) -> %T
@@ -156,16 +188,40 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @G[%self: %Class.2]() -> %T
+// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: @Class.%.loc6 (%Class.2) = name_ref self, %self
+// CHECK:STDOUT:   %n.ref: <unexpected>.inst+61 (%.2) = name_ref n, @Class.%.loc7 [template = @Class.%.loc7]
+// CHECK:STDOUT:   %.loc15_14.1: ref @Class.%T.ref.loc6 (%T) = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc15_14.2: @Class.%T.ref.loc6 (%T) = bind_value %.loc15_14.1
+// CHECK:STDOUT:   return %.loc15_14.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
+// CHECK:STDOUT:   <unexpected>.inst+34 => constants.%Class.2
+// CHECK:STDOUT:   <unexpected>.inst+35 => constants.%.2
+// CHECK:STDOUT:   <unexpected>.inst+31.loc7_8 => <unexpected>.inst+32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T.ref.loc5_11 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class.%G.decl(constants.%T) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @Class.%.loc6 => constants.%Class.2
+// CHECK:STDOUT:   @Class.%T.ref.loc6 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc4_13.2) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   file.%T.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
