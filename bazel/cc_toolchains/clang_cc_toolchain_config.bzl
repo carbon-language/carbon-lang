@@ -144,6 +144,7 @@ def _impl(ctx):
                             "-Wextra-semi",
                             "-Wmissing-prototypes",
                             "-Wzero-as-null-pointer-constant",
+                            "-Wdelete-non-virtual-dtor",
                             # Don't warn on external code as we can't
                             # necessarily patch it easily. Note that these have
                             # to be initial directories in the `#include` line.
