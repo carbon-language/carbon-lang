@@ -1077,10 +1077,13 @@ def _impl(ctx):
         target_system_name = identifier,
         target_cpu = ctx.attr.target_cpu,
 
+        # This is used to expose a "flag" that `config_setting` rules can use to
+        # determine if the compiler is Clang.
+        compiler = "clang",
+
         # These attributes aren't meaningful at all so just use placeholder
         # values.
         target_libc = "local",
-        compiler = "local",
         abi_version = "local",
         abi_libc_version = "local",
 
