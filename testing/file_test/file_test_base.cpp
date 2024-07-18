@@ -855,14 +855,16 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
   llvm::CrashRecoveryContext::Enable();
   llvm::DefaultThreadPool pool(
       {.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
-  std::mutex errs_mutex;
+
+  // Guard access to both `llvm::errs` and `crashed`.
+  std::mutex mutex;
   bool crashed = false;
 
   for (const auto& test_name : tests) {
-    pool.async([&test_factory, &errs_mutex, &exe_path, &crashed, test_name] {
+    pool.async([&test_factory, &mutex, &exe_path, &crashed, test_name] {
       // If any thread crashed, don't try running more.
       {
-        std::unique_lock<std::mutex> lock(errs_mutex);
+        std::unique_lock<std::mutex> lock(mutex);
         if (crashed) {
           return;
         }
@@ -878,8 +880,7 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
             test_factory.factory_fn(exe_path, test_name));
         auto result = test->Autoupdate();
 
-        // Guard access to llvm::errs, which is not thread-safe.
-        std::unique_lock<std::mutex> lock(errs_mutex);
+        std::unique_lock<std::mutex> lock(mutex);
         if (result.ok()) {
           llvm::errs() << (*result ? "!" : ".");
         } else {
@@ -887,7 +888,7 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
         }
       });
       if (thread_crashed) {
-        std::unique_lock<std::mutex> lock(errs_mutex);
+        std::unique_lock<std::mutex> lock(mutex);
         crashed = true;
       }
     });
