@@ -1224,7 +1224,6 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    // TODO: Add --no-prelude-import for `/no_prelude/` subdirs.
     IdentifierId core_ident_id =
         unit_info.unit->value_stores->identifiers().Add("Core");
     if (prelude_import &&
