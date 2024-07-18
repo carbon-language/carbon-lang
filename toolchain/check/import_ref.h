@@ -22,7 +22,7 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
 // Adds an import_ref instruction for the specified instruction in the
 // specified IR. The import_ref is initially marked as unused.
 auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
-                  SemIR::ScopedNameId scoped_name_id) -> SemIR::InstId;
+                  SemIR::EntityNameId entity_name_id) -> SemIR::InstId;
 
 // Returns the canonical IR inst for an entity. Returns an invalid ir_id for the
 // current IR.

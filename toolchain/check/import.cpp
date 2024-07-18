@@ -30,9 +30,9 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     case SemIR::BindSymbolicName::Kind:
     case SemIR::ExportDecl::Kind: {
       auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
-      const auto& scoped_name =
-          import_sem_ir.scoped_names().Get(bind_inst.scoped_name_id);
-      return {scoped_name.name_id, scoped_name.parent_scope_id};
+      const auto& entity_name =
+          import_sem_ir.entity_names().Get(bind_inst.entity_name_id);
+      return {entity_name.name_id, entity_name.parent_scope_id};
     }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -154,7 +154,7 @@ static auto CopySingleNameScopeFromImportIR(
     SemIR::NameId name_id) -> SemIR::NameScopeId {
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
-    auto scoped_name_id = context.scoped_names().Add(
+    auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id,
          .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
@@ -163,7 +163,7 @@ static auto CopySingleNameScopeFromImportIR(
     return context.AddInst<SemIR::ImportRefLoaded>(
         import_ir_inst_id, {.type_id = namespace_type_id,
                             .import_ir_inst_id = import_ir_inst_id,
-                            .scoped_name_id = scoped_name_id});
+                            .entity_name_id = entity_name_id});
   };
   auto [namespace_scope_id, namespace_const_id, _] = AddNamespace(
       context, namespace_type_id, Parse::NodeId::Invalid, name_id,
@@ -237,7 +237,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
   auto [it, success] =
       parent_scope.name_map.insert({name_id, parent_scope.names.size()});
   if (success) {
-    auto scoped_name_id = context.scoped_names().Add(
+    auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id,
          .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
@@ -245,7 +245,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
         {.name_id = name_id,
          .inst_id =
              AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
-                          scoped_name_id),
+                          entity_name_id),
          .access_kind = SemIR::AccessKind::Public});
     return;
   }

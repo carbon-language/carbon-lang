@@ -18,7 +18,7 @@ namespace Carbon::SemIR {
 // Forward declare indexed types, for integration with ValueStore.
 class File;
 class Inst;
-struct ScopedName;
+struct EntityName;
 struct Class;
 struct Function;
 struct Generic;
@@ -174,12 +174,12 @@ constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
-// The ID of a ScopedName.
-struct ScopedNameId : public IdBase, public Printable<ScopedNameId> {
-  using ValueType = ScopedName;
+// The ID of a EntityName.
+struct EntityNameId : public IdBase, public Printable<EntityNameId> {
+  using ValueType = EntityName;
 
   // An explicitly invalid ID.
-  static const ScopedNameId Invalid;
+  static const EntityNameId Invalid;
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -188,7 +188,7 @@ struct ScopedNameId : public IdBase, public Printable<ScopedNameId> {
   }
 };
 
-constexpr ScopedNameId ScopedNameId::Invalid = ScopedNameId(InvalidIndex);
+constexpr EntityNameId EntityNameId::Invalid = EntityNameId(InvalidIndex);
 
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
@@ -209,7 +209,7 @@ struct CompileTimeBindIndex : public IndexBase,
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
 // Note that InvalidIndex - 1 and InvalidIndex - 2 are used by
-// DenseMapInfo<BindScopedName>.
+// DenseMapInfo<EntityName>.
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {

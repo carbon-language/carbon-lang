@@ -117,8 +117,8 @@ class File : public Printable<File> {
     return value_stores_->string_literal_values();
   }
 
-  auto scoped_names() -> ScopedNameStore& { return scoped_names_; }
-  auto scoped_names() const -> const ScopedNameStore& { return scoped_names_; }
+  auto entity_names() -> EntityNameStore& { return entity_names_; }
+  auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -202,8 +202,8 @@ class File : public Printable<File> {
   // TODO: If SemIR starts linking back to tokens, reuse its filename.
   std::string filename_;
 
-  // Storage for ScopedNames.
-  ScopedNameStore scoped_names_;
+  // Storage for EntityNames.
+  EntityNameStore entity_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;

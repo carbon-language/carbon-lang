@@ -11,7 +11,7 @@
 
 namespace Carbon::SemIR {
 
-struct ScopedName : public Printable<ScopedName> {
+struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index << "}";
@@ -25,48 +25,48 @@ struct ScopedName : public Printable<ScopedName> {
   CompileTimeBindIndex bind_index;
 };
 
-// Hashing for BindScopedName. See common/hashing.h.
-inline auto CarbonHashValue(const ScopedName& value, uint64_t seed)
+// Hashing for EntityName. See common/hashing.h.
+inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.Hash(value);
   return static_cast<HashCode>(hasher);
 }
 
-// DenseMapInfo for BindScopedName.
-struct BindScopedNameDenseMapInfo {
-  static auto getEmptyKey() -> ScopedName {
-    return ScopedName{.name_id = NameId::Invalid,
+// DenseMapInfo for EntityName.
+struct EntityNameDenseMapInfo {
+  static auto getEmptyKey() -> EntityName {
+    return EntityName{.name_id = NameId::Invalid,
                       .parent_scope_id = NameScopeId::Invalid,
                       .bind_index = CompileTimeBindIndex(
                           CompileTimeBindIndex::InvalidIndex - 1)};
   }
-  static auto getTombstoneKey() -> ScopedName {
-    return ScopedName{.name_id = NameId::Invalid,
+  static auto getTombstoneKey() -> EntityName {
+    return EntityName{.name_id = NameId::Invalid,
                       .parent_scope_id = NameScopeId::Invalid,
                       .bind_index = CompileTimeBindIndex(
                           CompileTimeBindIndex::InvalidIndex - 2)};
   }
-  static auto getHashValue(const ScopedName& val) -> unsigned {
+  static auto getHashValue(const EntityName& val) -> unsigned {
     return static_cast<uint64_t>(HashValue(val));
   }
-  static auto isEqual(const ScopedName& lhs, const ScopedName& rhs) -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(ScopedName)) == 0;
+  static auto isEqual(const EntityName& lhs, const EntityName& rhs) -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 };
 
-// Value store for BindScopedName. In addition to the regular ValueStore
-// functionality, this can provide optional canonical IDs for BindScopedNames.
-struct ScopedNameStore : public ValueStore<ScopedNameId> {
+// Value store for EntityName. In addition to the regular ValueStore
+// functionality, this can provide optional canonical IDs for EntityNames.
+struct EntityNameStore : public ValueStore<EntityNameId> {
  public:
   // Convert an ID to a canonical ID. All calls to this with equivalent
-  // `BindScopedName`s will return the same `BindNameId`.
-  auto MakeCanonical(ScopedNameId id) -> ScopedNameId {
+  // `EntityName`s will return the same `BindNameId`.
+  auto MakeCanonical(EntityNameId id) -> EntityNameId {
     return canonical_ids_.insert({Get(id), id}).first->second;
   }
 
  private:
-  llvm::DenseMap<ScopedName, ScopedNameId, BindScopedNameDenseMapInfo>
+  llvm::DenseMap<EntityName, EntityNameId, EntityNameDenseMapInfo>
       canonical_ids_;
 };
 

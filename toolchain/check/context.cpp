@@ -347,14 +347,14 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
           import_ir.sem_ir, import_scope_entry.inst_id);
     } else {
       // Add the first result found.
-      auto scoped_name_id = context.scoped_names().Add(
+      auto entity_name_id = context.entity_names().Add(
           {.name_id = name_id,
            .parent_scope_id = scope_id,
            .bind_index = SemIR::CompileTimeBindIndex::Invalid});
       result_id = AddImportRef(
           context,
           {.ir_id = import_ir_id, .inst_id = import_scope_entry.inst_id},
-          scoped_name_id);
+          entity_name_id);
       LoadImportRef(context, result_id);
     }
   }

@@ -54,10 +54,10 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
 }
 
 auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
-                  SemIR::ScopedNameId scoped_name_id) -> SemIR::InstId {
+                  SemIR::EntityNameId entity_name_id) -> SemIR::InstId {
   auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
   SemIR::ImportRefUnloaded inst = {.import_ir_inst_id = import_ir_inst_id,
-                                   .scoped_name_id = scoped_name_id};
+                                   .entity_name_id = entity_name_id};
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
       SemIR::LocIdAndInst(import_ir_inst_id, inst));
 
@@ -119,7 +119,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
   }
   auto conflict_id =
       AddImportRef(context, {.ir_id = new_ir_id, .inst_id = new_inst_id},
-                   SemIR::ScopedNameId::Invalid);
+                   SemIR::EntityNameId::Invalid);
   context.DiagnoseDuplicateName(conflict_id, prev_id);
 }
 
@@ -524,13 +524,13 @@ class ImportRefResolver {
       if (bind_inst) {
         switch (bind_inst->kind) {
           case SemIR::BindName::Kind: {
-            auto scoped_name_id = context_.scoped_names().Add(
+            auto entity_name_id = context_.entity_names().Add(
                 {.name_id = name_id,
                  .parent_scope_id = SemIR::NameScopeId::Invalid,
                  .bind_index = SemIR::CompileTimeBindIndex::Invalid});
             new_param_id = context_.AddInstInNoBlock<SemIR::BindName>(
                 AddImportIRInst(bind_id), {.type_id = type_id,
-                                           .scoped_name_id = scoped_name_id,
+                                           .entity_name_id = entity_name_id,
                                            .value_id = new_param_id});
             break;
           }
@@ -637,7 +637,7 @@ class ImportRefResolver {
     for (auto entry : import_scope.names) {
       auto ref_id = AddImportRef(
           context_, {.ir_id = import_ir_id_, .inst_id = entry.inst_id},
-          SemIR::ScopedNameId::Invalid);
+          SemIR::EntityNameId::Invalid);
       new_scope.AddRequired({.name_id = GetLocalNameId(entry.name_id),
                              .inst_id = ref_id,
                              .access_kind = entry.access_kind});
@@ -658,7 +658,7 @@ class ImportRefResolver {
     for (auto inst_id : associated_entities) {
       new_associated_entities.push_back(
           AddImportRef(context_, {.ir_id = import_ir_id_, .inst_id = inst_id},
-                       SemIR::ScopedNameId::Invalid));
+                       SemIR::EntityNameId::Invalid));
     }
     return context_.inst_blocks().Add(new_associated_entities);
   }
@@ -795,7 +795,7 @@ class ImportRefResolver {
     // Add a lazy reference to the target declaration.
     auto decl_id = AddImportRef(
         context_, {.ir_id = import_ir_id_, .inst_id = inst.decl_id},
-        SemIR::ScopedNameId::Invalid);
+        SemIR::EntityNameId::Invalid);
 
     return ResolveAs<SemIR::AssociatedEntity>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_const_id),
@@ -859,15 +859,15 @@ class ImportRefResolver {
     }
 
     const auto& import_bind_info =
-        import_ir_.scoped_names().Get(inst.scoped_name_id);
+        import_ir_.entity_names().Get(inst.entity_name_id);
     auto name_id = GetLocalNameId(import_bind_info.name_id);
-    auto scoped_name_id = context_.scoped_names().Add(
+    auto entity_name_id = context_.entity_names().Add(
         {.name_id = name_id,
          .parent_scope_id = SemIR::NameScopeId::Invalid,
          .bind_index = import_bind_info.bind_index});
     return ResolveAs<SemIR::BindSymbolicName>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
-         .scoped_name_id = scoped_name_id,
+         .entity_name_id = entity_name_id,
          .value_id = SemIR::InstId::Invalid});
   }
 
@@ -1574,7 +1574,7 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
       inst_id,
       SemIR::ImportRefLoaded{.type_id = type_id,
                              .import_ir_inst_id = inst->import_ir_inst_id,
-                             .scoped_name_id = inst->scoped_name_id});
+                             .entity_name_id = inst->entity_name_id});
 
   // Store the constant for both the ImportRefLoaded and indirect instructions.
   context.constant_values().Set(inst_id, constant_id);
@@ -1604,7 +1604,7 @@ static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
     auto& impl = context.impls().Get(impl_id);
     impl.witness_id = AddImportRef(
         context, {.ir_id = import_ir_id, .inst_id = import_impl.witness_id},
-        SemIR::ScopedNameId::Invalid);
+        SemIR::EntityNameId::Invalid);
   }
 }
 

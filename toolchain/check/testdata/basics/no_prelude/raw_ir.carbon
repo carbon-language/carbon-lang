@@ -22,7 +22,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+16}}
-// CHECK:STDOUT:   scoped_names:
+// CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     bindName0:       {name: name1, parent_scope: name_scope<invalid>, index: compTimeBind0}
 // CHECK:STDOUT:     bindName1:       {name: name2, parent_scope: name_scope<invalid>, index: compTimeBind<invalid>}
 // CHECK:STDOUT:   functions:

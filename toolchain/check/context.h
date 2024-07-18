@@ -378,8 +378,8 @@ class Context {
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
-  auto scoped_names() -> SemIR::ScopedNameStore& {
-    return sem_ir().scoped_names();
+  auto entity_names() -> SemIR::EntityNameStore& {
+    return sem_ir().entity_names();
   }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();

@@ -88,7 +88,7 @@ static auto BuildInterfaceWitness(
       context.insts().GetAs<SemIR::BindSymbolicName>(interface.self_param_id);
   Substitution substitutions[1] = {
       {.bind_id =
-           context.scoped_names().Get(self_bind.scoped_name_id).bind_index,
+           context.entity_names().Get(self_bind.entity_name_id).bind_index,
        .replacement_id = context.types().GetConstantId(impl.self_id)}};
 
   for (auto decl_id : assoc_entities) {

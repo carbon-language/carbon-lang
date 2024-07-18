@@ -82,7 +82,7 @@ static auto BuildAssociatedConstantDecl(Context& context,
   // Replace the tentative BindName instruction with the associated constant
   // declaration.
   auto name_id =
-      context.scoped_names().Get(binding_pattern->scoped_name_id).name_id;
+      context.entity_names().Get(binding_pattern->entity_name_id).name_id;
   context.ReplaceLocIdAndInstBeforeConstantUse(
       pattern_id,
       SemIR::LocIdAndInst(node_id, SemIR::AssociatedConstantDecl{
@@ -108,7 +108,7 @@ static auto HandleNameBinding(Context& context, SemIR::InstId pattern_id,
     // the variable.
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
         context.insts().GetLocId(pattern_id),
-        context.scoped_names().Get(bind_name->scoped_name_id).name_id);
+        context.entity_names().Get(bind_name->entity_name_id).name_id);
     context.decl_name_stack().AddNameOrDiagnoseDuplicate(
         name_context, pattern_id, access_kind);
     return bind_name->value_id;

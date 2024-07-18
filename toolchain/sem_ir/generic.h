@@ -26,7 +26,7 @@ struct Generic : public Printable<Generic> {
   InstId decl_id;
   // A block containing the IDs of compile time bindings in this generic scope.
   // The index in this block will match the `bind_index` in the name binding
-  // instruction's `BindScopedName`.
+  // instruction's `EntityName`.
   InstBlockId bindings_id;
 };
 

@@ -28,7 +28,7 @@ fn B() {}
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
-// CHECK:STDOUT:   scoped_names:    {}
+// CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
@@ -91,7 +91,7 @@ fn B() {}
 // CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
-// CHECK:STDOUT:   scoped_names:    {}
+// CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}

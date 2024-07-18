@@ -59,7 +59,7 @@ TEST(SemIRTest, YAML) {
   auto file = Yaml::Mapping(ElementsAre(
       Pair("import_irs_size", "1"),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
-      Pair("scoped_names", Yaml::Mapping(SizeIs(1))),
+      Pair("entity_names", Yaml::Mapping(SizeIs(1))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),
