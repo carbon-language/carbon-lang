@@ -82,6 +82,9 @@ TEST(ValueStore, Identifiers) {
   std::string b = "b";
   SharedValueStores value_stores;
 
+  // Make sure reserve works, we use it with identifiers.
+  value_stores.identifiers().Reserve(100);
+
   auto a_id = value_stores.identifiers().Add(a);
   auto b_id = value_stores.identifiers().Add(b);
 
