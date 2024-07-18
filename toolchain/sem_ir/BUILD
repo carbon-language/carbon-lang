@@ -88,11 +88,11 @@ cc_library(
         "name.cpp",
     ],
     hdrs = [
-        "bind_name.h",
         "builtin_function_kind.h",
         "class.h",
         "constant.h",
         "copy_on_write_block.h",
+        "entity_name.h",
         "file.h",
         "function.h",
         "generic.h",

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
-#define CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
+#define CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 
 #include "common/hashing.h"
 #include "toolchain/base/value_store.h"
@@ -72,4 +72,4 @@ struct EntityNameStore : public ValueStore<EntityNameId> {
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_

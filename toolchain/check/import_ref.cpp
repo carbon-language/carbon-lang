@@ -858,13 +858,13 @@ class ImportRefResolver {
       return ResolveResult::Retry();
     }
 
-    const auto& import_bind_info =
+    const auto& import_entity_name =
         import_ir_.entity_names().Get(inst.entity_name_id);
-    auto name_id = GetLocalNameId(import_bind_info.name_id);
+    auto name_id = GetLocalNameId(import_entity_name.name_id);
     auto entity_name_id = context_.entity_names().Add(
         {.name_id = name_id,
          .parent_scope_id = SemIR::NameScopeId::Invalid,
-         .bind_index = import_bind_info.bind_index});
+         .bind_index = import_entity_name.bind_index});
     return ResolveAs<SemIR::BindSymbolicName>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
          .entity_name_id = entity_name_id,

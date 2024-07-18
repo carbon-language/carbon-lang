@@ -183,7 +183,7 @@ struct EntityNameId : public IdBase, public Printable<EntityNameId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "bindName";
+    out << "entityName";
     IdBase::Print(out);
   }
 };
