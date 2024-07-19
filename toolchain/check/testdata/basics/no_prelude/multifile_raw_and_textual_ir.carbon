@@ -34,7 +34,7 @@ fn B() {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
-// CHECK:STDOUT:   bind_names:      {}
+// CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
@@ -107,8 +107,8 @@ fn B() {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
 // CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:   bind_names:
-// CHECK:STDOUT:     bind_name0:      {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
+// CHECK:STDOUT:   entity_names:
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
 // CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1, param_refs: empty}
@@ -133,7 +133,7 @@ fn B() {
 // CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type(inst+4)}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(instNamespaceType)}
-// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: bind_name0, type: type(inst+10)}
+// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type(inst+10)}

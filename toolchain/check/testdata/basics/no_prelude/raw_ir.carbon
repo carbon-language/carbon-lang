@@ -24,9 +24,9 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+16}}
-// CHECK:STDOUT:   bind_names:
-// CHECK:STDOUT:     bind_name0:      {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind0}
-// CHECK:STDOUT:     bind_name1:      {name: name2, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
+// CHECK:STDOUT:   entity_names:
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind0}
+// CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block5, return_storage: inst+15, return_slot: present, body: [block12]}
 // CHECK:STDOUT:   classes:         {}
@@ -56,11 +56,11 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+1':          {kind: Param, arg0: name1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: bind_name0, arg1: inst+1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: bind_name0, arg1: inst<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst+1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: Param, arg0: name2, type: type(symbolicConstant2)}
-// CHECK:STDOUT:     'inst+6':          {kind: BindName, arg0: bind_name1, arg1: inst+5, type: type(symbolicConstant2)}
+// CHECK:STDOUT:     'inst+6':          {kind: BindName, arg0: entity_name1, arg1: inst+5, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+9':          {kind: TupleLiteral, arg0: empty, type: type(inst+8)}

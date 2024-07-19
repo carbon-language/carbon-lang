@@ -410,7 +410,9 @@ class Context {
   auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
-  auto bind_names() -> SemIR::BindNameStore& { return sem_ir().bind_names(); }
+  auto entity_names() -> SemIR::EntityNameStore& {
+    return sem_ir().entity_names();
+  }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }

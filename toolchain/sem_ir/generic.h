@@ -35,7 +35,7 @@ struct Generic : public Printable<Generic> {
   InstId decl_id;
   // A block containing the IDs of compile time bindings in this generic scope.
   // The index in this block will match the `bind_index` in the name binding
-  // instruction's `BindNameInfo`.
+  // instruction's `EntityName`.
   InstBlockId bindings_id;
   // The self instance of this generic, which is an instance where every generic
   // parameter's argument is that same parameter. For example, the self instance

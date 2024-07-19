@@ -407,7 +407,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case BindSymbolicName::Kind:
       case ExportDecl::Kind: {
         auto inst = untyped_inst.As<AnyBindNameOrExportDecl>();
-        add_inst_name_id(sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
+        add_inst_name_id(
+            sem_ir_.entity_names().Get(inst.entity_name_id).name_id);
         continue;
       }
       case CARBON_KIND(Call inst): {

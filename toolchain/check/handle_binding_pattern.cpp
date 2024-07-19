@@ -37,7 +37,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                             SemIR::InstId value_id) -> SemIR::LocIdAndInst {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto bind_name_id = context.bind_names().Add(
+    auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
          // TODO: Don't allocate a compile-time binding index for an associated
@@ -49,13 +49,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       return SemIR::LocIdAndInst(
           name_node, SemIR::BindSymbolicName{.type_id = type_id,
-                                             .bind_name_id = bind_name_id,
+                                             .entity_name_id = entity_name_id,
                                              .value_id = value_id});
     } else {
-      return SemIR::LocIdAndInst(name_node,
-                                 SemIR::BindName{.type_id = type_id,
-                                                 .bind_name_id = bind_name_id,
-                                                 .value_id = value_id});
+      return SemIR::LocIdAndInst(
+          name_node, SemIR::BindName{.type_id = type_id,
+                                     .entity_name_id = entity_name_id,
+                                     .value_id = value_id});
     }
   };
 
@@ -206,7 +206,7 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
       self_param &&
-      context.bind_names().Get(self_param->bind_name_id).name_id ==
+      context.entity_names().Get(self_param->entity_name_id).name_id ==
           SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.

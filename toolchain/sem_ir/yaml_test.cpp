@@ -58,7 +58,7 @@ TEST(SemIRTest, YAML) {
       Pair("import_irs", Yaml::Mapping(SizeIs(1))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
-      Pair("bind_names", Yaml::Mapping(SizeIs(1))),
+      Pair("entity_names", Yaml::Mapping(SizeIs(1))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),

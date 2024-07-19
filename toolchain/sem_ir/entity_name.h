@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
-#define CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
+#define CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 
 #include "common/hashing.h"
 #include "common/set.h"
@@ -12,15 +12,15 @@
 
 namespace Carbon::SemIR {
 
-struct BindNameInfo : public Printable<BindNameInfo> {
+struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index << "}";
   }
 
-  friend auto CarbonHashtableEq(const BindNameInfo& lhs,
-                                const BindNameInfo& rhs) -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(BindNameInfo)) == 0;
+  friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
+      -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
   // The name.
@@ -31,46 +31,46 @@ struct BindNameInfo : public Printable<BindNameInfo> {
   CompileTimeBindIndex bind_index;
 };
 
-// Hashing for BindNameInfo. See common/hashing.h.
-inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
+// Hashing for EntityName. See common/hashing.h.
+inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
 
-// Value store for BindNameInfo. In addition to the regular ValueStore
-// functionality, this can provide optional canonical IDs for BindNameInfos.
-struct BindNameStore : public ValueStore<BindNameId> {
+// Value store for EntityName. In addition to the regular ValueStore
+// functionality, this can provide optional canonical IDs for EntityNames.
+struct EntityNameStore : public ValueStore<EntityNameId> {
  public:
   // Convert an ID to a canonical ID. All calls to this with equivalent
-  // `BindNameInfo`s will return the same `BindNameId`.
-  auto MakeCanonical(BindNameId id) -> BindNameId;
+  // `EntityName`s will return the same `EntityNameId`.
+  auto MakeCanonical(EntityNameId id) -> EntityNameId;
 
  private:
   class KeyContext;
 
-  Set<BindNameId, /*SmallSize=*/0, KeyContext> canonical_ids_;
+  Set<EntityNameId, /*SmallSize=*/0, KeyContext> canonical_ids_;
 };
 
-class BindNameStore::KeyContext : public TranslatingKeyContext<KeyContext> {
+class EntityNameStore::KeyContext : public TranslatingKeyContext<KeyContext> {
  public:
-  explicit KeyContext(const BindNameStore* store) : store_(store) {}
+  explicit KeyContext(const EntityNameStore* store) : store_(store) {}
 
   // Note that it is safe to return a `const` reference here as the underlying
   // object's lifetime is provided by the `store_`.
-  auto TranslateKey(BindNameId id) const -> const BindNameInfo& {
+  auto TranslateKey(EntityNameId id) const -> const EntityName& {
     return store_->Get(id);
   }
 
  private:
-  const BindNameStore* store_;
+  const EntityNameStore* store_;
 };
 
-inline auto BindNameStore::MakeCanonical(BindNameId id) -> BindNameId {
+inline auto EntityNameStore::MakeCanonical(EntityNameId id) -> EntityNameId {
   return canonical_ids_.Insert(id, KeyContext(this)).key();
 }
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_BIND_NAME_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
