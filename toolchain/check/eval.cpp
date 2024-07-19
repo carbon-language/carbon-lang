@@ -84,7 +84,9 @@ struct EvalContext {
 
   auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
   auto floats() -> FloatValueStore& { return sem_ir().floats(); }
-  auto bind_names() -> SemIR::BindNameStore& { return sem_ir().bind_names(); }
+  auto entity_names() -> SemIR::EntityNameStore& {
+    return sem_ir().entity_names();
+  }
   auto functions() -> const ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }
@@ -1322,7 +1324,8 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       break;
 
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
-      const auto& bind_name = eval_context.bind_names().Get(bind.bind_name_id);
+      const auto& bind_name =
+          eval_context.entity_names().Get(bind.entity_name_id);
 
       // If we know which instance we're evaluating within and this is an
       // argument of that instance, its constant value is the corresponding
@@ -1346,8 +1349,8 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
 
       // The constant form of a symbolic binding is an idealized form of the
       // original, with no equivalent value.
-      bind.bind_name_id =
-          eval_context.bind_names().MakeCanonical(bind.bind_name_id);
+      bind.entity_name_id =
+          eval_context.entity_names().MakeCanonical(bind.entity_name_id);
       bind.value_id = SemIR::InstId::Invalid;
       return MakeConstantResult(eval_context.context, bind, Phase::Symbolic);
     }

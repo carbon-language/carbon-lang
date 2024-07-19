@@ -607,9 +607,9 @@ class FormatterImpl {
     // A BindSymbolicName with no value is a purely symbolic binding, such as
     // the `Self` in an interface. Don't print out `invalid` for the value.
     if (inst.value_id.is_valid()) {
-      FormatArgs(inst.bind_name_id, inst.value_id);
+      FormatArgs(inst.entity_name_id, inst.value_id);
     } else {
-      FormatArgs(inst.bind_name_id);
+      FormatArgs(inst.entity_name_id);
     }
   }
 
@@ -811,8 +811,8 @@ class FormatterImpl {
 
   auto FormatArg(BuiltinInstKind kind) -> void { out_ << kind.label(); }
 
-  auto FormatArg(BindNameId id) -> void {
-    const auto& info = sem_ir_.bind_names().Get(id);
+  auto FormatArg(EntityNameId id) -> void {
+    const auto& info = sem_ir_.entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index.is_valid()) {
       out_ << " " << info.bind_index.index;

@@ -12,9 +12,9 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/sem_ir/bind_name.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -108,8 +108,8 @@ class File : public Printable<File> {
     return value_stores_->string_literal_values();
   }
 
-  auto bind_names() -> BindNameStore& { return bind_names_; }
-  auto bind_names() const -> const BindNameStore& { return bind_names_; }
+  auto entity_names() -> EntityNameStore& { return entity_names_; }
+  auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -186,8 +186,8 @@ class File : public Printable<File> {
   // TODO: If SemIR starts linking back to tokens, reuse its filename.
   std::string filename_;
 
-  // Storage for bind names.
-  BindNameStore bind_names_;
+  // Storage for EntityNames.
+  EntityNameStore entity_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;

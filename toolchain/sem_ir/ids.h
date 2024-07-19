@@ -18,7 +18,7 @@ namespace Carbon::SemIR {
 // Forward declare indexed types, for integration with ValueStore.
 class File;
 class Inst;
-struct BindNameInfo;
+struct EntityName;
 struct Class;
 struct Function;
 struct Generic;
@@ -194,21 +194,21 @@ constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
-// The ID of a bind name.
-struct BindNameId : public IdBase, public Printable<BindNameId> {
-  using ValueType = BindNameInfo;
+// The ID of a EntityName.
+struct EntityNameId : public IdBase, public Printable<EntityNameId> {
+  using ValueType = EntityName;
 
   // An explicitly invalid ID.
-  static const BindNameId Invalid;
+  static const EntityNameId Invalid;
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "bind_name";
+    out << "entity_name";
     IdBase::Print(out);
   }
 };
 
-constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
+constexpr EntityNameId EntityNameId::Invalid = EntityNameId(InvalidIndex);
 
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
