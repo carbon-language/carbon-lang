@@ -35,12 +35,12 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
 auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  // Lower all types that were required to be complete. Note that this may
-  // leave some entries in `types_` null, if those types were mentioned but not
-  // used.
-  types_.resize(sem_ir_->types().size());
-  for (auto type_id : sem_ir_->complete_types()) {
-    types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
+  // Lower all types that were required to be complete.
+  types_.resize(sem_ir_->insts().size());
+  for (auto type_id : sem_ir_->types().complete_types()) {
+    if (type_id.index >= 0) {
+      types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
+    }
   }
 
   // Lower function declarations.
@@ -122,15 +122,17 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
 
-  // Don't lower associated functions.
-  // TODO: We shouldn't lower any function that has generic parameters.
-  if (sem_ir().insts().Is<SemIR::InterfaceDecl>(
+  // Don't lower generic functions or associated functions.
+  // TODO: Associated functions have `Self` in scope so should be treated as
+  // generic functions.
+  if (function.generic_id.is_valid() ||
+      sem_ir().insts().Is<SemIR::InterfaceDecl>(
           sem_ir().name_scopes().Get(function.parent_scope_id).inst_id)) {
     return nullptr;
   }
 
   // Don't lower builtins.
-  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+  if (function.builtin_function_kind != SemIR::BuiltinFunctionKind::None) {
     return nullptr;
   }
 
@@ -240,6 +242,12 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 
   llvm::Function* llvm_function = GetFunction(function_id);
+  if (!llvm_function) {
+    // We chose not to lower this function at all, for example because it's a
+    // generic function.
+    return;
+  }
+
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   const bool has_return_slot = function.has_return_slot();
@@ -309,107 +317,145 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
-auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
-  CARBON_KIND_SWITCH(sem_ir_->insts().Get(inst_id)) {
-    case CARBON_KIND(SemIR::ArrayType inst): {
-      return llvm::ArrayType::get(GetType(inst.element_type_id),
-                                  sem_ir_->GetArrayBoundValue(inst.bound_id));
-    }
-    case CARBON_KIND(SemIR::Builtin inst): {
-      switch (inst.builtin_kind) {
-        case SemIR::BuiltinKind::Invalid:
-        case SemIR::BuiltinKind::Error:
-          CARBON_FATAL() << "Unexpected builtin type in lowering.";
-        case SemIR::BuiltinKind::TypeType:
-          return GetTypeType();
-        case SemIR::BuiltinKind::FloatType:
-          return llvm::Type::getDoubleTy(*llvm_context_);
-        case SemIR::BuiltinKind::IntType:
-          return llvm::Type::getInt32Ty(*llvm_context_);
-        case SemIR::BuiltinKind::BoolType:
-          // TODO: We may want to have different representations for `bool`
-          // storage
-          // (`i8`) versus for `bool` values (`i1`).
-          return llvm::Type::getInt1Ty(*llvm_context_);
-        case SemIR::BuiltinKind::StringType:
-          // TODO: Decide how we want to represent `StringType`.
-          return llvm::PointerType::get(*llvm_context_, 0);
-        case SemIR::BuiltinKind::BoundMethodType:
-        case SemIR::BuiltinKind::NamespaceType:
-        case SemIR::BuiltinKind::WitnessType:
-          // Return an empty struct as a placeholder.
-          return llvm::StructType::get(*llvm_context_);
-      }
-    }
-    case CARBON_KIND(SemIR::ClassType inst): {
-      auto object_repr_id =
-          sem_ir_->classes().Get(inst.class_id).object_repr_id;
-      return GetType(object_repr_id);
-    }
-    case CARBON_KIND(SemIR::ConstType inst): {
-      return GetType(inst.inner_id);
-    }
-    case SemIR::FloatType::Kind: {
-      // TODO: Handle different sizes.
-      return llvm::Type::getDoubleTy(*llvm_context_);
-    }
-    case CARBON_KIND(SemIR::IntType inst): {
-      auto width =
-          sem_ir_->insts().TryGetAs<SemIR::IntLiteral>(inst.bit_width_id);
-      CARBON_CHECK(width) << "Can't lower int type with symbolic width";
-      return llvm::IntegerType::get(
-          *llvm_context_, sem_ir_->ints().Get(width->int_id).getZExtValue());
-    }
-    case SemIR::PointerType::Kind: {
-      return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
-    }
-    case CARBON_KIND(SemIR::StructType inst): {
-      auto fields = sem_ir_->inst_blocks().Get(inst.fields_id);
-      llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(fields.size());
-      for (auto field_id : fields) {
-        auto field = sem_ir_->insts().GetAs<SemIR::StructTypeField>(field_id);
-        subtypes.push_back(GetType(field.field_type_id));
-      }
-      return llvm::StructType::get(*llvm_context_, subtypes);
-    }
-    case CARBON_KIND(SemIR::TupleType inst): {
-      // TODO: Investigate special-casing handling of empty tuples so that they
-      // can be collectively replaced with LLVM's void, particularly around
-      // function returns. LLVM doesn't allow declaring variables with a void
-      // type, so that may require significant special casing.
-      auto elements = sem_ir_->type_blocks().Get(inst.elements_id);
-      llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(elements.size());
-      for (auto element_id : elements) {
-        subtypes.push_back(GetType(element_id));
-      }
-      return llvm::StructType::get(*llvm_context_, subtypes);
-    }
-    case SemIR::AssociatedEntityType::Kind:
-    case SemIR::InterfaceType::Kind:
-    case SemIR::FunctionType::Kind:
-    case SemIR::GenericClassType::Kind:
-    case SemIR::GenericInterfaceType::Kind:
-    case SemIR::UnboundElementType::Kind: {
+static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
+    -> llvm::Type* {
+  return llvm::ArrayType::get(
+      context.GetType(inst.element_type_id),
+      context.sem_ir().GetArrayBoundValue(inst.bound_id));
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
+    -> llvm::Type* {
+  switch (inst.builtin_inst_kind) {
+    case SemIR::BuiltinInstKind::Invalid:
+      CARBON_FATAL() << "Unexpected builtin type in lowering.";
+    case SemIR::BuiltinInstKind::Error:
+      // This is a complete type but uses of it should never be lowered.
+      return nullptr;
+    case SemIR::BuiltinInstKind::TypeType:
+      return context.GetTypeType();
+    case SemIR::BuiltinInstKind::FloatType:
+      return llvm::Type::getDoubleTy(context.llvm_context());
+    case SemIR::BuiltinInstKind::IntType:
+      return llvm::Type::getInt32Ty(context.llvm_context());
+    case SemIR::BuiltinInstKind::BoolType:
+      // TODO: We may want to have different representations for `bool`
+      // storage
+      // (`i8`) versus for `bool` values (`i1`).
+      return llvm::Type::getInt1Ty(context.llvm_context());
+    case SemIR::BuiltinInstKind::StringType:
+      // TODO: Decide how we want to represent `StringType`.
+      return llvm::PointerType::get(context.llvm_context(), 0);
+    case SemIR::BuiltinInstKind::BoundMethodType:
+    case SemIR::BuiltinInstKind::NamespaceType:
+    case SemIR::BuiltinInstKind::WitnessType:
       // Return an empty struct as a placeholder.
-      // TODO: Should we model an interface as a witness table, or an associated
-      // entity as an index?
-      return llvm::StructType::get(*llvm_context_);
-    }
+      return llvm::StructType::get(context.llvm_context());
+  }
+}
 
-    // Treat non-monomorphized symbolic types as opaque.
-    case SemIR::BindSymbolicName::Kind:
-    case SemIR::InterfaceWitnessAccess::Kind: {
-      return llvm::StructType::get(*llvm_context_);
-    }
+// BuildTypeForInst is used to construct types for FileContext::BuildType below.
+// Implementations return the LLVM type for the instruction. This first overload
+// is the fallback handler for non-type instructions.
+template <typename InstT>
+  requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
+static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
+    -> llvm::Type* {
+  CARBON_FATAL() << "Cannot use inst as type: " << inst;
+}
 
-#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
-#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
-#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
+static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
+    -> llvm::Type* {
+  auto object_repr_id =
+      context.sem_ir().classes().Get(inst.class_id).object_repr_id;
+  return context.GetType(object_repr_id);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
+    -> llvm::Type* {
+  return context.GetType(inst.inner_id);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::FloatType /*inst*/)
+    -> llvm::Type* {
+  // TODO: Handle different sizes.
+  return llvm::Type::getDoubleTy(context.llvm_context());
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
+    -> llvm::Type* {
+  auto width =
+      context.sem_ir().insts().TryGetAs<SemIR::IntLiteral>(inst.bit_width_id);
+  CARBON_CHECK(width) << "Can't lower int type with symbolic width";
+  return llvm::IntegerType::get(
+      context.llvm_context(),
+      context.sem_ir().ints().Get(width->int_id).getZExtValue());
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
+    -> llvm::Type* {
+  return llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
+    -> llvm::Type* {
+  auto fields = context.sem_ir().inst_blocks().Get(inst.fields_id);
+  llvm::SmallVector<llvm::Type*> subtypes;
+  subtypes.reserve(fields.size());
+  for (auto field_id : fields) {
+    auto field =
+        context.sem_ir().insts().GetAs<SemIR::StructTypeField>(field_id);
+    subtypes.push_back(context.GetType(field.field_type_id));
+  }
+  return llvm::StructType::get(context.llvm_context(), subtypes);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
+    -> llvm::Type* {
+  // TODO: Investigate special-casing handling of empty tuples so that they
+  // can be collectively replaced with LLVM's void, particularly around
+  // function returns. LLVM doesn't allow declaring variables with a void
+  // type, so that may require significant special casing.
+  auto elements = context.sem_ir().type_blocks().Get(inst.elements_id);
+  llvm::SmallVector<llvm::Type*> subtypes;
+  subtypes.reserve(elements.size());
+  for (auto element_id : elements) {
+    subtypes.push_back(context.GetType(element_id));
+  }
+  return llvm::StructType::get(context.llvm_context(), subtypes);
+}
+
+template <typename InstT>
+  requires(InstT::Kind.template IsAnyOf<
+           SemIR::AssociatedEntityType, SemIR::FunctionType,
+           SemIR::GenericClassType, SemIR::GenericInterfaceType,
+           SemIR::InterfaceType, SemIR::UnboundElementType>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // Return an empty struct as a placeholder.
+  // TODO: Should we model an interface as a witness table, or an associated
+  // entity as an index?
+  return llvm::StructType::get(context.llvm_context());
+}
+
+// Treat non-monomorphized symbolic types as opaque.
+template <typename InstT>
+  requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
+                                        SemIR::InterfaceWitnessAccess>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  return llvm::StructType::get(context.llvm_context());
+}
+
+auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
+  // Use overload resolution to select the implementation, producing compile
+  // errors when BuildTypeForInst isn't defined for a given instruction.
+  CARBON_KIND_SWITCH(sem_ir_->insts().Get(inst_id)) {
+#define CARBON_SEM_IR_INST_KIND(Name)     \
+  case CARBON_KIND(SemIR::Name inst): {   \
+    return BuildTypeForInst(*this, inst); \
+  }
 #include "toolchain/sem_ir/inst_kind.def"
-      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " "
-                     << sem_ir_->insts().Get(inst_id);
   }
 }
 

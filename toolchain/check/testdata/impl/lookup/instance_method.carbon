@@ -46,6 +46,12 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -53,13 +59,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc23_6.1: %C = param c
@@ -74,11 +78,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
-// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = constants.%Self]
-// CHECK:STDOUT:     %self.loc14_8.1: %Self = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %Self = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %self.loc14_8.1: @I.%Self.ref (%Self) = param self
+// CHECK:STDOUT:     %self.loc14_8.2: @I.%Self.ref (%Self) = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
@@ -121,7 +125,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: %Self]() -> i32
+// CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: @I.%Self.ref (%Self)]() -> i32
 // CHECK:STDOUT:     generic [@I.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc19_10.2: %C]() -> i32;
@@ -136,5 +140,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc24_15.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc24_15.2: i32 = converted %F.call, %.loc24_15.1
 // CHECK:STDOUT:   return %.loc24_15.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   @I.%Self.ref => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

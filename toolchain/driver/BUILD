@@ -118,6 +118,8 @@ cc_fuzz_test(
     ],
 )
 
+# This target doesn't include prelude libraries. To get a target that has the
+# prelude available, use //toolchain.
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],

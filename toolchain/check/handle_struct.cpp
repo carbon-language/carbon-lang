@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "common/map.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 
 namespace Carbon::Check {
 
-auto HandleStructTypeLiteralStart(Context& context,
-                                  Parse::StructTypeLiteralStartId node_id)
+auto HandleParseNode(Context& context, Parse::StructTypeLiteralStartId node_id)
     -> bool {
   context.scope_stack().Push();
   context.node_stack().Push(node_id);
@@ -17,8 +17,8 @@ auto HandleStructTypeLiteralStart(Context& context,
   return true;
 }
 
-auto HandleStructLiteralStart(Context& context,
-                              Parse::StructLiteralStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
+    -> bool {
   context.scope_stack().Push();
   context.node_stack().Push(node_id);
   context.args_type_info_stack().Push();
@@ -26,21 +26,20 @@ auto HandleStructLiteralStart(Context& context,
   return true;
 }
 
-auto HandleStructFieldDesignator(Context& context,
-                                 Parse::StructFieldDesignatorId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::StructFieldDesignatorId /*node_id*/) -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(context.node_stack().PeekIsName());
   return true;
 }
 
-auto HandleStructComma(Context& context, Parse::StructCommaId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::StructCommaId /*node_id*/)
     -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleStructField(Context& context, Parse::StructFieldId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::StructFieldId node_id) -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
@@ -56,7 +55,7 @@ auto HandleStructField(Context& context, Parse::StructFieldId node_id) -> bool {
   return true;
 }
 
-auto HandleStructTypeField(Context& context, Parse::StructTypeFieldId node_id)
+auto HandleParseNode(Context& context, Parse::StructTypeFieldId node_id)
     -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
   SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
@@ -74,12 +73,12 @@ static auto DiagnoseDuplicateNames(Context& context,
                                    llvm::StringRef construct) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
-  llvm::SmallDenseMap<SemIR::NameId, SemIR::InstId> names;
+  Map<SemIR::NameId, SemIR::InstId> names;
   auto& insts = sem_ir.insts();
   for (SemIR::InstId field_inst_id : fields) {
     auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
-    auto [it, added] = names.insert({field_inst.name_id, field_inst_id});
-    if (!added) {
+    auto result = names.Insert(field_inst.name_id, field_inst_id);
+    if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Duplicated field name `{1}` in {0}.", std::string,
                         SemIR::NameId);
@@ -88,7 +87,7 @@ static auto DiagnoseDuplicateNames(Context& context,
       context.emitter()
           .Build(field_inst_id, StructNameDuplicate, construct.str(),
                  field_inst.name_id)
-          .Note(it->second, StructNamePrevious)
+          .Note(result.value(), StructNamePrevious)
           .Emit();
       return true;
     }
@@ -96,8 +95,7 @@ static auto DiagnoseDuplicateNames(Context& context,
   return false;
 }
 
-auto HandleStructLiteral(Context& context, Parse::StructLiteralId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralStart);
 
@@ -118,8 +116,8 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId node_id)
   return true;
 }
 
-auto HandleStructTypeLiteral(Context& context,
-                             Parse::StructTypeLiteralId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
+    -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructTypeLiteralStart);
 

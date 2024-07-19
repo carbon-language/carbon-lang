@@ -42,10 +42,12 @@ cc_library(
     ],
     deps = [
         "//common:check",
+        "//common:map",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
         "//toolchain/sem_ir:inst_namer",

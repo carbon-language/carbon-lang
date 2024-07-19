@@ -7,10 +7,22 @@
 
 #include <cstdint>
 
+#include "common/check.h"
 #include "common/enum_base.h"
 #include "llvm/ADT/FoldingSet.h"
 
 namespace Carbon::SemIR {
+
+// Whether an instruction defines a type.
+enum class InstIsType : int8_t {
+  // Always of type `type`, and might define a type constant.
+  Always,
+  // Sometimes of type `type`, and might define a type constant.
+  Maybe,
+  // Never defines a type constant. Note that such instructions can still have
+  // type `type`, but are not the canonical definition of any type.
+  Never,
+};
 
 // Whether an instruction produces or represents a value, and if so, what kind
 // of value.
@@ -74,36 +86,62 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   template <typename TypedNodeId>
   class Definition;
 
+  // Information about a definition. See associated accessors below for
+  // comments.
+  struct DefinitionInfo {
+    llvm::StringLiteral ir_name;
+    InstIsType is_type = InstIsType::Never;
+    InstConstantKind constant_kind = InstConstantKind::Never;
+    TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
+    bool is_lowered = true;
+  };
+
   // Provides a definition for this instruction kind. Should only be called
   // once, to construct the kind as part of defining it in `typed_insts.h`.
   template <typename TypedNodeId>
-  constexpr auto Define(
-      llvm::StringLiteral ir_name,
-      TerminatorKind terminator_kind = TerminatorKind::NotTerminator) const
-      -> Definition<TypedNodeId>;
+  constexpr auto Define(DefinitionInfo info) const -> Definition<TypedNodeId>;
 
   using EnumBase::AsInt;
   using EnumBase::Make;
 
-  // Returns the name to use for this instruction kind in Semantics IR.
-  auto ir_name() const -> llvm::StringLiteral;
+  // Returns true if the kind matches any of the provided instructions' kinds.
+  template <typename... InstT>
+  constexpr auto IsAnyOf() const -> bool {
+    return ((*this == InstT::Kind) || ...);
+  }
 
-  // Returns whether this kind of instruction is expected to produce a value.
+  // Returns the name to use for this instruction kind in Semantics IR.
+  auto ir_name() const -> llvm::StringLiteral {
+    return definition_info(*this).ir_name;
+  }
+
+  // Returns whether this instruction kind defines a type.
+  auto is_type() const -> InstIsType { return definition_info(*this).is_type; }
+
+  // Returns whether this instruction kind is expected to produce a value.
   auto value_kind() const -> InstValueKind;
 
-  // Returns whether this kind of instruction is able to define a constant.
-  auto constant_kind() const -> InstConstantKind;
+  // Returns this instruction kind's category of allowed constants.
+  auto constant_kind() const -> InstConstantKind {
+    return definition_info(*this).constant_kind;
+  }
 
   // Returns whether this instruction kind is a code block terminator, such as
   // an unconditional branch instruction, or part of the termination sequence,
   // such as a conditional branch instruction. The termination sequence of a
   // code block appears after all other instructions, and ends with a
   // terminator instruction.
-  auto terminator_kind() const -> TerminatorKind;
+  auto terminator_kind() const -> TerminatorKind {
+    return definition_info(*this).terminator_kind;
+  }
 
   // Compute a fingerprint for this instruction kind, allowing its use as part
   // of the key in a `FoldingSet`.
   void Profile(llvm::FoldingSetNodeID& id) { id.AddInteger(AsInt()); }
+
+ private:
+  // Returns the DefinitionInfo for the kind.
+  static auto definition_info(InstKind kind) -> const DefinitionInfo&;
 };
 
 #define CARBON_SEM_IR_INST_KIND(Name) \
@@ -115,9 +153,9 @@ static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 
 // A definition of an instruction kind. This is an InstKind value, plus
 // ancillary data such as the name to use for the node kind in LLVM IR. These
-// are not copyable, and only one instance of this type is expected to exist per
-// instruction kind, specifically `TypedInst::Kind`. Use `InstKind` instead as a
-// thin wrapper around an instruction kind index.
+// are not copyable, and only one instance of this type is expected to exist
+// per instruction kind, specifically `TypedInst::Kind`. Use `InstKind`
+// instead as a thin wrapper around an instruction kind index.
 template <typename TypedNodeIdArg>
 class InstKind::Definition : public InstKind {
  public:
@@ -128,30 +166,40 @@ class InstKind::Definition : public InstKind {
   auto operator=(const Definition&) -> Definition& = delete;
 
   // Returns the name to use for this instruction kind in Semantics IR.
-  constexpr auto ir_name() const -> llvm::StringLiteral { return ir_name_; }
+  constexpr auto ir_name() const -> llvm::StringLiteral {
+    return info_.ir_name;
+  }
+
+  // Returns whether this instruction kind defines a type.
+  constexpr auto is_type() const -> InstIsType { return info_.is_type; }
+
+  // Returns this instruction kind's category of allowed constants.
+  constexpr auto constant_kind() const -> InstConstantKind {
+    return info_.constant_kind;
+  }
 
   // Returns whether this instruction kind is a code block terminator. See
   // InstKind::terminator_kind().
   constexpr auto terminator_kind() const -> TerminatorKind {
-    return terminator_kind_;
+    return info_.terminator_kind;
   }
+
+  // Returns true if the instruction is lowered.
+  constexpr auto is_lowered() const -> bool { return info_.is_lowered; }
 
  private:
   friend class InstKind;
 
-  constexpr Definition(InstKind kind, llvm::StringLiteral ir_name,
-                       TerminatorKind terminator_kind)
-      : InstKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
+  constexpr Definition(InstKind kind, InstKind::DefinitionInfo info)
+      : InstKind(kind), info_(info) {}
 
-  llvm::StringLiteral ir_name_;
-  TerminatorKind terminator_kind_;
+  InstKind::DefinitionInfo info_;
 };
 
 template <typename TypedNodeId>
-constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
-                                TerminatorKind terminator_kind) const
+constexpr auto InstKind::Define(DefinitionInfo info) const
     -> Definition<TypedNodeId> {
-  return Definition<TypedNodeId>(*this, ir_name, terminator_kind);
+  return Definition<TypedNodeId>(*this, info);
 }
 
 }  // namespace Carbon::SemIR

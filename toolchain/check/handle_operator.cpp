@@ -32,19 +32,18 @@ static auto HandleBinaryOperator(Context& context,
   return true;
 }
 
-auto HandleInfixOperatorAmp(Context& context, Parse::InfixOperatorAmpId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorAmpId node_id)
     -> bool {
   // TODO: Facet type intersection may need to be handled directly.
   return HandleBinaryOperator(context, node_id, {"BitAnd"});
 }
 
-auto HandleInfixOperatorAmpEqual(Context& context,
-                                 Parse::InfixOperatorAmpEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorAmpEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"BitAndAssign"});
 }
 
-auto HandleInfixOperatorAs(Context& context, Parse::InfixOperatorAsId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorAsId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
@@ -55,19 +54,18 @@ auto HandleInfixOperatorAs(Context& context, Parse::InfixOperatorAsId node_id)
   return true;
 }
 
-auto HandleInfixOperatorCaret(Context& context,
-                              Parse::InfixOperatorCaretId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorCaretId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"BitXor"});
 }
 
-auto HandleInfixOperatorCaretEqual(Context& context,
-                                   Parse::InfixOperatorCaretEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorCaretEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"BitXorAssign"});
 }
 
-auto HandleInfixOperatorEqual(Context& context,
-                              Parse::InfixOperatorEqualId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
+    -> bool {
   // TODO: Switch to using assignment interface for most assignment. Some cases
   // may need to be handled directly.
   //
@@ -94,137 +92,126 @@ auto HandleInfixOperatorEqual(Context& context,
   return true;
 }
 
-auto HandleInfixOperatorEqualEqual(Context& context,
-                                   Parse::InfixOperatorEqualEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorEqualEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"Eq", "Equal"});
 }
 
-auto HandleInfixOperatorExclaimEqual(Context& context,
-                                     Parse::InfixOperatorExclaimEqualId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorExclaimEqualId node_id) -> bool {
   return HandleBinaryOperator(context, node_id, {"Eq", "NotEqual"});
 }
 
-auto HandleInfixOperatorGreater(Context& context,
-                                Parse::InfixOperatorGreaterId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorGreaterId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Ordered", "Greater"});
 }
 
-auto HandleInfixOperatorGreaterEqual(Context& context,
-                                     Parse::InfixOperatorGreaterEqualId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorGreaterEqualId node_id) -> bool {
   return HandleBinaryOperator(context, node_id,
                               {"Ordered", "GreaterOrEquivalent"});
 }
 
-auto HandleInfixOperatorGreaterGreater(
-    Context& context, Parse::InfixOperatorGreaterGreaterId node_id) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorGreaterGreaterId node_id) -> bool {
   return HandleBinaryOperator(context, node_id, {"RightShift"});
 }
 
-auto HandleInfixOperatorGreaterGreaterEqual(
-    Context& context, Parse::InfixOperatorGreaterGreaterEqualId node_id)
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorGreaterGreaterEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"RightShiftAssign"});
 }
 
-auto HandleInfixOperatorLess(Context& context,
-                             Parse::InfixOperatorLessId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorLessId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Ordered", "Less"});
 }
 
-auto HandleInfixOperatorLessEqual(Context& context,
-                                  Parse::InfixOperatorLessEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorLessEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id,
                               {"Ordered", "LessOrEquivalent"});
 }
 
-auto HandleInfixOperatorLessEqualGreater(
-    Context& context, Parse::InfixOperatorLessEqualGreaterId node_id) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorLessEqualGreaterId node_id) -> bool {
   return context.TODO(node_id, "remove <=> operator that is not in the design");
 }
 
-auto HandleInfixOperatorLessLess(Context& context,
-                                 Parse::InfixOperatorLessLessId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorLessLessId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"LeftShift"});
 }
 
-auto HandleInfixOperatorLessLessEqual(
-    Context& context, Parse::InfixOperatorLessLessEqualId node_id) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorLessLessEqualId node_id) -> bool {
   return HandleBinaryOperator(context, node_id, {"LeftShiftAssign"});
 }
 
-auto HandleInfixOperatorMinus(Context& context,
-                              Parse::InfixOperatorMinusId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorMinusId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Sub"});
 }
 
-auto HandleInfixOperatorMinusEqual(Context& context,
-                                   Parse::InfixOperatorMinusEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorMinusEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"SubAssign"});
 }
 
-auto HandleInfixOperatorPercent(Context& context,
-                                Parse::InfixOperatorPercentId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorPercentId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Mod"});
 }
 
-auto HandleInfixOperatorPercentEqual(Context& context,
-                                     Parse::InfixOperatorPercentEqualId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InfixOperatorPercentEqualId node_id) -> bool {
   return HandleBinaryOperator(context, node_id, {"ModAssign"});
 }
 
-auto HandleInfixOperatorPipe(Context& context,
-                             Parse::InfixOperatorPipeId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorPipeId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"BitOr"});
 }
 
-auto HandleInfixOperatorPipeEqual(Context& context,
-                                  Parse::InfixOperatorPipeEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorPipeEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"BitOrAssign"});
 }
 
-auto HandleInfixOperatorPlus(Context& context,
-                             Parse::InfixOperatorPlusId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorPlusId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Add"});
 }
 
-auto HandleInfixOperatorPlusEqual(Context& context,
-                                  Parse::InfixOperatorPlusEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorPlusEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"AddAssign"});
 }
 
-auto HandleInfixOperatorSlash(Context& context,
-                              Parse::InfixOperatorSlashId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorSlashId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Div"});
 }
 
-auto HandleInfixOperatorSlashEqual(Context& context,
-                                   Parse::InfixOperatorSlashEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorSlashEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"DivAssign"});
 }
 
-auto HandleInfixOperatorStar(Context& context,
-                             Parse::InfixOperatorStarId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InfixOperatorStarId node_id)
+    -> bool {
   return HandleBinaryOperator(context, node_id, {"Mul"});
 }
 
-auto HandleInfixOperatorStarEqual(Context& context,
-                                  Parse::InfixOperatorStarEqualId node_id)
+auto HandleParseNode(Context& context, Parse::InfixOperatorStarEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id, {"MulAssign"});
 }
 
-auto HandlePostfixOperatorStar(Context& context,
-                               Parse::PostfixOperatorStarId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
+    -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type_id = ExprAsType(context, node_id, value_id);
   context.AddInstAndPush<SemIR::PointerType>(
@@ -233,8 +220,8 @@ auto HandlePostfixOperatorStar(Context& context,
   return true;
 }
 
-auto HandlePrefixOperatorAmp(Context& context,
-                             Parse::PrefixOperatorAmpId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
+    -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto type_id = context.insts().Get(value_id).type_id();
   // Only durable reference expressions can have their address taken.
@@ -261,13 +248,13 @@ auto HandlePrefixOperatorAmp(Context& context,
   return true;
 }
 
-auto HandlePrefixOperatorCaret(Context& context,
-                               Parse::PrefixOperatorCaretId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PrefixOperatorCaretId node_id)
+    -> bool {
   return HandleUnaryOperator(context, node_id, {"BitComplement"});
 }
 
-auto HandlePrefixOperatorConst(Context& context,
-                               Parse::PrefixOperatorConstId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
+    -> bool {
   auto value_id = context.node_stack().PopExpr();
 
   // `const (const T)` is probably not what the developer intended.
@@ -285,19 +272,18 @@ auto HandlePrefixOperatorConst(Context& context,
   return true;
 }
 
-auto HandlePrefixOperatorMinus(Context& context,
-                               Parse::PrefixOperatorMinusId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PrefixOperatorMinusId node_id)
+    -> bool {
   return HandleUnaryOperator(context, node_id, {"Negate"});
 }
 
-auto HandlePrefixOperatorMinusMinus(Context& context,
-                                    Parse::PrefixOperatorMinusMinusId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::PrefixOperatorMinusMinusId node_id) -> bool {
   return HandleUnaryOperator(context, node_id, {"Dec"});
 }
 
-auto HandlePrefixOperatorNot(Context& context,
-                             Parse::PrefixOperatorNotId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PrefixOperatorNotId node_id)
+    -> bool {
   auto value_id = context.node_stack().PopExpr();
   value_id = ConvertToBoolValue(context, node_id, value_id);
   context.AddInstAndPush<SemIR::UnaryOperatorNot>(
@@ -306,14 +292,13 @@ auto HandlePrefixOperatorNot(Context& context,
   return true;
 }
 
-auto HandlePrefixOperatorPlusPlus(Context& context,
-                                  Parse::PrefixOperatorPlusPlusId node_id)
+auto HandleParseNode(Context& context, Parse::PrefixOperatorPlusPlusId node_id)
     -> bool {
   return HandleUnaryOperator(context, node_id, {"Inc"});
 }
 
-auto HandlePrefixOperatorStar(Context& context,
-                              Parse::PrefixOperatorStarId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
+    -> bool {
   auto base_id = context.node_stack().PopExpr();
 
   auto deref_base_id = PerformPointerDereference(
@@ -383,14 +368,12 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-auto HandleShortCircuitOperandAnd(Context& context,
-                                  Parse::ShortCircuitOperandAndId node_id)
+auto HandleParseNode(Context& context, Parse::ShortCircuitOperandAndId node_id)
     -> bool {
   return HandleShortCircuitOperand(context, node_id, /*is_or=*/false);
 }
 
-auto HandleShortCircuitOperandOr(Context& context,
-                                 Parse::ShortCircuitOperandOrId node_id)
+auto HandleParseNode(Context& context, Parse::ShortCircuitOperandOrId node_id)
     -> bool {
   return HandleShortCircuitOperand(context, node_id, /*is_or=*/true);
 }
@@ -426,14 +409,12 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   return true;
 }
 
-auto HandleShortCircuitOperatorAnd(Context& context,
-                                   Parse::ShortCircuitOperatorAndId node_id)
+auto HandleParseNode(Context& context, Parse::ShortCircuitOperatorAndId node_id)
     -> bool {
   return HandleShortCircuitOperator(context, node_id);
 }
 
-auto HandleShortCircuitOperatorOr(Context& context,
-                                  Parse::ShortCircuitOperatorOrId node_id)
+auto HandleParseNode(Context& context, Parse::ShortCircuitOperatorOrId node_id)
     -> bool {
   return HandleShortCircuitOperator(context, node_id);
 }

@@ -18,6 +18,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_index.h"
@@ -204,6 +205,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token) const
       -> void;
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
 
@@ -336,10 +341,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   llvm::SmallVector<TokenInfo> token_infos_;
 
   llvm::SmallVector<LineInfo> line_infos_;
-
-  // Stores the computed value of string literals so that StringRefs are
-  // durable.
-  llvm::SmallVector<std::unique_ptr<std::string>> computed_strings_;
 
   // The number of parse tree nodes that we expect to be created for the tokens
   // in this buffer.

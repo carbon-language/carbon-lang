@@ -124,9 +124,8 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
   auto& scope = context.name_scopes().Get(scope_id);
-  auto it = scope.name_map.find(name_id);
-  if (it != scope.name_map.end()) {
-    scope.names[it->second].inst_id = new_inst_id;
+  if (auto lookup = scope.name_map.Lookup(name_id)) {
+    scope.names[lookup.value()].inst_id = new_inst_id;
   }
 }
 
@@ -175,8 +174,9 @@ static auto CheckRedeclParam(Context& context,
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
-      new_param_ref.type_id() !=
-          SubstType(context, prev_param_ref.type_id(), substitutions)) {
+      !context.types().AreEqualAcrossDeclarations(
+          new_param_ref.type_id(),
+          SubstType(context, prev_param_ref.type_id(), substitutions))) {
     diagnose();
     return false;
   }

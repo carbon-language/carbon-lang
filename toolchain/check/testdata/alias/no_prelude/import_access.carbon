@@ -23,14 +23,10 @@ private alias A = C;
 // Test files
 // ============================================================================
 
-// --- fail_todo_def.impl.carbon
+// --- def.impl.carbon
 
 impl package Test library "def";
 
-// CHECK:STDERR: fail_todo_def.impl.carbon:[[@LINE+4]]:11: ERROR: Name `A` not found.
-// CHECK:STDERR: var inst: A = {};
-// CHECK:STDERR:           ^
-// CHECK:STDERR:
 var inst: A = {};
 
 // --- fail_local_def.carbon
@@ -78,27 +74,46 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+5, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir0, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .A [private] = imports.%import_ref.2
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir0, inst+1, unloaded
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
-// CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %inst.var: ref %C = var inst
+// CHECK:STDOUT:   %inst: ref %C = bind_name inst, %inst.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
-// CHECK:STDOUT:   assign file.%inst.var, <error>
+// CHECK:STDOUT:   %.loc4_16.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%inst.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc4_17: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%inst.var, %.loc4_17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,12 +123,16 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = imports.%import_ref
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
@@ -137,7 +156,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst

@@ -46,18 +46,17 @@ TEST(SemIRTest, YAML) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
-  auto type_block_id = Yaml::Scalar(MatchesRegex(R"(typeBlock\d+)"));
+  auto type_block_id = Yaml::Scalar(MatchesRegex(R"(type_block\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
   auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"((template|symbolic) inst(\w+|\+\d+))"));
+      Yaml::Scalar(MatchesRegex(R"(templateConstant\(inst(\w+|\+\d+)\))"));
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
-  auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
-  auto type_builtin = Pair(
-      type_id, Yaml::Mapping(ElementsAre(Pair("constant", constant_id),
-                                         Pair("value_rep", Yaml::Mapping(_)))));
+  auto type_id = Yaml::Scalar(MatchesRegex(R"(type(\w+|\(inst(\w+|\+\d+)\)))"));
+  auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
-      Pair("import_irs_size", "1"),
+      Pair("import_irs", Yaml::Mapping(SizeIs(1))),
+      Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
@@ -86,15 +85,17 @@ TEST(SemIRTest, YAML) {
                                                 Pair("arg1", inst_id)))))))),
       Pair("constant_values",
            Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
+      Pair("symbolic_constants", Yaml::Mapping(SizeIs(0))),
       // This production has only two instruction blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("empty", Yaml::Mapping(IsEmpty())),
                Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("import_refs", Yaml::Mapping(IsEmpty())),
                Pair("global_init", Yaml::Mapping(IsEmpty())),
-               Pair("block3", Yaml::Mapping(Each(Pair(_, inst_id)))),
                Pair("block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("block5", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+               Pair("block5", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("block6", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));

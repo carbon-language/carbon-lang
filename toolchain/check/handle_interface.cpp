@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
-#include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -13,8 +13,8 @@
 
 namespace Carbon::Check {
 
-auto HandleInterfaceIntroducer(Context& context,
-                               Parse::InterfaceIntroducerId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
+    -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // interface signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -110,16 +110,14 @@ static auto BuildInterfaceDecl(Context& context,
   return {interface_decl.interface_id, interface_decl_id};
 }
 
-auto HandleInterfaceDecl(Context& context, Parse::InterfaceDeclId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::InterfaceDeclId node_id) -> bool {
   BuildInterfaceDecl(context, node_id);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleInterfaceDefinitionStart(Context& context,
-                                    Parse::InterfaceDefinitionStartId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::InterfaceDefinitionStartId node_id) -> bool {
   auto [interface_id, interface_decl_id] = BuildInterfaceDecl(context, node_id);
   auto& interface_info = context.interfaces().Get(interface_id);
 
@@ -141,8 +139,10 @@ auto HandleInterfaceDefinitionStart(Context& context,
   }
 
   // Enter the interface scope.
-  context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
-  StartGenericDefinition(context, interface_info.generic_id);
+  context.scope_stack().Push(
+      interface_decl_id, interface_info.scope_id,
+      context.generics().GetSelfInstance(interface_info.generic_id));
+  StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);
@@ -152,10 +152,18 @@ auto HandleInterfaceDefinitionStart(Context& context,
 
   // Declare and introduce `Self`.
   if (!interface_info.is_defined()) {
-    // TODO: Once we support parameterized interfaces, this won't be the right
-    // type. For `interface X(T:! type)`, the type of `Self` is `X(T)`, whereas
-    // this will be simply `X`.
-    auto self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
+    SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
+    if (interface_info.is_generic()) {
+      auto instance_id =
+          context.generics().GetSelfInstance(interface_info.generic_id);
+      self_type_id = context.GetTypeIdForTypeConstant(
+          TryEvalInst(context, SemIR::InstId::Invalid,
+                      SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
+                                           .interface_id = interface_id,
+                                           .instance_id = instance_id}));
+    } else {
+      self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
+    }
 
     // We model `Self` as a symbolic binding whose type is the interface.
     // Because there is no equivalent non-symbolic value, we use `Invalid` as
@@ -187,8 +195,7 @@ auto HandleInterfaceDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleInterfaceDefinition(Context& context,
-                               Parse::InterfaceDefinitionId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     -> bool {
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();

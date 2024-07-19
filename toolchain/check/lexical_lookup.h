@@ -37,7 +37,7 @@ class LexicalLookup {
     SemIR::InstId inst_id;
   };
 
-  explicit LexicalLookup(const StringStoreWrapper<IdentifierId>& identifiers)
+  explicit LexicalLookup(const CanonicalValueStore<IdentifierId>& identifiers)
       : lookup_(identifiers.size() + SemIR::NameId::NonIndexValueCount) {}
 
   // Returns the lexical lookup results for a name.

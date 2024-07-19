@@ -24,17 +24,16 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   return true;
 }
 
-auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::LetIntroducerId node_id) -> bool {
   return HandleIntroducer<Lex::TokenKind::Let>(context, node_id);
 }
 
-auto HandleVariableIntroducer(Context& context,
-                              Parse::VariableIntroducerId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
+    -> bool {
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
-auto HandleReturnedModifier(Context& context, Parse::ReturnedModifierId node_id)
+auto HandleParseNode(Context& context, Parse::ReturnedModifierId node_id)
     -> bool {
   // This is pushed to be seen by HandleBindingPattern.
   context.node_stack().Push(node_id);
@@ -43,19 +42,19 @@ auto HandleReturnedModifier(Context& context, Parse::ReturnedModifierId node_id)
 
 static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
   if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context.inst_block_stack().PushGlobalInit();
+    context.global_init().Resume();
   }
   context.node_stack().Push(node_id);
   return true;
 }
 
-auto HandleLetInitializer(Context& context, Parse::LetInitializerId node_id)
+auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
   return HandleInitializer(context, node_id);
 }
 
-auto HandleVariableInitializer(Context& context,
-                               Parse::VariableInitializerId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
+    -> bool {
   return HandleInitializer(context, node_id);
 }
 
@@ -155,7 +154,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     if (decl_info->init_id &&
         context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-      context.inst_block_stack().PopGlobalInit();
+      context.global_init().Suspend();
     }
     context.TODO(node_id, "tuple pattern in let/var");
     decl_info = std::nullopt;
@@ -187,7 +186,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
   return decl_info;
 }
 
-auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
@@ -250,14 +249,13 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
 
   if (decl_info->init_id &&
       context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context.inst_block_stack().PopGlobalInit();
+    context.global_init().Suspend();
   }
 
   return true;
 }
 
-auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context, node_id);
@@ -288,7 +286,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
     }
 
     if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-      context.inst_block_stack().PopGlobalInit();
+      context.global_init().Suspend();
     }
   }
 

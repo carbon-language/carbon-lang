@@ -34,7 +34,8 @@ fn Run() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
@@ -51,7 +52,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc17_7: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc17_4.1: ref %.1 = temporary_storage
 // CHECK:STDOUT:   %.loc17_4.2: ref %.1 = temporary %.loc17_4.1, %F.call
-// CHECK:STDOUT:   %.loc17_8: ref <error> = tuple_index %.loc17_4.2, <error>
+// CHECK:STDOUT:   %.loc17_8: ref <error> = tuple_index %.loc17_4.2, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

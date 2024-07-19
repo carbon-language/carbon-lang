@@ -61,15 +61,10 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
       SemIR::LocIdAndInst(import_ir_inst_id, inst));
 
-  // We can't insert this instruction into whatever block we happen to be in,
-  // because this function is typically called by name lookup in the middle of
-  // an otherwise unknown checking step. But we need to add the instruction
-  // somewhere, because it's referenced by other instructions and needs to be
-  // visible in textual IR. Adding it to the file block is arbitrary but is the
-  // best place we have right now.
-  //
-  // TODO: Consider adding a dedicated block for import_refs.
-  context.inst_block_stack().AddInstIdToFileBlock(import_ref_id);
+  // ImportRefs have a dedicated block because this may be called during
+  // processing where the instruction shouldn't be inserted in the current inst
+  // block.
+  context.import_ref_ids().push_back(import_ref_id);
   return import_ref_id;
 }
 
@@ -97,9 +92,9 @@ auto GetCanonicalImportIRInst(Context& context, const SemIR::File* cursor_ir,
         if (cursor_ir != &context.sem_ir()) {
           // This uses AddImportIR in case it was indirectly found, which can
           // happen with two or more steps of exports.
-          ir_id = AddImportIR(context, {.node_id = Parse::NodeId::Invalid,
-                                        .sem_ir = cursor_ir,
-                                        .is_export = false});
+          ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::Invalid,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir});
         }
         return {.ir_id = ir_id, .inst_id = cursor_inst_id};
       }
@@ -225,7 +220,7 @@ class ImportRefResolver {
 
     if (import_type_inst_id.is_builtin()) {
       // Builtins don't require constant resolution; we can use them directly.
-      return context_.GetBuiltinType(import_type_inst_id.builtin_kind());
+      return context_.GetBuiltinType(import_type_inst_id.builtin_inst_kind());
     } else {
       return context_.GetTypeIdForTypeConstant(Resolve(import_type_inst_id));
     }
@@ -303,9 +298,9 @@ class ImportRefResolver {
       cursor_ir_id = context_.GetImportIRId(*cursor_ir);
       if (!cursor_ir_id.is_valid()) {
         // TODO: Should we figure out a location to assign here?
-        cursor_ir_id = AddImportIR(context_, {.node_id = Parse::NodeId::Invalid,
-                                              .sem_ir = cursor_ir,
-                                              .is_export = false});
+        cursor_ir_id = AddImportIR(context_, {.decl_id = SemIR::InstId::Invalid,
+                                              .is_export = false,
+                                              .sem_ir = cursor_ir});
       }
       cursor_inst_id = ir_inst.inst_id;
 
@@ -577,6 +572,7 @@ class ImportRefResolver {
   // unresolved constants to the work stack.
   auto GetLocalNameScopeId(SemIR::NameScopeId name_scope_id)
       -> SemIR::NameScopeId {
+    // Get the instruction that created the scope.
     auto [inst_id, inst] =
         import_ir_.name_scopes().GetInstIfValid(name_scope_id);
     if (!inst) {
@@ -585,14 +581,29 @@ class ImportRefResolver {
       // to remap them.
       return SemIR::NameScopeId::Invalid;
     }
-    if (inst->Is<SemIR::ImplDecl>()) {
-      // TODO: Import the scope for an `impl` definition.
+
+    // Get the constant value for the scope.
+    auto const_id = SemIR::ConstantId::Invalid;
+    CARBON_KIND_SWITCH(*inst) {
+      case SemIR::ImplDecl::Kind:
+        // TODO: Import the scope for an `impl` definition.
+        return SemIR::NameScopeId::Invalid;
+
+      case SemIR::Namespace::Kind:
+        // If the namespace has already been imported, we can use its constant.
+        // However, if it hasn't, we use Invalid instead of adding it to the
+        // work stack. That's expected to be okay when resolving references.
+        const_id = import_ir_constant_values().Get(inst_id);
+        break;
+
+      default:
+        const_id = GetLocalConstantId(inst_id);
+    }
+    if (!const_id.is_valid()) {
       return SemIR::NameScopeId::Invalid;
     }
-    auto const_inst_id = GetLocalConstantInstId(inst_id);
-    if (!const_inst_id.is_valid()) {
-      return SemIR::NameScopeId::Invalid;
-    }
+
+    auto const_inst_id = context_.constant_values().GetInstId(const_id);
     auto name_scope_inst = context_.insts().Get(const_inst_id);
     CARBON_KIND_SWITCH(name_scope_inst) {
       case CARBON_KIND(SemIR::Namespace inst): {
@@ -741,6 +752,10 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::IntLiteral inst): {
         return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::Namespace inst): {
+        CARBON_FATAL() << "Namespaces shouldn't need resolution this way: "
+                       << inst;
       }
       case CARBON_KIND(SemIR::PointerType inst): {
         return TryResolveTypedInst(inst);
@@ -1135,7 +1150,7 @@ class ImportRefResolver {
          .return_storage_id = new_return_storage,
          .is_extern = function.is_extern,
          .return_slot = function.return_slot,
-         .builtin_kind = function.builtin_kind,
+         .builtin_function_kind = function.builtin_function_kind,
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id
                               : SemIR::InstId::Invalid});
@@ -1314,7 +1329,11 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
-    auto self_param_id = GetLocalConstantInstId(import_interface.self_param_id);
+
+    std::optional<SemIR::InstId> self_param_id;
+    if (import_interface.is_defined()) {
+      self_param_id = GetLocalConstantInstId(import_interface.self_param_id);
+    }
 
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry(interface_const_id);
@@ -1328,7 +1347,8 @@ class ImportRefResolver {
         GetLocalParamRefsId(import_interface.param_refs_id, param_const_ids);
 
     if (import_interface.is_defined()) {
-      AddInterfaceDefinition(import_interface, new_interface, self_param_id);
+      CARBON_CHECK(self_param_id);
+      AddInterfaceDefinition(import_interface, new_interface, *self_param_id);
     }
     return {.const_id = interface_const_id};
   }
@@ -1372,7 +1392,8 @@ class ImportRefResolver {
 
     auto elements_id = GetLocalCanonicalInstBlockId(inst.elements_id, elements);
     return ResolveAs<SemIR::InterfaceWitness>(
-        {.type_id = context_.GetBuiltinType(SemIR::BuiltinKind::WitnessType),
+        {.type_id =
+             context_.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
          .elements_id = elements_id});
   }
 
@@ -1546,8 +1567,11 @@ static auto GetInstForLoad(Context& context,
     import_ir_inst =
         cursor_ir->import_ir_insts().Get(import_ref->import_ir_inst_id);
     cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-    import_ir_insts.push_back({.ir_id = context.GetImportIRId(*cursor_ir),
-                               .inst_id = import_ir_inst.inst_id});
+    import_ir_insts.push_back(
+        {.ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::Invalid,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir}),
+         .inst_id = import_ir_inst.inst_id});
   }
 }
 
@@ -1564,8 +1588,13 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
   ImportRefResolver resolver(context, load_ir_inst.ir_id);
+  // The resolver calls into Context to create instructions. Don't register
+  // those instructions as part of the enclosing generic scope if they're
+  // dependent on a generic parameter.
+  context.generic_region_stack().Push();
   auto type_id = resolver.ResolveType(load_type_id);
   auto constant_id = resolver.Resolve(load_ir_inst.inst_id);
+  context.generic_region_stack().Pop();
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
   // doesn't use ReplaceInstBeforeConstantUse because it would trigger

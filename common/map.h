@@ -224,7 +224,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  void ForEach(CallbackT callback)
+  void ForEach(CallbackT callback) const
     requires(std::invocable<CallbackT, KeyT&, ValueT&>)
   {
     return ViewT(*this).ForEach(callback);

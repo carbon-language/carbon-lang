@@ -13,15 +13,15 @@
 
 namespace Carbon::Check {
 
-auto HandleExportIntroducer(Context& context,
-                            Parse::ExportIntroducerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
+    -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
   // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();
@@ -78,8 +78,8 @@ auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
   // diagnostic and so that cross-package imports can find it easily.
   auto entity_name = context.entity_names().Get(import_ref->entity_name_id);
   auto& parent_scope = context.name_scopes().Get(entity_name.parent_scope_id);
-  auto it = parent_scope.name_map.find(entity_name.name_id);
-  auto& scope_inst_id = parent_scope.names[it->second].inst_id;
+  auto lookup = parent_scope.name_map.Lookup(entity_name.name_id);
+  auto& scope_inst_id = parent_scope.names[lookup.value()].inst_id;
   CARBON_CHECK(scope_inst_id == inst_id);
   scope_inst_id = export_id;
 

@@ -29,6 +29,8 @@ let b: B = C.base;
 // CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %.3} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -38,7 +40,8 @@ let b: B = C.base;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [template = constants.%B]

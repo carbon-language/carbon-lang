@@ -23,7 +23,8 @@ namespace Carbon::SemIR {
 // currently a wrapper around an identifier store that has no state of its own.
 class NameStoreWrapper {
  public:
-  explicit NameStoreWrapper(const StringStoreWrapper<IdentifierId>* identifiers)
+  explicit NameStoreWrapper(
+      const CanonicalValueStore<IdentifierId>* identifiers)
       : identifiers_(identifiers) {}
 
   // Returns the requested name as a string, if it is an identifier name. This
@@ -48,7 +49,7 @@ class NameStoreWrapper {
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
  private:
-  const StringStoreWrapper<IdentifierId>* identifiers_;
+  const CanonicalValueStore<IdentifierId>* identifiers_;
 };
 
 }  // namespace Carbon::SemIR

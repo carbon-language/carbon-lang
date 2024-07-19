@@ -13,7 +13,7 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, Parse::NamespaceStartId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
     -> bool {
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
@@ -21,7 +21,7 @@ auto HandleNamespaceStart(Context& context, Parse::NamespaceStartId /*node_id*/)
   return true;
 }
 
-auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
 
@@ -30,7 +30,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
-      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType),
       SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));

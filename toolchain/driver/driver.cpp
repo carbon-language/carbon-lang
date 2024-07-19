@@ -310,6 +310,14 @@ Dump the generated assembly to stdout after codegen.
         [&](auto& arg_b) { arg_b.Set(&dump_asm); });
     b.AddFlag(
         {
+            .name = "dump-mem-usage",
+            .help = R"""(
+Dumps the amount of memory used.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&dump_mem_usage); });
+    b.AddFlag(
+        {
             .name = "prelude-import",
             .help = R"""(
 Whether to use the implicit prelude import. Enabled by default.
@@ -344,6 +352,7 @@ Excludes files with the given prefix from dumps.
   bool dump_sem_ir = false;
   bool dump_llvm_ir = false;
   bool dump_asm = false;
+  bool dump_mem_usage = false;
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
@@ -540,6 +549,9 @@ class Driver::CompilationUnit {
       sorting_consumer_ = SortingDiagnosticConsumer(*consumer);
       consumer_ = &*sorting_consumer_;
     }
+    if (options_.dump_mem_usage && IncludeInDumps()) {
+      mem_usage_ = MemUsage();
+    }
   }
 
   // Loads source and lexes it. Returns true on success.
@@ -552,6 +564,10 @@ class Driver::CompilationUnit {
                                              *consumer_);
       }
     });
+    if (mem_usage_) {
+      mem_usage_->Add("source_", source_->text().size(),
+                      source_->text().size());
+    }
     if (!source_) {
       success_ = false;
       return;
@@ -564,6 +580,9 @@ class Driver::CompilationUnit {
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
       driver_->output_stream_ << tokens_;
+    }
+    if (mem_usage_) {
+      mem_usage_->Collect("tokens_", *tokens_);
     }
     CARBON_VLOG() << "*** Lex::TokenizedBuffer ***\n" << tokens_;
     if (tokens_->has_errors()) {
@@ -581,6 +600,9 @@ class Driver::CompilationUnit {
     if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
       parse_tree_->Print(driver_->output_stream_, options_.preorder_parse_tree);
+    }
+    if (mem_usage_) {
+      mem_usage_->Collect("parse_tree_", *parse_tree_);
     }
     CARBON_VLOG() << "*** Parse::Tree ***\n" << parse_tree_;
     if (parse_tree_->has_errors()) {
@@ -607,21 +629,28 @@ class Driver::CompilationUnit {
     // to wait for code generation.
     consumer_->Flush();
 
-    CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
+    if (mem_usage_) {
+      mem_usage_->Collect("sem_ir_", *sem_ir_);
+    }
+
     if (options_.dump_raw_sem_ir && IncludeInDumps()) {
+      CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
       sem_ir_->Print(driver_->output_stream_, options_.builtin_sem_ir);
       if (options_.dump_sem_ir) {
         driver_->output_stream_ << "\n";
       }
     }
 
-    if (vlog_stream_) {
-      CARBON_VLOG() << "*** SemIR::File ***\n";
-      SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_, *vlog_stream_);
-    }
-    if (options_.dump_sem_ir && IncludeInDumps()) {
-      SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
-                        driver_->output_stream_);
+    bool print = options_.dump_sem_ir && IncludeInDumps();
+    if (vlog_stream_ || print) {
+      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+      if (vlog_stream_) {
+        CARBON_VLOG() << "*** SemIR::File ***\n";
+        formatter.Print(*vlog_stream_);
+      }
+      if (print) {
+        formatter.Print(driver_->output_stream_);
+      }
     }
     if (sem_ir_->has_errors()) {
       success_ = false;
@@ -659,10 +688,15 @@ class Driver::CompilationUnit {
 
   // Runs post-compile logic. This is always called, and called after all other
   // actions on the CompilationUnit.
-  auto PostCompile() const -> void {
+  auto PostCompile() -> void {
     if (options_.dump_shared_values && IncludeInDumps()) {
       Yaml::Print(driver_->output_stream_,
                   value_stores_.OutputYaml(input_filename_));
+    }
+    if (mem_usage_) {
+      mem_usage_->Collect("value_stores_", value_stores_);
+      Yaml::Print(driver_->output_stream_,
+                  mem_usage_->OutputYaml(input_filename_));
     }
 
     // The diagnostics consumer must be flushed before compilation artifacts are
@@ -772,6 +806,9 @@ class Driver::CompilationUnit {
   DiagnosticConsumer* consumer_;
 
   bool success_ = true;
+
+  // Tracks memory usage of the compile.
+  std::optional<MemUsage> mem_usage_;
 
   // These are initialized as steps are run.
   std::optional<SourceBuffer> source_;

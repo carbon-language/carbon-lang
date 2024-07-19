@@ -14,8 +14,6 @@ build --stamp
 build --flag_alias=release=//bazel/version:release
 build --flag_alias=pre_release=//bazel/version:pre_release
 build --flag_alias=rc_number=//bazel/version:rc_number
-build --flag_alias=beta_number=//bazel/version:beta_number
-build --flag_alias=alpha_number=//bazel/version:alpha_number
 build --flag_alias=nightly_date=//bazel/version:nightly_date
 
 # Support running clang-tidy with:
@@ -109,6 +107,9 @@ build --action_env=LANG=en_US.UTF-8
 # Enable libpfm for google_benchmark on Linux only.
 build --enable_platform_specific_config
 build:linux --define=pfm=1
+
+# Enable TCMalloc on Linux as well.
+build:linux --custom_malloc=@tcmalloc//tcmalloc
 
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.

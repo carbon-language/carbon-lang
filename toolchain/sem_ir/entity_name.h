@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 
 #include "common/hashing.h"
+#include "common/set.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -15,6 +16,11 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index << "}";
+  }
+
+  friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
+      -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
   // The name.
@@ -29,46 +35,41 @@ struct EntityName : public Printable<EntityName> {
 inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.Hash(value);
+  hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
-
-// DenseMapInfo for EntityName.
-struct EntityNameDenseMapInfo {
-  static auto getEmptyKey() -> EntityName {
-    return EntityName{.name_id = NameId::Invalid,
-                      .parent_scope_id = NameScopeId::Invalid,
-                      .bind_index = CompileTimeBindIndex(
-                          CompileTimeBindIndex::InvalidIndex - 1)};
-  }
-  static auto getTombstoneKey() -> EntityName {
-    return EntityName{.name_id = NameId::Invalid,
-                      .parent_scope_id = NameScopeId::Invalid,
-                      .bind_index = CompileTimeBindIndex(
-                          CompileTimeBindIndex::InvalidIndex - 2)};
-  }
-  static auto getHashValue(const EntityName& val) -> unsigned {
-    return static_cast<uint64_t>(HashValue(val));
-  }
-  static auto isEqual(const EntityName& lhs, const EntityName& rhs) -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
-  }
-};
 
 // Value store for EntityName. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for EntityNames.
 struct EntityNameStore : public ValueStore<EntityNameId> {
  public:
   // Convert an ID to a canonical ID. All calls to this with equivalent
-  // `EntityName`s will return the same `BindNameId`.
-  auto MakeCanonical(EntityNameId id) -> EntityNameId {
-    return canonical_ids_.insert({Get(id), id}).first->second;
+  // `EntityName`s will return the same `EntityNameId`.
+  auto MakeCanonical(EntityNameId id) -> EntityNameId;
+
+ private:
+  class KeyContext;
+
+  Set<EntityNameId, /*SmallSize=*/0, KeyContext> canonical_ids_;
+};
+
+class EntityNameStore::KeyContext : public TranslatingKeyContext<KeyContext> {
+ public:
+  explicit KeyContext(const EntityNameStore* store) : store_(store) {}
+
+  // Note that it is safe to return a `const` reference here as the underlying
+  // object's lifetime is provided by the `store_`.
+  auto TranslateKey(EntityNameId id) const -> const EntityName& {
+    return store_->Get(id);
   }
 
  private:
-  llvm::DenseMap<EntityName, EntityNameId, EntityNameDenseMapInfo>
-      canonical_ids_;
+  const EntityNameStore* store_;
 };
+
+inline auto EntityNameStore::MakeCanonical(EntityNameId id) -> EntityNameId {
+  return canonical_ids_.Insert(id, KeyContext(this)).key();
+}
 
 }  // namespace Carbon::SemIR
 

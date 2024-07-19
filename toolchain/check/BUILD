@@ -21,6 +21,7 @@ cc_library(
         "eval.cpp",
         "function.cpp",
         "generic.cpp",
+        "global_init.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
         "merge.cpp",
@@ -38,6 +39,7 @@ cc_library(
         "eval.h",
         "function.h",
         "generic.h",
+        "global_init.h",
         "import_ref.h",
         "inst_block_stack.h",
         "keyword_modifier_set.h",
@@ -51,10 +53,13 @@ cc_library(
     ],
     deps = [
         ":node_stack",
+        "//common:array_stack",
         "//common:check",
+        "//common:map",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
+        "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_kind",
@@ -62,8 +67,9 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_diagnostic_converter",
-        "//toolchain/sem_ir:builtin_kind",
+        "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
@@ -94,6 +100,7 @@ cc_library(
         ":sem_ir_diagnostic_converter",
         "//common:check",
         "//common:error",
+        "//common:map",
         "//common:ostream",
         "//common:variant_helpers",
         "//common:vlog",
@@ -145,6 +152,22 @@ cc_library(
 )
 
 cc_library(
+    name = "generic_region_stack",
+    srcs = ["generic_region_stack.cpp"],
+    hdrs = ["generic_region_stack.h"],
+    deps = [
+        "//common:array_stack",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "impl",
     srcs = ["impl.cpp"],
     hdrs = ["impl.h"],
@@ -167,6 +190,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//common:map",
         "//toolchain/base:kind_switch",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:file",
@@ -217,6 +241,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
     ],
@@ -263,8 +288,10 @@ cc_library(
         "scope_stack.h",
     ],
     deps = [
+        "//common:array_stack",
         "//common:check",
         "//common:ostream",
+        "//common:set",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/sem_ir:file",

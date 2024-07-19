@@ -22,14 +22,10 @@ private var v: () = ();
 // Test files
 // ============================================================================
 
-// --- fail_todo_def.impl.carbon
+// --- def.impl.carbon
 
 impl package Test library "def";
 
-// CHECK:STDERR: fail_todo_def.impl.carbon:[[@LINE+4]]:14: ERROR: Name `v` not found.
-// CHECK:STDERR: var v2: () = v;
-// CHECK:STDERR:              ^
-// CHECK:STDERR:
 var v2: () = v;
 
 // --- fail_local_def.carbon
@@ -81,26 +77,36 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir0, inst+5, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .v [private] = imports.%import_ref
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %.loc4_10.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2
 // CHECK:STDOUT:   %v2: ref %.1 = bind_name v2, %v2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [template = <error>]
-// CHECK:STDOUT:   assign file.%v2.var, <error>
+// CHECK:STDOUT:   %v.ref: ref %.1 = name_ref v, imports.%import_ref
+// CHECK:STDOUT:   %.loc4_14: init %.1 = tuple_init () to file.%v2.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_15: init %.1 = converted %v.ref, %.loc4_14 [template = constants.%tuple]
+// CHECK:STDOUT:   assign file.%v2.var, %.loc4_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,6 +120,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2
@@ -138,7 +145,8 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
 // CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2

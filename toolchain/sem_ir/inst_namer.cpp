@@ -29,6 +29,10 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   // Build the constants scope.
   CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().array_ref());
 
+  // Build the ImportRef scope.
+  CollectNamesInBlock(ScopeId::ImportRefs,
+                      sem_ir.inst_blocks().Get(SemIR::InstBlockId::ImportRefs));
+
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
 
@@ -110,7 +114,7 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
     // These are treated as SemIR keywords.
     case ScopeId::File:
       return "file";
-    case ScopeId::ImportRef:
+    case ScopeId::ImportRefs:
       return "imports";
     case ScopeId::Constants:
       return "constants";
@@ -137,7 +141,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
 
   // Check for a builtin.
   if (inst_id.is_builtin()) {
-    return inst_id.builtin_kind().label().str();
+    return inst_id.builtin_inst_kind().label().str();
   }
 
   if (inst_id == InstId::PackageNamespace) {
@@ -148,7 +152,15 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (!inst_name) {
     // This should not happen in valid IR.
     std::string str;
-    llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
+    llvm::raw_string_ostream str_stream(str);
+    str_stream << "<unexpected>." << inst_id;
+    auto loc_id = sem_ir_.insts().GetLocId(inst_id);
+    // TODO: Consider handling inst_id cases.
+    if (loc_id.is_node_id()) {
+      auto token = parse_tree_.node_token(loc_id.node_id());
+      str_stream << ".loc" << tokenized_buffer_.GetLineNumber(token) << "_"
+                 << tokenized_buffer_.GetColumnNumber(token);
+    }
     return str;
   }
   if (inst_scope == scope_id) {
@@ -408,10 +420,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function =
             sem_ir_.functions().Get(callee_function.function_id);
         // Name the call's result based on the callee.
-        if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+        if (function.builtin_function_kind !=
+            SemIR::BuiltinFunctionKind::None) {
           // For a builtin, use the builtin name. Otherwise, we'd typically pick
           // the name `Op` below, which is probably not very useful.
-          add_inst_name(function.builtin_kind.name().str());
+          add_inst_name(function.builtin_function_kind.name().str());
           continue;
         }
 
@@ -451,6 +464,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         break;
       }
+      case CARBON_KIND(ImportDecl inst): {
+        if (inst.package_id.is_valid()) {
+          add_inst_name_id(inst.package_id, ".import");
+        } else {
+          add_inst_name("default.import");
+        }
+        break;
+      }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
         add_inst_name("import_ref");
@@ -461,7 +482,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_.constant_values().GetInstId(const_id);
           if (!insts[const_inst_id.index].second) {
-            CollectNamesInBlock(ScopeId::ImportRef, const_inst_id);
+            CollectNamesInBlock(ScopeId::ImportRefs, const_inst_id);
           }
         }
         continue;

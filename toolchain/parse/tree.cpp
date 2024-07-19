@@ -173,6 +173,12 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "  ]\n";
 }
 
+auto Tree::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+    -> void {
+  mem_usage.Add(MemUsage::ConcatLabel(label, "node_impls_"), node_impls_);
+  mem_usage.Add(MemUsage::ConcatLabel(label, "imports_"), imports_);
+}
+
 auto Tree::VerifyExtract(NodeId node_id, NodeKind kind,
                          ErrorBuilder* trace) const -> bool {
   switch (kind) {

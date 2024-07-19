@@ -14,20 +14,28 @@ auto ScopeStack::VerifyOnFinish() -> void {
 }
 
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
+                      SemIR::GenericInstanceId instance_id,
                       bool lexical_lookup_has_load_error) -> void {
+  compile_time_binding_stack_.PushArray();
   scope_stack_.push_back(
       {.index = next_scope_index_,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
-       .next_compile_time_bind_index =
-           scope_stack_.empty()
-               ? SemIR::CompileTimeBindIndex(0)
-               : scope_stack_.back().next_compile_time_bind_index,
+       .instance_id = instance_id,
+       .next_compile_time_bind_index = SemIR::CompileTimeBindIndex(
+           compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
   if (scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back(
-        {.scope_index = next_scope_index_, .name_scope_id = scope_id});
+    non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
+                                        .name_scope_id = scope_id,
+                                        .instance_id = instance_id});
+  } else {
+    // For lexical lookups, unqualified lookup doesn't know how to find the
+    // associated generic instance, so if we start adding lexical scopes with
+    // generic instances, we'll need to somehow track them in lookup.
+    CARBON_CHECK(!instance_id.is_valid())
+        << "Lexical scope should not have an associated generic instance.";
   }
 
   // TODO: Handle this case more gracefully.
@@ -39,12 +47,12 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
 auto ScopeStack::Pop() -> void {
   auto scope = scope_stack_.pop_back_val();
 
-  for (const auto& str_id : scope.names) {
+  scope.names.ForEach([&](SemIR::NameId str_id) {
     auto& lexical_results = lexical_lookup_.Get(str_id);
     CARBON_CHECK(lexical_results.back().scope_index == scope.index)
         << "Inconsistent scope index for name " << str_id;
     lexical_results.pop_back();
-  }
+  });
 
   if (scope.scope_id.is_valid()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
@@ -57,15 +65,13 @@ auto ScopeStack::Pop() -> void {
     return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
   }
 
-  CARBON_CHECK(scope.next_compile_time_bind_index.index ==
-               static_cast<int32_t>(compile_time_binding_stack_.size()))
+  CARBON_CHECK(
+      scope.next_compile_time_bind_index.index ==
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
       << "Wrong number of entries in compile-time binding stack, have "
-      << compile_time_binding_stack_.size() << ", expected "
+      << compile_time_binding_stack_.all_values_size() << ", expected "
       << scope.next_compile_time_bind_index.index;
-  compile_time_binding_stack_.truncate(
-      scope_stack_.empty()
-          ? 0
-          : scope_stack_.back().next_compile_time_bind_index.index);
+  compile_time_binding_stack_.PopArray();
 }
 
 auto ScopeStack::PopTo(ScopeIndex index) -> void {
@@ -120,12 +126,13 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
 
 auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
     -> SemIR::InstId {
-  if (!scope_stack_.back().names.insert(name_id).second) {
+  if (!scope_stack_.back().names.Insert(name_id).is_inserted()) {
     auto existing = lexical_lookup_.Get(name_id).back().inst_id;
     CARBON_CHECK(existing.is_valid())
         << "Name in scope but not in lexical lookups";
     return existing;
   }
+  ++scope_stack_.back().num_names;
 
   // TODO: Reject if we previously performed a failed lookup for this name
   // in this scope or a scope nested within it.
@@ -162,29 +169,26 @@ auto ScopeStack::Suspend() -> SuspendedScope {
     non_lexical_scope_stack_.pop_back();
   }
 
-  auto remaining_compile_time_bindings =
-      scope_stack_.empty()
-          ? 0
-          : scope_stack_.back().next_compile_time_bind_index.index;
+  auto peek_compile_time_bindings = compile_time_binding_stack_.PeekArray();
+  result.suspended_items.reserve(result.entry.num_names +
+                                 peek_compile_time_bindings.size());
 
-  result.suspended_items.reserve(result.entry.names.size() +
-                                 compile_time_binding_stack_.size() -
-                                 remaining_compile_time_bindings);
-  for (auto name_id : result.entry.names) {
+  result.entry.names.ForEach([&](SemIR::NameId name_id) {
     auto [index, inst_id] = lexical_lookup_.Suspend(name_id);
     CARBON_CHECK(index !=
                  SuspendedScope::ScopeItem::IndexForCompileTimeBinding);
     result.suspended_items.push_back({.index = index, .inst_id = inst_id});
-  }
+  });
+  CARBON_CHECK(static_cast<int>(result.suspended_items.size()) ==
+               result.entry.num_names);
 
   // Move any compile-time bindings into the suspended scope.
-  for (auto inst_id : llvm::ArrayRef(compile_time_binding_stack_)
-                          .drop_back(remaining_compile_time_bindings)) {
+  for (auto inst_id : peek_compile_time_bindings) {
     result.suspended_items.push_back(
         {.index = SuspendedScope::ScopeItem::IndexForCompileTimeBinding,
          .inst_id = inst_id});
   }
-  compile_time_binding_stack_.truncate(remaining_compile_time_bindings);
+  compile_time_binding_stack_.PopArray();
 
   // This would be easy to support if we had a need, but currently we do not.
   CARBON_CHECK(!result.entry.has_returned_var)
@@ -193,25 +197,29 @@ auto ScopeStack::Suspend() -> SuspendedScope {
 }
 
 auto ScopeStack::Restore(SuspendedScope scope) -> void {
+  compile_time_binding_stack_.PushArray();
   for (auto [index, inst_id] : scope.suspended_items) {
     if (index == SuspendedScope::ScopeItem::IndexForCompileTimeBinding) {
-      compile_time_binding_stack_.push_back(inst_id);
+      compile_time_binding_stack_.AppendToTop(inst_id);
     } else {
       lexical_lookup_.Restore({.index = index, .inst_id = inst_id},
                               scope.entry.index);
     }
   }
 
-  CARBON_CHECK(scope.entry.next_compile_time_bind_index.index ==
-               static_cast<int32_t>(compile_time_binding_stack_.size()))
+  CARBON_CHECK(
+      scope.entry.next_compile_time_bind_index.index ==
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
       << "Wrong number of entries in compile-time binding stack "
          "when restoring, have "
-      << compile_time_binding_stack_.size() << ", expected "
+      << compile_time_binding_stack_.all_values_size() << ", expected "
       << scope.entry.next_compile_time_bind_index.index;
 
   if (scope.entry.scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back({.scope_index = scope.entry.index,
-                                        .name_scope_id = scope.entry.scope_id});
+    non_lexical_scope_stack_.push_back(
+        {.scope_index = scope.entry.index,
+         .name_scope_id = scope.entry.scope_id,
+         .instance_id = scope.entry.instance_id});
   }
   scope_stack_.push_back(std::move(scope.entry));
 }

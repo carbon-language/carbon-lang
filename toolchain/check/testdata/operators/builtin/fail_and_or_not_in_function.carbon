@@ -58,9 +58,15 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %.4: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref ir3, inst+32, loaded [template = constants.%Float]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block20> [template = constants.%.3]
-// CHECK:STDOUT:   %F.call: init type = call <unexpected instref inst+59>(%.loc42_17)
+// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block21> [template = constants.%.3]
+// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+60.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_

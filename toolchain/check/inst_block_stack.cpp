@@ -11,74 +11,67 @@
 namespace Carbon::Check {
 
 auto InstBlockStack::Push(SemIR::InstBlockId id) -> void {
-  CARBON_VLOG() << name_ << " Push " << size_ << "\n";
-  CARBON_CHECK(size_ < (1 << 20))
+  CARBON_VLOG() << name_ << " Push " << id_stack_.size() << "\n";
+  CARBON_CHECK(id_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
-  if (size_ == static_cast<int>(stack_.size())) {
-    stack_.emplace_back();
-  }
-  stack_[size_].Reset(id);
-  ++size_;
+  id_stack_.push_back(id);
+  insts_stack_.PushArray();
 }
 
-auto InstBlockStack::PushGlobalInit() -> void {
-  Push(init_block_id_);
-  stack_[size_ - 1].content = std::move(init_block_);
+auto InstBlockStack::Push(SemIR::InstBlockId id,
+                          llvm::ArrayRef<SemIR::InstId> inst_ids) -> void {
+  Push(id);
+  insts_stack_.AppendToTop(inst_ids);
 }
 
 auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
-  CARBON_CHECK(size_ > depth) << "no such block";
-  int index = size_ - depth - 1;
-  auto& slot = stack_[index];
-  if (!slot.id.is_valid()) {
-    slot.id = sem_ir_->inst_blocks().AddDefaultValue();
+  CARBON_CHECK(static_cast<int>(id_stack_.size()) > depth) << "no such block";
+  int index = id_stack_.size() - depth - 1;
+  auto& slot = id_stack_[index];
+  if (!slot.is_valid()) {
+    slot = sem_ir_->inst_blocks().AddDefaultValue();
   }
-  return slot.id;
+  return slot;
 }
 
 auto InstBlockStack::Pop() -> SemIR::InstBlockId {
   CARBON_CHECK(!empty()) << "no current block";
-  --size_;
-  auto& back = stack_[size_];
+  auto id = id_stack_.pop_back_val();
+  auto insts = insts_stack_.PeekArray();
 
   // Finalize the block.
-  if (!back.content.empty() && back.id != SemIR::InstBlockId::Unreachable) {
-    if (back.id.is_valid()) {
-      sem_ir_->inst_blocks().Set(back.id, back.content);
+  if (!insts.empty() && id != SemIR::InstBlockId::Unreachable) {
+    if (id.is_valid()) {
+      sem_ir_->inst_blocks().Set(id, insts);
     } else {
-      back.id = sem_ir_->inst_blocks().Add(back.content);
+      id = sem_ir_->inst_blocks().Add(insts);
     }
   }
 
-  CARBON_VLOG() << name_ << " Pop " << size_ << ": " << back.id << "\n";
-  if (!back.id.is_valid()) {
-    return SemIR::InstBlockId::Empty;
-  }
-  return back.id;
-}
+  insts_stack_.PopArray();
 
-auto InstBlockStack::PopGlobalInit() -> void {
-  init_block_ = std::move(stack_[size_ - 1].content);
-  init_block_id_ = stack_[size_ - 1].id;
-  PopAndDiscard();
+  CARBON_VLOG() << name_ << " Pop " << id_stack_.size() << ": " << id << "\n";
+  return id.is_valid() ? id : SemIR::InstBlockId::Empty;
 }
 
 auto InstBlockStack::PopAndDiscard() -> void {
   CARBON_CHECK(!empty()) << "no current block";
-  --size_;
-  CARBON_VLOG() << name_ << " PopAndDiscard " << size_ << "\n";
+  id_stack_.pop_back();
+  insts_stack_.PopArray();
+  CARBON_VLOG() << name_ << " PopAndDiscard " << id_stack_.size() << "\n";
 }
 
-auto InstBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
+auto InstBlockStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,
+                                       llvm::raw_ostream& output) const
     -> void {
+  output.indent(indent);
   output << name_ << ":\n";
-  for (const auto& [i, entry] : llvm::enumerate(stack_)) {
-    output << "\t" << i << ".\t" << entry.id << "\t{";
-    llvm::ListSeparator sep;
-    for (auto id : entry.content) {
-      output << sep << id;
-    }
-    output << "}\n";
+  for (const auto& [i, id] : llvm::enumerate(id_stack_)) {
+    output.indent(indent + 2);
+    output << i << ". " << id;
+    formatter.PrintPartialTrailingCodeBlock(insts_stack_.PeekArrayAt(i),
+                                            indent + 4, output);
+    output << "\n";
   }
 }
 

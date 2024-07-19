@@ -82,7 +82,8 @@ base class BaseClass {
 // CHECK:STDOUT:     .AbstractClass = %AbstractClass.decl
 // CHECK:STDOUT:     .BaseClass = %BaseClass.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %FinalClass.decl: type = class_decl @FinalClass [template = constants.%FinalClass] {}
 // CHECK:STDOUT:   %AbstractClass.decl: type = class_decl @AbstractClass [template = constants.%AbstractClass] {}
 // CHECK:STDOUT:   %BaseClass.decl: type = class_decl @BaseClass [template = constants.%BaseClass] {}

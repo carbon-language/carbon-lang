@@ -53,24 +53,15 @@ class File : public Printable<File> {
   }
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return ints()
         .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
         .getZExtValue();
-  }
-
-  // Marks a type as complete, and sets its value representation.
-  auto CompleteType(TypeId object_type_id, ValueRepr value_repr) -> void {
-    if (object_type_id.index < 0) {
-      // We already know our builtin types are complete.
-      return;
-    }
-    CARBON_CHECK(types().Get(object_type_id).value_repr.kind ==
-                 ValueRepr::Unknown)
-        << "Type " << object_type_id << " completed more than once";
-    types().Get(object_type_id).value_repr = value_repr;
-    complete_types_.push_back(object_type_id);
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
@@ -91,10 +82,10 @@ class File : public Printable<File> {
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
 
   // Directly expose SharedValueStores members.
-  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+  auto identifiers() const -> const CanonicalValueStore<IdentifierId>& {
     return value_stores_->identifiers();
   }
   auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
@@ -109,11 +100,11 @@ class File : public Printable<File> {
   auto floats() const -> const FloatValueStore& {
     return value_stores_->floats();
   }
-  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }
   auto string_literal_values() const
-      -> const StringStoreWrapper<StringLiteralValueId>& {
+      -> const CanonicalValueStore<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }
 
@@ -129,8 +120,8 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
-  auto generics() -> ValueStore<GenericId>& { return generics_; }
-  auto generics() const -> const ValueStore<GenericId>& { return generics_; }
+  auto generics() -> GenericStore& { return generics_; }
+  auto generics() const -> const GenericStore& { return generics_; }
   auto generic_instances() -> GenericInstanceStore& {
     return generic_instances_;
   }
@@ -168,13 +159,6 @@ class File : public Printable<File> {
   auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
   auto constants() -> ConstantStore& { return constants_; }
   auto constants() const -> const ConstantStore& { return constants_; }
-
-  // A list of types that were completed in this file, in the order in which
-  // they were completed. Earlier types in this list cannot contain instances of
-  // later types.
-  auto complete_types() const -> llvm::ArrayRef<TypeId> {
-    return complete_types_;
-  }
 
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
@@ -218,7 +202,7 @@ class File : public Printable<File> {
   ImplStore impls_;
 
   // Storage for generics.
-  ValueStore<GenericId> generics_;
+  GenericStore generics_;
 
   // Storage for instances of generics.
   GenericInstanceStore generic_instances_;
@@ -234,8 +218,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All instructions. The first entries will always be Builtin insts, at
-  // indices matching BuiltinKind ordering.
+  // All instructions. The first entries will always be BuiltinInsts, at
+  // indices matching BuiltinInstKind ordering.
   InstStore insts_;
 
   // Storage for name scopes.
@@ -257,9 +241,6 @@ class File : public Printable<File> {
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(&insts_, &constant_values_);
-
-  // Types that were completed in this file.
-  llvm::SmallVector<TypeId> complete_types_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md

@@ -32,14 +32,27 @@ cc_library(
 )
 
 cc_library(
+    name = "mem_usage",
+    hdrs = ["mem_usage.h"],
+    deps = [
+        ":yaml",
+        "//common:map",
+        "//common:set",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "value_store",
     hdrs = ["value_store.h"],
     deps = [
         ":index_base",
+        ":mem_usage",
         ":yaml",
         "//common:check",
         "//common:hashing",
         "//common:ostream",
+        "//common:set",
         "@llvm-project//llvm:Support",
     ],
 )

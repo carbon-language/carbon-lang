@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
+#include "common/map.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -47,11 +48,14 @@ struct NameScope : Printable<NameScope> {
 
   // Adds a name to the scope that must not already exist.
   auto AddRequired(Entry name_entry) -> void {
-    int index = names.size();
-    names.push_back(name_entry);
-    auto success = name_map.insert({name_entry.name_id, index}).second;
-    CARBON_CHECK(success) << "Failed to add required name: "
-                          << name_entry.name_id;
+    auto add_name = [&] {
+      int index = names.size();
+      names.push_back(name_entry);
+      return index;
+    };
+    auto result = name_map.Insert(name_entry.name_id, add_name);
+    CARBON_CHECK(result.is_inserted())
+        << "Failed to add required name: " << name_entry.name_id;
   }
 
   // Names in the scope. We store both an insertion-ordered vector for iterating
@@ -64,7 +68,7 @@ struct NameScope : Printable<NameScope> {
   // intensive, we can also switch the lookup to a set of indices into the
   // vector rather than a map from `NameId` to index.
   llvm::SmallVector<Entry> names;
-  llvm::DenseMap<NameId, int> name_map = llvm::DenseMap<NameId, int>();
+  Map<NameId, int> name_map;
 
   // Scopes extended by this scope.
   //
@@ -155,6 +159,12 @@ class NameScopeStore {
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
+  }
+
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Collect(label, values_);
   }
 
  private:
