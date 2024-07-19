@@ -63,12 +63,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc24_22.1: %MemberNamedSelf = param x
-// CHECK:STDOUT:     @F.2.%x: %MemberNamedSelf = binding_pattern x, %x.loc24_22.3
+// CHECK:STDOUT:     %.loc24_22: %MemberNamedSelf = binding_pattern x, @F.2.%x
 // CHECK:STDOUT:     %Self.ref.loc24_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [template = constants.%Self]
 // CHECK:STDOUT:     %y.loc24_31.1: %Self = param y
-// CHECK:STDOUT:     @F.2.%y: %Self = binding_pattern y, %y.loc24_31.3
-// CHECK:STDOUT:     %x.loc24_22.3: %MemberNamedSelf = bind_name x, %x.loc24_22.1
-// CHECK:STDOUT:     %y.loc24_31.3: %Self = bind_name y, %y.loc24_31.1
+// CHECK:STDOUT:     %.loc24_31: %Self = binding_pattern y, @F.2.%y
+// CHECK:STDOUT:     @F.2.%x: %MemberNamedSelf = bind_name x, %x.loc24_22.1
+// CHECK:STDOUT:     @F.2.%y: %Self = bind_name y, %y.loc24_31.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,10 +85,10 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Self.ref.loc21_11: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc21_8.1: %MemberNamedSelf = param x
-// CHECK:STDOUT:     %x.loc21_8.2: %MemberNamedSelf = binding_pattern x, %x.loc21_8.3
+// CHECK:STDOUT:     %.loc21_8: %MemberNamedSelf = binding_pattern x, %x.loc21_8.3
 // CHECK:STDOUT:     %Self.ref.loc21_20: type = name_ref r#Self, %Self.decl [template = constants.%Self]
 // CHECK:STDOUT:     %y.loc21_17.1: %Self = param y
-// CHECK:STDOUT:     %y.loc21_17.2: %Self = binding_pattern y, %y.loc21_17.3
+// CHECK:STDOUT:     %.loc21_17: %Self = binding_pattern y, %y.loc21_17.3
 // CHECK:STDOUT:     %x.loc21_8.3: %MemberNamedSelf = bind_name x, %x.loc21_8.1
 // CHECK:STDOUT:     %y.loc21_17.3: %Self = bind_name y, %y.loc21_17.1
 // CHECK:STDOUT:   }

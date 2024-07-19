@@ -53,8 +53,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.loc15_14.1: type = param T
-// CHECK:STDOUT:     %T.loc15_14.2: type = binding_pattern T 0, <unexpected>.inst+15.loc15_14 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, <unexpected>.inst+15.loc15_14 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc15: type = binding_pattern T 0, %T.loc15_14.2 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -84,7 +84,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(<unexpected>.inst+15.loc15_14: type) {
+// CHECK:STDOUT: generic fn @F.2(file.%T.loc15_14.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {

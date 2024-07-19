@@ -129,8 +129,8 @@ class C {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = binding_pattern b, %b.loc16_8.3
-// CHECK:STDOUT:     %b.loc16_8.3: %Bad = bind_name b, %b.loc16_8.1
+// CHECK:STDOUT:     %.loc16: %Bad = binding_pattern b, @Use.%b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,7 +144,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b: %Bad) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: %Bad = name_ref b, file.%b.loc16_8.3
+// CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -182,8 +182,8 @@ class C {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %b.loc13_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = binding_pattern b, %b.loc13_8.3
-// CHECK:STDOUT:     %b.loc13_8.3: %Bad = bind_name b, %b.loc13_8.1
+// CHECK:STDOUT:     %.loc13: %Bad = binding_pattern b, @Use.%b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc13_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,7 +198,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b: %Bad) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: %Bad = name_ref b, file.%b.loc13_8.3
+// CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

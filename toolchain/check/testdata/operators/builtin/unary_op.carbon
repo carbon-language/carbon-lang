@@ -63,8 +63,8 @@ fn Constant() {
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11_11 [template = bool]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11_11, %.loc11_11.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_8.1: bool = param b
-// CHECK:STDOUT:     @Not.%b: bool = binding_pattern b, %b.loc11_8.3
-// CHECK:STDOUT:     %b.loc11_8.3: bool = bind_name b, %b.loc11_8.1
+// CHECK:STDOUT:     %.loc11_8: bool = binding_pattern b, @Not.%b
+// CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc11_8.1
 // CHECK:STDOUT:     %bool.make_type.loc11_20: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %bool.make_type.loc11_20 [template = bool]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %bool.make_type.loc11_20, %.loc11_20.1 [template = bool]
@@ -73,11 +73,11 @@ fn Constant() {
 // CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %bool.make_type.loc15, %.loc15_15.1 [template = bool]
-// CHECK:STDOUT:   %not_true: bool = binding_pattern not_true, @__global_init.%not_true
+// CHECK:STDOUT:   %.loc15_5: bool = binding_pattern not_true, @__global_init.%not_true
 // CHECK:STDOUT:   %bool.make_type.loc16: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc16_16.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
 // CHECK:STDOUT:   %.loc16_16.2: type = converted %bool.make_type.loc16, %.loc16_16.1 [template = bool]
-// CHECK:STDOUT:   %not_false: bool = binding_pattern not_false, @__global_init.%not_false
+// CHECK:STDOUT:   %.loc16_5: bool = binding_pattern not_false, @__global_init.%not_false
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,7 +85,7 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, file.%b.loc11_8.3
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %.loc12: bool = not %b.ref
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }

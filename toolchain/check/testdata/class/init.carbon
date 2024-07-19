@@ -68,13 +68,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:     %.loc16_12.2: type = converted %int.make_type_32.loc16, %.loc16_12.1 [template = i32]
 // CHECK:STDOUT:     %n.loc16_9.1: i32 = param n
-// CHECK:STDOUT:     @Make.%n: i32 = binding_pattern n, %n.loc16_9.3
+// CHECK:STDOUT:     %.loc16_9: i32 = binding_pattern n, @Make.%n
 // CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %next.loc16_17.1: %.3 = param next
-// CHECK:STDOUT:     @Make.%next: %.3 = binding_pattern next, %next.loc16_17.3
-// CHECK:STDOUT:     %n.loc16_9.3: i32 = bind_name n, %n.loc16_9.1
-// CHECK:STDOUT:     %next.loc16_17.3: %.3 = bind_name next, %next.loc16_17.1
+// CHECK:STDOUT:     %.loc16_17: %.3 = binding_pattern next, @Make.%next
+// CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc16_9.1
+// CHECK:STDOUT:     @Make.%next: %.3 = bind_name next, %next.loc16_17.1
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Make.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
@@ -83,13 +83,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
 // CHECK:STDOUT:     %.loc20_19.2: type = converted %int.make_type_32.loc20, %.loc20_19.1 [template = i32]
 // CHECK:STDOUT:     %n.loc20_16.1: i32 = param n
-// CHECK:STDOUT:     @MakeReorder.%n: i32 = binding_pattern n, %n.loc20_16.3
+// CHECK:STDOUT:     %.loc20_16: i32 = binding_pattern n, @MakeReorder.%n
 // CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %next.loc20_24.1: %.3 = param next
-// CHECK:STDOUT:     @MakeReorder.%next: %.3 = binding_pattern next, %next.loc20_24.3
-// CHECK:STDOUT:     %n.loc20_16.3: i32 = bind_name n, %n.loc20_16.1
-// CHECK:STDOUT:     %next.loc20_24.3: %.3 = bind_name next, %next.loc20_24.1
+// CHECK:STDOUT:     %.loc20_24: %.3 = binding_pattern next, @MakeReorder.%next
+// CHECK:STDOUT:     @MakeReorder.%n: i32 = bind_name n, %n.loc20_16.1
+// CHECK:STDOUT:     @MakeReorder.%next: %.3 = bind_name next, %next.loc20_24.1
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @MakeReorder.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
@@ -114,8 +114,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n: i32, %next: %.3) -> %return: %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_ref n, file.%n.loc16_9.3
-// CHECK:STDOUT:   %next.ref: %.3 = name_ref next, file.%next.loc16_17.3
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
+// CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %.loc17_31.1: %.5 = struct_literal (%n.ref, %next.ref)
 // CHECK:STDOUT:   %.loc17_31.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc17_31.3: init i32 = initialize_from %n.ref to %.loc17_31.2
@@ -128,8 +128,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeReorder(%n: i32, %next: %.3) -> %return: %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %next.ref: %.3 = name_ref next, file.%next.loc20_24.3
-// CHECK:STDOUT:   %n.ref: i32 = name_ref n, file.%n.loc20_16.3
+// CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc21_31.1: %.7 = struct_literal (%next.ref, %n.ref)
 // CHECK:STDOUT:   %.loc21_31.2: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc21_31.3: init i32 = initialize_from %n.ref to %.loc21_31.2

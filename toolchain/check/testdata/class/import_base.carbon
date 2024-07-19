@@ -84,12 +84,12 @@ fn Run() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc5_8.1: %Base = param self
-// CHECK:STDOUT:     %self.loc5_8.2: %Base = binding_pattern self, <unexpected>.inst+7.loc5_8
+// CHECK:STDOUT:     %.loc5: %Base = binding_pattern self, %self.loc5_8.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc6_13.1: %Base = param self
-// CHECK:STDOUT:     %self.loc6_13.2: %Base = binding_pattern self, <unexpected>.inst+15.loc6_13
+// CHECK:STDOUT:     %.loc6: %Base = binding_pattern self, %self.loc6_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -118,9 +118,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Base.%self.loc5_8.2: %Base]();
+// CHECK:STDOUT: fn @F[@Base.%.loc5: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[@Base.%self.loc6_13.2: %Base]();
+// CHECK:STDOUT: fn @Unused[@Base.%.loc6: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -234,5 +234,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %Base]();
+// CHECK:STDOUT: fn @F[%.1: %Base]();
 // CHECK:STDOUT:

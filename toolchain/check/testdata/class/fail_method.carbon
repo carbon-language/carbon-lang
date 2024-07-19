@@ -88,8 +88,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc18_6.1: %Class = param c
-// CHECK:STDOUT:     @F.%c: %Class = binding_pattern c, %c.loc18_6.3
-// CHECK:STDOUT:     %c.loc18_6.3: %Class = bind_name c, %c.loc18_6.1
+// CHECK:STDOUT:     %.loc18: %Class = binding_pattern c, @F.%c
+// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %c.loc18_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,7 +98,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.decl: %WithSelf.type = fn_decl @WithSelf [template = constants.%WithSelf] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_15.1: %Class = param self
-// CHECK:STDOUT:     %self.loc13_15.2: %Class = binding_pattern self, <unexpected>.inst+11.loc13_15
+// CHECK:STDOUT:     %.loc13: %Class = binding_pattern self, %self.loc13_15.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -109,14 +109,14 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[@Class.%self.loc13_15.2: %Class]();
+// CHECK:STDOUT: fn @WithSelf[@Class.%.loc13: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: %Class) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc19: %Class = name_ref c, file.%c.loc18_6.3
+// CHECK:STDOUT:   %c.ref.loc19: %Class = name_ref c, %c
 // CHECK:STDOUT:   %NoSelf.ref.loc19: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%NoSelf]
 // CHECK:STDOUT:   %NoSelf.call.loc19: init %.1 = call %NoSelf.ref.loc19()
-// CHECK:STDOUT:   %c.ref.loc20: %Class = name_ref c, file.%c.loc18_6.3
+// CHECK:STDOUT:   %c.ref.loc20: %Class = name_ref c, %c
 // CHECK:STDOUT:   %WithSelf.ref.loc20: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %.loc20: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
 // CHECK:STDOUT:   %WithSelf.call.loc20: init %.1 = call %.loc20(%c.ref.loc20)
@@ -128,7 +128,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.call.loc30: init %.1 = call %WithSelf.ref.loc30(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc38: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
-// CHECK:STDOUT:   %c.ref.loc38: %Class = name_ref c, file.%c.loc18_6.3
+// CHECK:STDOUT:   %c.ref.loc38: %Class = name_ref c, %c
 // CHECK:STDOUT:   %WithSelf.call.loc38: init %.1 = call %WithSelf.ref.loc38(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: %WithSelf.type = name_ref A, file.%A [template = constants.%WithSelf]
 // CHECK:STDOUT:   %WithSelf.call.loc46: init %.1 = call %A.ref(<invalid>) [template = <error>]

@@ -96,8 +96,8 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [template = constants.%AccessDerived] {
 // CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc24_18.1: %Derived = param d
-// CHECK:STDOUT:     @AccessDerived.%d: %Derived = binding_pattern d, %d.loc24_18.3
-// CHECK:STDOUT:     %d.loc24_18.3: %Derived = bind_name d, %d.loc24_18.1
+// CHECK:STDOUT:     %.loc24_18: %Derived = binding_pattern d, @AccessDerived.%d
+// CHECK:STDOUT:     @AccessDerived.%d: %Derived = bind_name d, %d.loc24_18.1
 // CHECK:STDOUT:     %int.make_type_32.loc24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc24_33.1: type = value_of_initializer %int.make_type_32.loc24 [template = i32]
 // CHECK:STDOUT:     %.loc24_33.2: type = converted %int.make_type_32.loc24, %.loc24_33.1 [template = i32]
@@ -106,8 +106,8 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [template = constants.%AccessBase] {
 // CHECK:STDOUT:     %Derived.ref.loc28: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc28_15.1: %Derived = param d
-// CHECK:STDOUT:     @AccessBase.%d: %Derived = binding_pattern d, %d.loc28_15.3
-// CHECK:STDOUT:     %d.loc28_15.3: %Derived = bind_name d, %d.loc28_15.1
+// CHECK:STDOUT:     %.loc28_15: %Derived = binding_pattern d, @AccessBase.%d
+// CHECK:STDOUT:     @AccessBase.%d: %Derived = bind_name d, %d.loc28_15.1
 // CHECK:STDOUT:     %int.make_type_32.loc28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc28_30.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:     %.loc28_30.2: type = converted %int.make_type_32.loc28, %.loc28_30.1 [template = i32]
@@ -117,8 +117,8 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc32_36: type = ptr_type %Derived [template = constants.%.11]
 // CHECK:STDOUT:     %p.loc32_26.1: %.11 = param p
-// CHECK:STDOUT:     @AccessDerivedIndirect.%p: %.11 = binding_pattern p, %p.loc32_26.3
-// CHECK:STDOUT:     %p.loc32_26.3: %.11 = bind_name p, %p.loc32_26.1
+// CHECK:STDOUT:     %.loc32_26: %.11 = binding_pattern p, @AccessDerivedIndirect.%p
+// CHECK:STDOUT:     @AccessDerivedIndirect.%p: %.11 = bind_name p, %p.loc32_26.1
 // CHECK:STDOUT:     %int.make_type_32.loc32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_45.1: type = value_of_initializer %int.make_type_32.loc32 [template = i32]
 // CHECK:STDOUT:     %.loc32_45.2: type = converted %int.make_type_32.loc32, %.loc32_45.1 [template = i32]
@@ -129,8 +129,8 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %Derived.ref.loc36: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc36_33: type = ptr_type %Derived [template = constants.%.11]
 // CHECK:STDOUT:     %p.loc36_23.1: %.11 = param p
-// CHECK:STDOUT:     @AccessBaseIndirect.%p: %.11 = binding_pattern p, %p.loc36_23.3
-// CHECK:STDOUT:     %p.loc36_23.3: %.11 = bind_name p, %p.loc36_23.1
+// CHECK:STDOUT:     %.loc36_23: %.11 = binding_pattern p, @AccessBaseIndirect.%p
+// CHECK:STDOUT:     @AccessBaseIndirect.%p: %.11 = bind_name p, %p.loc36_23.1
 // CHECK:STDOUT:     %int.make_type_32.loc36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc36_42.1: type = value_of_initializer %int.make_type_32.loc36 [template = i32]
 // CHECK:STDOUT:     %.loc36_42.2: type = converted %int.make_type_32.loc36, %.loc36_42.1 [template = i32]
@@ -184,7 +184,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDerived(%d: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %d.ref.loc25_10: %Derived = name_ref d, file.%d.loc24_18.3
+// CHECK:STDOUT:   %d.ref.loc25_10: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:   %d.ref.loc25_20: %.6 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc25_11.1: ref i32 = class_element_access %d.ref.loc25_10, element1
@@ -194,7 +194,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBase(%d: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %d.ref: %Derived = name_ref d, file.%d.loc28_15.3
+// CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc29_11.1: ref %Base = class_element_access %d.ref, element0
@@ -206,7 +206,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDerivedIndirect(%p: %.11) -> %.12 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.11 = name_ref p, file.%p.loc32_26.3
+// CHECK:STDOUT:   %p.ref: %.11 = name_ref p, %p
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:   %d.ref: %.6 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc33_12.1: ref %Derived = deref %p.ref
@@ -217,7 +217,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBaseIndirect(%p: %.11) -> %.12 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.11 = name_ref p, file.%p.loc36_23.3
+// CHECK:STDOUT:   %p.ref: %.11 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc37_12.1: ref %Derived = deref %p.ref

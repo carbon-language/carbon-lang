@@ -64,14 +64,14 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %.loc2_10.1: type = value_of_initializer %int.make_type_32.loc2_10 [template = i32]
 // CHECK:STDOUT:     %.loc2_10.2: type = converted %int.make_type_32.loc2_10, %.loc2_10.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_7.1: i32 = param a
-// CHECK:STDOUT:     @Or.%a: i32 = binding_pattern a, %a.loc2_7.3
+// CHECK:STDOUT:     %.loc2_7: i32 = binding_pattern a, @Or.%a
 // CHECK:STDOUT:     %int.make_type_32.loc2_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]
 // CHECK:STDOUT:     %.loc2_18.2: type = converted %int.make_type_32.loc2_18, %.loc2_18.1 [template = i32]
 // CHECK:STDOUT:     %b.loc2_15.1: i32 = param b
-// CHECK:STDOUT:     @Or.%b: i32 = binding_pattern b, %b.loc2_15.3
-// CHECK:STDOUT:     %a.loc2_7.3: i32 = bind_name a, %a.loc2_7.1
-// CHECK:STDOUT:     %b.loc2_15.3: i32 = bind_name b, %b.loc2_15.1
+// CHECK:STDOUT:     %.loc2_15: i32 = binding_pattern b, @Or.%b
+// CHECK:STDOUT:     @Or.%a: i32 = bind_name a, %a.loc2_7.1
+// CHECK:STDOUT:     @Or.%b: i32 = bind_name b, %b.loc2_15.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_26.1: type = value_of_initializer %int.make_type_32.loc2_26 [template = i32]
 // CHECK:STDOUT:     %.loc2_26.2: type = converted %int.make_type_32.loc2_26, %.loc2_26.1 [template = i32]
@@ -93,20 +93,20 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_20: type = array_type %.loc5_18, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc5_21: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %arr_p: %.6 = binding_pattern arr_p, @__global_init.%arr_p
+// CHECK:STDOUT:   %.loc5_5: %.6 = binding_pattern arr_p, @__global_init.%arr_p
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = binding_pattern a, %a.loc7_16.3
+// CHECK:STDOUT:     %.loc7_16: i32 = binding_pattern a, @RuntimeCall.%a
 // CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
 // CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = binding_pattern b, %b.loc7_24.3
-// CHECK:STDOUT:     %a.loc7_16.3: i32 = bind_name a, %a.loc7_16.1
-// CHECK:STDOUT:     %b.loc7_24.3: i32 = bind_name b, %b.loc7_24.1
+// CHECK:STDOUT:     %.loc7_24: i32 = binding_pattern b, @RuntimeCall.%b
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
 // CHECK:STDOUT:     %int.make_type_32.loc7_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
@@ -121,8 +121,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Or.ref: %Or.type = name_ref Or, file.%Or.decl [template = constants.%Or]
-// CHECK:STDOUT:   %a.ref: i32 = name_ref a, file.%a.loc7_16.3
-// CHECK:STDOUT:   %b.ref: i32 = name_ref b, file.%b.loc7_24.3
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.or: init i32 = call %Or.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc8_18.1: i32 = value_of_initializer %int.or
 // CHECK:STDOUT:   %.loc8_18.2: i32 = converted %int.or, %.loc8_18.1

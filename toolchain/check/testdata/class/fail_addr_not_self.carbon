@@ -58,15 +58,15 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %.loc16_21: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc16_13.1: %.1 = param a
-// CHECK:STDOUT:     %a.loc16_13.2: %.1 = binding_pattern a, <unexpected>.inst+9.loc16_13
+// CHECK:STDOUT:     %.loc16_13: %.1 = binding_pattern a, %a.loc16_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc21: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %.loc21_21: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %b.loc21_13.1: %.1 = param b
-// CHECK:STDOUT:     %b.loc21_13.2: %.1 = binding_pattern b, %b.loc21_13.3
+// CHECK:STDOUT:     %.loc21_13: %.1 = binding_pattern b, %b.loc21_13.3
 // CHECK:STDOUT:     %b.loc21_13.3: %.1 = bind_name b, %b.loc21_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -76,7 +76,7 @@ class Class {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%a.loc16_13.2: %.1]();
+// CHECK:STDOUT: fn @F[@Class.%.loc16_13: %.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Class.%b.loc21_13.2: %.1);
+// CHECK:STDOUT: fn @G(@Class.%b.loc21_13.3: %.1);
 // CHECK:STDOUT:

@@ -130,12 +130,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = binding_pattern T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_13.3: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompleteClass.decl: %CompleteClass.type = class_decl @CompleteClass [template = constants.%CompleteClass.1] {
 // CHECK:STDOUT:     %T.loc6_21.1: type = param T
-// CHECK:STDOUT:     %T.loc6_21.2: type = binding_pattern T 0, %T.loc6_21.3 [symbolic = @CompleteClass.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc6: type = binding_pattern T 0, %T.loc6_21.3 [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc6_21.3: type = bind_symbolic_name T 0, %T.loc6_21.1 [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
@@ -278,7 +278,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = binding_pattern T 0, %T.loc4_13.3 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_13.3 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.loc4_13.3: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
@@ -721,7 +721,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.loc14_13.1: type = param U
-// CHECK:STDOUT:     %U.loc14_13.2: type = binding_pattern U 0, %U.loc14_13.3 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %.loc14: type = binding_pattern U 0, %U.loc14_13.3 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:     %U.loc14_13.3: type = bind_symbolic_name U 0, %U.loc14_13.1 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

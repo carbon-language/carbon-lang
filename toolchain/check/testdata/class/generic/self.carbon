@@ -57,7 +57,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = binding_pattern T 0, %T.loc11_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc11: type = binding_pattern T 0, %T.loc11_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc11_13.3: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

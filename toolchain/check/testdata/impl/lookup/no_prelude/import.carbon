@@ -145,8 +145,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc4_6.1: %C = param c
-// CHECK:STDOUT:     @G.%c: %C = binding_pattern c, %c.loc4_6.3
-// CHECK:STDOUT:     %c.loc4_6.3: %C = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     %.loc4: %C = binding_pattern c, @G.%c
+// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,7 +169,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c.loc4_6.3
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.7 [template = constants.%.2]
 // CHECK:STDOUT:   %F.ref: %.5 = name_ref F, imports.%import_ref.3 [template = constants.%.6]

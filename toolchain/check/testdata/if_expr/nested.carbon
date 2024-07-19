@@ -55,20 +55,20 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type.loc11_9 [template = bool]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %bool.make_type.loc11_9, %.loc11_9.1 [template = bool]
 // CHECK:STDOUT:     %a.loc11_6.1: bool = param a
-// CHECK:STDOUT:     @F.%a: bool = binding_pattern a, %a.loc11_6.3
+// CHECK:STDOUT:     %.loc11_6: bool = binding_pattern a, @F.%a
 // CHECK:STDOUT:     %bool.make_type.loc11_18: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %bool.make_type.loc11_18 [template = bool]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %bool.make_type.loc11_18, %.loc11_18.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_15.1: bool = param b
-// CHECK:STDOUT:     @F.%b: bool = binding_pattern b, %b.loc11_15.3
+// CHECK:STDOUT:     %.loc11_15: bool = binding_pattern b, @F.%b
 // CHECK:STDOUT:     %bool.make_type.loc11_27: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %bool.make_type.loc11_27 [template = bool]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %bool.make_type.loc11_27, %.loc11_27.1 [template = bool]
 // CHECK:STDOUT:     %c.loc11_24.1: bool = param c
-// CHECK:STDOUT:     @F.%c: bool = binding_pattern c, %c.loc11_24.3
-// CHECK:STDOUT:     %a.loc11_6.3: bool = bind_name a, %a.loc11_6.1
-// CHECK:STDOUT:     %b.loc11_15.3: bool = bind_name b, %b.loc11_15.1
-// CHECK:STDOUT:     %c.loc11_24.3: bool = bind_name c, %c.loc11_24.1
+// CHECK:STDOUT:     %.loc11_24: bool = binding_pattern c, @F.%c
+// CHECK:STDOUT:     @F.%a: bool = bind_name a, %a.loc11_6.1
+// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc11_15.1
+// CHECK:STDOUT:     @F.%c: bool = bind_name c, %c.loc11_24.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_36.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_36.2: type = converted %int.make_type_32, %.loc11_36.1 [template = i32]
@@ -82,11 +82,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: bool = name_ref a, file.%a.loc11_6.3
+// CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   if %a.ref br !if.expr.then.loc12_10 else br !if.expr.else.loc12_10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12_10:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, file.%b.loc11_15.3
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then.loc12_20 else br !if.expr.else.loc12_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12_20:
@@ -102,7 +102,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc12_10(%.loc12_20)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc12_10:
-// CHECK:STDOUT:   %c.ref: bool = name_ref c, file.%c.loc11_24.3
+// CHECK:STDOUT:   %c.ref: bool = name_ref c, %c
 // CHECK:STDOUT:   if %c.ref br !if.expr.then.loc12_44 else br !if.expr.else.loc12_44
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12_44:

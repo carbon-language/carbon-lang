@@ -62,8 +62,8 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc11_18: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc11_19: type = ptr_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc11_6.1: %.4 = param p
-// CHECK:STDOUT:     @A.%p: %.4 = binding_pattern p, %p.loc11_6.3
-// CHECK:STDOUT:     %p.loc11_6.3: %.4 = bind_name p, %p.loc11_6.1
+// CHECK:STDOUT:     %.loc11_6: %.4 = binding_pattern p, @A.%p
+// CHECK:STDOUT:     @A.%p: %.4 = bind_name p, %p.loc11_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32.loc11_31 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32.loc11_31, %.loc11_25.1 [template = i32]
@@ -79,8 +79,8 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc15_19.3: type = ptr_type i32 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_9: type = const_type %.5 [template = constants.%.6]
 // CHECK:STDOUT:     %p.loc15_6.1: %.6 = param p
-// CHECK:STDOUT:     @B.%p: %.6 = binding_pattern p, %p.loc15_6.3
-// CHECK:STDOUT:     %p.loc15_6.3: %.6 = bind_name p, %p.loc15_6.1
+// CHECK:STDOUT:     %.loc15_6: %.6 = binding_pattern p, @B.%p
+// CHECK:STDOUT:     @B.%p: %.6 = bind_name p, %p.loc15_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
@@ -94,13 +94,13 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p: %.4) -> %.4 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.4 = name_ref p, file.%p.loc11_6.3
+// CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%p: %.6) -> %.6 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.6 = name_ref p, file.%p.loc15_6.3
+// CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

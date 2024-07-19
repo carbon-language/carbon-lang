@@ -94,15 +94,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc2_11.2: type = value_of_initializer %float.make_type.loc2_11 [template = f64]
 // CHECK:STDOUT:     %.loc2_11.3: type = converted %float.make_type.loc2_11, %.loc2_11.2 [template = f64]
 // CHECK:STDOUT:     %a.loc2_8.1: f64 = param a
-// CHECK:STDOUT:     @Sub.%a: f64 = binding_pattern a, %a.loc2_8.3
+// CHECK:STDOUT:     %.loc2_8: f64 = binding_pattern a, @Sub.%a
 // CHECK:STDOUT:     %.loc2_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_19: init type = call constants.%Float(%.loc2_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_19.2: type = value_of_initializer %float.make_type.loc2_19 [template = f64]
 // CHECK:STDOUT:     %.loc2_19.3: type = converted %float.make_type.loc2_19, %.loc2_19.2 [template = f64]
 // CHECK:STDOUT:     %b.loc2_16.1: f64 = param b
-// CHECK:STDOUT:     @Sub.%b: f64 = binding_pattern b, %b.loc2_16.3
-// CHECK:STDOUT:     %a.loc2_8.3: f64 = bind_name a, %a.loc2_8.1
-// CHECK:STDOUT:     %b.loc2_16.3: f64 = bind_name b, %b.loc2_16.1
+// CHECK:STDOUT:     %.loc2_16: f64 = binding_pattern b, @Sub.%b
+// CHECK:STDOUT:     @Sub.%a: f64 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     @Sub.%b: f64 = bind_name b, %b.loc2_16.1
 // CHECK:STDOUT:     %.loc2_27.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_27: init type = call constants.%Float(%.loc2_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_27.2: type = value_of_initializer %float.make_type.loc2_27 [template = f64]
@@ -115,15 +115,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc4_19.2: type = value_of_initializer %float.make_type.loc4_19 [template = f64]
 // CHECK:STDOUT:     %.loc4_19.3: type = converted %float.make_type.loc4_19, %.loc4_19.2 [template = f64]
 // CHECK:STDOUT:     %a.loc4_16.1: f64 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: f64 = binding_pattern a, %a.loc4_16.3
+// CHECK:STDOUT:     %.loc4_16: f64 = binding_pattern a, @RuntimeCall.%a
 // CHECK:STDOUT:     %.loc4_27.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_27: init type = call constants.%Float(%.loc4_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc4_27.2: type = value_of_initializer %float.make_type.loc4_27 [template = f64]
 // CHECK:STDOUT:     %.loc4_27.3: type = converted %float.make_type.loc4_27, %.loc4_27.2 [template = f64]
 // CHECK:STDOUT:     %b.loc4_24.1: f64 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: f64 = binding_pattern b, %b.loc4_24.3
-// CHECK:STDOUT:     %a.loc4_16.3: f64 = bind_name a, %a.loc4_16.1
-// CHECK:STDOUT:     %b.loc4_24.3: f64 = bind_name b, %b.loc4_24.1
+// CHECK:STDOUT:     %.loc4_24: f64 = binding_pattern b, @RuntimeCall.%b
+// CHECK:STDOUT:     @RuntimeCall.%a: f64 = bind_name a, %a.loc4_16.1
+// CHECK:STDOUT:     @RuntimeCall.%b: f64 = bind_name b, %b.loc4_24.1
 // CHECK:STDOUT:     %.loc4_35.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_35: init type = call constants.%Float(%.loc4_35.1) [template = f64]
 // CHECK:STDOUT:     %.loc4_35.2: type = value_of_initializer %float.make_type.loc4_35 [template = f64]
@@ -145,8 +145,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @RuntimeCall(%a: f64, %b: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, file.%a.loc4_16.3
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, file.%b.loc4_24.3
+// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
 // CHECK:STDOUT:   %float.sub: init f64 = call %Sub.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc5_19.1: f64 = value_of_initializer %float.sub
 // CHECK:STDOUT:   %.loc5_19.2: f64 = converted %float.sub, %.loc5_19.1
@@ -222,8 +222,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc8_14.2: type = value_of_initializer %float.make_type.loc8_14 [template = f64]
 // CHECK:STDOUT:     %.loc8_14.3: type = converted %float.make_type.loc8_14, %.loc8_14.2 [template = f64]
 // CHECK:STDOUT:     %a.loc8_11.1: f64 = param a
-// CHECK:STDOUT:     @TooFew.%a: f64 = binding_pattern a, %a.loc8_11.3
-// CHECK:STDOUT:     %a.loc8_11.3: f64 = bind_name a, %a.loc8_11.1
+// CHECK:STDOUT:     %.loc8_11: f64 = binding_pattern a, @TooFew.%a
+// CHECK:STDOUT:     @TooFew.%a: f64 = bind_name a, %a.loc8_11.1
 // CHECK:STDOUT:     %.loc8_22.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc8_22: init type = call constants.%Float(%.loc8_22.1) [template = f64]
 // CHECK:STDOUT:     %.loc8_22.2: type = value_of_initializer %float.make_type.loc8_22 [template = f64]
@@ -236,22 +236,22 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc13_15.2: type = value_of_initializer %float.make_type.loc13_15 [template = f64]
 // CHECK:STDOUT:     %.loc13_15.3: type = converted %float.make_type.loc13_15, %.loc13_15.2 [template = f64]
 // CHECK:STDOUT:     %a.loc13_12.1: f64 = param a
-// CHECK:STDOUT:     @TooMany.%a: f64 = binding_pattern a, %a.loc13_12.3
+// CHECK:STDOUT:     %.loc13_12: f64 = binding_pattern a, @TooMany.%a
 // CHECK:STDOUT:     %.loc13_23.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_23: init type = call constants.%Float(%.loc13_23.1) [template = f64]
 // CHECK:STDOUT:     %.loc13_23.2: type = value_of_initializer %float.make_type.loc13_23 [template = f64]
 // CHECK:STDOUT:     %.loc13_23.3: type = converted %float.make_type.loc13_23, %.loc13_23.2 [template = f64]
 // CHECK:STDOUT:     %b.loc13_20.1: f64 = param b
-// CHECK:STDOUT:     @TooMany.%b: f64 = binding_pattern b, %b.loc13_20.3
+// CHECK:STDOUT:     %.loc13_20: f64 = binding_pattern b, @TooMany.%b
 // CHECK:STDOUT:     %.loc13_31.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_31: init type = call constants.%Float(%.loc13_31.1) [template = f64]
 // CHECK:STDOUT:     %.loc13_31.2: type = value_of_initializer %float.make_type.loc13_31 [template = f64]
 // CHECK:STDOUT:     %.loc13_31.3: type = converted %float.make_type.loc13_31, %.loc13_31.2 [template = f64]
 // CHECK:STDOUT:     %c.loc13_28.1: f64 = param c
-// CHECK:STDOUT:     @TooMany.%c: f64 = binding_pattern c, %c.loc13_28.3
-// CHECK:STDOUT:     %a.loc13_12.3: f64 = bind_name a, %a.loc13_12.1
-// CHECK:STDOUT:     %b.loc13_20.3: f64 = bind_name b, %b.loc13_20.1
-// CHECK:STDOUT:     %c.loc13_28.3: f64 = bind_name c, %c.loc13_28.1
+// CHECK:STDOUT:     %.loc13_28: f64 = binding_pattern c, @TooMany.%c
+// CHECK:STDOUT:     @TooMany.%a: f64 = bind_name a, %a.loc13_12.1
+// CHECK:STDOUT:     @TooMany.%b: f64 = bind_name b, %b.loc13_20.1
+// CHECK:STDOUT:     @TooMany.%c: f64 = bind_name c, %c.loc13_28.1
 // CHECK:STDOUT:     %.loc13_39.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_39: init type = call constants.%Float(%.loc13_39.1) [template = f64]
 // CHECK:STDOUT:     %.loc13_39.2: type = value_of_initializer %float.make_type.loc13_39 [template = f64]
@@ -264,15 +264,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc17_21.2: type = value_of_initializer %float.make_type.loc17_21 [template = f64]
 // CHECK:STDOUT:     %.loc17_21.3: type = converted %float.make_type.loc17_21, %.loc17_21.2 [template = f64]
 // CHECK:STDOUT:     %a.loc17_18.1: f64 = param a
-// CHECK:STDOUT:     @BadReturnType.%a: f64 = binding_pattern a, %a.loc17_18.3
+// CHECK:STDOUT:     %.loc17_18: f64 = binding_pattern a, @BadReturnType.%a
 // CHECK:STDOUT:     %.loc17_29.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc17_29: init type = call constants.%Float(%.loc17_29.1) [template = f64]
 // CHECK:STDOUT:     %.loc17_29.2: type = value_of_initializer %float.make_type.loc17_29 [template = f64]
 // CHECK:STDOUT:     %.loc17_29.3: type = converted %float.make_type.loc17_29, %.loc17_29.2 [template = f64]
 // CHECK:STDOUT:     %b.loc17_26.1: f64 = param b
-// CHECK:STDOUT:     @BadReturnType.%b: f64 = binding_pattern b, %b.loc17_26.3
-// CHECK:STDOUT:     %a.loc17_18.3: f64 = bind_name a, %a.loc17_18.1
-// CHECK:STDOUT:     %b.loc17_26.3: f64 = bind_name b, %b.loc17_26.1
+// CHECK:STDOUT:     %.loc17_26: f64 = binding_pattern b, @BadReturnType.%b
+// CHECK:STDOUT:     @BadReturnType.%a: f64 = bind_name a, %a.loc17_18.1
+// CHECK:STDOUT:     @BadReturnType.%b: f64 = bind_name b, %b.loc17_26.1
 // CHECK:STDOUT:     %bool.make_type.loc17: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc17_37.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
 // CHECK:STDOUT:     %.loc17_37.2: type = converted %bool.make_type.loc17, %.loc17_37.1 [template = bool]
@@ -284,15 +284,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc18_17.2: type = value_of_initializer %float.make_type.loc18_17 [template = f64]
 // CHECK:STDOUT:     %.loc18_17.3: type = converted %float.make_type.loc18_17, %.loc18_17.2 [template = f64]
 // CHECK:STDOUT:     %a.loc18_14.1: f64 = param a
-// CHECK:STDOUT:     @JustRight.%a: f64 = binding_pattern a, %a.loc18_14.3
+// CHECK:STDOUT:     %.loc18_14: f64 = binding_pattern a, @JustRight.%a
 // CHECK:STDOUT:     %.loc18_25.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc18_25: init type = call constants.%Float(%.loc18_25.1) [template = f64]
 // CHECK:STDOUT:     %.loc18_25.2: type = value_of_initializer %float.make_type.loc18_25 [template = f64]
 // CHECK:STDOUT:     %.loc18_25.3: type = converted %float.make_type.loc18_25, %.loc18_25.2 [template = f64]
 // CHECK:STDOUT:     %b.loc18_22.1: f64 = param b
-// CHECK:STDOUT:     @JustRight.%b: f64 = binding_pattern b, %b.loc18_22.3
-// CHECK:STDOUT:     %a.loc18_14.3: f64 = bind_name a, %a.loc18_14.1
-// CHECK:STDOUT:     %b.loc18_22.3: f64 = bind_name b, %b.loc18_22.1
+// CHECK:STDOUT:     %.loc18_22: f64 = binding_pattern b, @JustRight.%b
+// CHECK:STDOUT:     @JustRight.%a: f64 = bind_name a, %a.loc18_14.1
+// CHECK:STDOUT:     @JustRight.%b: f64 = bind_name b, %b.loc18_22.1
 // CHECK:STDOUT:     %.loc18_33.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc18_33: init type = call constants.%Float(%.loc18_33.1) [template = f64]
 // CHECK:STDOUT:     %.loc18_33.2: type = value_of_initializer %float.make_type.loc18_33 [template = f64]
@@ -305,8 +305,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc20_25.2: type = value_of_initializer %float.make_type.loc20_25 [template = f64]
 // CHECK:STDOUT:     %.loc20_25.3: type = converted %float.make_type.loc20_25, %.loc20_25.2 [template = f64]
 // CHECK:STDOUT:     %a.loc20_22.1: f64 = param a
-// CHECK:STDOUT:     @RuntimeCallTooFew.%a: f64 = binding_pattern a, %a.loc20_22.3
-// CHECK:STDOUT:     %a.loc20_22.3: f64 = bind_name a, %a.loc20_22.1
+// CHECK:STDOUT:     %.loc20_22: f64 = binding_pattern a, @RuntimeCallTooFew.%a
+// CHECK:STDOUT:     @RuntimeCallTooFew.%a: f64 = bind_name a, %a.loc20_22.1
 // CHECK:STDOUT:     %.loc20_33.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc20_33: init type = call constants.%Float(%.loc20_33.1) [template = f64]
 // CHECK:STDOUT:     %.loc20_33.2: type = value_of_initializer %float.make_type.loc20_33 [template = f64]
@@ -319,22 +319,22 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc24_26.2: type = value_of_initializer %float.make_type.loc24_26 [template = f64]
 // CHECK:STDOUT:     %.loc24_26.3: type = converted %float.make_type.loc24_26, %.loc24_26.2 [template = f64]
 // CHECK:STDOUT:     %a.loc24_23.1: f64 = param a
-// CHECK:STDOUT:     @RuntimeCallTooMany.%a: f64 = binding_pattern a, %a.loc24_23.3
+// CHECK:STDOUT:     %.loc24_23: f64 = binding_pattern a, @RuntimeCallTooMany.%a
 // CHECK:STDOUT:     %.loc24_34.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc24_34: init type = call constants.%Float(%.loc24_34.1) [template = f64]
 // CHECK:STDOUT:     %.loc24_34.2: type = value_of_initializer %float.make_type.loc24_34 [template = f64]
 // CHECK:STDOUT:     %.loc24_34.3: type = converted %float.make_type.loc24_34, %.loc24_34.2 [template = f64]
 // CHECK:STDOUT:     %b.loc24_31.1: f64 = param b
-// CHECK:STDOUT:     @RuntimeCallTooMany.%b: f64 = binding_pattern b, %b.loc24_31.3
+// CHECK:STDOUT:     %.loc24_31: f64 = binding_pattern b, @RuntimeCallTooMany.%b
 // CHECK:STDOUT:     %.loc24_42.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc24_42: init type = call constants.%Float(%.loc24_42.1) [template = f64]
 // CHECK:STDOUT:     %.loc24_42.2: type = value_of_initializer %float.make_type.loc24_42 [template = f64]
 // CHECK:STDOUT:     %.loc24_42.3: type = converted %float.make_type.loc24_42, %.loc24_42.2 [template = f64]
 // CHECK:STDOUT:     %c.loc24_39.1: f64 = param c
-// CHECK:STDOUT:     @RuntimeCallTooMany.%c: f64 = binding_pattern c, %c.loc24_39.3
-// CHECK:STDOUT:     %a.loc24_23.3: f64 = bind_name a, %a.loc24_23.1
-// CHECK:STDOUT:     %b.loc24_31.3: f64 = bind_name b, %b.loc24_31.1
-// CHECK:STDOUT:     %c.loc24_39.3: f64 = bind_name c, %c.loc24_39.1
+// CHECK:STDOUT:     %.loc24_39: f64 = binding_pattern c, @RuntimeCallTooMany.%c
+// CHECK:STDOUT:     @RuntimeCallTooMany.%a: f64 = bind_name a, %a.loc24_23.1
+// CHECK:STDOUT:     @RuntimeCallTooMany.%b: f64 = bind_name b, %b.loc24_31.1
+// CHECK:STDOUT:     @RuntimeCallTooMany.%c: f64 = bind_name c, %c.loc24_39.1
 // CHECK:STDOUT:     %.loc24_50.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc24_50: init type = call constants.%Float(%.loc24_50.1) [template = f64]
 // CHECK:STDOUT:     %.loc24_50.2: type = value_of_initializer %float.make_type.loc24_50 [template = f64]
@@ -347,15 +347,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc28_32.2: type = value_of_initializer %float.make_type.loc28_32 [template = f64]
 // CHECK:STDOUT:     %.loc28_32.3: type = converted %float.make_type.loc28_32, %.loc28_32.2 [template = f64]
 // CHECK:STDOUT:     %a.loc28_29.1: f64 = param a
-// CHECK:STDOUT:     @RuntimeCallBadReturnType.%a: f64 = binding_pattern a, %a.loc28_29.3
+// CHECK:STDOUT:     %.loc28_29: f64 = binding_pattern a, @RuntimeCallBadReturnType.%a
 // CHECK:STDOUT:     %.loc28_40.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc28_40: init type = call constants.%Float(%.loc28_40.1) [template = f64]
 // CHECK:STDOUT:     %.loc28_40.2: type = value_of_initializer %float.make_type.loc28_40 [template = f64]
 // CHECK:STDOUT:     %.loc28_40.3: type = converted %float.make_type.loc28_40, %.loc28_40.2 [template = f64]
 // CHECK:STDOUT:     %b.loc28_37.1: f64 = param b
-// CHECK:STDOUT:     @RuntimeCallBadReturnType.%b: f64 = binding_pattern b, %b.loc28_37.3
-// CHECK:STDOUT:     %a.loc28_29.3: f64 = bind_name a, %a.loc28_29.1
-// CHECK:STDOUT:     %b.loc28_37.3: f64 = bind_name b, %b.loc28_37.1
+// CHECK:STDOUT:     %.loc28_37: f64 = binding_pattern b, @RuntimeCallBadReturnType.%b
+// CHECK:STDOUT:     @RuntimeCallBadReturnType.%a: f64 = bind_name a, %a.loc28_29.1
+// CHECK:STDOUT:     @RuntimeCallBadReturnType.%b: f64 = bind_name b, %b.loc28_37.1
 // CHECK:STDOUT:     %bool.make_type.loc28: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc28_48.1: type = value_of_initializer %bool.make_type.loc28 [template = bool]
 // CHECK:STDOUT:     %.loc28_48.2: type = converted %bool.make_type.loc28, %.loc28_48.1 [template = bool]
@@ -378,7 +378,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @RuntimeCallTooFew(%a: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, file.%a.loc20_22.3
+// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %TooFew.call: init f64 = call %TooFew.ref(%a.ref)
 // CHECK:STDOUT:   %.loc21_19.1: f64 = value_of_initializer %TooFew.call
 // CHECK:STDOUT:   %.loc21_19.2: f64 = converted %TooFew.call, %.loc21_19.1
@@ -388,9 +388,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a: f64, %b: f64, %c: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooMany.ref: %TooMany.type = name_ref TooMany, file.%TooMany.decl [template = constants.%TooMany]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, file.%a.loc24_23.3
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, file.%b.loc24_31.3
-// CHECK:STDOUT:   %c.ref: f64 = name_ref c, file.%c.loc24_39.3
+// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
+// CHECK:STDOUT:   %c.ref: f64 = name_ref c, %c
 // CHECK:STDOUT:   %TooMany.call: init f64 = call %TooMany.ref(%a.ref, %b.ref, %c.ref)
 // CHECK:STDOUT:   %.loc25_26.1: f64 = value_of_initializer %TooMany.call
 // CHECK:STDOUT:   %.loc25_26.2: f64 = converted %TooMany.call, %.loc25_26.1
@@ -400,8 +400,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: f64, %b: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [template = constants.%BadReturnType]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, file.%a.loc28_29.3
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, file.%b.loc28_37.3
+// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
 // CHECK:STDOUT:   %BadReturnType.call: init bool = call %BadReturnType.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc29_29.1: bool = value_of_initializer %BadReturnType.call
 // CHECK:STDOUT:   %.loc29_29.2: bool = converted %BadReturnType.call, %.loc29_29.1

@@ -95,8 +95,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
 // CHECK:STDOUT:     %.loc25_23.2: type = converted %bool.make_type.loc25, %.loc25_23.1 [template = bool]
 // CHECK:STDOUT:     %x.loc25_20.1: bool = param x
-// CHECK:STDOUT:     @PartialConstant.%x: bool = binding_pattern x, %x.loc25_20.3
-// CHECK:STDOUT:     %x.loc25_20.3: bool = bind_name x, %x.loc25_20.1
+// CHECK:STDOUT:     %.loc25_20: bool = binding_pattern x, @PartialConstant.%x
+// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc25_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -271,7 +271,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc26_18.1 br !or.rhs else br !or.result(%.loc26_18.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %x.ref: bool = name_ref x, file.%x.loc25_20.3
+// CHECK:STDOUT:   %x.ref: bool = name_ref x, %x
 // CHECK:STDOUT:   br !or.result(%x.ref)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:

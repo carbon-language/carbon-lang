@@ -81,7 +81,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = binding_pattern T 0, %T.loc11_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc11: type = binding_pattern T 0, %T.loc11_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc11_13.3: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
@@ -107,8 +107,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc12_21 [symbolic = @Get.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %.loc12_25: type = ptr_type %Class.2 [symbolic = @Get.%.1 (constants.%.2)]
 // CHECK:STDOUT:       %self.loc12_15.1: @Get.%.1 (%.2) = param self
-// CHECK:STDOUT:       %self.loc12_15.3: @Get.%.1 (%.2) = binding_pattern self, <unexpected>.inst+18.loc12_15
-// CHECK:STDOUT:       %.loc12_10: @Get.%.1 (%.2) = addr_pattern %self.loc12_15.3
+// CHECK:STDOUT:       %.loc12_15.2: @Get.%.1 (%.2) = binding_pattern self, %self.loc12_15.3
+// CHECK:STDOUT:       %.loc12_10: @Get.%.1 (%.2) = addr_pattern %.loc12_15.2
 // CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, file.%T.loc11_13.3 [symbolic = @Get.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc12_34: type = ptr_type %T [symbolic = @Get.%.2 (constants.%.3)]
 // CHECK:STDOUT:       %return.var: ref @Get.%.2 (%.3) = var <return slot>
@@ -132,9 +132,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.3: type = unbound_element_type @Get.%Class (%Class.2), @Get.%T (%T) [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr @Class.%self.loc12_15.3: @Get.%.1 (%.2)]() -> @Get.%.2 (%.3) {
+// CHECK:STDOUT:   fn[addr @Class.%.loc12_15.2: @Get.%.1 (%.2)]() -> @Get.%.2 (%.3) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref: @Get.%.1 (%.2) = name_ref self, <unexpected>.inst+18.loc12_15
+// CHECK:STDOUT:     %self.ref: @Get.%.1 (%.2) = name_ref self, @Class.%self.loc12_15.3
 // CHECK:STDOUT:     %.loc13_17.1: ref @Get.%Class (%Class.2) = deref %self.ref
 // CHECK:STDOUT:     %k.ref: @Get.%.3 (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
 // CHECK:STDOUT:     %.loc13_17.2: ref @Get.%T (%T) = class_element_access %.loc13_17.1, element0

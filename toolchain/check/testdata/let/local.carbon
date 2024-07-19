@@ -48,8 +48,8 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11_9 [template = i32]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32.loc11_9, %.loc11_9.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_6.1: i32 = param a
-// CHECK:STDOUT:     @F.%a: i32 = binding_pattern a, %a.loc11_6.3
-// CHECK:STDOUT:     %a.loc11_6.3: i32 = bind_name a, %a.loc11_6.1
+// CHECK:STDOUT:     %.loc11_6: i32 = binding_pattern a, @F.%a
+// CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc11_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17.1: type = value_of_initializer %int.make_type_32.loc11_17 [template = i32]
 // CHECK:STDOUT:     %.loc11_17.2: type = converted %int.make_type_32.loc11_17, %.loc11_17.1 [template = i32]
@@ -64,8 +64,8 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %b.loc12_7.1: i32 = binding_pattern b, %b.loc12_7.2
-// CHECK:STDOUT:   %a.ref: i32 = name_ref a, file.%a.loc11_6.3
+// CHECK:STDOUT:   %.loc12_7: i32 = binding_pattern b, %b.loc12_7.2
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.loc12_7.2: i32 = bind_name b, %a.ref
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b.loc12_7.2
 // CHECK:STDOUT:   return %b.ref

@@ -72,7 +72,7 @@ fn Var() {
 // CHECK:STDOUT:   %X.ref.loc19_14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc19_15.1: %.3 = tuple_literal (%X.ref.loc19_11, %X.ref.loc19_14)
 // CHECK:STDOUT:   %.loc19_15.2: type = converted %.loc19_15.1, constants.%.4 [template = constants.%.4]
-// CHECK:STDOUT:   %a.loc19_7.1: %.4 = binding_pattern a, %a.loc19_7.2
+// CHECK:STDOUT:   %.loc19_7: %.4 = binding_pattern a, %a.loc19_7.2
 // CHECK:STDOUT:   %Make.ref.loc19_20: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc19_24.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Make.call.loc19_24: init %X = call %Make.ref.loc19_20() to %.loc19_24.1

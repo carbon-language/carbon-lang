@@ -34,8 +34,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc13_6.1: %.1 = param T
-// CHECK:STDOUT:     @F.%T.loc13: %.1 = binding_pattern T 0, %T.loc13_6.3 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.loc13_6.3: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc13: %.1 = binding_pattern T 0, @F.%T.loc13 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     @F.%T.loc13: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -47,14 +47,14 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(file.%T.loc13_6.3: %.1) {
+// CHECK:STDOUT: generic fn @F(%T.loc13: %.1) {
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc13: %.1) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, file.%T.loc13_6.3 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.var: ref @F.%T.1 (%T) = var x

@@ -48,14 +48,14 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
 // CHECK:STDOUT:     %.loc14_9.2: type = converted %int.make_type_32.loc14_9, %.loc14_9.1 [template = i32]
 // CHECK:STDOUT:     %n.loc14_6.1: i32 = param n
-// CHECK:STDOUT:     @F.%n: i32 = binding_pattern n, %n.loc14_6.3
+// CHECK:STDOUT:     %.loc14_6: i32 = binding_pattern n, @F.%n
 // CHECK:STDOUT:     %int.make_type_32.loc14_18: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %n.ref: i32 = name_ref n, %n.loc14_6.3
+// CHECK:STDOUT:     %n.ref: i32 = name_ref n, @F.%n
 // CHECK:STDOUT:     %.loc14_25: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %a.loc14_14.1: <error> = param a
-// CHECK:STDOUT:     @F.%a: <error> = binding_pattern a, %a.loc14_14.3
-// CHECK:STDOUT:     %n.loc14_6.3: i32 = bind_name n, %n.loc14_6.1
-// CHECK:STDOUT:     %a.loc14_14.3: <error> = bind_name a, %a.loc14_14.1
+// CHECK:STDOUT:     %.loc14_14: <error> = binding_pattern a, @F.%a
+// CHECK:STDOUT:     @F.%n: i32 = bind_name n, %n.loc14_6.1
+// CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc14_14.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

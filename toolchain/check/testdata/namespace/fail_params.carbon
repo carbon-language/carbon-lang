@@ -82,20 +82,20 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
 // CHECK:STDOUT:   %n.loc24_13.1: i32 = param n
-// CHECK:STDOUT:   %n.loc24_13.2: i32 = binding_pattern n, %n.loc24_13.3
+// CHECK:STDOUT:   %.loc24_13: i32 = binding_pattern n, %n.loc24_13.3
 // CHECK:STDOUT:   %n.loc24_13.3: i32 = bind_name n, %n.loc24_13.1
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.loc30_13.1: type = param T
-// CHECK:STDOUT:   %T.loc30_13.2: type = binding_pattern T 0, <unexpected>.inst+22.loc30_13 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, <unexpected>.inst+22.loc30_13 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc30_13: type = binding_pattern T 0, %T.loc30_13.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc30_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %x.loc30_23.1: %T = param x
-// CHECK:STDOUT:   %x.loc30_23.2: %T = binding_pattern x, %x.loc30_23.3
+// CHECK:STDOUT:   %.loc30_23: %T = binding_pattern x, %x.loc30_23.3
 // CHECK:STDOUT:   %x.loc30_23.3: %T = bind_name x, %x.loc30_23.1
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %T.loc39_6.1: type = param T
-// CHECK:STDOUT:     %T.loc39_6.2: type = binding_pattern T 0, %T.loc39_6.3 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc39: type = binding_pattern T 0, %T.loc39_6.3 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc39_6.3: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

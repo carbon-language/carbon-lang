@@ -194,26 +194,26 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_8.2: %C = binding_pattern a, %a.loc7_8.3
+// CHECK:STDOUT:     %.loc7: %C = binding_pattern a, %a.loc7_8.3
 // CHECK:STDOUT:     %a.loc7_8.3: %C = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc8_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc8_8.3
-// CHECK:STDOUT:     %a.loc8_8.3: %C = bind_name a, %a.loc8_8.1
+// CHECK:STDOUT:     %.loc8: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc8_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc10_8.1: %C = param a
-// CHECK:STDOUT:     %a.loc10_8.2: %C = binding_pattern a, %a.loc10_8.3
+// CHECK:STDOUT:     %.loc10: %C = binding_pattern a, %a.loc10_8.3
 // CHECK:STDOUT:     %a.loc10_8.3: %C = bind_name a, %a.loc10_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc11_8.1: %C = param a
-// CHECK:STDOUT:     @Bar.%a: %C = binding_pattern a, %a.loc11_8.3
-// CHECK:STDOUT:     %a.loc11_8.3: %C = bind_name a, %a.loc11_8.1
+// CHECK:STDOUT:     %.loc11: %C = binding_pattern a, @Bar.%a
+// CHECK:STDOUT:     @Bar.%a: %C = bind_name a, %a.loc11_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,14 +252,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_14.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_14.2: %C = binding_pattern a, %a.loc6_14.3
+// CHECK:STDOUT:     %.loc6: %C = binding_pattern a, %a.loc6_14.3
 // CHECK:STDOUT:     %a.loc6_14.3: %C = bind_name a, %a.loc6_14.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_10.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc7_10.3
-// CHECK:STDOUT:     %a.loc7_10.3: %C = bind_name a, %a.loc7_10.1
+// CHECK:STDOUT:     %.loc7: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc7_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,14 +295,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc6_8.3
-// CHECK:STDOUT:     %a.loc6_8.3: %C = bind_name a, %a.loc6_8.1
+// CHECK:STDOUT:     %.loc6: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc14_8.1: %C = param a
-// CHECK:STDOUT:     @.1.%a: %C = binding_pattern a, %a.loc14_8.3
-// CHECK:STDOUT:     %a.loc14_8.3: %C = bind_name a, %a.loc14_8.1
+// CHECK:STDOUT:     %.loc14: %C = binding_pattern a, @.1.%a
+// CHECK:STDOUT:     @.1.%a: %C = bind_name a, %a.loc14_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,14 +338,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_8.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_8.2: %C = binding_pattern a, %a.loc6_8.3
+// CHECK:STDOUT:     %.loc6: %C = binding_pattern a, %a.loc6_8.3
 // CHECK:STDOUT:     %a.loc6_8.3: %C = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc7_8.3
-// CHECK:STDOUT:     %a.loc7_8.3: %C = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:     %.loc7: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -384,14 +384,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc7_8.3
-// CHECK:STDOUT:     %a.loc7_8.3: %C = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:     %.loc7: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc8_8.1: %C = param a
-// CHECK:STDOUT:     @Bar.%a: %C = binding_pattern a, %a.loc8_8.3
-// CHECK:STDOUT:     %a.loc8_8.3: %C = bind_name a, %a.loc8_8.1
+// CHECK:STDOUT:     %.loc8: %C = binding_pattern a, @Bar.%a
+// CHECK:STDOUT:     @Bar.%a: %C = bind_name a, %a.loc8_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -437,14 +437,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:     %a.loc4_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc4_8.3
-// CHECK:STDOUT:     %a.loc4_8.3: %C = bind_name a, %a.loc4_8.1
+// CHECK:STDOUT:     %.loc4: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc4_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:     %a.loc5_8.1: %C = param a
-// CHECK:STDOUT:     @Bar.%a: %C = binding_pattern a, %a.loc5_8.3
-// CHECK:STDOUT:     %a.loc5_8.3: %C = bind_name a, %a.loc5_8.1
+// CHECK:STDOUT:     %.loc5: %C = binding_pattern a, @Bar.%a
+// CHECK:STDOUT:     @Bar.%a: %C = bind_name a, %a.loc5_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -488,14 +488,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc7_8.3
-// CHECK:STDOUT:     %a.loc7_8.3: %C = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:     %.loc7: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %b.loc15_8.1: %C = param b
-// CHECK:STDOUT:     @.1.%b: %C = binding_pattern b, %b.loc15_8.3
-// CHECK:STDOUT:     %b.loc15_8.3: %C = bind_name b, %b.loc15_8.1
+// CHECK:STDOUT:     %.loc15: %C = binding_pattern b, @.1.%b
+// CHECK:STDOUT:     @.1.%b: %C = bind_name b, %b.loc15_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -536,14 +536,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc7_8.3
-// CHECK:STDOUT:     %a.loc7_8.3: %C = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:     %.loc7: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_8.1: %C = param a
-// CHECK:STDOUT:     @.1.%a: %C = binding_pattern a, %a.loc15_8.3
-// CHECK:STDOUT:     %a.loc15_8.3: %C = bind_name a, %a.loc15_8.1
+// CHECK:STDOUT:     %.loc15: %C = binding_pattern a, @.1.%a
+// CHECK:STDOUT:     @.1.%a: %C = bind_name a, %a.loc15_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,12 +584,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, <unexpected>.inst+8.loc7_8
+// CHECK:STDOUT:     @Foo.%.loc7: %C = binding_pattern a, @Foo.%a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_8.1: %C = param a
-// CHECK:STDOUT:     @.1.%a: %C = binding_pattern a, <unexpected>.inst+16.loc15_8
+// CHECK:STDOUT:     @.1.%.loc15: %C = binding_pattern a, @.1.%a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -598,9 +598,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[%a: %C]();
+// CHECK:STDOUT: fn @Foo[%.loc7: %C]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%a: %C]() {
+// CHECK:STDOUT: fn @.1[%.loc15: %C]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -668,8 +668,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc6_8.3
-// CHECK:STDOUT:     %a.loc6_8.3: %C = bind_name a, %a.loc6_8.1
+// CHECK:STDOUT:     %.loc6: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -710,8 +710,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_8.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = binding_pattern a, %a.loc6_8.3
-// CHECK:STDOUT:     %a.loc6_8.3: %C = bind_name a, %a.loc6_8.1
+// CHECK:STDOUT:     %.loc6: %C = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -747,18 +747,18 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_11: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %a.loc6_8.1: %.2 = param a
-// CHECK:STDOUT:     @Foo.%a: %.2 = binding_pattern a, %a.loc6_8.3
-// CHECK:STDOUT:     %a.loc6_8.3: %.2 = bind_name a, %a.loc6_8.1
+// CHECK:STDOUT:     %.loc6_8: %.2 = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     @Foo.%a: %.2 = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc17_18: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %.loc17_11: type = const_type %.2 [template = constants.%.2]
 // CHECK:STDOUT:     %a.loc17_8.1: %.2 = param a
-// CHECK:STDOUT:     @.1.%a: %.2 = binding_pattern a, %a.loc17_8.3
-// CHECK:STDOUT:     %a.loc17_8.3: %.2 = bind_name a, %a.loc17_8.1
+// CHECK:STDOUT:     %.loc17_8: %.2 = binding_pattern a, @.1.%a
+// CHECK:STDOUT:     @.1.%a: %.2 = bind_name a, %a.loc17_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -90,8 +90,8 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
 // CHECK:STDOUT:     %b.loc13_6.1: %.3 = param b
-// CHECK:STDOUT:     @G.%b: %.3 = binding_pattern b, %b.loc13_6.3
-// CHECK:STDOUT:     %b.loc13_6.3: %.3 = bind_name b, %b.loc13_6.1
+// CHECK:STDOUT:     %.loc13_6: %.3 = binding_pattern b, @G.%b
+// CHECK:STDOUT:     @G.%b: %.3 = bind_name b, %b.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,14 +107,14 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc19_14.3: type = ptr_type i32 [template = constants.%.5]
 // CHECK:STDOUT:   %pb.var: ref %.5 = var pb
 // CHECK:STDOUT:   %pb: ref %.5 = bind_name pb, %pb.var
-// CHECK:STDOUT:   %b.ref.loc19: %.3 = name_ref b, file.%b.loc13_6.3
+// CHECK:STDOUT:   %b.ref.loc19: %.3 = name_ref b, %b
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc19_22.1: ref %.3 = value_as_ref %b.ref.loc19
 // CHECK:STDOUT:   %.loc19_22.2: ref i32 = array_index %.loc19_22.1, %.loc19_21
 // CHECK:STDOUT:   %.loc19_22.3: i32 = bind_value %.loc19_22.2
 // CHECK:STDOUT:   %.loc19_18: %.5 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %pb.var, %.loc19_18
-// CHECK:STDOUT:   %b.ref.loc24: %.3 = name_ref b, file.%b.loc13_6.3
+// CHECK:STDOUT:   %b.ref.loc24: %.3 = name_ref b, %b
 // CHECK:STDOUT:   %.loc24_5: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc24_6.1: ref %.3 = value_as_ref %b.ref.loc24
 // CHECK:STDOUT:   %.loc24_6.2: ref i32 = array_index %.loc24_6.1, %.loc24_5

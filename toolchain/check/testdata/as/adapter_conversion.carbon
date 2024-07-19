@@ -153,12 +153,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %a_ref.var: ref %A = var a_ref
 // CHECK:STDOUT:   %a_ref: ref %A = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   %A.ref.loc18: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:   %a_val: %A = binding_pattern a_val, @__global_init.%a_val
+// CHECK:STDOUT:   %.loc18: %A = binding_pattern a_val, @__global_init.%a_val
 // CHECK:STDOUT:   %B.ref.loc21: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %b_val: %B = binding_pattern b_val, @__global_init.%b_val
+// CHECK:STDOUT:   %.loc21: %B = binding_pattern b_val, @__global_init.%b_val
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc22: type = ptr_type %B [template = constants.%.7]
-// CHECK:STDOUT:   %b_ptr: %.7 = binding_pattern b_ptr, @__global_init.%b_ptr
+// CHECK:STDOUT:   %.loc22_13: type = ptr_type %B [template = constants.%.7]
+// CHECK:STDOUT:   %.loc22_5: %.7 = binding_pattern b_ptr, @__global_init.%b_ptr
 // CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_factory.var: ref %B = var b_factory
 // CHECK:STDOUT:   %b_factory: ref %B = bind_name b_factory, %b_factory.var
@@ -280,11 +280,11 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:   %a: %A = binding_pattern a, @__global_init.%a
+// CHECK:STDOUT:   %.loc8: %A = binding_pattern a, @__global_init.%a
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32, %.loc9_8.1 [template = i32]
-// CHECK:STDOUT:   %n: i32 = binding_pattern n, @__global_init.%n
+// CHECK:STDOUT:   %.loc9_5: i32 = binding_pattern n, @__global_init.%n
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -358,7 +358,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:   %d: %D = binding_pattern d, @__global_init.%d
+// CHECK:STDOUT:   %.loc9: %D = binding_pattern d, @__global_init.%d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -447,7 +447,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %B.ref.loc13: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %b_value: %B = binding_pattern b_value, @__global_init.%b_value
+// CHECK:STDOUT:   %.loc13: %B = binding_pattern b_value, @__global_init.%b_value
 // CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_init.var: ref %B = var b_init
 // CHECK:STDOUT:   %b_init: ref %B = bind_name b_init, %b_init.var

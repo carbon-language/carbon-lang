@@ -66,16 +66,16 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_32.loc11_23, %.loc11_23.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:     %s.loc11_6.1: %.2 = param s
-// CHECK:STDOUT:     @G.%s: %.2 = binding_pattern s, %s.loc11_6.3
-// CHECK:STDOUT:     %s.loc11_6.3: %.2 = bind_name s, %s.loc11_6.1
+// CHECK:STDOUT:     %.loc11_6: %.2 = binding_pattern s, @G.%s
+// CHECK:STDOUT:     @G.%s: %.2 = bind_name s, %s.loc11_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
 // CHECK:STDOUT:     %cond.loc13_6.1: bool = param cond
-// CHECK:STDOUT:     @F.%cond: bool = binding_pattern cond, %cond.loc13_6.3
-// CHECK:STDOUT:     %cond.loc13_6.3: bool = bind_name cond, %cond.loc13_6.1
+// CHECK:STDOUT:     %.loc13_6: bool = binding_pattern cond, @F.%cond
+// CHECK:STDOUT:     @F.%cond: bool = bind_name cond, %cond.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,7 +107,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc14_47: init %.2 = converted %.loc14_46.1, %.loc14_46.6 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc14_47
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %cond.ref: bool = name_ref cond, file.%cond.loc13_6.3
+// CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

@@ -37,8 +37,8 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc11_9.1: %.1 = param a
-// CHECK:STDOUT:     @Echo.%a: %.1 = binding_pattern a, %a.loc11_9.3
-// CHECK:STDOUT:     %a.loc11_9.3: %.1 = bind_name a, %a.loc11_9.1
+// CHECK:STDOUT:     %.loc11_9: %.1 = binding_pattern a, @Echo.%a
+// CHECK:STDOUT:     @Echo.%a: %.1 = bind_name a, %a.loc11_9.1
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @Echo.%return: ref %.1 = var <return slot>
@@ -48,7 +48,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %.1 = name_ref a, file.%a.loc11_9.3
+// CHECK:STDOUT:   %a.ref: %.1 = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

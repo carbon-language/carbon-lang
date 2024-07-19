@@ -96,7 +96,7 @@ let a: T = 0;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%import_ref [symbolic = constants.%T]
-// CHECK:STDOUT:   %a: %T = binding_pattern a, @__global_init.%a
+// CHECK:STDOUT:   %.loc8: %T = binding_pattern a, @__global_init.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

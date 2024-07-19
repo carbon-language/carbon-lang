@@ -92,8 +92,8 @@ fn TestOp() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc18_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc18_14.1: %.3 = param self
-// CHECK:STDOUT:     %self.loc18_14.3: %.3 = binding_pattern self, <unexpected>.inst+21.loc18_14
-// CHECK:STDOUT:     %.loc18_9: %.3 = addr_pattern %self.loc18_14.3
+// CHECK:STDOUT:     %.loc18_14.2: %.3 = binding_pattern self, %self.loc18_14.3
+// CHECK:STDOUT:     %.loc18_9: %.3 = addr_pattern %.loc18_14.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -107,13 +107,13 @@ fn TestOp() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[addr @impl.%self.loc18_14.3: %.3]();
+// CHECK:STDOUT: fn @Op.1[addr @impl.%.loc18_14.2: %.3]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.3: type = ptr_type @Op.2.%Self (%Self) [symbolic = %.3 (constants.%.5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: @Op.2.%.2 (%.5)]();
+// CHECK:STDOUT:   fn[addr %.1: @Op.2.%.3 (%.5)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
@@ -135,11 +135,11 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT:   %.3 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%C) {
 // CHECK:STDOUT:   %Self => constants.%C
-// CHECK:STDOUT:   %.2 => constants.%.3
+// CHECK:STDOUT:   %.3 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

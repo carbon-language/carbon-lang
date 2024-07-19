@@ -63,8 +63,8 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc15_26: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_27: type = ptr_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc15_6.1: %.4 = param p
-// CHECK:STDOUT:     @G.%p: %.4 = binding_pattern p, %p.loc15_6.3
-// CHECK:STDOUT:     %p.loc15_6.3: %.4 = bind_name p, %p.loc15_6.1
+// CHECK:STDOUT:     %.loc15_6: %.4 = binding_pattern p, @G.%p
+// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc15_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
@@ -78,7 +78,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.4 = name_ref p, file.%p.loc15_6.3
+// CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -58,14 +58,14 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
-// CHECK:STDOUT:     @Add.%a: i32 = binding_pattern a, %a.loc11_8.3
+// CHECK:STDOUT:     %.loc11_8: i32 = binding_pattern a, @Add.%a
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
-// CHECK:STDOUT:     @Add.%b: i32 = binding_pattern b, %b.loc11_16.3
-// CHECK:STDOUT:     %a.loc11_8.3: i32 = bind_name a, %a.loc11_8.1
-// CHECK:STDOUT:     %b.loc11_16.3: i32 = bind_name b, %b.loc11_16.1
+// CHECK:STDOUT:     %.loc11_16: i32 = binding_pattern b, @Add.%b
+// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc11_8.1
+// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc11_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %int.make_type_32.loc11_27 [template = i32]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %int.make_type_32.loc11_27, %.loc11_27.1 [template = i32]
@@ -87,7 +87,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_32.loc14, %.loc14_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_15: type = array_type %.loc14_14, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_16: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %b.loc14: %.6 = binding_pattern b, @__global_init.%b
+// CHECK:STDOUT:   %.loc14_5: %.6 = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

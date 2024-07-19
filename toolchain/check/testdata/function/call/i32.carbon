@@ -55,8 +55,8 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32.loc11_12 [template = i32]
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11_12, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %a.loc11_9.1: i32 = param a
-// CHECK:STDOUT:     @Echo.%a: i32 = binding_pattern a, %a.loc11_9.3
-// CHECK:STDOUT:     %a.loc11_9.3: i32 = bind_name a, %a.loc11_9.1
+// CHECK:STDOUT:     %.loc11_9: i32 = binding_pattern a, @Echo.%a
+// CHECK:STDOUT:     @Echo.%a: i32 = bind_name a, %a.loc11_9.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %int.make_type_32.loc11_20 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %int.make_type_32.loc11_20, %.loc11_20.1 [template = i32]
@@ -69,7 +69,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: i32 = name_ref a, file.%a.loc11_9.3
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

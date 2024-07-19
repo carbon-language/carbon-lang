@@ -113,8 +113,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartiallyConstant.decl: %PartiallyConstant.type = fn_decl @PartiallyConstant [template = constants.%PartiallyConstant] {
 // CHECK:STDOUT:     %t.loc28_22.1: type = param t
-// CHECK:STDOUT:     @PartiallyConstant.%t: type = binding_pattern t, %t.loc28_22.3
-// CHECK:STDOUT:     %t.loc28_22.3: type = bind_name t, %t.loc28_22.1
+// CHECK:STDOUT:     %.loc28_22: type = binding_pattern t, @PartiallyConstant.%t
+// CHECK:STDOUT:     @PartiallyConstant.%t: type = bind_name t, %t.loc28_22.1
 // CHECK:STDOUT:     %int.make_type_32.loc28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc28_34.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:     %.loc28_34.2: type = converted %int.make_type_32.loc28, %.loc28_34.1 [template = i32]
@@ -250,7 +250,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc29(%.loc29_23.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc29:
-// CHECK:STDOUT:   %t.ref.loc29: type = name_ref t, file.%t.loc28_22.3
+// CHECK:STDOUT:   %t.ref.loc29: type = name_ref t, %t
 // CHECK:STDOUT:   br !if.expr.result.loc29(%t.ref.loc29)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc29:
@@ -263,7 +263,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   if %.loc30_13 br !if.expr.then.loc30 else br !if.expr.else.loc30
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc30:
-// CHECK:STDOUT:   %t.ref.loc30: type = name_ref t, file.%t.loc28_22.3
+// CHECK:STDOUT:   %t.ref.loc30: type = name_ref t, %t
 // CHECK:STDOUT:   br !if.expr.result.loc30(%t.ref.loc30)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc30:

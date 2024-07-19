@@ -119,14 +119,14 @@ fn Run() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %self.loc14_8.1: %ForwardDeclared = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %ForwardDeclared = binding_pattern self, <unexpected>.inst+27.loc14_8
+// CHECK:STDOUT:     %.loc14: %ForwardDeclared = binding_pattern self, %self.loc14_8.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.5]
 // CHECK:STDOUT:     %self.loc15_13.1: %.5 = param self
-// CHECK:STDOUT:     %self.loc15_13.3: %.5 = binding_pattern self, <unexpected>.inst+36.loc15_13
-// CHECK:STDOUT:     %.loc15_8: %.5 = addr_pattern %self.loc15_13.3
+// CHECK:STDOUT:     %.loc15_13.2: %.5 = binding_pattern self, %self.loc15_13.3
+// CHECK:STDOUT:     %.loc15_8: %.5 = addr_pattern %.loc15_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -139,9 +139,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@ForwardDeclared.%self.loc14_8.2: %ForwardDeclared]();
+// CHECK:STDOUT: fn @F[@ForwardDeclared.%.loc14: %ForwardDeclared]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr @ForwardDeclared.%self.loc15_13.3: %.5]();
+// CHECK:STDOUT: fn @G[addr @ForwardDeclared.%.loc15_13.2: %.5]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -293,7 +293,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %ForwardDeclared.1]();
+// CHECK:STDOUT: fn @F[%.1: %ForwardDeclared.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self: %.9]();
+// CHECK:STDOUT: fn @G[addr %.1: %.9]();
 // CHECK:STDOUT:

@@ -64,14 +64,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11_12, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_18: type = array_type %.loc11_17, i32 [template = constants.%.3]
 // CHECK:STDOUT:     %arr.loc11_6.1: %.3 = param arr
-// CHECK:STDOUT:     @F.%arr: %.3 = binding_pattern arr, %arr.loc11_6.3
+// CHECK:STDOUT:     %.loc11_6: %.3 = binding_pattern arr, @F.%arr
 // CHECK:STDOUT:     %int.make_type_32.loc11_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_24.1: type = value_of_initializer %int.make_type_32.loc11_24 [template = i32]
 // CHECK:STDOUT:     %.loc11_24.2: type = converted %int.make_type_32.loc11_24, %.loc11_24.1 [template = i32]
 // CHECK:STDOUT:     %i.loc11_21.1: i32 = param i
-// CHECK:STDOUT:     @F.%i: i32 = binding_pattern i, %i.loc11_21.3
-// CHECK:STDOUT:     %arr.loc11_6.3: %.3 = bind_name arr, %arr.loc11_6.1
-// CHECK:STDOUT:     %i.loc11_21.3: i32 = bind_name i, %i.loc11_21.1
+// CHECK:STDOUT:     %.loc11_21: i32 = binding_pattern i, @F.%i
+// CHECK:STDOUT:     @F.%arr: %.3 = bind_name arr, %arr.loc11_6.1
+// CHECK:STDOUT:     @F.%i: i32 = bind_name i, %i.loc11_21.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_32.1: type = value_of_initializer %int.make_type_32.loc11_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_32.2: type = converted %int.make_type_32.loc11_32, %.loc11_32.1 [template = i32]
@@ -89,8 +89,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: %.3, %i: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: %.3 = name_ref arr, file.%arr.loc11_6.3
-// CHECK:STDOUT:   %i.ref: i32 = name_ref i, file.%i.loc11_21.3
+// CHECK:STDOUT:   %arr.ref: %.3 = name_ref arr, %arr
+// CHECK:STDOUT:   %i.ref: i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc12_15.1: ref %.3 = value_as_ref %arr.ref
 // CHECK:STDOUT:   %.loc12_15.2: ref i32 = array_index %.loc12_15.1, %i.ref
 // CHECK:STDOUT:   %.loc12_15.3: i32 = bind_value %.loc12_15.2

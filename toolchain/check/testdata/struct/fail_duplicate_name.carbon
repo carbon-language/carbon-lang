@@ -117,11 +117,11 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %int.make_type_32.loc27_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc27_22.1: type = value_of_initializer %int.make_type_32.loc27_22 [template = i32]
 // CHECK:STDOUT:   %.loc27_22.2: type = converted %int.make_type_32.loc27_22, %.loc27_22.1 [template = i32]
-// CHECK:STDOUT:   %v: <error> = binding_pattern v, @__global_init.%v
+// CHECK:STDOUT:   %.loc27_5: <error> = binding_pattern v, @__global_init.%v
 // CHECK:STDOUT:   %int.make_type_32.loc36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc36_8.1: type = value_of_initializer %int.make_type_32.loc36 [template = i32]
 // CHECK:STDOUT:   %.loc36_8.2: type = converted %int.make_type_32.loc36, %.loc36_8.1 [template = i32]
-// CHECK:STDOUT:   %w: i32 = binding_pattern w, @__global_init.%w
+// CHECK:STDOUT:   %.loc36_5: i32 = binding_pattern w, @__global_init.%w
 // CHECK:STDOUT:   %int.make_type_32.loc45: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc45_13.1: type = value_of_initializer %int.make_type_32.loc45 [template = i32]
 // CHECK:STDOUT:   %.loc45_13.2: type = converted %int.make_type_32.loc45, %.loc45_13.1 [template = i32]

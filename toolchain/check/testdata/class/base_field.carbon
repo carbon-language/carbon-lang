@@ -76,8 +76,8 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc24_21: type = ptr_type %Derived [template = constants.%.8]
 // CHECK:STDOUT:     %p.loc24_11.1: %.8 = param p
-// CHECK:STDOUT:     @Access.%p: %.8 = binding_pattern p, %p.loc24_11.3
-// CHECK:STDOUT:     %p.loc24_11.3: %.8 = bind_name p, %p.loc24_11.1
+// CHECK:STDOUT:     %.loc24_11: %.8 = binding_pattern p, @Access.%p
+// CHECK:STDOUT:     @Access.%p: %.8 = bind_name p, %p.loc24_11.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc24_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc24_30.2: type = converted %int.make_type_32, %.loc24_30.1 [template = i32]
@@ -131,7 +131,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%p: %.8) -> %.9 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.8 = name_ref p, file.%p.loc24_11.3
+// CHECK:STDOUT:   %p.ref: %.8 = name_ref p, %p
 // CHECK:STDOUT:   %.loc25_12: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %c.ref: %.2 = name_ref c, @Base.%.loc14_8 [template = @Base.%.loc14_8]
 // CHECK:STDOUT:   %.loc25_15.1: ref %Base = class_element_access %.loc25_12, element0

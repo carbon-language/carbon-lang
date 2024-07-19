@@ -61,7 +61,7 @@ fn T.F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %T: type = binding_pattern T, @__global_init.%T
+// CHECK:STDOUT:   %.loc16: type = binding_pattern T, @__global_init.%T
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

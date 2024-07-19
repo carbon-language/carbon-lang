@@ -81,14 +81,14 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.6]
+// CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.6]
 // CHECK:STDOUT:     %s.loc19_6.1: %.6 = param s
-// CHECK:STDOUT:     @F.2.%s: %.6 = binding_pattern s, %s.loc19_6.3
+// CHECK:STDOUT:     %.loc19_6: %.6 = binding_pattern s, @F.2.%s
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %b.loc19_18.1: %B = param b
-// CHECK:STDOUT:     @F.2.%b: %B = binding_pattern b, %b.loc19_18.3
-// CHECK:STDOUT:     %s.loc19_6.3: %.6 = bind_name s, %s.loc19_6.1
-// CHECK:STDOUT:     %b.loc19_18.3: %B = bind_name b, %b.loc19_18.1
+// CHECK:STDOUT:     %.loc19_18: %B = binding_pattern b, @F.2.%b
+// CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %s.loc19_6.1
+// CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %b.loc19_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -97,8 +97,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
-// CHECK:STDOUT:     %self.loc12_13.3: %.1 = binding_pattern self, <unexpected>.inst+9.loc12_13
-// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
+// CHECK:STDOUT:     %.loc12_13.2: %.1 = binding_pattern self, %self.loc12_13.3
+// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %.loc12_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -115,16 +115,16 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @A.%self.loc12_13.3: %.1]();
+// CHECK:STDOUT: fn @F.1[addr @A.%.loc12_13.2: %.1]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: %.6, %b: %B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.ref: %.6 = name_ref s, file.%s.loc19_6.3
+// CHECK:STDOUT:   %s.ref: %.6 = name_ref s, %s
 // CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4, %F.ref.loc28
 // CHECK:STDOUT:   %F.call.loc28: init %.2 = call %.loc28_6(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %b.ref: %B = name_ref b, file.%b.loc19_18.3
+// CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
 // CHECK:STDOUT:   %a.ref: %.5 = name_ref a, @B.%.loc16 [template = @B.%.loc16]
 // CHECK:STDOUT:   %.loc38_4.1: ref %A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1

@@ -69,8 +69,8 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]
 // CHECK:STDOUT:     %.loc2_18.2: type = converted %int.make_type_32.loc2_18, %.loc2_18.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_15.1: i32 = param a
-// CHECK:STDOUT:     @Complement.%a: i32 = binding_pattern a, %a.loc2_15.3
-// CHECK:STDOUT:     %a.loc2_15.3: i32 = bind_name a, %a.loc2_15.1
+// CHECK:STDOUT:     %.loc2_15: i32 = binding_pattern a, @Complement.%a
+// CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %a.loc2_15.1
 // CHECK:STDOUT:     %int.make_type_32.loc2_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_26.1: type = value_of_initializer %int.make_type_32.loc2_26 [template = i32]
 // CHECK:STDOUT:     %.loc2_26.2: type = converted %int.make_type_32.loc2_26, %.loc2_26.1 [template = i32]
@@ -81,14 +81,14 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %.loc3_11.1: type = value_of_initializer %int.make_type_32.loc3_11 [template = i32]
 // CHECK:STDOUT:     %.loc3_11.2: type = converted %int.make_type_32.loc3_11, %.loc3_11.1 [template = i32]
 // CHECK:STDOUT:     %a.loc3_8.1: i32 = param a
-// CHECK:STDOUT:     @And.%a: i32 = binding_pattern a, %a.loc3_8.3
+// CHECK:STDOUT:     %.loc3_8: i32 = binding_pattern a, @And.%a
 // CHECK:STDOUT:     %int.make_type_32.loc3_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %int.make_type_32.loc3_19 [template = i32]
 // CHECK:STDOUT:     %.loc3_19.2: type = converted %int.make_type_32.loc3_19, %.loc3_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc3_16.1: i32 = param b
-// CHECK:STDOUT:     @And.%b: i32 = binding_pattern b, %b.loc3_16.3
-// CHECK:STDOUT:     %a.loc3_8.3: i32 = bind_name a, %a.loc3_8.1
-// CHECK:STDOUT:     %b.loc3_16.3: i32 = bind_name b, %b.loc3_16.1
+// CHECK:STDOUT:     %.loc3_16: i32 = binding_pattern b, @And.%b
+// CHECK:STDOUT:     @And.%a: i32 = bind_name a, %a.loc3_8.1
+// CHECK:STDOUT:     @And.%b: i32 = bind_name b, %b.loc3_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc3_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_27.1: type = value_of_initializer %int.make_type_32.loc3_27 [template = i32]
 // CHECK:STDOUT:     %.loc3_27.2: type = converted %int.make_type_32.loc3_27, %.loc3_27.1 [template = i32]
@@ -114,14 +114,14 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %int.make_type_32.loc6, %.loc6_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_26: type = array_type %.loc6_18, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc6_27: type = ptr_type %.6 [template = constants.%.7]
-// CHECK:STDOUT:   %arr_p: %.7 = binding_pattern arr_p, @__global_init.%arr_p
+// CHECK:STDOUT:   %.loc6_5: %.7 = binding_pattern arr_p, @__global_init.%arr_p
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc8_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_19.1: type = value_of_initializer %int.make_type_32.loc8_19 [template = i32]
 // CHECK:STDOUT:     %.loc8_19.2: type = converted %int.make_type_32.loc8_19, %.loc8_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc8_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = binding_pattern a, %a.loc8_16.3
-// CHECK:STDOUT:     %a.loc8_16.3: i32 = bind_name a, %a.loc8_16.1
+// CHECK:STDOUT:     %.loc8_16: i32 = binding_pattern a, @RuntimeCall.%a
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc8_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc8_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32.loc8_27 [template = i32]
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
@@ -138,7 +138,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [template = constants.%Complement]
-// CHECK:STDOUT:   %a.ref: i32 = name_ref a, file.%a.loc8_16.3
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %int.complement: init i32 = call %Complement.ref(%a.ref)
 // CHECK:STDOUT:   %.loc9_23.1: i32 = value_of_initializer %int.complement
 // CHECK:STDOUT:   %.loc9_23.2: i32 = converted %int.complement, %.loc9_23.1
