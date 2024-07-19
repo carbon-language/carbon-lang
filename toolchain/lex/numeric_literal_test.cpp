@@ -136,17 +136,22 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
 
 TEST_F(NumericLiteralTest, ValidatesIntDigitSeparators) {
   llvm::StringLiteral valid[] = {
-      // Decimal literals optionally have digit separators every 3 places.
+      // Decimal literals.
       "1_234",
       "123_456",
       "1_234_567",
+      "12_34",
+      "123_4_6_789",
+      "12_3456_789",
 
-      // Hexadecimal literals optionally have digit separators every 4 places.
+      // Hexadecimal literals.
       "0x1_0000",
       "0x1000_0000",
       "0x1_0000_0000",
+      "0x12_3",
+      "0x1234_567",
 
-      // Binary integer literals can have digit separators anywhere..
+      // Binary literals.
       "0b1_0_1_0_1_0",
       "0b111_0000",
   };
@@ -158,18 +163,13 @@ TEST_F(NumericLiteralTest, ValidatesIntDigitSeparators) {
 
   llvm::StringLiteral invalid[] = {
       // Decimal literals.
-      "12_34",
-      "123_4_6_789",
-      "12_3456_789",
       "12__345",
       "1_",
 
       // Hexadecimal literals.
       "0x_1234",
       "0x123_",
-      "0x12_3",
       "0x_234_5678",
-      "0x1234_567",
 
       // Binary literals.
       "0b_10101",
@@ -257,17 +257,6 @@ TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
 }
 
 TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
-  llvm::StringLiteral invalid_digit_separators[] = {
-      // Invalid digit separators.
-      "12_34.5",     "123.4_567", "123.456_7", "1_2_3.4",
-      "123.4e56_78", "0x12_34.5", "0x12.3_4",  "0x12.34p5_6",
-  };
-  for (llvm::StringLiteral literal : invalid_digit_separators) {
-    error_tracker.Reset();
-    EXPECT_THAT(Parse(literal), HasRealValue({})) << literal;
-    EXPECT_TRUE(error_tracker.seen_error()) << literal;
-  }
-
   llvm::StringLiteral invalid[] = {
       // No digits in integer part.
       "0x.0",
