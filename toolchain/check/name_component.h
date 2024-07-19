@@ -20,6 +20,12 @@ struct NameComponent {
   Parse::NodeId name_loc_id;
   SemIR::NameId name_id;
 
+  // Parse tree bounds for the parameters, including both implicit and explicit
+  // parameters. These will be compared to match between declaration and
+  // definition.
+  Parse::NodeId first_param_node_id;
+  Parse::NodeId last_param_node_id;
+
   // The implicit parameter list.
   Parse::NodeId implicit_params_loc_id;
   SemIR::InstBlockId implicit_params_id;

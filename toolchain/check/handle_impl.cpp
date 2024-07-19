@@ -36,6 +36,8 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
   auto params_id =
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
   context.node_stack().Push(node_id, params_id);
   return true;
 }

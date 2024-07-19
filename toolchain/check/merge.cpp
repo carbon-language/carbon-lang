@@ -268,9 +268,77 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   return true;
 }
 
+// Returns true if the two nodes represent the same syntax.
+static auto IsNodeSyntaxEqual(Context& context, Parse::NodeId new_node_id,
+                              Parse::NodeId prev_node_id) -> bool {
+  if (context.parse_tree().node_kind(new_node_id) !=
+      context.parse_tree().node_kind(prev_node_id)) {
+    return false;
+  }
+
+  // TODO: Should there be a trivial way to check if we need to check spellings?
+  // Identifiers and literals need their text checked, but keywords and
+  // operators shouldn't.
+  auto new_spelling = context.tokens().GetTokenText(
+      context.parse_tree().node_token(new_node_id));
+  auto prev_spelling = context.tokens().GetTokenText(
+      context.parse_tree().node_token(prev_node_id));
+  return new_spelling == prev_spelling;
+}
+
+// Returns false if redeclaration parameter syntax doesn't match.
+static auto CheckRedeclParamSyntax(Context& context,
+                                   Parse::NodeId new_first_param_node_id,
+                                   Parse::NodeId new_last_param_node_id,
+                                   Parse::NodeId prev_first_param_node_id,
+                                   Parse::NodeId prev_last_param_node_id)
+    -> bool {
+  // Parse nodes may not always be available to compare.
+  // TODO: Support cross-file syntax checks. Right now imports provide invalid
+  // nodes, and we'll need to follow the declaration to its original file to
+  // get the parse tree.
+  if (!new_first_param_node_id.is_valid() ||
+      !prev_first_param_node_id.is_valid()) {
+    return true;
+  }
+  CARBON_CHECK(new_last_param_node_id.is_valid())
+      << "new_last_param_node_id.is_valid should match "
+         "new_first_param_node_id.is_valid";
+  CARBON_CHECK(prev_last_param_node_id.is_valid())
+      << "prev_last_param_node_id.is_valid should match "
+         "prev_first_param_node_id.is_valid";
+
+  auto new_range = context.parse_tree().postorder(new_first_param_node_id,
+                                                  new_last_param_node_id);
+  auto prev_range = context.parse_tree().postorder(prev_first_param_node_id,
+                                                   prev_last_param_node_id);
+
+  // zip is using the shortest range. If they differ in length, there should be
+  // some difference inside the range, or the semantics should have a mismatch
+  // (such as a different parameter count). As a consequence, we don't
+  // explicitly handle different range sizes here.
+  for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
+    if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
+                        "Redeclaration syntax differs here.");
+      CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
+                        "Comparing with previous declaration here.");
+      context.emitter()
+          .Build(new_node_id, RedeclParamSyntaxDiffers)
+          .Note(prev_node_id, RedeclParamSyntaxPrevious)
+          .Emit();
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            Substitutions substitutions) -> bool {
+                            Substitutions substitutions, bool check_syntax)
+    -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -278,10 +346,19 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(context, new_entity.loc,
                          new_entity.implicit_param_refs_id, prev_entity.loc,
                          prev_entity.implicit_param_refs_id, "implicit ",
-                         substitutions) ||
-      !CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
+                         substitutions)) {
+    return false;
+  }
+  if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
                          prev_entity.loc, prev_entity.param_refs_id, "",
                          substitutions)) {
+    return false;
+  }
+  if (check_syntax &&
+      !CheckRedeclParamSyntax(context, new_entity.first_param_node_id,
+                              new_entity.last_param_node_id,
+                              prev_entity.first_param_node_id,
+                              prev_entity.last_param_node_id)) {
     return false;
   }
   return true;

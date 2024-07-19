@@ -86,6 +86,11 @@ struct Function : public Printable<Function> {
   InstId decl_id;
   // If this is a generic function, information about the generic.
   GenericId generic_id;
+  // Parse tree bounds for the parameters, including both implicit and explicit
+  // parameters. These will be compared to match between declaration and
+  // definition.
+  Parse::NodeId first_param_node_id;
+  Parse::NodeId last_param_node_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.

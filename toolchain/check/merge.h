@@ -47,17 +47,30 @@ struct DeclParams {
   template <typename Entity>
   explicit DeclParams(const Entity& entity)
       : loc(entity.decl_id),
+        first_param_node_id(entity.first_param_node_id),
+        last_param_node_id(entity.last_param_node_id),
         implicit_param_refs_id(entity.implicit_param_refs_id),
         param_refs_id(entity.param_refs_id) {}
 
-  DeclParams(SemIRLoc loc, SemIR::InstBlockId implicit_params_id,
+  DeclParams(SemIRLoc loc, Parse::NodeId first_param_node_id,
+             Parse::NodeId last_param_node_id,
+             SemIR::InstBlockId implicit_params_id,
              SemIR::InstBlockId params_id)
       : loc(loc),
+        first_param_node_id(first_param_node_id),
+        last_param_node_id(last_param_node_id),
         implicit_param_refs_id(implicit_params_id),
         param_refs_id(params_id) {}
 
   // The location of the declaration of the entity.
   SemIRLoc loc;
+
+  // Parse tree bounds for the parameters, including both implicit and explicit
+  // parameters. These will be compared to match between declaration and
+  // definition.
+  Parse::NodeId first_param_node_id;
+  Parse::NodeId last_param_node_id;
+
   // The implicit parameters of the entity. Can be Invalid if there is no
   // implicit parameter list.
   SemIR::InstBlockId implicit_param_refs_id;
@@ -71,8 +84,8 @@ struct DeclParams {
 // returns false.
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            Substitutions substitutions = Substitutions())
-    -> bool;
+                            Substitutions substitutions = Substitutions(),
+                            bool check_syntax = true) -> bool;
 
 }  // namespace Carbon::Check
 
