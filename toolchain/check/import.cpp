@@ -508,7 +508,7 @@ auto ImportNameFromOtherPackage(
     CARBON_CHECK(!identifier.empty());
   }
 
-  // Annotate diagnostics as occuring during this name lookup.
+  // Annotate diagnostics as occurring during this name lookup.
   DiagnosticAnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InNameLookup, Note, "In name lookup for `{0}`.",
@@ -540,7 +540,7 @@ auto ImportNameFromOtherPackage(
       continue;
     }
 
-    // If the imported intruction is a namespace, we add it directly instead of
+    // If the imported instruction is a namespace, we add it directly instead of
     // as an ImportRef.
     if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {
       if (!result_id.is_valid()) {
