@@ -277,8 +277,9 @@ static auto IsNodeSyntaxEqual(Context& context, Parse::NodeId new_node_id,
   }
 
   // TODO: Should there be a trivial way to check if we need to check spellings?
-  // Identifiers and literals need their text checked, but keywords and
-  // operators shouldn't.
+  // Identifiers and literals need their text checked for cross-file matching,
+  // but not intra-file. Keywords and operators shouldn't need the token text
+  // examined at all.
   auto new_spelling = context.tokens().GetTokenText(
       context.parse_tree().node_token(new_node_id));
   auto prev_spelling = context.tokens().GetTokenText(
@@ -314,9 +315,9 @@ static auto CheckRedeclParamSyntax(Context& context,
                                                    prev_last_param_node_id);
 
   // zip is using the shortest range. If they differ in length, there should be
-  // some difference inside the range, or the semantics should have a mismatch
-  // (such as a different parameter count). As a consequence, we don't
-  // explicitly handle different range sizes here.
+  // some difference inside the range because the range includes parameter
+  // brackets. As a consequence, we don't explicitly handle different range
+  // sizes here.
   for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
       CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,

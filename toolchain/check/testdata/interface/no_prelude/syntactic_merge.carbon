@@ -30,6 +30,22 @@ class C {}
 interface Foo [ ] ( a : C );
 interface Foo[](a: C) {}
 
+// --- fail_parens.carbon
+
+library "parens";
+
+class C {}
+
+interface Foo[](a: C);
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:20: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: interface Foo[](a: (C)) {}
+// CHECK:STDERR:                    ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:20: Comparing with previous declaration here.
+// CHECK:STDERR: interface Foo[](a: C);
+// CHECK:STDERR:                    ^
+// CHECK:STDERR:
+interface Foo[](a: (C)) {}
+
 // --- two_file.carbon
 
 library "two_file";
@@ -100,6 +116,23 @@ interface Foo(a: C);
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
 interface Foo(a: D) {}
+
+// --- fail_deduced_alias.carbon
+
+library "deduced_alias";
+
+class C {}
+alias D = C;
+
+interface Foo[a: C]();
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:18: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: interface Foo[a: D]() {}
+// CHECK:STDERR:                  ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:18: Comparing with previous declaration here.
+// CHECK:STDERR: interface Foo[a: C]();
+// CHECK:STDERR:                  ^
+// CHECK:STDERR:
+interface Foo[a: D]() {}
 
 // --- alias_two_file.carbon
 
@@ -250,6 +283,53 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Foo {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_parens.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Foo.type: type = generic_interface_type @Foo [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = generic_interface_type @.1 [template]
+// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = interface_type @.1 [template]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .Foo = %Foo.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = interface_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc6_17.1: %C = param a
+// CHECK:STDOUT:     %a.loc6_17.2: %C = bind_name a, %a.loc6_17.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.decl: %.type = interface_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc14_17.1: %C = param a
+// CHECK:STDOUT:     %a.loc14_17.2: %C = bind_name a, %a.loc14_17.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Foo;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @.1 {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -429,6 +509,56 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Foo.type: type = generic_interface_type @Foo [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = generic_interface_type @.1 [template]
+// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = interface_type @.1 [template]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D
+// CHECK:STDOUT:     .Foo = %Foo.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.ref.loc5: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = interface_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc7_15.1: %C = param a
+// CHECK:STDOUT:     %a.loc7_15.2: %C = bind_name a, %a.loc7_15.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.decl: %.type = interface_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
+// CHECK:STDOUT:     %a.loc15_15.1: %C = param a
+// CHECK:STDOUT:     %a.loc15_15.2: %C = bind_name a, %a.loc15_15.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Foo;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @.1 {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_deduced_alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
