@@ -103,7 +103,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .Generic = %Generic.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc4: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
 // CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = %T.loc4_15.2 (constants.%T)]
@@ -143,7 +151,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %T.loc12_9.1: type = param T
@@ -183,7 +199,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -192,7 +208,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -249,7 +273,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -258,7 +282,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
@@ -314,7 +346,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,7 +355,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T.1)]
@@ -379,7 +419,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E.decl: %E.type = class_decl @E [template = constants.%E.1] {
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]

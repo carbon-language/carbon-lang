@@ -104,7 +104,15 @@ base class F {}
 // CHECK:STDOUT:     .A = %A.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl.loc4: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %A.decl.loc12: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
@@ -127,7 +135,15 @@ base class F {}
 // CHECK:STDOUT:     .B = %B.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc4: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT: }
@@ -150,7 +166,15 @@ base class F {}
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
@@ -173,7 +197,15 @@ base class F {}
 // CHECK:STDOUT:     .D = %D.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc4: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %D.decl.loc12: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
@@ -196,7 +228,15 @@ base class F {}
 // CHECK:STDOUT:     .E = %E.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E.decl.loc4: type = class_decl @E [template = constants.%E] {}
 // CHECK:STDOUT:   %E.decl.loc12: type = class_decl @E [template = constants.%E] {}
 // CHECK:STDOUT: }
@@ -219,7 +259,15 @@ base class F {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: type = class_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc11: type = class_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }

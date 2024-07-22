@@ -447,7 +447,7 @@ class FormatterImpl {
     const auto& scope = sem_ir_.name_scopes().Get(id);
 
     if (scope.names.empty() && scope.extended_scopes.empty() &&
-        !scope.has_error) {
+        scope.import_ir_scopes.empty() && !scope.has_error) {
       // Name scope is empty.
       return;
     }
@@ -480,6 +480,13 @@ class FormatterImpl {
       // TODO: Print this scope in a better way.
       Indent();
       out_ << "extend " << extended_scope_id << "\n";
+    }
+
+    for (auto [import_ir_id, unused] : scope.import_ir_scopes) {
+      Indent();
+      out_ << "import ";
+      FormatArg(import_ir_id);
+      out_ << "\n";
     }
 
     if (scope.has_error) {
@@ -831,13 +838,31 @@ class FormatterImpl {
 
   auto FormatArg(ImplId id) -> void { FormatImplName(id); }
 
-  auto FormatArg(ImportIRId id) -> void { out_ << id; }
+  auto FormatArg(ImportIRId id) -> void {
+    if (!id.is_valid()) {
+      out_ << id;
+      return;
+    }
+    const auto& import_ir = *sem_ir_.import_irs().Get(id).sem_ir;
+    if (import_ir.package_id().is_valid()) {
+      out_ << import_ir.identifiers().Get(import_ir.package_id());
+    } else {
+      out_ << "Main";
+    }
+    out_ << "//";
+    if (import_ir.library_id().is_valid()) {
+      out_ << import_ir.string_literal_values().Get(import_ir.library_id());
+    } else {
+      out_ << "default";
+    }
+  }
 
   auto FormatArg(ImportIRInstId id) -> void {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
     auto import_ir_inst = sem_ir_.import_ir_insts().Get(id);
-    out_ << import_ir_inst.ir_id << ", " << import_ir_inst.inst_id;
+    FormatArg(import_ir_inst.ir_id);
+    out_ << ", " << import_ir_inst.inst_id;
   }
 
   auto FormatArg(IntId id) -> void {

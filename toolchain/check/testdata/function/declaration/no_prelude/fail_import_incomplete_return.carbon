@@ -171,14 +171,14 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %ReturnCUnused.type = import_ref ir1, inst+7, loaded [template = constants.%ReturnCUnused]
-// CHECK:STDOUT:   %import_ref.4: %ReturnCUsed.type = import_ref ir1, inst+13, loaded [template = constants.%ReturnCUsed]
-// CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref ir1, inst+18, loaded [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref ir1, inst+23, loaded [template = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: %ReturnCUnused.type = import_ref Main//api, inst+7, loaded [template = constants.%ReturnCUnused]
+// CHECK:STDOUT:   %import_ref.4: %ReturnCUsed.type = import_ref Main//api, inst+13, loaded [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref Main//api, inst+18, loaded [template = constants.%ReturnDUnused]
+// CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref Main//api, inst+23, loaded [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//api, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//api, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

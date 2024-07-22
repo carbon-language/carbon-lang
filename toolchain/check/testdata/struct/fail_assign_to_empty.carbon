@@ -28,7 +28,15 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x

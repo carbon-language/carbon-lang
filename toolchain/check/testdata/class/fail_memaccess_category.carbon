@@ -65,7 +65,15 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {

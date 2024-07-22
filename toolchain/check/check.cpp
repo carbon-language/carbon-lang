@@ -885,8 +885,15 @@ static auto CheckParseTree(
     llvm::MutableArrayRef<Parse::NodeLocConverter*> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
+  auto package_id = IdentifierId::Invalid;
+  auto library_id = StringLiteralValueId::Invalid;
+  if (const auto& packaging = unit_info.unit->parse_tree->packaging_decl()) {
+    package_id = packaging->names.package_id;
+    library_id = packaging->names.library_id;
+  }
   unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, *unit_info.unit->value_stores,
+      unit_info.check_ir_id, package_id, library_id,
+      *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;

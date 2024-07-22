@@ -56,9 +56,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,7 +67,15 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     .PartialConstant = %PartialConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -152,9 +160,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -163,7 +171,15 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     .KnownValueButNonConstantCondition = %KnownValueButNonConstantCondition.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [template = constants.%KnownValueButNonConstantCondition] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type [template = bool]

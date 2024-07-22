@@ -36,7 +36,15 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Bool = %Bool.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [template = constants.%Bool] {
 // CHECK:STDOUT:     @Bool.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
@@ -54,7 +62,7 @@ var b: Bool() = false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref ir1, inst+4, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Main//types, inst+4, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -65,7 +73,15 @@ var b: Bool() = false;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bool.ref: %Bool.type = name_ref Bool, imports.%import_ref [template = constants.%Bool]
 // CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]

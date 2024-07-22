@@ -60,7 +60,15 @@ fn Run() {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
@@ -88,7 +96,15 @@ fn Run() {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
@@ -125,9 +141,9 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir1, inst+4, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B1.type = import_ref ir2, inst+4, loaded [template = constants.%B1]
-// CHECK:STDOUT:   %import_ref.3: %B2.type = import_ref ir2, inst+10, loaded [template = constants.%B2]
+// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Example//a, inst+4, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.2: %B1.type = import_ref Example//b, inst+4, loaded [template = constants.%B1]
+// CHECK:STDOUT:   %import_ref.3: %B2.type = import_ref Example//b, inst+10, loaded [template = constants.%B2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -138,14 +154,22 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+3, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Example//a, inst+3, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .A = imports.%import_ref.1
 // CHECK:STDOUT:     .B1 = imports.%import_ref.2
 // CHECK:STDOUT:     .B2 = imports.%import_ref.3
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}

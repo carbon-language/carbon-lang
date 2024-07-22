@@ -80,12 +80,6 @@ class Tree : public Printable<Tree> {
   class PostorderIterator;
   class SiblingIterator;
 
-  // For PackagingDecl.
-  enum class ApiOrImpl : uint8_t {
-    Api,
-    Impl,
-  };
-
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {

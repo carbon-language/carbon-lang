@@ -85,7 +85,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir0, inst+5, loaded
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref Test//def, inst+5, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -146,7 +146,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {
+// CHECK:STDOUT:     import Test//def
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v2.var: ref %.1 = var v2

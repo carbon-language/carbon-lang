@@ -174,25 +174,25 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+20, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.4: ref %.14 = import_ref ir1, inst+42, loaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.5 = import_ref ir1, inst+11, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.8: %.7 = import_ref ir1, inst+18, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.12: %.9 = import_ref ir1, inst+26, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.13: %.11 = import_ref ir1, inst+32, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir1, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref ir1, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref ir1, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref ir1, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+20, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.4: ref %.14 = import_ref Main//a, inst+42, loaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.5 = import_ref Main//a, inst+11, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.8: %.7 = import_ref Main//a, inst+18, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.12: %.9 = import_ref Main//a, inst+26, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.13: %.11 = import_ref Main//a, inst+32, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//a, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//a, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//a, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//a, inst+28, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

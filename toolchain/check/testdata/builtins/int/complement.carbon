@@ -41,15 +41,15 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,7 +62,15 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Complement.decl: %Complement.type = fn_decl @Complement [template = constants.%Complement] {
 // CHECK:STDOUT:     %int.make_type_32.loc2_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]

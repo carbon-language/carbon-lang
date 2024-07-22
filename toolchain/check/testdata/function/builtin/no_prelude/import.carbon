@@ -80,8 +80,8 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir1, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref ir1, inst+20, loaded [template = constants.%TestAdd]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//test, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//test, inst+20, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -90,7 +90,9 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//test
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:   %TestAdd.ref: %TestAdd.type = name_ref TestAdd, imports.%import_ref.2 [template = constants.%TestAdd]
