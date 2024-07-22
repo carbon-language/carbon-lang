@@ -175,7 +175,7 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  // True if there parts of the IR may be invalid.
+  // True if parts of the IR may be invalid.
   bool has_errors_ = false;
 
   // The file's ID.
