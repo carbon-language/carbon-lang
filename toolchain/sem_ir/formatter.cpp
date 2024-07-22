@@ -367,13 +367,21 @@ class FormatterImpl {
 
     IndentLabel();
     out_ << region_name << ":\n";
-    for (auto [generic_inst_id, specific_inst_id] :
-         llvm::zip(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(region)),
-                   sem_ir_.inst_blocks().Get(specific.GetValueBlock(region)))) {
+    for (auto [generic_inst_id, specific_inst_id] : llvm::zip_longest(
+             sem_ir_.inst_blocks().Get(generic.GetEvalBlock(region)),
+             sem_ir_.inst_blocks().Get(specific.GetValueBlock(region)))) {
       Indent();
-      FormatInstName(generic_inst_id);
+      if (generic_inst_id) {
+        FormatInstName(*generic_inst_id);
+      } else {
+        out_ << "<missing>";
+      }
       out_ << " => ";
-      FormatInstName(specific_inst_id);
+      if (specific_inst_id) {
+        FormatInstName(*specific_inst_id);
+      } else {
+        out_ << "<missing>";
+      }
       out_ << "\n";
     }
   }
