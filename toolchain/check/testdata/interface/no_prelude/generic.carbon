@@ -144,10 +144,9 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Simple(file.%T.loc4_18.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Simple, @Simple(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT: }
@@ -161,10 +160,9 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @WithAssocFn(file.%T.loc8_23.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @WithAssocFn, @WithAssocFn(%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT: }
@@ -184,7 +182,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @WithImplicitArgs(file.%T.loc22_28.2: type, file.%N.loc22_38.2: @WithImplicitArgs.%T (%T.1)) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT: }
@@ -235,9 +232,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.1(file.%T.loc8_23.2: type, @WithAssocFn.%Self.1: @WithAssocFn.%.1 (%.4)) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @F.1(file.%T.loc8_23.2: type, @WithAssocFn.%Self.1: @WithAssocFn.%.1 (%.4)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> %X;
 // CHECK:STDOUT:
@@ -250,17 +245,15 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Receive(%T.loc24: %.7) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.7 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Receive(%T.loc24: %.7);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Pass(%T.loc25: %.7) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.7 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Pass(%T.loc25: %.7) {
@@ -272,52 +265,41 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Simple.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(@Simple.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Simple.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @WithAssocFn.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(@WithAssocFn.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @WithAssocFn.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Simple.%T => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%C) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @WithAssocFn.%T => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.1, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @WithImplicitArgs.%T => constants.%T.1
 // CHECK:STDOUT:   @WithImplicitArgs.%N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Receive.%T.1 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Pass.%T.1 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,10 +360,9 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Generic(file.%T.loc4_19.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Generic, @Generic(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT: }
@@ -405,17 +386,15 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%T.loc9: %.4) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.4 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T.loc9: %.4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @G(%T.loc10: %.5) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.5 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%T.loc10: %.5) {
@@ -427,32 +406,26 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(@Generic.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.3) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T.1 => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

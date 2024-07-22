@@ -155,10 +155,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT: }
@@ -190,10 +189,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(file.%T.loc4_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n: %T) -> %T {
@@ -203,11 +201,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @G(file.%T.loc4_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,33 +218,27 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Class.%Class => constants.%Class.2
 // CHECK:STDOUT:   @Class.%.1 => constants.%.2
-// CHECK:STDOUT:   <unexpected>.inst+40 => <unexpected>.inst+36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@G.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T => constants.%T
 // CHECK:STDOUT:   @G.%Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,10 +288,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @A(file.%T.loc4_9.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -316,11 +306,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @B(file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @B.%T (%T)) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -340,12 +329,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @B.%T (%T)) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %B: type = class_type @B, @B(%T, %N) [symbolic = %B (constants.%B.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: %B.2](%a: %T) {
@@ -354,28 +342,24 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @A.%T => constants.%T
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%T, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @B.%T => constants.%T
 // CHECK:STDOUT:   @B.%N => constants.%N
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(@F.%T, @F.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @B.%T => constants.%T
 // CHECK:STDOUT:   @B.%N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT:   @F.%N => constants.%N
 // CHECK:STDOUT:   @F.%B => constants.%B.2
@@ -419,10 +403,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(file.%T.loc15_15.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
@@ -431,7 +414,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -465,10 +447,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Generic(file.%T.loc4_15.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Generic {
@@ -479,9 +460,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .TooFew = %TooFew.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @TooFew(file.%T.loc4_15.2: type) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @TooFew(file.%T.loc4_15.2: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew();
 // CHECK:STDOUT:
@@ -491,13 +470,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @TooFew(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @TooFew(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_too_many_args.carbon
 // CHECK:STDOUT:
@@ -535,10 +511,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Generic(file.%T.loc4_15.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Generic {
@@ -549,18 +524,15 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .TooMany = %TooMany.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @TooMany(file.%T.loc4_15.2: type) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @TooMany(file.%T.loc4_15.2: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooMany();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(file.%T.loc15_12.2: type, file.%U.loc15_22.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
@@ -569,16 +541,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @TooMany(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @TooMany(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%T => constants.%T
 // CHECK:STDOUT:   @.1.%U => constants.%U
 // CHECK:STDOUT: }
@@ -619,10 +587,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Generic(file.%T.loc4_15.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Generic {
@@ -633,17 +600,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .WrongType = %WrongType.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @WrongType(file.%T.loc4_15.2: type) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @WrongType(file.%T.loc4_15.2: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongType();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(file.%T.loc14_12.2: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
@@ -652,16 +616,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Generic.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WrongType(constants.%T.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @WrongType(constants.%T.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

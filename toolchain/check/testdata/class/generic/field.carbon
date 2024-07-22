@@ -113,10 +113,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc11_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT: }
@@ -142,11 +141,10 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @G(%T.loc19: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,11 +158,10 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @H(%U.loc23: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%U.1) [symbolic = %Class (constants.%Class.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @H.%Class (%Class.4), @H.%U.1 (%U) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,58 +175,47 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Class.%Class => constants.%Class.2
 // CHECK:STDOUT:   @Class.%.1 => constants.%.2
-// CHECK:STDOUT:   <unexpected>.inst+20 => <unexpected>.inst+16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => i32
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Class.%Class => constants.%Class.3
 // CHECK:STDOUT:   @Class.%.1 => constants.%.4
-// CHECK:STDOUT:   <unexpected>.inst+20 => <unexpected>.inst+45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@G.%T.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T.1 => constants.%T
 // CHECK:STDOUT:   @G.%Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%U
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Class.%Class => constants.%Class.4
 // CHECK:STDOUT:   @Class.%.1 => constants.%.6
-// CHECK:STDOUT:   <unexpected>.inst+20 => <unexpected>.inst+93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@H.%U.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%U) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @H.%U.1 => constants.%U
 // CHECK:STDOUT:   @H.%Class => constants.%Class.4
 // CHECK:STDOUT: }

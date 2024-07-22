@@ -88,10 +88,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc11_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT: }
@@ -118,13 +117,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Get(file.%T.loc11_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = ptr_type @Get.%Class (%Class.2) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Get.%T (%T) [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.3: type = unbound_element_type @Get.%Class (%Class.2), @Get.%T (%T) [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -163,22 +161,18 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Class.%Class => constants.%Class.2
 // CHECK:STDOUT:   @Class.%.1 => constants.%.4
-// CHECK:STDOUT:   <unexpected>.inst+38 => <unexpected>.inst+34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Get.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Get(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Get.%T => constants.%T
 // CHECK:STDOUT:   @Get.%Class => constants.%Class.2
 // CHECK:STDOUT:   @Get.%.1 => constants.%.2
@@ -186,17 +180,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => i32
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Class.%Class => constants.%Class.3
 // CHECK:STDOUT:   @Class.%.1 => constants.%.7
-// CHECK:STDOUT:   <unexpected>.inst+38 => <unexpected>.inst+69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -64,10 +64,9 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @I(file.%T.loc11_13.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT: }
@@ -96,7 +95,6 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(file.%T.loc11_13.2: type, @I.%Self.1: @I.%.1 (%.2)) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
@@ -105,12 +103,11 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: fn @F[@I.%self.loc13_8.2: @F.%Self (%Self)]() -> %Self;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(file.%T.loc22_6.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[%self: @.1.%Self (%Self)]() -> %Self {
@@ -120,38 +117,32 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%T => constants.%T
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @I.%.1 => constants.%.2
 // CHECK:STDOUT:   @I.%Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@F.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT:   @F.%.1 => constants.%.2
 // CHECK:STDOUT:   @F.%Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@I.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@.1.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @I.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%T => constants.%T
 // CHECK:STDOUT:   @.1.%.1 => constants.%.2
 // CHECK:STDOUT:   @.1.%Self => constants.%Self

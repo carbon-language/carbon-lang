@@ -111,9 +111,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(@I.%Self: %.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -123,17 +121,11 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @G(@I.%Self: %.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @G(@I.%Self: %.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(@I.%a.loc14_8.2: i32, @I.%b.loc14_16.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @G(constants.%Self) {}
 // CHECK:STDOUT:

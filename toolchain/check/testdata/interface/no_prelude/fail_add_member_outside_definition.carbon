@@ -80,9 +80,7 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Inner(@Outer.%Self: %.3) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,30 +99,20 @@ interface Outer {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @.1(@Outer.%Self: %.3, @Inner.%Self.1: %.4) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @.1(@Outer.%Self: %.3, @Inner.%Self.1: %.4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.2(@Outer.%Self: %.3) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @F.2(@Outer.%Self: %.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.2) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   @Inner.%Self.2 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%Self.2) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.2(constants.%Self.2) {}
 // CHECK:STDOUT:

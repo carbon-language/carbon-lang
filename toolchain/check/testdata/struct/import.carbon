@@ -150,10 +150,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @C(file.%S.loc8_9.2: %.11) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %S: %.11 = bind_symbolic_name S 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -196,12 +195,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @C.%S => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.4) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @C.%S => constants.%struct.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

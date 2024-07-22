@@ -57,10 +57,9 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @GenericInterface(file.%T.loc11_28.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @GenericInterface, @GenericInterface(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT: }
@@ -110,17 +109,15 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F.1(file.%T.loc11_28.2: type, @GenericInterface.%Self.1: @GenericInterface.%.1 (%.2)) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: @F.1.%T (%T));
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F.2(@C.%T.loc19_23.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: @F.2.%T (%T)) {
@@ -129,22 +126,18 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @GenericInterface.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.1.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(@GenericInterface.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @GenericInterface.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.2.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

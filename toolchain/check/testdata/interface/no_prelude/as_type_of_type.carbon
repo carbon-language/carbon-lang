@@ -47,10 +47,9 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%T.loc13: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T.loc13: %.1) {
@@ -64,7 +63,6 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

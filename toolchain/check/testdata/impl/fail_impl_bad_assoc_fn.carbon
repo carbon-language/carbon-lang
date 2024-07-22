@@ -849,9 +849,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   .Self = constants.%SelfNestedBadReturnType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
@@ -865,9 +863,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.5(@J.%Self: %.6) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @F.5(@J.%Self: %.6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5[@J.%self.loc93_20.2: bool](@J.%b.loc93_32.2: bool) -> bool;
 // CHECK:STDOUT:
@@ -888,7 +884,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F.13(@SelfNested.%Self: %.9) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.13.%Self (%Self.3) [symbolic = %.1 (constants.%.10)]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: @F.13.%Self (%Self.3), .y: i32} [symbolic = %.2 (constants.%.11)]
@@ -902,19 +897,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.15(@impl.15.%x.loc212_10.2: %.27) -> %.22;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(constants.%Self.2) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.5(constants.%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.13(constants.%Self.3) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.13.%Self => constants.%Self.3
 // CHECK:STDOUT:   @F.13.%.1 => constants.%.10
-// CHECK:STDOUT:   <unexpected>.inst+298 => <unexpected>.inst+268
 // CHECK:STDOUT:   @F.13.%.2 => constants.%.11
 // CHECK:STDOUT:   @F.13.%.3 => constants.%.16
 // CHECK:STDOUT:   @F.13.%.4 => constants.%.15

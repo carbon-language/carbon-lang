@@ -129,11 +129,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -144,25 +143,22 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:   @Class.%N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%.3, constants.%.4) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%.3
 // CHECK:STDOUT:   @Class.%N => constants.%.4
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%.1, constants.%.6) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%.1
 // CHECK:STDOUT:   @Class.%N => constants.%.6
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_too_few.carbon
@@ -215,11 +211,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -230,7 +225,6 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:   @Class.%N => constants.%N
 // CHECK:STDOUT: }
@@ -289,11 +283,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -304,7 +297,6 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:   @Class.%N => constants.%N
 // CHECK:STDOUT: }
@@ -361,11 +353,10 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -376,7 +367,6 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:   @Class.%N => constants.%N
 // CHECK:STDOUT: }

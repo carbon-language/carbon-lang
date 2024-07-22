@@ -40,11 +40,10 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%T.loc11: type, %U.loc11: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,7 +62,6 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T
 // CHECK:STDOUT:   @F.%U.1 => constants.%U
 // CHECK:STDOUT: }

@@ -135,11 +135,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(file.%T.loc4_6.2: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T.loc6: type) -> %.1 {
@@ -153,7 +152,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T
 // CHECK:STDOUT:   @F.%.1 => constants.%.1
 // CHECK:STDOUT: }
@@ -200,7 +198,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%T.loc4: type, %U.loc4: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
@@ -209,12 +206,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: fn @F(%T.loc4: type, %U.loc4: type) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(%T.loc13: type, %U.loc13: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   %.1: type = ptr_type @.1.%U.1 (%U) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.2: type = ptr_type @.1.%T.1 (%T) [symbolic = %.2 (constants.%.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,14 +223,12 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T
 // CHECK:STDOUT:   @F.%U.1 => constants.%U
 // CHECK:STDOUT:   @F.%.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%T.1 => constants.%T
 // CHECK:STDOUT:   @.1.%U.1 => constants.%U
 // CHECK:STDOUT:   @.1.%.1 => constants.%.3
@@ -284,7 +278,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%T.loc4: type, %U.loc4: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U.1)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T.1) [symbolic = %.1 (constants.%.1)]
@@ -293,12 +286,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: fn @F(%T.loc4: type, %U.loc4: type) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(%U.loc13: type, %T.loc13: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U.2)]
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 1 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:   %.1: type = ptr_type @.1.%T.1 (%T.2) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @.1.%T.2 (%T.1) [symbolic = %.2 (constants.%.1)]
 // CHECK:STDOUT: }
@@ -312,14 +304,12 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.1, constants.%U.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T.1
 // CHECK:STDOUT:   @F.%U.1 => constants.%U.1
 // CHECK:STDOUT:   @F.%.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U.2, constants.%T.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%U.1 => constants.%U.2
 // CHECK:STDOUT:   @.1.%T.1 => constants.%T.2
 // CHECK:STDOUT:   @.1.%.1 => constants.%.3
@@ -369,7 +359,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%T.loc4: type, %U.loc4: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U.1)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T.1) [symbolic = %.1 (constants.%.1)]
@@ -378,12 +367,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: fn @F(%T.loc4: type, %U.loc4: type) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @.1(%U.loc13: type, %T.loc13: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U.2)]
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 1 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:   %.1: type = ptr_type @.1.%U.1 (%U.2) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @.1.%T.2 (%T.1) [symbolic = %.2 (constants.%.1)]
 // CHECK:STDOUT: }
@@ -397,14 +385,12 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.1, constants.%U.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%T.1 => constants.%T.1
 // CHECK:STDOUT:   @F.%U.1 => constants.%U.1
 // CHECK:STDOUT:   @F.%.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U.2, constants.%T.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @.1.%U.1 => constants.%U.2
 // CHECK:STDOUT:   @.1.%T.1 => constants.%T.2
 // CHECK:STDOUT:   @.1.%.1 => constants.%.3

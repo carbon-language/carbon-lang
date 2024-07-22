@@ -40,10 +40,9 @@ fn G(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @G(%T.loc11: type) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = array_type constants.%.2, @G.%T.1 (%T) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:   %array: @G.%.1 (%.3) = tuple_value () [symbolic = %array (constants.%array)]
 // CHECK:STDOUT: }
@@ -63,7 +62,6 @@ fn G(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @G.%T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

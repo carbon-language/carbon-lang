@@ -165,10 +165,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @C(file.%X.loc7_9.2: %.9) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %X: %.9 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -218,12 +217,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @C.%X => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.5) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @C.%X => constants.%tuple.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

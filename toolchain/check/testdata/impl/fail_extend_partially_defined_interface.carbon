@@ -52,9 +52,7 @@ interface I {
 // CHECK:STDOUT: impl @impl: %C as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @C(@I.%Self: %.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -67,7 +65,5 @@ interface I {
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:

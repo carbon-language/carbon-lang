@@ -211,11 +211,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Symbolic(%N.loc14: i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type signed, %N.1 [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Symbolic(%N.loc14: i32, %x: @Symbolic.%.1 (%.6)) -> %.6 {
@@ -225,7 +224,6 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Symbolic(constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Symbolic.%N.1 => constants.%N
 // CHECK:STDOUT:   @Symbolic.%.1 => constants.%.6
 // CHECK:STDOUT: }

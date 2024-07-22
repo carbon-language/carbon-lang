@@ -97,7 +97,6 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Make.1(@DefaultConstructible.%Self: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +111,6 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Make.1.%Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

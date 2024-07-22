@@ -345,12 +345,10 @@ class FormatterImpl {
     out_ << ") ";
 
     OpenBrace();
-    IndentLabel();
-    out_ << "declaration:\n";
     FormatCodeBlock(generic.decl_block_id);
     if (generic.definition_block_id.is_valid()) {
       IndentLabel();
-      out_ << "definition:\n";
+      out_ << "!definition:\n";
       FormatCodeBlock(generic.definition_block_id);
     }
     CloseBrace();
@@ -365,11 +363,21 @@ class FormatterImpl {
       return;
     }
 
-    IndentLabel();
-    out_ << region_name << ":\n";
+    if (!region_name.empty()) {
+      IndentLabel();
+      out_ << "!" << region_name << ":\n";
+    }
     for (auto [generic_inst_id, specific_inst_id] : llvm::zip_longest(
              sem_ir_.inst_blocks().Get(generic.GetEvalBlock(region)),
              sem_ir_.inst_blocks().Get(specific.GetValueBlock(region)))) {
+      if (generic_inst_id && specific_inst_id &&
+          sem_ir_.insts().Is<StructTypeField>(*generic_inst_id) &&
+          sem_ir_.insts().Is<StructTypeField>(*specific_inst_id)) {
+        // Skip printing struct type fields to match the way we print the
+        // generic.
+        continue;
+      }
+
       Indent();
       if (generic_inst_id) {
         FormatInstName(*generic_inst_id);
@@ -406,7 +414,7 @@ class FormatterImpl {
 
     OpenBrace();
     FormatSpecificRegion(generic, specific,
-                         GenericInstIndex::Region::Declaration, "declaration");
+                         GenericInstIndex::Region::Declaration, "");
     FormatSpecificRegion(generic, specific,
                          GenericInstIndex::Region::Definition, "definition");
     CloseBrace();

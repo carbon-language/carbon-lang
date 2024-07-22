@@ -77,17 +77,14 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F(@Interface.%Self: %.1) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @F(@Interface.%Self: %.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @CallStatic(%T.loc13: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallStatic(%T.loc13: %.1) {
@@ -98,10 +95,9 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @CallFacet(%T.loc21: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: definition:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFacet(%T.loc21: %.1, %x: @CallFacet.%T.1 (%T)) {
@@ -110,17 +106,13 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallStatic(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @CallStatic.%T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallFacet(constants.%T) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @CallFacet.%T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

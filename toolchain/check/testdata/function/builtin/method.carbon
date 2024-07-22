@@ -130,7 +130,6 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +140,6 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.1.%Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

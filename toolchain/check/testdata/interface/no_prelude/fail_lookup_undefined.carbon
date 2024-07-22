@@ -107,23 +107,15 @@ interface BeingDefined {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @H(@BeingDefined.%Self: %.4) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @H(@BeingDefined.%Self: %.4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> <error>;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @.2(@BeingDefined.%Self: %.4) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: generic @.2(@BeingDefined.%Self: %.4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @H(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @H(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.2(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @.2(constants.%Self) {}
 // CHECK:STDOUT:

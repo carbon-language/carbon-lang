@@ -251,7 +251,6 @@ impl D as SelfNested {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F.1(@UseSelf.%Self: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -274,7 +273,6 @@ impl D as SelfNested {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F.4(@SelfNested.%Self: %.9) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.4.%Self (%Self.2) [symbolic = %.1 (constants.%.10)]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: @F.4.%Self (%Self.2), .y: %.2} [symbolic = %.2 (constants.%.11)]
@@ -288,15 +286,12 @@ impl D as SelfNested {
 // CHECK:STDOUT: fn @F.6(@impl.4.%x.loc36_8.2: %.23);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.1.%Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.4(constants.%Self.2) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.4.%Self => constants.%Self.2
 // CHECK:STDOUT:   @F.4.%.1 => constants.%.10
-// CHECK:STDOUT:   <unexpected>.inst+104 => <unexpected>.inst+88
 // CHECK:STDOUT:   @F.4.%.2 => constants.%.11
 // CHECK:STDOUT:   @F.4.%.3 => constants.%.14
 // CHECK:STDOUT: }

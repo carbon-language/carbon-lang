@@ -76,14 +76,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @Op(@Add.%Self: %.1) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op[@Add.%self.loc5_9.2: @Op.%Self (%Self)](@Add.%other.loc5_21.2: @Op.%Self (%Self)) -> %Self;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @Op.%Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -56,14 +56,12 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic @F(%N.loc14: i32) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%N.loc14: i32, %a: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT: declaration:
 // CHECK:STDOUT:   @F.%N.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
