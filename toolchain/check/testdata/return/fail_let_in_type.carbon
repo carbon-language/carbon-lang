@@ -63,6 +63,6 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific <unexpected>.inst+29.loc24_21(constants.%y) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+27.loc24_19 => constants.%y
+// CHECK:STDOUT:   <unexpected>.inst+30 => constants.%y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

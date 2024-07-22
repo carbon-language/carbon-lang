@@ -46,29 +46,29 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.ref.loc12_11: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12_11 (constants.%T)]
-// CHECK:STDOUT:     %n.loc12_8.1: @Class.%T.ref.loc12_11 (%T) = param n
-// CHECK:STDOUT:     %n.loc12_8.2: @Class.%T.ref.loc12_11 (%T) = bind_name n, %n.loc12_8.1
-// CHECK:STDOUT:     %T.ref.loc12_17: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12_11 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc12_11: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+18 (constants.%T)]
+// CHECK:STDOUT:     %n.loc12_8.1: <unexpected>.inst+18 (%T) = param n
+// CHECK:STDOUT:     %n.loc12_8.2: <unexpected>.inst+18 (%T) = bind_name n, %n.loc12_8.1
+// CHECK:STDOUT:     %T.ref.loc12_17: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+18 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc12: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc16: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc16 (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc16 [symbolic = %.loc16 (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc16_8.1: @Class.%.loc16 (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc16_8.2: @Class.%.loc16 (%Class.2) = bind_name self, %self.loc16_8.1
-// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc16 (constants.%T)]
+// CHECK:STDOUT:     %.loc16: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = <unexpected>.inst+29 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc16 [symbolic = <unexpected>.inst+29 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc16_8.1: <unexpected>.inst+29 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc16_8.2: <unexpected>.inst+29 (%Class.2) = bind_name self, %self.loc16_8.1
+// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+28 (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc16: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc20: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc20: <unexpected>.inst+35 (%.2) = field_decl n, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc20: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc20: <unexpected>.inst+39 (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -77,46 +77,51 @@ class Class(T:! type) {
 // CHECK:STDOUT:   .n = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@Class.%n.loc12_8.2: @Class.%T.ref.loc12_11 (%T)) -> %T
+// CHECK:STDOUT: fn @F(@Class.%n.loc12_8.2: <unexpected>.inst+18 (%T)) -> %T
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: @Class.%T.ref.loc12_11 (%T) = name_ref n, @Class.%n.loc12_8.2
+// CHECK:STDOUT:   %n.ref: <unexpected>.inst+18 (%T) = name_ref n, @Class.%n.loc12_8.2
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[@Class.%self.loc16_8.2: @Class.%.loc16 (%Class.2)]() -> %T
+// CHECK:STDOUT: fn @G[@Class.%self.loc16_8.2: <unexpected>.inst+29 (%Class.2)]() -> %T
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: @Class.%.loc16 (%Class.2) = name_ref self, @Class.%self.loc16_8.2
-// CHECK:STDOUT:   %n.ref: <unexpected>.inst+44 (%.2) = name_ref n, @Class.%.loc20 [template = @Class.%.loc20]
-// CHECK:STDOUT:   %.loc17_16.1: ref @Class.%T.ref.loc16 (%T) = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc17_16.2: @Class.%T.ref.loc16 (%T) = bind_value %.loc17_16.1
+// CHECK:STDOUT:   %self.ref: <unexpected>.inst+29 (%Class.2) = name_ref self, @Class.%self.loc16_8.2
+// CHECK:STDOUT:   %n.ref: <unexpected>.inst+49 (%.2) = name_ref n, @Class.%.loc20 [template = @Class.%.loc20]
+// CHECK:STDOUT:   %.loc17_16.1: ref <unexpected>.inst+28 (%T) = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc17_16.2: <unexpected>.inst+28 (%T) = bind_value %.loc17_16.1
 // CHECK:STDOUT:   return %.loc17_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected>.inst+34 => constants.%Class.2
-// CHECK:STDOUT:   <unexpected>.inst+35 => constants.%.2
-// CHECK:STDOUT:   <unexpected>.inst+31.loc20_8 => <unexpected>.inst+32
+// CHECK:STDOUT:   <unexpected>.inst+38 => constants.%Class.2
+// CHECK:STDOUT:   <unexpected>.inst+39 => constants.%.2
+// CHECK:STDOUT:   <unexpected>.inst+40 => <unexpected>.inst+36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Class.%T.ref.loc12_11 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+28) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%G.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Class.%.loc16 => constants.%Class.2
-// CHECK:STDOUT:   @Class.%T.ref.loc16 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+28 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+29 => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+7) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

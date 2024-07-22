@@ -63,14 +63,14 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
 // CHECK:STDOUT:     %N.loc32_10.1: i32 = param N
-// CHECK:STDOUT:     %N.loc32_10.2: i32 = bind_symbolic_name N 0, %N.loc32_10.1 [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc32_10.2: i32 = bind_symbolic_name N 0, %N.loc32_10.1 [symbolic = <unexpected>.inst+51 (constants.%N)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %self.loc32_21.1: <error> = param self
 // CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc32_21.1
@@ -82,16 +82,16 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc12: <unexpected>.inst+28 (%.2) = field_decl a, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc12: <unexpected>.inst+31 (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc13 (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = %.loc13 (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc13_8.1: @Class.%.loc13 (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc13_8.2: @Class.%.loc13 (%Class.2) = bind_name self, %self.loc13_8.1
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc13 (constants.%T)]
-// CHECK:STDOUT:     %n.loc13_20.1: @Class.%T.ref.loc13 (%T) = param n
-// CHECK:STDOUT:     %n.loc13_20.2: @Class.%T.ref.loc13 (%T) = bind_name n, %n.loc13_20.1
+// CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = <unexpected>.inst+26 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = <unexpected>.inst+26 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc13_8.1: <unexpected>.inst+26 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: <unexpected>.inst+26 (%Class.2) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+25 (constants.%T)]
+// CHECK:STDOUT:     %n.loc13_20.1: <unexpected>.inst+25 (%T) = param n
+// CHECK:STDOUT:     %n.loc13_20.2: <unexpected>.inst+25 (%T) = bind_name n, %n.loc13_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -100,7 +100,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: @Class.%.loc13 (%Class.2)](@Class.%n.loc13_20.2: @Class.%T.ref.loc13 (%T))
+// CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: <unexpected>.inst+26 (%Class.2)](@Class.%n.loc13_20.2: <unexpected>.inst+25 (%T))
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -113,22 +113,27 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+25) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Class.%.loc13 => constants.%Class.2
-// CHECK:STDOUT:   @Class.%T.ref.loc13 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+25 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+26 => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+7) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%.decl(constants.%N) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%N.loc32_10.2 => constants.%N
+// CHECK:STDOUT:   <unexpected>.inst+51 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

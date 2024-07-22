@@ -133,7 +133,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_30: type = struct_type {.a: i32, .b: i32} [template = constants.%.11]
 // CHECK:STDOUT:     %S.loc8_9.1: %.11 = param S
-// CHECK:STDOUT:     %S.loc8_9.2: %.11 = bind_symbolic_name S 0, %S.loc8_9.1 [symbolic = %S.loc8_9.2 (constants.%S)]
+// CHECK:STDOUT:     %S.loc8_9.2: %.11 = bind_symbolic_name S 0, %S.loc8_9.1 [symbolic = <unexpected>.inst+105 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
@@ -191,12 +191,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%C.decl(constants.%S) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%S.loc8_9.2 => constants.%S
+// CHECK:STDOUT:   <unexpected>.inst+105 => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%C.decl(constants.%struct.4) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%S.loc8_9.2 => constants.%struct.4
+// CHECK:STDOUT:   <unexpected>.inst+105 => constants.%struct.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -233,12 +233,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.1: ref %.2 = import_ref ir0, inst+17, loaded
 // CHECK:STDOUT:   %import_ref.2: ref %.6 = import_ref ir0, inst+60, loaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+104, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+126, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+127, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir0, inst+107, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir0, inst+108, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -366,8 +366,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+104, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+126, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+107, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+127, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+108, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -442,8 +442,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref ir0, inst+104, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+126, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+107, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir0, inst+127, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+108, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

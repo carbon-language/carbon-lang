@@ -75,18 +75,18 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref ir4, inst+65, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+61, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+26, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref ir4, inst+47, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref ir4, inst+43, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+26, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+52, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref ir4, inst+70, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+64, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+27, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+29, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref ir4, inst+50, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref ir4, inst+44, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir4, inst+52, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir4, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir4, inst+27, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir4, inst+44, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -39,7 +39,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc16_10.1: type = param T
@@ -56,16 +56,16 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc12: <unexpected>.inst+28 (%.2) = field_decl a, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc12: <unexpected>.inst+31 (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc13 (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = %.loc13 (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc13_8.1: @Class.%.loc13 (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc13_8.2: @Class.%.loc13 (%Class.2) = bind_name self, %self.loc13_8.1
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc13 (constants.%T)]
-// CHECK:STDOUT:     %n.loc13_20.1: @Class.%T.ref.loc13 (%T) = param n
-// CHECK:STDOUT:     %n.loc13_20.2: @Class.%T.ref.loc13 (%T) = bind_name n, %n.loc13_20.1
+// CHECK:STDOUT:     %.loc13: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = <unexpected>.inst+26 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc13 [symbolic = <unexpected>.inst+26 (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc13_8.1: <unexpected>.inst+26 (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: <unexpected>.inst+26 (%Class.2) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+25 (constants.%T)]
+// CHECK:STDOUT:     %n.loc13_20.1: <unexpected>.inst+25 (%T) = param n
+// CHECK:STDOUT:     %n.loc13_20.2: <unexpected>.inst+25 (%T) = bind_name n, %n.loc13_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -82,22 +82,27 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected>.inst+27 => constants.%Class.2
-// CHECK:STDOUT:   <unexpected>.inst+28 => constants.%.2
-// CHECK:STDOUT:   <unexpected>.inst+14.loc12_8 => <unexpected>.inst+15
+// CHECK:STDOUT:   <unexpected>.inst+30 => constants.%Class.2
+// CHECK:STDOUT:   <unexpected>.inst+31 => constants.%.2
+// CHECK:STDOUT:   <unexpected>.inst+32 => <unexpected>.inst+16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+25) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Class.%.loc13 => constants.%Class.2
-// CHECK:STDOUT:   @Class.%T.ref.loc13 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+25 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+26 => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+7) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

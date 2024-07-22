@@ -51,18 +51,18 @@ class C {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type = interface_decl @GenericInterface [template = constants.%GenericInterface] {
 // CHECK:STDOUT:     %T.loc11_28.1: type = param T
-// CHECK:STDOUT:     %T.loc11_28.2: type = bind_symbolic_name T 0, %T.loc11_28.1 [symbolic = %T.loc11_28.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_28.2: type = bind_symbolic_name T 0, %T.loc11_28.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface
 // CHECK:STDOUT:     generic [file.%T.loc11_28.2: type] {
-// CHECK:STDOUT:   %Self: <unexpected>.inst+22 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: <unexpected>.inst+24 (%.2) = bind_symbolic_name Self 1 [symbolic = <unexpected>.inst+25 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = %T.ref (constants.%T)]
-// CHECK:STDOUT:     %x.loc12_8.1: @GenericInterface.%T.ref (%T) = param x
-// CHECK:STDOUT:     %x.loc12_8.2: @GenericInterface.%T.ref (%T) = bind_name x, %x.loc12_8.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = <unexpected>.inst+18 (constants.%T)]
+// CHECK:STDOUT:     %x.loc12_8.1: <unexpected>.inst+18 (%T) = param x
+// CHECK:STDOUT:     %x.loc12_8.2: <unexpected>.inst+18 (%T) = bind_name x, %x.loc12_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -74,9 +74,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.2 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = %T.ref (constants.%T)]
-// CHECK:STDOUT:     %x.loc20_10.1: @impl.%T.ref (%T) = param x
-// CHECK:STDOUT:     %x.loc20_10.2: @impl.%T.ref (%T) = bind_name x, %x.loc20_10.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = <unexpected>.inst+40 (constants.%T)]
+// CHECK:STDOUT:     %x.loc20_10.1: <unexpected>.inst+40 (%T) = param x
+// CHECK:STDOUT:     %x.loc20_10.2: <unexpected>.inst+40 (%T) = bind_name x, %x.loc20_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
@@ -101,10 +101,10 @@ class C {
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: @GenericInterface.%T.ref (%T))
-// CHECK:STDOUT:     generic [file.%T.loc11_28.2: type, @GenericInterface.%Self: <unexpected>.inst+22 (%.2)];
+// CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc12_8.2: <unexpected>.inst+18 (%T))
+// CHECK:STDOUT:     generic [file.%T.loc11_28.2: type, @GenericInterface.%Self: <unexpected>.inst+24 (%.2)];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: @impl.%T.ref (%T))
+// CHECK:STDOUT: fn @F.2(@impl.%x.loc20_10.2: <unexpected>.inst+40 (%T))
 // CHECK:STDOUT:     generic [@C.%T.loc19_23.2: type] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -112,21 +112,21 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%GenericInterface.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_28.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface.%F.decl(constants.%T, constants.%Self) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @GenericInterface.%T.ref => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%GenericInterface.decl(file.%T.loc11_28.2) {
+// CHECK:STDOUT: specific file.%GenericInterface.decl(<unexpected>.inst+7) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_28.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @impl.%T.ref => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+40 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

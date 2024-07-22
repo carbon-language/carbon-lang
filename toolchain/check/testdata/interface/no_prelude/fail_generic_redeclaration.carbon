@@ -69,22 +69,22 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.1 = interface_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.loc19_22.1: type = param T
-// CHECK:STDOUT:     %T.loc19_22.2: type = bind_symbolic_name T 0, %T.loc19_22.1 [symbolic = %T.loc19_22.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc19_22.2: type = bind_symbolic_name T 0, %T.loc19_22.1 [symbolic = <unexpected>.inst+7 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
 // CHECK:STDOUT:     %T.loc21_19.1: type = param T
-// CHECK:STDOUT:     %T.loc21_19.2: type = bind_symbolic_name T 0, %T.loc21_19.1 [symbolic = %T.loc21_19.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc21_19.2: type = bind_symbolic_name T 0, %T.loc21_19.1 [symbolic = <unexpected>.inst+19 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.5] {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams] {
 // CHECK:STDOUT:     %T.loc31_27.1: type = param T
-// CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = %T.loc31_27.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = <unexpected>.inst+29 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc38: %.type.2 = interface_decl @.3 [template = constants.%.6] {
 // CHECK:STDOUT:     %.loc38_32.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %T.loc38_27.1: %.2 = param T
-// CHECK:STDOUT:     %T.loc38_27.2: %.2 = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = %T.loc38_27.2 (constants.%T.2)]
+// CHECK:STDOUT:     %T.loc38_27.2: %.2 = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = <unexpected>.inst+38 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +92,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1
 // CHECK:STDOUT:     generic [file.%T.loc19_22.2: type] {
-// CHECK:STDOUT:   %Self: <unexpected>.inst+13 (%.4) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: <unexpected>.inst+14 (%.4) = bind_symbolic_name Self 1 [symbolic = <unexpected>.inst+15 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -115,7 +115,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.3
 // CHECK:STDOUT:     generic [file.%T.loc38_27.2: %.2] {
-// CHECK:STDOUT:   %Self: <unexpected>.inst+39 (%.7) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: <unexpected>.inst+44 (%.7) = bind_symbolic_name Self 1 [symbolic = <unexpected>.inst+45 (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -124,31 +124,31 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%.decl.loc19(constants.%T.1) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc19_22.2 => constants.%T.1
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl.loc19(file.%T.loc19_22.2) {
+// CHECK:STDOUT: specific file.%.decl.loc19(<unexpected>.inst+7) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc19_22.2 => constants.%T.1
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc21_19.2 => constants.%T.1
+// CHECK:STDOUT:   <unexpected>.inst+19 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%DifferentParams.decl(constants.%T.1) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc31_27.2 => constants.%T.1
+// CHECK:STDOUT:   <unexpected>.inst+29 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%.decl.loc38(constants.%T.2) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc38_27.2 => constants.%T.2
+// CHECK:STDOUT:   <unexpected>.inst+38 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl.loc38(file.%T.loc38_27.2) {
+// CHECK:STDOUT: specific file.%.decl.loc38(<unexpected>.inst+38) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc38_27.2 => constants.%T.2
+// CHECK:STDOUT:   <unexpected>.inst+38 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

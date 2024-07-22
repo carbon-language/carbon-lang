@@ -47,12 +47,12 @@ fn TestOp() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.8 = import_ref ir4, inst+65, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+61, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+52, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.8 = import_ref ir4, inst+70, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+64, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+52, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+64, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

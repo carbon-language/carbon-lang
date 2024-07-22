@@ -177,19 +177,19 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %int.make_type_32, %.loc14_17.1 [template = i32]
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
-// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = @Symbolic.%N (constants.%N)]
+// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = <unexpected>.inst+78 (constants.%N)]
 // CHECK:STDOUT:     %Int.ref.loc14_25: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
-// CHECK:STDOUT:     %N.ref.loc14_29: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_signed.loc14_28: init type = call %Int.ref.loc14_25(%N.ref.loc14_29) [symbolic = %int.make_type_signed.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_30.1: type = value_of_initializer %int.make_type_signed.loc14_28 [symbolic = %int.make_type_signed.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_30.2: type = converted %int.make_type_signed.loc14_28, %.loc14_30.1 [symbolic = %int.make_type_signed.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %x.loc14_22.1: file.%int.make_type_signed.loc14_28 (%.6) = param x
-// CHECK:STDOUT:     @Symbolic.%x: file.%int.make_type_signed.loc14_28 (%.6) = bind_name x, %x.loc14_22.1
+// CHECK:STDOUT:     %N.ref.loc14_29: i32 = name_ref N, @Symbolic.%N [symbolic = <unexpected>.inst+78 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_signed.loc14_28: init type = call %Int.ref.loc14_25(%N.ref.loc14_29) [symbolic = <unexpected>.inst+79 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_30.1: type = value_of_initializer %int.make_type_signed.loc14_28 [symbolic = <unexpected>.inst+79 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_30.2: type = converted %int.make_type_signed.loc14_28, %.loc14_30.1 [symbolic = <unexpected>.inst+79 (constants.%.6)]
+// CHECK:STDOUT:     %x.loc14_22.1: <unexpected>.inst+79 (%.6) = param x
+// CHECK:STDOUT:     @Symbolic.%x: <unexpected>.inst+79 (%.6) = bind_name x, %x.loc14_22.1
 // CHECK:STDOUT:     %Int.ref.loc14_36: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
-// CHECK:STDOUT:     %N.ref.loc14_40: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_signed.loc14_39: init type = call %Int.ref.loc14_36(%N.ref.loc14_40) [symbolic = %int.make_type_signed.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int.make_type_signed.loc14_39 [symbolic = %int.make_type_signed.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_41.2: type = converted %int.make_type_signed.loc14_39, %.loc14_41.1 [symbolic = %int.make_type_signed.loc14_28 (constants.%.6)]
+// CHECK:STDOUT:     %N.ref.loc14_40: i32 = name_ref N, @Symbolic.%N [symbolic = <unexpected>.inst+78 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_signed.loc14_39: init type = call %Int.ref.loc14_36(%N.ref.loc14_40) [symbolic = <unexpected>.inst+79 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int.make_type_signed.loc14_39 [symbolic = <unexpected>.inst+79 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_41.2: type = converted %int.make_type_signed.loc14_39, %.loc14_41.1 [symbolic = <unexpected>.inst+79 (constants.%.6)]
 // CHECK:STDOUT:     @Symbolic.%return: ref %.6 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -210,17 +210,17 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: file.%int.make_type_signed.loc14_28 (%.6)) -> %.6
+// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: <unexpected>.inst+79 (%.6)) -> %.6
 // CHECK:STDOUT:     generic [%N: i32] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: file.%int.make_type_signed.loc14_28 (%.6) = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: <unexpected>.inst+79 (%.6) = name_ref x, %x
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Symbolic.decl(constants.%N) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Symbolic.%N => constants.%N
-// CHECK:STDOUT:   file.%int.make_type_signed.loc14_28 => constants.%.6
+// CHECK:STDOUT:   <unexpected>.inst+78 => constants.%N
+// CHECK:STDOUT:   <unexpected>.inst+79 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon

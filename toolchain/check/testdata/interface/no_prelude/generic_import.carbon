@@ -48,13 +48,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = %T.loc4_19.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = <unexpected>.inst+5 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddWith
 // CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
-// CHECK:STDOUT:   %Self: <unexpected>.inst+17 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: <unexpected>.inst+18 (%.2) = bind_symbolic_name Self 1 [symbolic = <unexpected>.inst+19 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -65,20 +65,20 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: <unexpected>.inst+17 (%.2)];
+// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: <unexpected>.inst+18 (%.2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%AddWith.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+5 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.%F.decl(constants.%T, constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%AddWith.decl(file.%T.loc4_19.2) {
+// CHECK:STDOUT: specific file.%AddWith.decl(<unexpected>.inst+5) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+5 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -102,9 +102,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+11, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+12, loaded [template = constants.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

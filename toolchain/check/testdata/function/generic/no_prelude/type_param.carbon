@@ -29,28 +29,28 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = <unexpected>.inst+5 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type)
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc12: type = ptr_type %T [symbolic = %.loc12 (constants.%.2)]
-// CHECK:STDOUT:   %p.var: ref @F.%.loc12 (%.2) = var p
-// CHECK:STDOUT:   %p: ref @F.%.loc12 (%.2) = bind_name p, %p.var
-// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %p.ref: ref @F.%.loc12 (%.2) = name_ref p, %p
-// CHECK:STDOUT:   %.loc13_15: @F.%.loc12 (%.2) = bind_value %p.ref
-// CHECK:STDOUT:   %.loc13_14.1: ref @F.%T (%T) = deref %.loc13_15
-// CHECK:STDOUT:   %.loc13_14.2: @F.%T (%T) = bind_value %.loc13_14.1
-// CHECK:STDOUT:   %n: @F.%T (%T) = bind_name n, %.loc13_14.2
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, %T [symbolic = <unexpected>.inst+5 (constants.%T)]
+// CHECK:STDOUT:   %.loc12: type = ptr_type %T [symbolic = <unexpected>.inst+21 (constants.%.2)]
+// CHECK:STDOUT:   %p.var: ref <unexpected>.inst+21 (%.2) = var p
+// CHECK:STDOUT:   %p: ref <unexpected>.inst+21 (%.2) = bind_name p, %p.var
+// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = <unexpected>.inst+5 (constants.%T)]
+// CHECK:STDOUT:   %p.ref: ref <unexpected>.inst+21 (%.2) = name_ref p, %p
+// CHECK:STDOUT:   %.loc13_15: <unexpected>.inst+21 (%.2) = bind_value %p.ref
+// CHECK:STDOUT:   %.loc13_14.1: ref <unexpected>.inst+5 (%T) = deref %.loc13_15
+// CHECK:STDOUT:   %.loc13_14.2: <unexpected>.inst+5 (%T) = bind_value %.loc13_14.1
+// CHECK:STDOUT:   %n: <unexpected>.inst+5 (%T) = bind_name n, %.loc13_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+5 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -130,11 +130,11 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %self.loc13_8.1: @Simple.%Self.ref (%Self) = param self
-// CHECK:STDOUT:     %self.loc13_8.2: @Simple.%Self.ref (%Self) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = <unexpected>.inst+20 (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = <unexpected>.inst+20 (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = <unexpected>.inst+20 (constants.%Self)]
+// CHECK:STDOUT:     %self.loc13_8.1: <unexpected>.inst+20 (%Self) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: <unexpected>.inst+20 (%Self) = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_21: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
@@ -165,7 +165,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT: fn @F.1()
 // CHECK:STDOUT:     generic [@Simple.%Self: %.1];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1[@Simple.%self.loc13_8.2: @Simple.%Self.ref (%Self)]()
+// CHECK:STDOUT: fn @G.1[@Simple.%self.loc13_8.2: <unexpected>.inst+20 (%Self)]()
 // CHECK:STDOUT:     generic [@Simple.%Self: %.1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -225,6 +225,6 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.%G.decl(constants.%Self) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Simple.%Self.ref => constants.%Self
+// CHECK:STDOUT:   <unexpected>.inst+20 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

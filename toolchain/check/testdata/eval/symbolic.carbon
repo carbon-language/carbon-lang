@@ -43,35 +43,35 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc12_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc12_6.1 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc12_6.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type)
 // CHECK:STDOUT:     generic [%T: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref.loc13_11: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc13_12: type = ptr_type %T [symbolic = %.loc13_12 (constants.%.2)]
-// CHECK:STDOUT:   %T.ref.loc13_21: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc13_15: type = const_type %T [symbolic = %.loc13_15 (constants.%.3)]
+// CHECK:STDOUT:   %T.ref.loc13_11: type = name_ref T, %T [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc13_12: type = ptr_type %T [symbolic = <unexpected>.inst+41 (constants.%.2)]
+// CHECK:STDOUT:   %T.ref.loc13_21: type = name_ref T, %T [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc13_15: type = const_type %T [symbolic = <unexpected>.inst+42 (constants.%.3)]
 // CHECK:STDOUT:   %.loc13_22.1: %.4 = tuple_literal (%.loc13_12, %.loc13_15)
-// CHECK:STDOUT:   %.loc13_22.2: type = converted %.loc13_22.1, constants.%.5 [symbolic = %.loc13_22.2 (constants.%.5)]
-// CHECK:STDOUT:   %u.var: ref @F.%.loc13_22.2 (%.5) = var u
-// CHECK:STDOUT:   %u: ref @F.%.loc13_22.2 (%.5) = bind_name u, %u.var
-// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc14: type = struct_type {.a: %T} [symbolic = %.loc14 (constants.%.8)]
-// CHECK:STDOUT:   %v.var: ref @F.%.loc14 (%.8) = var v
-// CHECK:STDOUT:   %v: ref @F.%.loc14 (%.8) = bind_name v, %v.var
-// CHECK:STDOUT:   %T.ref.loc15: type = name_ref T, %T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %.loc13_22.2: type = converted %.loc13_22.1, constants.%.5 [symbolic = <unexpected>.inst+43 (constants.%.5)]
+// CHECK:STDOUT:   %u.var: ref <unexpected>.inst+43 (%.5) = var u
+// CHECK:STDOUT:   %u: ref <unexpected>.inst+43 (%.5) = bind_name u, %u.var
+// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc14: type = struct_type {.a: %T} [symbolic = <unexpected>.inst+45 (constants.%.8)]
+// CHECK:STDOUT:   %v.var: ref <unexpected>.inst+45 (%.8) = var v
+// CHECK:STDOUT:   %v: ref <unexpected>.inst+45 (%.8) = bind_name v, %v.var
+// CHECK:STDOUT:   %T.ref.loc15: type = name_ref T, %T [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   %.loc15_14: i32 = int_literal 5 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc15_15: type = array_type %.loc15_14, %T [symbolic = %.loc15_15 (constants.%.10)]
-// CHECK:STDOUT:   %w.var: ref @F.%.loc15_15 (%.10) = var w
-// CHECK:STDOUT:   %w: ref @F.%.loc15_15 (%.10) = bind_name w, %w.var
+// CHECK:STDOUT:   %.loc15_15: type = array_type %.loc15_14, %T [symbolic = <unexpected>.inst+46 (constants.%.10)]
+// CHECK:STDOUT:   %w.var: ref <unexpected>.inst+46 (%.10) = var w
+// CHECK:STDOUT:   %w: ref <unexpected>.inst+46 (%.10) = bind_name w, %w.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%F.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

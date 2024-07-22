@@ -77,7 +77,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -90,18 +90,18 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT:   %Get.decl: %Get.type = fn_decl @Get [template = constants.%Get] {
-// CHECK:STDOUT:     %.loc12_21: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = %.loc12_21 (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc12_21 [symbolic = %.loc12_21 (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = %.loc12_25 (constants.%.2)]
-// CHECK:STDOUT:     %self.loc12_15.1: @Class.%.loc12_25 (%.2) = param self
-// CHECK:STDOUT:     %self.loc12_15.3: @Class.%.loc12_25 (%.2) = bind_name self, %self.loc12_15.1
-// CHECK:STDOUT:     %.loc12_10: @Class.%.loc12_25 (%.2) = addr_pattern %self.loc12_15.3
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T.ref.loc12 (constants.%T)]
-// CHECK:STDOUT:     %.loc12_34: type = ptr_type %T [symbolic = %.loc12_34 (constants.%.3)]
+// CHECK:STDOUT:     %.loc12_21: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = <unexpected>.inst+25 (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc12_21 [symbolic = <unexpected>.inst+25 (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc12_25: type = ptr_type %Class.2 [symbolic = <unexpected>.inst+26 (constants.%.2)]
+// CHECK:STDOUT:     %self.loc12_15.1: <unexpected>.inst+26 (%.2) = param self
+// CHECK:STDOUT:     %self.loc12_15.3: <unexpected>.inst+26 (%.2) = bind_name self, %self.loc12_15.1
+// CHECK:STDOUT:     %.loc12_10: <unexpected>.inst+26 (%.2) = addr_pattern %self.loc12_15.3
+// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+24 (constants.%T)]
+// CHECK:STDOUT:     %.loc12_34: type = ptr_type %T [symbolic = <unexpected>.inst+27 (constants.%.3)]
 // CHECK:STDOUT:     %return.var: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc16: <unexpected>.inst+32 (%.4) = field_decl k, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc16: type = name_ref T, file.%T.loc11_13.2 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:   %.loc16: <unexpected>.inst+37 (%.4) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -109,14 +109,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .k = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: @Class.%.loc12_25 (%.2)]() -> %.3
+// CHECK:STDOUT: fn @Get[addr @Class.%self.loc12_15.3: <unexpected>.inst+26 (%.2)]() -> %.3
 // CHECK:STDOUT:     generic [file.%T.loc11_13.2: type] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: @Class.%.loc12_25 (%.2) = name_ref self, @Class.%self.loc12_15.3
-// CHECK:STDOUT:   %.loc13_17.1: ref @Class.%.loc12_21 (%Class.2) = deref %self.ref
-// CHECK:STDOUT:   %k.ref: <unexpected>.inst+40 (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
-// CHECK:STDOUT:   %.loc13_17.2: ref @Class.%T.ref.loc12 (%T) = class_element_access %.loc13_17.1, element0
-// CHECK:STDOUT:   %.loc13_12: @Class.%.loc12_34 (%.3) = addr_of %.loc13_17.2
+// CHECK:STDOUT:   %self.ref: <unexpected>.inst+26 (%.2) = name_ref self, @Class.%self.loc12_15.3
+// CHECK:STDOUT:   %.loc13_17.1: ref <unexpected>.inst+25 (%Class.2) = deref %self.ref
+// CHECK:STDOUT:   %k.ref: <unexpected>.inst+46 (%.4) = name_ref k, @Class.%.loc16 [template = @Class.%.loc16]
+// CHECK:STDOUT:   %.loc13_17.2: ref <unexpected>.inst+24 (%T) = class_element_access %.loc13_17.1, element0
+// CHECK:STDOUT:   %.loc13_12: <unexpected>.inst+27 (%.3) = addr_of %.loc13_17.2
 // CHECK:STDOUT:   return %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,34 +146,39 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected>.inst+31 => constants.%Class.2
-// CHECK:STDOUT:   <unexpected>.inst+32 => constants.%.4
-// CHECK:STDOUT:   <unexpected>.inst+28.loc16_8 => <unexpected>.inst+29
+// CHECK:STDOUT:   <unexpected>.inst+36 => constants.%Class.2
+// CHECK:STDOUT:   <unexpected>.inst+37 => constants.%.4
+// CHECK:STDOUT:   <unexpected>.inst+38 => <unexpected>.inst+34
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+24) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.%Get.decl(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Class.%.loc12_21 => constants.%Class.2
-// CHECK:STDOUT:   @Class.%.loc12_25 => constants.%.2
-// CHECK:STDOUT:   @Class.%T.ref.loc12 => constants.%T
-// CHECK:STDOUT:   @Class.%.loc12_34 => constants.%.3
+// CHECK:STDOUT:   <unexpected>.inst+24 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+25 => constants.%Class.2
+// CHECK:STDOUT:   <unexpected>.inst+26 => constants.%.2
+// CHECK:STDOUT:   <unexpected>.inst+27 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(file.%T.loc11_13.2) {
+// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+7) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific file.%Class.decl(i32) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc11_13.2 => i32
+// CHECK:STDOUT:   <unexpected>.inst+7 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected>.inst+31 => constants.%Class.3
-// CHECK:STDOUT:   <unexpected>.inst+32 => constants.%.7
-// CHECK:STDOUT:   <unexpected>.inst+28.loc16_8 => <unexpected>.inst+29
+// CHECK:STDOUT:   <unexpected>.inst+36 => constants.%Class.3
+// CHECK:STDOUT:   <unexpected>.inst+37 => constants.%.7
+// CHECK:STDOUT:   <unexpected>.inst+38 => <unexpected>.inst+69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -43,7 +43,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir4, inst+1, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir4, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref ir4, inst+24, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref ir4, inst+25, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir4, inst+1, loaded [template = constants.%.4]
