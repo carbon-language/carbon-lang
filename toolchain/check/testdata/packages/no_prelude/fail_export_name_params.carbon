@@ -86,8 +86,8 @@ export C2(T:! type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref ir1, inst+4, loaded [template = constants.%C1.1]
-// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref ir1, inst+11, loaded [template = constants.%C2.1]
+// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, inst+4, loaded [template = constants.%C1.1]
+// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, inst+11, loaded [template = constants.%C2.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

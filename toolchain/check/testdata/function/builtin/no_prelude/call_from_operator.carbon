@@ -121,15 +121,15 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir1, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref ir1, inst+28, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref ir1, inst+24, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir1, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref Core//default, inst+28, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+24, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//default, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -138,7 +138,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//default
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
