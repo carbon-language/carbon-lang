@@ -118,14 +118,14 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir1, inst+10, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir1, inst+21, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Impl//default, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Impl//default, inst+10, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+21, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Impl//default, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Impl//default, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -134,7 +134,9 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impl.import = import Impl
-// CHECK:STDOUT:   %Impl: <namespace> = namespace %Impl.import, [template] {}
+// CHECK:STDOUT:   %Impl: <namespace> = namespace %Impl.import, [template] {
+// CHECK:STDOUT:     import Impl//default
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]

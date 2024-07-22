@@ -56,8 +56,8 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,7 +67,15 @@ fn Run() {
 // CHECK:STDOUT:     .Child = %Child.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Child.decl: type = class_decl @Child [template = constants.%Child] {}
 // CHECK:STDOUT: }
@@ -142,15 +150,15 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+38, loaded [template = constants.%Child]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref ir1, inst+8, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref ir1, inst+27, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+39, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+38, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+8, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref Main//a, inst+27, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+34, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+43, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -162,7 +170,15 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

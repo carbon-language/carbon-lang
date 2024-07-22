@@ -54,7 +54,7 @@ var a: () = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir0, inst+5, loaded
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref Implicit//default, inst+5, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

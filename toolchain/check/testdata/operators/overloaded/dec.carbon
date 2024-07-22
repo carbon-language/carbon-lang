@@ -47,12 +47,12 @@ fn TestOp() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+133, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+135, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.8 = import_ref ir4, inst+149, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir4, inst+145, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+133, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+145, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+133, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+135, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.8 = import_ref Core//prelude/operators/arithmetic, inst+149, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+145, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+133, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+145, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,7 +62,15 @@ fn TestOp() {
 // CHECK:STDOUT:     .TestOp = %TestOp.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]

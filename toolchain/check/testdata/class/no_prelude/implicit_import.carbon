@@ -109,7 +109,7 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref: type = import_ref Main//basic, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -153,8 +153,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//redecl_after_def, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//redecl_after_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -199,8 +199,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//redef_after_def, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//redef_after_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -249,8 +249,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+4, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//def_alias, inst+4, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

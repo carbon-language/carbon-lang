@@ -48,7 +48,15 @@ fn Run() {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc6_18: type = ptr_type %Cycle [template = constants.%.1]
@@ -84,10 +92,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.3 = import_ref ir1, inst+13, loaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref ir1, inst+20, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref %.3 = import_ref Main//a, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref Main//a, inst+20, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -99,7 +107,15 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -93,7 +93,7 @@ extern fn A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//basic, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -136,7 +136,7 @@ extern fn A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_api, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -176,7 +176,7 @@ extern fn A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_impl, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

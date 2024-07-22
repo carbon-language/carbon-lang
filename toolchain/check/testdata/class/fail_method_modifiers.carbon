@@ -83,7 +83,15 @@ base class BaseClass {
 // CHECK:STDOUT:     .BaseClass = %BaseClass.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FinalClass.decl: type = class_decl @FinalClass [template = constants.%FinalClass] {}
 // CHECK:STDOUT:   %AbstractClass.decl: type = class_decl @AbstractClass [template = constants.%AbstractClass] {}
 // CHECK:STDOUT:   %BaseClass.decl: type = class_decl @BaseClass [template = constants.%BaseClass] {}

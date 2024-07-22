@@ -185,7 +185,7 @@ fn B() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir1, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref A//default, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -194,7 +194,9 @@ fn B() {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.import = import A
-// CHECK:STDOUT:   %A: <namespace> = namespace %A.import, [template] {}
+// CHECK:STDOUT:   %A: <namespace> = namespace %A.import, [template] {
+// CHECK:STDOUT:     import A//default
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

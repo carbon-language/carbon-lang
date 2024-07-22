@@ -119,8 +119,8 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -169,8 +169,8 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_in_api_definition_in_impl, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -228,8 +228,8 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_only_in_api, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_only_in_api, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -287,8 +287,8 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

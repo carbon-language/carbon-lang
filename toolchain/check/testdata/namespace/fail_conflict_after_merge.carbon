@@ -59,7 +59,15 @@ fn NS();
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,9 +88,17 @@ fn NS();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+3, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Example//namespace, inst+3, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {}
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl.loc20: %.type.1 = fn_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT:   %.loc24: <namespace> = namespace [template] {}

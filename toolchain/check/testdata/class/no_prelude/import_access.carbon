@@ -200,8 +200,8 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -265,7 +265,9 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {
+// CHECK:STDOUT:     import Test//def
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
@@ -290,8 +292,8 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -355,7 +357,9 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {
+// CHECK:STDOUT:     import Test//forward_with_def
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
@@ -381,7 +385,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+1, loaded [template = constants.%Forward]
+// CHECK:STDOUT:   %import_ref: type = import_ref Test//forward, inst+1, loaded [template = constants.%Forward]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -450,7 +454,9 @@ private class Redecl {}
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {}
+// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {
+// CHECK:STDOUT:     import Test//forward
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]

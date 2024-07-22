@@ -70,7 +70,7 @@ var w: () = v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir1, inst+5, loaded
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref Main//base, inst+5, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,7 +89,7 @@ var w: () = v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref ir1, inst+4, loaded [template = <error>]
+// CHECK:STDOUT:   %import_ref: ref %.1 = import_ref Main//export, inst+4, loaded [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

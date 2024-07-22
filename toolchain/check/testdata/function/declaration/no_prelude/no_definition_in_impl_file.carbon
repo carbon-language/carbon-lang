@@ -97,7 +97,7 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -124,7 +124,7 @@ fn D();
 // CHECK:STDOUT: --- use_decl_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//decl_in_api_definition_in_impl, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -155,7 +155,7 @@ fn D();
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref ir0, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//decl_only_in_api, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -192,7 +192,7 @@ fn D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %C.type = import_ref ir0, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref: %C.type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
