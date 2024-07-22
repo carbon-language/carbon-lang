@@ -36,15 +36,24 @@ library "parens";
 
 class C {}
 
-fn Foo[](a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:13: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: fn Foo[](a: (C)) {}
-// CHECK:STDERR:             ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:13: Comparing with previous declaration here.
-// CHECK:STDERR: fn Foo[](a: C);
-// CHECK:STDERR:             ^
+fn Foo(a: C);
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:11: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: fn Foo(a: (C)) {}
+// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: Comparing with previous declaration here.
+// CHECK:STDERR: fn Foo(a: C);
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
-fn Foo[](a: (C)) {}
+fn Foo(a: (C)) {}
+
+// --- todo_fail_raw_identifier.carbon
+
+library "raw_identifier";
+
+class C {}
+
+fn Foo(a: C);
+fn Foo(a: r#C) {}
 
 // --- two_file.carbon
 
@@ -279,13 +288,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc6_10.1: %C = param a
-// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc6_10.1
+// CHECK:STDOUT:     %a.loc6_8.1: %C = param a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc14_10.1: %C = param a
-// CHECK:STDOUT:     @.1.%a: %C = bind_name a, %a.loc14_10.1
+// CHECK:STDOUT:     %a.loc14_8.1: %C = param a
+// CHECK:STDOUT:     @.1.%a: %C = bind_name a, %a.loc14_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,9 +303,48 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[](%a: %C);
+// CHECK:STDOUT: fn @Foo(%a: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[](%a: %C) {
+// CHECK:STDOUT: fn @.1(%a: %C) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc6
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc6_8.1: %C = param a
+// CHECK:STDOUT:     %a.loc6_8.2: %C = bind_name a, %a.loc6_8.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc7_8.1: %C = param a
+// CHECK:STDOUT:     @Foo.%a: %C = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

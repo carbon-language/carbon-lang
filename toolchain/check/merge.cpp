@@ -269,6 +269,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
 }
 
 // Returns true if the two nodes represent the same syntax.
+// TODO: Detect raw identifiers (will require token changes).
 static auto IsNodeSyntaxEqual(Context& context, Parse::NodeId new_node_id,
                               Parse::NodeId prev_node_id) -> bool {
   if (context.parse_tree().node_kind(new_node_id) !=

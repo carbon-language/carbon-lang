@@ -36,15 +36,24 @@ library "parens";
 
 class C {}
 
-class Foo[](a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:16: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: class Foo[](a: (C)) {}
-// CHECK:STDERR:                ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:16: Comparing with previous declaration here.
-// CHECK:STDERR: class Foo[](a: C);
-// CHECK:STDERR:                ^
+class Foo(a: C);
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:14: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: class Foo(a: (C)) {}
+// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:14: Comparing with previous declaration here.
+// CHECK:STDERR: class Foo(a: C);
+// CHECK:STDERR:              ^
 // CHECK:STDERR:
-class Foo[](a: (C)) {}
+class Foo(a: (C)) {}
+
+// --- todo_fail_raw_identifier.carbon
+
+library "raw_identifier";
+
+class C {}
+
+class Foo(a: C);
+class Foo(a: r#C) {}
 
 // --- two_file.carbon
 
@@ -292,13 +301,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc6_13.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_13.2: %C = bind_name a, %a.loc6_13.1
+// CHECK:STDOUT:     %a.loc6_11.1: %C = param a
+// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_name a, %a.loc6_11.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc14_13.1: %C = param a
-// CHECK:STDOUT:     %a.loc14_13.2: %C = bind_name a, %a.loc14_13.1
+// CHECK:STDOUT:     %a.loc14_11.1: %C = param a
+// CHECK:STDOUT:     %a.loc14_11.2: %C = bind_name a, %a.loc14_11.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,6 +321,45 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc6
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc6_11.1: %C = param a
+// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc7_11.1: %C = param a
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Foo {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Foo.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
