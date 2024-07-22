@@ -9,6 +9,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
@@ -57,6 +58,12 @@ class InstNamer {
       index += id.index;
     }
     return static_cast<ScopeId>(index);
+  }
+
+  // Returns the scope ID corresponding to a generic. A generic object shares
+  // its scope with its generic entity.
+  auto GetScopeFor(GenericId id) const -> ScopeId {
+    return generic_scopes[id.index];
   }
 
   // Returns the IR name for the specified scope.
@@ -156,6 +163,8 @@ class InstNamer {
   auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
       -> void;
 
+  auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+
   const Lex::TokenizedBuffer& tokenized_buffer_;
   const Parse::Tree& parse_tree_;
   const File& sem_ir_;
@@ -164,6 +173,7 @@ class InstNamer {
   std::vector<std::pair<ScopeId, Namespace::Name>> insts;
   std::vector<std::pair<ScopeId, Namespace::Name>> labels;
   std::vector<Scope> scopes;
+  std::vector<ScopeId> generic_scopes;
 };
 
 }  // namespace Carbon::SemIR

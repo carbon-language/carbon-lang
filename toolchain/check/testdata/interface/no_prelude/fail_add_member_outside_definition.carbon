@@ -79,13 +79,19 @@ interface Outer {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Inner
-// CHECK:STDOUT:     generic [@Outer.%Self: %.3] {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = <unexpected>.inst+21 (constants.%Self.3)]
+// CHECK:STDOUT: generic @Inner(@Outer.%Self: %.3) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Inner {
+// CHECK:STDOUT:   %Self.1: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .F = @Outer.%F.decl
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
@@ -95,24 +101,30 @@ interface Outer {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [@Outer.%Self: %.3, @Inner.%Self: %.4];
+// CHECK:STDOUT: generic @.1(@Outer.%Self: %.3, @Inner.%Self.1: %.4) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2()
-// CHECK:STDOUT:     generic [@Outer.%Self: %.3];
+// CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.%Inner.decl(constants.%Self.2) {
+// CHECK:STDOUT: generic @F.2(@Outer.%Self: %.3) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.2();
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(constants.%Self.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected>.inst+21 => constants.%Self.3
+// CHECK:STDOUT:   @Inner.%Self.2 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner.%.decl(constants.%Self.2, constants.%Self.3) {
+// CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer.%F.decl(constants.%Self.2) {
+// CHECK:STDOUT: specific @F.2(constants.%Self.2) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

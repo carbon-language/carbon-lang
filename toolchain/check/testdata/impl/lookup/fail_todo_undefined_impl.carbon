@@ -107,8 +107,11 @@ impl C as I {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@I.%Self: %.1];
+// CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -124,7 +127,7 @@ impl C as I {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

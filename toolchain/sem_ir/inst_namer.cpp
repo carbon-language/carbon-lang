@@ -25,6 +25,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   insts.resize(sem_ir.insts().size());
   labels.resize(sem_ir.inst_blocks().size());
   scopes.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
+  generic_scopes.resize(sem_ir.generics().size(), ScopeId::None);
 
   // Build the constants scope.
   CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().array_ref());
@@ -62,6 +63,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     for (auto block_id : fn.body_block_ids) {
       AddBlockLabel(fn_scope, block_id);
     }
+    CollectNamesInGeneric(fn_scope, fn.generic_id);
   }
 
   // Build each class scope.
@@ -75,6 +77,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         sem_ir.names().GetIRBaseName(class_info.name_id).str());
     AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
     CollectNamesInBlock(class_scope, class_info.body_block_id);
+    CollectNamesInGeneric(class_scope, class_info.generic_id);
   }
 
   // Build each interface scope.
@@ -90,6 +93,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
                   interface_loc);
     CollectNamesInBlock(interface_scope, interface_info.body_block_id);
+    CollectNamesInGeneric(interface_scope, interface_info.generic_id);
   }
 
   // Build each impl scope.
@@ -103,6 +107,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         globals.AllocateName(*this, impl_loc, "impl");
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
+    // TODO: Collect names from the generic once we support generic impls.
   }
 }
 
@@ -550,6 +555,17 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       add_inst_name("");
     }
   }
+}
+
+auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
+    -> void {
+  if (!generic_id.is_valid()) {
+    return;
+  }
+  generic_scopes[generic_id.index] = scope_id;
+  const auto& generic = sem_ir_.generics().Get(generic_id);
+  CollectNamesInBlock(scope_id, generic.decl_block_id);
+  CollectNamesInBlock(scope_id, generic.definition_block_id);
 }
 
 }  // namespace Carbon::SemIR

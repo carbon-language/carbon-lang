@@ -44,17 +44,23 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:     %N.loc12_6.1: i32 = param N
-// CHECK:STDOUT:     @G.%N: i32 = bind_symbolic_name N 0, %N.loc12_6.1 [symbolic = <unexpected>.inst+16 (constants.%N)]
+// CHECK:STDOUT:     @G.%N.loc12: i32 = bind_symbolic_name N 0, %N.loc12_6.1 [symbolic = @G.%N.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%N: i32)
-// CHECK:STDOUT:     generic [%N: i32] {
+// CHECK:STDOUT: generic @G(%N.loc12: i32) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%N.loc12: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %N.ref: i32 = name_ref N, %N [symbolic = <unexpected>.inst+16 (constants.%N)]
+// CHECK:STDOUT:   %N.ref: i32 = name_ref N, %N.loc12 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:   %.loc16_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc16_11.2: type = converted %int.make_type_32, %.loc16_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc16_17: type = array_type %N.ref, i32 [template = <error>]
@@ -63,8 +69,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%G.decl(constants.%N) {
+// CHECK:STDOUT: specific @G(constants.%N) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+16 => constants.%N
+// CHECK:STDOUT:   @G.%N.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

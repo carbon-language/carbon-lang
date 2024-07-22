@@ -34,7 +34,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc13_6.1: %.1 = param T
-// CHECK:STDOUT:     @F.%T: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = <unexpected>.inst+10 (constants.%T)]
+// CHECK:STDOUT:     @F.%T.loc13: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,19 +46,25 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: %.1)
-// CHECK:STDOUT:     generic [%T: %.1] {
+// CHECK:STDOUT: generic @F(%T.loc13: %.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%T.loc13: %.1) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = <unexpected>.inst+10 (constants.%T)]
-// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = <unexpected>.inst+10 (constants.%T)]
-// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = <unexpected>.inst+10 (constants.%T)]
-// CHECK:STDOUT:   %x.var: ref <unexpected>.inst+10 (%T) = var x
-// CHECK:STDOUT:   %x: ref <unexpected>.inst+10 (%T) = bind_name x, %x.var
+// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %x.var: ref @F.%T.1 (%T) = var x
+// CHECK:STDOUT:   %x: ref @F.%T.1 (%T) = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+10 => constants.%T
+// CHECK:STDOUT:   @F.%T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

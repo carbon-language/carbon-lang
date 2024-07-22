@@ -112,7 +112,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -131,7 +131,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc10_10.1: type = param T
@@ -145,7 +145,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc14_10.1: type = param T
 // CHECK:STDOUT:     %T.loc14_10.2: type = bind_symbolic_name T 0, %T.loc14_10.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc14: type = specific_constant constants.%Class.2, %Class.decl(constants.%T) [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %.loc14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc14 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %self.loc14_22.1: %Class.2 = param self
 // CHECK:STDOUT:     @G.%self: %Class.2 = bind_name self, %self.loc14_22.1
@@ -154,25 +154,33 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
+// CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = <unexpected>.inst+18 (constants.%T)]
-// CHECK:STDOUT:     %n.loc5_8.1: <unexpected>.inst+18 (%T) = param n
-// CHECK:STDOUT:     %n.loc5_8.2: <unexpected>.inst+18 (%T) = bind_name n, %n.loc5_8.1
-// CHECK:STDOUT:     %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = <unexpected>.inst+18 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %n.loc5_8.1: @F.%T (%T) = param n
+// CHECK:STDOUT:     %n.loc5_8.2: @F.%T (%T) = bind_name n, %n.loc5_8.1
+// CHECK:STDOUT:     %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc5: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc6: type = specific_constant constants.%Class.2, file.%Class.decl(constants.%T) [symbolic = <unexpected>.inst+29 (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc6 [symbolic = <unexpected>.inst+29 (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc6_8.1: <unexpected>.inst+29 (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc6_8.2: <unexpected>.inst+29 (%Class.2) = bind_name self, %self.loc6_8.1
-// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, file.%T.loc4_13.2 [symbolic = <unexpected>.inst+28 (constants.%T)]
+// CHECK:STDOUT:     %.loc6: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc6 [symbolic = @G.%Class (constants.%Class.2)]
+// CHECK:STDOUT:     %self.loc6_8.1: @G.%Class (%Class.2) = param self
+// CHECK:STDOUT:     %self.loc6_8.2: @G.%Class (%Class.2) = bind_name self, %self.loc6_8.1
+// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, file.%T.loc4_13.2 [symbolic = @G.%T (constants.%T)]
 // CHECK:STDOUT:     %return.var.loc6: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc7: type = name_ref T, file.%T.loc4_13.2 [symbolic = <unexpected>.inst+7 (constants.%T)]
-// CHECK:STDOUT:   %.loc7: <unexpected>.inst+39 (%.2) = field_decl n, element0 [template]
+// CHECK:STDOUT:   %T.ref.loc7: type = name_ref T, file.%T.loc4_13.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %.loc7: @Class.%.1 (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class.2
@@ -181,52 +189,66 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .n = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: %T) -> %T
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
+// CHECK:STDOUT: generic @F(file.%T.loc4_13.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%n: %T) -> %T {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: <unexpected>.inst+18 (%T) = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: @F.%T (%T) = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self: %Class.2]() -> %T
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type] {
+// CHECK:STDOUT: generic @G(file.%T.loc4_13.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G[%self: %Class.2]() -> %T {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: <unexpected>.inst+29 (%Class.2) = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: <unexpected>.inst+66 (%.2) = name_ref n, @Class.%.loc7 [template = @Class.%.loc7]
-// CHECK:STDOUT:   %.loc15_14.1: ref <unexpected>.inst+28 (%T) = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc15_14.2: <unexpected>.inst+28 (%T) = bind_value %.loc15_14.1
+// CHECK:STDOUT:   %self.ref: @G.%Class (%Class.2) = name_ref self, %self
+// CHECK:STDOUT:   %n.ref: @G.%.1 (%.2) = name_ref n, @Class.%.loc7 [template = @Class.%.loc7]
+// CHECK:STDOUT:   %.loc15_14.1: ref @G.%T (%T) = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc15_14.2: @G.%T (%T) = bind_value %.loc15_14.1
 // CHECK:STDOUT:   return %.loc15_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
-// CHECK:STDOUT:   <unexpected>.inst+38 => constants.%Class.2
-// CHECK:STDOUT:   <unexpected>.inst+39 => constants.%.2
+// CHECK:STDOUT:   @Class.%Class => constants.%Class.2
+// CHECK:STDOUT:   @Class.%.1 => constants.%.2
 // CHECK:STDOUT:   <unexpected>.inst+40 => <unexpected>.inst+36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%T
+// CHECK:STDOUT:   @F.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+28) {
+// CHECK:STDOUT: specific @Class(@G.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class.%G.decl(constants.%T) {
+// CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+28 => constants.%T
-// CHECK:STDOUT:   <unexpected>.inst+29 => constants.%Class.2
+// CHECK:STDOUT:   @G.%T => constants.%T
+// CHECK:STDOUT:   @G.%Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(<unexpected>.inst+7) {
+// CHECK:STDOUT: specific @Class(@Class.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
@@ -236,11 +258,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %A.2: type = class_type @A, file.%A.decl(%T) [symbolic]
+// CHECK:STDOUT:   %A.2: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %B.type: type = generic_class_type @B [template]
 // CHECK:STDOUT:   %B.1: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %B.2: type = class_type @B, @A.%B.decl(%T, %N) [symbolic]
+// CHECK:STDOUT:   %B.2: type = class_type @B, @B(%T, %N) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -256,7 +278,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
-// CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = @A.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc10_6.1: type = param T
@@ -264,7 +286,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10_6.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %N.loc10_18.1: %T = param N
 // CHECK:STDOUT:     %N.loc10_18.2: %T = bind_symbolic_name N 1, %N.loc10_18.1 [symbolic = constants.%N]
-// CHECK:STDOUT:     %.loc10: type = specific_constant constants.%B.2, @A.%B.decl(constants.%T, constants.%N) [symbolic = constants.%B.2]
+// CHECK:STDOUT:     %.loc10: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc10 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %self.loc10_27.1: %B.2 = param self
 // CHECK:STDOUT:     @F.%self: %B.2 = bind_name self, %self.loc10_27.1
@@ -274,12 +296,18 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type] {
+// CHECK:STDOUT: generic @A(file.%T.loc4_9.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = <unexpected>.inst+17 (constants.%T)]
-// CHECK:STDOUT:     %N.loc5_11.1: <unexpected>.inst+17 (%T) = param N
-// CHECK:STDOUT:     %N.loc5_11.2: <unexpected>.inst+17 (%T) = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = <unexpected>.inst+18 (constants.%N)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = @B.%T (constants.%T)]
+// CHECK:STDOUT:     %N.loc5_11.1: @B.%T (%T) = param N
+// CHECK:STDOUT:     %N.loc5_11.2: @B.%T (%T) = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = @B.%N (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -287,16 +315,23 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: <unexpected>.inst+17 (%T)] {
+// CHECK:STDOUT: generic @B(file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @B.%T (%T)) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc6: type = specific_constant constants.%B.2, @A.%B.decl(constants.%T, constants.%N) [symbolic = <unexpected>.inst+32 (constants.%B.2)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc6 [symbolic = <unexpected>.inst+32 (constants.%B.2)]
-// CHECK:STDOUT:     %self.loc6_10.1: <unexpected>.inst+32 (%B.2) = param self
-// CHECK:STDOUT:     %self.loc6_10.2: <unexpected>.inst+32 (%B.2) = bind_name self, %self.loc6_10.1
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = <unexpected>.inst+30 (constants.%T)]
-// CHECK:STDOUT:     %a.loc6_22.1: <unexpected>.inst+30 (%T) = param a
-// CHECK:STDOUT:     %a.loc6_22.2: <unexpected>.inst+30 (%T) = bind_name a, %a.loc6_22.1
+// CHECK:STDOUT:     %.loc6: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = @F.%B (constants.%B.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc6 [symbolic = @F.%B (constants.%B.2)]
+// CHECK:STDOUT:     %self.loc6_10.1: @F.%B (%B.2) = param self
+// CHECK:STDOUT:     %self.loc6_10.2: @F.%B (%B.2) = bind_name self, %self.loc6_10.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:     %a.loc6_22.1: @F.%T (%T) = param a
+// CHECK:STDOUT:     %a.loc6_22.2: @F.%T (%T) = bind_name a, %a.loc6_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -304,38 +339,46 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %B.2](%a: %T)
-// CHECK:STDOUT:     generic [file.%T.loc4_9.2: type, @A.%N.loc5_11.2: <unexpected>.inst+17 (%T)] {
+// CHECK:STDOUT: generic @F(file.%T.loc4_9.2: type, @A.%N.loc5_11.2: @B.%T (%T)) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %B: type = class_type @B, @B(%T, %N) [symbolic = %B (constants.%B.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F[%self: %B.2](%a: %T) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%A.decl(constants.%T) {
+// CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @A.%T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.%B.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific @B(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+17 => constants.%T
-// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%N
+// CHECK:STDOUT:   @B.%T => constants.%T
+// CHECK:STDOUT:   @B.%N => constants.%N
 // CHECK:STDOUT:
 // CHECK:STDOUT: definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.%B.decl(<unexpected>.inst+30, <unexpected>.inst+31) {
+// CHECK:STDOUT: specific @B(@F.%T, @F.%N) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+17 => constants.%T
-// CHECK:STDOUT:   <unexpected>.inst+18 => constants.%N
+// CHECK:STDOUT:   @B.%T => constants.%T
+// CHECK:STDOUT:   @B.%N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.%F.decl(constants.%T, constants.%N) {
+// CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+30 => constants.%T
-// CHECK:STDOUT:   <unexpected>.inst+31 => constants.%N
-// CHECK:STDOUT:   <unexpected>.inst+32 => constants.%B.2
+// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   @F.%N => constants.%N
+// CHECK:STDOUT:   @F.%B => constants.%B.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_not_generic_vs_generic.carbon
@@ -361,7 +404,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %NotGeneric.decl: type = class_decl @NotGeneric [template = constants.%NotGeneric] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.loc15_15.1: type = param T
-// CHECK:STDOUT:     %T.loc15_15.2: type = bind_symbolic_name T 0, %T.loc15_15.1 [symbolic = <unexpected>.inst+14 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_15.2: type = bind_symbolic_name T 0, %T.loc15_15.1 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -375,15 +418,21 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [file.%T.loc15_15.2: type] {
+// CHECK:STDOUT: generic @.1(file.%T.loc15_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl(constants.%T) {
+// CHECK:STDOUT: specific @.1(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+14 => constants.%T
+// CHECK:STDOUT:   @.1.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_too_few_args.carbon
@@ -393,7 +442,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic.1: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, file.%Generic.decl(%T) [symbolic]
+// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %TooFew.type: type = fn_type @TooFew [template]
 // CHECK:STDOUT:   %TooFew: %TooFew.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -410,13 +459,19 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
-// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = @Generic.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
+// CHECK:STDOUT: generic @Generic(file.%T.loc4_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Generic {
 // CHECK:STDOUT:   %TooFew.decl: %TooFew.type = fn_decl @TooFew [template = constants.%TooFew] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -424,20 +479,23 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .TooFew = %TooFew.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooFew()
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type];
+// CHECK:STDOUT: generic @TooFew(file.%T.loc4_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @TooFew();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Generic.decl(constants.%T) {
+// CHECK:STDOUT: specific @Generic(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @Generic.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.%TooFew.decl(constants.%T) {
+// CHECK:STDOUT: specific @TooFew(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,7 +506,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic.1: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, file.%Generic.decl(%T) [symbolic]
+// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %TooMany.type: type = fn_type @TooMany [template]
 // CHECK:STDOUT:   %TooMany: %TooMany.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -466,18 +524,24 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
-// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = @Generic.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.loc15_12.1: type = param T
-// CHECK:STDOUT:     %T.loc15_12.2: type = bind_symbolic_name T 0, %T.loc15_12.1 [symbolic = <unexpected>.inst+22 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_12.2: type = bind_symbolic_name T 0, %T.loc15_12.1 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %U.loc15_22.1: type = param U
-// CHECK:STDOUT:     %U.loc15_22.2: type = bind_symbolic_name U 1, %U.loc15_22.1 [symbolic = <unexpected>.inst+23 (constants.%U)]
+// CHECK:STDOUT:     %U.loc15_22.2: type = bind_symbolic_name U 1, %U.loc15_22.1 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
+// CHECK:STDOUT: generic @Generic(file.%T.loc4_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Generic {
 // CHECK:STDOUT:   %TooMany.decl: %TooMany.type = fn_decl @TooMany [template = constants.%TooMany] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -485,28 +549,38 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .TooMany = %TooMany.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooMany()
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type];
+// CHECK:STDOUT: generic @TooMany(file.%T.loc4_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [file.%T.loc15_12.2: type, file.%U.loc15_22.2: type] {
+// CHECK:STDOUT: fn @TooMany();
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic @.1(file.%T.loc15_12.2: type, file.%U.loc15_22.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Generic.decl(constants.%T) {
+// CHECK:STDOUT: specific @Generic(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @Generic.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.%TooMany.decl(constants.%T) {
+// CHECK:STDOUT: specific @TooMany(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+22 => constants.%T
-// CHECK:STDOUT:   <unexpected>.inst+23 => constants.%U
+// CHECK:STDOUT:   @.1.%T => constants.%T
+// CHECK:STDOUT:   @.1.%U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_wrong_arg_type.carbon
@@ -516,7 +590,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic.1: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, file.%Generic.decl(%T.1) [symbolic]
+// CHECK:STDOUT:   %Generic.2: type = class_type @Generic, @Generic(%T.1) [symbolic]
 // CHECK:STDOUT:   %WrongType.type: type = fn_type @WrongType [template]
 // CHECK:STDOUT:   %WrongType: %WrongType.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -534,18 +608,24 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.loc4_15.1: type = param T
-// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = <unexpected>.inst+7 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T 0, %T.loc4_15.1 [symbolic = @Generic.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %.loc14_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc14_12.1: %.1 = param T
-// CHECK:STDOUT:     %T.loc14_12.2: %.1 = bind_symbolic_name T 0, %T.loc14_12.1 [symbolic = <unexpected>.inst+22 (constants.%T.2)]
+// CHECK:STDOUT:     %T.loc14_12.2: %.1 = bind_symbolic_name T 0, %T.loc14_12.1 [symbolic = @.1.%T (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Generic
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type] {
+// CHECK:STDOUT: generic @Generic(file.%T.loc4_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Generic {
 // CHECK:STDOUT:   %WrongType.decl: %WrongType.type = fn_decl @WrongType [template = constants.%WrongType] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -553,26 +633,35 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   .WrongType = %WrongType.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WrongType()
-// CHECK:STDOUT:     generic [file.%T.loc4_15.2: type];
+// CHECK:STDOUT: generic @WrongType(file.%T.loc4_15.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [file.%T.loc14_12.2: %.1] {
+// CHECK:STDOUT: fn @WrongType();
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic @.1(file.%T.loc14_12.2: %.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic = %T (constants.%T.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Generic.decl(constants.%T.1) {
+// CHECK:STDOUT: specific @Generic(constants.%T.1) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T.1
+// CHECK:STDOUT:   @Generic.%T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.%WrongType.decl(constants.%T.1) {
+// CHECK:STDOUT: specific @WrongType(constants.%T.1) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl(constants.%T.2) {
+// CHECK:STDOUT: specific @.1(constants.%T.2) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+22 => constants.%T.2
+// CHECK:STDOUT:   @.1.%T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

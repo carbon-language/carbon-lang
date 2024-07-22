@@ -95,10 +95,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, file.%Class.decl(%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
-// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, file.%CompleteClass.decl(%T) [symbolic]
+// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %CompleteClass.2, i32 [symbolic]
@@ -106,7 +106,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, file.%CompleteClass.decl(i32) [template]
+// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, @CompleteClass(i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -128,11 +128,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = <unexpected>.inst+7 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompleteClass.decl: %CompleteClass.type = class_decl @CompleteClass [template = constants.%CompleteClass.1] {
 // CHECK:STDOUT:     %T.loc6_21.1: type = param T
-// CHECK:STDOUT:     %T.loc6_21.2: type = bind_symbolic_name T 0, %T.loc6_21.1 [symbolic = <unexpected>.inst+15 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_21.2: type = bind_symbolic_name T 0, %T.loc6_21.1 [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, %CompleteClass.decl [template = constants.%CompleteClass.1]
@@ -146,15 +146,27 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class
-// CHECK:STDOUT:     generic [file.%T.loc4_13.2: type];
+// CHECK:STDOUT: generic @Class(file.%T.loc4_13.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @CompleteClass
-// CHECK:STDOUT:     generic [file.%T.loc6_21.2: type] {
+// CHECK:STDOUT: class @Class;
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic @CompleteClass(file.%T.loc6_21.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
+// CHECK:STDOUT:   %.1: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.2), i32 [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @CompleteClass {
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_32.loc7, %.loc7_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc7_8: <unexpected>.inst+41 (%.2) = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc7_8: @CompleteClass.%.1 (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -170,8 +182,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() -> i32
-// CHECK:STDOUT:     generic [file.%T.loc6_21.2: type] {
+// CHECK:STDOUT: generic @F.1(file.%T.loc6_21.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc8
@@ -179,28 +196,28 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Class.decl(constants.%T) {
+// CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+7 => constants.%T
+// CHECK:STDOUT:   @Class.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%CompleteClass.decl(constants.%T) {
+// CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+15 => constants.%T
+// CHECK:STDOUT:   @CompleteClass.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass.%F.decl(constants.%T) {
+// CHECK:STDOUT: specific @F.1(constants.%T) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%CompleteClass.decl(<unexpected>.inst+15) {
+// CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+15 => constants.%T
+// CHECK:STDOUT:   @CompleteClass.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%CompleteClass.decl(i32) {
+// CHECK:STDOUT: specific @CompleteClass(i32) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+15 => i32
+// CHECK:STDOUT:   @CompleteClass.%T => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- foo.impl.carbon
@@ -210,16 +227,16 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, <invalid>(i32) [template]
+// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, invalid(i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
@@ -293,9 +310,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return %.loc9_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(i32);
+// CHECK:STDOUT: specific invalid(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_foo.carbon
 // CHECK:STDOUT:
@@ -309,8 +326,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+28 [symbolic]
-// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, <invalid>(%T) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, <invalid>(i32) [template]
+// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, invalid(%T) [symbolic]
+// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, invalid(i32) [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -384,9 +401,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(i32);
+// CHECK:STDOUT: specific invalid(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_foo.carbon
 // CHECK:STDOUT:
@@ -400,8 +417,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+28 [symbolic]
-// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, <invalid>(%T) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, <invalid>(i32) [template]
+// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, invalid(%T) [symbolic]
+// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, invalid(i32) [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -470,9 +487,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %CompleteClass.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(i32);
+// CHECK:STDOUT: specific invalid(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_arg_mismatch.carbon
 // CHECK:STDOUT:
@@ -484,13 +501,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+19 [symbolic]
-// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, <invalid>(%.3) [template]
+// CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, invalid(%.3) [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %CompleteClass.4: type = class_type @CompleteClass, <invalid>(i32) [template]
+// CHECK:STDOUT:   %CompleteClass.4: type = class_type @CompleteClass, invalid(i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -549,11 +566,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %CompleteClass.4;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%.3);
+// CHECK:STDOUT: specific invalid(constants.%.3);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(i32);
+// CHECK:STDOUT: specific invalid(i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_foo.impl.carbon
 // CHECK:STDOUT:
@@ -563,10 +580,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+17 [symbolic]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, file.%.decl(%U) [symbolic]
+// CHECK:STDOUT:   %.3: type = class_type @.1, @.1(%U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -588,14 +605,20 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.loc9_13.1: type = param U
-// CHECK:STDOUT:     %U.loc9_13.2: type = bind_symbolic_name U 0, %U.loc9_13.1 [symbolic = <unexpected>.inst+19 (constants.%U)]
+// CHECK:STDOUT:     %U.loc9_13.2: type = bind_symbolic_name U 0, %U.loc9_13.1 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1
-// CHECK:STDOUT:     generic [file.%U.loc9_13.2: type] {
+// CHECK:STDOUT: generic @.1(file.%U.loc9_13.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc13: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:
@@ -604,10 +627,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   .x = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl(constants.%U) {
+// CHECK:STDOUT: specific @.1(constants.%U) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+19 => constants.%U
+// CHECK:STDOUT:   @.1.%U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -84,8 +84,11 @@ fn F(c: C) {
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@I.%Self: %.1];
+// CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: %C) {
 // CHECK:STDOUT: !entry:
@@ -96,7 +99,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
+// CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

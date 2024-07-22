@@ -151,14 +151,6 @@ class FormatterImpl {
     Indent(-2);
   }
 
-  // Wraps the current line, prior to some text that we expect to be quite long
-  // and more readable on a separate line. This is indented two levels more than
-  // the ambient text.
-  auto WrapLine() -> void {
-    out_ << '\n';
-    Indent(4);
-  }
-
   auto FormatConstants() -> void {
     if (!sem_ir_.constants().size()) {
       return;
@@ -188,13 +180,10 @@ class FormatterImpl {
 
   auto FormatClass(ClassId id) -> void {
     const Class& class_info = sem_ir_.classes().Get(id);
+    FormatGeneric(class_info.generic_id);
 
     out_ << "\nclass ";
     FormatClassName(id);
-
-    if (class_info.generic_id.is_valid()) {
-      FormatGeneric(class_info.generic_id);
-    }
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -212,13 +201,10 @@ class FormatterImpl {
 
   auto FormatInterface(InterfaceId id) -> void {
     const Interface& interface_info = sem_ir_.interfaces().Get(id);
+    FormatGeneric(interface_info.generic_id);
 
     out_ << "\ninterface ";
     FormatInterfaceName(id);
-
-    if (interface_info.generic_id.is_valid()) {
-      FormatGeneric(interface_info.generic_id);
-    }
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -283,6 +269,7 @@ class FormatterImpl {
 
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
+    FormatGeneric(fn.generic_id);
 
     out_ << "\n";
 
@@ -323,10 +310,6 @@ class FormatterImpl {
       out_ << "\"";
     }
 
-    if (fn.generic_id.is_valid()) {
-      FormatGeneric(fn.generic_id);
-    }
-
     if (!fn.body_block_ids.empty()) {
       out_ << ' ';
       OpenBrace();
@@ -347,14 +330,31 @@ class FormatterImpl {
   }
 
   auto FormatGeneric(GenericId generic_id) -> void {
-    const auto& generic = sem_ir_.generics().Get(generic_id);
+    if (!generic_id.is_valid()) {
+      return;
+    }
 
-    WrapLine();
-    out_ << "generic [";
+    const auto& generic = sem_ir_.generics().Get(generic_id);
+    out_ << "\ngeneric ";
+    FormatGenericName(generic_id);
+
+    llvm::SaveAndRestore generic_scope(scope_, inst_namer_->GetScopeFor(generic_id));
+
+    out_ << "(";
     FormatParamList(generic.bindings_id);
-    out_ << "]";
-    // TODO: Format at least the portions of the declaration and definition
-    // blocks that don't duplicate portions of the generic body.
+    out_ << ") ";
+
+    OpenBrace();
+    IndentLabel();
+    out_ << "declaration:\n";
+    FormatCodeBlock(generic.decl_block_id);
+    if (generic.definition_block_id.is_valid()) {
+      IndentLabel();
+      out_ << "definition:\n";
+      FormatCodeBlock(generic.definition_block_id);
+    }
+    CloseBrace();
+    out_ << '\n';
   }
 
   auto FormatSpecificRegion(const Generic& generic,
@@ -948,17 +948,13 @@ class FormatterImpl {
     out_ << inst_namer_->GetNameFor(id);
   }
 
+  auto FormatGenericName(GenericId id) -> void {
+    out_ << inst_namer_->GetNameFor(id);
+  }
+
   auto FormatSpecificName(GenericInstanceId id) -> void {
     const auto& specific = sem_ir_.generic_instances().Get(id);
-    // TODO: We don't yet import generics properly, and instead form specifics
-    // with an invalid generic ID. In this case, just print a placeholder for
-    // now. Once import works, we can remove this code.
-    if (!specific.generic_id.is_valid()) {
-      out_ << "<invalid>";
-    } else {
-      const Generic& generic = sem_ir_.generics().Get(specific.generic_id);
-      FormatInstName(generic.decl_id);
-    }
+    FormatGenericName(specific.generic_id);
     FormatArg(specific.args_id);
   }
 

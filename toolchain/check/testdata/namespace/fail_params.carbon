@@ -84,7 +84,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %T.loc39_6.1: type = param T
-// CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = <unexpected>.inst+31 (constants.%T)]
+// CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,14 +95,20 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [file.%T.loc39_6.2: type] {
+// CHECK:STDOUT: generic @.1(file.%T.loc39_6.2: type) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%.decl(constants.%T) {
+// CHECK:STDOUT: specific @.1(constants.%T) {
 // CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   <unexpected>.inst+31 => constants.%T
+// CHECK:STDOUT:   @.1.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

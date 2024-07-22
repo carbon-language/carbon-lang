@@ -57,23 +57,33 @@ interface Modifiers {
 // CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Final()
-// CHECK:STDOUT:     generic [@Modifiers.%Self: %.1] {
+// CHECK:STDOUT: generic @Final(@Modifiers.%Self: %.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Final() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Default()
-// CHECK:STDOUT:     generic [@Modifiers.%Self: %.1] {
+// CHECK:STDOUT: generic @Default(@Modifiers.%Self: %.1) {
+// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:
+// CHECK:STDOUT: definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Default() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Modifiers.%Final.decl(constants.%Self) {
+// CHECK:STDOUT: specific @Final(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Modifiers.%Default.decl(constants.%Self) {
+// CHECK:STDOUT: specific @Default(constants.%Self) {
 // CHECK:STDOUT: declaration:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
