@@ -47,7 +47,8 @@ static auto AddGenericConstantInstToEvalBlock(
 namespace {
 // Substitution callbacks to rebuild a generic constant in the eval block for a
 // generic region.
-class RebuildGenericConstantInEvalBlockCallbacks final : public SubstInstCallbacks {
+class RebuildGenericConstantInEvalBlockCallbacks final
+    : public SubstInstCallbacks {
  public:
   RebuildGenericConstantInEvalBlockCallbacks(
       Context& context, SemIR::GenericId generic_id,
@@ -102,8 +103,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final : public SubstInstCallbac
     // operand of this instruction has the same constant value.
     auto result = constants_in_generic_.Insert(const_inst_id, [&] {
       // TODO: Add a function on `Context` to add the instruction without
-      // inserting it into the dependent instructions list or computing a constant
-      // value for it.
+      // inserting it into the dependent instructions list or computing a
+      // constant value for it.
       auto inst_id = context_.sem_ir().insts().AddInNoBlock(
           SemIR::LocIdAndInst::NoLoc(new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(

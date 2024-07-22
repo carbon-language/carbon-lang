@@ -338,7 +338,8 @@ class FormatterImpl {
     out_ << "\ngeneric ";
     FormatGenericName(generic_id);
 
-    llvm::SaveAndRestore generic_scope(scope_, inst_namer_->GetScopeFor(generic_id));
+    llvm::SaveAndRestore generic_scope(scope_,
+                                       inst_namer_->GetScopeFor(generic_id));
 
     out_ << "(";
     FormatParamList(generic.bindings_id);
