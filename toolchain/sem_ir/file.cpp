@@ -145,7 +145,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("import_irs", import_irs_.OutputYaml());
           map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
-          map.Add("bind_names", bind_names_.OutputYaml());
+          map.Add("entity_names", entity_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("generics", generics_.OutputYaml());
@@ -191,7 +191,8 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "bind_names_"), bind_names_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
+                    entity_names_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
@@ -296,9 +297,10 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case BindAlias::Kind:
       case BindSymbolicName::Kind:
       case ExportDecl::Kind: {
-        auto name_id = untyped_inst.As<AnyBindNameOrExportDecl>().bind_name_id;
+        auto name_id =
+            untyped_inst.As<AnyBindNameOrExportDecl>().entity_name_id;
         out << sem_ir.names().GetFormatted(
-            sem_ir.bind_names().Get(name_id).name_id);
+            sem_ir.entity_names().Get(name_id).name_id);
         break;
       }
       case CARBON_KIND(ClassType inst): {

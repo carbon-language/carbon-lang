@@ -237,7 +237,7 @@ struct AnyBindName {
 
   InstKind kind;
   TypeId type_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
   InstId value_id;
 };
 
@@ -250,7 +250,7 @@ struct AnyBindNameOrExportDecl {
 
   InstKind kind;
   TypeId type_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
   InstId value_id;
 };
 
@@ -260,7 +260,7 @@ struct BindAlias {
       InstKind::BindAlias.Define<Parse::NodeId>({.ir_name = "bind_alias"});
 
   TypeId type_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
   InstId value_id;
 };
 
@@ -271,7 +271,7 @@ struct BindName {
       InstKind::BindName.Define<Parse::NodeId>({.ir_name = "bind_name"});
 
   TypeId type_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
   // The value is inline in the inst so that value access doesn't require an
   // indirection.
   InstId value_id;
@@ -285,7 +285,7 @@ struct BindSymbolicName {
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
   InstId value_id;
 };
 
@@ -501,7 +501,7 @@ struct ExportDecl {
       InstKind::ExportDecl.Define<Parse::NodeId>({.ir_name = "export"});
 
   TypeId type_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
   // The exported entity.
   InstId value_id;
 };
@@ -635,7 +635,7 @@ struct AnyImportRef {
   ImportIRInstId import_ir_inst_id;
   // A BindName is currently only set on directly imported names. It is not
   // generically available.
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
 };
 
 // An imported entity that is not yet been loaded.
@@ -646,7 +646,7 @@ struct ImportRefUnloaded {
           {.ir_name = "import_ref", .is_lowered = false});
 
   ImportIRInstId import_ir_inst_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
 };
 
 // A imported entity that is loaded, and may be used.
@@ -658,7 +658,7 @@ struct ImportRefLoaded {
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
-  BindNameId bind_name_id;
+  EntityNameId entity_name_id;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression

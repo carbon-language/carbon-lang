@@ -34,7 +34,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Alias>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
 
-  auto bind_name_id = context.bind_names().Add(
+  auto entity_name_id = context.entity_names().Add(
       {.name_id = name_context.name_id_for_new_inst(),
        .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
        .bind_index = SemIR::CompileTimeBindIndex::Invalid});
@@ -61,7 +61,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   }
   auto alias_id = context.AddInst<SemIR::BindAlias>(
       name_context.loc_id, {.type_id = alias_type_id,
-                            .bind_name_id = bind_name_id,
+                            .entity_name_id = entity_name_id,
                             .value_id = alias_value_id});
 
   // Add the name of the binding to the current scope.
