@@ -271,13 +271,44 @@ To try out Carbon, you can use the Carbon explorer to interpret Carbon code and
 print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-Because Carbon is an early, experimental project we don't yet have releases you
-can download and try out locally, you'll instead need to build any tools
-yourself from source. We expect to have packaged releases you can try out when
-we reach our
+Carbon is an early, experimental project, and so we only have very experimental
+nightly releases of the Carbon toolchain available to download, and only on
+limited platforms. If you are using a recent Ubuntu Linux or similar (Debian,
+WSL, etc.), you can try these out by going to our
+[releases](https://github.com/carbon-language/carbon-lang/releases) page and
+download the latest nightly toolchain tar file:
+`carbon_toolchain-v0.0.0-0.nightly.YYYY.MM.DD.tar.gz`. Then you can try it out:
+
+```shell
+# A variable with the specific nightly version:
+VERSION="v0.0.0-0.nightly.YYYY.MM.DD"
+
+# Unpack the toolchain:
+tar -xvf carbon_toolchain-${VERSION}.tar.gz
+
+# Create a simple Carbon source file:
+echo "fn Run() { Print(42); }" > forty_two.carbon
+
+# Compile to an object file:
+./carbon_toolchain-${VERSION}/bin/carbon compile \
+  --output=forty_two.o forty_two.carbon
+
+# Link to an executable:
+./carbon_toolchain-${VERSION}/bin/carbon link \
+  --output=forty_two forty_two.o
+
+# Run it:
+./forty_two
+```
+
+However, the toolchain is still very early and many things don't yet work.
+Please hold off on filing lots of bugs, we know many parts of this don't work
+yet or may not work on all systems. We expect to have releases that are much
+more robust and reliable that you can try out when we reach our
 [0.1 milestone](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation).
 
-If you do want to try out Carbon locally, you'll need to install our
+If you do want to build Carbon's toolchain yourself and maybe contribute fixes
+or improvements to Carbon, you'll need to install our
 [build dependencies](/docs/project/contribution_tools.md#setup-commands) (Bazel,
 Clang, LLD, libc++) and check out the Carbon repository, for example on Debian
 or Ubuntu:
