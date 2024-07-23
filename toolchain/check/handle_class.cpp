@@ -93,6 +93,8 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   }
 
   if (new_is_definition) {
+    prev_class.first_param_node_id = new_class.first_param_node_id;
+    prev_class.last_param_node_id = new_class.last_param_node_id;
     prev_class.implicit_param_refs_id = new_class.implicit_param_refs_id;
     prev_class.param_refs_id = new_class.param_refs_id;
     prev_class.definition_id = new_class.definition_id;
@@ -225,6 +227,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .name_id = name_context.name_id_for_new_inst(),
       .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
       .generic_id = SemIR::GenericId::Invalid,
+      .first_param_node_id = name.first_param_node_id,
+      .last_param_node_id = name.last_param_node_id,
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       // `.self_type_id` depends on the ClassType, so is set below.

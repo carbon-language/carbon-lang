@@ -54,7 +54,8 @@ static auto CheckAssociatedFunctionImplementation(
   // synthesize a suitable thunk.
   if (!CheckFunctionTypeMatches(
           context, context.functions().Get(impl_function_decl->function_id),
-          context.functions().Get(interface_function_id), substitutions)) {
+          context.functions().Get(interface_function_id), substitutions,
+          /*check_syntax=*/false)) {
     return SemIR::InstId::BuiltinError;
   }
   return impl_decl_id;

@@ -366,8 +366,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     return InvalidResult;
   }
 
-  auto new_params =
-      DeclParams(name.name_loc_id, name.implicit_params_id, name.params_id);
+  auto new_params = DeclParams(name.name_loc_id, name.first_param_node_id,
+                               name.last_param_node_id, name.implicit_params_id,
+                               name.params_id);
 
   // Find the scope corresponding to the resolved instruction.
   CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
@@ -404,10 +405,11 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
-      if (!CheckRedeclParamsMatch(*context_, new_params,
-                                  DeclParams(name_context.resolved_inst_id,
-                                             SemIR::InstBlockId::Invalid,
-                                             SemIR::InstBlockId::Invalid))) {
+      if (!CheckRedeclParamsMatch(
+              *context_, new_params,
+              DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,
+                         Parse::NodeId::Invalid, SemIR::InstBlockId::Invalid,
+                         SemIR::InstBlockId::Invalid))) {
         return InvalidResult;
       }
       if (scope.is_closed_import) {

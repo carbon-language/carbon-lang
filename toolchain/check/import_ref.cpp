@@ -909,6 +909,8 @@ class ImportRefResolver {
         // importing the parameters.
         .parent_scope_id = SemIR::NameScopeId::Invalid,
         .generic_id = generic_id,
+        .first_param_node_id = Parse::NodeId::Invalid,
+        .last_param_node_id = Parse::NodeId::Invalid,
         .implicit_param_refs_id = import_class.implicit_param_refs_id.is_valid()
                                       ? SemIR::InstBlockId::Empty
                                       : SemIR::InstBlockId::Invalid,
@@ -1143,6 +1145,8 @@ class ImportRefResolver {
          .parent_scope_id = parent_scope_id,
          .decl_id = function_decl_id,
          .generic_id = generic_id,
+         .first_param_node_id = Parse::NodeId::Invalid,
+         .last_param_node_id = Parse::NodeId::Invalid,
          .implicit_param_refs_id = GetLocalParamRefsId(
              function.implicit_param_refs_id, implicit_param_const_ids),
          .param_refs_id =
@@ -1249,6 +1253,8 @@ class ImportRefResolver {
         // importing the parameters.
         .parent_scope_id = SemIR::NameScopeId::Invalid,
         .generic_id = generic_id,
+        .first_param_node_id = Parse::NodeId::Invalid,
+        .last_param_node_id = Parse::NodeId::Invalid,
         .implicit_param_refs_id =
             import_interface.implicit_param_refs_id.is_valid()
                 ? SemIR::InstBlockId::Empty

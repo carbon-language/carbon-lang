@@ -9,15 +9,40 @@
 namespace Carbon::Check {
 
 auto PopNameComponent(Context& context) -> NameComponent {
+  Parse::NodeId first_param_node_id = Parse::InvalidNodeId();
+  Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
+
+  // Explicit params.
   auto [params_loc_id, params_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+  if (params_id) {
+    first_param_node_id =
+        context.node_stack()
+            .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
+    last_param_node_id = params_loc_id;
+  }
+
+  // Implicit params.
   auto [implicit_params_loc_id, implicit_params_id] =
       context.node_stack()
           .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
+  if (implicit_params_id) {
+    // Implicit params always come before explicit params.
+    first_param_node_id =
+        context.node_stack()
+            .PopForSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
+    // Only use the end of implicit params if there weren't explicit params.
+    if (last_param_node_id.is_valid()) {
+      last_param_node_id = params_loc_id;
+    }
+  }
+
   auto [name_loc_id, name_id] = context.node_stack().PopNameWithNodeId();
   return {
       .name_loc_id = name_loc_id,
       .name_id = name_id,
+      .first_param_node_id = first_param_node_id,
+      .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_params_id =
           implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
