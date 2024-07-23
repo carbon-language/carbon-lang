@@ -804,8 +804,9 @@ static auto DiagnoseMissingDefinitions(Context& context,
         break;
       }
       case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-        if (context.functions().Get(function_decl.function_id).definition_id ==
-            SemIR::InstId::Invalid) {
+        if (context.functions()
+                .Get(function_decl.function_id)
+                .base.definition_id == SemIR::InstId::Invalid) {
           emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;

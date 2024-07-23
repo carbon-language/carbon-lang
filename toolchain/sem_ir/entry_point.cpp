@@ -15,8 +15,8 @@ auto IsEntryPoint(const SemIR::File& file, SemIR::FunctionId function_id)
   // TODO: Check if `file` is in the `Main` package.
   const auto& function = file.functions().Get(function_id);
   // TODO: Check if `function` is in a namespace.
-  return function.name_id.is_valid() &&
-         file.names().GetAsStringIfIdentifier(function.name_id) ==
+  return function.base.name_id.is_valid() &&
+         file.names().GetAsStringIfIdentifier(function.base.name_id) ==
              EntryPointFunction;
 }
 

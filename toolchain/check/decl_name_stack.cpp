@@ -371,11 +371,14 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                name.params_id);
 
   // Find the scope corresponding to the resolved instruction.
+  // TODO: When diagnosing qualifiers on names, print a diagnostic that talks
+  // about qualifiers instead of redeclarations. Maybe also rename
+  // CheckRedeclParamsMatch.
   CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       const auto& class_info = context_->classes().Get(class_decl.class_id);
       if (!CheckRedeclParamsMatch(*context_, new_params,
-                                  DeclParams(class_info))) {
+                                  DeclParams(class_info.base))) {
         return InvalidResult;
       }
       if (!class_info.is_defined()) {
@@ -384,13 +387,13 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         return InvalidResult;
       }
       return {class_info.scope_id,
-              context_->generics().GetSelfInstance(class_info.generic_id)};
+              context_->generics().GetSelfInstance(class_info.base.generic_id)};
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       const auto& interface_info =
           context_->interfaces().Get(interface_decl.interface_id);
       if (!CheckRedeclParamsMatch(*context_, new_params,
-                                  DeclParams(interface_info))) {
+                                  DeclParams(interface_info.base))) {
         return InvalidResult;
       }
       if (!interface_info.is_defined()) {
@@ -399,12 +402,13 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
             name_context.resolved_inst_id);
         return InvalidResult;
       }
-      return {interface_info.scope_id,
-              context_->generics().GetSelfInstance(interface_info.generic_id)};
+      return {interface_info.scope_id, context_->generics().GetSelfInstance(
+                                           interface_info.base.generic_id)};
     }
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
+      // This is specifically for qualified name handling.
       if (!CheckRedeclParamsMatch(
               *context_, new_params,
               DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,

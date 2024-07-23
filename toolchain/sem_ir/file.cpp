@@ -291,7 +291,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
           push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
         } else {
           auto interface_name_id =
-              sem_ir.interfaces().Get(inst.interface_id).name_id;
+              sem_ir.interfaces().Get(inst.interface_id).base.name_id;
           out << " in " << sem_ir.names().GetFormatted(interface_name_id)
               << ">";
         }
@@ -307,7 +307,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         break;
       }
       case CARBON_KIND(ClassType inst): {
-        auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
+        auto class_name_id = sem_ir.classes().Get(inst.class_id).base.name_id;
         out << sem_ir.names().GetFormatted(class_name_id);
         break;
       }
@@ -350,25 +350,25 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         break;
       }
       case CARBON_KIND(FunctionType inst): {
-        auto fn_name_id = sem_ir.functions().Get(inst.function_id).name_id;
+        auto fn_name_id = sem_ir.functions().Get(inst.function_id).base.name_id;
         out << "<type of " << sem_ir.names().GetFormatted(fn_name_id) << ">";
         break;
       }
       case CARBON_KIND(GenericClassType inst): {
-        auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
+        auto class_name_id = sem_ir.classes().Get(inst.class_id).base.name_id;
         out << "<type of " << sem_ir.names().GetFormatted(class_name_id) << ">";
         break;
       }
       case CARBON_KIND(GenericInterfaceType inst): {
         auto interface_name_id =
-            sem_ir.interfaces().Get(inst.interface_id).name_id;
+            sem_ir.interfaces().Get(inst.interface_id).base.name_id;
         out << "<type of " << sem_ir.names().GetFormatted(interface_name_id)
             << ">";
         break;
       }
       case CARBON_KIND(InterfaceType inst): {
         auto interface_name_id =
-            sem_ir.interfaces().Get(inst.interface_id).name_id;
+            sem_ir.interfaces().Get(inst.interface_id).base.name_id;
         out << sem_ir.names().GetFormatted(interface_name_id);
         break;
       }

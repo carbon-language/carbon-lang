@@ -104,25 +104,20 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
-                       {.loc = new_loc,
-                        .is_definition = new_is_definition,
-                        .is_extern = new_function.is_extern},
-                       {.loc = prev_function.definition_id.is_valid()
-                                   ? prev_function.definition_id
-                                   : prev_function.decl_id,
-                        .is_definition = prev_function.definition_id.is_valid(),
-                        .is_extern = prev_function.is_extern},
-                       prev_import_ir_id);
+  CheckIsAllowedRedecl(
+      context, Lex::TokenKind::Fn, prev_function.base.name_id,
+      {.loc = new_loc,
+       .is_definition = new_is_definition,
+       .is_extern = new_function.is_extern},
+      {.loc = prev_function.base.latest_decl_id(),
+       .is_definition = prev_function.base.definition_id.is_valid(),
+       .is_extern = prev_function.is_extern},
+      prev_import_ir_id);
 
   if (new_is_definition) {
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
-    prev_function.definition_id = new_function.definition_id;
-    prev_function.first_param_node_id = new_function.first_param_node_id;
-    prev_function.last_param_node_id = new_function.last_param_node_id;
-    prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
-    prev_function.param_refs_id = new_function.param_refs_id;
+    prev_function.base.MergeDefinition(new_function.base);
     prev_function.return_storage_id = new_function.return_storage_id;
   }
   // The new function might have return slot information if it was imported.
@@ -131,9 +126,10 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
-    prev_function.decl_id = new_function.decl_id;
-    ReplacePrevInstForMerge(context, prev_function.parent_scope_id,
-                            prev_function.name_id, new_function.decl_id);
+    prev_function.base.decl_id = new_function.base.decl_id;
+    ReplacePrevInstForMerge(context, prev_function.base.parent_scope_id,
+                            prev_function.base.name_id,
+                            new_function.base.decl_id);
   }
   return true;
 }
@@ -182,7 +178,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.is_valid()) {
-    context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
+    context.DiagnoseDuplicateName(function_info.base.decl_id, prev_id);
     return;
   }
 
@@ -251,19 +247,12 @@ static auto BuildFunctionDecl(Context& context,
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
   auto function_info = SemIR::Function{
-      .name_id = name_context.name_id_for_new_inst(),
-      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-      .decl_id = decl_id,
-      .generic_id = SemIR::GenericId::Invalid,
-      .first_param_node_id = name.first_param_node_id,
-      .last_param_node_id = name.last_param_node_id,
-      .implicit_param_refs_id = name.implicit_params_id,
-      .param_refs_id = name.params_id,
+      .base = name_context.MakeEntityWithParamsBase(decl_id, name),
       .return_storage_id = return_storage_id,
       .is_extern = is_extern,
       .return_slot = return_slot};
   if (is_definition) {
-    function_info.definition_id = decl_id;
+    function_info.base.definition_id = decl_id;
   }
 
   TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
@@ -271,10 +260,10 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
-    function_info.generic_id = FinishGenericDecl(context, decl_id);
+    function_info.base.generic_id = FinishGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
-    FinishGenericRedecl(context, decl_id, function_info.generic_id);
+    FinishGenericRedecl(context, decl_id, function_info.base.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
   function_decl.type_id = context.GetFunctionType(
@@ -288,7 +277,7 @@ static auto BuildFunctionDecl(Context& context,
   if (!name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
-    auto lookup_result_id = function_info.decl_id;
+    auto lookup_result_id = function_info.base.decl_id;
     if (parent_scope_inst && !name_context.has_qualifiers) {
       if (auto interface_scope =
               parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
@@ -304,9 +293,9 @@ static auto BuildFunctionDecl(Context& context,
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (function_info.implicit_param_refs_id.is_valid() ||
-        !function_info.param_refs_id.is_valid() ||
-        !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
+    if (function_info.base.implicit_param_refs_id.is_valid() ||
+        !function_info.base.param_refs_id.is_valid() ||
+        !context.inst_blocks().Get(function_info.base.param_refs_id).empty() ||
         (return_type_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
@@ -352,8 +341,9 @@ static auto HandleFunctionDefinitionAfterSignature(
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<const SemIR::InstId>(
-           context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
-           context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
+           context.inst_blocks().GetOrEmpty(
+               function.base.implicit_param_refs_id),
+           context.inst_blocks().GetOrEmpty(function.base.param_refs_id))) {
     auto param = context.insts().Get(param_id);
 
     // Find the parameter in the pattern.
@@ -431,7 +421,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
 
   // If this is a generic function, collect information about the definition.
   auto& function = context.functions().Get(function_id);
-  FinishGenericDefinition(context, function.generic_id);
+  FinishGenericDefinition(context, function.base.generic_id);
 
   return true;
 }
@@ -477,8 +467,9 @@ static auto IsValidBuiltinDeclaration(Context& context,
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
   auto implicit_param_refs =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().GetOrEmpty(function.param_refs_id);
+      context.inst_blocks().GetOrEmpty(function.base.implicit_param_refs_id);
+  auto param_refs =
+      context.inst_blocks().GetOrEmpty(function.base.param_refs_id);
   param_type_ids.reserve(implicit_param_refs.size() + param_refs.size());
   for (auto param_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {

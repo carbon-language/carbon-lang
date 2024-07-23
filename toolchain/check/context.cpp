@@ -188,14 +188,15 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
-  if (class_info.definition_id.is_valid()) {
+  if (class_info.base.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "Class is incomplete within its definition.");
-    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+    builder.Note(class_info.base.definition_id,
+                 ClassIncompleteWithinDefinition);
   } else {
     CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
                       "Class was forward declared here.");
-    builder.Note(class_info.decl_id, ClassForwardDeclaredHere);
+    builder.Note(class_info.base.decl_id, ClassForwardDeclaredHere);
   }
 }
 
@@ -206,12 +207,12 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
   if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
                       "Interface is currently being defined.");
-    builder.Note(interface_info.definition_id,
+    builder.Note(interface_info.base.definition_id,
                  InterfaceUndefinedWithinDefinition);
   } else {
     CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
                       "Interface was forward declared here.");
-    builder.Note(interface_info.decl_id, InterfaceForwardDeclaredHere);
+    builder.Note(interface_info.base.decl_id, InterfaceForwardDeclaredHere);
   }
 }
 

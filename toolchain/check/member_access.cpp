@@ -88,7 +88,7 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
-       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_refs_id)) {
+       sem_ir.inst_blocks().GetOrEmpty(function.base.implicit_param_refs_id)) {
     auto param =
         SemIR::Function::GetParamFromParamRefId(sem_ir, param_id).second;
     if (param.name_id == SemIR::NameId::SelfValue) {
@@ -173,7 +173,7 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
                       "that does not implement that interface.",
                       SemIR::NameId, std::string);
     context.emitter().Emit(node_id, MissingImplInMemberAccess,
-                           interface.name_id,
+                           interface.base.name_id,
                            context.sem_ir().StringifyType(type_const_id));
     return SemIR::InstId::BuiltinError;
   }

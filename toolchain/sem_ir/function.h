@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -28,8 +29,7 @@ struct Function : public Printable<Function> {
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
-        << ", param_refs: " << param_refs_id;
+    out << "{base: " << base;
     if (return_storage_id.is_valid()) {
       out << ", return_storage: " << return_storage_id;
       out << ", return_slot: ";
@@ -84,26 +84,12 @@ struct Function : public Printable<Function> {
     return return_slot == ReturnSlot::Present;
   }
 
+  // Common entity fields.
+  EntityWithParamsBase base;
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
-  // The function name.
-  NameId name_id;
-  // The parent scope.
-  NameScopeId parent_scope_id;
-  // The first declaration of the function. This is a FunctionDecl.
-  InstId decl_id;
-  // If this is a generic function, information about the generic.
-  GenericId generic_id;
-  // Parse tree bounds for the parameters, including both implicit and explicit
-  // parameters. These will be compared to match between declaration and
-  // definition.
-  Parse::NodeId first_param_node_id;
-  Parse::NodeId last_param_node_id;
-  // A block containing a single reference instruction per implicit parameter.
-  InstBlockId implicit_param_refs_id;
-  // A block containing a single reference instruction per parameter.
-  InstBlockId param_refs_id;
   // The storage for the return value, which is a reference expression whose
   // type is the return type of the function. This may or may not be used by the
   // function, depending on whether the return type needs a return slot, but is
@@ -123,12 +109,6 @@ struct Function : public Printable<Function> {
 
   // If this is a builtin function, the corresponding builtin kind.
   BuiltinFunctionKind builtin_function_kind = BuiltinFunctionKind::None;
-
-  // The following members are set at the `{` of the function definition.
-
-  // The definition, if the function has been defined or is currently being
-  // defined. This is a FunctionDecl.
-  InstId definition_id = InstId::Invalid;
 
   // The following members are accumulated throughout the function definition.
 

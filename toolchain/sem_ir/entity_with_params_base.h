@@ -1,0 +1,66 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_BASE_H_
+#define CARBON_TOOLCHAIN_SEM_IR_ENTITY_BASE_H_
+
+#include "toolchain/sem_ir/ids.h"
+
+namespace Carbon::SemIR {
+
+struct EntityWithParamsBase : Printable<EntityWithParamsBase> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
+  }
+
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const EntityWithParamsBase& definition) -> void {
+    first_param_node_id = definition.first_param_node_id;
+    last_param_node_id = definition.last_param_node_id;
+    implicit_param_refs_id = definition.implicit_param_refs_id;
+    param_refs_id = definition.param_refs_id;
+    definition_id = definition.definition_id;
+  }
+
+  // Returns the instruction for the latest declaration.
+  auto latest_decl_id() const -> SemIR::InstId {
+    return definition_id.is_valid() ? definition_id : decl_id;
+  }
+
+  // Determines whether this is a generic entity.
+  auto is_generic() const -> bool {
+    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+  }
+
+  // The following members always have values, and do not change throughout the
+  // lifetime of the entity.
+
+  // The class name.
+  NameId name_id;
+  // The parent scope.
+  NameScopeId parent_scope_id;
+  // If this is a generic function, information about the generic.
+  GenericId generic_id;
+  // Parse tree bounds for the parameters, including both implicit and explicit
+  // parameters. These will be compared to match between declaration and
+  // definition.
+  Parse::NodeId first_param_node_id;
+  Parse::NodeId last_param_node_id;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
+  // The first declaration of the entity. This will be a <entity>Decl.
+  InstId decl_id = InstId::Invalid;
+
+  // The following members are set at the `{` of the definition.
+
+  // The first declaration of the entity. This will be a <entity>Decl.
+  InstId definition_id = InstId::Invalid;
+};
+
+}  // namespace Carbon::SemIR
+
+#endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_BASE_H_
