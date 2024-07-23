@@ -29,12 +29,11 @@ struct SuspendedFunction {
 // Checks that `new_function` has the same parameter types and return type as
 // `prev_function`, applying the specified set of substitutions to the
 // previous function. Prints a suitable diagnostic and returns false if not.
-// Note that this doesn't include the syntactic check that's performed for
-// redeclarations.
 auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
-                              Substitutions substitutions) -> bool;
+                              Substitutions substitutions, bool check_syntax)
+    -> bool;
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if

@@ -62,7 +62,8 @@ static auto BuildInterfaceDecl(Context& context,
       // now we just check the generic parameters match.
       if (CheckRedeclParamsMatch(
               context,
-              DeclParams(interface_decl_id, name.implicit_params_id,
+              DeclParams(interface_decl_id, name.first_param_node_id,
+                         name.last_param_node_id, name.implicit_params_id,
                          name.params_id),
               DeclParams(context.interfaces().Get(
                   existing_interface_decl->interface_id)))) {
@@ -90,6 +91,8 @@ static auto BuildInterfaceDecl(Context& context,
         .name_id = name_context.name_id_for_new_inst(),
         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
         .generic_id = generic_id,
+        .first_param_node_id = name.first_param_node_id,
+        .last_param_node_id = name.last_param_node_id,
         .implicit_param_refs_id = name.implicit_params_id,
         .param_refs_id = name.params_id,
         .decl_id = interface_decl_id};

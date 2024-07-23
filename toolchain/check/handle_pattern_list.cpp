@@ -16,10 +16,10 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
+  // Note the Start node remains on the stack, where the param list handler can
+  // make use of it.
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::ImplicitParamListStart);
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
   context.node_stack().Push(node_id, refs_id);
   // The implicit parameter list's scope extends to the end of the following
   // parameter list.
@@ -40,10 +40,10 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
+  // Note the Start node remains on the stack, where the param list handler can
+  // make use of it.
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
   context.node_stack().Push(node_id, refs_id);
   return true;
 }

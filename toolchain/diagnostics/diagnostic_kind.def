@@ -165,6 +165,8 @@ CARBON_DIAGNOSTIC_KIND(RedeclParamCountDiffers)
 CARBON_DIAGNOSTIC_KIND(RedeclParamCountPrevious)
 CARBON_DIAGNOSTIC_KIND(RedeclParamDiffers)
 CARBON_DIAGNOSTIC_KIND(RedeclParamPrevious)
+CARBON_DIAGNOSTIC_KIND(RedeclParamSyntaxDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamSyntaxPrevious)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)

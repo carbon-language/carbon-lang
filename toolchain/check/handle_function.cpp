@@ -99,7 +99,8 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                                 SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function, {})) {
+  if (!CheckFunctionTypeMatches(context, new_function, prev_function, {},
+                                /*check_syntax=*/true)) {
     return false;
   }
 
@@ -118,6 +119,8 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.definition_id = new_function.definition_id;
+    prev_function.first_param_node_id = new_function.first_param_node_id;
+    prev_function.last_param_node_id = new_function.last_param_node_id;
     prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
     prev_function.param_refs_id = new_function.param_refs_id;
     prev_function.return_storage_id = new_function.return_storage_id;
@@ -252,6 +255,8 @@ static auto BuildFunctionDecl(Context& context,
       .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
       .decl_id = decl_id,
       .generic_id = SemIR::GenericId::Invalid,
+      .first_param_node_id = name.first_param_node_id,
+      .last_param_node_id = name.last_param_node_id,
       .implicit_param_refs_id = name.implicit_params_id,
       .param_refs_id = name.params_id,
       .return_storage_id = return_storage_id,
