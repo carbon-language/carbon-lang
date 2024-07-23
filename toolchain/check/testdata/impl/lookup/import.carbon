@@ -54,7 +54,15 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
@@ -120,14 +128,14 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir8, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir8, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref ir8, inst+12, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir8, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir8, inst+23, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir8, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir8, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir8, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Impl//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Impl//default, inst+12, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+23, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Impl//default, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Impl//default, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -138,8 +146,18 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Impl.import = import Impl
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
-// CHECK:STDOUT:   %Impl: <namespace> = namespace %Impl.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Impl: <namespace> = namespace %Impl.import, [template] {
+// CHECK:STDOUT:     import Impl//default
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]

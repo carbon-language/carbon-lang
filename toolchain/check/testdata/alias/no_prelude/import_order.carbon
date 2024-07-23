@@ -81,13 +81,13 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+16, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+18, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.4 = import_ref ir1, inst+7, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+16, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//a, inst+18, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.4 = import_ref Main//a, inst+7, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

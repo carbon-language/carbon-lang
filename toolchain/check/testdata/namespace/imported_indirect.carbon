@@ -50,7 +50,15 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,11 +71,19 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+3, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Same//a, inst+3, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,15 +96,23 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//b, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+6, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//b, inst+6, loaded
 // CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,19 +131,27 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//c, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+6, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//c, inst+6, loaded
 // CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+8, loaded
+// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Same//c, inst+8, loaded
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,7 +169,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %D.type = import_ref ir1, inst+10, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref: %D.type = import_ref Same//d, inst+10, loaded [template = constants.%D]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -148,19 +180,27 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//d, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+6, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//d, inst+6, loaded
 // CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+8, loaded
+// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Same//d, inst+8, loaded
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = imports.%import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref %.1 = var e

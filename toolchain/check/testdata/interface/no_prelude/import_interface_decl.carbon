@@ -48,7 +48,7 @@ impl library "a";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref ir0, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//a, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

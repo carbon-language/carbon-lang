@@ -150,7 +150,7 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//basic, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -193,7 +193,7 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_api, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -236,7 +236,7 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_impl, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -282,7 +282,7 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//redecl_after_def, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -325,7 +325,7 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref ir0, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//redef_after_def, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -373,8 +373,8 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref ir0, inst+6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Main//def_alias, inst+6, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

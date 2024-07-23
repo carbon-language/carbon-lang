@@ -110,20 +110,20 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir6, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir6, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref ir6, inst+31, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref ir6, inst+52, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref ir6, inst+26, loaded [template = constants.%Equal.2]
-// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref ir6, inst+47, loaded [template = constants.%NotEqual.2]
-// CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.8: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref ir6, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir6, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.13: type = import_ref ir6, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir6, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+31, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref Core//prelude/operators/comparison, inst+26, loaded [template = constants.%Equal.2]
+// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+47, loaded [template = constants.%NotEqual.2]
+// CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.8: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -134,7 +134,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     .TestNotEqual = %TestNotEqual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
@@ -273,17 +281,17 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir6, inst+3, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir6, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref ir6, inst+31, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref ir6, inst+52, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir6, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir6, inst+47, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir6, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref ir6, inst+3, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir6, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+31, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -294,7 +302,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     .TestNotEqual = %TestNotEqual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [template = constants.%TestEqual] {
 // CHECK:STDOUT:     %D.ref.loc6_17: type = name_ref D, %D.decl [template = constants.%D]
@@ -387,20 +403,20 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir6, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir6, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref ir6, inst+31, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref ir6, inst+52, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref ir6, inst+26, loaded [template = constants.%Equal.2]
-// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref ir6, inst+47, loaded [template = constants.%NotEqual.2]
-// CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.8: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref ir6, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir6, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref ir7, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.13: type = import_ref ir6, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir6, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+31, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref Core//prelude/operators/comparison, inst+26, loaded [template = constants.%Equal.2]
+// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+47, loaded [template = constants.%NotEqual.2]
+// CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.8: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -412,7 +428,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     .TestLhsBad = %TestLhsBad.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   impl_decl @impl {

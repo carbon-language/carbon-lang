@@ -138,8 +138,6 @@ class NumericLiteral::Parser {
   auto CheckDigitSequence(llvm::StringRef text, Radix radix,
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult;
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, Radix radix,
-                                    int num_digit_separators) -> void;
   auto CheckLeadingZero() -> bool;
   auto CheckIntPart() -> bool;
   auto CheckFractionalPart() -> bool;

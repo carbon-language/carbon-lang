@@ -126,9 +126,9 @@ var test_f128: f128;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -139,7 +139,15 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_i64 = %test_i64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc3_14.1: i32 = int_literal 8 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc3: init type = call constants.%Int(%.loc3_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_signed.loc3 [template = constants.%.3]
@@ -176,10 +184,10 @@ var test_f128: f128;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.4: %Int.type = import_ref ir3, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.4: %Int.type = import_ref Core//prelude/types, inst+14, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -192,7 +200,15 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_i10000000000000000000 = %test_i10000000000000000000
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i0.ref: <error> = name_ref i0, <error> [template = <error>]
 // CHECK:STDOUT:   %test_i0.var: ref <error> = var test_i0
 // CHECK:STDOUT:   %test_i0: ref <error> = bind_name test_i0, %test_i0.var
@@ -238,9 +254,9 @@ var test_f128: f128;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
-// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -251,7 +267,15 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_u64 = %test_u64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc3_14.1: i32 = int_literal 8 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc3: init type = call constants.%UInt(%.loc3_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_unsigned.loc3 [template = constants.%.3]
@@ -288,10 +312,10 @@ var test_f128: f128;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
-// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
-// CHECK:STDOUT:   %import_ref.4: %UInt.type = import_ref ir3, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.3: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.4: %UInt.type = import_ref Core//prelude/types, inst+23, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -304,7 +328,15 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_u10000000000000000000 = %test_u10000000000000000000
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u0.ref: <error> = name_ref u0, <error> [template = <error>]
 // CHECK:STDOUT:   %test_u0.var: ref <error> = var test_u0
 // CHECK:STDOUT:   %test_u0: ref <error> = bind_name test_u0, %test_u0.var

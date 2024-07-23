@@ -68,8 +68,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//base, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -97,8 +97,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+7, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//export, inst+6, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

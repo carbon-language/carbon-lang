@@ -71,9 +71,9 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Foo//a, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Foo//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

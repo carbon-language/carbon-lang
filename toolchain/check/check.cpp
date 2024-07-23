@@ -885,8 +885,15 @@ static auto CheckParseTree(
     llvm::MutableArrayRef<Parse::NodeLocConverter*> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
+  auto package_id = IdentifierId::Invalid;
+  auto library_id = StringLiteralValueId::Invalid;
+  if (const auto& packaging = unit_info.unit->parse_tree->packaging_decl()) {
+    package_id = packaging->names.package_id;
+    library_id = packaging->names.library_id;
+  }
   unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, *unit_info.unit->value_stores,
+      unit_info.check_ir_id, package_id, library_id,
+      *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
@@ -1224,7 +1231,6 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    // TODO: Add --no-prelude-import for `/no_prelude/` subdirs.
     IdentifierId core_ident_id =
         unit_info.unit->value_stores->identifiers().Add("Core");
     if (prelude_import &&

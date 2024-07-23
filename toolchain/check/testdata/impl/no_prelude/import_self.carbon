@@ -104,11 +104,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref ir1, inst+25, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir1, inst+19, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref Main//a, inst+25, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+19, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

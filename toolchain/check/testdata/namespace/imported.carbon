@@ -44,7 +44,15 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ChildNS = %ChildNS
 // CHECK:STDOUT:     .A = %A.decl
@@ -71,8 +79,8 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref ir0, inst+5, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref ir0, inst+9, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Implicit//default, inst+5, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Implicit//default, inst+9, loaded [template = constants.%B]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -87,16 +95,24 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir0, inst+3, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Implicit//default, inst+3, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = imports.%import_ref.1
 // CHECK:STDOUT:     .ChildNS = %ChildNS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir0, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Implicit//default, inst+4, loaded
 // CHECK:STDOUT:   %ChildNS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .B = imports.%import_ref.2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a

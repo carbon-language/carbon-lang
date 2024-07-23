@@ -105,10 +105,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref ir1, inst+4, loaded [template = constants.%AddWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref ir1, inst+12, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+4, loaded [template = constants.%AddWith]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref Main//a, inst+12, loaded [template = constants.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

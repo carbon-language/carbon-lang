@@ -74,7 +74,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+14':         {kind: Converted, arg0: inst+11, arg1: inst+13, type: typeTypeType}
 // CHECK:STDOUT:     'inst+15':         {kind: VarStorage, arg0: nameReturnSlot, type: type(symbolicConstant1)}
 // CHECK:STDOUT:     'inst+16':         {kind: FunctionDecl, arg0: function0, arg1: block7, type: type(inst+20)}
-// CHECK:STDOUT:     'inst+17':         {kind: BindSymbolicName, arg0: bind_name0, arg1: inst<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+17':         {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: TupleType, arg0: type_block3, type: typeTypeType}
 // CHECK:STDOUT:     'inst+19':         {kind: TupleType, arg0: type_block3, type: typeTypeType}
 // CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, type: typeTypeType}

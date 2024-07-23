@@ -98,9 +98,9 @@ var d: D* = &c;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//base, inst+5, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,9 +125,9 @@ var d: D* = &c;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//base, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -155,8 +155,8 @@ var d: D* = &c;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//export, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -191,7 +191,7 @@ var d: D* = &c;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//export, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -224,9 +224,9 @@ var d: D* = &c;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+8, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//export_orig, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export_orig, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
