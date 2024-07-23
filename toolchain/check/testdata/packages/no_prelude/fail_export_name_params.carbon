@@ -56,17 +56,17 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @C1(file.%T.loc4_10.2: type) {
+// CHECK:STDOUT: generic class @C1(file.%T.loc4_10.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @C2(file.%T.loc5_10.2: type) {
+// CHECK:STDOUT: generic class @C2(file.%T.loc5_10.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C2;
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
 // CHECK:STDOUT:   @C1.%T => constants.%T

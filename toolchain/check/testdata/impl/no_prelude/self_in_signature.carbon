@@ -250,11 +250,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.1(@UseSelf.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F.1(@UseSelf.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@UseSelf.%self.loc12_8.2: @F.1.%Self (%Self.1)](@UseSelf.%x.loc12_20.2: @F.1.%Self (%Self.1)) -> %Self.1;
+// CHECK:STDOUT:   fn[@UseSelf.%self.loc12_8.2: @F.1.%Self (%Self.1)](@UseSelf.%x.loc12_20.2: @F.1.%Self (%Self.1)) -> %Self.1;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.1.%self.loc20_8.2: %C](@impl.1.%x.loc20_17.2: %C) -> @impl.1.%return.var: %C {
 // CHECK:STDOUT: !entry:
@@ -272,14 +272,14 @@ impl D as SelfNested {
 // CHECK:STDOUT:   return %.loc24_48 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.4(@SelfNested.%Self: %.9) {
+// CHECK:STDOUT: generic fn @F.4(@SelfNested.%Self: %.9) {
 // CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.4.%Self (%Self.2) [symbolic = %.1 (constants.%.10)]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: @F.4.%Self (%Self.2), .y: %.2} [symbolic = %.2 (constants.%.11)]
 // CHECK:STDOUT:   %.3: type = tuple_type (@F.4.%.1 (%.10), @F.4.%.2 (%.11)) [symbolic = %.3 (constants.%.13)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.4(@SelfNested.%x.loc28_8.2: @F.4.%.3 (%.13));
+// CHECK:STDOUT:   fn(@SelfNested.%x.loc28_8.2: @F.4.%.3 (%.13));
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5(@impl.3.%x.loc32_8.2: %.19);
 // CHECK:STDOUT:

@@ -77,33 +77,34 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F(@Interface.%Self: %.1) {}
+// CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @CallStatic(%T.loc13: %.1) {
+// CHECK:STDOUT: generic fn @CallStatic(%T.loc13: %.1) {
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc13: %.1) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallStatic(%T.loc13: %.1) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @CallFacet(%T.loc21: %.1) {
+// CHECK:STDOUT: generic fn @CallFacet(%T.loc21: %.1) {
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFacet(%T.loc21: %.1, %x: @CallFacet.%T.1 (%T)) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: @CallFacet.%T.1 (%T) = name_ref x, %x
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn(%T.loc21: %.1, %x: @CallFacet.%T.1 (%T)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %x.ref: @CallFacet.%T.1 (%T) = name_ref x, %x
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

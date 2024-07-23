@@ -857,9 +857,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   .Self = constants.%SelfNestedBadReturnType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {}
+// CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PossiblyF();
 // CHECK:STDOUT:
@@ -871,9 +872,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.5(@J.%Self: %.6) {}
+// CHECK:STDOUT: generic fn @F.5(@J.%Self: %.6) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.5[@J.%self.loc93_20.2: bool](@J.%b.loc93_32.2: bool) -> bool;
+// CHECK:STDOUT:   fn[@J.%self.loc93_20.2: bool](@J.%b.loc93_32.2: bool) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.6[@impl.7.%self.loc104_10.2: bool]() -> bool;
 // CHECK:STDOUT:
@@ -891,15 +893,15 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.13(@SelfNested.%Self: %.9) {
+// CHECK:STDOUT: generic fn @F.13(@SelfNested.%Self: %.9) {
 // CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.13.%Self (%Self.3) [symbolic = %.1 (constants.%.10)]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: @F.13.%Self (%Self.3), .y: i32} [symbolic = %.2 (constants.%.11)]
 // CHECK:STDOUT:   %.3: type = tuple_type (@F.13.%.1 (%.10), @F.13.%.2 (%.11)) [symbolic = %.3 (constants.%.13)]
 // CHECK:STDOUT:   %.4: type = array_type constants.%.14, @F.13.%Self (%Self.3) [symbolic = %.4 (constants.%.15)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.13(@SelfNested.%x.loc188_8.2: @F.13.%.3 (%.13)) -> %.15;
+// CHECK:STDOUT:   fn(@SelfNested.%x.loc188_8.2: @F.13.%.3 (%.13)) -> %.15;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: %.21) -> %.22;
 // CHECK:STDOUT:

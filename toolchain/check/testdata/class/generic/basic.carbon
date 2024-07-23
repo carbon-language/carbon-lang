@@ -62,45 +62,45 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @Class(file.%T.loc11_13.2: type) {
+// CHECK:STDOUT: generic class @Class(file.%T.loc11_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %GetAddr.decl: %GetAddr.type = fn_decl @GetAddr [template = constants.%GetAddr] {
+// CHECK:STDOUT:       %.loc12_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetAddr.%Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref.loc12: type = name_ref Self, %.loc12_25 [symbolic = @GetAddr.%Class (constants.%Class.2)]
+// CHECK:STDOUT:       %.loc12_29: type = ptr_type %Class.2 [symbolic = @GetAddr.%.1 (constants.%.2)]
+// CHECK:STDOUT:       %self.loc12_19.1: @GetAddr.%.1 (%.2) = param self
+// CHECK:STDOUT:       %self.loc12_19.3: @GetAddr.%.1 (%.2) = bind_name self, %self.loc12_19.1
+// CHECK:STDOUT:       %.loc12_14: @GetAddr.%.1 (%.2) = addr_pattern %self.loc12_19.3
+// CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetAddr.%T (constants.%T)]
+// CHECK:STDOUT:       %.loc12_38: type = ptr_type %T [symbolic = @GetAddr.%.2 (constants.%.3)]
+// CHECK:STDOUT:       %return.var.loc12: ref %.3 = var <return slot>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
+// CHECK:STDOUT:       %.loc17: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetValue.%Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref.loc17: type = name_ref Self, %.loc17 [symbolic = @GetValue.%Class (constants.%Class.2)]
+// CHECK:STDOUT:       %self.loc17_15.1: @GetValue.%Class (%Class.2) = param self
+// CHECK:STDOUT:       %self.loc17_15.2: @GetValue.%Class (%Class.2) = bind_name self, %self.loc17_15.1
+// CHECK:STDOUT:       %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetValue.%T (constants.%T)]
+// CHECK:STDOUT:       %return.var.loc17: ref %T = var <return slot>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %.loc21: @Class.%.1 (%.4) = field_decl k, element0 [template]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Class.2
+// CHECK:STDOUT:     .GetAddr = %GetAddr.decl
+// CHECK:STDOUT:     .GetValue = %GetValue.decl
+// CHECK:STDOUT:     .k = %.loc21
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %GetAddr.decl: %GetAddr.type = fn_decl @GetAddr [template = constants.%GetAddr] {
-// CHECK:STDOUT:     %.loc12_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetAddr.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, %.loc12_25 [symbolic = @GetAddr.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc12_29: type = ptr_type %Class.2 [symbolic = @GetAddr.%.1 (constants.%.2)]
-// CHECK:STDOUT:     %self.loc12_19.1: @GetAddr.%.1 (%.2) = param self
-// CHECK:STDOUT:     %self.loc12_19.3: @GetAddr.%.1 (%.2) = bind_name self, %self.loc12_19.1
-// CHECK:STDOUT:     %.loc12_14: @GetAddr.%.1 (%.2) = addr_pattern %self.loc12_19.3
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetAddr.%T (constants.%T)]
-// CHECK:STDOUT:     %.loc12_38: type = ptr_type %T [symbolic = @GetAddr.%.2 (constants.%.3)]
-// CHECK:STDOUT:     %return.var.loc12: ref %.3 = var <return slot>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GetValue.decl: %GetValue.type = fn_decl @GetValue [template = constants.%GetValue] {
-// CHECK:STDOUT:     %.loc17: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetValue.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, %.loc17 [symbolic = @GetValue.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %self.loc17_15.1: @GetValue.%Class (%Class.2) = param self
-// CHECK:STDOUT:     %self.loc17_15.2: @GetValue.%Class (%Class.2) = bind_name self, %self.loc17_15.1
-// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetValue.%T (constants.%T)]
-// CHECK:STDOUT:     %return.var.loc17: ref %T = var <return slot>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc21: @Class.%.1 (%.4) = field_decl k, element0 [template]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Class.2
-// CHECK:STDOUT:   .GetAddr = %GetAddr.decl
-// CHECK:STDOUT:   .GetValue = %GetValue.decl
-// CHECK:STDOUT:   .k = %.loc21
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @GetAddr(file.%T.loc11_13.2: type) {
+// CHECK:STDOUT: generic fn @GetAddr(file.%T.loc11_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = ptr_type @GetAddr.%Class (%Class.2) [symbolic = %.1 (constants.%.2)]
@@ -108,33 +108,33 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.3: type = unbound_element_type @GetAddr.%Class (%Class.2), @GetAddr.%T (%T) [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr @Class.%self.loc12_19.3: @GetAddr.%.1 (%.2)]() -> %.3 {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %self.ref: @GetAddr.%.1 (%.2) = name_ref self, @Class.%self.loc12_19.3
+// CHECK:STDOUT:     %.loc13_17.1: ref @GetAddr.%Class (%Class.2) = deref %self.ref
+// CHECK:STDOUT:     %k.ref: @GetAddr.%.3 (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:     %.loc13_17.2: ref @GetAddr.%T (%T) = class_element_access %.loc13_17.1, element0
+// CHECK:STDOUT:     %.loc13_12: @GetAddr.%.2 (%.3) = addr_of %.loc13_17.2
+// CHECK:STDOUT:     return %.loc13_12
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetAddr[addr @Class.%self.loc12_19.3: @GetAddr.%.1 (%.2)]() -> %.3 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: @GetAddr.%.1 (%.2) = name_ref self, @Class.%self.loc12_19.3
-// CHECK:STDOUT:   %.loc13_17.1: ref @GetAddr.%Class (%Class.2) = deref %self.ref
-// CHECK:STDOUT:   %k.ref: @GetAddr.%.3 (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
-// CHECK:STDOUT:   %.loc13_17.2: ref @GetAddr.%T (%T) = class_element_access %.loc13_17.1, element0
-// CHECK:STDOUT:   %.loc13_12: @GetAddr.%.2 (%.3) = addr_of %.loc13_17.2
-// CHECK:STDOUT:   return %.loc13_12
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @GetValue(file.%T.loc11_13.2: type) {
+// CHECK:STDOUT: generic fn @GetValue(file.%T.loc11_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @GetValue.%Class (%Class.2), @GetValue.%T (%T) [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetValue[@Class.%self.loc17_15.2: @GetValue.%Class (%Class.2)]() -> %T {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: @GetValue.%Class (%Class.2) = name_ref self, @Class.%self.loc17_15.2
-// CHECK:STDOUT:   %k.ref: @GetValue.%.1 (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
-// CHECK:STDOUT:   %.loc18_16.1: ref @GetValue.%T (%T) = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc18_16.2: @GetValue.%T (%T) = bind_value %.loc18_16.1
-// CHECK:STDOUT:   return %.loc18_16.2
+// CHECK:STDOUT:   fn[@Class.%self.loc17_15.2: @GetValue.%Class (%Class.2)]() -> %T {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %self.ref: @GetValue.%Class (%Class.2) = name_ref self, @Class.%self.loc17_15.2
+// CHECK:STDOUT:     %k.ref: @GetValue.%.1 (%.4) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
+// CHECK:STDOUT:     %.loc18_16.1: ref @GetValue.%T (%T) = class_element_access %self.ref, element0
+// CHECK:STDOUT:     %.loc18_16.2: @GetValue.%T (%T) = bind_value %.loc18_16.1
+// CHECK:STDOUT:     return %.loc18_16.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {

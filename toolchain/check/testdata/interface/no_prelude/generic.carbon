@@ -143,50 +143,50 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @Simple(file.%T.loc4_18.2: type) {
+// CHECK:STDOUT: generic interface @Simple(file.%T.loc4_18.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Simple, @Simple(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:     %Self.1: @Simple.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %Self.1: @Simple.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.1
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @WithAssocFn(file.%T.loc8_23.2: type) {
+// CHECK:STDOUT: generic interface @WithAssocFn(file.%T.loc8_23.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @WithAssocFn, @WithAssocFn(%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @WithAssocFn {
-// CHECK:STDOUT:   %Self.1: @WithAssocFn.%.1 (%.4) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %return.var: ref %X = var <return slot>
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:     %Self.1: @WithAssocFn.%.1 (%.4) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
+// CHECK:STDOUT:     %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
+// CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:       %return.var: ref %X = var <return slot>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc10: %.5 = assoc_entity element0, %F.decl [template = constants.%.6]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .F = %.loc10
+// CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: %.5 = assoc_entity element0, %F.decl [template = constants.%.6]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.1
-// CHECK:STDOUT:   .F = %.loc10
-// CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @WithImplicitArgs(file.%T.loc22_28.2: type, file.%N.loc22_38.2: @WithImplicitArgs.%T (%T.1)) {
+// CHECK:STDOUT: generic interface @WithImplicitArgs(file.%T.loc22_28.2: type, file.%N.loc22_38.2: @WithImplicitArgs.%T (%T.1)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @WithImplicitArgs;
+// CHECK:STDOUT:   interface;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.7 {
 // CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.8]
@@ -232,9 +232,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.1(file.%T.loc8_23.2: type, @WithAssocFn.%Self.1: @WithAssocFn.%.1 (%.4)) {}
+// CHECK:STDOUT: generic fn @F.1(file.%T.loc8_23.2: type, @WithAssocFn.%Self.1: @WithAssocFn.%.1 (%.4)) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() -> %X;
+// CHECK:STDOUT:   fn() -> %X;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> @impl.2.%return.var: %X {
 // CHECK:STDOUT: !entry:
@@ -244,24 +245,24 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   return %.loc17_16 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @Receive(%T.loc24: %.7) {
+// CHECK:STDOUT: generic fn @Receive(%T.loc24: %.7) {
 // CHECK:STDOUT:   %T.1: %.7 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc24: %.7);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Receive(%T.loc24: %.7);
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @Pass(%T.loc25: %.7) {
+// CHECK:STDOUT: generic fn @Pass(%T.loc25: %.7) {
 // CHECK:STDOUT:   %T.1: %.7 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Pass(%T.loc25: %.7) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
-// CHECK:STDOUT:   %T.ref: %.7 = name_ref T, %T.loc25 [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:   %Receive.call: init %.1 = call %Receive.ref(%T.ref)
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn(%T.loc25: %.7) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
+// CHECK:STDOUT:     %T.ref: %.7 = name_ref T, %T.loc25 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:     %Receive.call: init %.1 = call %Receive.ref(%T.ref)
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.1) {
@@ -359,20 +360,20 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @Generic(file.%T.loc4_19.2: type) {
+// CHECK:STDOUT: generic interface @Generic(file.%T.loc4_19.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Generic, @Generic(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Generic {
-// CHECK:STDOUT:   %Self.1: @Generic.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:     %Self.1: @Generic.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self.1
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -385,24 +386,24 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F(%T.loc9: %.4) {
+// CHECK:STDOUT: generic fn @F(%T.loc9: %.4) {
 // CHECK:STDOUT:   %T.1: %.4 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc9: %.4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T.loc9: %.4);
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic @G(%T.loc10: %.5) {
+// CHECK:STDOUT: generic fn @G(%T.loc10: %.5) {
 // CHECK:STDOUT:   %T.1: %.5 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%T.loc10: %.5) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %T.ref: %.5 = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn(%T.loc10: %.5) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:     %T.ref: %.5 = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT:     %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {

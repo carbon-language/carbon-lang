@@ -133,11 +133,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F.1(@I.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc14_8.2: @F.1.%Self (%Self)]() -> i32;
+// CHECK:STDOUT:   fn[@I.%self.loc14_8.2: @F.1.%Self (%Self)]() -> i32;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc19_10.2: %C]() -> i32;
 // CHECK:STDOUT:

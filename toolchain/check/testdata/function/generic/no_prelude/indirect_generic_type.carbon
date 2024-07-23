@@ -41,20 +41,20 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F(%T.loc11: type) {
+// CHECK:STDOUT: generic fn @F(%T.loc11: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @F.%.1 (%.1) [symbolic = %.2 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T.loc11: type, %p: @F.%.2 (%.2)) -> %.1 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: @F.%.2 (%.2) = name_ref p, %p
-// CHECK:STDOUT:   %.loc12_10.1: ref @F.%.1 (%.1) = deref %p.ref
-// CHECK:STDOUT:   %.loc12_10.2: @F.%.1 (%.1) = bind_value %.loc12_10.1
-// CHECK:STDOUT:   return %.loc12_10.2
+// CHECK:STDOUT:   fn(%T.loc11: type, %p: @F.%.2 (%.2)) -> %.1 {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %p.ref: @F.%.2 (%.2) = name_ref p, %p
+// CHECK:STDOUT:     %.loc12_10.1: ref @F.%.1 (%.1) = deref %p.ref
+// CHECK:STDOUT:     %.loc12_10.2: @F.%.1 (%.1) = bind_value %.loc12_10.1
+// CHECK:STDOUT:     return %.loc12_10.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {

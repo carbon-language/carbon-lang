@@ -178,12 +178,31 @@ class FormatterImpl {
     out_ << "\n\n";
   }
 
+  template <typename IdT>
+  auto FormatEntityStart(llvm::StringRef entity_kind, GenericId generic_id,
+                         IdT entity_id) -> void {
+    if (generic_id.is_valid()) {
+      FormatGenericStart(entity_kind, generic_id);
+      out_ << "\n";
+      Indent();
+      out_ << entity_kind;
+    } else {
+      out_ << "\n";
+      Indent();
+      out_ << entity_kind << " ";
+      FormatName(entity_id);
+    }
+  }
+
+  auto FormatEntityEnd(GenericId generic_id) -> void {
+    if (generic_id.is_valid()) {
+      FormatGenericEnd();
+    }
+  }
+
   auto FormatClass(ClassId id) -> void {
     const Class& class_info = sem_ir_.classes().Get(id);
-    FormatGeneric(class_info.generic_id);
-
-    out_ << "\nclass ";
-    FormatClassName(id);
+    FormatEntityStart("class", class_info.generic_id, id);
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -197,14 +216,13 @@ class FormatterImpl {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(class_info.generic_id);
   }
 
   auto FormatInterface(InterfaceId id) -> void {
     const Interface& interface_info = sem_ir_.interfaces().Get(id);
-    FormatGeneric(interface_info.generic_id);
-
-    out_ << "\ninterface ";
-    FormatInterfaceName(id);
+    FormatEntityStart("interface", interface_info.generic_id, id);
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -229,13 +247,14 @@ class FormatterImpl {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(interface_info.generic_id);
   }
 
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_.impls().Get(id);
+    FormatEntityStart("impl", SemIR::GenericId::Invalid, id);
 
-    out_ << "\nimpl ";
-    FormatImplName(id);
     out_ << ": ";
     // TODO: Include the deduced parameter list if present.
     FormatType(impl_info.self_id);
@@ -269,16 +288,7 @@ class FormatterImpl {
 
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
-    FormatGeneric(fn.generic_id);
-
-    out_ << "\n";
-
-    if (fn.is_extern) {
-      out_ << "extern ";
-    }
-
-    out_ << "fn ";
-    FormatFunctionName(id);
+    FormatEntityStart(fn.is_extern ? "extern fn" : "fn", fn.generic_id, id);
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -297,7 +307,7 @@ class FormatterImpl {
     if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
       if (!fn.body_block_ids.empty() && fn.has_return_slot()) {
-        FormatInstName(fn.return_storage_id);
+        FormatName(fn.return_storage_id);
         out_ << ": ";
       }
       FormatType(sem_ir_.insts().Get(fn.return_storage_id).type_id());
@@ -327,16 +337,16 @@ class FormatterImpl {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(fn.generic_id);
   }
 
-  auto FormatGeneric(GenericId generic_id) -> void {
-    if (!generic_id.is_valid()) {
-      return;
-    }
-
+  auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id) -> void {
     const auto& generic = sem_ir_.generics().Get(generic_id);
-    out_ << "\ngeneric ";
-    FormatGenericName(generic_id);
+    out_ << "\n";
+    Indent();
+    out_ << "generic " << entity_kind << " ";
+    FormatName(generic_id);
 
     llvm::SaveAndRestore generic_scope(scope_,
                                        inst_namer_->GetScopeFor(generic_id));
@@ -352,6 +362,9 @@ class FormatterImpl {
       out_ << "!definition:\n";
       FormatCodeBlock(generic.definition_block_id);
     }
+  }
+
+  auto FormatGenericEnd() -> void {
     CloseBrace();
     out_ << '\n';
   }
@@ -381,13 +394,13 @@ class FormatterImpl {
 
       Indent();
       if (generic_inst_id) {
-        FormatInstName(*generic_inst_id);
+        FormatName(*generic_inst_id);
       } else {
         out_ << "<missing>";
       }
       out_ << " => ";
       if (specific_inst_id) {
-        FormatInstName(*specific_inst_id);
+        FormatName(*specific_inst_id);
       } else {
         out_ << "<missing>";
       }
@@ -401,7 +414,7 @@ class FormatterImpl {
     out_ << "\n";
 
     out_ << "specific ";
-    FormatSpecificName(id);
+    FormatName(id);
 
     // TODO: Remove once we stop forming generic specifics with no generic
     // during import.
@@ -435,7 +448,7 @@ class FormatterImpl {
         out_ << "addr ";
         param_id = addr->inner_id;
       }
-      FormatInstName(param_id);
+      FormatName(param_id);
       out_ << ": ";
       FormatType(sem_ir_.insts().Get(param_id).type_id());
     }
@@ -489,7 +502,7 @@ class FormatterImpl {
           break;
       }
       out_ << " = ";
-      FormatInstName(inst_id);
+      FormatName(inst_id);
       out_ << "\n";
     }
 
@@ -577,7 +590,7 @@ class FormatterImpl {
   auto FormatInstLHS(InstId inst_id, Inst inst) -> void {
     switch (inst.kind().value_kind()) {
       case InstValueKind::Typed:
-        FormatInstName(inst_id);
+        FormatName(inst_id);
         out_ << ": ";
         switch (GetExprCategory(sem_ir_, inst_id)) {
           case ExprCategory::NotExpr:
@@ -603,14 +616,14 @@ class FormatterImpl {
 
   // Format ImportDecl with its name.
   auto FormatInstLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
+    FormatName(inst_id);
     out_ << " = ";
   }
 
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
   auto FormatInstLHS(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
-    FormatInstName(inst_id);
+    FormatName(inst_id);
     out_ << " = ";
   }
 
@@ -655,7 +668,7 @@ class FormatterImpl {
       Indent();
     }
     out_ << "if ";
-    FormatInstName(inst.cond_id);
+    FormatName(inst.cond_id);
     out_ << " " << Branch::Kind.ir_name() << " ";
     FormatLabel(inst.target_id);
     out_ << " else ";
@@ -669,7 +682,7 @@ class FormatterImpl {
     out_ << BranchWithArg::Kind.ir_name() << " ";
     FormatLabel(inst.target_id);
     out_ << "(";
-    FormatInstName(inst.arg_id);
+    FormatName(inst.arg_id);
     out_ << ")\n";
     in_terminator_sequence_ = false;
   }
@@ -843,17 +856,17 @@ class FormatterImpl {
     }
   }
 
-  auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
+  auto FormatArg(FunctionId id) -> void { FormatName(id); }
 
-  auto FormatArg(ClassId id) -> void { FormatClassName(id); }
+  auto FormatArg(ClassId id) -> void { FormatName(id); }
 
-  auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
+  auto FormatArg(InterfaceId id) -> void { FormatName(id); }
 
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
 
   auto FormatArg(FloatKind k) -> void { k.Print(out_); }
 
-  auto FormatArg(ImplId id) -> void { FormatImplName(id); }
+  auto FormatArg(ImplId id) -> void { FormatName(id); }
 
   auto FormatArg(ImportIRId id) -> void {
     if (!id.is_valid()) {
@@ -908,7 +921,7 @@ class FormatterImpl {
     CloseBrace();
   }
 
-  auto FormatArg(InstId id) -> void { FormatInstName(id); }
+  auto FormatArg(InstId id) -> void { FormatName(id); }
 
   auto FormatArg(InstBlockId id) -> void {
     if (!id.is_valid()) {
@@ -925,7 +938,7 @@ class FormatterImpl {
     out_ << ')';
   }
 
-  auto FormatArg(GenericInstanceId id) -> void { FormatSpecificName(id); }
+  auto FormatArg(GenericInstanceId id) -> void { FormatName(id); }
 
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
@@ -964,38 +977,23 @@ class FormatterImpl {
     out_ << sem_ir_.names().GetFormatted(id);
   }
 
-  auto FormatInstName(InstId id) -> void {
+  auto FormatName(InstId id) -> void {
     out_ << inst_namer_->GetNameFor(scope_, id);
+  }
+
+  template <typename IdT>
+  auto FormatName(IdT id) -> void {
+    out_ << inst_namer_->GetNameFor(id);
+  }
+
+  auto FormatName(GenericInstanceId id) -> void {
+    const auto& specific = sem_ir_.generic_instances().Get(id);
+    FormatName(specific.generic_id);
+    FormatArg(specific.args_id);
   }
 
   auto FormatLabel(InstBlockId id) -> void {
     out_ << inst_namer_->GetLabelFor(scope_, id);
-  }
-
-  auto FormatFunctionName(FunctionId id) -> void {
-    out_ << inst_namer_->GetNameFor(id);
-  }
-
-  auto FormatClassName(ClassId id) -> void {
-    out_ << inst_namer_->GetNameFor(id);
-  }
-
-  auto FormatInterfaceName(InterfaceId id) -> void {
-    out_ << inst_namer_->GetNameFor(id);
-  }
-
-  auto FormatImplName(ImplId id) -> void {
-    out_ << inst_namer_->GetNameFor(id);
-  }
-
-  auto FormatGenericName(GenericId id) -> void {
-    out_ << inst_namer_->GetNameFor(id);
-  }
-
-  auto FormatSpecificName(GenericInstanceId id) -> void {
-    const auto& specific = sem_ir_.generic_instances().Get(id);
-    FormatGenericName(specific.generic_id);
-    FormatArg(specific.args_id);
   }
 
   auto FormatConstant(ConstantId id) -> void {
@@ -1012,17 +1010,17 @@ class FormatterImpl {
       if (symbolic_constant.generic_id.is_valid()) {
         const auto& generic =
             sem_ir_.generics().Get(symbolic_constant.generic_id);
-        FormatInstName(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(
+        FormatName(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(
             symbolic_constant.index
                 .region()))[symbolic_constant.index.index()]);
         out_ << " (";
-        FormatInstName(sem_ir_.constant_values().GetInstId(id));
+        FormatName(sem_ir_.constant_values().GetInstId(id));
         out_ << ")";
         return;
       }
     }
 
-    FormatInstName(sem_ir_.constant_values().GetInstId(id));
+    FormatName(sem_ir_.constant_values().GetInstId(id));
   }
 
   auto FormatType(TypeId id) -> void {

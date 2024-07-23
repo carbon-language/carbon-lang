@@ -52,13 +52,15 @@ interface Interface {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @F(@Interface.%Self: %.1) {}
+// CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic @.1(@Interface.%Self: %.1) {}
+// CHECK:STDOUT: generic fn @.1(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}
 // CHECK:STDOUT:
