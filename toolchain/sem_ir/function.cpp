@@ -5,11 +5,14 @@
 #include "toolchain/sem_ir/function.h"
 
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::Invalid,
+                           .instance_id = GenericInstanceId::Invalid,
                            .self_id = InstId::Invalid,
                            .is_error = false};
 
@@ -35,14 +38,18 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   }
 
   result.function_id = fn_type->function_id;
+  result.instance_id = fn_type->instance_id;
   return result;
 }
 
-auto Function::declared_return_type(const File& file) const -> TypeId {
+auto Function::declared_return_type(const File& file,
+                                    GenericInstanceId specific_id) const
+    -> TypeId {
   if (!return_storage_id.is_valid()) {
     return TypeId::Invalid;
   }
-  return file.insts().Get(return_storage_id).type_id();
+  return GetTypeInInstance(file, specific_id,
+                           file.insts().Get(return_storage_id).type_id());
 }
 
 }  // namespace Carbon::SemIR

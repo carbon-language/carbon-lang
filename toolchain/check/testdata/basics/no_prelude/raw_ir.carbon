@@ -72,12 +72,12 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+9, arg1: inst+8, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: TupleType, arg0: type_block2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: Converted, arg0: inst+11, arg1: inst+13, type: typeTypeType}
-// CHECK:STDOUT:     'inst+15':         {kind: VarStorage, arg0: nameReturnSlot, type: type(symbolicConstant1)}
+// CHECK:STDOUT:     'inst+15':         {kind: VarStorage, arg0: nameReturnSlot, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+16':         {kind: FunctionDecl, arg0: function0, arg1: block7, type: type(inst+20)}
 // CHECK:STDOUT:     'inst+17':         {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: TupleType, arg0: type_block3, type: typeTypeType}
 // CHECK:STDOUT:     'inst+19':         {kind: TupleType, arg0: type_block3, type: typeTypeType}
-// CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+21':         {kind: StructValue, arg0: empty, type: type(inst+20)}
 // CHECK:STDOUT:     'inst+22':         {kind: PointerType, arg0: type(symbolicConstant1), type: typeTypeType}
 // CHECK:STDOUT:     'inst+23':         {kind: NameRef, arg0: name2, arg1: inst+6, type: type(symbolicConstant2)}

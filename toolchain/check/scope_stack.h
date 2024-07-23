@@ -88,6 +88,14 @@ class ScopeStack {
   // there is no such instruction, such as for a block scope.
   auto PeekInstId() const -> SemIR::InstId { return Peek().scope_inst_id; }
 
+  // Returns the specific associated with the innermost enclosing scope that is
+  // associated with a specific. This will generally be the self specific of the
+  // innermost enclosing generic, as there is no way to enter any other specific
+  // scope.
+  auto PeekSpecificId() const -> SemIR::GenericInstanceId {
+    return Peek().instance_id;
+  }
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>

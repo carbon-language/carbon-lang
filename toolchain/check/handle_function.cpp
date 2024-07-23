@@ -277,18 +277,8 @@ static auto BuildFunctionDecl(Context& context,
     FinishGenericRedecl(context, decl_id, function_info.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
-  function_decl.type_id = context.GetFunctionType(function_decl.function_id);
-
-  // TODO: Temporarily replace the return type with the canonical return type.
-  // This is a placeholder to avoid breaking tests before generic type
-  // substitution is ready.
-  if (return_storage_id.is_valid()) {
-    auto return_storage = context.insts().Get(return_storage_id);
-    return_storage.SetType(SemIR::GetTypeInInstance(
-        context.sem_ir(), SemIR::GenericInstanceId::Invalid,
-        return_storage.type_id()));
-    context.sem_ir().insts().Set(return_storage_id, return_storage);
-  }
+  function_decl.type_id = context.GetFunctionType(
+      function_decl.function_id, context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);

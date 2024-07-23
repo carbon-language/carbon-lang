@@ -128,7 +128,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc12_32: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.1: type = facet_type_access %Self.ref.loc12_32 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %Self.ref.loc12_32, %.loc12_32.1 [symbolic = @F.1.%Self (constants.%Self.1)]
-// CHECK:STDOUT:     %return.var: ref %Self.1 = var <return slot>
+// CHECK:STDOUT:     %return.var: ref @F.1.%Self (%Self.1) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_36: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -253,7 +253,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: generic fn @F.1(@UseSelf.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@UseSelf.%self.loc12_8.2: @F.1.%Self (%Self.1)](@UseSelf.%x.loc12_20.2: @F.1.%Self (%Self.1)) -> %Self.1;
+// CHECK:STDOUT:   fn[@UseSelf.%self.loc12_8.2: @F.1.%Self (%Self.1)](@UseSelf.%x.loc12_20.2: @F.1.%Self (%Self.1)) -> @F.1.%Self (%Self.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.1.%self.loc20_8.2: %C](@impl.1.%x.loc20_17.2: %C) -> @impl.1.%return.var: %C {

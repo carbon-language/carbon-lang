@@ -206,7 +206,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = @Symbolic.%.1 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = @Symbolic.%.1 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = @Symbolic.%.1 (constants.%.6)]
-// CHECK:STDOUT:     @Symbolic.%return: ref %.6 = var <return slot>
+// CHECK:STDOUT:     @Symbolic.%return: ref @Symbolic.%.1 (%.6) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,7 +232,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.loc14: i32, %x: @Symbolic.%.1 (%.6)) -> %.6 {
+// CHECK:STDOUT:   fn(%N.loc14: i32, %x: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Symbolic.%.1 (%.6) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref

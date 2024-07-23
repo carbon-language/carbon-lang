@@ -21,9 +21,11 @@ auto CheckFunctionTypeMatches(Context& context,
     return false;
   }
 
+  // TODO: Pass a specific ID for `prev_function` instead of substitutions and
+  // use it here.
   auto new_return_type_id = new_function.declared_return_type(context.sem_ir());
-  auto prev_return_type_id =
-      prev_function.declared_return_type(context.sem_ir());
+  auto prev_return_type_id = prev_function.declared_return_type(
+      context.sem_ir(), SemIR::GenericInstanceId::Invalid);
   if (new_return_type_id == SemIR::TypeId::Error ||
       prev_return_type_id == SemIR::TypeId::Error) {
     return false;
