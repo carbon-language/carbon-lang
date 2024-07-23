@@ -81,22 +81,25 @@ class C {
 // CHECK:STDOUT:   .I = %I.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@I.%Self: %.1] {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc16_19.1: %.6 = struct_literal ()
-// CHECK:STDOUT:   %.loc16_19.2: init %C = class_init (), %c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc16_20: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign %c.var, %.loc16_20
-// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc14 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %.2 = call %.1()
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %c.var: ref %C = var c
+// CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:     %.loc16_19.1: %.6 = struct_literal ()
+// CHECK:STDOUT:     %.loc16_19.2: init %C = class_init (), %c.var [template = constants.%struct]
+// CHECK:STDOUT:     %.loc16_20: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%struct]
+// CHECK:STDOUT:     assign %c.var, %.loc16_20
+// CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
+// CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %F.ref: %.3 = name_ref F, @I.%.loc14 [template = constants.%.4]
+// CHECK:STDOUT:     %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:     %F.call: init %.2 = call %.1()
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
@@ -104,7 +107,5 @@ class C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:

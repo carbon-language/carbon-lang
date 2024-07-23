@@ -56,9 +56,9 @@ class A {
 // CHECK:STDOUT: interface @DefaultConstructible {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = %Self.ref (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = @Make.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_20: %.3 = assoc_entity element0, %Make.decl [template = constants.%.4]
@@ -96,8 +96,11 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.1() -> %Self
-// CHECK:STDOUT:     generic [@DefaultConstructible.%Self: %.1];
+// CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self: %.1) {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> @impl.%return.var: %C {
 // CHECK:STDOUT: !entry:
@@ -107,8 +110,7 @@ class A {
 // CHECK:STDOUT:   return %.loc21_34 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DefaultConstructible.%Make.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @DefaultConstructible.%Self.ref => constants.%Self
+// CHECK:STDOUT: specific @Make.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

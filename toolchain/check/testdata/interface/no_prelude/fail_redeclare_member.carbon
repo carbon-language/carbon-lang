@@ -52,17 +52,17 @@ interface Interface {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
+// CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1()
-// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.%F.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.%.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: generic fn @.1(@Interface.%Self: %.1) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%Self) {}
 // CHECK:STDOUT:
