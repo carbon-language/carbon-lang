@@ -422,11 +422,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir0, inst+5, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref ir0, inst+9, loaded [template = constants.%Foo.1]
-// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref ir0, inst+17, loaded [template = constants.%Bar.1]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+5, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, inst+9, loaded [template = constants.%Foo.1]
+// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, inst+17, loaded [template = constants.%Bar.1]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -649,9 +649,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir0, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref ir0, inst+7, loaded [template = constants.%Foo.1]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir0, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, inst+7, loaded [template = constants.%Foo.1]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//alias_two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
