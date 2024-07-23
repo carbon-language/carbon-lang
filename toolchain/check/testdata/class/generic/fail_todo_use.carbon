@@ -169,33 +169,33 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.2
-// CHECK:STDOUT:   @Class.%.1 => constants.%.4
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Get.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Get(constants.%T) {
-// CHECK:STDOUT:   @Get.%T => constants.%T
-// CHECK:STDOUT:   @Get.%Class => constants.%Class.2
-// CHECK:STDOUT:   @Get.%.1 => constants.%.2
-// CHECK:STDOUT:   @Get.%.2 => constants.%.3
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.2 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(i32) {
-// CHECK:STDOUT:   @Class.%T => i32
+// CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.3
-// CHECK:STDOUT:   @Class.%.1 => constants.%.7
+// CHECK:STDOUT:   %Class => constants.%Class.3
+// CHECK:STDOUT:   %.1 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,6 +77,6 @@ fn G(N:! i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%N) {
-// CHECK:STDOUT:   @G.%N.1 => constants.%N
+// CHECK:STDOUT:   %N.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

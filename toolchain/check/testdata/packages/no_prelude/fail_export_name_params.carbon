@@ -69,11 +69,11 @@ export C2(T:! type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
-// CHECK:STDOUT:   @C1.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C2(constants.%T) {
-// CHECK:STDOUT:   @C2.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon

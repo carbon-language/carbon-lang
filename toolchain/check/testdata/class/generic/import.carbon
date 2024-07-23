@@ -201,21 +201,21 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
-// CHECK:STDOUT:   @CompleteClass.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
-// CHECK:STDOUT:   @CompleteClass.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(i32) {
-// CHECK:STDOUT:   @CompleteClass.%T => i32
+// CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- foo.impl.carbon
@@ -667,6 +667,6 @@ class Class(U:! type) {
 // CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U) {
-// CHECK:STDOUT:   @.1.%U => constants.%U
+// CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

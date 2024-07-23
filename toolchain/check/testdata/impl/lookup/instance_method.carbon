@@ -154,6 +154,6 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
-// CHECK:STDOUT:   @F.1.%Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

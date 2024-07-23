@@ -266,42 +266,42 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.1) {
-// CHECK:STDOUT:   @Simple.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(@Simple.%T) {
-// CHECK:STDOUT:   @Simple.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.1) {
-// CHECK:STDOUT:   @WithAssocFn.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(@WithAssocFn.%T) {
-// CHECK:STDOUT:   @WithAssocFn.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
-// CHECK:STDOUT:   @Simple.%T => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%C) {
-// CHECK:STDOUT:   @WithAssocFn.%T => constants.%C
+// CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.1, constants.%N) {
-// CHECK:STDOUT:   @WithImplicitArgs.%T => constants.%T.1
-// CHECK:STDOUT:   @WithImplicitArgs.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.2) {
-// CHECK:STDOUT:   @Receive.%T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.1 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.2) {
-// CHECK:STDOUT:   @Pass.%T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.1 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_args.carbon
@@ -407,26 +407,26 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(@Generic.%T) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
-// CHECK:STDOUT:   @Generic.%T => constants.%A
+// CHECK:STDOUT:   %T => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.2) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.1 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
-// CHECK:STDOUT:   @Generic.%T => constants.%B
+// CHECK:STDOUT:   %T => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.3) {
-// CHECK:STDOUT:   @G.%T.1 => constants.%T.3
+// CHECK:STDOUT:   %T.1 => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

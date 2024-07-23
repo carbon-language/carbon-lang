@@ -225,11 +225,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
-// CHECK:STDOUT:   @C.%X => constants.%X
+// CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.5) {
-// CHECK:STDOUT:   @C.%X => constants.%tuple.5
+// CHECK:STDOUT:   %X => constants.%tuple.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon

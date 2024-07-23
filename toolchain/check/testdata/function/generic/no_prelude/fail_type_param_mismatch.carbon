@@ -62,7 +62,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T
-// CHECK:STDOUT:   @F.%U.1 => constants.%U
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %U.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

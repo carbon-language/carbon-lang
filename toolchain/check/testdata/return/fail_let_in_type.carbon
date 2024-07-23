@@ -67,6 +67,6 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HalfDozen(constants.%y) {
-// CHECK:STDOUT:   @HalfDozen.%y => constants.%y
+// CHECK:STDOUT:   %y => constants.%y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

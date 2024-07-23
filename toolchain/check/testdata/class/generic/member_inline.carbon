@@ -122,27 +122,27 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.2
-// CHECK:STDOUT:   @Class.%.1 => constants.%.2
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@G.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   @G.%T => constants.%T
-// CHECK:STDOUT:   @G.%Class => constants.%Class.2
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

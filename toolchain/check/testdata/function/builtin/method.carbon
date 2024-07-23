@@ -148,6 +148,6 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
-// CHECK:STDOUT:   @F.1.%Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

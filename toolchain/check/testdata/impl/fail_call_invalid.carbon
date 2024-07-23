@@ -129,6 +129,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self) {
-// CHECK:STDOUT:   @G.1.%Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -111,7 +111,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.2) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Inner.%Self.2 => constants.%Self.3
+// CHECK:STDOUT:   %Self.2 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}

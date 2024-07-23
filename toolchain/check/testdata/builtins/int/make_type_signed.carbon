@@ -240,8 +240,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Symbolic(constants.%N) {
-// CHECK:STDOUT:   @Symbolic.%N.1 => constants.%N
-// CHECK:STDOUT:   @Symbolic.%.1 => constants.%.6
+// CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon

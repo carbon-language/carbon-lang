@@ -134,7 +134,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_list.carbon
@@ -185,7 +185,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT:   @.1.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
@@ -262,12 +262,12 @@ class E(U:! type) {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%N.1) {
-// CHECK:STDOUT:   @B.%N => constants.%N.1
+// CHECK:STDOUT:   %N => constants.%N.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%N.2) {
-// CHECK:STDOUT:   @.1.%T => constants.%T
-// CHECK:STDOUT:   @.1.%N => constants.%N.2
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
@@ -342,12 +342,12 @@ class E(U:! type) {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
-// CHECK:STDOUT:   @C.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
-// CHECK:STDOUT:   @.1.%T => constants.%T
-// CHECK:STDOUT:   @.1.%U => constants.%U
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_type.carbon
@@ -419,11 +419,11 @@ class E(U:! type) {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T.1) {
-// CHECK:STDOUT:   @D.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.2) {
-// CHECK:STDOUT:   @.1.%T => constants.%T.2
+// CHECK:STDOUT:   %T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon
@@ -484,10 +484,10 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%T) {
-// CHECK:STDOUT:   @E.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U) {
-// CHECK:STDOUT:   @.1.%U => constants.%U
+// CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

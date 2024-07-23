@@ -183,48 +183,48 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.2
-// CHECK:STDOUT:   @Class.%.1 => constants.%.2
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(i32) {
-// CHECK:STDOUT:   @Class.%T => i32
+// CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.3
-// CHECK:STDOUT:   @Class.%.1 => constants.%.4
+// CHECK:STDOUT:   %Class => constants.%Class.3
+// CHECK:STDOUT:   %.1 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@G.%T.1) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   @G.%T.1 => constants.%T
-// CHECK:STDOUT:   @G.%Class => constants.%Class.2
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U) {
-// CHECK:STDOUT:   @Class.%T => constants.%U
+// CHECK:STDOUT:   %T => constants.%U
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.4
-// CHECK:STDOUT:   @Class.%.1 => constants.%.6
+// CHECK:STDOUT:   %Class => constants.%Class.4
+// CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@H.%U.1) {
-// CHECK:STDOUT:   @Class.%T => constants.%U
+// CHECK:STDOUT:   %T => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%U) {
-// CHECK:STDOUT:   @H.%U.1 => constants.%U
-// CHECK:STDOUT:   @H.%Class => constants.%Class.4
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %Class => constants.%Class.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

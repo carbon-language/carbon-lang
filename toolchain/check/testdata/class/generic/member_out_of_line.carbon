@@ -226,28 +226,28 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.2
-// CHECK:STDOUT:   @Class.%.1 => constants.%.2
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   @F.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@G.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   @G.%T => constants.%T
-// CHECK:STDOUT:   @G.%Class => constants.%Class.2
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
@@ -358,27 +358,27 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
-// CHECK:STDOUT:   @A.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%T, constants.%N) {
-// CHECK:STDOUT:   @B.%T => constants.%T
-// CHECK:STDOUT:   @B.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(@F.%T, @F.%N) {
-// CHECK:STDOUT:   @B.%T => constants.%T
-// CHECK:STDOUT:   @B.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
-// CHECK:STDOUT:   @F.%T => constants.%T
-// CHECK:STDOUT:   @F.%N => constants.%N
-// CHECK:STDOUT:   @F.%B => constants.%B.2
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %B => constants.%B.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_not_generic_vs_generic.carbon
@@ -438,7 +438,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT:   @.1.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_too_few_args.carbon
@@ -503,7 +503,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooFew(constants.%T) {}
@@ -583,14 +583,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooMany(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
-// CHECK:STDOUT:   @.1.%T => constants.%T
-// CHECK:STDOUT:   @.1.%U => constants.%U
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_wrong_arg_type.carbon
@@ -667,12 +667,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongType(constants.%T.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.2) {
-// CHECK:STDOUT:   @.1.%T => constants.%T.2
+// CHECK:STDOUT:   %T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -110,10 +110,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: specific @F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallStatic(constants.%T) {
-// CHECK:STDOUT:   @CallStatic.%T.1 => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallFacet(constants.%T) {
-// CHECK:STDOUT:   @CallFacet.%T.1 => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

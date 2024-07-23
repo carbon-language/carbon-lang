@@ -117,34 +117,34 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
-// CHECK:STDOUT:   @I.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @I.%.1 => constants.%.2
-// CHECK:STDOUT:   @I.%Self.2 => constants.%Self
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@F.%T) {
-// CHECK:STDOUT:   @I.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {
-// CHECK:STDOUT:   @F.%T => constants.%T
-// CHECK:STDOUT:   @F.%.1 => constants.%.2
-// CHECK:STDOUT:   @F.%Self => constants.%Self
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@I.%T) {
-// CHECK:STDOUT:   @I.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@.1.%T) {
-// CHECK:STDOUT:   @I.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT:   @.1.%T => constants.%T
-// CHECK:STDOUT:   @.1.%.1 => constants.%.2
-// CHECK:STDOUT:   @.1.%Self => constants.%Self
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

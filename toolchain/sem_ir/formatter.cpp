@@ -426,6 +426,8 @@ class FormatterImpl {
     out_ << " ";
 
     const auto& generic = sem_ir_.generics().Get(specific.generic_id);
+    llvm::SaveAndRestore generic_scope(
+        scope_, inst_namer_->GetScopeFor(specific.generic_id));
 
     OpenBrace();
     FormatSpecificRegion(generic, specific,

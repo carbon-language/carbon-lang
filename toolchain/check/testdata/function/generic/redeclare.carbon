@@ -160,8 +160,8 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T
-// CHECK:STDOUT:   @F.%.1 => constants.%.1
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_different_return_type.carbon
@@ -239,15 +239,15 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T
-// CHECK:STDOUT:   @F.%U.1 => constants.%U
-// CHECK:STDOUT:   @F.%.1 => constants.%.1
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
-// CHECK:STDOUT:   @.1.%T.1 => constants.%T
-// CHECK:STDOUT:   @.1.%U.1 => constants.%U
-// CHECK:STDOUT:   @.1.%.1 => constants.%.3
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_reorder.carbon
@@ -328,15 +328,15 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.1, constants.%U.1) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T.1
-// CHECK:STDOUT:   @F.%U.1 => constants.%U.1
-// CHECK:STDOUT:   @F.%.1 => constants.%.1
+// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT:   %U.1 => constants.%U.1
+// CHECK:STDOUT:   %.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U.2, constants.%T.2) {
-// CHECK:STDOUT:   @.1.%U.1 => constants.%U.2
-// CHECK:STDOUT:   @.1.%T.1 => constants.%T.2
-// CHECK:STDOUT:   @.1.%.1 => constants.%.3
+// CHECK:STDOUT:   %U.1 => constants.%U.2
+// CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_rename.carbon
@@ -417,14 +417,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.1, constants.%U.1) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T.1
-// CHECK:STDOUT:   @F.%U.1 => constants.%U.1
-// CHECK:STDOUT:   @F.%.1 => constants.%.1
+// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT:   %U.1 => constants.%U.1
+// CHECK:STDOUT:   %.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U.2, constants.%T.2) {
-// CHECK:STDOUT:   @.1.%U.1 => constants.%U.2
-// CHECK:STDOUT:   @.1.%T.1 => constants.%T.2
-// CHECK:STDOUT:   @.1.%.1 => constants.%.3
+// CHECK:STDOUT:   %U.1 => constants.%U.2
+// CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

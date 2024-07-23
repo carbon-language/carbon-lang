@@ -286,13 +286,13 @@ impl D as SelfNested {
 // CHECK:STDOUT: fn @F.6(@impl.4.%x.loc36_8.2: %.23);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {
-// CHECK:STDOUT:   @F.1.%Self => constants.%Self.1
+// CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.4(constants.%Self.2) {
-// CHECK:STDOUT:   @F.4.%Self => constants.%Self.2
-// CHECK:STDOUT:   @F.4.%.1 => constants.%.10
-// CHECK:STDOUT:   @F.4.%.2 => constants.%.11
-// CHECK:STDOUT:   @F.4.%.3 => constants.%.14
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %.2 => constants.%.11
+// CHECK:STDOUT:   %.3 => constants.%.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

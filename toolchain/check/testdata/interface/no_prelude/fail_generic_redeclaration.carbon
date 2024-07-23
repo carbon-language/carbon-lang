@@ -143,26 +143,26 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.1) {
-// CHECK:STDOUT:   @.1.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(@.1.%T) {
-// CHECK:STDOUT:   @.1.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
-// CHECK:STDOUT:   @Generic.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams(constants.%T.1) {
-// CHECK:STDOUT:   @DifferentParams.%T => constants.%T.1
+// CHECK:STDOUT:   %T => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.3(constants.%T.2) {
-// CHECK:STDOUT:   @.3.%T => constants.%T.2
+// CHECK:STDOUT:   %T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.3(@.3.%T) {
-// CHECK:STDOUT:   @.3.%T => constants.%T.2
+// CHECK:STDOUT:   %T => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -70,6 +70,6 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   @F.%N.1 => constants.%N
+// CHECK:STDOUT:   %N.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

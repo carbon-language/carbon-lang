@@ -153,38 +153,38 @@ class Declaration(T:! type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   @Class.%Class => constants.%Class.2
-// CHECK:STDOUT:   @Class.%.1 => constants.%.4
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@GetAddr.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%T) {
-// CHECK:STDOUT:   @GetAddr.%T => constants.%T
-// CHECK:STDOUT:   @GetAddr.%Class => constants.%Class.2
-// CHECK:STDOUT:   @GetAddr.%.1 => constants.%.2
-// CHECK:STDOUT:   @GetAddr.%.2 => constants.%.3
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.2 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@GetValue.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetValue(constants.%T) {
-// CHECK:STDOUT:   @GetValue.%T => constants.%T
-// CHECK:STDOUT:   @GetValue.%Class => constants.%Class.2
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Declaration(constants.%T) {
-// CHECK:STDOUT:   @Declaration.%T => constants.%T
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

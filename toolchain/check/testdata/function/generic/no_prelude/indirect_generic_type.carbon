@@ -58,8 +58,8 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   @F.%T.1 => constants.%T
-// CHECK:STDOUT:   @F.%.1 => constants.%.1
-// CHECK:STDOUT:   @F.%.2 => constants.%.2
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

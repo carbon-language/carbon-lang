@@ -912,10 +912,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: specific @F.5(constants.%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.13(constants.%Self.3) {
-// CHECK:STDOUT:   @F.13.%Self => constants.%Self.3
-// CHECK:STDOUT:   @F.13.%.1 => constants.%.10
-// CHECK:STDOUT:   @F.13.%.2 => constants.%.11
-// CHECK:STDOUT:   @F.13.%.3 => constants.%.16
-// CHECK:STDOUT:   @F.13.%.4 => constants.%.15
+// CHECK:STDOUT:   %Self => constants.%Self.3
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %.2 => constants.%.11
+// CHECK:STDOUT:   %.3 => constants.%.16
+// CHECK:STDOUT:   %.4 => constants.%.15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

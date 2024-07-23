@@ -151,20 +151,20 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
-// CHECK:STDOUT:   @Class.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%.3, constants.%.4) {
-// CHECK:STDOUT:   @Class.%T => constants.%.3
-// CHECK:STDOUT:   @Class.%N => constants.%.4
+// CHECK:STDOUT:   %T => constants.%.3
+// CHECK:STDOUT:   %N => constants.%.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%.1, constants.%.6) {
-// CHECK:STDOUT:   @Class.%T => constants.%.1
-// CHECK:STDOUT:   @Class.%N => constants.%.6
+// CHECK:STDOUT:   %T => constants.%.1
+// CHECK:STDOUT:   %N => constants.%.6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -241,8 +241,8 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
-// CHECK:STDOUT:   @Class.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_too_many.carbon
@@ -321,8 +321,8 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
-// CHECK:STDOUT:   @Class.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_conversion.carbon
@@ -399,7 +399,7 @@ var a: Class(5, i32*);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
-// CHECK:STDOUT:   @Class.%T => constants.%T
-// CHECK:STDOUT:   @Class.%N => constants.%N
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
