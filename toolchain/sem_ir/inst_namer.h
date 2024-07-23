@@ -169,8 +169,8 @@ class InstNamer {
   const Parse::Tree& parse_tree_;
   const File& sem_ir_;
 
-  // The scope for entity names. Names within this scope are prefixed with `@`
-  // in formatted SemIR.
+  // The namespace for entity names. Names within this namespace are prefixed
+  // with `@` in formatted SemIR.
   Namespace globals_;
   // The scope and name for each instruction, indexed by the InstId's index.
   std::vector<std::pair<ScopeId, Namespace::Name>> insts_;
