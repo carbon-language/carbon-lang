@@ -172,12 +172,13 @@ class InstNamer {
   // The namespace for entity names. Names within this namespace are prefixed
   // with `@` in formatted SemIR.
   Namespace globals_;
-  // The scope and name for each instruction, indexed by the InstId's index.
+  // The enclosing scope and name for each instruction, indexed by the InstId's
+  // index.
   std::vector<std::pair<ScopeId, Namespace::Name>> insts_;
-  // The scope and name for each block that might be a branch target, indexed by
-  // the InstBlockId's index.
+  // The enclosing scope and name for each block that might be a branch target,
+  // indexed by the InstBlockId's index.
   std::vector<std::pair<ScopeId, Namespace::Name>> labels_;
-  // The scopes corresponding to ScopeIndex values.
+  // The scopes corresponding to ScopeId values.
   std::vector<Scope> scopes_;
   // The scope IDs corresponding to generics. The vector indexes are the
   // GenericId index.
