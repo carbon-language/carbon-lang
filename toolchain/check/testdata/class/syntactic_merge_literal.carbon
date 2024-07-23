@@ -39,7 +39,7 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %C.2: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1000 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, <invalid>(%.3) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, invalid(%.3) [template]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %D.2: type = class_type @D [template]
@@ -104,7 +104,7 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%.3);
+// CHECK:STDOUT: specific invalid(constants.%.3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %C.2: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1000 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, <invalid>(%.3) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, invalid(%.3) [template]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %D.2: type = class_type @D [template]
@@ -187,5 +187,5 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%.3);
+// CHECK:STDOUT: specific invalid(constants.%.3);
 // CHECK:STDOUT:

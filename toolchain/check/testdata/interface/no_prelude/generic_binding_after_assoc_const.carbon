@@ -46,14 +46,14 @@ interface I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc12_8.1: type = param T
-// CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = %T.loc12_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
 // CHECK:STDOUT:   %.loc13: %.5 = assoc_entity element1, %U [template = constants.%.6]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc16_8.1: type = param T
-// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T 1, %T.loc16_8.1 [symbolic = %T.loc16_8.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T 1, %T.loc16_8.1 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: %.7 = assoc_entity element2, %G.decl [template = constants.%.8]
 // CHECK:STDOUT:
@@ -65,19 +65,23 @@ interface I {
 // CHECK:STDOUT:   witness = (%F.decl, %U, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@I.%T.loc12_8.2: type)
-// CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc12_8.2: type];
+// CHECK:STDOUT: generic fn @F(@I.%Self: %.1, @I.%T.loc12_8.2: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 1 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@I.%T.loc16_8.2: type)
-// CHECK:STDOUT:     generic [@I.%Self: %.1, @I.%T.loc16_8.2: type];
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%F.decl(constants.%Self, constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @I.%T.loc12_8.2 => constants.%T
+// CHECK:STDOUT:   fn(@I.%T.loc12_8.2: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%G.decl(constants.%Self, constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @I.%T.loc16_8.2 => constants.%T
+// CHECK:STDOUT: generic fn @G(@I.%Self: %.1, @I.%T.loc16_8.2: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 1 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(@I.%T.loc16_8.2: type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%Self, constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G(constants.%Self, constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

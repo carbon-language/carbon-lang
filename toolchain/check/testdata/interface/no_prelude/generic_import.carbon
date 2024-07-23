@@ -34,7 +34,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @AddWith, file.%AddWith.decl(%T) [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @AddWith, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -48,37 +48,42 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = %T.loc4_19.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @AddWith
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type] {
-// CHECK:STDOUT:   %Self: <unexpected>.inst+17 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc5
-// CHECK:STDOUT:   witness = (%F.decl)
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @AddWith, @AddWith(%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:     %Self.1: @AddWith.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:     %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .F = %.loc5
+// CHECK:STDOUT:     witness = (%F.decl)
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F()
-// CHECK:STDOUT:     generic [file.%T.loc4_19.2: type, @AddWith.%Self: <unexpected>.inst+17 (%.2)];
+// CHECK:STDOUT: generic fn @F(file.%T.loc4_19.2: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%AddWith.decl(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith.%F.decl(constants.%T, constants.%Self) {
-// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: specific @AddWith(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%AddWith.decl(file.%T.loc4_19.2) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc4_19.2 => constants.%T
+// CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddWith(@AddWith.%T) {
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -90,9 +95,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+14 [symbolic]
-// CHECK:STDOUT:   %.3: type = interface_type @AddWith, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @AddWith, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @AddWith, <invalid>(%C) [template]
+// CHECK:STDOUT:   %.4: type = interface_type @AddWith, invalid(%C) [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -102,9 +107,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+4, loaded [template = constants.%AddWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref Main//a, inst+11, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref Main//a, inst+12, loaded [template = constants.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -152,7 +157,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%C);
+// CHECK:STDOUT: specific invalid(constants.%C);
 // CHECK:STDOUT:

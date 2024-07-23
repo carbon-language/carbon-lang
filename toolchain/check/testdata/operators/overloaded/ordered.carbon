@@ -121,32 +121,32 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+74, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+94, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: %.10 = import_ref Core//prelude/operators/comparison, inst+114, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.6: %.12 = import_ref Core//prelude/operators/comparison, inst+134, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.7: %Less.type.2 = import_ref Core//prelude/operators/comparison, inst+70, loaded [template = constants.%Less.2]
-// CHECK:STDOUT:   %import_ref.8: %LessOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+90, loaded [template = constants.%LessOrEquivalent.2]
-// CHECK:STDOUT:   %import_ref.9: %Greater.type.2 = import_ref Core//prelude/operators/comparison, inst+110, loaded [template = constants.%Greater.2]
-// CHECK:STDOUT:   %import_ref.10: %GreaterOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+130, loaded [template = constants.%GreaterOrEquivalent.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+77, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+98, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %.10 = import_ref Core//prelude/operators/comparison, inst+119, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.6: %.12 = import_ref Core//prelude/operators/comparison, inst+140, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.7: %Less.type.2 = import_ref Core//prelude/operators/comparison, inst+72, loaded [template = constants.%Less.2]
+// CHECK:STDOUT:   %import_ref.8: %LessOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+93, loaded [template = constants.%LessOrEquivalent.2]
+// CHECK:STDOUT:   %import_ref.9: %Greater.type.2 = import_ref Core//prelude/operators/comparison, inst+114, loaded [template = constants.%Greater.2]
+// CHECK:STDOUT:   %import_ref.10: %GreaterOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+135, loaded [template = constants.%GreaterOrEquivalent.2]
 // CHECK:STDOUT:   %import_ref.11: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.13: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.14: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.15: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/comparison, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/comparison, inst+72, unloaded
 // CHECK:STDOUT:   %import_ref.18: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.19: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/comparison, inst+90, unloaded
+// CHECK:STDOUT:   %import_ref.19: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
 // CHECK:STDOUT:   %import_ref.21: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.22: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.23 = import_ref Core//prelude/operators/comparison, inst+110, unloaded
+// CHECK:STDOUT:   %import_ref.22: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.23 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
 // CHECK:STDOUT:   %import_ref.24: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.25: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.26 = import_ref Core//prelude/operators/comparison, inst+130, unloaded
+// CHECK:STDOUT:   %import_ref.25: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.26 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -403,26 +403,26 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+74, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+94, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref Core//prelude/operators/comparison, inst+114, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref Core//prelude/operators/comparison, inst+134, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+70, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+90, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/comparison, inst+110, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+130, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+77, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+98, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref Core//prelude/operators/comparison, inst+119, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref Core//prelude/operators/comparison, inst+140, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+72, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+72, unloaded
 // CHECK:STDOUT:   %import_ref.13: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.14: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+90, unloaded
+// CHECK:STDOUT:   %import_ref.14: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
 // CHECK:STDOUT:   %import_ref.16: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.17: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.18 = import_ref Core//prelude/operators/comparison, inst+110, unloaded
+// CHECK:STDOUT:   %import_ref.17: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.18 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
 // CHECK:STDOUT:   %import_ref.19: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.20: type = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.21 = import_ref Core//prelude/operators/comparison, inst+130, unloaded
+// CHECK:STDOUT:   %import_ref.20: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.21 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

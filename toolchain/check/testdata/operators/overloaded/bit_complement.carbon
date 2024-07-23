@@ -48,7 +48,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/bitwise, inst+19, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/bitwise, inst+20, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+14, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+14, unloaded

@@ -76,20 +76,21 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@Simple.%Self: %.1];
+// CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2()
-// CHECK:STDOUT:     generic [file.%T.loc15_14.2: type] {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple.%F.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
+// CHECK:STDOUT: generic fn @F.2(file.%T.loc15_14.2: type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.%F.decl(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:

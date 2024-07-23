@@ -39,11 +39,11 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Core//prelude/operators/arithmetic, inst+67, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref Core//prelude/operators/arithmetic, inst+84, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+80, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/arithmetic, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Core//prelude/operators/arithmetic, inst+72, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref Core//prelude/operators/arithmetic, inst+90, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

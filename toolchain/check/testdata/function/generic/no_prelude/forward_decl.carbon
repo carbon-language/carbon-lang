@@ -4,16 +4,13 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param_scope.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/forward_decl.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param_scope.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/no_prelude/forward_decl.carbon
 
-fn F(T:! type, n: T) -> T {
-  let m: T = n;
-  return m;
-}
+fn F(T:! type);
 
-// CHECK:STDOUT: --- type_param_scope.carbon
+// CHECK:STDOUT: --- forward_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
@@ -29,27 +26,13 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
 // CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %n.loc11_16.1: @F.%T.1 (%T) = param n
-// CHECK:STDOUT:     @F.%n: @F.%T.1 (%T) = bind_name n, %n.loc11_16.1
-// CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc11: type, %n: @F.%T.1 (%T)) -> %T {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %n.ref: @F.%T.1 (%T) = name_ref n, %n
-// CHECK:STDOUT:     %m: @F.%T.1 (%T) = bind_name m, %n.ref
-// CHECK:STDOUT:     %m.ref: @F.%T.1 (%T) = name_ref m, %m
-// CHECK:STDOUT:     return %m.ref
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   fn(%T.loc11: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {

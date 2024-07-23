@@ -66,8 +66,10 @@ fn F() {
 // CHECK:STDOUT:   witness = (%F.decl, %T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@Interface.%Self: %.1];
+// CHECK:STDOUT: generic fn @F.1(@Interface.%Self: %.1) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
@@ -80,7 +82,5 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.%F.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
