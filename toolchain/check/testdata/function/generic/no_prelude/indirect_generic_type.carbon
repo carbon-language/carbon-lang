@@ -29,31 +29,37 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:     %.loc11_20: type = ptr_type %T [symbolic = %.loc11_20 (constants.%.1)]
-// CHECK:STDOUT:     %.loc11_21: type = ptr_type %.1 [symbolic = %.loc11_21 (constants.%.2)]
-// CHECK:STDOUT:     %p.loc11_16.1: file.%.loc11_21 (%.2) = param p
-// CHECK:STDOUT:     @F.%p: file.%.loc11_21 (%.2) = bind_name p, %p.loc11_16.1
-// CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, @F.%T [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:     %.loc11_28: type = ptr_type %T [symbolic = %.loc11_20 (constants.%.1)]
+// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc11_20: type = ptr_type %T [symbolic = @F.%.1 (constants.%.1)]
+// CHECK:STDOUT:     %.loc11_21: type = ptr_type %.1 [symbolic = @F.%.2 (constants.%.2)]
+// CHECK:STDOUT:     %p.loc11_16.1: @F.%.2 (%.2) = param p
+// CHECK:STDOUT:     @F.%p: @F.%.2 (%.2) = bind_name p, %p.loc11_16.1
+// CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc11_28: type = ptr_type %T [symbolic = @F.%.1 (constants.%.1)]
 // CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%T: type, %p: file.%.loc11_21 (%.2)) -> %.1
-// CHECK:STDOUT:     generic [%T: type] {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: file.%.loc11_21 (%.2) = name_ref p, %p
-// CHECK:STDOUT:   %.loc12_10.1: ref file.%.loc11_20 (%.1) = deref %p.ref
-// CHECK:STDOUT:   %.loc12_10.2: file.%.loc11_20 (%.1) = bind_value %.loc12_10.1
-// CHECK:STDOUT:   return %.loc12_10.2
+// CHECK:STDOUT: generic fn @F(%T.loc11: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.2: type = ptr_type @F.%.1 (%.1) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc11: type, %p: @F.%.2 (%.2)) -> %.1 {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %p.ref: @F.%.2 (%.2) = name_ref p, %p
+// CHECK:STDOUT:     %.loc12_10.1: ref @F.%.1 (%.1) = deref %p.ref
+// CHECK:STDOUT:     %.loc12_10.2: @F.%.1 (%.1) = bind_value %.loc12_10.1
+// CHECK:STDOUT:     return %.loc12_10.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%F.decl(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @F.%T => constants.%T
-// CHECK:STDOUT:   file.%.loc11_20 => constants.%.1
-// CHECK:STDOUT:   file.%.loc11_21 => constants.%.2
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

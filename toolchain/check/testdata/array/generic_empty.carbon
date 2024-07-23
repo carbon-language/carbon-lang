@@ -43,27 +43,33 @@ fn G(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @G.%T: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @G.%T (constants.%T)]
+// CHECK:STDOUT:     @G.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%T: type)
-// CHECK:STDOUT:     generic [%T: type] {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc13_16: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_17: type = array_type %.loc13_16, %T [symbolic = %.loc13_17 (constants.%.3)]
-// CHECK:STDOUT:   %arr.var: ref @G.%.loc13_17 (%.3) = var arr
-// CHECK:STDOUT:   %arr: ref @G.%.loc13_17 (%.3) = bind_name arr, %arr.var
-// CHECK:STDOUT:   %.loc13_22.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc13_22.2: init @G.%.loc13_17 (%.3) = array_init () to %arr.var [symbolic = %.loc13_22.2 (constants.%array)]
-// CHECK:STDOUT:   %.loc13_23: init @G.%.loc13_17 (%.3) = converted %.loc13_22.1, %.loc13_22.2 [symbolic = %.loc13_22.2 (constants.%array)]
-// CHECK:STDOUT:   assign %arr.var, %.loc13_23
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: generic fn @G(%T.loc11: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = array_type constants.%.2, @G.%T.1 (%T) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %array: @G.%.1 (%.3) = tuple_value () [symbolic = %array (constants.%array)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc11: type) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc13_16: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc13_17: type = array_type %.loc13_16, %T [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:     %arr.var: ref @G.%.1 (%.3) = var arr
+// CHECK:STDOUT:     %arr: ref @G.%.1 (%.3) = bind_name arr, %arr.var
+// CHECK:STDOUT:     %.loc13_22.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_22.2: init @G.%.1 (%.3) = array_init () to %arr.var [symbolic = %array (constants.%array)]
+// CHECK:STDOUT:     %.loc13_23: init @G.%.1 (%.3) = converted %.loc13_22.1, %.loc13_22.2 [symbolic = %array (constants.%array)]
+// CHECK:STDOUT:     assign %arr.var, %.loc13_23
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%G.decl(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @G.%T => constants.%T
+// CHECK:STDOUT: specific @G(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

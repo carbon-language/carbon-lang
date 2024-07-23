@@ -90,19 +90,19 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, %Self [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %self.loc12_8.1: @I.%Self.ref.loc12_14 (%Self) = param self
-// CHECK:STDOUT:     %self.loc12_8.2: @I.%Self.ref.loc12_14 (%Self) = bind_name self, %self.loc12_8.1
-// CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %other.loc12_20.1: @I.%Self.ref.loc12_14 (%Self) = param other
-// CHECK:STDOUT:     %other.loc12_20.2: @I.%Self.ref.loc12_14 (%Self) = bind_name other, %other.loc12_20.1
-// CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = %Self.ref.loc12_14 (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %self.loc12_8.1: @F.1.%Self (%Self) = param self
+// CHECK:STDOUT:     %self.loc12_8.2: @F.1.%Self (%Self) = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %other.loc12_20.1: @F.1.%Self (%Self) = param other
+// CHECK:STDOUT:     %other.loc12_20.2: @F.1.%Self (%Self) = bind_name other, %other.loc12_20.1
+// CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_40: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
@@ -137,15 +137,17 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@I.%self.loc12_8.2: @I.%Self.ref.loc12_14 (%Self)](@I.%other.loc12_20.2: @I.%Self.ref.loc12_14 (%Self)) -> %Self
-// CHECK:STDOUT:     generic [@I.%Self: %.1];
+// CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[@I.%self.loc12_8.2: @F.1.%Self (%Self)](@I.%other.loc12_20.2: @F.1.%Self (%Self)) -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%F.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @I.%Self.ref.loc12_14 => constants.%Self
+// CHECK:STDOUT: specific @F.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

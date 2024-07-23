@@ -9,6 +9,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
@@ -57,6 +58,12 @@ class InstNamer {
       index += id.index;
     }
     return static_cast<ScopeId>(index);
+  }
+
+  // Returns the scope ID corresponding to a generic. A generic object shares
+  // its scope with its generic entity.
+  auto GetScopeFor(GenericId id) const -> ScopeId {
+    return generic_scopes_[id.index];
   }
 
   // Returns the IR name for the specified scope.
@@ -135,11 +142,11 @@ class InstNamer {
   };
 
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {
-    return scopes[static_cast<int>(scope_id)];
+    return scopes_[static_cast<int>(scope_id)];
   }
 
   auto GetScopeInfo(ScopeId scope_id) const -> const Scope& {
-    return scopes[static_cast<int>(scope_id)];
+    return scopes_[static_cast<int>(scope_id)];
   }
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
@@ -156,14 +163,26 @@ class InstNamer {
   auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
       -> void;
 
+  auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+
   const Lex::TokenizedBuffer& tokenized_buffer_;
   const Parse::Tree& parse_tree_;
   const File& sem_ir_;
 
-  Namespace globals;
-  std::vector<std::pair<ScopeId, Namespace::Name>> insts;
-  std::vector<std::pair<ScopeId, Namespace::Name>> labels;
-  std::vector<Scope> scopes;
+  // The namespace for entity names. Names within this namespace are prefixed
+  // with `@` in formatted SemIR.
+  Namespace globals_;
+  // The enclosing scope and name for each instruction, indexed by the InstId's
+  // index.
+  std::vector<std::pair<ScopeId, Namespace::Name>> insts_;
+  // The enclosing scope and name for each block that might be a branch target,
+  // indexed by the InstBlockId's index.
+  std::vector<std::pair<ScopeId, Namespace::Name>> labels_;
+  // The scopes corresponding to ScopeId values.
+  std::vector<Scope> scopes_;
+  // The scope IDs corresponding to generics. The vector indexes are the
+  // GenericId index.
+  std::vector<ScopeId> generic_scopes_;
 };
 
 }  // namespace Carbon::SemIR

@@ -138,11 +138,11 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = %Self.ref (constants.%Self)]
-// CHECK:STDOUT:     %self.loc13_8.1: @Simple.%Self.ref (%Self) = param self
-// CHECK:STDOUT:     %self.loc13_8.2: @Simple.%Self.ref (%Self) = bind_name self, %self.loc13_8.1
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %self.loc13_8.1: @G.1.%Self (%Self) = param self
+// CHECK:STDOUT:     %self.loc13_8.2: @G.1.%Self (%Self) = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_21: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
@@ -170,11 +170,16 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1()
-// CHECK:STDOUT:     generic [@Simple.%Self: %.1];
+// CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1[@Simple.%self.loc13_8.2: @Simple.%Self.ref (%Self)]()
-// CHECK:STDOUT:     generic [@Simple.%Self: %.1];
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %.1) {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[@Simple.%self.loc13_8.2: @G.1.%Self (%Self)]();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -227,12 +232,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple.%F.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple.%G.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Simple.%Self.ref => constants.%Self
+// CHECK:STDOUT: specific @G.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
