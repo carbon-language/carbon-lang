@@ -341,7 +341,8 @@ class FormatterImpl {
     FormatEntityEnd(fn.generic_id);
   }
 
-  auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id) -> void {
+  auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)
+      -> void {
     const auto& generic = sem_ir_.generics().Get(generic_id);
     out_ << "\n";
     Indent();
