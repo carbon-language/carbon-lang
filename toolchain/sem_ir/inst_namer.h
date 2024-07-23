@@ -63,7 +63,7 @@ class InstNamer {
   // Returns the scope ID corresponding to a generic. A generic object shares
   // its scope with its generic entity.
   auto GetScopeFor(GenericId id) const -> ScopeId {
-    return generic_scopes[id.index];
+    return generic_scopes_[id.index];
   }
 
   // Returns the IR name for the specified scope.
@@ -142,11 +142,11 @@ class InstNamer {
   };
 
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {
-    return scopes[static_cast<int>(scope_id)];
+    return scopes_[static_cast<int>(scope_id)];
   }
 
   auto GetScopeInfo(ScopeId scope_id) const -> const Scope& {
-    return scopes[static_cast<int>(scope_id)];
+    return scopes_[static_cast<int>(scope_id)];
   }
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
@@ -169,11 +169,19 @@ class InstNamer {
   const Parse::Tree& parse_tree_;
   const File& sem_ir_;
 
-  Namespace globals;
-  std::vector<std::pair<ScopeId, Namespace::Name>> insts;
-  std::vector<std::pair<ScopeId, Namespace::Name>> labels;
-  std::vector<Scope> scopes;
-  std::vector<ScopeId> generic_scopes;
+  // The scope for entity names. Names within this scope are prefixed with `@`
+  // in formatted SemIR.
+  Namespace globals_;
+  // The scope and name for each instruction, indexed by the InstId's index.
+  std::vector<std::pair<ScopeId, Namespace::Name>> insts_;
+  // The scope and name for each block that might be a branch target, indexed by
+  // the InstBlockId's index.
+  std::vector<std::pair<ScopeId, Namespace::Name>> labels_;
+  // The scopes corresponding to ScopeIndex values.
+  std::vector<Scope> scopes_;
+  // The scope IDs corresponding to generics. The vector indexes are the
+  // GenericId index.
+  std::vector<ScopeId> generic_scopes_;
 };
 
 }  // namespace Carbon::SemIR
