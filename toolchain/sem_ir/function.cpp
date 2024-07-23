@@ -42,8 +42,8 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
-auto Function::declared_return_type(const File& file,
-                                    GenericInstanceId specific_id) const
+auto Function::GetDeclaredReturnType(const File& file,
+                                     GenericInstanceId specific_id) const
     -> TypeId {
   if (!return_storage_id.is_valid()) {
     return TypeId::Invalid;

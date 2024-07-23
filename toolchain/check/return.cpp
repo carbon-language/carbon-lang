@@ -58,7 +58,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
     -> SemIR::InstId {
   // A `returned var` requires an explicit return type.
   auto& function = GetCurrentFunction(context);
-  auto return_type_id = function.declared_return_type(context.sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   if (!return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarWithNoReturnType, Error,
                       "Cannot declare a `returned var` in this function.");
@@ -106,7 +106,7 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
 auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
     -> void {
   const auto& function = GetCurrentFunction(context);
-  auto return_type_id = function.declared_return_type(context.sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   if (return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
@@ -124,7 +124,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::Invalid;
-  auto return_type_id = function.declared_return_type(context.sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   if (!return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(

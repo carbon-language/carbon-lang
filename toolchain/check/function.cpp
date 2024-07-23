@@ -23,8 +23,9 @@ auto CheckFunctionTypeMatches(Context& context,
 
   // TODO: Pass a specific ID for `prev_function` instead of substitutions and
   // use it here.
-  auto new_return_type_id = new_function.declared_return_type(context.sem_ir());
-  auto prev_return_type_id = prev_function.declared_return_type(
+  auto new_return_type_id =
+      new_function.GetDeclaredReturnType(context.sem_ir());
+  auto prev_return_type_id = prev_function.GetDeclaredReturnType(
       context.sem_ir(), SemIR::GenericInstanceId::Invalid);
   if (new_return_type_id == SemIR::TypeId::Error ||
       prev_return_type_id == SemIR::TypeId::Error) {
@@ -82,7 +83,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     return;
   }
 
-  auto return_type_id = function.declared_return_type(context.sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   CARBON_CHECK(return_type_id.is_valid())
       << "Have return storage but no return type.";
 

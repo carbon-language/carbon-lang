@@ -118,7 +118,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   // For functions with an implicit return type, the return type is the empty
   // tuple type.
   SemIR::TypeId type_id =
-      callable.declared_return_type(context.sem_ir(), specific_id);
+      callable.GetDeclaredReturnType(context.sem_ir(), specific_id);
   if (!type_id.is_valid()) {
     type_id = context.GetTupleType({});
   }

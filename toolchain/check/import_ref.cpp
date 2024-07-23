@@ -1105,7 +1105,7 @@ class ImportRefResolver {
     auto return_type_const_id = SemIR::ConstantId::Invalid;
     if (function.return_storage_id.is_valid()) {
       return_type_const_id =
-          GetLocalConstantId(function.declared_return_type(import_ir_));
+          GetLocalConstantId(function.GetDeclaredReturnType(import_ir_));
     }
     auto parent_scope_id = GetLocalNameScopeId(function.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =

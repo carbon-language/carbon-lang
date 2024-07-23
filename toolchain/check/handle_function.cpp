@@ -302,7 +302,7 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
-    auto return_type_id = function_info.declared_return_type(context.sem_ir());
+    auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
     // TODO: Update this once valid signatures for the entry point are decided.
     if (function_info.implicit_param_refs_id.is_valid() ||
         !function_info.param_refs_id.is_valid() ||
@@ -487,7 +487,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   }
 
   // Get the return type. This is `()` if none was specified.
-  auto return_type_id = function.declared_return_type(context.sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   if (!return_type_id.is_valid()) {
     return_type_id = context.GetTupleType({});
   }

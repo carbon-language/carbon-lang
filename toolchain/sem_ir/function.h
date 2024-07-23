@@ -66,9 +66,9 @@ struct Function : public Printable<Function> {
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `Invalid` if no return type was specified, in which
   // case the effective return type is an empty tuple.
-  auto declared_return_type(const File& file,
-                            GenericInstanceId specific_id =
-                                GenericInstanceId::Invalid) const -> TypeId;
+  auto GetDeclaredReturnType(const File& file,
+                             GenericInstanceId specific_id =
+                                 GenericInstanceId::Invalid) const -> TypeId;
 
   // Returns whether the function has a return slot. Can only be called for a
   // function that has either been called or defined, otherwise this is not
