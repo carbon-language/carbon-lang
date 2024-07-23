@@ -32,6 +32,13 @@ auto Tree::postorder(NodeId n) const
       PostorderIterator(NodeId(end_index)));
 }
 
+auto Tree::postorder(NodeId begin, NodeId end) const
+    -> llvm::iterator_range<PostorderIterator> {
+  CARBON_CHECK(begin.is_valid() && end.is_valid());
+  return llvm::iterator_range<PostorderIterator>(
+      PostorderIterator(begin), PostorderIterator(NodeId(end.index + 1)));
+}
+
 auto Tree::children(NodeId n) const -> llvm::iterator_range<SiblingIterator> {
   CARBON_CHECK(n.is_valid());
   int end_index = n.index - node_impls_[n.index].subtree_size;

@@ -13,9 +13,11 @@ namespace Carbon::Check {
 auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
-                              Substitutions substitutions) -> bool {
+                              Substitutions substitutions, bool check_syntax)
+    -> bool {
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
-                              DeclParams(prev_function), substitutions)) {
+                              DeclParams(prev_function), substitutions,
+                              check_syntax)) {
     return false;
   }
 

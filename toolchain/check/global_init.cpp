@@ -39,6 +39,8 @@ auto GlobalInit::Finalize() -> void {
        .parent_scope_id = SemIR::NameScopeId::Package,
        .decl_id = SemIR::InstId::Invalid,
        .generic_id = SemIR::GenericId::Invalid,
+       .first_param_node_id = Parse::NodeId::Invalid,
+       .last_param_node_id = Parse::NodeId::Invalid,
        .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
        .param_refs_id = SemIR::InstBlockId::Empty,
        .return_storage_id = SemIR::InstId::Invalid,

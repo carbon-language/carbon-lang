@@ -14,7 +14,7 @@ base class Base {
   fn F[addr self: Self*]();
 }
 
-fn Base.F[addr self: Base*]() {
+fn Base.F[addr self: Self*]() {
   (*self).a = 1;
 }
 
@@ -73,7 +73,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Base.ref: type = name_ref Base, %Base.decl [template = constants.%Base]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc17_16.1: %.3 = param self
 // CHECK:STDOUT:     @F.%self: %.3 = bind_name self, %self.loc17_16.1
