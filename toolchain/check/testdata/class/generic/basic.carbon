@@ -21,6 +21,7 @@ class Class(T:! type) {
   var k: T;
 }
 
+class Declaration(T:! type);
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -39,12 +40,16 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
+// CHECK:STDOUT:   %Declaration.type: type = generic_class_type @Declaration [template]
+// CHECK:STDOUT:   %Declaration.1: %Declaration.type = struct_value () [template]
+// CHECK:STDOUT:   %Declaration.2: type = class_type @Declaration, @Declaration(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Declaration = %Declaration.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
@@ -59,6 +64,10 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Declaration.decl: %Declaration.type = class_decl @Declaration [template = constants.%Declaration.1] {
+// CHECK:STDOUT:     %T.loc24_19.1: type = param T
+// CHECK:STDOUT:     %T.loc24_19.2: type = bind_symbolic_name T 0, %T.loc24_19.1 [symbolic = @Declaration.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,6 +107,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:     .GetValue = %GetValue.decl
 // CHECK:STDOUT:     .k = %.loc21
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Declaration(file.%T.loc24_19.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @GetAddr(file.%T.loc11_13.2: type) {
@@ -167,5 +182,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
 // CHECK:STDOUT:   @Class.%T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Declaration(constants.%T) {
+// CHECK:STDOUT:   @Declaration.%T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
