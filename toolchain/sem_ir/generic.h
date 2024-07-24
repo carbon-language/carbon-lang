@@ -138,13 +138,13 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
 };
 
 // Gets the substituted value of a potentially generic constant within a
-// specific.  Note that this does not perform substitution, and will return
+// specific. Note that this does not perform substitution, and will return
 // `Invalid` if the substituted constant value is not yet known.
 auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
                            ConstantId const_id) -> ConstantId;
 
 // Gets the substituted constant value of a potentially generic instruction
-// within a specific.  Note that this does not perform substitution, and will
+// within a specific. Note that this does not perform substitution, and will
 // return `Invalid` if the substituted constant value is not yet known.
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
