@@ -30,17 +30,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .ReturnType = %ReturnType.decl
-// CHECK:STDOUT:     .Six = %Six.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -49,6 +40,16 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .ReturnType = %ReturnType.decl
+// CHECK:STDOUT:     .Six = %Six.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [template = constants.%ReturnType] {
 // CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }

@@ -71,7 +71,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]
-// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
+// CHECK:STDOUT:     %return.var: ref @Op.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -86,7 +86,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: generic fn @Op(@Add.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@Add.%self.loc7_9.2: @Op.%Self (%Self)](@Add.%other.loc7_21.2: @Op.%Self (%Self)) -> %Self;
+// CHECK:STDOUT:   fn[@Add.%self.loc7_9.2: @Op.%Self (%Self)](@Add.%other.loc7_21.2: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
@@ -109,7 +109,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Add, %Op.type.2 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.8 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.8: <bound method> = bound_method %.4, %Op.1 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.10: type = array_type %.9, i32 [template]
@@ -123,31 +123,30 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .Add = %import_ref.2
+// CHECK:STDOUT:     import Core//default
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.4: %.6 = import_ref Core//default, inst+29, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+24, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//default, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Core//default, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+24, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//default
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_32.loc6, %.loc6_6.1 [template = i32]
-// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.2 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%Int32() [template = i32]

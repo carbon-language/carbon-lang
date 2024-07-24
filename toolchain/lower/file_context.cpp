@@ -146,7 +146,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   // TODO: Include parameters corresponding to positional parameters.
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
-  auto return_type_id = function.declared_return_type(sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(sem_ir());
 
   SemIR::InitRepr return_rep =
       return_type_id.is_valid()

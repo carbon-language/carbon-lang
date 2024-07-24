@@ -33,7 +33,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     %n.loc11_16.1: @F.%T.1 (%T) = param n
 // CHECK:STDOUT:     @F.%n: @F.%T.1 (%T) = bind_name n, %n.loc11_16.1
 // CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref @F.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -42,7 +42,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc11: type, %n: @F.%T.1 (%T)) -> %T {
+// CHECK:STDOUT:   fn(%T.loc11: type, %n: @F.%T.1 (%T)) -> @F.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %n.ref: @F.%T.1 (%T) = name_ref n, %n

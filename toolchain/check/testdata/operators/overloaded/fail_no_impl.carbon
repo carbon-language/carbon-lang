@@ -84,6 +84,19 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Negate = %import_ref.1
+// CHECK:STDOUT:     .Add = %import_ref.6
+// CHECK:STDOUT:     .AddAssign = %import_ref.11
+// CHECK:STDOUT:     .Inc = %import_ref.16
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+72, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
 // CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Core//prelude/operators/arithmetic, inst+90, loaded [template = constants.%.6]
@@ -108,22 +121,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestUnary = %TestUnary.decl
 // CHECK:STDOUT:     .TestBinary = %TestBinary.decl
 // CHECK:STDOUT:     .TestRef = %TestRef.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [template = constants.%TestUnary] {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]

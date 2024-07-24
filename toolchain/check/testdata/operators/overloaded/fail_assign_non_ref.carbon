@@ -67,37 +67,17 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type @Inc, %Op.type.2 [template]
-// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.9 [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [template]
 // CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, %Op.type.4 [template]
-// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.12 [template]
+// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/arithmetic, inst+70, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+64, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/arithmetic, inst+50, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+44, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+44, unloaded
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .TestIncNonRef = %TestIncNonRef.decl
-// CHECK:STDOUT:     .TestAddAssignNonRef = %TestAddAssignNonRef.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Inc = %import_ref.1
+// CHECK:STDOUT:     .AddAssign = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -106,15 +86,35 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/arithmetic, inst+70, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+64, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+29, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/arithmetic, inst+50, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+44, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+44, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .TestIncNonRef = %TestIncNonRef.decl
+// CHECK:STDOUT:     .TestAddAssignNonRef = %TestAddAssignNonRef.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, %Core [template = %Core]
+// CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref.loc18: <namespace> = name_ref Core, %Core [template = %Core]
+// CHECK:STDOUT:     %Core.ref.loc18: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.5 [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {

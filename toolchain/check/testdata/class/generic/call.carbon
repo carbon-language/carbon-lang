@@ -103,19 +103,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .b = %b
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -124,6 +113,17 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
@@ -204,18 +204,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -224,6 +214,16 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
@@ -282,18 +282,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -302,6 +292,16 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
@@ -361,18 +361,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -381,6 +371,16 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
@@ -434,32 +434,39 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.type: type = generic_class_type @Inner [template]
 // CHECK:STDOUT:   %Inner.1: %Inner.type = struct_value () [template]
 // CHECK:STDOUT:   %Inner.2: type = class_type @Inner, @Inner(%T, %U) [symbolic]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
+// CHECK:STDOUT:   %A.type.1: type = fn_type @A, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %A.1: %A.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Outer.3: type = class_type @Outer, @Outer(%U) [symbolic]
-// CHECK:STDOUT:   %B.type: type = fn_type @B [template]
-// CHECK:STDOUT:   %B: %B.type = struct_value () [template]
+// CHECK:STDOUT:   %B.type.1: type = fn_type @B, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %B.1: %B.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.3: type = class_type @Inner, @Inner(%T) [symbolic]
-// CHECK:STDOUT:   %C.type: type = fn_type @C [template]
-// CHECK:STDOUT:   %C: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.type.1: type = fn_type @C, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %C.1: %C.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%U) [symbolic]
-// CHECK:STDOUT:   %D.type: type = fn_type @D [template]
-// CHECK:STDOUT:   %D: %D.type = struct_value () [template]
+// CHECK:STDOUT:   %D.type.1: type = fn_type @D, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %D.1: %D.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %struct.1: %Outer.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct.2: %Outer.3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %A.2: %A.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %B.2: %B.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %C.2: %C.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %D.2: %D.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct.3: %Inner.3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %A.type.2: type = fn_type @A, @Inner(%U, %U) [symbolic]
+// CHECK:STDOUT:   %A.3: %A.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %B.type.2: type = fn_type @B, @Inner(%U, %U) [symbolic]
+// CHECK:STDOUT:   %B.3: %B.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %C.type.2: type = fn_type @C, @Inner(%U, %U) [symbolic]
+// CHECK:STDOUT:   %C.3: %C.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %D.type.2: type = fn_type @D, @Inner(%U, %U) [symbolic]
+// CHECK:STDOUT:   %D.3: %D.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct.4: %Inner.4 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Outer = %Outer.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -468,6 +475,14 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Outer = %Outer.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [template = constants.%Outer.1] {
 // CHECK:STDOUT:     %T.loc2_13.1: type = param T
 // CHECK:STDOUT:     %T.loc2_13.2: type = bind_symbolic_name T 0, %T.loc2_13.1 [symbolic = @Outer.%T (constants.%T)]
@@ -495,39 +510,48 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %A.type: type = fn_type @A, @Inner(%T, %U) [symbolic = %A.type (constants.%A.type.1)]
+// CHECK:STDOUT:   %A: @Inner.%A.type (%A.type.1) = struct_value () [symbolic = %A (constants.%A.1)]
+// CHECK:STDOUT:   %B.type: type = fn_type @B, @Inner(%T, %U) [symbolic = %B.type (constants.%B.type.1)]
+// CHECK:STDOUT:   %B: @Inner.%B.type (%B.type.1) = struct_value () [symbolic = %B (constants.%B.1)]
+// CHECK:STDOUT:   %C.type: type = fn_type @C, @Inner(%T, %U) [symbolic = %C.type (constants.%C.type.1)]
+// CHECK:STDOUT:   %C: @Inner.%C.type (%C.type.1) = struct_value () [symbolic = %C (constants.%C.1)]
+// CHECK:STDOUT:   %D.type: type = fn_type @D, @Inner(%T, %U) [symbolic = %D.type (constants.%D.type.1)]
+// CHECK:STDOUT:   %D: @Inner.%D.type (%D.type.1) = struct_value () [symbolic = %D (constants.%D.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %A.decl: %A.type = fn_decl @A [template = constants.%A] {
+// CHECK:STDOUT:     %A.decl: @Inner.%A.type (%A.type.1) = fn_decl @A [symbolic = %A (constants.%A.1)] {
 // CHECK:STDOUT:       %Outer.ref.loc4: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:       %T.ref.loc4: type = name_ref T, file.%T.loc2_13.2 [symbolic = @A.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc4_20: init type = call %Outer.ref.loc4(%T.ref.loc4) [symbolic = @A.%Outer (constants.%Outer.2)]
 // CHECK:STDOUT:       %.loc4_22.1: type = value_of_initializer %.loc4_20 [symbolic = @A.%Outer (constants.%Outer.2)]
 // CHECK:STDOUT:       %.loc4_22.2: type = converted %.loc4_20, %.loc4_22.1 [symbolic = @A.%Outer (constants.%Outer.2)]
-// CHECK:STDOUT:       %return.var.loc4: ref %Outer.2 = var <return slot>
+// CHECK:STDOUT:       %return.var.loc4: ref @A.%Outer (%Outer.2) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %B.decl: @Inner.%B.type (%B.type.1) = fn_decl @B [symbolic = %B (constants.%B.1)] {
 // CHECK:STDOUT:       %Outer.ref.loc7: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:       %U.ref.loc7: type = name_ref U, @Outer.%U.loc3_15.2 [symbolic = @B.%U (constants.%U)]
 // CHECK:STDOUT:       %.loc7_20: init type = call %Outer.ref.loc7(%U.ref.loc7) [symbolic = @B.%Outer (constants.%Outer.3)]
 // CHECK:STDOUT:       %.loc7_22.1: type = value_of_initializer %.loc7_20 [symbolic = @B.%Outer (constants.%Outer.3)]
 // CHECK:STDOUT:       %.loc7_22.2: type = converted %.loc7_20, %.loc7_22.1 [symbolic = @B.%Outer (constants.%Outer.3)]
-// CHECK:STDOUT:       %return.var.loc7: ref %Outer.3 = var <return slot>
+// CHECK:STDOUT:       %return.var.loc7: ref @B.%Outer (%Outer.3) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %C.decl: @Inner.%C.type (%C.type.1) = fn_decl @C [symbolic = %C (constants.%C.1)] {
 // CHECK:STDOUT:       %Inner.ref.loc10: %Inner.type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner.1]
 // CHECK:STDOUT:       %T.ref.loc10: type = name_ref T, file.%T.loc2_13.2 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc10_20: init type = call %Inner.ref.loc10(%T.ref.loc10) [symbolic = @C.%Inner (constants.%Inner.3)]
 // CHECK:STDOUT:       %.loc10_22.1: type = value_of_initializer %.loc10_20 [symbolic = @C.%Inner (constants.%Inner.3)]
 // CHECK:STDOUT:       %.loc10_22.2: type = converted %.loc10_20, %.loc10_22.1 [symbolic = @C.%Inner (constants.%Inner.3)]
-// CHECK:STDOUT:       %return.var.loc10: ref %Inner.3 = var <return slot>
+// CHECK:STDOUT:       %return.var.loc10: ref @C.%Inner (%Inner.3) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %D.decl: %D.type = fn_decl @D [template = constants.%D] {
+// CHECK:STDOUT:     %D.decl: @Inner.%D.type (%D.type.1) = fn_decl @D [symbolic = %D (constants.%D.1)] {
 // CHECK:STDOUT:       %Inner.ref.loc13: %Inner.type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner.1]
 // CHECK:STDOUT:       %U.ref.loc13: type = name_ref U, @Outer.%U.loc3_15.2 [symbolic = @D.%U (constants.%U)]
 // CHECK:STDOUT:       %.loc13_20: init type = call %Inner.ref.loc13(%U.ref.loc13) [symbolic = @D.%Inner (constants.%Inner.4)]
 // CHECK:STDOUT:       %.loc13_22.1: type = value_of_initializer %.loc13_20 [symbolic = @D.%Inner (constants.%Inner.4)]
 // CHECK:STDOUT:       %.loc13_22.2: type = converted %.loc13_20, %.loc13_22.1 [symbolic = @D.%Inner (constants.%Inner.4)]
-// CHECK:STDOUT:       %return.var.loc13: ref %Inner.4 = var <return slot>
+// CHECK:STDOUT:       %return.var.loc13: ref @D.%Inner (%Inner.4) = var <return slot>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -546,7 +570,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %struct: @A.%Outer (%Outer.2) = struct_value () [symbolic = %struct (constants.%struct.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc4: %Outer.2 {
+// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc4: @A.%Outer (%Outer.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc5_15.1: %.2 = struct_literal ()
 // CHECK:STDOUT:     %.loc5_15.2: init @A.%Outer (%Outer.2) = class_init (), @Inner.%return.var.loc4 [symbolic = %struct (constants.%struct.1)]
@@ -562,7 +586,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %struct: @B.%Outer (%Outer.3) = struct_value () [symbolic = %struct (constants.%struct.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc7: %Outer.3 {
+// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc7: @B.%Outer (%Outer.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_15.1: %.2 = struct_literal ()
 // CHECK:STDOUT:     %.loc8_15.2: init @B.%Outer (%Outer.3) = class_init (), @Inner.%return.var.loc7 [symbolic = %struct (constants.%struct.2)]
@@ -578,7 +602,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %struct: @C.%Inner (%Inner.3) = struct_value () [symbolic = %struct (constants.%struct.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc10: %Inner.3 {
+// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc10: @C.%Inner (%Inner.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15.1: %.2 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_15.2: init @C.%Inner (%Inner.3) = class_init (), @Inner.%return.var.loc10 [symbolic = %struct (constants.%struct.3)]
@@ -594,7 +618,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %struct: @D.%Inner (%Inner.4) = struct_value () [symbolic = %struct (constants.%struct.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc13: %Inner.4 {
+// CHECK:STDOUT:   fn() -> @Inner.%return.var.loc13: @D.%Inner (%Inner.4) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc14_15.1: %.2 = struct_literal ()
 // CHECK:STDOUT:     %.loc14_15.2: init @D.%Inner (%Inner.4) = class_init (), @Inner.%return.var.loc13 [symbolic = %struct (constants.%struct.4)]
@@ -641,6 +665,15 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %A.type => constants.%A.type.1
+// CHECK:STDOUT:   %A => constants.%A.2
+// CHECK:STDOUT:   %B.type => constants.%B.type.1
+// CHECK:STDOUT:   %B => constants.%B.2
+// CHECK:STDOUT:   %C.type => constants.%C.type.1
+// CHECK:STDOUT:   %C => constants.%C.2
+// CHECK:STDOUT:   %D.type => constants.%D.type.1
+// CHECK:STDOUT:   %D => constants.%D.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(@C.%T) {
@@ -656,6 +689,15 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%U
+// CHECK:STDOUT:   %A.type => constants.%A.type.2
+// CHECK:STDOUT:   %A => constants.%A.3
+// CHECK:STDOUT:   %B.type => constants.%B.type.2
+// CHECK:STDOUT:   %B => constants.%B.3
+// CHECK:STDOUT:   %C.type => constants.%C.type.2
+// CHECK:STDOUT:   %C => constants.%C.3
+// CHECK:STDOUT:   %D.type => constants.%D.type.2
+// CHECK:STDOUT:   %D => constants.%D.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(@D.%U) {
@@ -665,5 +707,13 @@ class Outer(T:! type) {
 // CHECK:STDOUT: specific @D(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %Inner => constants.%Inner.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@Inner.%T, @Inner.%U) {
+// CHECK:STDOUT:   %U => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(constants.%U, constants.%U) {
+// CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

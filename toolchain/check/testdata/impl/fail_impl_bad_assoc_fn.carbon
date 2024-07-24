@@ -302,35 +302,24 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Bool = %import_ref.1
+// CHECK:STDOUT:     .Int32 = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.3: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.4: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.5: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.6: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.8: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.10: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.11: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.13: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.14: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.15: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.16: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.17: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.18: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.19: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.20: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.21: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.22: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.23: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.24: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .NoF = %NoF.decl
 // CHECK:STDOUT:     .FNotFunction = %FNotFunction.decl
@@ -352,15 +341,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     .SelfNestedBadReturnType = %SelfNestedBadReturnType.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %NoF.decl: type = class_decl @NoF [template = constants.%NoF] {}
 // CHECK:STDOUT:   %FNotFunction.decl: type = class_decl @FNotFunction [template = constants.%FNotFunction] {}
@@ -442,7 +422,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_52: type = array_type %.loc188_51, %Self.3 [symbolic = @F.13.%.4 (constants.%.15)]
-// CHECK:STDOUT:     %return.var: ref %.15 = var <return slot>
+// CHECK:STDOUT:     %return.var: ref @F.13.%.4 (%.15) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc188_53: %.17 = assoc_entity element0, %F.decl [template = constants.%.18]
 // CHECK:STDOUT:
@@ -900,7 +880,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.3: type = tuple_type (@F.13.%.1 (%.10), @F.13.%.2 (%.11)) [symbolic = %.3 (constants.%.13)]
 // CHECK:STDOUT:   %.4: type = array_type constants.%.14, @F.13.%Self (%Self.3) [symbolic = %.4 (constants.%.15)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@SelfNested.%x.loc188_8.2: @F.13.%.3 (%.13)) -> %.15;
+// CHECK:STDOUT:   fn(@SelfNested.%x.loc188_8.2: @F.13.%.3 (%.13)) -> @F.13.%.4 (%.15);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: %.21) -> %.22;

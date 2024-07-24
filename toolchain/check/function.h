@@ -39,7 +39,9 @@ auto CheckFunctionTypeMatches(Context& context,
 // error if not. This computes the return slot usage for the function if
 // necessary.
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
-                             SemIR::Function& function) -> void;
+                             SemIR::Function& function,
+                             SemIR::GenericInstanceId specific_id)
+    -> SemIR::Function::ReturnSlot;
 
 }  // namespace Carbon::Check
 

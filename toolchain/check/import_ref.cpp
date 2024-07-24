@@ -8,6 +8,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
@@ -1104,7 +1105,7 @@ class ImportRefResolver {
     auto return_type_const_id = SemIR::ConstantId::Invalid;
     if (function.return_storage_id.is_valid()) {
       return_type_const_id =
-          GetLocalConstantId(function.declared_return_type(import_ir_));
+          GetLocalConstantId(function.GetDeclaredReturnType(import_ir_));
     }
     auto parent_scope_id = GetLocalNameScopeId(function.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
@@ -1158,7 +1159,10 @@ class ImportRefResolver {
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id
                               : SemIR::InstId::Invalid});
-    function_decl.type_id = context_.GetFunctionType(function_decl.function_id);
+    // TODO: Import this or recompute it.
+    auto specific_id = SemIR::GenericInstanceId::Invalid;
+    function_decl.type_id =
+        context_.GetFunctionType(function_decl.function_id, specific_id);
     // Write the function ID into the FunctionDecl.
     context_.ReplaceInstBeforeConstantUse(function_decl_id, function_decl);
     return {.const_id = context_.constant_values().Get(function_decl_id)};
@@ -1174,6 +1178,8 @@ class ImportRefResolver {
     }
     auto fn_val = context_.insts().Get(fn_val_id);
     CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id()));
+    // TODO: Import the correct generic instance and build a function type
+    // constant using it.
     return {.const_id = context_.types().GetConstantId(fn_val.type_id())};
   }
 

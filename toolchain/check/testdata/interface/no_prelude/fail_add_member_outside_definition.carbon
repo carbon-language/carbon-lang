@@ -43,10 +43,11 @@ interface Outer {
 // CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_type @Inner [template]
 // CHECK:STDOUT:   %Self.3: %.4 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.5: %.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2) [symbolic]
+// CHECK:STDOUT:   %.5: %.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.6: %.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @Inner(%Self.2) [symbolic]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -71,7 +72,7 @@ interface Outer {
 // CHECK:STDOUT: interface @Outer {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [template = constants.%.4] {}
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [symbolic = constants.%F.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -82,10 +83,13 @@ interface Outer {
 // CHECK:STDOUT: generic interface @Inner(@Outer.%Self: %.3) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
+// CHECK:STDOUT:   %Self.3: %.3 = bind_symbolic_name Self 0 [symbolic = %Self.3 (constants.%Self.2)]
+// CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.3) [symbolic = %.type (constants.%.type)]
+// CHECK:STDOUT:   %.1: @Inner.%.type (%.type) = struct_value () [symbolic = %.1 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
-// CHECK:STDOUT:     %.decl: %.type = fn_decl @.1 [template = constants.%.5] {}
+// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = %.1 (constants.%.5)] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -118,9 +122,14 @@ interface Outer {
 // CHECK:STDOUT: specific @Inner(constants.%Self.2) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.2 => constants.%Self.3
+// CHECK:STDOUT:   %Self.3 => constants.%Self.2
+// CHECK:STDOUT:   %.type => constants.%.type
+// CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@Inner.%Self.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:

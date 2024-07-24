@@ -102,8 +102,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %CompleteClass.2, i32 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, @CompleteClass(i32) [template]
@@ -112,20 +112,8 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .CompleteClass = %CompleteClass.decl
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -134,6 +122,17 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .CompleteClass = %CompleteClass.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
@@ -166,13 +165,15 @@ class Class(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.2), i32 [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T) [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:     %.loc7_10.2: type = converted %int.make_type_32.loc7, %.loc7_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc7_8: @CompleteClass.%.1 (%.2) = field_decl n, element0 [template]
-// CHECK:STDOUT:     %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
+// CHECK:STDOUT:     %F.decl: @CompleteClass.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {
 // CHECK:STDOUT:       %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:       %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:       %.loc8_13.2: type = converted %int.make_type_32.loc8, %.loc8_13.1 [template = i32]
@@ -246,23 +247,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+6, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+14, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//foo, inst+55, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+18, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -271,6 +257,22 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+35, unloaded
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = constants.%T]
@@ -345,24 +347,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+14, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type.1 = import_ref Main//foo, inst+55, loaded [template = constants.%F.1]
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+18, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.7: %F.type.2 = import_ref Main//foo, inst+36, loaded [template = constants.%F.2]
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Use = %Use.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -371,6 +357,22 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.7: %F.type.2 = import_ref Main//foo, inst+35, loaded [template = constants.%F.2]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = imports.%import_ref.1
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
+// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Use = %Use.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -443,24 +445,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+14, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//foo, inst+55, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+18, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref Main//foo, inst+28, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//foo, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Use = %Use.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -469,6 +455,22 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref Main//foo, inst+28, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//foo, inst+35, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = imports.%import_ref.1
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
+// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Use = %Use.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -538,23 +540,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+14, loaded [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//foo, inst+55, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+18, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Use = %Use.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -563,6 +550,22 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+35, unloaded
+// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = imports.%import_ref.1
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
+// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Use = %Use.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -620,19 +623,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+6, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+55, unloaded
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -641,6 +632,18 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = imports.%import_ref.1
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
+// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.loc9_13.1: type = param U
 // CHECK:STDOUT:     %U.loc9_13.2: type = bind_symbolic_name U 0, %U.loc9_13.1 [symbolic = @.1.%U (constants.%U)]

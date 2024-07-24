@@ -51,7 +51,7 @@ fn B() {
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type(inst+2)}
-// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type(inst+2)}
 // CHECK:STDOUT:     'inst+5':          {kind: Return}
@@ -85,7 +85,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst+1}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
-// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst+8}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
@@ -108,13 +108,13 @@ fn B() {
 // CHECK:STDOUT:     'inst+1':          {kind: ImportDecl, arg0: name1}
 // CHECK:STDOUT:     'inst+2':          {kind: Namespace, arg0: name_scope1, arg1: inst+1, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+3':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type(inst+4)}
-// CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type(inst+4)}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, arg1: genericInstance<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type(inst+5)}
@@ -138,7 +138,8 @@ fn B() {
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+3
 // CHECK:STDOUT:     import_refs:
-// CHECK:STDOUT:       0:               inst+8
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       1:               inst+8
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
@@ -149,6 +150,5 @@ fn B() {
 // CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
-// CHECK:STDOUT:       2:               inst+2
-// CHECK:STDOUT:       3:               inst+3
+// CHECK:STDOUT:       2:               inst+3
 // CHECK:STDOUT: ...

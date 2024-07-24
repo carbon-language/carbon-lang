@@ -51,20 +51,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     .H = %H.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -73,6 +61,18 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:     .H = %H.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
@@ -103,7 +103,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %c.loc19_16.1: @G.%Class (%Class.2) = param c
 // CHECK:STDOUT:     @G.%c: @G.%Class (%Class.2) = bind_name c, %c.loc19_16.1
 // CHECK:STDOUT:     %T.ref.loc19_32: type = name_ref T, @G.%T.loc19 [symbolic = @G.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @G.%return: ref %T = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref @G.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %U.loc23_6.1: type = param U
@@ -116,7 +116,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %c.loc23_16.1: @H.%Class (%Class.4) = param c
 // CHECK:STDOUT:     @H.%c: @H.%Class (%Class.4) = bind_name c, %c.loc23_16.1
 // CHECK:STDOUT:     %U.ref.loc23_32: type = name_ref U, @H.%U.loc23 [symbolic = @H.%U.1 (constants.%U)]
-// CHECK:STDOUT:     @H.%return: ref %U = var <return slot>
+// CHECK:STDOUT:     @H.%return: ref @H.%U.1 (%U) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,7 +155,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc19: type, %c: @G.%Class (%Class.2)) -> %T {
+// CHECK:STDOUT:   fn(%T.loc19: type, %c: @G.%Class (%Class.2)) -> @G.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class (%Class.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%.1 (%.2) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
@@ -172,7 +172,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @H.%Class (%Class.4), @H.%U.1 (%U) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc23: type, %c: @H.%Class (%Class.4)) -> %U {
+// CHECK:STDOUT:   fn(%U.loc23: type, %c: @H.%Class (%Class.4)) -> @H.%U.1 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class (%Class.4) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%.1 (%.6) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]

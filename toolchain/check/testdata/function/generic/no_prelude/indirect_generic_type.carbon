@@ -37,7 +37,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     @F.%p: @F.%.2 (%.2) = bind_name p, %p.loc11_16.1
 // CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_28: type = ptr_type %T [symbolic = @F.%.1 (constants.%.1)]
-// CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref @F.%.1 (%.1) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,7 +48,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc11: type, %p: @F.%.2 (%.2)) -> %.1 {
+// CHECK:STDOUT:   fn(%T.loc11: type, %p: @F.%.2 (%.2)) -> @F.%.1 (%.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.ref: @F.%.2 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc12_10.1: ref @F.%.1 (%.1) = deref %p.ref

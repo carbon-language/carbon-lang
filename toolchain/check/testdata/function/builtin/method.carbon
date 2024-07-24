@@ -42,21 +42,8 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:     .arr = %arr
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -65,6 +52,16 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:     .arr = %arr
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
@@ -103,7 +100,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
+// CHECK:STDOUT:     %return.var: ref @F.1.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_40: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -140,7 +137,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@I.%self.loc12_8.2: @F.1.%Self (%Self)](@I.%other.loc12_20.2: @F.1.%Self (%Self)) -> %Self;
+// CHECK:STDOUT:   fn[@I.%self.loc12_8.2: @F.1.%Self (%Self)](@I.%other.loc12_20.2: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
