@@ -38,10 +38,9 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
     return SemIR::InstId::Invalid;
   }
 
-  // TODO: For a parameterized interface, find the corresponding generic
-  // instance.
+  // TODO: For a parameterized interface, find the corresponding specific.
   LookupScope scope = {.name_scope_id = interface_scope_id,
-                       .instance_id = SemIR::GenericInstanceId::Invalid};
+                       .specific_id = SemIR::SpecificId::Invalid};
 
   // Lookup `Interface.Op`.
   auto op_ident_id = context.identifiers().Add(op.op_name);
@@ -53,8 +52,8 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
   }
 
   // Look through import_refs and aliases.
-  auto op_const_id = GetConstantValueInInstance(
-      context.sem_ir(), op_result.instance_id, op_result.inst_id);
+  auto op_const_id = GetConstantValueInSpecific(
+      context.sem_ir(), op_result.specific_id, op_result.inst_id);
   auto op_id = context.constant_values().GetInstId(op_const_id);
 
   // We expect it to be an associated function.

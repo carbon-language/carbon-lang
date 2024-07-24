@@ -1119,7 +1119,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId callee_id,
-                        SemIR::GenericInstanceId callee_specific_id,
+                        SemIR::SpecificId callee_specific_id,
                         std::optional<SemIR::AddrPattern> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
                         SemIR::InstId self_id) -> SemIR::InstId {
@@ -1168,7 +1168,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
 
   return ConvertToValueOfType(
       context, call_loc_id, self_or_addr_id,
-      SemIR::GetTypeInInstance(context.sem_ir(), callee_specific_id,
+      SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
                                self_param.type_id));
 }
 
@@ -1176,7 +1176,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id, SemIR::InstId callee_id,
-                     SemIR::GenericInstanceId callee_specific_id,
+                     SemIR::SpecificId callee_specific_id,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
   auto implicit_param_refs =
@@ -1237,7 +1237,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     diag_param_index = i;
 
     auto param_type_id =
-        SemIR::GetTypeInInstance(context.sem_ir(), callee_specific_id,
+        SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
                                  context.insts().Get(param_id).type_id());
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.

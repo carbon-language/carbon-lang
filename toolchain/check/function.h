@@ -40,7 +40,7 @@ auto CheckFunctionTypeMatches(Context& context,
 // necessary.
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
-                             SemIR::GenericInstanceId specific_id)
+                             SemIR::SpecificId specific_id)
     -> SemIR::Function::ReturnSlot;
 
 }  // namespace Carbon::Check
