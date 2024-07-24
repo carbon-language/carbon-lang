@@ -45,7 +45,6 @@ auto GlobalInit::Finalize() -> void {
        .param_refs_id = SemIR::InstBlockId::Empty,
        .return_storage_id = SemIR::InstId::Invalid,
        .is_extern = false,
-       .return_slot = SemIR::Function::ReturnSlot::Absent,
        .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
 }
 

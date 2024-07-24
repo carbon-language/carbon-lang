@@ -1154,7 +1154,6 @@ class ImportRefResolver {
              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
          .return_storage_id = new_return_storage,
          .is_extern = function.is_extern,
-         .return_slot = function.return_slot,
          .builtin_function_kind = function.builtin_function_kind,
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id

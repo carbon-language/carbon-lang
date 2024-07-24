@@ -37,11 +37,12 @@ auto CheckFunctionTypeMatches(Context& context,
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if
-// necessary.
+// necessary, and returns information about how the function returns its return
+// value.
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
                              SemIR::GenericInstanceId specific_id)
-    -> SemIR::Function::ReturnSlot;
+    -> SemIR::Function::ReturnInfo;
 
 }  // namespace Carbon::Check
 

@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -136,17 +137,21 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     return nullptr;
   }
 
-  // Don't lower unused functions.
-  if (function.return_slot == SemIR::Function::ReturnSlot::NotComputed) {
-    return nullptr;
-  }
+  // TODO: Consider tracking whether the function has been used, and only
+  // lowering it if it's needed.
 
-  const bool has_return_slot = function.has_return_slot();
+  // TODO: Pass in a specific ID for generic functions.
+  const auto specific_id = SemIR::GenericInstanceId::Invalid;
+
+  const auto return_info = function.GetReturnInfo(sem_ir(), specific_id);
+  CARBON_CHECK(return_info.is_valid()) << "Should not lower invalid functions.";
+
+  const bool has_return_slot = return_info.has_return_slot();
   auto implicit_param_refs =
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   // TODO: Include parameters corresponding to positional parameters.
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
-  auto return_type_id = function.GetDeclaredReturnType(sem_ir());
+  auto return_type_id = return_info.type_id;
 
   SemIR::InitRepr return_rep =
       return_type_id.is_valid()
@@ -250,7 +255,11 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
-  const bool has_return_slot = function.has_return_slot();
+  // TODO: Pass in a specific ID for generic functions.
+  const auto specific_id = SemIR::GenericInstanceId::Invalid;
+
+  const auto return_info = function.GetReturnInfo(sem_ir(), specific_id);
+  const bool has_return_slot = return_info.has_return_slot();
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
