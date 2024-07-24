@@ -95,6 +95,7 @@ cc_library(
         "constant.h",
         "copy_on_write_block.h",
         "entity_name.h",
+        "entity_with_params_base.h",
         "file.h",
         "function.h",
         "generic.h",

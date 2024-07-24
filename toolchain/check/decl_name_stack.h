@@ -65,6 +65,8 @@ class Context;
 class DeclNameStack {
  public:
   // Context for declaration name construction.
+  // TODO: Add a helper for class, function, and interface to turn a NameContext
+  // into an EntityWithParamsBase.
   struct NameContext {
     enum class State : int8_t {
       // A context that has not processed any parts of the qualifier.
@@ -85,6 +87,23 @@ class DeclNameStack {
       // unresolved name. No new diagnostics should be emitted.
       Error,
     };
+
+    // Combines name information to produce a base struct for entity
+    // construction.
+    auto MakeEntityWithParamsBase(SemIR::InstId decl_id,
+                                  const NameComponent& name)
+        -> SemIR::EntityWithParamsBase {
+      return {
+          .name_id = name_id_for_new_inst(),
+          .parent_scope_id = parent_scope_id_for_new_inst(),
+          .generic_id = SemIR::GenericId::Invalid,
+          .first_param_node_id = name.first_param_node_id,
+          .last_param_node_id = name.last_param_node_id,
+          .implicit_param_refs_id = name.implicit_params_id,
+          .param_refs_id = name.params_id,
+          .decl_id = decl_id,
+      };
+    }
 
     // Returns any name collision found, or Invalid.
     auto prev_inst_id() -> SemIR::InstId;
