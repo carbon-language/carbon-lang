@@ -73,6 +73,11 @@ struct Function : public Printable<Function> {
   // Returns whether the function has a return slot. Can only be called for a
   // function that has either been called or defined, otherwise this is not
   // known.
+  //
+  // For a generic function, this only returns information about the generic
+  // itself, not a specific. Because a generic function can't be called (only a
+  // specific can be), this information is only available for generic functions
+  // that are defined.
   auto has_return_slot() const -> bool {
     CARBON_CHECK(return_slot != ReturnSlot::NotComputed);
     // On error, we assume no return slot is used.
@@ -110,7 +115,8 @@ struct Function : public Printable<Function> {
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
 
-  // Whether the function uses a return slot.
+  // Whether the function uses a return slot. For a generic function, this
+  // tracks information about the generic, not a specific.
   ReturnSlot return_slot;
 
   // The following members are set at the end of a builtin function definition.
