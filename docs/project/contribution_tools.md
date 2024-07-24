@@ -233,7 +233,7 @@ considering if they fit your workflow.
         ```
         ./scripts/create_compdb.py
         ```
-        -   **NOTE** This assumes you have `python` 3 installed on your system.
+        -   **NOTE**: This assumes you have `python` 3 installed on your system.
 
 ### Manually building Clang and LLVM (not recommended)
 
