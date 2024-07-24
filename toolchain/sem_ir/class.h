@@ -10,8 +10,8 @@
 
 namespace Carbon::SemIR {
 
-// A class.
-struct Class : public Printable<Class> {
+// Class-specific fields.
+struct ClassFields {
   enum InheritanceKind : int8_t {
     // `abstract class`
     Abstract,
@@ -20,17 +20,6 @@ struct Class : public Printable<Class> {
     // `class`
     Final,
   };
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{base: " << base << "}";
-  }
-
-  // Determines whether this class has been fully defined. This is false until
-  // we reach the `}` of the class definition.
-  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
-
-  // Common entity fields.
-  EntityWithParamsBase base;
 
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
@@ -66,6 +55,21 @@ struct Class : public Printable<Class> {
   // the class is defined. For an adapter, this is the non-adapter type that
   // this class directly or transitively adapts.
   TypeId object_repr_id = TypeId::Invalid;
+};
+
+// A class. See EntityWithParamsBase regarding the inheritance here.
+struct Class : public EntityWithParamsBase,
+               public ClassFields,
+               public Printable<Class> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{";
+    PrintBaseFields(out);
+    out << "}";
+  }
+
+  // Determines whether this class has been fully defined. This is false until
+  // we reach the `}` of the class definition.
+  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 };
 
 }  // namespace Carbon::SemIR

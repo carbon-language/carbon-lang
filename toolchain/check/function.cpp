@@ -15,8 +15,8 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& prev_function,
                               Substitutions substitutions, bool check_syntax)
     -> bool {
-  if (!CheckRedeclParamsMatch(context, DeclParams(new_function.base),
-                              DeclParams(prev_function.base), substitutions,
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
+                              DeclParams(prev_function), substitutions,
                               check_syntax)) {
     return false;
   }
@@ -46,21 +46,21 @@ auto CheckFunctionTypeMatches(Context& context,
         "Function redeclaration differs because no return type is provided.");
     auto diag =
         new_return_type_id.is_valid()
-            ? context.emitter().Build(new_function.base.decl_id,
+            ? context.emitter().Build(new_function.decl_id,
                                       FunctionRedeclReturnTypeDiffers,
                                       new_return_type_id)
-            : context.emitter().Build(new_function.base.decl_id,
+            : context.emitter().Build(new_function.decl_id,
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
                         "Previously declared with return type `{0}`.",
                         SemIR::TypeId);
-      diag.Note(prev_function.base.decl_id, FunctionRedeclReturnTypePrevious,
+      diag.Note(prev_function.decl_id, FunctionRedeclReturnTypePrevious,
                 prev_return_type_id);
     } else {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePreviousNoReturn, Note,
                         "Previously declared with no return type.");
-      diag.Note(prev_function.base.decl_id,
+      diag.Note(prev_function.decl_id,
                 FunctionRedeclReturnTypePreviousNoReturn);
     }
     diag.Emit();

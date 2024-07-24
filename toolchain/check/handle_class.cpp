@@ -56,15 +56,15 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                              SemIR::ClassId prev_class_id, bool prev_is_extern,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIRLoc prev_loc = prev_class.base.latest_decl_id();
+  SemIRLoc prev_loc = prev_class.latest_decl_id();
 
   // Check the generic parameters match, if they were specified.
-  if (!CheckRedeclParamsMatch(context, DeclParams(new_class.base),
-                              DeclParams(prev_class.base))) {
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
+                              DeclParams(prev_class))) {
     return false;
   }
 
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Class, prev_class.base.name_id,
+  CheckIsAllowedRedecl(context, Lex::TokenKind::Class, prev_class.name_id,
                        {.loc = new_loc,
                         .is_definition = new_is_definition,
                         .is_extern = new_is_extern},
@@ -92,7 +92,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   }
 
   if (new_is_definition) {
-    prev_class.base.MergeDefinition(new_class.base);
+    prev_class.MergeDefinition(new_class);
     prev_class.scope_id = new_class.scope_id;
     prev_class.body_block_id = new_class.body_block_id;
     prev_class.adapt_id = new_class.adapt_id;
@@ -102,10 +102,10 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
 
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_is_extern && !new_is_extern)) {
-    prev_class.base.decl_id = new_class.base.decl_id;
+    prev_class.decl_id = new_class.decl_id;
     ReplacePrevInstForMerge(
-        context, prev_class.base.parent_scope_id, prev_class.base.name_id,
-        new_is_import ? new_loc.inst_id : new_class.base.decl_id);
+        context, prev_class.parent_scope_id, prev_class.name_id,
+        new_is_import ? new_loc.inst_id : new_class.decl_id);
   }
   return true;
 }
@@ -219,10 +219,10 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
-      .base = name_context.MakeEntityWithParamsBase(class_decl_id, name),
-      // `.self_type_id` depends on the ClassType, so is set below.
-      .self_type_id = SemIR::TypeId::Invalid,
-      .inheritance_kind = inheritance_kind};
+      name_context.MakeEntityWithParamsBase(class_decl_id, name),
+      {// `.self_type_id` depends on the ClassType, so is set below.
+       .self_type_id = SemIR::TypeId::Invalid,
+       .inheritance_kind = inheritance_kind}};
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
                  class_info, is_definition, is_extern,
@@ -234,13 +234,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
-    class_info.base.generic_id = FinishGenericDecl(context, class_decl_id);
+    class_info.generic_id = FinishGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
-    if (class_info.base.is_generic()) {
+    if (class_info.is_generic()) {
       class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
     }
   } else {
-    FinishGenericRedecl(context, class_decl_id, class_info.base.generic_id);
+    FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
   }
 
   // Write the class ID into the ClassDecl.
@@ -251,9 +251,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: Form this as part of building the definition, not as part of the
     // declaration.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    if (class_info.base.is_generic()) {
+    if (class_info.is_generic()) {
       auto instance_id =
-          context.generics().GetSelfInstance(class_info.base.generic_id);
+          context.generics().GetSelfInstance(class_info.generic_id);
       class_info.self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
@@ -285,15 +285,15 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
 
   // Track that this declaration is the definition.
   if (!class_info.is_defined()) {
-    class_info.base.definition_id = class_decl_id;
+    class_info.definition_id = class_decl_id;
     class_info.scope_id = context.name_scopes().Add(
-        class_decl_id, SemIR::NameId::Invalid, class_info.base.parent_scope_id);
+        class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
   }
 
   // Enter the class scope.
   context.scope_stack().Push(
       class_decl_id, class_info.scope_id,
-      context.generics().GetSelfInstance(class_info.base.generic_id));
+      context.generics().GetSelfInstance(class_info.generic_id));
   StartGenericDefinition(context);
 
   // Introduce `Self`.
@@ -612,7 +612,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId /*node_id*/)
     class_info.object_repr_id = context.GetStructType(fields_id);
   }
 
-  FinishGenericDefinition(context, class_info.base.generic_id);
+  FinishGenericDefinition(context, class_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

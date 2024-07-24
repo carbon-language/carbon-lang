@@ -202,7 +202,7 @@ class FormatterImpl {
 
   auto FormatClass(ClassId id) -> void {
     const Class& class_info = sem_ir_.classes().Get(id);
-    FormatEntityStart("class", class_info.base.generic_id, id);
+    FormatEntityStart("class", class_info.generic_id, id);
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -217,12 +217,12 @@ class FormatterImpl {
       out_ << ";\n";
     }
 
-    FormatEntityEnd(class_info.base.generic_id);
+    FormatEntityEnd(class_info.generic_id);
   }
 
   auto FormatInterface(InterfaceId id) -> void {
     const Interface& interface_info = sem_ir_.interfaces().Get(id);
-    FormatEntityStart("interface", interface_info.base.generic_id, id);
+    FormatEntityStart("interface", interface_info.generic_id, id);
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -248,7 +248,7 @@ class FormatterImpl {
       out_ << ";\n";
     }
 
-    FormatEntityEnd(interface_info.base.generic_id);
+    FormatEntityEnd(interface_info.generic_id);
   }
 
   auto FormatImpl(ImplId id) -> void {
@@ -288,19 +288,19 @@ class FormatterImpl {
 
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
-    FormatEntityStart(fn.is_extern ? "extern fn" : "fn", fn.base.generic_id, id);
+    FormatEntityStart(fn.is_extern ? "extern fn" : "fn", fn.generic_id, id);
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    if (fn.base.implicit_param_refs_id.is_valid()) {
+    if (fn.implicit_param_refs_id.is_valid()) {
       out_ << "[";
-      FormatParamList(fn.base.implicit_param_refs_id);
+      FormatParamList(fn.implicit_param_refs_id);
       out_ << "]";
     }
 
-    if (fn.base.param_refs_id.is_valid()) {
+    if (fn.param_refs_id.is_valid()) {
       out_ << "(";
-      FormatParamList(fn.base.param_refs_id);
+      FormatParamList(fn.param_refs_id);
       out_ << ")";
     }
 
@@ -338,7 +338,7 @@ class FormatterImpl {
       out_ << ";\n";
     }
 
-    FormatEntityEnd(fn.base.generic_id);
+    FormatEntityEnd(fn.generic_id);
   }
 
   auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)

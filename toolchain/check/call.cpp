@@ -32,8 +32,7 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, class_info.base,
-      specific_id);
+      /*return_storage_id=*/SemIR::InstId::Invalid, class_info, specific_id);
   return context.AddInst<SemIR::Call>(node_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
@@ -59,7 +58,7 @@ static auto PerformCallToGenericInterface(Context& context,
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info.base,
+      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info,
       specific_id);
   return context.AddInst<SemIR::Call>(node_id,
                                       {.type_id = SemIR::TypeId::TypeType,
@@ -106,12 +105,11 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   if (callee_function.instance_id.is_valid()) {
     auto enclosing_args_id =
         context.generic_instances().Get(callee_function.instance_id).args_id;
-    auto fn_params_id =
-        context.generics().Get(callable.base.generic_id).bindings_id;
+    auto fn_params_id = context.generics().Get(callable.generic_id).bindings_id;
     if (context.inst_blocks().Get(fn_params_id).size() ==
         context.inst_blocks().Get(enclosing_args_id).size()) {
-      specific_id = MakeGenericInstance(context, callable.base.generic_id,
-                                        enclosing_args_id);
+      specific_id =
+          MakeGenericInstance(context, callable.generic_id, enclosing_args_id);
     }
   }
 
@@ -156,7 +154,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   // Convert the arguments to match the parameters.
   auto converted_args_id =
       ConvertCallArgs(context, node_id, callee_function.self_id, arg_ids,
-                      return_storage_id, callable.base, specific_id);
+                      return_storage_id, callable, specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(node_id, {.type_id = type_id,
                                              .callee_id = callee_id,

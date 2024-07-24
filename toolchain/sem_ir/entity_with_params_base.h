@@ -2,16 +2,41 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_BASE_H_
-#define CARBON_TOOLCHAIN_SEM_IR_ENTITY_BASE_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_WITH_PARAMS_BASE_H_
+#define CARBON_TOOLCHAIN_SEM_IR_ENTITY_WITH_PARAMS_BASE_H_
 
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
-struct EntityWithParamsBase : Printable<EntityWithParamsBase> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
+// Common entity fields.
+//
+// `EntityWithParamsBase` would be a base class of entities like `Function`,
+// except that then we couldn't use named initialization (or would need to
+// disable warnings about mixing named and unnamed initialization) due to how
+// C++ handles initialization of base structs. Instead, this is composed with a
+// `Fields` struct to provide an entity's actual struct.
+//
+// For example:
+//   struct FunctionFields {
+//     ... data members ...
+//   };
+//
+//   struct Function : public EntityWithParamsBase,
+//                     public FunctionFields, public Printable<Function> {
+//     ... methods ...
+//   };
+//
+// This achieves a few things:
+//   - Allows named initialization, such as:
+//     `{{.name_id = ...}, {.function_field = ...}}`
+//   - Makes `entity.name_id` access work.
+//   - Allows passing a `EntityWithParamsBase*` when only common fields are
+//     needed.
+//   - Does all this in a way that's vanilla C++.
+struct EntityWithParamsBase {
+  auto PrintBaseFields(llvm::raw_ostream& out) const -> void {
+    out << "name: " << name_id << ", parent_scope: " << parent_scope_id;
   }
 
   // When merging a declaration and definition, prefer things which would point
@@ -63,4 +88,4 @@ struct EntityWithParamsBase : Printable<EntityWithParamsBase> {
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_BASE_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_WITH_PARAMS_BASE_H_

@@ -65,9 +65,8 @@ static auto BuildInterfaceDecl(Context& context,
               DeclParams(interface_decl_id, name.first_param_node_id,
                          name.last_param_node_id, name.implicit_params_id,
                          name.params_id),
-              DeclParams(context.interfaces()
-                             .Get(existing_interface_decl->interface_id)
-                             .base))) {
+              DeclParams(context.interfaces().Get(
+                  existing_interface_decl->interface_id)))) {
         // This is a redeclaration of an existing interface.
         interface_decl.interface_id = existing_interface_decl->interface_id;
         interface_decl.type_id = existing_interface_decl->type_id;
@@ -89,23 +88,23 @@ static auto BuildInterfaceDecl(Context& context,
     // interface name here. We should keep track of it even if the name is
     // invalid.
     SemIR::Interface interface_info = {
-        .base = {.name_id = name_context.name_id_for_new_inst(),
-                 .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-                 .generic_id = generic_id,
-                 .first_param_node_id = name.first_param_node_id,
-                 .last_param_node_id = name.last_param_node_id,
-                 .implicit_param_refs_id = name.implicit_params_id,
-                 .param_refs_id = name.params_id,
-                 .decl_id = interface_decl_id}};
+        {.name_id = name_context.name_id_for_new_inst(),
+         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+         .generic_id = generic_id,
+         .first_param_node_id = name.first_param_node_id,
+         .last_param_node_id = name.last_param_node_id,
+         .implicit_param_refs_id = name.implicit_params_id,
+         .param_refs_id = name.params_id,
+         .decl_id = interface_decl_id}};
     interface_decl.interface_id = context.interfaces().Add(interface_info);
-    if (interface_info.base.is_generic()) {
+    if (interface_info.is_generic()) {
       interface_decl.type_id =
           context.GetGenericInterfaceType(interface_decl.interface_id);
     }
   } else {
     FinishGenericRedecl(
         context, interface_decl_id,
-        context.interfaces().Get(interface_decl.interface_id).base.generic_id);
+        context.interfaces().Get(interface_decl.interface_id).generic_id);
   }
 
   // Write the interface ID into the InterfaceDecl.
@@ -132,20 +131,20 @@ auto HandleParseNode(Context& context,
     CARBON_DIAGNOSTIC(InterfacePreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(node_id, InterfaceRedefinition, interface_info.base.name_id)
-        .Note(interface_info.base.definition_id, InterfacePreviousDefinition)
+        .Build(node_id, InterfaceRedefinition, interface_info.name_id)
+        .Note(interface_info.definition_id, InterfacePreviousDefinition)
         .Emit();
   } else {
-    interface_info.base.definition_id = interface_decl_id;
+    interface_info.definition_id = interface_decl_id;
     interface_info.scope_id =
         context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
-                                  interface_info.base.parent_scope_id);
+                                  interface_info.parent_scope_id);
   }
 
   // Enter the interface scope.
   context.scope_stack().Push(
       interface_decl_id, interface_info.scope_id,
-      context.generics().GetSelfInstance(interface_info.base.generic_id));
+      context.generics().GetSelfInstance(interface_info.generic_id));
   StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
@@ -157,9 +156,9 @@ auto HandleParseNode(Context& context,
   // Declare and introduce `Self`.
   if (!interface_info.is_defined()) {
     SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
-    if (interface_info.base.is_generic()) {
+    if (interface_info.is_generic()) {
       auto instance_id =
-          context.generics().GetSelfInstance(interface_info.base.generic_id);
+          context.generics().GetSelfInstance(interface_info.generic_id);
       self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
@@ -212,7 +211,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     interface_info.associated_entities_id = associated_entities_id;
   }
 
-  FinishGenericDefinition(context, interface_info.base.generic_id);
+  FinishGenericDefinition(context, interface_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

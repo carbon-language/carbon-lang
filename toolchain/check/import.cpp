@@ -44,17 +44,17 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       return GetImportNameForEntity(
-          import_sem_ir.classes().Get(class_decl.class_id).base);
+          import_sem_ir.classes().Get(class_decl.class_id));
     }
 
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       return GetImportNameForEntity(
-          import_sem_ir.functions().Get(function_decl.function_id).base);
+          import_sem_ir.functions().Get(function_decl.function_id));
     }
 
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       return GetImportNameForEntity(
-          import_sem_ir.interfaces().Get(interface_decl.interface_id).base);
+          import_sem_ir.interfaces().Get(interface_decl.interface_id));
     }
 
     case CARBON_KIND(SemIR::Namespace ns): {

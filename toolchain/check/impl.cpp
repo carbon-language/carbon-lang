@@ -24,8 +24,7 @@ static auto NoteAssociatedFunction(Context& context,
   CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
                     "Associated function {0} declared here.", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(function.base.decl_id, ImplAssociatedFunctionHere,
-               function.base.name_id);
+  builder.Note(function.decl_id, ImplAssociatedFunctionHere, function.name_id);
 }
 
 // Checks that `impl_function_id` is a valid implementation of the function
@@ -43,7 +42,7 @@ static auto CheckAssociatedFunctionImplementation(
                       SemIR::NameId);
     auto builder = context.emitter().Build(
         impl_decl_id, ImplFunctionWithNonFunction,
-        context.functions().Get(interface_function_id).base.name_id);
+        context.functions().Get(interface_function_id).name_id);
     NoteAssociatedFunction(context, builder, interface_function_id);
     builder.Emit();
 
@@ -72,7 +71,7 @@ static auto BuildInterfaceWitness(
                       "Implementation of undefined interface {0}.",
                       SemIR::NameId);
     auto builder = context.emitter().Build(
-        impl.definition_id, ImplOfUndefinedInterface, interface.base.name_id);
+        impl.definition_id, ImplOfUndefinedInterface, interface.name_id);
     context.NoteUndefinedInterface(interface_id, builder);
     builder.Emit();
     return SemIR::InstId::BuiltinError;
@@ -110,7 +109,7 @@ static auto BuildInterfaceWitness(
         }
         auto& fn = context.functions().Get(fn_type->function_id);
         auto impl_decl_id = context.LookupNameInExactScope(
-            decl_id, fn.base.name_id, impl.scope_id, impl_scope);
+            decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);
           table.push_back(CheckAssociatedFunctionImplementation(
@@ -122,7 +121,7 @@ static auto BuildInterfaceWitness(
               SemIR::NameId, SemIR::NameId);
           auto builder =
               context.emitter().Build(impl.definition_id, ImplMissingFunction,
-                                      fn.base.name_id, interface.base.name_id);
+                                      fn.name_id, interface.name_id);
           NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 

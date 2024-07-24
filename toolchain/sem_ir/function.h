@@ -12,8 +12,8 @@
 
 namespace Carbon::SemIR {
 
-// A function.
-struct Function : public Printable<Function> {
+// Function-specific fields.
+struct FunctionFields {
   // A value that describes whether the function uses a return slot.
   enum class ReturnSlot : int8_t {
     // Not yet known: the function has not been called or defined.
@@ -28,8 +28,44 @@ struct Function : public Printable<Function> {
     Error
   };
 
+  // The following members always have values, and do not change throughout the
+  // lifetime of the function.
+
+  // The storage for the return value, which is a reference expression whose
+  // type is the return type of the function. This may or may not be used by the
+  // function, depending on whether the return type needs a return slot, but is
+  // always present if the function has a declared return type.
+  InstId return_storage_id;
+  // Whether the declaration is extern.
+  bool is_extern;
+
+  // The following member is set on the first call to the function, or at the
+  // point where the function is defined.
+
+  // Whether the function uses a return slot. For a generic function, this
+  // tracks information about the generic, not a specific.
+  ReturnSlot return_slot;
+
+  // The following members are set at the end of a builtin function definition.
+
+  // If this is a builtin function, the corresponding builtin kind.
+  BuiltinFunctionKind builtin_function_kind = BuiltinFunctionKind::None;
+
+  // The following members are accumulated throughout the function definition.
+
+  // A list of the statically reachable code blocks in the body of the
+  // function, in lexical order. The first block is the entry block. This will
+  // be empty for declarations that don't have a visible definition.
+  llvm::SmallVector<InstBlockId> body_block_ids = {};
+};
+
+// A function. See EntityWithParamsBase regarding the inheritance here.
+struct Function : public EntityWithParamsBase,
+                  public FunctionFields,
+                  public Printable<Function> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{base: " << base;
+    out << "{";
+    PrintBaseFields(out);
     if (return_storage_id.is_valid()) {
       out << ", return_storage: " << return_storage_id;
       out << ", return_slot: ";
@@ -83,39 +119,6 @@ struct Function : public Printable<Function> {
     // On error, we assume no return slot is used.
     return return_slot == ReturnSlot::Present;
   }
-
-  // Common entity fields.
-  EntityWithParamsBase base;
-
-  // The following members always have values, and do not change throughout the
-  // lifetime of the function.
-
-  // The storage for the return value, which is a reference expression whose
-  // type is the return type of the function. This may or may not be used by the
-  // function, depending on whether the return type needs a return slot, but is
-  // always present if the function has a declared return type.
-  InstId return_storage_id;
-  // Whether the declaration is extern.
-  bool is_extern;
-
-  // The following member is set on the first call to the function, or at the
-  // point where the function is defined.
-
-  // Whether the function uses a return slot. For a generic function, this
-  // tracks information about the generic, not a specific.
-  ReturnSlot return_slot;
-
-  // The following members are set at the end of a builtin function definition.
-
-  // If this is a builtin function, the corresponding builtin kind.
-  BuiltinFunctionKind builtin_function_kind = BuiltinFunctionKind::None;
-
-  // The following members are accumulated throughout the function definition.
-
-  // A list of the statically reachable code blocks in the body of the
-  // function, in lexical order. The first block is the entry block. This will
-  // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<InstBlockId> body_block_ids = {};
 };
 
 class File;

@@ -125,9 +125,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // Don't lower generic functions or associated functions.
   // TODO: Associated functions have `Self` in scope so should be treated as
   // generic functions.
-  if (function.base.generic_id.is_valid() ||
+  if (function.generic_id.is_valid() ||
       sem_ir().insts().Is<SemIR::InterfaceDecl>(
-          sem_ir().name_scopes().Get(function.base.parent_scope_id).inst_id)) {
+          sem_ir().name_scopes().Get(function.parent_scope_id).inst_id)) {
     return nullptr;
   }
 
@@ -143,10 +143,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   const bool has_return_slot = function.has_return_slot();
   auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.base.implicit_param_refs_id);
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   // TODO: Include parameters corresponding to positional parameters.
-  auto param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.base.param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   auto return_type_id = function.GetDeclaredReturnType(sem_ir());
 
   SemIR::InitRepr return_rep =
@@ -200,13 +199,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else if (auto name = sem_ir().names().GetAsStringIfIdentifier(
-                 function.base.name_id)) {
+  } else if (auto name =
+                 sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
     // TODO: Decide on a name mangling scheme.
     mangled_name = *name;
   } else {
     CARBON_FATAL() << "Unexpected special name for function: "
-                   << function.base.name_id;
+                   << function.name_id;
   }
 
   llvm::FunctionType* function_type =
@@ -258,9 +257,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
   auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.base.implicit_param_refs_id);
-  auto param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.base.param_refs_id);
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_storage_id,

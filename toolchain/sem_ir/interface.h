@@ -10,25 +10,8 @@
 
 namespace Carbon::SemIR {
 
-// An interface.
-struct Interface : public Printable<Interface> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{base: " << base << "}";
-  }
-
-  // Determines whether this interface has been fully defined. This is false
-  // until we reach the `}` of the interface definition.
-  auto is_defined() const -> bool { return associated_entities_id.is_valid(); }
-
-  // Determines whether we're currently defining the interface. This is true
-  // between the braces of the interface.
-  auto is_being_defined() const -> bool {
-    return base.definition_id.is_valid() && !is_defined();
-  }
-
-  // Common entity fields.
-  EntityWithParamsBase base;
-
+// Interface-specific fields.
+struct InterfaceFields {
   // The following members are set at the `{` of the interface definition.
 
   // The interface scope.
@@ -41,6 +24,27 @@ struct Interface : public Printable<Interface> {
 
   // The following members are set at the `}` of the interface definition.
   InstBlockId associated_entities_id = InstBlockId::Invalid;
+};
+
+// An interface. See EntityWithParamsBase regarding the inheritance here.
+struct Interface : public EntityWithParamsBase,
+                   public InterfaceFields,
+                   public Printable<Interface> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{";
+    PrintBaseFields(out);
+    out << "}";
+  }
+
+  // Determines whether this interface has been fully defined. This is false
+  // until we reach the `}` of the interface definition.
+  auto is_defined() const -> bool { return associated_entities_id.is_valid(); }
+
+  // Determines whether we're currently defining the interface. This is true
+  // between the braces of the interface.
+  auto is_being_defined() const -> bool {
+    return definition_id.is_valid() && !is_defined();
+  }
 };
 
 }  // namespace Carbon::SemIR

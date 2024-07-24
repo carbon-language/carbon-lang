@@ -45,9 +45,9 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     // disambiguator.
     auto fn_loc = Parse::NodeId::Invalid;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
-        *this, fn_loc, sem_ir.names().GetIRBaseName(fn.base.name_id).str());
-    CollectNamesInBlock(fn_scope, fn.base.implicit_param_refs_id);
-    CollectNamesInBlock(fn_scope, fn.base.param_refs_id);
+        *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
+    CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
+    CollectNamesInBlock(fn_scope, fn.param_refs_id);
     if (fn.return_storage_id.is_valid()) {
       insts_[fn.return_storage_id.index] = {
           fn_scope,
@@ -63,7 +63,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     for (auto block_id : fn.body_block_ids) {
       AddBlockLabel(fn_scope, block_id);
     }
-    CollectNamesInGeneric(fn_scope, fn.base.generic_id);
+    CollectNamesInGeneric(fn_scope, fn.generic_id);
   }
 
   // Build each class scope.
@@ -74,10 +74,10 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     auto class_loc = Parse::NodeId::Invalid;
     GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
-        sem_ir.names().GetIRBaseName(class_info.base.name_id).str());
+        sem_ir.names().GetIRBaseName(class_info.name_id).str());
     AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
     CollectNamesInBlock(class_scope, class_info.body_block_id);
-    CollectNamesInGeneric(class_scope, class_info.base.generic_id);
+    CollectNamesInGeneric(class_scope, class_info.generic_id);
   }
 
   // Build each interface scope.
@@ -89,11 +89,11 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     auto interface_loc = Parse::NodeId::Invalid;
     GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
-        sem_ir.names().GetIRBaseName(interface_info.base.name_id).str());
+        sem_ir.names().GetIRBaseName(interface_info.name_id).str());
     AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
                   interface_loc);
     CollectNamesInBlock(interface_scope, interface_info.body_block_id);
-    CollectNamesInGeneric(interface_scope, interface_info.base.generic_id);
+    CollectNamesInGeneric(interface_scope, interface_info.generic_id);
   }
 
   // Build each impl scope.
@@ -433,38 +433,36 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           continue;
         }
 
-        add_inst_name_id(function.base.name_id, ".call");
+        add_inst_name_id(function.name_id, ".call");
         continue;
       }
       case CARBON_KIND(ClassDecl inst): {
-        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).base.name_id,
-                         ".decl");
+        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".decl");
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
-        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).base.name_id);
+        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
         continue;
       }
       case CARBON_KIND(FunctionDecl inst): {
-        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).base.name_id,
+        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id,
                          ".decl");
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
-        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).base.name_id,
+        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id,
                          ".type");
         continue;
       }
       case CARBON_KIND(GenericClassType inst): {
-        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).base.name_id,
-                         ".type");
+        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".type");
         continue;
       }
       case CARBON_KIND(GenericInterfaceType inst): {
-        add_inst_name_id(
-            sem_ir_.interfaces().Get(inst.interface_id).base.name_id, ".type");
+        add_inst_name_id(sem_ir_.interfaces().Get(inst.interface_id).name_id,
+                         ".type");
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {
@@ -495,8 +493,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(InterfaceDecl inst): {
-        add_inst_name_id(
-            sem_ir_.interfaces().Get(inst.interface_id).base.name_id, ".decl");
+        add_inst_name_id(sem_ir_.interfaces().Get(inst.interface_id).name_id,
+                         ".decl");
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         continue;
       }
@@ -519,19 +517,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(StructValue inst): {
         if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(inst.type_id)) {
-          add_inst_name_id(
-              sem_ir_.functions().Get(fn_ty->function_id).base.name_id);
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id);
         } else if (auto generic_class_ty =
                        sem_ir_.types().TryGetAs<GenericClassType>(
                            inst.type_id)) {
           add_inst_name_id(
-              sem_ir_.classes().Get(generic_class_ty->class_id).base.name_id);
+              sem_ir_.classes().Get(generic_class_ty->class_id).name_id);
         } else if (auto generic_interface_ty =
                        sem_ir_.types().TryGetAs<GenericInterfaceType>(
                            inst.type_id)) {
           add_inst_name_id(sem_ir_.interfaces()
                                .Get(generic_interface_ty->interface_id)
-                               .base.name_id);
+                               .name_id);
         } else {
           add_inst_name("struct");
         }
