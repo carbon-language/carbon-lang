@@ -763,6 +763,14 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
+  auto FormatInstRHS(FunctionType inst) -> void {
+    if (inst.instance_id.is_valid()) {
+      FormatArgs(inst.function_id, inst.instance_id);
+    } else {
+      FormatArgs(inst.function_id);
+    }
+  }
+
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
     FormatTrailingBlock(inst.decl_block_id);

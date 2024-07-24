@@ -422,7 +422,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_52: type = array_type %.loc188_51, %Self.3 [symbolic = @F.13.%.4 (constants.%.15)]
-// CHECK:STDOUT:     %return.var: ref %.15 = var <return slot>
+// CHECK:STDOUT:     %return.var: ref @F.13.%.4 (%.15) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc188_53: %.17 = assoc_entity element0, %F.decl [template = constants.%.18]
 // CHECK:STDOUT:
@@ -880,7 +880,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.3: type = tuple_type (@F.13.%.1 (%.10), @F.13.%.2 (%.11)) [symbolic = %.3 (constants.%.13)]
 // CHECK:STDOUT:   %.4: type = array_type constants.%.14, @F.13.%Self (%Self.3) [symbolic = %.4 (constants.%.15)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@SelfNested.%x.loc188_8.2: @F.13.%.3 (%.13)) -> %.15;
+// CHECK:STDOUT:   fn(@SelfNested.%x.loc188_8.2: @F.13.%.3 (%.13)) -> @F.13.%.4 (%.15);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.14(@impl.14.%x.loc200_10.2: %.21) -> %.22;

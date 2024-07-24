@@ -71,7 +71,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]
-// CHECK:STDOUT:     %return.var: ref %Self = var <return slot>
+// CHECK:STDOUT:     %return.var: ref @Op.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -86,7 +86,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: generic fn @Op(@Add.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@Add.%self.loc7_9.2: @Op.%Self (%Self)](@Add.%other.loc7_21.2: @Op.%Self (%Self)) -> %Self;
+// CHECK:STDOUT:   fn[@Add.%self.loc7_9.2: @Op.%Self (%Self)](@Add.%other.loc7_21.2: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
