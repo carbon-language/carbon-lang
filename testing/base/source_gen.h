@@ -103,9 +103,9 @@ class SourceGen {
     ClassParams class_params = {};
   };
 
-  // Access a global instance of this type to generate Carbon code for benchmarks, tests, or
-  // other places where sharing a common instance is useful. Note that there is
-  // nothing thread safe about this instance or type.
+  // Access a global instance of this type to generate Carbon code for
+  // benchmarks, tests, or other places where sharing a common instance is
+  // useful. Note that there is nothing thread safe about this instance or type.
   static auto Global() -> SourceGen&;
 
   // Construct a source generator for the provided language, by default Carbon.
