@@ -440,9 +440,9 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   }
 }
 
-// Looks up a name in a scope imported from another package. An `identifier` is provided if
-// `name_id` corresponds to an identifier in the current file; otherwise,
-// `name_id` is file-agnostic and can be used directly.
+// Looks up a name in a scope imported from another package. An `identifier` is
+// provided if `name_id` corresponds to an identifier in the current file;
+// otherwise, `name_id` is file-agnostic and can be used directly.
 static auto LookupNameInImport(const SemIR::File& import_ir,
                                SemIR::NameScopeId import_scope_id,
                                SemIR::NameId name_id,
@@ -542,8 +542,8 @@ auto ImportNameFromOtherPackage(
 
     // Add the first result found.
     if (!result_id.is_valid()) {
-      // If the imported instruction is a namespace, we add it directly instead of
-      // as an ImportRef.
+      // If the imported instruction is a namespace, we add it directly instead
+      // of as an ImportRef.
       if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {
         result_id = AddNamespaceFromOtherPackage(context, import_ir_id,
                                                  import_scope_entry->inst_id,
@@ -574,9 +574,9 @@ auto ImportNameFromOtherPackage(
       canonical_result_inst =
           GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
     }
-    VerifySameCanonicalImportIRInst(
-        context, result_id, *canonical_result_inst, import_ir_id,
-        import_ir.sem_ir, import_scope_entry->inst_id);
+    VerifySameCanonicalImportIRInst(context, result_id, *canonical_result_inst,
+                                    import_ir_id, import_ir.sem_ir,
+                                    import_scope_entry->inst_id);
   }
 
   return result_id;
