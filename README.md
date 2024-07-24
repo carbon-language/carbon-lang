@@ -277,17 +277,17 @@ limited platforms. If you are using a recent Ubuntu Linux or similar (Debian,
 WSL, etc.), you can try these out by going to our
 [releases](https://github.com/carbon-language/carbon-lang/releases) page and
 download the latest nightly toolchain tar file:
-`carbon_toolchain-v0.0.0-0.nightly.YYYY.MM.DD.tar.gz`. Then you can try it out:
+`carbon_toolchain-0.0.0-0.nightly.YYYY.MM.DD.tar.gz`. Then you can try it out:
 
 ```shell
 # A variable with the specific nightly version:
-VERSION="v0.0.0-0.nightly.YYYY.MM.DD"
+VERSION="0.0.0-0.nightly.YYYY.MM.DD"
 
 # Unpack the toolchain:
 tar -xvf carbon_toolchain-${VERSION}.tar.gz
 
 # Create a simple Carbon source file:
-echo "fn Run() { Print(42); }" > forty_two.carbon
+echo "fn Run() { Core.Print(42); }" > forty_two.carbon
 
 # Compile to an object file:
 ./carbon_toolchain-${VERSION}/bin/carbon compile \
@@ -302,7 +302,7 @@ echo "fn Run() { Print(42); }" > forty_two.carbon
 ```
 
 However, the toolchain is still very early and many things don't yet work.
-Please hold off on filing lots of bugs, we know many parts of this don't work
+Please hold off on filing lots of bugs: we know many parts of this don't work
 yet or may not work on all systems. We expect to have releases that are much
 more robust and reliable that you can try out when we reach our
 [0.1 milestone](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation).
