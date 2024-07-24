@@ -105,22 +105,33 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Ordered, %Less.type.2 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.17 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.12 [template]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [template]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type @Ordered, %LessOrEquivalent.type.2 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element1, imports.%import_ref.20 [template]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element1, imports.%import_ref.13 [template]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [template]
 // CHECK:STDOUT:   %TestGreater: %TestGreater.type = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type @Ordered, %Greater.type.2 [template]
-// CHECK:STDOUT:   %.11: %.10 = assoc_entity element2, imports.%import_ref.23 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element2, imports.%import_ref.14 [template]
 // CHECK:STDOUT:   %TestGreaterEqual.type: type = fn_type @TestGreaterEqual [template]
 // CHECK:STDOUT:   %TestGreaterEqual: %TestGreaterEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %.12: type = assoc_entity_type @Ordered, %GreaterOrEquivalent.type.2 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element3, imports.%import_ref.26 [template]
+// CHECK:STDOUT:   %.13: %.12 = assoc_entity element3, imports.%import_ref.15 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Ordered = %import_ref.1
+// CHECK:STDOUT:     .Bool = %import_ref.11
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+77, loaded [template = constants.%.7]
@@ -132,26 +143,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %import_ref.9: %Greater.type.2 = import_ref Core//prelude/operators/comparison, inst+114, loaded [template = constants.%Greater.2]
 // CHECK:STDOUT:   %import_ref.10: %GreaterOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+135, loaded [template = constants.%GreaterOrEquivalent.2]
 // CHECK:STDOUT:   %import_ref.11: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.12: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.13: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.14: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.15: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/comparison, inst+72, unloaded
-// CHECK:STDOUT:   %import_ref.18: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.19: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
-// CHECK:STDOUT:   %import_ref.21: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.22: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.23 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
-// CHECK:STDOUT:   %import_ref.24: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.25: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.26 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+72, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestLess = %TestLess.decl
 // CHECK:STDOUT:     .TestLessEqual = %TestLessEqual.decl
@@ -159,19 +159,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [template = constants.%TestLess] {
@@ -386,22 +377,33 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %LessOrEquivalent.type: type = fn_type @LessOrEquivalent [template]
 // CHECK:STDOUT:   %LessOrEquivalent: %LessOrEquivalent.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type @Ordered, %LessOrEquivalent.type [template]
-// CHECK:STDOUT:   %.8: %.7 = assoc_entity element1, imports.%import_ref.15 [template]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element1, imports.%import_ref.13 [template]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [template]
 // CHECK:STDOUT:   %TestGreater: %TestGreater.type = struct_value () [template]
 // CHECK:STDOUT:   %Greater.type: type = fn_type @Greater [template]
 // CHECK:STDOUT:   %Greater: %Greater.type = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = assoc_entity_type @Ordered, %Greater.type [template]
-// CHECK:STDOUT:   %.10: %.9 = assoc_entity element2, imports.%import_ref.18 [template]
+// CHECK:STDOUT:   %.10: %.9 = assoc_entity element2, imports.%import_ref.14 [template]
 // CHECK:STDOUT:   %TestGreaterEqual.type: type = fn_type @TestGreaterEqual [template]
 // CHECK:STDOUT:   %TestGreaterEqual: %TestGreaterEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type: type = fn_type @GreaterOrEquivalent [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent: %GreaterOrEquivalent.type = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type @Ordered, %GreaterOrEquivalent.type [template]
-// CHECK:STDOUT:   %.12: %.11 = assoc_entity element3, imports.%import_ref.21 [template]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element3, imports.%import_ref.15 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Bool = %import_ref.1
+// CHECK:STDOUT:     .Ordered = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+56, unloaded
@@ -414,20 +416,14 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
 // CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+72, unloaded
-// CHECK:STDOUT:   %import_ref.13: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.14: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
-// CHECK:STDOUT:   %import_ref.16: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.17: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.18 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
-// CHECK:STDOUT:   %import_ref.19: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.20: type = import_ref Core//prelude/operators/comparison, inst+54, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.21 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/comparison, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+114, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+135, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestLess = %TestLess.decl
 // CHECK:STDOUT:     .TestLessEqual = %TestLessEqual.decl
@@ -435,15 +431,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [template = constants.%TestLess] {
 // CHECK:STDOUT:     %D.ref.loc6_16: type = name_ref D, %D.decl [template = constants.%D]

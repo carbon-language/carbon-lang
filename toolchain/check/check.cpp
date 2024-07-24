@@ -303,14 +303,6 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
 }
 
 // Add imports to the root block.
-// TODO: Should this be importing all namespaces before anything else, including
-// for imports from other packages? Otherwise, name conflict resolution
-// involving something such as `fn F() -> Other.NS.A`, wherein `Other.NS`
-// hasn't been imported yet (before `Other.NS` had a constant assigned), could
-// result in an inconsistent scoping for `Other.NS.A` versus if it were imported
-// as part of scanning `Other.NS` (after `Other.NS` had a constant assigned).
-// This will probably require IRs separating out which namespaces they
-// declare (or declare entities inside).
 static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
                                        int total_ir_count) -> void {
   // First create the constant values map for all imported IRs. We'll populate
