@@ -30,12 +30,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %I: %I.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = interface_type @I, @I(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, %F.type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.5: %.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic]
+// CHECK:STDOUT:   %F.1: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, %F.type [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [symbolic]
+// CHECK:STDOUT:   %F.2: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.type: type = fn_type @.1, @I(%T) [symbolic]
+// CHECK:STDOUT:   %.5: %.type = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,7 +47,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [symbolic = constants.%.5] {
 // CHECK:STDOUT:     %T.loc22_6.1: type = param T
 // CHECK:STDOUT:     %T.loc22_6.2: type = bind_symbolic_name T 0, %T.loc22_6.1 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %.loc22_24.1: @.1.%.1 (%.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = @.1.%Self (constants.%Self)]
@@ -59,7 +60,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %Self.ref.loc22_35: @.1.%.1 (%.2) = name_ref Self, %.loc22_35.1 [symbolic = @.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_35.2: type = facet_type_access %Self.ref.loc22_35 [symbolic = @.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_35.3: type = converted %Self.ref.loc22_35, %.loc22_35.2 [symbolic = @.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     @.1.%return: ref %Self = var <return slot>
+// CHECK:STDOUT:     @.1.%return: ref @.1.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,10 +70,14 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @I.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @I, @I.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.3: @I.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {
 // CHECK:STDOUT:       %.loc13_14.1: @F.%.1 (%.2) = specific_constant %Self.1, @I(constants.%T) [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_14: @F.%.1 (%.2) = name_ref Self, %.loc13_14.1 [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc13_14.2: type = facet_type_access %Self.ref.loc13_14 [symbolic = @F.%Self (constants.%Self)]
@@ -83,9 +88,9 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:       %Self.ref.loc13_25: @F.%.1 (%.2) = name_ref Self, %.loc13_25.1 [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc13_25.2: type = facet_type_access %Self.ref.loc13_25 [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc13_25.3: type = converted %Self.ref.loc13_25, %.loc13_25.2 [symbolic = @F.%Self (constants.%Self)]
-// CHECK:STDOUT:       %return.var: ref %Self = var <return slot>
+// CHECK:STDOUT:       %return.var: ref @F.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc13_29: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:     %.loc13_29: @I.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -99,7 +104,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@I.%self.loc13_8.2: @F.%Self (%Self)]() -> %Self;
+// CHECK:STDOUT:   fn[@I.%self.loc13_8.2: @F.%Self (%Self)]() -> @F.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(file.%T.loc22_6.2: type) {
@@ -109,7 +114,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @.1.%Self (%Self)]() -> %Self {
+// CHECK:STDOUT:   fn[%self: @.1.%Self (%Self)]() -> @.1.%Self (%Self) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @.1.%Self (%Self) = name_ref self, %self
 // CHECK:STDOUT:     return %self.ref
@@ -122,6 +127,10 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %F.type => constants.%F.type
+// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.2 => constants.%.3
+// CHECK:STDOUT:   %.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@F.%T) {

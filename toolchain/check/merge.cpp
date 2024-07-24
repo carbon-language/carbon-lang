@@ -171,6 +171,8 @@ static auto CheckRedeclParam(Context& context,
         .Emit();
   };
 
+  // TODO: Pass in a specific ID for the previous declaration instead of
+  // substitutions.
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||

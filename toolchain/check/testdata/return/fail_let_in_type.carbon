@@ -59,7 +59,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %y {
+// CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc24: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:     return <error>

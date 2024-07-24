@@ -62,13 +62,22 @@ struct Function : public Printable<Function> {
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
 
-  // Gets the declared return type of the function. Returns `Invalid` if no
-  // return type was specified,
-  auto declared_return_type(const File& file) const -> TypeId;
+  // Gets the declared return type for a specific instance of this function, or
+  // the canonical return type for the original declaration no specific is
+  // specified.  Returns `Invalid` if no return type was specified, in which
+  // case the effective return type is an empty tuple.
+  auto GetDeclaredReturnType(const File& file,
+                             GenericInstanceId specific_id =
+                                 GenericInstanceId::Invalid) const -> TypeId;
 
   // Returns whether the function has a return slot. Can only be called for a
   // function that has either been called or defined, otherwise this is not
   // known.
+  //
+  // For a generic function, this only returns information about the generic
+  // itself, not a specific. Because a generic function can't be called (only a
+  // specific can be), this information is only available for generic functions
+  // that are defined.
   auto has_return_slot() const -> bool {
     CARBON_CHECK(return_slot != ReturnSlot::NotComputed);
     // On error, we assume no return slot is used.
@@ -106,7 +115,8 @@ struct Function : public Printable<Function> {
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
 
-  // Whether the function uses a return slot.
+  // Whether the function uses a return slot. For a generic function, this
+  // tracks information about the generic, not a specific.
   ReturnSlot return_slot;
 
   // The following members are set at the end of a builtin function definition.
@@ -133,6 +143,8 @@ class File;
 struct CalleeFunction {
   // The function. Invalid if not a function.
   SemIR::FunctionId function_id;
+  // The generic instance that contains the function.
+  SemIR::GenericInstanceId instance_id;
   // The bound `self` parameter. Invalid if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.

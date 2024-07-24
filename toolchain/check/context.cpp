@@ -1084,8 +1084,10 @@ auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
   return type_id;
 }
 
-auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id);
+auto Context::GetFunctionType(SemIR::FunctionId fn_id,
+                              SemIR::GenericInstanceId instance_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, instance_id);
 }
 
 auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {

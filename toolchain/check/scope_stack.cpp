@@ -16,12 +16,19 @@ auto ScopeStack::VerifyOnFinish() -> void {
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                       SemIR::GenericInstanceId instance_id,
                       bool lexical_lookup_has_load_error) -> void {
+  // If this scope doesn't have a specific of its own, it lives in the enclosing
+  // scope's specific, if any.
+  auto enclosing_instance_id = instance_id;
+  if (!instance_id.is_valid() && !scope_stack_.empty()) {
+    enclosing_instance_id = PeekSpecificId();
+  }
+
   compile_time_binding_stack_.PushArray();
   scope_stack_.push_back(
       {.index = next_scope_index_,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
-       .instance_id = instance_id,
+       .instance_id = enclosing_instance_id,
        .next_compile_time_bind_index = SemIR::CompileTimeBindIndex(
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
@@ -29,7 +36,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   if (scope_id.is_valid()) {
     non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
                                         .name_scope_id = scope_id,
-                                        .instance_id = instance_id});
+                                        .instance_id = enclosing_instance_id});
   } else {
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated generic instance, so if we start adding lexical scopes with
