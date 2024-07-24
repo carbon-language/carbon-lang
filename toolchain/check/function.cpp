@@ -71,19 +71,23 @@ auto CheckFunctionTypeMatches(Context& context,
 }
 
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
-                             SemIR::Function& function) -> void {
+                             SemIR::Function& function,
+                             SemIR::GenericInstanceId specific_id)
+    -> SemIR::Function::ReturnSlot {
   // If we have already checked the return type, we have nothing to do.
-  if (function.return_slot != SemIR::Function::ReturnSlot::NotComputed) {
-    return;
+  if (function.return_slot != SemIR::Function::ReturnSlot::NotComputed &&
+      !specific_id.is_valid()) {
+    return function.return_slot;
   }
 
   if (!function.return_storage_id.is_valid()) {
     // Implicit `-> ()` has no return slot.
     function.return_slot = SemIR::Function::ReturnSlot::Absent;
-    return;
+    return function.return_slot;
   }
 
-  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
+  auto return_type_id =
+      function.GetDeclaredReturnType(context.sem_ir(), specific_id);
   CARBON_CHECK(return_type_id.is_valid())
       << "Have return storage but no return type.";
 
@@ -95,18 +99,23 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                    return_type_id);
   };
+  SemIR::Function::ReturnSlot result;
   if (!context.TryToCompleteType(
           return_type_id,
           function.return_slot == SemIR::Function::ReturnSlot::Error
               ? std::nullopt
               : std::optional(diagnose_incomplete_return_type))) {
-    function.return_slot = SemIR::Function::ReturnSlot::Error;
+    result = SemIR::Function::ReturnSlot::Error;
   } else if (SemIR::GetInitRepr(context.sem_ir(), return_type_id)
                  .has_return_slot()) {
-    function.return_slot = SemIR::Function::ReturnSlot::Present;
+    result = SemIR::Function::ReturnSlot::Present;
   } else {
-    function.return_slot = SemIR::Function::ReturnSlot::Absent;
+    result = SemIR::Function::ReturnSlot::Absent;
   }
+  if (!specific_id.is_valid()) {
+    function.return_slot = result;
+  }
+  return result;
 }
 
 }  // namespace Carbon::Check
