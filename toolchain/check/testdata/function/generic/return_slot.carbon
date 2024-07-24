@@ -128,43 +128,43 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32.loc22_10: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc22_10.1: type = value_of_initializer %int.make_type_32.loc22_10 [template = i32]
-// CHECK:STDOUT:   %.loc22_10.2: type = converted %int.make_type_32.loc22_10, %.loc22_10.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc18_10: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32.loc18_10 [template = i32]
+// CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32.loc18_10, %.loc18_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %Wrap.ref.loc22: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %int.make_type_32.loc22_21: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22_21 [template = i32]
-// CHECK:STDOUT:   %.loc22_20.2: type = converted %int.make_type_32.loc22_21, %.loc22_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc22_20.3: init type = call %Wrap.ref.loc22(%.loc22_20.2) [template = constants.%Wrap.3]
-// CHECK:STDOUT:   %.loc22_25: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(i32) [template = constants.%Make.2]
-// CHECK:STDOUT:   %Make.ref.loc22: %Make.type.2 = name_ref Make, %.loc22_25 [template = constants.%Make.2]
-// CHECK:STDOUT:   %Make.call.loc22: init i32 = call %Make.ref.loc22()
-// CHECK:STDOUT:   assign %a.var, %Make.call.loc22
-// CHECK:STDOUT:   %.loc27_11.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc27_11.2: type = converted %.loc27_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %int.make_type_32.loc18_21: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc18_20.1: type = value_of_initializer %int.make_type_32.loc18_21 [template = i32]
+// CHECK:STDOUT:   %.loc18_20.2: type = converted %int.make_type_32.loc18_21, %.loc18_20.1 [template = i32]
+// CHECK:STDOUT:   %.loc18_20.3: init type = call %Wrap.ref.loc18(%.loc18_20.2) [template = constants.%Wrap.3]
+// CHECK:STDOUT:   %.loc18_25: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(i32) [template = constants.%Make.2]
+// CHECK:STDOUT:   %Make.ref.loc18: %Make.type.2 = name_ref Make, %.loc18_25 [template = constants.%Make.2]
+// CHECK:STDOUT:   %Make.call.loc18: init i32 = call %Make.ref.loc18()
+// CHECK:STDOUT:   assign %a.var, %Make.call.loc18
+// CHECK:STDOUT:   %.loc19_11.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc19_11.2: type = converted %.loc19_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref %.1 = var b
 // CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
-// CHECK:STDOUT:   %Wrap.ref.loc27: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %.loc27_21: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc27_19.1: type = converted %.loc27_21, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc27_19.2: init type = call %Wrap.ref.loc27(%.loc27_19.1) [template = constants.%Wrap.4]
-// CHECK:STDOUT:   %.loc27_23: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%.1) [template = constants.%Make.3]
-// CHECK:STDOUT:   %Make.ref.loc27: %Make.type.3 = name_ref Make, %.loc27_23 [template = constants.%Make.3]
-// CHECK:STDOUT:   %Make.call.loc27: init %.1 = call %Make.ref.loc27()
-// CHECK:STDOUT:   assign %b.var, %Make.call.loc27
-// CHECK:STDOUT:   %C.ref.loc31_10: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %.loc19_21: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc19_19.1: type = converted %.loc19_21, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19_19.2: init type = call %Wrap.ref.loc19(%.loc19_19.1) [template = constants.%Wrap.4]
+// CHECK:STDOUT:   %.loc19_23: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%.1) [template = constants.%Make.3]
+// CHECK:STDOUT:   %Make.ref.loc19: %Make.type.3 = name_ref Make, %.loc19_23 [template = constants.%Make.3]
+// CHECK:STDOUT:   %Make.call.loc19: init %.1 = call %Make.ref.loc19()
+// CHECK:STDOUT:   assign %b.var, %Make.call.loc19
+// CHECK:STDOUT:   %C.ref.loc20_10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %Wrap.ref.loc31: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %C.ref.loc31_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc31_18: init type = call %Wrap.ref.loc31(%C.ref.loc31_19) [template = constants.%Wrap.5]
-// CHECK:STDOUT:   %.loc31_21: %Make.type.4 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [template = constants.%Make.4]
-// CHECK:STDOUT:   %Make.ref.loc31: %Make.type.4 = name_ref Make, %.loc31_21 [template = constants.%Make.4]
-// CHECK:STDOUT:   %.loc31_7: ref %C = splice_block %c.var {}
-// CHECK:STDOUT:   %Make.call.loc31: init %C = call %Make.ref.loc31() to %.loc31_7
-// CHECK:STDOUT:   assign %c.var, %Make.call.loc31
+// CHECK:STDOUT:   %Wrap.ref.loc20: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %C.ref.loc20_19: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc20_18: init type = call %Wrap.ref.loc20(%C.ref.loc20_19) [template = constants.%Wrap.5]
+// CHECK:STDOUT:   %.loc20_21: %Make.type.4 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [template = constants.%Make.4]
+// CHECK:STDOUT:   %Make.ref.loc20: %Make.type.4 = name_ref Make, %.loc20_21 [template = constants.%Make.4]
+// CHECK:STDOUT:   %.loc20_7: ref %C = splice_block %c.var {}
+// CHECK:STDOUT:   %Make.call.loc20: init %C = call %Make.ref.loc20() to %.loc20_7
+// CHECK:STDOUT:   assign %c.var, %Make.call.loc20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
