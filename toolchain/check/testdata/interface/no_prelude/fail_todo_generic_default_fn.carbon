@@ -107,7 +107,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   fn[@I.%self.loc13_8.2: @F.%Self (%Self)]() -> @F.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(file.%T.loc22_6.2: type) {
+// CHECK:STDOUT: generic fn @.1(file.%T.loc22_6.2: type, @I.%Self.1: @I.%.1 (%.2)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
@@ -151,7 +151,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%T) {
+// CHECK:STDOUT: specific @.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT:   %Self => constants.%Self
