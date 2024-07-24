@@ -113,6 +113,18 @@ class SourceGen {
 
   // Generate an API file with dense classes containing function forward
   // declarations.
+  //
+  // Accepts a number of `target_lines` for the resulting source code. This is a
+  // rough approximation used to scale all the other constructs up and down
+  // accordingly. For C++ source generation, we work to generate the same number
+  // of constructs as Carbon would for the given line count over keeping the
+  // actual line count close to the target.
+  //
+  // TODO: Currently, the formatting and line breaks of generating code are
+  // extremely rough still, and those are a large factor in adherence to
+  // `target_lines`. Long term, the goal is to get as close as we can to any
+  // automatically formatted code while still keeping the stability of
+  // benchmarking.
   auto GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
       -> std::string;
 
