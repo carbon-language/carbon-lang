@@ -295,9 +295,9 @@ echo "fn Run() { Core.Print(42); }" > forty_two.carbon
 ./carbon_toolchain-${VERSION}/bin/carbon compile \
   --output=forty_two.o forty_two.carbon
 
-# Install minimal system libraries used for linking, note that installing `gcc`
-# or `g++` for compiling C/C++ code with GCC will also be sufficient, this is
-# just the specific system libraries Carbon linking currently still uses.
+# Install minimal system libraries used for linking. Note that installing `gcc`
+# or `g++` for compiling C/C++ code with GCC will also be sufficient, these are
+# just the specific system libraries Carbon linking still uses.
 sudo apt install libgcc-11-dev
 
 # Link to an executable:
