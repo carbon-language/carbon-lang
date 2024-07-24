@@ -15,6 +15,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/merge.h"
@@ -299,91 +300,6 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
           .inst_id = SemIR::InstId::BuiltinError};
 }
 
-// Handles lookup through the import_ir_scopes for LookupNameInExactScope.
-static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
-                                   SemIR::NameId name_id,
-                                   SemIR::NameScopeId scope_id,
-                                   const SemIR::NameScope& scope)
-    -> SemIR::InstId {
-  auto identifier_id = name_id.AsIdentifierId();
-  llvm::StringRef identifier;
-  if (identifier_id.is_valid()) {
-    identifier = context.identifiers().Get(identifier_id);
-  }
-
-  DiagnosticAnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InNameLookup, Note, "In name lookup for `{0}`.",
-                          SemIR::NameId);
-        builder.Note(loc, InNameLookup, name_id);
-      });
-
-  auto result_id = SemIR::InstId::Invalid;
-  std::optional<SemIR::ImportIRInst> canonical_result_inst;
-
-  for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
-    auto& import_ir = context.import_irs().Get(import_ir_id);
-
-    // Determine the NameId in the import IR.
-    SemIR::NameId import_name_id = name_id;
-    if (identifier_id.is_valid()) {
-      auto import_identifier_id =
-          import_ir.sem_ir->identifiers().Lookup(identifier);
-      if (!import_identifier_id.is_valid()) {
-        // Name doesn't exist in the import IR.
-        continue;
-      }
-      import_name_id = SemIR::NameId::ForIdentifier(import_identifier_id);
-    }
-
-    // Look up the name in the import scope.
-    const auto& import_scope =
-        import_ir.sem_ir->name_scopes().Get(import_scope_id);
-    auto lookup = import_scope.name_map.Lookup(import_name_id);
-    if (!lookup) {
-      // Name doesn't exist in the import scope.
-      continue;
-    }
-    const auto& import_scope_entry = import_scope.names[lookup.value()];
-    auto import_inst =
-        import_ir.sem_ir->insts().Get(import_scope_entry.inst_id);
-    if (import_inst.Is<SemIR::AnyImportRef>()) {
-      // This entity was added to name lookup by using an import, and is not
-      // exported.
-      continue;
-    }
-
-    if (import_scope_entry.access_kind != SemIR::AccessKind::Public) {
-      // Ignore cross-package non-public names.
-      continue;
-    }
-
-    if (result_id.is_valid()) {
-      // On a conflict, we verify the canonical instruction is the same.
-      if (!canonical_result_inst) {
-        canonical_result_inst =
-            GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
-      }
-      VerifySameCanonicalImportIRInst(
-          context, result_id, *canonical_result_inst, import_ir_id,
-          import_ir.sem_ir, import_scope_entry.inst_id);
-    } else {
-      // Add the first result found.
-      auto entity_name_id = context.entity_names().Add(
-          {.name_id = name_id,
-           .parent_scope_id = scope_id,
-           .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-      result_id = AddImportRef(
-          context,
-          {.ir_id = import_ir_id, .inst_id = import_scope_entry.inst_id},
-          entity_name_id);
-      LoadImportRef(context, result_id);
-    }
-  }
-
-  return result_id;
-}
-
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
@@ -394,7 +310,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
     return inst_id;
   }
   if (!scope.import_ir_scopes.empty()) {
-    return LookupInImportIRScopes(*this, loc, name_id, scope_id, scope);
+    return ImportNameFromOtherPackage(*this, loc, scope_id,
+                                      scope.import_ir_scopes, name_id);
   }
   return SemIR::InstId::Invalid;
 }
@@ -410,14 +327,14 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
     auto [scope_id, instance_id] = scopes.pop_back_val();
-    const auto& scope = name_scopes().Get(scope_id);
-    has_error |= scope.has_error;
+    const auto& name_scope = name_scopes().Get(scope_id);
+    has_error |= name_scope.has_error;
 
     auto scope_result_id =
-        LookupNameInExactScope(node_id, name_id, scope_id, scope);
+        LookupNameInExactScope(node_id, name_id, scope_id, name_scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
-      auto extended = scope.extended_scopes;
+      auto extended = name_scope.extended_scopes;
       scopes.reserve(scopes.size() + extended.size());
       for (auto extended_id : llvm::reverse(extended)) {
         // TODO: Track a constant describing the extended scope, and substitute

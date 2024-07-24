@@ -106,7 +106,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst+1}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
-// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst+8}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
@@ -159,7 +159,8 @@ fn B() {
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+3
 // CHECK:STDOUT:     import_refs:
-// CHECK:STDOUT:       0:               inst+8
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       1:               inst+8
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
@@ -170,8 +171,7 @@ fn B() {
 // CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
-// CHECK:STDOUT:       2:               inst+2
-// CHECK:STDOUT:       3:               inst+3
+// CHECK:STDOUT:       2:               inst+3
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -185,24 +185,25 @@ fn B() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %A: <namespace> = namespace file.%A.import, [template] {
+// CHECK:STDOUT:     .A = %import_ref
+// CHECK:STDOUT:     import A//default
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %A.type = import_ref A//default, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .A = imports.%A
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.import = import A
-// CHECK:STDOUT:   %A: <namespace> = namespace %A.import, [template] {
-// CHECK:STDOUT:     import A//default
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, imports.%A [template = imports.%A]
 // CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref.loc6_4()
 // CHECK:STDOUT:   return

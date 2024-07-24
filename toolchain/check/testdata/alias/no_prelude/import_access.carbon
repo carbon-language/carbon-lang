@@ -151,16 +151,19 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
+// CHECK:STDOUT:     import Test//def
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test: <namespace> = namespace %Test.import, [template] {
-// CHECK:STDOUT:     import Test//def
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
+// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var

@@ -67,24 +67,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.4: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.5: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.6: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.7: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Sub = %Sub.decl
-// CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
-// CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Float = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -93,6 +77,17 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Sub = %Sub.decl
+// CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Sub.decl: %Sub.type = fn_decl @Sub [template = constants.%Sub] {
 // CHECK:STDOUT:     %.loc2_11.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_11: init type = call constants.%Float(%.loc2_11.1) [template = f64]
@@ -190,32 +185,24 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Float = %import_ref.1
+// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.4: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.5: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.6: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.7: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.8: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.9: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.10: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.11: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.12: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.13: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.14: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.15: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.16: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.17: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.18: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.19: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.20: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.21: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .TooFew = %TooFew.decl
 // CHECK:STDOUT:     .TooMany = %TooMany.decl
 // CHECK:STDOUT:     .BadReturnType = %BadReturnType.decl
@@ -225,15 +212,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .RuntimeCallBadReturnType = %RuntimeCallBadReturnType.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Core: <namespace> = namespace %Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooFew.decl: %TooFew.type = fn_decl @TooFew [template = constants.%TooFew] {
 // CHECK:STDOUT:     %.loc8_14.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc8_14: init type = call constants.%Float(%.loc8_14.1) [template = f64]

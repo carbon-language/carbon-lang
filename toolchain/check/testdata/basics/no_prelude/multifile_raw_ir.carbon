@@ -85,7 +85,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst+1}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
-// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst+8}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
@@ -138,7 +138,8 @@ fn B() {
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+3
 // CHECK:STDOUT:     import_refs:
-// CHECK:STDOUT:       0:               inst+8
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       1:               inst+8
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
@@ -149,6 +150,5 @@ fn B() {
 // CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
-// CHECK:STDOUT:       2:               inst+2
-// CHECK:STDOUT:       3:               inst+3
+// CHECK:STDOUT:       2:               inst+3
 // CHECK:STDOUT: ...
