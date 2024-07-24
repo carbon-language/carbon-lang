@@ -138,7 +138,7 @@ TEST(SourceGenTest, GenAPIFileDenseDeclsCppTest) {
   SourceGen gen(SourceGen::Language::Cpp);
 
   // Generate a 1000-line file which is enough to have a reasonably accurate
-  // line count estimate and gave a few classes.
+  // line count estimate and have a few classes.
   std::string source =
       gen.GenAPIFileDenseDecls(1000, SourceGen::DenseDeclParams{});
   // Should be within 10% of the requested line count.

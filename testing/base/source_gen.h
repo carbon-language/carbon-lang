@@ -29,6 +29,7 @@ namespace Carbon::Testing {
 //   - Functions
 //   - Classes with class functions, methods, and fields
 //   - Interfaces
+//   - Checked generics and templates
 //   - Nested and unnested impls
 //   - Nested classes
 //   - Inline and out-of-line function and method definitions
@@ -102,7 +103,7 @@ class SourceGen {
     ClassParams class_params = {};
   };
 
-  // Access a global instance of this type for use in benchmarks, tests, or
+  // Access a global instance of this type to generate Carbon code for benchmarks, tests, or
   // other places where sharing a common instance is useful. Note that there is
   // nothing thread safe about this instance or type.
   static auto Global() -> SourceGen&;
@@ -151,7 +152,7 @@ class SourceGen {
   //
   // Usually, benchmarks should use the shuffled version. However, this is
   // useful when there is already a post-processing step to shuffle things as it
-  // is *dramatically* more efficient, especially in debug builds .
+  // is *dramatically* more efficient, especially in debug builds.
   auto GetIds(int number, int min_length = 1, int max_length = 64,
               bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
 
