@@ -268,9 +268,9 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-To try out Carbon immediately in your browser, you can use the Carbon explorer
-to interpret Carbon code and print its output on:
-[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+To try out Carbon immediately in your browser, you can use the demo interpreter
+for Carbon on:
+[carbon.compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 We are developing a traditional toolchain for Carbon that can compile and link
 programs. However, Carbon is still an early, experimental project, and so we
@@ -294,6 +294,11 @@ echo "fn Run() { Core.Print(42); }" > forty_two.carbon
 # Compile to an object file:
 ./carbon_toolchain-${VERSION}/bin/carbon compile \
   --output=forty_two.o forty_two.carbon
+
+# Install minimal system libraries used for linking, note that installing `gcc`
+# or `g++` for compiling C/C++ code with GCC will also be sufficient, this is
+# just the specific system libraries Carbon linking currently still uses.
+sudo apt install libgcc-11-dev
 
 # Link to an executable:
 ./carbon_toolchain-${VERSION}/bin/carbon link \
