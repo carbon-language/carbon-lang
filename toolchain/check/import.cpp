@@ -440,7 +440,7 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   }
 }
 
-// Looks up a name in an imported scope. An `identifier` is provided if
+// Looks up a name in a scope imported from another package. An `identifier` is provided if
 // `name_id` corresponds to an identifier in the current file; otherwise,
 // `name_id` is file-agnostic and can be used directly.
 static auto LookupNameInImport(const SemIR::File& import_ir,
