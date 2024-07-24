@@ -540,17 +540,26 @@ auto ImportNameFromOtherPackage(
       continue;
     }
 
-    // If the imported instruction is a namespace, we add it directly instead of
-    // as an ImportRef.
-    if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {
-      if (!result_id.is_valid()) {
+    // Add the first result found.
+    if (!result_id.is_valid()) {
+      // If the imported instruction is a namespace, we add it directly instead of
+      // as an ImportRef.
+      if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {
         result_id = AddNamespaceFromOtherPackage(context, import_ir_id,
                                                  import_scope_entry->inst_id,
                                                  *import_ns, scope_id, name_id);
-        continue;
+      } else {
+        result_id = AddScopedImportRef(
+            context, scope_id, context.name_scopes().Get(scope_id), name_id,
+            {.ir_id = import_ir_id, .inst_id = import_scope_entry->inst_id},
+            SemIR::AccessKind::Public);
+        LoadImportRef(context, result_id);
       }
+      continue;
+    }
 
-      // When namespaces collide between files, merge lookup in the scopes.
+    // When namespaces collide between files, merge lookup in the scopes.
+    if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {
       if (auto ns = context.insts().TryGetAs<SemIR::Namespace>(result_id)) {
         auto& name_scope = context.name_scopes().Get(ns->name_scope_id);
         name_scope.import_ir_scopes.push_back(
@@ -561,23 +570,13 @@ auto ImportNameFromOtherPackage(
 
     // When there's a name collision, they need to either be the same canonical
     // instruction, or we'll diagnose.
-    if (result_id.is_valid()) {
-      if (!canonical_result_inst) {
-        canonical_result_inst =
-            GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
-      }
-      VerifySameCanonicalImportIRInst(
-          context, result_id, *canonical_result_inst, import_ir_id,
-          import_ir.sem_ir, import_scope_entry->inst_id);
-      continue;
+    if (!canonical_result_inst) {
+      canonical_result_inst =
+          GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
     }
-
-    // Add the first result found.
-    result_id = AddScopedImportRef(
-        context, scope_id, context.name_scopes().Get(scope_id), name_id,
-        {.ir_id = import_ir_id, .inst_id = import_scope_entry->inst_id},
-        SemIR::AccessKind::Public);
-    LoadImportRef(context, result_id);
+    VerifySameCanonicalImportIRInst(
+        context, result_id, *canonical_result_inst, import_ir_id,
+        import_ir.sem_ir, import_scope_entry->inst_id);
   }
 
   return result_id;
