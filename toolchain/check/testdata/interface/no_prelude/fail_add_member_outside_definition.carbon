@@ -94,9 +94,13 @@ interface Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: generic fn @F.1(@Interface.%Self: %.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(@Outer.%Self: %.3, @Inner.%Self.1: %.4) {
@@ -104,10 +108,12 @@ interface Outer {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@Outer.%Self: %.3) {
+// CHECK:STDOUT: generic fn @F.2(@Outer.%Self: %.3, @Inner.%Self.1: %.4) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.2) {
 // CHECK:STDOUT: !definition:
@@ -116,5 +122,5 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%Self.2) {}
+// CHECK:STDOUT: specific @F.2(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:
