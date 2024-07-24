@@ -193,19 +193,19 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %int.make_type_32, %.loc14_17.1 [template = i32]
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
-// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = @Symbolic.%N (constants.%N)]
+// CHECK:STDOUT:     @Symbolic.%N.loc14: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = @Symbolic.%N.1 (constants.%N)]
 // CHECK:STDOUT:     %UInt.ref.loc14_25: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
-// CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
-// CHECK:STDOUT:     %x.loc14_22.1: file.%int.make_type_unsigned.loc14_29 (%.6) = param x
-// CHECK:STDOUT:     @Symbolic.%x: file.%int.make_type_unsigned.loc14_29 (%.6) = bind_name x, %x.loc14_22.1
+// CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N.loc14 [symbolic = @Symbolic.%N.1 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = @Symbolic.%.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = @Symbolic.%.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = @Symbolic.%.1 (constants.%.6)]
+// CHECK:STDOUT:     %x.loc14_22.1: @Symbolic.%.1 (%.6) = param x
+// CHECK:STDOUT:     @Symbolic.%x: @Symbolic.%.1 (%.6) = bind_name x, %x.loc14_22.1
 // CHECK:STDOUT:     %UInt.ref.loc14_37: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
-// CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = %int.make_type_unsigned.loc14_29 (constants.%.6)]
+// CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, @Symbolic.%N.loc14 [symbolic = @Symbolic.%N.1 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = @Symbolic.%.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = @Symbolic.%.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = @Symbolic.%.1 (constants.%.6)]
 // CHECK:STDOUT:     @Symbolic.%return: ref %.6 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -226,17 +226,22 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Symbolic(%N: i32, %x: file.%int.make_type_unsigned.loc14_29 (%.6)) -> %.6
-// CHECK:STDOUT:     generic [%N: i32] {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: file.%int.make_type_unsigned.loc14_29 (%.6) = name_ref x, %x
-// CHECK:STDOUT:   return %x.ref
+// CHECK:STDOUT: generic fn @Symbolic(%N.loc14: i32) {
+// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:   %.1: type = int_type unsigned, %N.1 [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%N.loc14: i32, %x: @Symbolic.%.1 (%.6)) -> %.6 {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %x.ref: @Symbolic.%.1 (%.6) = name_ref x, %x
+// CHECK:STDOUT:     return %x.ref
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%Symbolic.decl(constants.%N) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   @Symbolic.%N => constants.%N
-// CHECK:STDOUT:   file.%int.make_type_unsigned.loc14_29 => constants.%.6
+// CHECK:STDOUT: specific @Symbolic(constants.%N) {
+// CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon

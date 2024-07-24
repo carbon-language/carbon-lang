@@ -35,10 +35,10 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
-// CHECK:STDOUT:   %C1.2: type = class_type @C1, file.%C1.decl(%T) [symbolic]
+// CHECK:STDOUT:   %C1.2: type = class_type @C1, @C1(%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
-// CHECK:STDOUT:   %C2.2: type = class_type @C2, file.%C2.decl(%T) [symbolic]
+// CHECK:STDOUT:   %C2.2: type = class_type @C2, @C2(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,28 +48,32 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [template = constants.%C1.1] {
 // CHECK:STDOUT:     %T.loc4_10.1: type = param T
-// CHECK:STDOUT:     %T.loc4_10.2: type = bind_symbolic_name T 0, %T.loc4_10.1 [symbolic = %T.loc4_10.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_10.2: type = bind_symbolic_name T 0, %T.loc4_10.1 [symbolic = @C1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [template = constants.%C2.1] {
 // CHECK:STDOUT:     %T.loc5_10.1: type = param T
-// CHECK:STDOUT:     %T.loc5_10.2: type = bind_symbolic_name T 0, %T.loc5_10.1 [symbolic = %T.loc5_10.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc5_10.2: type = bind_symbolic_name T 0, %T.loc5_10.1 [symbolic = @C2.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C1
-// CHECK:STDOUT:     generic [file.%T.loc4_10.2: type];
+// CHECK:STDOUT: generic class @C1(file.%T.loc4_10.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C2
-// CHECK:STDOUT:     generic [file.%T.loc5_10.2: type];
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%C1.decl(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc4_10.2 => constants.%T
+// CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific file.%C2.decl(constants.%T) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT:   file.%T.loc5_10.2 => constants.%T
+// CHECK:STDOUT: generic class @C2(file.%T.loc5_10.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C2(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -79,15 +83,15 @@ export C2(T:! type);
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+18 [symbolic]
-// CHECK:STDOUT:   %C1.2: type = class_type @C1, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %C1.2: type = class_type @C1, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
-// CHECK:STDOUT:   %C2.2: type = class_type @C2, <invalid>(%T) [symbolic]
+// CHECK:STDOUT:   %C2.2: type = class_type @C2, invalid(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, inst+4, loaded [template = constants.%C1.1]
-// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, inst+11, loaded [template = constants.%C2.1]
+// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, inst+12, loaded [template = constants.%C2.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,5 +110,5 @@ export C2(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific <invalid>(constants.%T);
+// CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:

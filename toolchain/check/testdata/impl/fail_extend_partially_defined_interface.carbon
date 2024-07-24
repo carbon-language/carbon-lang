@@ -59,18 +59,19 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C
-// CHECK:STDOUT:     generic [@I.%Self: %.1] {
-// CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT: generic class @C(@I.%Self: %.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     impl_decl @impl {
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.%C.decl(constants.%Self) {
-// CHECK:STDOUT: declaration:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:
