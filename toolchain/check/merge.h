@@ -44,13 +44,12 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // Information about the parameters of a declaration, which is common across
 // different kinds of entity such as classes and functions.
 struct DeclParams {
-  template <typename Entity>
-  explicit DeclParams(const Entity& entity)
-      : loc(entity.decl_id),
-        first_param_node_id(entity.first_param_node_id),
-        last_param_node_id(entity.last_param_node_id),
-        implicit_param_refs_id(entity.implicit_param_refs_id),
-        param_refs_id(entity.param_refs_id) {}
+  explicit DeclParams(const SemIR::EntityWithParamsBase& base)
+      : loc(base.decl_id),
+        first_param_node_id(base.first_param_node_id),
+        last_param_node_id(base.last_param_node_id),
+        implicit_param_refs_id(base.implicit_param_refs_id),
+        param_refs_id(base.param_refs_id) {}
 
   DeclParams(SemIRLoc loc, Parse::NodeId first_param_node_id,
              Parse::NodeId last_param_node_id,

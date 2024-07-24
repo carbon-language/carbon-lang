@@ -35,18 +35,18 @@ auto GlobalInit::Finalize() -> void {
 
   auto name_id = context_->sem_ir().identifiers().Add("__global_init");
   context_->sem_ir().functions().Add(
-      {.name_id = SemIR::NameId::ForIdentifier(name_id),
-       .parent_scope_id = SemIR::NameScopeId::Package,
-       .decl_id = SemIR::InstId::Invalid,
-       .generic_id = SemIR::GenericId::Invalid,
-       .first_param_node_id = Parse::NodeId::Invalid,
-       .last_param_node_id = Parse::NodeId::Invalid,
-       .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
-       .param_refs_id = SemIR::InstBlockId::Empty,
-       .return_storage_id = SemIR::InstId::Invalid,
-       .is_extern = false,
-       .return_slot = SemIR::Function::ReturnSlot::Absent,
-       .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
+      {{.name_id = SemIR::NameId::ForIdentifier(name_id),
+        .parent_scope_id = SemIR::NameScopeId::Package,
+        .generic_id = SemIR::GenericId::Invalid,
+        .first_param_node_id = Parse::NodeId::Invalid,
+        .last_param_node_id = Parse::NodeId::Invalid,
+        .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
+        .param_refs_id = SemIR::InstBlockId::Empty,
+        .decl_id = SemIR::InstId::Invalid},
+       {.return_storage_id = SemIR::InstId::Invalid,
+        .is_extern = false,
+        .return_slot = SemIR::Function::ReturnSlot::Absent,
+        .body_block_ids = {SemIR::InstBlockId::GlobalInit}}});
 }
 
 }  // namespace Carbon::Check

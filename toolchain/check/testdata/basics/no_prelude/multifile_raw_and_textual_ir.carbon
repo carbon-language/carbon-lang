@@ -36,7 +36,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   generic_instances: {}
@@ -110,8 +110,8 @@ fn B() {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
-// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1, param_refs: empty}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block4]}
+// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   generic_instances: {}
