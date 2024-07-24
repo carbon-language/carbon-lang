@@ -213,6 +213,15 @@ static auto PushNameQualifierScope(Context& context,
 
   context.scope_stack().Push(scope_inst_id, scope_id, instance_id, has_error);
 
+  // An interface also introduces its 'Self' parameter into scope, despite it
+  // not being redeclared as part of the qualifier.
+  if (auto interface_decl =
+          context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
+    auto& interface = context.interfaces().Get(interface_decl->interface_id);
+    context.scope_stack().AddCompileTimeBinding();
+    context.scope_stack().PushCompileTimeBinding(interface.self_param_id);
+  }
+
   // Enter a parameter scope in case the qualified name itself has parameters.
   context.scope_stack().Push();
 }
