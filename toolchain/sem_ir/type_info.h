@@ -99,9 +99,6 @@ struct InitRepr {
   // Returns whether the initializing representation information could be fully
   // computed.
   auto is_valid() const -> bool { return kind != Incomplete; }
-
-  // Returns whether a return slot is used when returning this type.
-  auto has_return_slot() const -> bool { return kind == InPlace; }
 };
 
 // Returns information about the initializing representation to use for a type.
@@ -125,7 +122,7 @@ struct ReturnTypeInfo {
   // only be called for valid return info.
   auto has_return_slot() const -> bool {
     CARBON_CHECK(is_valid());
-    return init_repr.has_return_slot();
+    return init_repr.kind == InitRepr::InPlace;
   }
 
   // The declared return type. Invalid if no return type was specified.

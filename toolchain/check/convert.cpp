@@ -54,7 +54,8 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
         return init.dest_id;
       }
       case CARBON_KIND(SemIR::Call call): {
-        if (!SemIR::GetInitRepr(sem_ir, call.type_id).has_return_slot()) {
+        if (!SemIR::ReturnTypeInfo::ForType(sem_ir, call.type_id)
+                 .has_return_slot()) {
           return SemIR::InstId::Invalid;
         }
         if (!call.args_id.is_valid()) {

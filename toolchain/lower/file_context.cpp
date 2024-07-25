@@ -153,11 +153,6 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   auto* return_type =
       return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
-  SemIR::InitRepr return_rep =
-      return_info.type_id.is_valid()
-          ? SemIR::GetInitRepr(sem_ir(), return_info.type_id)
-          : SemIR::InitRepr{.kind = SemIR::InitRepr::None};
-  CARBON_CHECK(return_rep.has_return_slot() == return_info.has_return_slot());
 
   llvm::SmallVector<llvm::Type*> param_types;
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
@@ -197,7 +192,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
   llvm::Type* function_return_type =
-      return_rep.kind == SemIR::InitRepr::ByCopy
+      return_info.init_repr.kind == SemIR::InitRepr::ByCopy
           ? return_type
           : llvm::Type::getVoidTy(llvm_context());
 

@@ -312,7 +312,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  if (SemIR::GetInitRepr(context.sem_ir(), inst.type_id).has_return_slot()) {
+  if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst.type_id)
+          .has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
