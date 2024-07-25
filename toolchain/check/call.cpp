@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -98,18 +99,16 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   }
   auto& callable = context.functions().Get(callee_function.function_id);
 
-  // TODO: Properly determine the generic argument values for the call. For now,
-  // we do so only if the function introduces no generic parameters beyond those
-  // of the enclosing context.
+  // If the callee is a generic function, determine the generic argument values
+  // for the call.
   auto specific_id = SemIR::SpecificId::Invalid;
-  if (callee_function.specific_id.is_valid()) {
-    auto enclosing_args_id =
-        context.specifics().Get(callee_function.specific_id).args_id;
-    auto fn_params_id = context.generics().Get(callable.generic_id).bindings_id;
-    if (context.inst_blocks().Get(fn_params_id).size() ==
-        context.inst_blocks().Get(enclosing_args_id).size()) {
-      specific_id =
-          MakeSpecific(context, callable.generic_id, enclosing_args_id);
+  if (callable.generic_id.is_valid()) {
+    specific_id = DeduceGenericCallArguments(
+        context, node_id, callable.generic_id, callee_function.specific_id,
+        callable.implicit_param_refs_id, callable.param_refs_id,
+        callee_function.self_id, arg_ids);
+    if (!specific_id.is_valid()) {
+      return SemIR::InstId::BuiltinError;
     }
   }
 

@@ -434,3 +434,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.1 => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T.3) {
+// CHECK:STDOUT:   %T.1 => constants.%T.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
