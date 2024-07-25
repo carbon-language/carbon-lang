@@ -146,18 +146,18 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   const auto return_info = function.GetReturnInfo(sem_ir(), specific_id);
   CARBON_CHECK(return_info.is_valid()) << "Should not lower invalid functions.";
 
-  const bool has_return_slot = return_info.has_return_slot();
   auto implicit_param_refs =
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   // TODO: Include parameters corresponding to positional parameters.
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
-  auto return_type_id = return_info.type_id;
 
+  auto* return_type =
+      return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
   SemIR::InitRepr return_rep =
-      return_type_id.is_valid()
-          ? SemIR::GetInitRepr(sem_ir(), return_type_id)
+      return_info.type_id.is_valid()
+          ? SemIR::GetInitRepr(sem_ir(), return_info.type_id)
           : SemIR::InitRepr{.kind = SemIR::InitRepr::None};
-  CARBON_CHECK(return_rep.has_return_slot() == has_return_slot);
+  CARBON_CHECK(return_rep.has_return_slot() == return_info.has_return_slot());
 
   llvm::SmallVector<llvm::Type*> param_types;
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
@@ -165,12 +165,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // out a mechanism to compute the mapping between parameters and arguments on
   // demand.
   llvm::SmallVector<SemIR::InstId> param_inst_ids;
-  auto max_llvm_params =
-      has_return_slot + implicit_param_refs.size() + param_refs.size();
+  auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
+                         implicit_param_refs.size() + param_refs.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
-  if (has_return_slot) {
-    param_types.push_back(GetType(return_type_id)->getPointerTo());
+  if (return_info.has_return_slot()) {
+    param_types.push_back(return_type->getPointerTo());
     param_inst_ids.push_back(function.return_storage_id);
   }
   for (auto param_ref_id :
@@ -194,11 +194,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     }
   }
 
-  // If the initializing representation doesn't produce a value, set the return
-  // type to void.
-  llvm::Type* return_type = return_rep.kind == SemIR::InitRepr::ByCopy
-                                ? GetType(return_type_id)
-                                : llvm::Type::getVoidTy(llvm_context());
+  // Compute the return type to use for the LLVM function. If the initializing
+  // representation doesn't produce a value, set the return type to void.
+  llvm::Type* function_return_type =
+      return_rep.kind == SemIR::InitRepr::ByCopy
+          ? return_type
+          : llvm::Type::getVoidTy(llvm_context());
 
   std::string mangled_name;
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
@@ -213,8 +214,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
                    << function.name_id;
   }
 
-  llvm::FunctionType* function_type =
-      llvm::FunctionType::get(return_type, param_types, /*isVarArg=*/false);
+  llvm::FunctionType* function_type = llvm::FunctionType::get(
+      function_return_type, param_types, /*isVarArg=*/false);
   auto* llvm_function =
       llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
                              mangled_name, llvm_module());
@@ -225,8 +226,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     auto name_id = SemIR::NameId::Invalid;
     if (inst_id == function.return_storage_id) {
       name_id = SemIR::NameId::ReturnSlot;
-      arg.addAttr(llvm::Attribute::getWithStructRetType(
-          llvm_context(), GetType(return_type_id)));
+      arg.addAttr(
+          llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
       name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
                     .second.name_id;
@@ -258,9 +259,6 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: Pass in a specific ID for generic functions.
   const auto specific_id = SemIR::GenericInstanceId::Invalid;
 
-  const auto return_info = function.GetReturnInfo(sem_ir(), specific_id);
-  const bool has_return_slot = return_info.has_return_slot();
-
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
   // function parameters that was already computed in BuildFunctionDecl.
@@ -269,7 +267,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
-  if (has_return_slot) {
+  if (function.GetReturnInfo(sem_ir(), specific_id).has_return_slot()) {
     function_lowering.SetLocal(function.return_storage_id,
                                llvm_function->getArg(param_index));
     ++param_index;

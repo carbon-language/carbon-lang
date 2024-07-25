@@ -56,17 +56,17 @@ auto Function::ReturnInfo::ForType(const File& file, TypeId type_id)
     -> ReturnInfo {
   if (!type_id.is_valid()) {
     // Implicit `-> ()` has no return slot.
-    return {.type_id = type_id, .slot = ReturnSlot::Absent};
+    return {.type_id = type_id, .return_slot = ReturnSlot::Absent};
   }
 
   if (!file.types().IsComplete(type_id)) {
-    return {.type_id = type_id, .slot = ReturnSlot::Incomplete};
+    return {.type_id = type_id, .return_slot = ReturnSlot::Incomplete};
   }
 
   return {.type_id = type_id,
-          .slot = GetInitRepr(file, type_id).has_return_slot()
-                      ? SemIR::Function::ReturnSlot::Present
-                      : SemIR::Function::ReturnSlot::Absent};
+          .return_slot = GetInitRepr(file, type_id).has_return_slot()
+                             ? SemIR::Function::ReturnSlot::Present
+                             : SemIR::Function::ReturnSlot::Absent};
 }
 
 }  // namespace Carbon::SemIR

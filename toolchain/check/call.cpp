@@ -126,7 +126,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
         });
     return CheckFunctionReturnType(context, callee_id, callable, specific_id);
   }();
-  switch (return_info.slot) {
+  switch (return_info.return_slot) {
     case SemIR::Function::ReturnSlot::Present:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.

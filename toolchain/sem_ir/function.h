@@ -31,19 +31,21 @@ struct Function : public Printable<Function> {
     static auto ForType(const File& file, TypeId type_id) -> ReturnInfo;
 
     // Returns whether the return information could be fully computed.
-    auto is_valid() const -> bool { return slot != ReturnSlot::Incomplete; }
+    auto is_valid() const -> bool {
+      return return_slot != ReturnSlot::Incomplete;
+    }
 
     // Returns whether the function has a return slot. Can only be called for
     // valid return info.
     auto has_return_slot() const -> bool {
       CARBON_CHECK(is_valid());
-      return slot == ReturnSlot::Present;
+      return return_slot == ReturnSlot::Present;
     }
 
     // The return type. Invalid if no return type was specified.
     TypeId type_id;
     // The return slot usage for this function.
-    ReturnSlot slot;
+    ReturnSlot return_slot;
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {
