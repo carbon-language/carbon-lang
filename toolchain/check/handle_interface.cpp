@@ -88,14 +88,14 @@ static auto BuildInterfaceDecl(Context& context,
     // interface name here. We should keep track of it even if the name is
     // invalid.
     SemIR::Interface interface_info = {
-        .name_id = name_context.name_id_for_new_inst(),
-        .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-        .generic_id = generic_id,
-        .first_param_node_id = name.first_param_node_id,
-        .last_param_node_id = name.last_param_node_id,
-        .implicit_param_refs_id = name.implicit_params_id,
-        .param_refs_id = name.params_id,
-        .decl_id = interface_decl_id};
+        {.name_id = name_context.name_id_for_new_inst(),
+         .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+         .generic_id = generic_id,
+         .first_param_node_id = name.first_param_node_id,
+         .last_param_node_id = name.last_param_node_id,
+         .implicit_param_refs_id = name.implicit_params_id,
+         .param_refs_id = name.params_id,
+         .decl_id = interface_decl_id}};
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.is_generic()) {
       interface_decl.type_id =
@@ -144,7 +144,7 @@ auto HandleParseNode(Context& context,
   // Enter the interface scope.
   context.scope_stack().Push(
       interface_decl_id, interface_info.scope_id,
-      context.generics().GetSelfInstance(interface_info.generic_id));
+      context.generics().GetSelfSpecific(interface_info.generic_id));
   StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
@@ -157,13 +157,13 @@ auto HandleParseNode(Context& context,
   if (!interface_info.is_defined()) {
     SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
     if (interface_info.is_generic()) {
-      auto instance_id =
-          context.generics().GetSelfInstance(interface_info.generic_id);
+      auto specific_id =
+          context.generics().GetSelfSpecific(interface_info.generic_id);
       self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
                                            .interface_id = interface_id,
-                                           .instance_id = instance_id}));
+                                           .specific_id = specific_id}));
     } else {
       self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
     }

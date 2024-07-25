@@ -28,12 +28,12 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind0}
 // CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block5, return_storage: inst+15, body: [block12]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_storage: inst+15, body: [block12]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:
 // CHECK:STDOUT:     generic0:        {decl: inst+16, bindings: block8}
-// CHECK:STDOUT:   generic_instances:
-// CHECK:STDOUT:     genericInstance0: {generic: generic0, args: block10}
+// CHECK:STDOUT:   specifics:
+// CHECK:STDOUT:     specific0:       {generic: generic0, args: block10}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -77,7 +77,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+17':         {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: TupleType, arg0: type_block3, type: typeTypeType}
 // CHECK:STDOUT:     'inst+19':         {kind: TupleType, arg0: type_block3, type: typeTypeType}
-// CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+21':         {kind: StructValue, arg0: empty, type: type(inst+20)}
 // CHECK:STDOUT:     'inst+22':         {kind: PointerType, arg0: type(symbolicConstant1), type: typeTypeType}
 // CHECK:STDOUT:     'inst+23':         {kind: NameRef, arg0: name2, arg1: inst+6, type: type(symbolicConstant2)}

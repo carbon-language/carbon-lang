@@ -86,9 +86,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                        {.loc = new_loc,
                         .is_definition = new_is_definition,
                         .is_extern = new_function.is_extern},
-                       {.loc = prev_function.definition_id.is_valid()
-                                   ? prev_function.definition_id
-                                   : prev_function.decl_id,
+                       {.loc = prev_function.latest_decl_id(),
                         .is_definition = prev_function.definition_id.is_valid(),
                         .is_extern = prev_function.is_extern},
                        prev_import_ir_id);
@@ -96,11 +94,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   if (new_is_definition) {
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
-    prev_function.definition_id = new_function.definition_id;
-    prev_function.first_param_node_id = new_function.first_param_node_id;
-    prev_function.last_param_node_id = new_function.last_param_node_id;
-    prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
-    prev_function.param_refs_id = new_function.param_refs_id;
+    prev_function.MergeDefinition(new_function);
     prev_function.return_storage_id = new_function.return_storage_id;
   }
   // The new function might have return slot information if it was imported.
@@ -222,17 +216,10 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info = SemIR::Function{
-      .name_id = name_context.name_id_for_new_inst(),
-      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-      .decl_id = decl_id,
-      .generic_id = SemIR::GenericId::Invalid,
-      .first_param_node_id = name.first_param_node_id,
-      .last_param_node_id = name.last_param_node_id,
-      .implicit_param_refs_id = name.implicit_params_id,
-      .param_refs_id = name.params_id,
-      .return_storage_id = return_storage_id,
-      .is_extern = is_extern};
+  auto function_info =
+      SemIR::Function{{name_context.MakeEntityWithParamsBase(decl_id, name)},
+                      {.return_storage_id = return_storage_id,
+                       .is_extern = is_extern}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
@@ -319,7 +306,7 @@ static auto HandleFunctionDefinitionAfterSignature(
 
   // Check the return type is complete.
   CheckFunctionReturnType(context, function.return_storage_id, function,
-                          SemIR::GenericInstanceId::Invalid);
+                          SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<const SemIR::InstId>(

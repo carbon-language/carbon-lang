@@ -26,7 +26,7 @@ auto CheckFunctionTypeMatches(Context& context,
   auto new_return_type_id =
       new_function.GetDeclaredReturnType(context.sem_ir());
   auto prev_return_type_id = prev_function.GetDeclaredReturnType(
-      context.sem_ir(), SemIR::GenericInstanceId::Invalid);
+      context.sem_ir(), SemIR::SpecificId::Invalid);
   if (new_return_type_id == SemIR::TypeId::Error ||
       prev_return_type_id == SemIR::TypeId::Error) {
     return false;
@@ -72,7 +72,7 @@ auto CheckFunctionTypeMatches(Context& context,
 
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
-                             SemIR::GenericInstanceId specific_id)
+                             SemIR::SpecificId specific_id)
     -> SemIR::Function::ReturnInfo {
   auto return_info = function.GetReturnInfo(context.sem_ir(), specific_id);
 

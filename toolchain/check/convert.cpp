@@ -1119,7 +1119,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId callee_id,
-                        SemIR::GenericInstanceId callee_specific_id,
+                        SemIR::SpecificId callee_specific_id,
                         std::optional<SemIR::AddrPattern> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
                         SemIR::InstId self_id) -> SemIR::InstId {
@@ -1168,20 +1168,20 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
 
   return ConvertToValueOfType(
       context, call_loc_id, self_or_addr_id,
-      SemIR::GetTypeInInstance(context.sem_ir(), callee_specific_id,
+      SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
                                self_param.type_id));
 }
 
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id, SemIR::InstId callee_id,
-                     SemIR::GenericInstanceId callee_specific_id,
-                     SemIR::InstBlockId implicit_param_refs_id,
-                     SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
+                     SemIR::InstId return_storage_id,
+                     const SemIR::EntityWithParamsBase& callee,
+                     SemIR::SpecificId callee_specific_id)
+    -> SemIR::InstBlockId {
   auto implicit_param_refs =
-      context.inst_blocks().GetOrEmpty(implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().GetOrEmpty(param_refs_id);
+      context.inst_blocks().GetOrEmpty(callee.implicit_param_refs_id);
+  auto param_refs = context.inst_blocks().GetOrEmpty(callee.param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -1192,7 +1192,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     context.emitter()
         .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(callee_id, InCallToFunction)
+        .Note(callee.decl_id, InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
   }
@@ -1210,7 +1210,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         context.sem_ir(), implicit_param_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
       auto converted_self_id =
-          ConvertSelf(context, call_loc_id, callee_id, callee_specific_id,
+          ConvertSelf(context, call_loc_id, callee.decl_id, callee_specific_id,
                       addr_pattern, param_id, param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
@@ -1229,7 +1229,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(callee_id, InCallToFunctionParam, diag_param_index + 1);
+        builder.Note(callee.decl_id, InCallToFunctionParam,
+                     diag_param_index + 1);
       });
 
   // Check type conversions per-element.
@@ -1237,7 +1238,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     diag_param_index = i;
 
     auto param_type_id =
-        SemIR::GetTypeInInstance(context.sem_ir(), callee_specific_id,
+        SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
                                  context.insts().Get(param_id).type_id());
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.

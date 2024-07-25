@@ -27,10 +27,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: block4, return_storage: inst+13, body: [block7]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_storage: inst+13, body: [block7]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
-// CHECK:STDOUT:   generic_instances: {}
+// CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -60,7 +60,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+9, arg1: inst+8, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: VarStorage, arg0: nameReturnSlot, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+14':         {kind: FunctionDecl, arg0: function0, arg1: block6, type: type(inst+15)}
-// CHECK:STDOUT:     'inst+15':         {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+15':         {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+16':         {kind: StructValue, arg0: empty, type: type(inst+15)}
 // CHECK:STDOUT:     'inst+17':         {kind: PointerType, arg0: type(inst+8), type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: NameRef, arg0: name1, arg1: inst+5, type: type(inst+1)}

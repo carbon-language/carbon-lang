@@ -27,13 +27,12 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
   // TODO: Pass in information about the specific in which the generic class
   // name was found.
   // TODO: Perform argument deduction.
-  auto specific_id = SemIR::GenericInstanceId::Invalid;
+  auto specific_id = SemIR::SpecificId::Invalid;
 
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, class_info.decl_id,
-      specific_id, class_info.implicit_param_refs_id, class_info.param_refs_id);
+      /*return_storage_id=*/SemIR::InstId::Invalid, class_info, specific_id);
   return context.AddInst<SemIR::Call>(node_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
@@ -54,14 +53,13 @@ static auto PerformCallToGenericInterface(Context& context,
   // TODO: Pass in information about the specific in which the generic interface
   // name was found.
   // TODO: Perform argument deduction.
-  auto specific_id = SemIR::GenericInstanceId::Invalid;
+  auto specific_id = SemIR::SpecificId::Invalid;
 
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info.decl_id,
-      specific_id, interface_info.implicit_param_refs_id,
-      interface_info.param_refs_id);
+      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info,
+      specific_id);
   return context.AddInst<SemIR::Call>(node_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
@@ -103,15 +101,15 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   // TODO: Properly determine the generic argument values for the call. For now,
   // we do so only if the function introduces no generic parameters beyond those
   // of the enclosing context.
-  auto specific_id = SemIR::GenericInstanceId::Invalid;
-  if (callee_function.instance_id.is_valid()) {
+  auto specific_id = SemIR::SpecificId::Invalid;
+  if (callee_function.specific_id.is_valid()) {
     auto enclosing_args_id =
-        context.generic_instances().Get(callee_function.instance_id).args_id;
+        context.specifics().Get(callee_function.specific_id).args_id;
     auto fn_params_id = context.generics().Get(callable.generic_id).bindings_id;
     if (context.inst_blocks().Get(fn_params_id).size() ==
         context.inst_blocks().Get(enclosing_args_id).size()) {
       specific_id =
-          MakeGenericInstance(context, callable.generic_id, enclosing_args_id);
+          MakeSpecific(context, callable.generic_id, enclosing_args_id);
     }
   }
 
@@ -150,8 +148,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   // Convert the arguments to match the parameters.
   auto converted_args_id =
       ConvertCallArgs(context, node_id, callee_function.self_id, arg_ids,
-                      return_storage_id, callable.decl_id, specific_id,
-                      callable.implicit_param_refs_id, callable.param_refs_id);
+                      return_storage_id, callable, specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(node_id, {.type_id = return_info.type_id,
                                              .callee_id = callee_id,

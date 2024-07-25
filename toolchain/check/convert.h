@@ -95,10 +95,10 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id, SemIR::InstId callee_id,
-                     SemIR::GenericInstanceId callee_specific_id,
-                     SemIR::InstBlockId implicit_param_refs_id,
-                     SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId;
+                     SemIR::InstId return_storage_id,
+                     const SemIR::EntityWithParamsBase& callee,
+                     SemIR::SpecificId callee_specific_id)
+    -> SemIR::InstBlockId;
 
 // Converts an expression for use as a type.
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)

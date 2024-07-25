@@ -141,7 +141,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // lowering it if it's needed.
 
   // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::GenericInstanceId::Invalid;
+  const auto specific_id = SemIR::SpecificId::Invalid;
 
   const auto return_info = function.GetReturnInfo(sem_ir(), specific_id);
   CARBON_CHECK(return_info.is_valid()) << "Should not lower invalid functions.";
@@ -257,7 +257,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::GenericInstanceId::Invalid;
+  const auto specific_id = SemIR::SpecificId::Invalid;
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM

@@ -36,10 +36,10 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
-// CHECK:STDOUT:   generic_instances: {}
+// CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -51,7 +51,7 @@ fn B() {
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type(inst+2)}
-// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type(inst+2)}
 // CHECK:STDOUT:     'inst+5':          {kind: Return}
@@ -89,11 +89,11 @@ fn B() {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, param_refs: empty, body: [block4]}
-// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1, param_refs: empty}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block4]}
+// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
-// CHECK:STDOUT:   generic_instances: {}
+// CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -108,13 +108,13 @@ fn B() {
 // CHECK:STDOUT:     'inst+1':          {kind: ImportDecl, arg0: name1}
 // CHECK:STDOUT:     'inst+2':          {kind: Namespace, arg0: name_scope1, arg1: inst+1, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+3':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type(inst+4)}
-// CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, arg1: genericInstance<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type(inst+4)}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, arg1: genericInstance<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type(inst+5)}

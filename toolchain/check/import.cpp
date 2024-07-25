@@ -20,6 +20,13 @@
 
 namespace Carbon::Check {
 
+// Returns name information for an EntityWithParamsBase.
+template <typename T>
+static auto GetImportNameForEntity(const T& entity)
+    -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
+  return {entity.name_id, entity.parent_scope_id};
+}
+
 // Returns name information for the entity, corresponding to IDs in the import
 // IR rather than the current IR.
 static auto GetImportName(const SemIR::File& import_sem_ir,
@@ -31,31 +38,28 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     case SemIR::BindSymbolicName::Kind:
     case SemIR::ExportDecl::Kind: {
       auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
-      const auto& entity_name =
-          import_sem_ir.entity_names().Get(bind_inst.entity_name_id);
-      return {entity_name.name_id, entity_name.parent_scope_id};
+      return GetImportNameForEntity(
+          import_sem_ir.entity_names().Get(bind_inst.entity_name_id));
     }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      const auto& class_info = import_sem_ir.classes().Get(class_decl.class_id);
-      return {class_info.name_id, class_info.parent_scope_id};
+      return GetImportNameForEntity(
+          import_sem_ir.classes().Get(class_decl.class_id));
     }
 
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      const auto& function =
-          import_sem_ir.functions().Get(function_decl.function_id);
-      return {function.name_id, function.parent_scope_id};
+      return GetImportNameForEntity(
+          import_sem_ir.functions().Get(function_decl.function_id));
     }
 
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      const auto& interface =
-          import_sem_ir.interfaces().Get(interface_decl.interface_id);
-      return {interface.name_id, interface.parent_scope_id};
+      return GetImportNameForEntity(
+          import_sem_ir.interfaces().Get(interface_decl.interface_id));
     }
 
     case CARBON_KIND(SemIR::Namespace ns): {
-      const auto& scope = import_sem_ir.name_scopes().Get(ns.name_scope_id);
-      return {scope.name_id, scope.parent_scope_id};
+      return GetImportNameForEntity(
+          import_sem_ir.name_scopes().Get(ns.name_scope_id));
     }
 
     default:

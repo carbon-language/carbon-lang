@@ -82,11 +82,11 @@ static auto PushOperand(Context& context, Worklist& worklist,
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
-    case SemIR::IdKind::For<SemIR::GenericInstanceId>:
-      if (auto instance_id = static_cast<SemIR::GenericInstanceId>(arg);
-          instance_id.is_valid()) {
+    case SemIR::IdKind::For<SemIR::SpecificId>:
+      if (auto specific_id = static_cast<SemIR::SpecificId>(arg);
+          specific_id.is_valid()) {
         PushOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
-                    context.generic_instances().Get(instance_id).args_id.index);
+                    context.specifics().Get(specific_id).args_id.index);
       }
       break;
     default:
@@ -145,17 +145,17 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       }
       return new_type_block.GetCanonical().index;
     }
-    case SemIR::IdKind::For<SemIR::GenericInstanceId>: {
-      auto instance_id = SemIR::GenericInstanceId(arg);
-      if (!instance_id.is_valid()) {
+    case SemIR::IdKind::For<SemIR::SpecificId>: {
+      auto specific_id = SemIR::SpecificId(arg);
+      if (!specific_id.is_valid()) {
         return arg;
       }
-      auto& instance = context.generic_instances().Get(instance_id);
+      auto& specific = context.specifics().Get(specific_id);
       auto args_id =
           PopOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
-                     instance.args_id.index);
-      return MakeGenericInstance(context, instance.generic_id,
-                                 SemIR::InstBlockId(args_id))
+                     specific.args_id.index);
+      return MakeSpecific(context, specific.generic_id,
+                          SemIR::InstBlockId(args_id))
           .index;
     }
     default:

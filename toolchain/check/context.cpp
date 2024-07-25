@@ -275,11 +275,11 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
       scope_stack().LookupInLexicalScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
-  for (auto [index, lookup_scope_id, instance_id] :
+  for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result = LookupQualifiedName(
             node_id, name_id,
-            {.name_scope_id = lookup_scope_id, .instance_id = instance_id},
+            {.name_scope_id = lookup_scope_id, .specific_id = specific_id},
             /*required=*/false);
         non_lexical_result.inst_id.is_valid()) {
       return non_lexical_result;
@@ -287,16 +287,16 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   if (lexical_result.is_valid()) {
-    // A lexical scope never needs an associated generic instance. If there's a
+    // A lexical scope never needs an associated specific. If there's a
     // lexically enclosing generic, then it also encloses the point of use of
     // the name.
-    return {.instance_id = SemIR::GenericInstanceId::Invalid,
+    return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = lexical_result};
   }
 
   // We didn't find anything at all.
   DiagnoseNameNotFound(node_id, name_id);
-  return {.instance_id = SemIR::GenericInstanceId::Invalid,
+  return {.specific_id = SemIR::SpecificId::Invalid,
           .inst_id = SemIR::InstId::BuiltinError};
 }
 
@@ -320,13 +320,13 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                                   LookupScope scope, bool required)
     -> LookupResult {
   llvm::SmallVector<LookupScope> scopes = {scope};
-  LookupResult result = {.instance_id = SemIR::GenericInstanceId::Invalid,
+  LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::Invalid};
   bool has_error = false;
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
-    auto [scope_id, instance_id] = scopes.pop_back_val();
+    auto [scope_id, specific_id] = scopes.pop_back_val();
     const auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error;
 
@@ -338,9 +338,9 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
       scopes.reserve(scopes.size() + extended.size());
       for (auto extended_id : llvm::reverse(extended)) {
         // TODO: Track a constant describing the extended scope, and substitute
-        // into it to determine its corresponding generic instance.
+        // into it to determine its corresponding specific.
         scopes.push_back({.name_scope_id = extended_id,
-                          .instance_id = SemIR::GenericInstanceId::Invalid});
+                          .specific_id = SemIR::SpecificId::Invalid});
       }
       continue;
     }
@@ -356,19 +356,19 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
           SemIR::NameId);
       emitter_->Emit(node_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
-      return {.instance_id = SemIR::GenericInstanceId::Invalid,
+      return {.specific_id = SemIR::SpecificId::Invalid,
               .inst_id = SemIR::InstId::BuiltinError};
     }
 
     result.inst_id = scope_result_id;
-    result.instance_id = instance_id;
+    result.specific_id = specific_id;
   }
 
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
       DiagnoseNameNotFound(node_id, name_id);
     }
-    return {.instance_id = SemIR::GenericInstanceId::Invalid,
+    return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = SemIR::InstId::BuiltinError};
   }
 
@@ -715,8 +715,8 @@ class TypeCompleter {
           }
           return false;
         }
-        if (inst.instance_id.is_valid()) {
-          ResolveSpecificDefinition(context_, inst.instance_id);
+        if (inst.specific_id.is_valid()) {
+          ResolveSpecificDefinition(context_, inst.specific_id);
         }
         Push(class_info.object_repr_id);
         break;
@@ -1012,8 +1012,8 @@ auto Context::TryToDefineType(
       return false;
     }
 
-    if (interface->instance_id.is_valid()) {
-      ResolveSpecificDefinition(*this, interface->instance_id);
+    if (interface->specific_id.is_valid()) {
+      ResolveSpecificDefinition(*this, interface->specific_id);
     }
   }
 
@@ -1085,9 +1085,8 @@ auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
 }
 
 auto Context::GetFunctionType(SemIR::FunctionId fn_id,
-                              SemIR::GenericInstanceId instance_id)
-    -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, instance_id);
+                              SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
 }
 
 auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {

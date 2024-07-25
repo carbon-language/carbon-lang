@@ -5,12 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
-// A class.
-struct Class : public Printable<Class> {
+// Class-specific fields.
+struct ClassFields {
   enum InheritanceKind : int8_t {
     // `abstract class`
     Abstract,
@@ -20,49 +21,17 @@ struct Class : public Printable<Class> {
     Final,
   };
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
-  }
-
-  // Determines whether this class has been fully defined. This is false until
-  // we reach the `}` of the class definition.
-  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
-
-  // Determines whether this is a generic class.
-  auto is_generic() const -> bool {
-    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
-  }
-
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
 
-  // The class name.
-  NameId name_id;
-  // The parent scope.
-  NameScopeId parent_scope_id;
-  // If this is a generic function, information about the generic.
-  GenericId generic_id;
-  // Parse tree bounds for the parameters, including both implicit and explicit
-  // parameters. These will be compared to match between declaration and
-  // definition.
-  Parse::NodeId first_param_node_id;
-  Parse::NodeId last_param_node_id;
-  // A block containing a single reference instruction per implicit parameter.
-  InstBlockId implicit_param_refs_id;
-  // A block containing a single reference instruction per parameter.
-  InstBlockId param_refs_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
-  // The first declaration of the class. This is a ClassDecl.
-  InstId decl_id = InstId::Invalid;
   // The kind of inheritance that this class supports.
   // TODO: The rules here are not yet decided. See #3384.
   InheritanceKind inheritance_kind;
 
   // The following members are set at the `{` of the class definition.
 
-  // The definition of the class. This is a ClassDecl.
-  InstId definition_id = InstId::Invalid;
   // The class scope.
   NameScopeId scope_id = NameScopeId::Invalid;
   // The first block of the class body.
@@ -86,6 +55,21 @@ struct Class : public Printable<Class> {
   // the class is defined. For an adapter, this is the non-adapter type that
   // this class directly or transitively adapts.
   TypeId object_repr_id = TypeId::Invalid;
+};
+
+// A class. See EntityWithParamsBase regarding the inheritance here.
+struct Class : public EntityWithParamsBase,
+               public ClassFields,
+               public Printable<Class> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{";
+    PrintBaseFields(out);
+    out << "}";
+  }
+
+  // Determines whether this class has been fully defined. This is false until
+  // we reach the `}` of the class definition.
+  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 };
 
 }  // namespace Carbon::SemIR

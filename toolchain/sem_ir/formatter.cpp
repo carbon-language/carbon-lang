@@ -69,8 +69,8 @@ class FormatterImpl {
       FormatFunction(FunctionId(i));
     }
 
-    for (int i : llvm::seq(sem_ir_.generic_instances().size())) {
-      FormatSpecific(GenericInstanceId(i));
+    for (int i : llvm::seq(sem_ir_.specifics().size())) {
+      FormatSpecific(SpecificId(i));
     }
 
     // End-of-file newline.
@@ -372,8 +372,7 @@ class FormatterImpl {
     out_ << '\n';
   }
 
-  auto FormatSpecificRegion(const Generic& generic,
-                            const GenericInstance& specific,
+  auto FormatSpecificRegion(const Generic& generic, const Specific& specific,
                             GenericInstIndex::Region region,
                             llvm::StringRef region_name) -> void {
     if (!specific.GetValueBlock(region).is_valid()) {
@@ -411,8 +410,8 @@ class FormatterImpl {
     }
   }
 
-  auto FormatSpecific(GenericInstanceId id) -> void {
-    const auto& specific = sem_ir_.generic_instances().Get(id);
+  auto FormatSpecific(SpecificId id) -> void {
+    const auto& specific = sem_ir_.specifics().Get(id);
 
     out_ << "\n";
 
@@ -767,8 +766,8 @@ class FormatterImpl {
   }
 
   auto FormatInstRHS(FunctionType inst) -> void {
-    if (inst.instance_id.is_valid()) {
-      FormatArgs(inst.function_id, inst.instance_id);
+    if (inst.specific_id.is_valid()) {
+      FormatArgs(inst.function_id, inst.specific_id);
     } else {
       FormatArgs(inst.function_id);
     }
@@ -780,8 +779,8 @@ class FormatterImpl {
   }
 
   auto FormatInstRHS(ClassType inst) -> void {
-    if (inst.instance_id.is_valid()) {
-      FormatArgs(inst.class_id, inst.instance_id);
+    if (inst.specific_id.is_valid()) {
+      FormatArgs(inst.class_id, inst.specific_id);
     } else {
       FormatArgs(inst.class_id);
     }
@@ -798,8 +797,8 @@ class FormatterImpl {
   }
 
   auto FormatInstRHS(InterfaceType inst) -> void {
-    if (inst.instance_id.is_valid()) {
-      FormatArgs(inst.interface_id, inst.instance_id);
+    if (inst.specific_id.is_valid()) {
+      FormatArgs(inst.interface_id, inst.specific_id);
     } else {
       FormatArgs(inst.interface_id);
     }
@@ -952,7 +951,7 @@ class FormatterImpl {
     out_ << ')';
   }
 
-  auto FormatArg(GenericInstanceId id) -> void { FormatName(id); }
+  auto FormatArg(SpecificId id) -> void { FormatName(id); }
 
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
@@ -1000,8 +999,8 @@ class FormatterImpl {
     out_ << inst_namer_->GetNameFor(id);
   }
 
-  auto FormatName(GenericInstanceId id) -> void {
-    const auto& specific = sem_ir_.generic_instances().Get(id);
+  auto FormatName(SpecificId id) -> void {
+    const auto& specific = sem_ir_.specifics().Get(id);
     FormatName(specific.generic_id);
     FormatArg(specific.args_id);
   }

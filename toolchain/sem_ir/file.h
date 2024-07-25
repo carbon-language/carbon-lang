@@ -125,12 +125,8 @@ class File : public Printable<File> {
   auto impls() const -> const ImplStore& { return impls_; }
   auto generics() -> GenericStore& { return generics_; }
   auto generics() const -> const GenericStore& { return generics_; }
-  auto generic_instances() -> GenericInstanceStore& {
-    return generic_instances_;
-  }
-  auto generic_instances() const -> const GenericInstanceStore& {
-    return generic_instances_;
-  }
+  auto specifics() -> SpecificStore& { return specifics_; }
+  auto specifics() const -> const SpecificStore& { return specifics_; }
   auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
   auto import_irs() const -> const ValueStore<ImportIRId>& {
     return import_irs_;
@@ -215,8 +211,8 @@ class File : public Printable<File> {
   // Storage for generics.
   GenericStore generics_;
 
-  // Storage for instances of generics.
-  GenericInstanceStore generic_instances_;
+  // Storage for specifics.
+  SpecificStore specifics_;
 
   // Related IRs. There are some fixed entries at the start; see ImportIRId.
   ValueStore<ImportIRId> import_irs_;
