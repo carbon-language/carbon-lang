@@ -642,6 +642,33 @@ class ImportRefResolver {
                    << name_scope_inst;
   }
 
+  // Given an imported entity base, returns an incomplete, local version of it.
+  //
+  // Most fields are set in the second pass once they're imported. Import enough
+  // of the parameter lists that we know whether this interface is a generic
+  // interface and can build the right constant value for it.
+  //
+  // TODO: Add a better way to represent a generic prior to importing the
+  // parameters.
+  auto GetIncompleteLocalEntityBase(
+      SemIR::InstId decl_id, const SemIR::EntityWithParamsBase& import_base)
+      -> SemIR::EntityWithParamsBase {
+    return {
+        .name_id = GetLocalNameId(import_base.name_id),
+        .parent_scope_id = SemIR::NameScopeId::Invalid,
+        .generic_id = GetLocalGeneric(import_base.generic_id),
+        .first_param_node_id = Parse::NodeId::Invalid,
+        .last_param_node_id = Parse::NodeId::Invalid,
+        .implicit_param_refs_id = import_base.implicit_param_refs_id.is_valid()
+                                      ? SemIR::InstBlockId::Empty
+                                      : SemIR::InstBlockId::Invalid,
+        .param_refs_id = import_base.param_refs_id.is_valid()
+                             ? SemIR::InstBlockId::Empty
+                             : SemIR::InstBlockId::Invalid,
+        .decl_id = decl_id,
+    };
+  }
+
   // Adds ImportRefUnloaded entries for members of the imported scope, for name
   // lookup.
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
@@ -897,32 +924,12 @@ class ImportRefResolver {
                                    .decl_block_id = SemIR::InstBlockId::Empty};
     auto class_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(AddImportIRInst(import_class.decl_id), class_decl));
-    // TODO: Support for importing generics.
-    auto generic_id = GetLocalGeneric(import_class.generic_id);
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
-    class_decl.class_id = context_.classes().Add({
-        .name_id = GetLocalNameId(import_class.name_id),
-        // These are set in the second pass once we've imported them. Import
-        // enough of the parameter lists that we know whether this class is a
-        // generic class and can build the right constant value for it.
-        // TODO: Add a better way to represent a generic `Class` prior to
-        // importing the parameters.
-        .parent_scope_id = SemIR::NameScopeId::Invalid,
-        .generic_id = generic_id,
-        .first_param_node_id = Parse::NodeId::Invalid,
-        .last_param_node_id = Parse::NodeId::Invalid,
-        .implicit_param_refs_id = import_class.implicit_param_refs_id.is_valid()
-                                      ? SemIR::InstBlockId::Empty
-                                      : SemIR::InstBlockId::Invalid,
-        .param_refs_id = import_class.param_refs_id.is_valid()
-                             ? SemIR::InstBlockId::Empty
-                             : SemIR::InstBlockId::Invalid,
-        .self_type_id = SemIR::TypeId::Invalid,
-        // These fields can be set immediately.
-        .decl_id = class_decl_id,
-        .inheritance_kind = import_class.inheritance_kind,
-    });
+    class_decl.class_id = context_.classes().Add(
+        {GetIncompleteLocalEntityBase(class_decl_id, import_class),
+         {.self_type_id = SemIR::TypeId::Invalid,
+          .inheritance_kind = import_class.inheritance_kind}});
 
     if (import_class.is_generic()) {
       class_decl.type_id = context_.GetGenericClassType(class_decl.class_id);
@@ -1122,10 +1129,7 @@ class ImportRefResolver {
         .type_id = SemIR::TypeId::Invalid,
         .function_id = SemIR::FunctionId::Invalid,
         .decl_block_id = SemIR::InstBlockId::Empty};
-    // Prefer pointing diagnostics towards a definition.
-    auto import_ir_inst_id = AddImportIRInst(function.definition_id.is_valid()
-                                                 ? function.definition_id
-                                                 : function.decl_id);
+    auto import_ir_inst_id = AddImportIRInst(function.latest_decl_id());
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
     // TODO: Implement import for generics.
@@ -1142,23 +1146,23 @@ class ImportRefResolver {
            .name_id = SemIR::NameId::ReturnSlot});
     }
     function_decl.function_id = context_.functions().Add(
-        {.name_id = GetLocalNameId(function.name_id),
-         .parent_scope_id = parent_scope_id,
-         .decl_id = function_decl_id,
-         .generic_id = generic_id,
-         .first_param_node_id = Parse::NodeId::Invalid,
-         .last_param_node_id = Parse::NodeId::Invalid,
-         .implicit_param_refs_id = GetLocalParamRefsId(
-             function.implicit_param_refs_id, implicit_param_const_ids),
-         .param_refs_id =
-             GetLocalParamRefsId(function.param_refs_id, param_const_ids),
-         .return_storage_id = new_return_storage,
-         .is_extern = function.is_extern,
-         .return_slot = function.return_slot,
-         .builtin_function_kind = function.builtin_function_kind,
-         .definition_id = function.definition_id.is_valid()
-                              ? function_decl_id
-                              : SemIR::InstId::Invalid});
+        {{.name_id = GetLocalNameId(function.name_id),
+          .parent_scope_id = parent_scope_id,
+          .generic_id = generic_id,
+          .first_param_node_id = Parse::NodeId::Invalid,
+          .last_param_node_id = Parse::NodeId::Invalid,
+          .implicit_param_refs_id = GetLocalParamRefsId(
+              function.implicit_param_refs_id, implicit_param_const_ids),
+          .param_refs_id =
+              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
+          .decl_id = function_decl_id,
+          .definition_id = function.definition_id.is_valid()
+                               ? function_decl_id
+                               : SemIR::InstId::Invalid},
+         {.return_storage_id = new_return_storage,
+          .is_extern = function.is_extern,
+          .return_slot = function.return_slot,
+          .builtin_function_kind = function.builtin_function_kind}});
     // TODO: Import this or recompute it.
     auto specific_id = SemIR::SpecificId::Invalid;
     function_decl.type_id =
@@ -1247,29 +1251,10 @@ class ImportRefResolver {
         context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
             AddImportIRInst(import_interface.decl_id), interface_decl));
 
-    // TODO: Support for importing generics.
-    auto generic_id = GetLocalGeneric(import_interface.generic_id);
     // Start with an incomplete interface.
-    interface_decl.interface_id = context_.interfaces().Add({
-        .name_id = GetLocalNameId(import_interface.name_id),
-        // These are set in the second pass once we've imported them. Import
-        // enough of the parameter lists that we know whether this interface is
-        // a generic interface and can build the right constant value for it.
-        // TODO: Add a better way to represent a generic `Interface` prior to
-        // importing the parameters.
-        .parent_scope_id = SemIR::NameScopeId::Invalid,
-        .generic_id = generic_id,
-        .first_param_node_id = Parse::NodeId::Invalid,
-        .last_param_node_id = Parse::NodeId::Invalid,
-        .implicit_param_refs_id =
-            import_interface.implicit_param_refs_id.is_valid()
-                ? SemIR::InstBlockId::Empty
-                : SemIR::InstBlockId::Invalid,
-        .param_refs_id = import_interface.param_refs_id.is_valid()
-                             ? SemIR::InstBlockId::Empty
-                             : SemIR::InstBlockId::Invalid,
-        .decl_id = interface_decl_id,
-    });
+    interface_decl.interface_id = context_.interfaces().Add(
+        {GetIncompleteLocalEntityBase(interface_decl_id, import_interface),
+         {}});
 
     if (import_interface.is_generic()) {
       interface_decl.type_id =

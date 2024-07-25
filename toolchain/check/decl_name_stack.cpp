@@ -213,6 +213,15 @@ static auto PushNameQualifierScope(Context& context,
 
   context.scope_stack().Push(scope_inst_id, scope_id, specific_id, has_error);
 
+  // An interface also introduces its 'Self' parameter into scope, despite it
+  // not being redeclared as part of the qualifier.
+  if (auto interface_decl =
+          context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
+    auto& interface = context.interfaces().Get(interface_decl->interface_id);
+    context.scope_stack().AddCompileTimeBinding();
+    context.scope_stack().PushCompileTimeBinding(interface.self_param_id);
+  }
+
   // Enter a parameter scope in case the qualified name itself has parameters.
   context.scope_stack().Push();
 }
@@ -370,6 +379,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                name.params_id);
 
   // Find the scope corresponding to the resolved instruction.
+  // TODO: When diagnosing qualifiers on names, print a diagnostic that talks
+  // about qualifiers instead of redeclarations. Maybe also rename
+  // CheckRedeclParamsMatch.
   CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       const auto& class_info = context_->classes().Get(class_decl.class_id);
@@ -404,6 +416,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
+      // This is specifically for qualified name handling.
       if (!CheckRedeclParamsMatch(
               *context_, new_params,
               DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,
