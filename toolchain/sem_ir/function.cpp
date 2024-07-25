@@ -51,7 +51,7 @@ auto Function::GetDeclaredReturnType(const File& file,
                            file.insts().Get(return_storage_id).type_id());
 }
 
-auto ReturnInfo::ForType(const File& file, TypeId type_id) -> ReturnInfo {
+auto ReturnTypeInfo::ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
   if (!type_id.is_valid()) {
     // Implicit `-> ()` has no return slot.
     return {.type_id = type_id, .return_slot = ReturnSlot::Absent};

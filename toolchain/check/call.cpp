@@ -115,7 +115,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
 
   // If there is a return slot, build storage for the result.
   SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
-  SemIR::ReturnInfo return_info = [&] {
+  SemIR::ReturnTypeInfo return_info = [&] {
     DiagnosticAnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,

@@ -73,8 +73,8 @@ auto CheckFunctionTypeMatches(Context& context,
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
-    -> SemIR::ReturnInfo {
-  auto return_info = function.GetReturnInfo(context.sem_ir(), specific_id);
+    -> SemIR::ReturnTypeInfo {
+  auto return_info = function.GetReturnTypeInfo(context.sem_ir(), specific_id);
 
   // If we couldn't determine the return information due to the return type
   // being incomplete, try to complete it now.
@@ -91,7 +91,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     // definition or call to this function.
     if (context.TryToCompleteType(return_info.type_id,
                                   diagnose_incomplete_return_type)) {
-      return_info = function.GetReturnInfo(context.sem_ir(), specific_id);
+      return_info = function.GetReturnTypeInfo(context.sem_ir(), specific_id);
     }
   }
 

@@ -306,7 +306,7 @@ class FormatterImpl {
 
     if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
-      auto return_info = fn.GetReturnInfo(sem_ir_);
+      auto return_info = fn.GetReturnTypeInfo(sem_ir_);
       if (!fn.body_block_ids.empty() && return_info.is_valid() &&
           return_info.has_return_slot()) {
         FormatName(fn.return_storage_id);
@@ -712,7 +712,7 @@ class FormatterImpl {
 
     llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(inst.args_id);
 
-    auto return_info = ReturnInfo::ForType(sem_ir_, inst.type_id);
+    auto return_info = ReturnTypeInfo::ForType(sem_ir_, inst.type_id);
     bool has_return_slot = return_info.has_return_slot();
     InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {

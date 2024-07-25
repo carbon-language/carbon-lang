@@ -25,9 +25,9 @@ enum class ReturnSlot : int8_t {
 };
 
 // Information about how a function returns its return value.
-struct ReturnInfo {
+struct ReturnTypeInfo {
   // Builds return information for a given declared return type.
-  static auto ForType(const File& file, TypeId type_id) -> ReturnInfo;
+  static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo;
 
   // Returns whether the return information could be fully computed.
   auto is_valid() const -> bool {
@@ -109,10 +109,10 @@ struct Function : public EntityWithParamsBase,
       -> TypeId;
 
   // Returns information about how the function returns its return value.
-  auto GetReturnInfo(const File& file,
+  auto GetReturnTypeInfo(const File& file,
                      SpecificId specific_id = SpecificId::Invalid) const
-      -> ReturnInfo {
-    return ReturnInfo::ForType(file, GetDeclaredReturnType(file, specific_id));
+      -> ReturnTypeInfo {
+    return ReturnTypeInfo::ForType(file, GetDeclaredReturnType(file, specific_id));
   }
 };
 

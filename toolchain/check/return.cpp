@@ -57,7 +57,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
                       Parse::NodeId type_node, SemIR::TypeId type_id)
     -> SemIR::InstId {
   auto& function = GetCurrentFunction(context);
-  auto return_info = function.GetReturnInfo(context.sem_ir());
+  auto return_info = function.GetReturnTypeInfo(context.sem_ir());
   if (!return_info.is_valid()) {
     // We already diagnosed this when we started defining the function. Create a
     // placeholder for error recovery.
@@ -131,7 +131,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::Invalid;
-  auto return_info = function.GetReturnInfo(context.sem_ir());
+  auto return_info = function.GetReturnTypeInfo(context.sem_ir());
 
   if (!return_info.type_id.is_valid()) {
     CARBON_DIAGNOSTIC(
@@ -178,7 +178,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   }
 
   auto return_slot_id = function.return_storage_id;
-  if (!function.GetReturnInfo(context.sem_ir()).has_return_slot()) {
+  if (!function.GetReturnTypeInfo(context.sem_ir()).has_return_slot()) {
     // If we don't have a return slot, we're returning by value. Convert to a
     // value expression.
     returned_var_id = ConvertToValueExpr(context, returned_var_id);
