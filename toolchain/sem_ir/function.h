@@ -12,22 +12,43 @@
 
 namespace Carbon::SemIR {
 
+// A value that describes whether the function uses a return slot.
+enum class ReturnSlot : int8_t {
+  // The function is known to not use a return slot.
+  Absent,
+  // The function has a return slot, and a call to the function is expected to
+  // have an additional final argument corresponding to the return slot.
+  Present,
+  // Computing whether the function should have a return slot failed because
+  // the return type was incomplete.
+  Incomplete,
+};
+
+// Information about how a function returns its return value.
+struct ReturnInfo {
+  // Builds return information for a given declared return type.
+  static auto ForType(const File& file, TypeId type_id) -> ReturnInfo;
+
+  // Returns whether the return information could be fully computed.
+  auto is_valid() const -> bool {
+    return return_slot != ReturnSlot::Incomplete;
+  }
+
+  // Returns whether the function has a return slot. Can only be called for
+  // valid return info.
+  auto has_return_slot() const -> bool {
+    CARBON_CHECK(is_valid());
+    return return_slot == ReturnSlot::Present;
+  }
+
+  // The return type. Invalid if no return type was specified.
+  TypeId type_id;
+  // The return slot usage for this function.
+  ReturnSlot return_slot;
+};
+
 // Function-specific fields.
 struct FunctionFields {
-  // A value that describes whether the function uses a return slot.
-  enum class ReturnSlot : int8_t {
-    // Not yet known: the function has not been called or defined.
-    NotComputed,
-    // The function is known to not use a return slot.
-    Absent,
-    // The function has a return slot, and a call to the function is expected to
-    // have an additional final argument corresponding to the return slot.
-    Present,
-    // Computing whether the function should have a return slot failed, for
-    // example because the return type was incomplete.
-    Error
-  };
-
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -41,10 +62,6 @@ struct FunctionFields {
 
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
-
-  // Whether the function uses a return slot. For a generic function, this
-  // tracks information about the generic, not a specific.
-  ReturnSlot return_slot;
 
   // The following members are set at the end of a builtin function definition.
 
@@ -68,21 +85,6 @@ struct Function : public EntityWithParamsBase,
     PrintBaseFields(out);
     if (return_storage_id.is_valid()) {
       out << ", return_storage: " << return_storage_id;
-      out << ", return_slot: ";
-      switch (return_slot) {
-        case ReturnSlot::NotComputed:
-          out << "unknown";
-          break;
-        case ReturnSlot::Absent:
-          out << "absent";
-          break;
-        case ReturnSlot::Present:
-          out << "present";
-          break;
-        case ReturnSlot::Error:
-          out << "error";
-          break;
-      }
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -106,18 +108,11 @@ struct Function : public EntityWithParamsBase,
                              SpecificId specific_id = SpecificId::Invalid) const
       -> TypeId;
 
-  // Returns whether the function has a return slot. Can only be called for a
-  // function that has either been called or defined, otherwise this is not
-  // known.
-  //
-  // For a generic function, this only returns information about the generic
-  // itself, not a specific. Because a generic function can't be called (only a
-  // specific can be), this information is only available for generic functions
-  // that are defined.
-  auto has_return_slot() const -> bool {
-    CARBON_CHECK(return_slot != ReturnSlot::NotComputed);
-    // On error, we assume no return slot is used.
-    return return_slot == ReturnSlot::Present;
+  // Returns information about how the function returns its return value.
+  auto GetReturnInfo(const File& file,
+                     SpecificId specific_id = SpecificId::Invalid) const
+      -> ReturnInfo {
+    return ReturnInfo::ForType(file, GetDeclaredReturnType(file, specific_id));
   }
 };
 

@@ -1161,7 +1161,6 @@ class ImportRefResolver {
                                : SemIR::InstId::Invalid},
          {.return_storage_id = new_return_storage,
           .is_extern = function.is_extern,
-          .return_slot = function.return_slot,
           .builtin_function_kind = function.builtin_function_kind}});
     // TODO: Import this or recompute it.
     auto specific_id = SemIR::SpecificId::Invalid;

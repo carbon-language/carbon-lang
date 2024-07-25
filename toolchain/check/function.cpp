@@ -73,49 +73,29 @@ auto CheckFunctionTypeMatches(Context& context,
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
-    -> SemIR::Function::ReturnSlot {
-  // If we have already checked the return type, we have nothing to do.
-  if (function.return_slot != SemIR::Function::ReturnSlot::NotComputed &&
-      !specific_id.is_valid()) {
-    return function.return_slot;
+    -> SemIR::ReturnInfo {
+  auto return_info = function.GetReturnInfo(context.sem_ir(), specific_id);
+
+  // If we couldn't determine the return information due to the return type
+  // being incomplete, try to complete it now.
+  if (return_info.return_slot == SemIR::ReturnSlot::Incomplete) {
+    auto diagnose_incomplete_return_type = [&] {
+      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                        "Function returns incomplete type `{0}`.",
+                        SemIR::TypeId);
+      return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
+                                     return_info.type_id);
+    };
+
+    // TODO: Consider suppressing the diagnostic if we've already diagnosed a
+    // definition or call to this function.
+    if (context.TryToCompleteType(return_info.type_id,
+                                  diagnose_incomplete_return_type)) {
+      return_info = function.GetReturnInfo(context.sem_ir(), specific_id);
+    }
   }
 
-  if (!function.return_storage_id.is_valid()) {
-    // Implicit `-> ()` has no return slot.
-    function.return_slot = SemIR::Function::ReturnSlot::Absent;
-    return function.return_slot;
-  }
-
-  auto return_type_id =
-      function.GetDeclaredReturnType(context.sem_ir(), specific_id);
-  CARBON_CHECK(return_type_id.is_valid())
-      << "Have return storage but no return type.";
-
-  // Check the return type is complete. Only diagnose incompleteness if we've
-  // not already done so.
-  auto diagnose_incomplete_return_type = [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                      "Function returns incomplete type `{0}`.", SemIR::TypeId);
-    return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
-                                   return_type_id);
-  };
-  SemIR::Function::ReturnSlot result;
-  if (!context.TryToCompleteType(
-          return_type_id,
-          function.return_slot == SemIR::Function::ReturnSlot::Error
-              ? std::nullopt
-              : std::optional(diagnose_incomplete_return_type))) {
-    result = SemIR::Function::ReturnSlot::Error;
-  } else if (SemIR::GetInitRepr(context.sem_ir(), return_type_id)
-                 .has_return_slot()) {
-    result = SemIR::Function::ReturnSlot::Present;
-  } else {
-    result = SemIR::Function::ReturnSlot::Absent;
-  }
-  if (!specific_id.is_valid()) {
-    function.return_slot = result;
-  }
-  return result;
+  return return_info;
 }
 
 }  // namespace Carbon::Check

@@ -64,28 +64,6 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
 }
 
-// Returns the return slot usage for a function given the computed usage for two
-// different declarations of the function.
-static auto MergeReturnSlot(SemIR::Function::ReturnSlot a,
-                            SemIR::Function::ReturnSlot b)
-    -> SemIR::Function::ReturnSlot {
-  if (a == SemIR::Function::ReturnSlot::NotComputed) {
-    return b;
-  }
-  if (b == SemIR::Function::ReturnSlot::NotComputed) {
-    return a;
-  }
-  if (a == SemIR::Function::ReturnSlot::Error) {
-    return b;
-  }
-  if (b == SemIR::Function::ReturnSlot::Error) {
-    return a;
-  }
-  CARBON_CHECK(a == b)
-      << "Different return slot usage computed for the same function.";
-  return a;
-}
-
 // Tries to merge new_function into prev_function_id. Since new_function won't
 // have a definition even if one is upcoming, set is_definition to indicate the
 // planned result.
@@ -120,8 +98,6 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     prev_function.return_storage_id = new_function.return_storage_id;
   }
   // The new function might have return slot information if it was imported.
-  prev_function.return_slot =
-      MergeReturnSlot(prev_function.return_slot, new_function.return_slot);
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
@@ -198,14 +174,10 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   auto return_storage_id = SemIR::InstId::Invalid;
-  auto return_slot = SemIR::Function::ReturnSlot::NotComputed;
   if (auto [return_node, maybe_return_storage_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
       maybe_return_storage_id) {
     return_storage_id = *maybe_return_storage_id;
-  } else {
-    // If there's no return type, there's no return slot.
-    return_slot = SemIR::Function::ReturnSlot::Absent;
   }
 
   auto name = PopNameComponent(context);
@@ -244,11 +216,9 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info =
-      SemIR::Function{{name_context.MakeEntityWithParamsBase(decl_id, name)},
-                      {.return_storage_id = return_storage_id,
-                       .is_extern = is_extern,
-                       .return_slot = return_slot}};
+  auto function_info = SemIR::Function{
+      {name_context.MakeEntityWithParamsBase(decl_id, name)},
+      {.return_storage_id = return_storage_id, .is_extern = is_extern}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
