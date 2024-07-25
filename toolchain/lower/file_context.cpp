@@ -82,7 +82,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
     // If we want a pointer to the constant, materialize a global to hold it.
     // TODO: We could reuse the same global if the constant is used more than
     // once.
-    auto value_rep = SemIR::GetValueRepr(sem_ir(), inst.type_id());
+    auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), inst.type_id());
     if (value_rep.kind == SemIR::ValueRepr::Pointer) {
       // Include both the name of the constant, if any, and the point of use in
       // the name of the variable.
@@ -173,7 +173,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     auto param_type_id =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id)
             .second.type_id;
-    switch (auto value_rep = SemIR::GetValueRepr(sem_ir(), param_type_id);
+    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL()
@@ -275,7 +275,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     // Get the value of the parameter from the function argument.
     auto param_type_id = param.type_id;
     llvm::Value* param_value = llvm::PoisonValue::get(GetType(param_type_id));
-    if (SemIR::GetValueRepr(sem_ir(), param_type_id).kind !=
+    if (SemIR::ValueRepr::ForType(sem_ir(), param_type_id).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;

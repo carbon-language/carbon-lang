@@ -12,6 +12,9 @@ namespace Carbon::SemIR {
 
 // The value representation to use when passing by value.
 struct ValueRepr : public Printable<ValueRepr> {
+  // Returns information about the value representation to use for a type.
+  static auto ForType(const File& file, TypeId type_id) -> ValueRepr;
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
   enum Kind : int8_t {
@@ -62,9 +65,6 @@ struct ValueRepr : public Printable<ValueRepr> {
   TypeId type_id = TypeId::Invalid;
 };
 
-// Returns information about the value representation to use for a type.
-auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr;
-
 // Information stored about a TypeId corresponding to a complete type.
 struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -76,6 +76,10 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
 
 // The initializing representation to use when returning by value.
 struct InitRepr {
+  // Returns information about the initializing representation to use for a
+  // type.
+  static auto ForType(const File& file, TypeId type_id) -> InitRepr;
+
   enum Kind : int8_t {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
@@ -101,15 +105,12 @@ struct InitRepr {
   auto is_valid() const -> bool { return kind != Incomplete; }
 };
 
-// Returns information about the initializing representation to use for a type.
-auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
-
 // Information about a function's return type.
 struct ReturnTypeInfo {
   // Builds return type information for a given declared return type.
   static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
     return {.type_id = type_id,
-            .init_repr = type_id.is_valid() ? GetInitRepr(file, type_id)
+            .init_repr = type_id.is_valid() ? InitRepr::ForType(file, type_id)
                                             : InitRepr{.kind = InitRepr::None}};
   }
 

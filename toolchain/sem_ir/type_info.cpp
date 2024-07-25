@@ -34,12 +34,12 @@ auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "{value_rep: " << value_repr << "}";
 }
 
-auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
+auto ValueRepr::ForType(const File& file, TypeId type_id) -> ValueRepr {
   return file.types().GetValueRepr(type_id);
 }
 
-auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
-  auto value_rep = GetValueRepr(file, type_id);
+auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
+  auto value_rep = ValueRepr::ForType(file, type_id);
   switch (value_rep.kind) {
     case ValueRepr::None:
       return {.kind = InitRepr::None};

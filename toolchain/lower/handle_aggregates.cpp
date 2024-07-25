@@ -38,7 +38,7 @@ static auto GetAggregateElement(FunctionContext& context,
 
     case SemIR::ExprCategory::Value: {
       auto value_rep =
-          SemIR::GetValueRepr(context.sem_ir(), aggr_inst.type_id());
+          SemIR::ValueRepr::ForType(context.sem_ir(), aggr_inst.type_id());
       CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate)
           << "aggregate type should have aggregate value representation";
       switch (value_rep.kind) {
@@ -67,7 +67,8 @@ static auto GetAggregateElement(FunctionContext& context,
 
           // `elem_ptr` points to a value representation. Load it.
           auto result_value_type_id =
-              SemIR::GetValueRepr(context.sem_ir(), result_type_id).type_id;
+              SemIR::ValueRepr::ForType(context.sem_ir(), result_type_id)
+                  .type_id;
           return context.builder().CreateLoad(
               context.GetType(result_value_type_id), elem_ptr, name + ".load");
         }
@@ -123,7 +124,7 @@ static auto EmitAggregateInitializer(FunctionContext& context,
                                      llvm::Twine name) -> llvm::Value* {
   auto* llvm_type = context.GetType(type_id);
 
-  switch (SemIR::GetInitRepr(context.sem_ir(), type_id).kind) {
+  switch (SemIR::InitRepr::ForType(context.sem_ir(), type_id).kind) {
     case SemIR::InitRepr::None:
     case SemIR::InitRepr::InPlace:
       // TODO: Add a helper to poison a value slot.
@@ -173,7 +174,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 static auto EmitAggregateValueRepr(FunctionContext& context,
                                    SemIR::TypeId type_id,
                                    SemIR::InstBlockId refs_id) -> llvm::Value* {
-  auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
+  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL() << "Incomplete aggregate type in lowering";

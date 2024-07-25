@@ -36,32 +36,6 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   return {param_ref_id, ref.As<SemIR::Param>()};
 }
 
-auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
-  out << "{kind: ";
-  switch (kind) {
-    case Unknown:
-      out << "unknown";
-      break;
-    case None:
-      out << "none";
-      break;
-    case Copy:
-      out << "copy";
-      break;
-    case Pointer:
-      out << "pointer";
-      break;
-    case Custom:
-      out << "custom";
-      break;
-  }
-  out << ", type: " << type_id << "}";
-}
-
-auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{value_rep: " << value_repr << "}";
-}
-
 File::File(CheckIRId check_ir_id, IdentifierId package_id,
            StringLiteralValueId library_id, SharedValueStores& value_stores,
            std::string filename)

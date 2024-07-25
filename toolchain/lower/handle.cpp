@@ -194,7 +194,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
   auto result_type_id = context.sem_ir().insts().Get(inst.expr_id).type_id();
-  switch (SemIR::GetInitRepr(context.sem_ir(), result_type_id).kind) {
+  switch (SemIR::InitRepr::ForType(context.sem_ir(), result_type_id).kind) {
     case SemIR::InitRepr::None:
       // Nothing to return.
       context.builder().CreateRetVoid();

@@ -133,7 +133,7 @@ auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
 
 auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
                                  SemIR::InstId source_id) -> void {
-  switch (SemIR::GetInitRepr(sem_ir(), type_id).kind) {
+  switch (SemIR::InitRepr::ForType(sem_ir(), type_id).kind) {
     case SemIR::InitRepr::None:
       break;
     case SemIR::InitRepr::InPlace:
@@ -154,7 +154,7 @@ auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
 
 auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
-  switch (auto rep = SemIR::GetValueRepr(sem_ir(), type_id); rep.kind) {
+  switch (auto rep = SemIR::ValueRepr::ForType(sem_ir(), type_id); rep.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL() << "Attempt to copy incomplete type";
     case SemIR::ValueRepr::None:

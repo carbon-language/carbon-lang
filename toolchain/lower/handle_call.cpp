@@ -320,7 +320,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   for (auto arg_id : arg_ids) {
     auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
-    if (SemIR::GetValueRepr(context.sem_ir(), arg_type_id).kind !=
+    if (SemIR::ValueRepr::ForType(context.sem_ir(), arg_type_id).kind !=
         SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
