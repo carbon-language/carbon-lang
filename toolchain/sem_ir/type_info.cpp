@@ -28,9 +28,7 @@ auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
       return {.kind = InitRepr::InPlace};
 
     case ValueRepr::Unknown:
-      CARBON_FATAL()
-          << "Attempting to perform initialization of incomplete type "
-          << file.types().GetAsInst(type_id);
+      return {.kind = InitRepr::Incomplete};
   }
 }
 

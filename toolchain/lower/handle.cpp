@@ -207,6 +207,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       // The expression produces the value representation for the type.
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
+    case SemIR::InitRepr::Incomplete:
+      CARBON_FATAL() << "Lowering return of incomplete type "
+                     << context.sem_ir().types().GetAsInst(result_type_id);
   }
 }
 

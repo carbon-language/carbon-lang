@@ -139,6 +139,10 @@ static auto EmitAggregateInitializer(FunctionContext& context,
           llvm::PoisonValue::get(llvm_type), context.GetValue(refs[0]), {0},
           name);
     }
+
+    case SemIR::InitRepr::Incomplete:
+      CARBON_FATAL() << "Lowering aggregate initialization of incomplete type "
+                     << context.sem_ir().types().GetAsInst(type_id);
   }
 }
 

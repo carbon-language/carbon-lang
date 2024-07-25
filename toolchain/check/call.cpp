@@ -124,21 +124,23 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
         });
     return CheckFunctionReturnType(context, callee_id, callable, specific_id);
   }();
-  switch (return_info.return_slot) {
-    case SemIR::ReturnSlot::Present:
+  switch (return_info.init_repr.kind) {
+    case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
       return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
           node_id, {.type_id = return_info.type_id});
       break;
-    case SemIR::ReturnSlot::Absent:
+    case SemIR::InitRepr::None:
       // For functions with an implicit return type, the return type is the
       // empty tuple type.
       if (!return_info.type_id.is_valid()) {
         return_info.type_id = context.GetTupleType({});
       }
       break;
-    case SemIR::ReturnSlot::Incomplete:
+    case SemIR::InitRepr::ByCopy:
+      break;
+    case SemIR::InitRepr::Incomplete:
       // Don't form an initializing expression with an incomplete type.
       // CheckFunctionReturnType will have diagnosed this for us if needed.
       return_info.type_id = SemIR::TypeId::Error;

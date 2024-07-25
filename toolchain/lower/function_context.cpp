@@ -146,6 +146,9 @@ auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
     case SemIR::InitRepr::ByCopy:
       CopyValue(type_id, source_id, dest_id);
       break;
+    case SemIR::InitRepr::Incomplete:
+      CARBON_FATAL() << "Lowering aggregate initialization of incomplete type "
+                     << sem_ir().types().GetAsInst(type_id);
   }
 }
 
