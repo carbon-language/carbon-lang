@@ -115,7 +115,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
 
   // If there is a return slot, build storage for the result.
   SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
-  SemIR::Function::ReturnInfo return_info = [&] {
+  SemIR::ReturnInfo return_info = [&] {
     DiagnosticAnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
@@ -125,20 +125,20 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
     return CheckFunctionReturnType(context, callee_id, callable, specific_id);
   }();
   switch (return_info.return_slot) {
-    case SemIR::Function::ReturnSlot::Present:
+    case SemIR::ReturnSlot::Present:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
       return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
           node_id, {.type_id = return_info.type_id});
       break;
-    case SemIR::Function::ReturnSlot::Absent:
+    case SemIR::ReturnSlot::Absent:
       // For functions with an implicit return type, the return type is the
       // empty tuple type.
       if (!return_info.type_id.is_valid()) {
         return_info.type_id = context.GetTupleType({});
       }
       break;
-    case SemIR::Function::ReturnSlot::Incomplete:
+    case SemIR::ReturnSlot::Incomplete:
       // Don't form an initializing expression with an incomplete type.
       // CheckFunctionReturnType will have diagnosed this for us if needed.
       return_info.type_id = SemIR::TypeId::Error;

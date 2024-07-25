@@ -73,12 +73,12 @@ auto CheckFunctionTypeMatches(Context& context,
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
-    -> SemIR::Function::ReturnInfo {
+    -> SemIR::ReturnInfo {
   auto return_info = function.GetReturnInfo(context.sem_ir(), specific_id);
 
   // If we couldn't determine the return information due to the return type
   // being incomplete, try to complete it now.
-  if (return_info.return_slot == SemIR::Function::ReturnSlot::Incomplete) {
+  if (return_info.return_slot == SemIR::ReturnSlot::Incomplete) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "Function returns incomplete type `{0}`.",

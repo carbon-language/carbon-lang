@@ -51,7 +51,7 @@ auto Function::GetDeclaredReturnType(const File& file,
                            file.insts().Get(return_storage_id).type_id());
 }
 
-auto Function::ReturnInfo::ForType(const File& file, TypeId type_id)
+auto ReturnInfo::ForType(const File& file, TypeId type_id)
     -> ReturnInfo {
   if (!type_id.is_valid()) {
     // Implicit `-> ()` has no return slot.
@@ -64,8 +64,8 @@ auto Function::ReturnInfo::ForType(const File& file, TypeId type_id)
 
   return {.type_id = type_id,
           .return_slot = GetInitRepr(file, type_id).has_return_slot()
-                             ? SemIR::Function::ReturnSlot::Present
-                             : SemIR::Function::ReturnSlot::Absent};
+                             ? SemIR::ReturnSlot::Present
+                             : SemIR::ReturnSlot::Absent};
 }
 
 }  // namespace Carbon::SemIR
