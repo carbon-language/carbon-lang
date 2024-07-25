@@ -8,6 +8,32 @@
 
 namespace Carbon::SemIR {
 
+auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
+  out << "{kind: ";
+  switch (kind) {
+    case Unknown:
+      out << "unknown";
+      break;
+    case None:
+      out << "none";
+      break;
+    case Copy:
+      out << "copy";
+      break;
+    case Pointer:
+      out << "pointer";
+      break;
+    case Custom:
+      out << "custom";
+      break;
+  }
+  out << ", type: " << type_id << "}";
+}
+
+auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
+  out << "{value_rep: " << value_repr << "}";
+}
+
 auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
   return file.types().GetValueRepr(type_id);
 }
