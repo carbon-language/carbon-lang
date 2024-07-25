@@ -122,6 +122,7 @@ cc_library(
         "//common:error",
         "//common:hashing",
         "//common:map",
+        "//common:ostream",
         "//common:set",
         "//toolchain/base:kind_switch",
         "//toolchain/base:value_store",

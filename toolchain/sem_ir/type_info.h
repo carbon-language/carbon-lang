@@ -114,9 +114,7 @@ struct ReturnTypeInfo {
   }
 
   // Returns whether the return information could be fully computed.
-  auto is_valid() const -> bool {
-    return init_repr.is_valid();
-  }
+  auto is_valid() const -> bool { return init_repr.is_valid(); }
 
   // Returns whether a function with this return type has a return slot. Can
   // only be called for valid return info.
