@@ -62,6 +62,9 @@ struct ValueRepr : public Printable<ValueRepr> {
   TypeId type_id = TypeId::Invalid;
 };
 
+// Returns information about the value representation to use for a type.
+auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr;
+
 // Information stored about a TypeId corresponding to a complete type.
 struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -70,6 +73,32 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   // not complete.
   ValueRepr value_repr = ValueRepr();
 };
+
+// The initializing representation to use when returning by value.
+struct InitRepr {
+  enum Kind : int8_t {
+    // The type has no initializing representation. This is used for empty
+    // types, where no initialization is necessary.
+    None,
+    // An initializing expression produces an object representation by value,
+    // which is copied into the initialized object.
+    ByCopy,
+    // An initializing expression takes a location as input, which is
+    // initialized as a side effect of evaluating the expression.
+    InPlace,
+    // TODO: Consider adding a kind where the expression takes an advisory
+    // location and returns a value plus an indicator of whether the location
+    // was actually initialized.
+  };
+  // The kind of initializing representation used by this type.
+  Kind kind;
+
+  // Returns whether a return slot is used when returning this type.
+  auto has_return_slot() const -> bool { return kind == InPlace; }
+};
+
+// Returns information about the initializing representation to use for a type.
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
 
 }  // namespace Carbon::SemIR
 
