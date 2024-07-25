@@ -105,9 +105,9 @@ fn NS();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl.loc20: %.type.1 = fn_decl @.1 [template = constants.%.2] {}
-// CHECK:STDOUT:   %.loc24: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS.loc24: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl.loc35: %.type.2 = fn_decl @.2 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

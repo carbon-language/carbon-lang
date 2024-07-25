@@ -533,7 +533,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %.loc13: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

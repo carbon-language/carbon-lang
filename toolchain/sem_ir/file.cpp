@@ -19,23 +19,6 @@
 
 namespace Carbon::SemIR {
 
-auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
-    -> std::pair<InstId, Param> {
-  auto ref = sem_ir.insts().Get(param_ref_id);
-
-  if (auto addr_pattern = ref.TryAs<SemIR::AddrPattern>()) {
-    param_ref_id = addr_pattern->inner_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
-
-  if (auto bind_name = ref.TryAs<SemIR::AnyBindName>()) {
-    param_ref_id = bind_name->value_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
-
-  return {param_ref_id, ref.As<SemIR::Param>()};
-}
-
 File::File(CheckIRId check_ir_id, IdentifierId package_id,
            StringLiteralValueId library_id, SharedValueStores& value_stores,
            std::string filename)
