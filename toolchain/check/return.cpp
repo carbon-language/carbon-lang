@@ -56,10 +56,17 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
                       Parse::NodeId name_node, SemIR::NameId name_id,
                       Parse::NodeId type_node, SemIR::TypeId type_id)
     -> SemIR::InstId {
-  // A `returned var` requires an explicit return type.
   auto& function = GetCurrentFunction(context);
-  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
-  if (!return_type_id.is_valid()) {
+  auto return_info = function.GetReturnInfo(context.sem_ir());
+  if (!return_info.is_valid()) {
+    // We already diagnosed this when we started defining the function. Create a
+    // placeholder for error recovery.
+    return context.AddInst<SemIR::VarStorage>(
+        name_node, {.type_id = type_id, .name_id = name_id});
+  }
+
+  // A `returned var` requires an explicit return type.
+  if (!return_info.type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarWithNoReturnType, Error,
                       "Cannot declare a `returned var` in this function.");
     auto diag =
@@ -70,21 +77,21 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   }
 
   // The declared type of the var must match the return type of the function.
-  if (return_type_id != type_id) {
+  if (return_info.type_id != type_id) {
     CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
                       "Type `{0}` of `returned var` does not match "
                       "return type of enclosing function.",
                       SemIR::TypeId);
     auto diag =
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
-    NoteReturnType(diag, function, return_type_id);
+    NoteReturnType(diag, function, return_info.type_id);
     diag.Emit();
     return SemIR::InstId::BuiltinError;
   }
 
   // The variable aliases the return slot if there is one. If not, it has its
   // own storage.
-  if (function.has_return_slot()) {
+  if (return_info.has_return_slot()) {
     return function.return_storage_id;
   }
   return context.AddInst<SemIR::VarStorage>(
@@ -124,9 +131,9 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::Invalid;
-  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
+  auto return_info = function.GetReturnInfo(context.sem_ir());
 
-  if (!return_type_id.is_valid()) {
+  if (!return_info.type_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         ReturnStatementDisallowExpr, Error,
         "No return expression should be provided in this context.");
@@ -142,14 +149,16 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
     expr_id = SemIR::InstId::BuiltinError;
-  } else if (function.has_return_slot()) {
+  } else if (!return_info.is_valid()) {
+    // We already diagnosed that the return type is invalid. Don't try to
+    // convert to it.
+    expr_id = SemIR::InstId::BuiltinError;
+  } else if (return_info.has_return_slot()) {
     expr_id = Initialize(context, node_id, function.return_storage_id, expr_id);
     return_slot_id = function.return_storage_id;
-  } else if (function.return_slot == SemIR::Function::ReturnSlot::Error) {
-    // Don't produce a second error complaining the return type is incomplete.
-    expr_id = SemIR::InstId::BuiltinError;
   } else {
-    expr_id = ConvertToValueOfType(context, node_id, expr_id, return_type_id);
+    expr_id =
+        ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);
   }
 
   context.AddInst<SemIR::ReturnExpr>(
@@ -169,7 +178,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   }
 
   auto return_slot_id = function.return_storage_id;
-  if (!function.has_return_slot()) {
+  if (!function.GetReturnInfo(context.sem_ir()).has_return_slot()) {
     // If we don't have a return slot, we're returning by value. Convert to a
     // value expression.
     returned_var_id = ConvertToValueExpr(context, returned_var_id);
