@@ -34,10 +34,6 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
-  namespace_inst.name_scope_id = context.name_scopes().Add(
-      namespace_id, name_context.name_id_for_new_inst(),
-      name_context.parent_scope_id_for_new_inst());
-  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   auto existing_inst_id = context.decl_name_stack().LookupOrAddName(
       name_context, namespace_id, SemIR::AccessKind::Public);
@@ -46,6 +42,9 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     // previous declaration. Otherwise, diagnose the issue.
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
+      // Point at the other namespace.
+      namespace_inst.name_scope_id = existing->name_scope_id;
+
       if (context.name_scopes().Get(existing->name_scope_id).is_closed_import) {
         // The existing name is a package name, so this is a name conflict.
         context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
@@ -64,6 +63,17 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
     }
   }
+
+  // If we weren't able to merge namespaces, add a new name scope. Note this
+  // occurs even for duplicates where we discard the namespace, because we want
+  // to produce a valid constant.
+  if (!namespace_inst.name_scope_id.is_valid()) {
+    namespace_inst.name_scope_id = context.name_scopes().Add(
+        namespace_id, name_context.name_id_for_new_inst(),
+        name_context.parent_scope_id_for_new_inst());
+  }
+
+  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   context.decl_name_stack().PopScope();
   return true;
