@@ -108,15 +108,18 @@ fn Run() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:     .NS = %NS.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %NS.loc4: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B1.decl: %B1.type = fn_decl @B1 [template = constants.%B1] {}
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .B1 = %B1.decl
+// CHECK:STDOUT:     .B2 = %B2.decl
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B2.decl: %B2.type = fn_decl @B2 [template = constants.%B2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -176,7 +179,12 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = imports.%import_ref.2
+// CHECK:STDOUT:     .B1 = imports.%import_ref.3
+// CHECK:STDOUT:     .B2 = imports.%import_ref.4
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
