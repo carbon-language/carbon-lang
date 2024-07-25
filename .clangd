@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 CompileFlags:
+  # Workaround for https://github.com/clangd/clangd/issues/1582
   Remove: [-march=*]
