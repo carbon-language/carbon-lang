@@ -74,7 +74,8 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo {
-  auto return_info = ReturnTypeInfo::ForFunction(context.sem_ir(), function, specific_id);
+  auto return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
+                                                        function, specific_id);
 
   // If we couldn't determine the return information due to the return type
   // being incomplete, try to complete it now.
@@ -91,7 +92,8 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     // definition or call to this function.
     if (context.TryToCompleteType(return_info.type_id,
                                   diagnose_incomplete_return_type)) {
-      return_info = ReturnTypeInfo::ForFunction(context.sem_ir(), function, specific_id);
+      return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
+                                                       function, specific_id);
     }
   }
 

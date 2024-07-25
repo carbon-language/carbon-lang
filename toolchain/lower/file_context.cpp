@@ -143,7 +143,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // TODO: Pass in a specific ID for generic functions.
   const auto specific_id = SemIR::SpecificId::Invalid;
 
-  const auto return_info = ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
+  const auto return_info =
+      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   CARBON_CHECK(return_info.is_valid()) << "Should not lower invalid functions.";
 
   auto implicit_param_refs =
@@ -262,7 +263,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
-  if (ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id).has_return_slot()) {
+  if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+          .has_return_slot()) {
     function_lowering.SetLocal(function.return_storage_id,
                                llvm_function->getArg(param_index));
     ++param_index;
