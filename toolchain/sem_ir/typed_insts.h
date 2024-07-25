@@ -450,7 +450,7 @@ struct ClassInit {
   InstId dest_id;
 };
 
-// The type for a class, either non-generic or parameterized generic instance.
+// The type for a class, either non-generic or specific.
 struct ClassType {
   static constexpr auto Kind = InstKind::ClassType.Define<Parse::NodeId>(
       {.ir_name = "class_type",
@@ -459,7 +459,7 @@ struct ClassType {
 
   TypeId type_id;
   ClassId class_id;
-  GenericInstanceId instance_id;
+  SpecificId specific_id;
 };
 
 // Indicates `const` on a type, such as `var x: const i32`.
@@ -575,7 +575,7 @@ struct FunctionType {
 
   TypeId type_id;
   FunctionId function_id;
-  GenericInstanceId instance_id;
+  SpecificId specific_id;
 };
 
 // The type of the name of a generic class. The corresponding value is an empty
@@ -690,8 +690,7 @@ struct InterfaceDecl {
   InstBlockId decl_block_id;
 };
 
-// The type for an interface, either non-generic or parameterized generic
-// instance.
+// The type for an interface, either non-generic or specific.
 struct InterfaceType {
   static constexpr auto Kind = InstKind::InterfaceType.Define<Parse::NodeId>(
       {.ir_name = "interface_type",
@@ -700,7 +699,7 @@ struct InterfaceType {
 
   TypeId type_id;
   InterfaceId interface_id;
-  GenericInstanceId instance_id;
+  SpecificId specific_id;
 };
 
 // A witness that a type implements an interface.
@@ -823,7 +822,7 @@ struct ReturnExpr {
 };
 
 // Given an instruction with a constant value that depends on a generic
-// parameter, selects an instance of that instruction with the constant value
+// parameter, selects a version of that instruction with the constant value
 // corresponding to a particular specific.
 //
 // TODO: We only form these as the instruction referenced by a `NameRef`.
@@ -835,7 +834,7 @@ struct SpecificConstant {
 
   TypeId type_id;
   InstId inst_id;
-  GenericInstanceId instance_id;
+  SpecificId specific_id;
 };
 
 // Splices a block into the location where this appears. This may be an

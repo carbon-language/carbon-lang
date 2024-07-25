@@ -22,7 +22,7 @@
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
-// CHECK:STDOUT:   generic_instances: {}
+// CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}

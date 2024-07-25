@@ -252,13 +252,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // declaration.
     auto& class_info = context.classes().Get(class_decl.class_id);
     if (class_info.is_generic()) {
-      auto instance_id =
-          context.generics().GetSelfInstance(class_info.generic_id);
+      auto specific_id =
+          context.generics().GetSelfSpecific(class_info.generic_id);
       class_info.self_type_id = context.GetTypeIdForTypeConstant(
           TryEvalInst(context, SemIR::InstId::Invalid,
                       SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
                                        .class_id = class_decl.class_id,
-                                       .instance_id = instance_id}));
+                                       .specific_id = specific_id}));
     } else {
       class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
     }
@@ -293,7 +293,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   // Enter the class scope.
   context.scope_stack().Push(
       class_decl_id, class_info.scope_id,
-      context.generics().GetSelfInstance(class_info.generic_id));
+      context.generics().GetSelfSpecific(class_info.generic_id));
   StartGenericDefinition(context);
 
   // Introduce `Self`.

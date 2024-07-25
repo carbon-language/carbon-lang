@@ -31,7 +31,7 @@ class EvalContext {
  public:
   explicit EvalContext(
       Context& context,
-      SemIR::GenericInstanceId specific_id = SemIR::GenericInstanceId::Invalid,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
       : context_(context),
         specific_id_(specific_id),
@@ -45,7 +45,7 @@ class EvalContext {
       return SemIR::ConstantId::Invalid;
     }
 
-    const auto& specific = generic_instances().Get(specific_id_);
+    const auto& specific = specifics().Get(specific_id_);
     auto args = inst_blocks().Get(specific.args_id);
 
     // Bindings past the ones with known arguments can appear as local
@@ -67,14 +67,14 @@ class EvalContext {
 
     // While resolving a specific, map from previous instructions in the eval
     // block into their evaluated values. These values won't be present on the
-    // instance itself yet, so `GetConstantInInstance` won't be able to find
+    // specific itself yet, so `GetConstantInSpecific` won't be able to find
     // them.
     if (specific_eval_info_) {
       const auto& symbolic_info =
           constant_values().GetSymbolicConstant(const_id);
       if (symbolic_info.index.is_valid() &&
           symbolic_info.generic_id ==
-              generic_instances().Get(specific_id_).generic_id &&
+              specifics().Get(specific_id_).generic_id &&
           symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
         CARBON_CHECK(inst_id.is_valid())
@@ -85,7 +85,7 @@ class EvalContext {
     }
 
     // Map from a specific constant value to the canonical value.
-    return GetConstantInInstance(sem_ir(), specific_id_, const_id);
+    return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
   }
 
   // Gets the constant value of the specified instruction in this context.
@@ -124,8 +124,8 @@ class EvalContext {
   auto interfaces() -> const ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
-  auto generic_instances() -> const SemIR::GenericInstanceStore& {
-    return sem_ir().generic_instances();
+  auto specifics() -> const SemIR::SpecificStore& {
+    return sem_ir().specifics();
   }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
@@ -157,7 +157,7 @@ class EvalContext {
   // The type-checking context in which we're performing evaluation.
   Context& context_;
   // The specific that we are evaluating within.
-  SemIR::GenericInstanceId specific_id_;
+  SemIR::SpecificId specific_id_;
   // If we are currently evaluating an eval block for `specific_id_`,
   // information about that evaluation.
   std::optional<SpecificEvalInfo> specific_eval_info_;
@@ -320,26 +320,25 @@ static auto GetConstantValue(EvalContext& eval_context,
   return type_block_id;
 }
 
-// The constant value of a generic instance is the generic instance with the
-// corresponding constant values for its arguments.
+// The constant value of a specific is the specific with the corresponding
+// constant values for its arguments.
 static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::GenericInstanceId instance_id, Phase* phase)
-    -> SemIR::GenericInstanceId {
-  if (!instance_id.is_valid()) {
-    return SemIR::GenericInstanceId::Invalid;
+                             SemIR::SpecificId specific_id, Phase* phase)
+    -> SemIR::SpecificId {
+  if (!specific_id.is_valid()) {
+    return SemIR::SpecificId::Invalid;
   }
 
-  const auto& instance = eval_context.generic_instances().Get(instance_id);
-  auto args_id = GetConstantValue(eval_context, instance.args_id, phase);
+  const auto& specific = eval_context.specifics().Get(specific_id);
+  auto args_id = GetConstantValue(eval_context, specific.args_id, phase);
   if (!args_id.is_valid()) {
-    return SemIR::GenericInstanceId::Invalid;
+    return SemIR::SpecificId::Invalid;
   }
 
-  if (args_id == instance.args_id) {
-    return instance_id;
+  if (args_id == specific.args_id) {
+    return specific_id;
   }
-  return MakeGenericInstance(eval_context.context(), instance.generic_id,
-                             args_id);
+  return MakeSpecific(eval_context.context(), specific.generic_id, args_id);
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -1095,7 +1094,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
       eval_context.insts().Get(call.callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::GenericClassType generic_class): {
-      auto instance_id = MakeGenericInstance(
+      auto specific_id = MakeSpecific(
           eval_context.context(),
           eval_context.classes().Get(generic_class.class_id).generic_id,
           call.args_id);
@@ -1103,21 +1102,20 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
           eval_context.context(),
           SemIR::ClassType{.type_id = call.type_id,
                            .class_id = generic_class.class_id,
-                           .instance_id = instance_id},
+                           .specific_id = specific_id},
           phase);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-      auto instance_id =
-          MakeGenericInstance(eval_context.context(),
-                              eval_context.interfaces()
-                                  .Get(generic_interface.interface_id)
-                                  .generic_id,
-                              call.args_id);
+      auto specific_id = MakeSpecific(eval_context.context(),
+                                      eval_context.interfaces()
+                                          .Get(generic_interface.interface_id)
+                                          .generic_id,
+                                      call.args_id);
       return MakeConstantResult(
           eval_context.context(),
           SemIR::InterfaceType{.type_id = call.type_id,
                                .interface_id = generic_interface.interface_id,
-                               .instance_id = instance_id},
+                               .specific_id = specific_id},
           phase);
     }
     default: {
@@ -1187,13 +1185,13 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
           &SemIR::BoundMethod::object_id, &SemIR::BoundMethod::function_id);
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::ClassType::instance_id);
+                                        &SemIR::ClassType::specific_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::FunctionType::instance_id);
+                                        &SemIR::FunctionType::specific_id);
     case SemIR::InterfaceType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::InterfaceType::instance_id);
+                                        &SemIR::InterfaceType::specific_id);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::InterfaceWitness::elements_id);
@@ -1288,7 +1286,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
           eval_context.context(),
           SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
                            .class_id = class_decl.class_id,
-                           .instance_id = SemIR::GenericInstanceId::Invalid},
+                           .specific_id = SemIR::SpecificId::Invalid},
           Phase::Template);
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
@@ -1309,17 +1307,16 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       // A non-generic interface declaration evaluates to the interface type.
       return MakeConstantResult(
           eval_context.context(),
-          SemIR::InterfaceType{
-              .type_id = SemIR::TypeId::TypeType,
-              .interface_id = interface_decl.interface_id,
-              .instance_id = SemIR::GenericInstanceId::Invalid},
+          SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
+                               .interface_id = interface_decl.interface_id,
+                               .specific_id = SemIR::SpecificId::Invalid},
           Phase::Template);
     }
 
-    case CARBON_KIND(SemIR::SpecificConstant instance): {
+    case CARBON_KIND(SemIR::SpecificConstant specific): {
       // Pull the constant value out of the specific.
-      return SemIR::GetConstantValueInInstance(
-          eval_context.sem_ir(), instance.instance_id, instance.inst_id);
+      return SemIR::GetConstantValueInSpecific(
+          eval_context.sem_ir(), specific.specific_id, specific.inst_id);
     }
 
     // These cases are treated as being the unique canonical definition of the
@@ -1371,8 +1368,8 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       const auto& bind_name =
           eval_context.entity_names().Get(bind.entity_name_id);
 
-      // If we know which instance we're evaluating within and this is an
-      // argument of that instance, its constant value is the corresponding
+      // If we know which specific we're evaluating within and this is an
+      // argument of that specific, its constant value is the corresponding
       // argument value.
       if (auto value =
               eval_context.GetCompileTimeBindValue(bind_name.bind_index);
@@ -1482,11 +1479,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
-auto TryEvalBlockForSpecific(Context& context,
-                             SemIR::GenericInstanceId specific_id,
+auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
     -> SemIR::InstBlockId {
-  auto generic_id = context.generic_instances().Get(specific_id).generic_id;
+  auto generic_id = context.specifics().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 

@@ -27,7 +27,7 @@ static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
   auto base = context.insts().Get(base_id);
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
-                       .instance_id = SemIR::GenericInstanceId::Invalid};
+                       .specific_id = SemIR::SpecificId::Invalid};
   }
   // TODO: Consider refactoring the near-identical class and interface support
   // below.
@@ -43,7 +43,7 @@ static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
         });
     auto& class_info = context.classes().Get(base_as_class->class_id);
     return LookupScope{.name_scope_id = class_info.scope_id,
-                       .instance_id = base_as_class->instance_id};
+                       .specific_id = base_as_class->specific_id};
   }
   if (auto base_as_interface = base.TryAs<SemIR::InterfaceType>()) {
     context.TryToDefineType(
@@ -58,7 +58,7 @@ static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
     auto& interface_info =
         context.interfaces().Get(base_as_interface->interface_id);
     return LookupScope{.name_scope_id = interface_info.scope_id,
-                       .instance_id = base_as_interface->instance_id};
+                       .specific_id = base_as_interface->specific_id};
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
@@ -218,7 +218,7 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
                                     LookupScope lookup_scope) -> SemIR::InstId {
-  LookupResult result = {.instance_id = SemIR::GenericInstanceId::Invalid,
+  LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::BuiltinError};
   if (lookup_scope.name_scope_id.is_valid()) {
     result = context.LookupQualifiedName(node_id, name_id, lookup_scope);
@@ -226,18 +226,18 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
   auto inst = context.insts().Get(result.inst_id);
-  auto type_id = SemIR::GetTypeInInstance(context.sem_ir(), result.instance_id,
+  auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           inst.type_id());
   CARBON_CHECK(type_id.is_valid()) << "Missing type for member " << inst;
 
-  // If the named entity has a constant value that depends on its generic
-  // instance, store the instance too.
-  if (result.instance_id.is_valid() &&
+  // If the named entity has a constant value that depends on its specific,
+  // store the specific too.
+  if (result.specific_id.is_valid() &&
       context.constant_values().Get(result.inst_id).is_symbolic()) {
     result.inst_id = context.AddInst<SemIR::SpecificConstant>(
         node_id, {.type_id = type_id,
                   .inst_id = result.inst_id,
-                  .instance_id = result.instance_id});
+                  .specific_id = result.specific_id});
   }
 
   // TODO: Use a different kind of instruction that also references the

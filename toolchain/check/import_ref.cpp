@@ -422,30 +422,30 @@ class ImportRefResolver {
   }
 
   // Gets a local argument list corresponding to the arguments of an imported
-  // generic instance.
-  auto GetLocalGenericInstanceArgs(SemIR::GenericInstanceId instance_id)
+  // specific.
+  auto GetLocalSpecificArgs(SemIR::SpecificId specific_id)
       -> llvm::SmallVector<SemIR::InstId> {
-    if (!instance_id.is_valid()) {
+    if (!specific_id.is_valid()) {
       return {};
     }
     return GetLocalInstBlockContents(
-        import_ir_.generic_instances().Get(instance_id).args_id);
+        import_ir_.specifics().Get(specific_id).args_id);
   }
 
-  // Gets a local generic instance whose arguments were already imported by
-  // GetLocalGenericInstanceArgs. Does not add any new work.
-  auto GetLocalGenericInstance(SemIR::GenericInstanceId instance_id,
-                               llvm::ArrayRef<SemIR::InstId> args)
-      -> SemIR::GenericInstanceId {
-    if (!instance_id.is_valid()) {
-      return SemIR::GenericInstanceId::Invalid;
+  // Gets a local specific whose arguments were already imported by
+  // GetLocalSpecificArgs. Does not add any new work.
+  auto GetLocalSpecific(SemIR::SpecificId specific_id,
+                        llvm::ArrayRef<SemIR::InstId> args)
+      -> SemIR::SpecificId {
+    if (!specific_id.is_valid()) {
+      return SemIR::SpecificId::Invalid;
     }
-    const auto& instance = import_ir_.generic_instances().Get(instance_id);
+    const auto& specific = import_ir_.specifics().Get(specific_id);
     // TODO: Import the generic.
     auto generic_id = SemIR::GenericId::Invalid;
-    auto args_id = GetLocalCanonicalInstBlockId(instance.args_id, args);
-    // TODO: Also import the generic instance.
-    return context_.generic_instances().GetOrAdd(generic_id, args_id);
+    auto args_id = GetLocalCanonicalInstBlockId(specific.args_id, args);
+    // TODO: Also import the specific.
+    return context_.specifics().GetOrAdd(generic_id, args_id);
   }
 
   // Returns the ConstantId for each parameter's type. Adds unresolved constants
@@ -1046,7 +1046,7 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_const_id =
         GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
-    auto args = GetLocalGenericInstanceArgs(inst.instance_id);
+    auto args = GetLocalSpecificArgs(inst.specific_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
@@ -1061,11 +1061,11 @@ class ImportRefResolver {
     } else {
       auto generic_class_type = context_.types().GetAs<SemIR::GenericClassType>(
           class_const_inst.type_id());
-      auto instance_id = GetLocalGenericInstance(inst.instance_id, args);
+      auto specific_id = GetLocalSpecific(inst.specific_id, args);
       return ResolveAs<SemIR::ClassType>(
           {.type_id = SemIR::TypeId::TypeType,
            .class_id = generic_class_type.class_id,
-           .instance_id = instance_id});
+           .specific_id = specific_id});
     }
   }
 
@@ -1164,7 +1164,7 @@ class ImportRefResolver {
           .return_slot = function.return_slot,
           .builtin_function_kind = function.builtin_function_kind}});
     // TODO: Import this or recompute it.
-    auto specific_id = SemIR::GenericInstanceId::Invalid;
+    auto specific_id = SemIR::SpecificId::Invalid;
     function_decl.type_id =
         context_.GetFunctionType(function_decl.function_id, specific_id);
     // Write the function ID into the FunctionDecl.
@@ -1182,8 +1182,8 @@ class ImportRefResolver {
     }
     auto fn_val = context_.insts().Get(fn_val_id);
     CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id()));
-    // TODO: Import the correct generic instance and build a function type
-    // constant using it.
+    // TODO: Import the correct specific and build a function type constant
+    // using it.
     return {.const_id = context_.types().GetConstantId(fn_val.type_id())};
   }
 
@@ -1355,7 +1355,7 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_const_id = GetLocalConstantId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
-    auto args = GetLocalGenericInstanceArgs(inst.instance_id);
+    auto args = GetLocalSpecificArgs(inst.specific_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
@@ -1372,11 +1372,11 @@ class ImportRefResolver {
       auto generic_interface_type =
           context_.types().GetAs<SemIR::GenericInterfaceType>(
               interface_const_inst.type_id());
-      auto instance_id = GetLocalGenericInstance(inst.instance_id, args);
+      auto specific_id = GetLocalSpecific(inst.specific_id, args);
       return ResolveAs<SemIR::InterfaceType>(
           {.type_id = SemIR::TypeId::TypeType,
            .interface_id = generic_interface_type.interface_id,
-           .instance_id = instance_id});
+           .specific_id = specific_id});
     }
   }
 
