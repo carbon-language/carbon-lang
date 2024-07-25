@@ -216,10 +216,9 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info =
-      SemIR::Function{{name_context.MakeEntityWithParamsBase(decl_id, name)},
-                      {.return_storage_id = return_storage_id,
-                       .is_extern = is_extern}};
+  auto function_info = SemIR::Function{
+      {name_context.MakeEntityWithParamsBase(decl_id, name)},
+      {.return_storage_id = return_storage_id, .is_extern = is_extern}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
