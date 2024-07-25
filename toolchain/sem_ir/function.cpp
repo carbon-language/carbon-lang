@@ -42,6 +42,23 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
+auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
+    -> std::pair<InstId, Param> {
+  auto ref = sem_ir.insts().Get(param_ref_id);
+
+  if (auto addr_pattern = ref.TryAs<SemIR::AddrPattern>()) {
+    param_ref_id = addr_pattern->inner_id;
+    ref = sem_ir.insts().Get(param_ref_id);
+  }
+
+  if (auto bind_name = ref.TryAs<SemIR::AnyBindName>()) {
+    param_ref_id = bind_name->value_id;
+    ref = sem_ir.insts().Get(param_ref_id);
+  }
+
+  return {param_ref_id, ref.As<SemIR::Param>()};
+}
+
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_storage_id.is_valid()) {
