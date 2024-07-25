@@ -100,6 +100,41 @@ struct InitRepr {
 // Returns information about the initializing representation to use for a type.
 auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
 
+// A value that describes whether the function uses a return slot.
+enum class ReturnSlot : int8_t {
+  // The function is known to not use a return slot.
+  Absent,
+  // The function has a return slot, and a call to the function is expected to
+  // have an additional final argument corresponding to the return slot.
+  Present,
+  // Computing whether the function should have a return slot failed because
+  // the return type was incomplete.
+  Incomplete,
+};
+
+// Information about how a function returns its return value.
+struct ReturnTypeInfo {
+  // Builds return information for a given declared return type.
+  static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo;
+
+  // Returns whether the return information could be fully computed.
+  auto is_valid() const -> bool {
+    return return_slot != ReturnSlot::Incomplete;
+  }
+
+  // Returns whether the function has a return slot. Can only be called for
+  // valid return info.
+  auto has_return_slot() const -> bool {
+    CARBON_CHECK(is_valid());
+    return return_slot == ReturnSlot::Present;
+  }
+
+  // The return type. Invalid if no return type was specified.
+  TypeId type_id;
+  // The return slot usage for this function.
+  ReturnSlot return_slot;
+};
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_TYPE_INFO_H_
