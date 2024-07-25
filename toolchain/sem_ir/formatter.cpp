@@ -306,7 +306,7 @@ class FormatterImpl {
 
     if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
-      auto return_info = fn.GetReturnTypeInfo(sem_ir_);
+      auto return_info = ReturnTypeInfo::ForFunction(sem_ir_, fn);
       if (!fn.body_block_ids.empty() && return_info.is_valid() &&
           return_info.has_return_slot()) {
         FormatName(fn.return_storage_id);

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_INFO_H_
 
 #include "common/ostream.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -112,6 +113,13 @@ struct ReturnTypeInfo {
     return {.type_id = type_id,
             .init_repr = type_id.is_valid() ? InitRepr::ForType(file, type_id)
                                             : InitRepr{.kind = InitRepr::None}};
+  }
+
+  // Builds return type information for a given function.
+  static auto ForFunction(const File& file, const Function& function,
+                          SpecificId specific_id = SpecificId::Invalid)
+      -> ReturnTypeInfo {
+    return ForType(file, function.GetDeclaredReturnType(file, specific_id));
   }
 
   // Returns whether the return information could be fully computed.

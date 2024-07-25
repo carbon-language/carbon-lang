@@ -8,7 +8,6 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -73,14 +72,6 @@ struct Function : public EntityWithParamsBase,
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::Invalid) const
       -> TypeId;
-
-  // Returns information about how the function returns its return value.
-  auto GetReturnTypeInfo(const File& file,
-                         SpecificId specific_id = SpecificId::Invalid) const
-      -> ReturnTypeInfo {
-    return ReturnTypeInfo::ForType(file,
-                                   GetDeclaredReturnType(file, specific_id));
-  }
 };
 
 class File;
