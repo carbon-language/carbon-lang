@@ -542,11 +542,13 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                            target.type_id);
     return SemIR::InstId::BuiltinError;
   }
-  if (class_info.object_repr_id == SemIR::TypeId::Error) {
+  auto object_repr_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), dest_type.specific_id, class_info.object_repr_id);
+  if (object_repr_id == SemIR::TypeId::Error) {
     return SemIR::InstId::BuiltinError;
   }
   auto dest_struct_type =
-      context.types().GetAs<SemIR::StructType>(class_info.object_repr_id);
+      context.types().GetAs<SemIR::StructType>(object_repr_id);
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
@@ -571,9 +573,10 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   return result_id;
 }
 
-// An inheritance path is a sequence of `BaseDecl`s in order from derived to
-// base.
-using InheritancePath = llvm::SmallVector<SemIR::InstId>;
+// An inheritance path is a sequence of `BaseDecl`s and corresponding base types
+// in order from derived to base.
+using InheritancePath =
+    llvm::SmallVector<std::pair<SemIR::InstId, SemIR::TypeId>>;
 
 // Computes the inheritance path from class `derived_id` to class `base_id`.
 // Returns nullopt if `derived_id` is not a class derived from `base_id`.
@@ -602,10 +605,13 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
       result = std::nullopt;
       break;
     }
-    result->push_back(derived_class.base_id);
-    derived_id = context.insts()
-                     .GetAs<SemIR::BaseDecl>(derived_class.base_id)
-                     .base_type_id;
+    auto base_decl =
+        context.insts().GetAs<SemIR::BaseDecl>(derived_class.base_id);
+    auto base_type_id = SemIR::GetTypeInSpecific(
+        context.sem_ir(), derived_class_type->specific_id,
+        base_decl.base_type_id);
+    result->push_back({derived_class.base_id, base_type_id});
+    derived_id = base_type_id;
   }
   return result;
 }
@@ -619,10 +625,10 @@ static auto ConvertDerivedToBase(Context& context, SemIR::LocId loc_id,
   value_id = ConvertToValueOrRefExpr(context, value_id);
 
   // Add a series of `.base` accesses.
-  for (auto base_id : path) {
+  for (auto [base_id, base_type_id] : path) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
     value_id = context.AddInst<SemIR::ClassElementAccess>(
-        loc_id, {.type_id = base_decl.base_type_id,
+        loc_id, {.type_id = base_type_id,
                  .base_id = value_id,
                  .index = base_decl.index});
   }
@@ -677,7 +683,8 @@ static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
   if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = context.classes().Get(class_type->class_id);
     if (class_info.adapt_id.is_valid()) {
-      return class_info.object_repr_id;
+      return SemIR::GetTypeInSpecific(context.sem_ir(), class_type->specific_id,
+                                      class_info.object_repr_id);
     }
   }
 

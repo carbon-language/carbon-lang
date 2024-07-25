@@ -611,6 +611,8 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId /*node_id*/)
     class_info.object_repr_id = context.GetStructType(fields_id);
   }
 
+  // TODO: Put object_repr_id somewhere that FinishGenericDefinition can see it!
+
   FinishGenericDefinition(context, class_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
