@@ -82,7 +82,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
     // If we want a pointer to the constant, materialize a global to hold it.
     // TODO: We could reuse the same global if the constant is used more than
     // once.
-    auto value_rep = SemIR::GetValueRepr(sem_ir(), inst.type_id());
+    auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), inst.type_id());
     if (value_rep.kind == SemIR::ValueRepr::Pointer) {
       // Include both the name of the constant, if any, and the point of use in
       // the name of the variable.
@@ -143,7 +143,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // TODO: Pass in a specific ID for generic functions.
   const auto specific_id = SemIR::SpecificId::Invalid;
 
-  const auto return_info = function.GetReturnInfo(sem_ir(), specific_id);
+  const auto return_info =
+      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   CARBON_CHECK(return_info.is_valid()) << "Should not lower invalid functions.";
 
   auto implicit_param_refs =
@@ -153,11 +154,6 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   auto* return_type =
       return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
-  SemIR::InitRepr return_rep =
-      return_info.type_id.is_valid()
-          ? SemIR::GetInitRepr(sem_ir(), return_info.type_id)
-          : SemIR::InitRepr{.kind = SemIR::InitRepr::None};
-  CARBON_CHECK(return_rep.has_return_slot() == return_info.has_return_slot());
 
   llvm::SmallVector<llvm::Type*> param_types;
   // TODO: Consider either storing `param_inst_ids` somewhere so that we can
@@ -178,7 +174,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     auto param_type_id =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id)
             .second.type_id;
-    switch (auto value_rep = SemIR::GetValueRepr(sem_ir(), param_type_id);
+    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL()
@@ -197,7 +193,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
   llvm::Type* function_return_type =
-      return_rep.kind == SemIR::InitRepr::ByCopy
+      return_info.init_repr.kind == SemIR::InitRepr::ByCopy
           ? return_type
           : llvm::Type::getVoidTy(llvm_context());
 
@@ -267,7 +263,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
-  if (function.GetReturnInfo(sem_ir(), specific_id).has_return_slot()) {
+  if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+          .has_return_slot()) {
     function_lowering.SetLocal(function.return_storage_id,
                                llvm_function->getArg(param_index));
     ++param_index;
@@ -280,7 +277,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     // Get the value of the parameter from the function argument.
     auto param_type_id = param.type_id;
     llvm::Value* param_value = llvm::PoisonValue::get(GetType(param_type_id));
-    if (SemIR::GetValueRepr(sem_ir(), param_type_id).kind !=
+    if (SemIR::ValueRepr::ForType(sem_ir(), param_type_id).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;

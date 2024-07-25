@@ -88,6 +88,7 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "name.cpp",
+        "type_info.cpp",
     ],
     hdrs = [
         "builtin_function_kind.h",
@@ -105,6 +106,7 @@ cc_library(
         "name.h",
         "name_scope.h",
         "type.h",
+        "type_info.h",
     ],
     textual_hdrs = [
         "builtin_function_kind.def",
@@ -115,12 +117,12 @@ cc_library(
         ":ids",
         ":inst",
         ":inst_kind",
-        ":type_info",
         "//common:check",
         "//common:enum_base",
         "//common:error",
         "//common:hashing",
         "//common:map",
+        "//common:ostream",
         "//common:set",
         "//toolchain/base:kind_switch",
         "//toolchain/base:value_store",
@@ -173,16 +175,6 @@ cc_library(
     deps = [
         ":file",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "type_info",
-    hdrs = ["type_info.h"],
-    deps = [
-        ":ids",
-        ":inst",
-        "//common:ostream",
     ],
 )
 

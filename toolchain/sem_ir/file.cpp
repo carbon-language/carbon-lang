@@ -19,32 +19,6 @@
 
 namespace Carbon::SemIR {
 
-auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
-  out << "{kind: ";
-  switch (kind) {
-    case Unknown:
-      out << "unknown";
-      break;
-    case None:
-      out << "none";
-      break;
-    case Copy:
-      out << "copy";
-      break;
-    case Pointer:
-      out << "pointer";
-      break;
-    case Custom:
-      out << "custom";
-      break;
-  }
-  out << ", type: " << type_id << "}";
-}
-
-auto CompleteTypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{value_rep: " << value_repr << "}";
-}
-
 File::File(CheckIRId check_ir_id, IdentifierId package_id,
            StringLiteralValueId library_id, SharedValueStores& value_stores,
            std::string filename)
@@ -687,28 +661,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ValueAsRef::Kind:
         return ExprCategory::EphemeralRef;
     }
-  }
-}
-
-auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
-  auto value_rep = GetValueRepr(file, type_id);
-  switch (value_rep.kind) {
-    case ValueRepr::None:
-      return {.kind = InitRepr::None};
-
-    case ValueRepr::Copy:
-      // TODO: Use in-place initialization for types that have non-trivial
-      // destructive move.
-      return {.kind = InitRepr::ByCopy};
-
-    case ValueRepr::Pointer:
-    case ValueRepr::Custom:
-      return {.kind = InitRepr::InPlace};
-
-    case ValueRepr::Unknown:
-      CARBON_FATAL()
-          << "Attempting to perform initialization of incomplete type "
-          << file.types().GetAsInst(type_id);
   }
 }
 
