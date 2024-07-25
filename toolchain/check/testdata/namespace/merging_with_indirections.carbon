@@ -117,7 +117,10 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS1: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = imports.%import_ref.2
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
