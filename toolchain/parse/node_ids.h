@@ -20,7 +20,7 @@ struct InvalidNodeId {};
 // contain any of the information about the node, and serve as a handle that
 // can be used with the underlying tree to query for detailed information.
 struct NodeId : public IdBase {
-  // An explicitly invalid instance.
+  // An explicitly invalid node ID.
   static constexpr InvalidNodeId Invalid;
 
   using IdBase::IdBase;

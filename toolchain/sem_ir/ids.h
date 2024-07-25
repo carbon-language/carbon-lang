@@ -22,7 +22,7 @@ struct EntityName;
 struct Class;
 struct Function;
 struct Generic;
-struct GenericInstance;
+struct Specific;
 struct ImportIR;
 struct ImportIRInst;
 struct Interface;
@@ -319,27 +319,28 @@ struct GenericId : public IdBase, public Printable<GenericId> {
 
 constexpr GenericId GenericId::Invalid = GenericId(InvalidIndex);
 
-// The ID of an instance of a generic.
-struct GenericInstanceId : public IdBase, public Printable<GenericInstanceId> {
-  using ValueType = GenericInstance;
+// The ID of a specific, which is the result of specifying the generic arguments
+// for a generic.
+struct SpecificId : public IdBase, public Printable<SpecificId> {
+  using ValueType = Specific;
 
   // An explicitly invalid ID. This is typically used to represent a non-generic
-  // instance.
-  static const GenericInstanceId Invalid;
+  // entity.
+  static const SpecificId Invalid;
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "genericInstance";
+    out << "specific";
     IdBase::Print(out);
   }
 };
 
-constexpr GenericInstanceId GenericInstanceId::Invalid =
-    GenericInstanceId(InvalidIndex);
+constexpr SpecificId SpecificId::Invalid = SpecificId(InvalidIndex);
 
 // The index of an instruction that depends on generic parameters within a
-// generic, and the value of that instruction within the instances of that
-// generic. This is a pair of a region and an index, stored in 32 bits.
+// region of a generic. A corresponding specific version of the instruction can
+// be found in each specific corresponding to that generic. This is a pair of a
+// region and an index, stored in 32 bits.
 struct GenericInstIndex : public IndexBase, public Printable<GenericInstIndex> {
   // Where the value is first used within the generic.
   enum Region : uint8_t {

@@ -98,13 +98,13 @@ struct Function : public EntityWithParamsBase,
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
 
-  // Gets the declared return type for a specific instance of this function, or
+  // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `Invalid` if no return type was specified, in which
   // case the effective return type is an empty tuple.
   auto GetDeclaredReturnType(const File& file,
-                             GenericInstanceId specific_id =
-                                 GenericInstanceId::Invalid) const -> TypeId;
+                             SpecificId specific_id = SpecificId::Invalid) const
+      -> TypeId;
 
   // Returns whether the function has a return slot. Can only be called for a
   // function that has either been called or defined, otherwise this is not
@@ -126,8 +126,8 @@ class File;
 struct CalleeFunction {
   // The function. Invalid if not a function.
   SemIR::FunctionId function_id;
-  // The generic instance that contains the function.
-  SemIR::GenericInstanceId instance_id;
+  // The specific that contains the function.
+  SemIR::SpecificId specific_id;
   // The bound `self` parameter. Invalid if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.

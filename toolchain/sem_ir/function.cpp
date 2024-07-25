@@ -12,7 +12,7 @@ namespace Carbon::SemIR {
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::Invalid,
-                           .instance_id = GenericInstanceId::Invalid,
+                           .specific_id = SpecificId::Invalid,
                            .self_id = InstId::Invalid,
                            .is_error = false};
 
@@ -38,17 +38,16 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   }
 
   result.function_id = fn_type->function_id;
-  result.instance_id = fn_type->instance_id;
+  result.specific_id = fn_type->specific_id;
   return result;
 }
 
 auto Function::GetDeclaredReturnType(const File& file,
-                                     GenericInstanceId specific_id) const
-    -> TypeId {
+                                     SpecificId specific_id) const -> TypeId {
   if (!return_storage_id.is_valid()) {
     return TypeId::Invalid;
   }
-  return GetTypeInInstance(file, specific_id,
+  return GetTypeInSpecific(file, specific_id,
                            file.insts().Get(return_storage_id).type_id());
 }
 

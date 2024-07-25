@@ -206,8 +206,7 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
                                /*api_imports=*/nullptr, total_ir_count));
 
   context.scope_stack().Push(
-      package_inst_id, SemIR::NameScopeId::Package,
-      SemIR::GenericInstanceId::Invalid,
+      package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::Invalid,
       context.name_scopes().Get(SemIR::NameScopeId::Package).has_error);
 }
 

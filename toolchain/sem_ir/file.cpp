@@ -152,7 +152,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("generics", generics_.OutputYaml());
-          map.Add("generic_instances", generic_instances_.OutputYaml());
+          map.Add("specifics", specifics_.OutputYaml());
           map.Add("types", types_.OutputYaml());
           map.Add("type_blocks", type_blocks_.OutputYaml());
           map.Add(
@@ -201,8 +201,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "generics_"), generics_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "generic_instances_"),
-                    generic_instances_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "specifics_"), specifics_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);

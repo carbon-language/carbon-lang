@@ -30,16 +30,16 @@ namespace Carbon::Check {
 struct LookupScope {
   // The name scope in which names are searched.
   SemIR::NameScopeId name_scope_id;
-  // The generic instance for the name scope, or `Invalid` if the name scope is
-  // not an instance of a generic.
-  SemIR::GenericInstanceId instance_id;
+  // The specific for the name scope, or `Invalid` if the name scope is not
+  // defined by a generic or we should perform lookup into the generic itself.
+  SemIR::SpecificId specific_id;
 };
 
 // A result produced by name lookup.
 struct LookupResult {
-  // The generic instance in which the lookup result was found. `Invalid` if the
-  // result was not found in a generic instance.
-  SemIR::GenericInstanceId instance_id;
+  // The specific in which the lookup result was found. `Invalid` if the result
+  // was not found in a specific.
+  SemIR::SpecificId specific_id;
   // The declaration that was found by name lookup.
   SemIR::InstId inst_id;
 };
@@ -288,8 +288,8 @@ class Context {
   auto GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
-  auto GetFunctionType(SemIR::FunctionId fn_id,
-                       SemIR::GenericInstanceId instance_id) -> SemIR::TypeId;
+  auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
+      -> SemIR::TypeId;
 
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
@@ -423,9 +423,7 @@ class Context {
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
-  auto generic_instances() -> SemIR::GenericInstanceStore& {
-    return sem_ir().generic_instances();
-  }
+  auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
   }

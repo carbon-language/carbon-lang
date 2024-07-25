@@ -335,7 +335,7 @@ static auto HandleFunctionDefinitionAfterSignature(
 
   // Check the return type is complete.
   CheckFunctionReturnType(context, function.return_storage_id, function,
-                          SemIR::GenericInstanceId::Invalid);
+                          SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<const SemIR::InstId>(

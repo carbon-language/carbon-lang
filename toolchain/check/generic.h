@@ -31,26 +31,25 @@ auto FinishGenericRedecl(Context& context, SemIR::InstId decl_id,
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     -> void;
 
-// Builds a new generic instance, or finds an existing one if this instance of
-// this generic has already been referenced. Performs substitution into the
+// Builds a new specific, or finds an existing one if this generic has already
+// been referenced with these arguments. Performs substitution into the
 // declaration, but not the definition, of the generic.
 //
 // `args_id` should be a canonical instruction block referring to constants.
-auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,
-                         SemIR::InstBlockId args_id)
-    -> SemIR::GenericInstanceId;
+auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
+                  SemIR::InstBlockId args_id) -> SemIR::SpecificId;
 
-// Builds the generic instance corresponding to the generic itself. For example,
-// for a generic `G(T:! type)`, this is `G(T)`. For an invalid `generic_id`,
-// returns an invalid instance ID.
-auto MakeGenericSelfInstance(Context& context, SemIR::GenericId generic_id)
-    -> SemIR::GenericInstanceId;
+// Builds the specific that describes how the generic should refer to itself.
+// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. For an
+// invalid `generic_id`, returns an invalid specific ID.
+auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
+    -> SemIR::SpecificId;
 
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
 // block in the specific. Returns false if a definition is not available.
-auto ResolveSpecificDefinition(Context& context,
-                               SemIR::GenericInstanceId specific_id) -> bool;
+auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
+    -> bool;
 
 }  // namespace Carbon::Check
 

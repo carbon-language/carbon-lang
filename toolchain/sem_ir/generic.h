@@ -37,10 +37,10 @@ struct Generic : public Printable<Generic> {
   // The index in this block will match the `bind_index` in the name binding
   // instruction's `EntityName`.
   InstBlockId bindings_id;
-  // The self instance of this generic, which is an instance where every generic
-  // parameter's argument is that same parameter. For example, the self instance
+  // The self specific of this generic, which is a specific where every generic
+  // parameter's argument is that same parameter. For example, the self specific
   // of `Vector(T:! type)` is `Vector(T)`.
-  GenericInstanceId self_instance_id;
+  SpecificId self_specific_id;
 
   // The following members are set at the end of the corresponding region of the
   // generic.
@@ -54,19 +54,18 @@ struct Generic : public Printable<Generic> {
 // Provides storage for generics.
 class GenericStore : public ValueStore<GenericId> {
  public:
-  // Get the self-instance for a generic, or an invalid instance for an invalid
+  // Get the self specific for a generic, or an invalid specific for an invalid
   // generic ID.
-  auto GetSelfInstance(GenericId id) -> GenericInstanceId {
-    return id.is_valid() ? Get(id).self_instance_id
-                         : GenericInstanceId::Invalid;
+  auto GetSelfSpecific(GenericId id) -> SpecificId {
+    return id.is_valid() ? Get(id).self_specific_id : SpecificId::Invalid;
   }
 };
 
-// An instance of a generic entity, such as an instance of a generic function.
-// For each construct that depends on a compile-time parameter in the generic
-// entity, this contains the corresponding non-generic value. This includes
+// A specific, which is the combination of a generic and specified generic
+// arguments. For each construct that depends on a compile-time parameter in the
+// generic entity, this contains the corresponding specific value. This includes
 // values for the compile-time parameters themselves.
-struct GenericInstance : Printable<GenericInstance> {
+struct Specific : Printable<Specific> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
@@ -82,7 +81,7 @@ struct GenericInstance : Printable<GenericInstance> {
                : definition_block_id;
   }
 
-  // The generic that this is an instance of.
+  // The generic that this is a specific version of.
   GenericId generic_id;
   // Argument values, corresponding to the bindings in `Generic::bindings_id`.
   InstBlockId args_id;
@@ -96,64 +95,64 @@ struct GenericInstance : Printable<GenericInstance> {
   InstBlockId definition_block_id = InstBlockId::Invalid;
 };
 
-// Provides storage for deduplicated instances of generics.
-class GenericInstanceStore : public Yaml::Printable<GenericInstanceStore> {
+// Provides storage for deduplicated specifics, which represent generics plus
+// their associated generic argument list.
+class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
-  // Adds a new generic instance, or gets the existing generic instance for a
-  // specified generic and argument list. Returns the ID of the generic
-  // instance. The argument IDs must be for instructions in the constant block,
-  // and must be a canonical instruction block ID.
-  auto GetOrAdd(GenericId generic_id, InstBlockId args_id) -> GenericInstanceId;
+  // Adds a new specific, or gets the existing specific for a specified generic
+  // and argument list. Returns the ID of the specific. The argument IDs must be
+  // for instructions in the constant block, and must be a canonical instruction
+  // block ID.
+  auto GetOrAdd(GenericId generic_id, InstBlockId args_id) -> SpecificId;
 
-  // Gets the specified generic instance.
-  auto Get(GenericInstanceId instance_id) const -> const GenericInstance& {
-    return generic_instances_.Get(instance_id);
+  // Gets the specific with the given ID.
+  auto Get(SpecificId specific_id) const -> const Specific& {
+    return specifics_.Get(specific_id);
   }
 
-  // Gets the specified generic instance.
-  auto Get(GenericInstanceId instance_id) -> GenericInstance& {
-    return generic_instances_.Get(instance_id);
+  // Gets the specific with the given ID.
+  auto Get(SpecificId specific_id) -> Specific& {
+    return specifics_.Get(specific_id);
   }
 
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
-    return generic_instances_.OutputYaml();
+    return specifics_.OutputYaml();
   }
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto array_ref() const -> llvm::ArrayRef<GenericInstance> {
-    return generic_instances_.array_ref();
+  auto array_ref() const -> llvm::ArrayRef<Specific> {
+    return specifics_.array_ref();
   }
-  auto size() const -> size_t { return generic_instances_.size(); }
+  auto size() const -> size_t { return specifics_.size(); }
 
  private:
   // Context for hashing keys.
   class KeyContext;
 
-  ValueStore<GenericInstanceId> generic_instances_;
-  Carbon::Set<GenericInstanceId, 0, KeyContext> lookup_table_;
+  ValueStore<SpecificId> specifics_;
+  Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
 
-// Gets the substituted value of a constant within a specified instance of a
-// generic. Note that this does not perform substitution, and will return
+// Gets the substituted value of a potentially generic constant within a
+// specific. Note that this does not perform substitution, and will return
 // `Invalid` if the substituted constant value is not yet known.
-auto GetConstantInInstance(const File& sem_ir, GenericInstanceId instance_id,
+auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
                            ConstantId const_id) -> ConstantId;
 
-// Gets the substituted constant value of an instruction within a specified
-// instance of a generic. Note that this does not perform substitution, and will
+// Gets the substituted constant value of a potentially generic instruction
+// within a specific. Note that this does not perform substitution, and will
 // return `Invalid` if the substituted constant value is not yet known.
-auto GetConstantValueInInstance(const File& sem_ir,
-                                GenericInstanceId instance_id, InstId inst_id)
-    -> ConstantId;
+auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
+                                InstId inst_id) -> ConstantId;
 
-// Gets the substituted value of a type within a specified instance of a
-// generic. Note that this does not perform substitution, and will return
-// `Invalid` if the substituted type is not yet known.
-auto GetTypeInInstance(const File& sem_ir, GenericInstanceId instance_id,
+// Gets the substituted value of a potentially generic type within a specific.
+// Note that this does not perform substitution, and will return `Invalid` if
+// the substituted type is not yet known.
+auto GetTypeInSpecific(const File& sem_ir, SpecificId specific_id,
                        TypeId type_id) -> TypeId;
 
 }  // namespace Carbon::SemIR
