@@ -34,34 +34,6 @@ static auto HasModifier(Context& context, Context::StateStackEntry state,
   return false;
 }
 
-// Handles parsing of the library name. Returns the name's ID on success, which
-// may be invalid for `default`.
-static auto HandleLibraryName(Context& context, bool accept_default)
-    -> std::optional<StringLiteralValueId> {
-  if (auto library_name_token =
-          context.ConsumeIf(Lex::TokenKind::StringLiteral)) {
-    context.AddLeafNode(NodeKind::LibraryName, *library_name_token);
-    return context.tokens().GetStringLiteralValue(*library_name_token);
-  }
-
-  if (accept_default) {
-    if (auto default_token = context.ConsumeIf(Lex::TokenKind::Default)) {
-      context.AddLeafNode(NodeKind::DefaultLibrary, *default_token);
-      return StringLiteralValueId::Invalid;
-    }
-  }
-
-  CARBON_DIAGNOSTIC(
-      ExpectedLibraryNameOrDefault, Error,
-      "Expected `default` or a string literal to specify the library name.");
-  CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
-                    "Expected a string literal to specify the library name.");
-  context.emitter().Emit(*context.position(), accept_default
-                                                  ? ExpectedLibraryNameOrDefault
-                                                  : ExpectedLibraryName);
-  return std::nullopt;
-}
-
 // Handles everything after the declaration's introducer.
 static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
                               NodeKind declaration, bool is_export,
@@ -102,7 +74,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   // Parse the optional library keyword.
   bool accept_default = !names.package_id.is_valid();
   if (declaration == NodeKind::LibraryDecl) {
-    auto library_id = HandleLibraryName(context, accept_default);
+    auto library_id = context.ParseLibraryName(accept_default);
     if (!library_id) {
       on_parse_error();
       return;
@@ -113,7 +85,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
     if (next_kind == Lex::TokenKind::Library) {
       auto library_token = context.ConsumeChecked(Lex::TokenKind::Library);
       auto library_subtree_start = context.tree().size();
-      auto library_id = HandleLibraryName(context, accept_default);
+      auto library_id = context.ParseLibraryName(accept_default);
       if (!library_id) {
         on_parse_error();
         return;

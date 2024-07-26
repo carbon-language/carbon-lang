@@ -9,7 +9,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/basic.carbon
 
 fn F();
-extern fn G();
 
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -19,11 +18,5 @@ extern fn G();
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'ExternModifier', text: 'extern'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'G'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

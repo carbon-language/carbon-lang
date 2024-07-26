@@ -195,7 +195,7 @@ using DefaultLibrary =
 using PackageIntroducer =
     LeafNode<NodeKind::PackageIntroducer, Lex::PackageTokenIndex>;
 
-// `library` in `package` or `import`.
+// `library` in `package`, `import`, or `extern`.
 struct LibrarySpecifier {
   static constexpr auto Kind =
       NodeKind::LibrarySpecifier.Define({.child_count = 1});
@@ -923,6 +923,20 @@ struct PostfixOperator {
   using PostfixOperator##Name =                       \
       PostfixOperator<NodeKind::PostfixOperator##Name, Lex::Name##TokenIndex>;
 #include "toolchain/parse/node_kind.def"
+
+// `extern` modifier syntax, with no `library`.
+using ExternTokenModifier =
+    LeafNode<NodeKind::ExternTokenModifier, Lex::ExternTokenIndex,
+             NodeCategory::Modifier>;
+
+// `extern library <owning_library>` modifier syntax.
+struct ExternLibraryModifier {
+  static constexpr auto Kind = NodeKind::ExternLibraryModifier.Define(
+      {.category = NodeCategory::Modifier, .child_count = 1});
+
+  Lex::ExternTokenIndex token;
+  LibrarySpecifierId library;
+};
 
 // The first operand of a short-circuiting infix operator: `a and` or `a or`.
 // The complete operator expression will be an InfixOperator with this as the

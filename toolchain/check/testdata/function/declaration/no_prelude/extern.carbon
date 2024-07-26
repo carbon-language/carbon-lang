@@ -44,17 +44,29 @@ fn F();
 
 // --- fail_member_extern.carbon
 
+library "member_extern";
+
 class C {
   // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
   // CHECK:STDERR:   extern fn G[self: Self]();
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extern fn G[self: Self]();
 }
+
+// --- fail_todo_library.carbon
+
+library "library";
+
+// CHECK:STDERR: fail_todo_library.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `extern library support`.
+// CHECK:STDERR: extern library "foo" fn C();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+extern library "foo" fn C();
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -132,8 +144,8 @@ class C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc11_15.1: %C = param self
-// CHECK:STDOUT:     %self.loc11_15.2: %C = bind_name self, %self.loc11_15.1
+// CHECK:STDOUT:     %self.loc14_15.1: %C = param self
+// CHECK:STDOUT:     %self.loc14_15.2: %C = bind_name self, %self.loc14_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -144,5 +156,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[@C.%self.loc11_15.2: %C]();
+// CHECK:STDOUT: fn @G[@C.%self.loc14_15.2: %C]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_library.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

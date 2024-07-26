@@ -177,6 +177,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Alias:
         case Lex::TokenKind::Class:
         case Lex::TokenKind::Constraint:
+        case Lex::TokenKind::Extern:
         case Lex::TokenKind::Fn:
         case Lex::TokenKind::Import:
         case Lex::TokenKind::Interface:
@@ -220,6 +221,29 @@ static auto TryHandleAsModifier(Context& context) -> bool {
     context.AddLeafNode(NodeKind::Name##Modifier, context.Consume()); \
     return true;
 #include "toolchain/parse/node_kind.def"
+
+    case Lex::TokenKind::Extern: {
+      auto extern_token = context.ConsumeChecked(Lex::TokenKind::Extern);
+      if (auto library_token = context.ConsumeIf(Lex::TokenKind::Library)) {
+        // `extern library <owning_library>`
+        auto library_subtree_start = context.tree().size();
+        auto library_id = context.ParseLibraryName(/*accept_default=*/true);
+        if (!library_id) {
+          context.AddLeafNode(NodeKind::LibraryName, *context.position(),
+                              /*has_error=*/true);
+        }
+        context.AddNode(NodeKind::LibrarySpecifier, *library_token,
+                        library_subtree_start,
+                        /*has_error=*/false);
+        context.AddNode(NodeKind::ExternLibraryModifier, extern_token,
+                        library_subtree_start,
+                        /*has_error=*/false);
+      } else {
+        // `extern` as a standalone token.
+        context.AddLeafNode(NodeKind::ExternTokenModifier, extern_token);
+      }
+      return true;
+    }
 
     default:
       return false;

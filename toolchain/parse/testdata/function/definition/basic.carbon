@@ -8,8 +8,20 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/definition/basic.carbon
 
+// --- basic.carbon
+
 fn F() {}
+
+// --- extern.carbon
+
 extern fn G() {}
+
+// --- extern_library.carbon
+
+// CHECK:STDERR: extern_library.carbon:[[@LINE+3]]:22: ERROR: Unrecognized declaration introducer.
+// CHECK:STDERR: extern library "foo" G() {}
+// CHECK:STDERR:                      ^
+extern library "foo" G() {}
 
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -20,12 +32,27 @@ extern fn G() {}
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: extern.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'ExternModifier', text: 'extern'},
+// CHECK:STDOUT:         {kind: 'ExternTokenModifier', text: 'extern'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'G'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: extern_library.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'G', has_error: yes},
+// CHECK:STDOUT:           {kind: 'LibraryName', text: '"foo"'},
+// CHECK:STDOUT:         {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'ExternLibraryModifier', text: 'extern', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: '}', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

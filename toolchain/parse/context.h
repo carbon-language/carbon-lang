@@ -302,6 +302,12 @@ class Context {
   auto RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                             bool skip_past_likely_end) -> void;
 
+  // Handles parsing of the library name. Returns the name's ID on success,
+  // which may be invalid for `default`.
+  // TODO: Produce a name node regardless of error.
+  auto ParseLibraryName(bool accept_default)
+      -> std::optional<StringLiteralValueId>;
+
   // Sets the package declaration information. Called at most once.
   auto set_packaging_decl(Tree::PackagingNames packaging_names, bool is_impl)
       -> void {

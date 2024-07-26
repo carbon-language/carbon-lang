@@ -437,6 +437,30 @@ auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
           /*has_error=*/true);
 }
 
+auto Context::ParseLibraryName(bool accept_default)
+    -> std::optional<StringLiteralValueId> {
+  if (auto library_name_token = ConsumeIf(Lex::TokenKind::StringLiteral)) {
+    AddLeafNode(NodeKind::LibraryName, *library_name_token);
+    return tokens().GetStringLiteralValue(*library_name_token);
+  }
+
+  if (accept_default) {
+    if (auto default_token = ConsumeIf(Lex::TokenKind::Default)) {
+      AddLeafNode(NodeKind::DefaultLibrary, *default_token);
+      return StringLiteralValueId::Invalid;
+    }
+  }
+
+  CARBON_DIAGNOSTIC(
+      ExpectedLibraryNameOrDefault, Error,
+      "Expected `default` or a string literal to specify the library name.");
+  CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
+                    "Expected a string literal to specify the library name.");
+  emitter().Emit(*position(), accept_default ? ExpectedLibraryNameOrDefault
+                                             : ExpectedLibraryName);
+  return std::nullopt;
+}
+
 auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
                     "`{0}` declarations must end with a `;`.", Lex::TokenKind);
