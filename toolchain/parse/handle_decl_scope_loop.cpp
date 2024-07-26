@@ -230,11 +230,11 @@ static auto TryHandleAsModifier(Context& context) -> bool {
         context.ParseLibrarySpecifier(/*accept_default=*/true);
         // TODO: Consider error recovery when a non-declaration token is next,
         // like a typo of the library name.
-        context.AddNode(NodeKind::ExternLibraryModifier, extern_token,
+        context.AddNode(NodeKind::ExternModifierWithLibrary, extern_token,
                         subtree_start, /*has_error=*/false);
       } else {
         // `extern` syntax without a library.
-        context.AddLeafNode(NodeKind::ExternTokenModifier, extern_token);
+        context.AddLeafNode(NodeKind::ExternModifier, extern_token);
       }
       return true;
     }

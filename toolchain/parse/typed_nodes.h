@@ -925,13 +925,12 @@ struct PostfixOperator {
 #include "toolchain/parse/node_kind.def"
 
 // `extern` as a standalone modifier.
-using ExternTokenModifier =
-    LeafNode<NodeKind::ExternTokenModifier, Lex::ExternTokenIndex,
-             NodeCategory::Modifier>;
+using ExternModifier = LeafNode<NodeKind::ExternModifier, Lex::ExternTokenIndex,
+                                NodeCategory::Modifier>;
 
 // `extern library <owning_library>` modifiers.
-struct ExternLibraryModifier {
-  static constexpr auto Kind = NodeKind::ExternLibraryModifier.Define(
+struct ExternModifierWithLibrary {
+  static constexpr auto Kind = NodeKind::ExternModifierWithLibrary.Define(
       {.category = NodeCategory::Modifier, .child_count = 1});
 
   Lex::ExternTokenIndex token;

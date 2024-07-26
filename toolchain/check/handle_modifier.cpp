@@ -94,12 +94,12 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   }
 #include "toolchain/parse/node_kind.def"
 
-auto HandleParseNode(Context& context, Parse::ExternLibraryModifierId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::ExternModifierWithLibraryId node_id) -> bool {
   return context.TODO(node_id, "extern library syntax");
 }
 
-auto HandleParseNode(Context& context, Parse::ExternTokenModifierId node_id)
+auto HandleParseNode(Context& context, Parse::ExternModifierId node_id)
     -> bool {
   return HandleModifier(context, node_id, KeywordModifierSet::Extern);
 }

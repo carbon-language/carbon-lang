@@ -20,7 +20,7 @@ extern library "foo" fn G() {}
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'ExternTokenModifier', text: 'extern'},
+// CHECK:STDOUT:         {kind: 'ExternModifier', text: 'extern'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'G'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
@@ -34,7 +34,7 @@ extern library "foo" fn G() {}
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:             {kind: 'LibraryName', text: '"foo"'},
 // CHECK:STDOUT:           {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'ExternLibraryModifier', text: 'extern', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ExternModifierWithLibrary', text: 'extern', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'G'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
