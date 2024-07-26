@@ -471,7 +471,7 @@ class FormatterImpl {
   }
 
   // Prints a code block with braces, intended to be used trailing after other
-  // content on the same line (may wrap lines).
+  // content on the same line. If non-empty, instructions are on separate lines.
   auto FormatTrailingBlock(InstBlockId block_id) -> void {
     out_ << ' ';
     OpenBrace();
