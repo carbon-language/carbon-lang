@@ -302,6 +302,18 @@ class Context {
   auto RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                             bool skip_past_likely_end) -> void;
 
+  // Handles parsing of the library name. Returns the name's ID on success,
+  // which may be invalid for `default`.
+  // TODO: Add an invalid node on error, fix callers to adapt.
+  auto ParseLibraryName(bool accept_default)
+      -> std::optional<StringLiteralValueId>;
+
+  // Handles parsing `library <name>`. Requires that the position is a `library`
+  // token. Returns the name's ID on success, which may be invalid for
+  // `default`.
+  auto ParseLibrarySpecifier(bool accept_default)
+      -> std::optional<StringLiteralValueId>;
+
   // Sets the package declaration information. Called at most once.
   auto set_packaging_decl(Tree::PackagingNames packaging_names, bool is_impl)
       -> void {

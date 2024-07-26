@@ -17,7 +17,7 @@ impl namespace Foo;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'PrivateModifier', text: 'private'},
-// CHECK:STDOUT:       {kind: 'ExternModifier', text: 'extern'},
+// CHECK:STDOUT:       {kind: 'ExternTokenModifier', text: 'extern'},
 // CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
 // CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
 // CHECK:STDOUT:       {kind: 'DefaultModifier', text: 'default'},
