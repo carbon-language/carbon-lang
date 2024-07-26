@@ -24,17 +24,17 @@ auto HandleChoiceDefinitionStart(Context& context) -> void {
     }
 
     context.AddNode(NodeKind::ChoiceDefinitionStart, *context.position(),
-                    state.subtree_start, /*has_error=*/true);
+                    /*has_error=*/true);
 
     context.AddNode(NodeKind::ChoiceDefinition, *context.position(),
-                    state.subtree_start, /*has_error=*/true);
+                    /*has_error=*/true);
 
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
 
   context.AddNode(NodeKind::ChoiceDefinitionStart, context.Consume(),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 
   state.has_error = false;
   state.state = State::ChoiceDefinitionFinish;
@@ -94,6 +94,6 @@ auto HandleChoiceDefinitionFinish(Context& context) -> void {
 
   context.AddNode(NodeKind::ChoiceDefinition,
                   context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 }
 }  // namespace Carbon::Parse

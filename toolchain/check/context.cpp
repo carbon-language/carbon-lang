@@ -36,11 +36,14 @@
 namespace Carbon::Check {
 
 Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
-                 const Parse::Tree& parse_tree, SemIR::File& sem_ir,
-                 llvm::raw_ostream* vlog_stream)
+                 const Parse::Tree& parse_tree,
+                 llvm::function_ref<const Parse::TreeAndSubtrees&()>
+                     get_parse_tree_and_subtrees,
+                 SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream)
     : tokens_(&tokens),
       emitter_(&emitter),
       parse_tree_(&parse_tree),
+      get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees),
       sem_ir_(&sem_ir),
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),

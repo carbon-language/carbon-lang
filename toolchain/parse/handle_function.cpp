@@ -31,8 +31,7 @@ auto HandleFunctionAfterParams(Context& context) -> void {
 auto HandleFunctionReturnTypeFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ReturnType, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::ReturnType, state.token, state.has_error);
 }
 
 auto HandleFunctionSignatureFinish(Context& context) -> void {
@@ -41,12 +40,11 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Semi: {
       context.AddNode(NodeKind::FunctionDecl, context.Consume(),
-                      state.subtree_start, state.has_error);
+                      state.has_error);
       break;
     }
     case Lex::TokenKind::OpenCurlyBrace: {
-      context.AddFunctionDefinitionStart(context.Consume(), state.subtree_start,
-                                         state.has_error);
+      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
       context.PushState(state, State::FunctionDefinitionFinish);
@@ -55,7 +53,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
     }
     case Lex::TokenKind::Equal: {
       context.AddNode(NodeKind::BuiltinFunctionDefinitionStart,
-                      context.Consume(), state.subtree_start, state.has_error);
+                      context.Consume(), state.has_error);
       if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::StringLiteral,
                                            NodeKind::BuiltinName)) {
         CARBON_DIAGNOSTIC(ExpectedBuiltinName, Error,
@@ -73,7 +71,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
                                      /*skip_past_likely_end=*/true);
       } else {
         context.AddNode(NodeKind::BuiltinFunctionDefinition, *semi,
-                        state.subtree_start, state.has_error);
+                        state.has_error);
       }
       break;
     }
@@ -94,8 +92,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddFunctionDefinition(context.Consume(), state.subtree_start,
-                                state.has_error);
+  context.AddFunctionDefinition(context.Consume(), state.has_error);
 }
 
 }  // namespace Carbon::Parse

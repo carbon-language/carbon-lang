@@ -276,12 +276,12 @@ auto HandleExprLoop(Context& context) -> void {
       // node so that checking can insert control flow here.
       case Lex::TokenKind::And:
         context.AddNode(NodeKind::ShortCircuitOperandAnd, state.token,
-                        state.subtree_start, state.has_error);
+                        state.has_error);
         state.state = State::ExprLoopForShortCircuitOperatorAsAnd;
         break;
       case Lex::TokenKind::Or:
         context.AddNode(NodeKind::ShortCircuitOperandOr, state.token,
-                        state.subtree_start, state.has_error);
+                        state.has_error);
         state.state = State::ExprLoopForShortCircuitOperatorAsOr;
         break;
 
@@ -307,8 +307,7 @@ auto HandleExprLoop(Context& context) -> void {
                        << operator_kind;
     }
 
-    context.AddNode(node_kind, state.token, state.subtree_start,
-                    state.has_error);
+    context.AddNode(node_kind, state.token, state.has_error);
     state.has_error = false;
     context.PushState(state);
   }
@@ -318,7 +317,7 @@ auto HandleExprLoop(Context& context) -> void {
 static auto HandleExprLoopForOperator(Context& context,
                                       Context::StateStackEntry state,
                                       NodeKind node_kind) -> void {
-  context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
+  context.AddNode(node_kind, state.token, state.has_error);
   state.has_error = false;
   context.PushState(state, State::ExprLoop);
 }
@@ -371,8 +370,7 @@ auto HandleExprLoopForShortCircuitOperatorAsOr(Context& context) -> void {
 auto HandleIfExprFinishCondition(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::IfExprIf, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::IfExprIf, state.token, state.has_error);
 
   if (context.PositionIs(Lex::TokenKind::Then)) {
     context.PushState(State::IfExprFinishThen);
@@ -397,8 +395,7 @@ auto HandleIfExprFinishCondition(Context& context) -> void {
 auto HandleIfExprFinishThen(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::IfExprThen, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::IfExprThen, state.token, state.has_error);
 
   if (context.PositionIs(Lex::TokenKind::Else)) {
     context.PushState(State::IfExprFinishElse);
@@ -431,16 +428,14 @@ auto HandleIfExprFinishElse(Context& context) -> void {
 auto HandleIfExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::IfExprElse, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::IfExprElse, state.token, state.has_error);
 }
 
 auto HandleExprStatementFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(NodeKind::ExprStatement, *semi, state.subtree_start,
-                    state.has_error);
+    context.AddNode(NodeKind::ExprStatement, *semi, state.has_error);
     return;
   }
 
@@ -451,8 +446,7 @@ auto HandleExprStatementFinish(Context& context) -> void {
   }
 
   context.AddNode(NodeKind::ExprStatement,
-                  context.SkipPastLikelyEnd(state.token), state.subtree_start,
-                  /*has_error=*/true);
+                  context.SkipPastLikelyEnd(state.token), /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse

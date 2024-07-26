@@ -76,7 +76,7 @@ static auto HandleBindingPatternFinish(Context& context, NodeKind node_kind)
     -> void {
   auto state = context.PopState();
 
-  context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
+  context.AddNode(node_kind, state.token, state.has_error);
 
   // Propagate errors to the parent state so that they can take different
   // actions on invalid patterns.
@@ -96,8 +96,7 @@ auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
 auto HandleBindingPatternAddr(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::Addr, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::Addr, state.token, state.has_error);
 
   // If an error was encountered, propagate it while adding a node.
   if (state.has_error) {
@@ -108,8 +107,7 @@ auto HandleBindingPatternAddr(Context& context) -> void {
 auto HandleBindingPatternTemplate(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::Template, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::Template, state.token, state.has_error);
 
   // If an error was encountered, propagate it while adding a node.
   if (state.has_error) {
