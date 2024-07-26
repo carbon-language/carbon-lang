@@ -312,10 +312,10 @@ static auto CheckRedeclParamSyntax(Context& context,
       << "prev_last_param_node_id.is_valid should match "
          "prev_first_param_node_id.is_valid";
 
-  auto new_range = context.parse_tree().postorder(new_first_param_node_id,
-                                                  new_last_param_node_id);
-  auto prev_range = context.parse_tree().postorder(prev_first_param_node_id,
-                                                   prev_last_param_node_id);
+  auto new_range = Parse::Tree::PostorderIterator::MakeRange(
+      new_first_param_node_id, new_last_param_node_id);
+  auto prev_range = Parse::Tree::PostorderIterator::MakeRange(
+      prev_first_param_node_id, prev_last_param_node_id);
 
   // zip is using the shortest range. If they differ in length, there should be
   // some difference inside the range because the range includes parameter

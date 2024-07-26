@@ -647,9 +647,10 @@ class NodeIdTraversal {
       : context_(context),
         next_deferred_definition_(&context.parse_tree()),
         worklist_(vlog_stream) {
+    auto range = context.parse_tree().postorder();
     chunks_.push_back(
-        {.it = context.parse_tree().postorder().begin(),
-         .end = context.parse_tree().postorder().end(),
+        {.it = range.begin(),
+         .end = range.end(),
          .next_definition = Parse::DeferredDefinitionIndex::Invalid});
   }
 
@@ -717,12 +718,11 @@ class NodeIdTraversal {
         context_.parse_tree().deferred_definitions().Get(definition_index);
     HandleFunctionDefinitionResume(context_, definition_info.start_id,
                                    std::move(suspended_fn));
-    chunks_.push_back(
-        {.it = context_.parse_tree().postorder(definition_info.start_id).end(),
-         .end = context_.parse_tree()
-                    .postorder(definition_info.definition_id)
-                    .end(),
-         .next_definition = next_deferred_definition_.index()});
+    auto range = Parse::Tree::PostorderIterator::MakeRange(
+        definition_info.start_id, definition_info.definition_id);
+    chunks_.push_back({.it = range.begin() + 1,
+                       .end = range.end(),
+                       .next_definition = next_deferred_definition_.index()});
     ++definition_index.index;
     next_deferred_definition_.SkipTo(definition_index);
   }
@@ -776,7 +776,7 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
 
       // Continue type-checking the parse tree after the end of the definition.
       chunks_.back().it =
-          context_.parse_tree().postorder(definition_info.definition_id).end();
+          Parse::Tree::PostorderIterator(definition_info.definition_id) + 1;
       next_deferred_definition_.SkipTo(definition_info.next_definition_index);
       continue;
     }

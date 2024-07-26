@@ -22,21 +22,10 @@ auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
 
 auto Tree::postorder(NodeId n) const
     -> llvm::iterator_range<PostorderIterator> {
-  CARBON_CHECK(n.is_valid());
   // The postorder ends after this node, the root, and begins at the start of
   // its subtree.
-  int end_index = n.index + 1;
-  int start_index = end_index - node_impls_[n.index].subtree_size;
-  return llvm::iterator_range<PostorderIterator>(
-      PostorderIterator(NodeId(start_index)),
-      PostorderIterator(NodeId(end_index)));
-}
-
-auto Tree::postorder(NodeId begin, NodeId end) const
-    -> llvm::iterator_range<PostorderIterator> {
-  CARBON_CHECK(begin.is_valid() && end.is_valid());
-  return llvm::iterator_range<PostorderIterator>(
-      PostorderIterator(begin), PostorderIterator(NodeId(end.index + 1)));
+  int start_index = n.index - node_impls_[n.index].subtree_size + 1;
+  return PostorderIterator::MakeRange(NodeId(start_index), n);
 }
 
 auto Tree::children(NodeId n) const -> llvm::iterator_range<SiblingIterator> {
@@ -305,6 +294,13 @@ auto Tree::Verify() const -> ErrorOr<Success> {
                       tokens_->size()));
   }
   return Success();
+}
+
+auto Tree::PostorderIterator::MakeRange(NodeId begin, NodeId end)
+    -> llvm::iterator_range<PostorderIterator> {
+  CARBON_CHECK(begin.is_valid() && end.is_valid());
+  return llvm::iterator_range<PostorderIterator>(
+      PostorderIterator(begin), PostorderIterator(NodeId(end.index + 1)));
 }
 
 auto Tree::PostorderIterator::Print(llvm::raw_ostream& output) const -> void {
