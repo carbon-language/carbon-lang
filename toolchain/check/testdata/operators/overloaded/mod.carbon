@@ -192,14 +192,23 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   return %.loc19_14 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self.1](%other: %Self.1) -> %Self.1;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
+// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/arithmetic, inst+281, loaded [symbolic = %import_ref (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self.1](%other: %Self.1) -> %Self.1;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc23_14.3: %.7](@impl.2.%other.loc23_24.2: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.6) {
+// CHECK:STDOUT:   %import_ref.1: %.6 = import_ref Core//prelude/operators/arithmetic, inst+305, loaded [symbolic = %import_ref.1 (constants.%Self.2)]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+306, loaded [symbolic = %import_ref.2 (constants.%.8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a: %C, %b: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:

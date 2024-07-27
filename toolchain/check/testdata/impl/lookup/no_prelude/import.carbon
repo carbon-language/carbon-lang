@@ -172,7 +172,10 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %.2) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:

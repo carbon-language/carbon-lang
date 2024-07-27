@@ -192,7 +192,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%self: %Self.1]() -> %Self.1;
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.4) {
+// CHECK:STDOUT:   %import_ref: %.4 = import_ref Core//prelude/operators/arithmetic, inst+86, loaded [symbolic = %import_ref (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self.1]() -> %Self.1;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestBinary(%a: %C, %b: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
@@ -201,7 +205,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self.2](%other: %Self.2) -> %Self.2;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %.7) {
+// CHECK:STDOUT:   %import_ref: %.7 = import_ref Core//prelude/operators/arithmetic, inst+20, loaded [symbolic = %import_ref (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self.2](%other: %Self.2) -> %Self.2;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b: %C) {
 // CHECK:STDOUT: !entry:
@@ -218,7 +226,17 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr %self: %.11](%other: %Self.3);
+// CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %.10) {
+// CHECK:STDOUT:   %import_ref.1: %.10 = import_ref Core//prelude/operators/arithmetic, inst+45, loaded [symbolic = %import_ref.1 (constants.%Self.3)]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+46, loaded [symbolic = %import_ref.2 (constants.%.11)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self: %.15]();
+// CHECK:STDOUT:   fn[addr %self: %.11](%other: %Self.3);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %.14) {
+// CHECK:STDOUT:   %import_ref.1: %.14 = import_ref Core//prelude/operators/arithmetic, inst+65, loaded [symbolic = %import_ref.1 (constants.%Self.4)]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+66, loaded [symbolic = %import_ref.2 (constants.%.15)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: %.15]();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

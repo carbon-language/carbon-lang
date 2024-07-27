@@ -120,7 +120,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   return %.loc19_14 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self]() -> %Self;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/arithmetic, inst+86, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self]() -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:

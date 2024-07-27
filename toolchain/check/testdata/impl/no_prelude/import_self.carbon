@@ -170,7 +170,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   return %.loc7_53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %import_ref: %.2 = import_ref Main//a, inst+20, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x: %.1, %y: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:

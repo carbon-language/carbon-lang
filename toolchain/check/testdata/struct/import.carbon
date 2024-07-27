@@ -25,6 +25,10 @@ impl package Implicit;
 
 var a: {.a: i32} = a_ref;
 var b: {.a: {.b: i32, .c: (i32,)}, .d: i32} = b_ref;
+// CHECK:STDERR: implicit.impl.carbon:[[@LINE+4]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
+// CHECK:STDERR: var c: C({.a = 1, .b = 2}) = F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var c: C({.a = 1, .b = 2}) = F();
 
 // --- fail_bad_type.impl.carbon
@@ -230,8 +234,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.13: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.14: type = ptr_type %.11 [template]
 // CHECK:STDOUT:   %struct: %.11 = struct_value (%.12, %.13) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, invalid(%struct) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%struct) [template]
 // CHECK:STDOUT:   %.15: type = ptr_type %.10 [template]
+// CHECK:STDOUT:   %C.4: type = class_type @C, invalid(%struct) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -291,26 +296,32 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %b.var: ref %.6 = var b
 // CHECK:STDOUT:   %b: ref %.6 = bind_name b, %b.var
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc6_16: i32 = int_literal 1 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc6_24: i32 = int_literal 2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc6_25: %.11 = struct_literal (%.loc6_16, %.loc6_24)
-// CHECK:STDOUT:   %struct: %.11 = struct_value (%.loc6_16, %.loc6_24) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_9.1: %.11 = converted %.loc6_25, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_9.2: init type = call %C.ref(%.loc6_9.1) [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc6_26.1: type = value_of_initializer %.loc6_9.2 [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc6_26.2: type = converted %.loc6_9.2, %.loc6_26.1 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc10_24: i32 = int_literal 2 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc10_25: %.11 = struct_literal (%.loc10_16, %.loc10_24)
+// CHECK:STDOUT:   %struct: %.11 = struct_value (%.loc10_16, %.loc10_24) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc10_9.1: %.11 = converted %.loc10_25, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc10_9.2: init type = call %C.ref(%.loc10_9.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc10_26.1: type = value_of_initializer %.loc10_9.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc10_26.2: type = converted %.loc10_9.2, %.loc10_26.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c.var: ref %C.3 = var c
 // CHECK:STDOUT:   %c: ref %C.3 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT: generic class @C(constants.%S: %.11) {
+// CHECK:STDOUT:   %import_ref: %.11 = import_ref Implicit//default, inst+100, loaded [symbolic = %import_ref (constants.%S)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.6
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.3;
+// CHECK:STDOUT: fn @F() -> %C.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -344,13 +355,19 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc5_52: init %.6 = converted %b_ref.ref, %.loc5_47.20
 // CHECK:STDOUT:   assign file.%b.var, %.loc5_52
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc6: ref %C.3 = splice_block file.%c.var {}
-// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc6
-// CHECK:STDOUT:   assign file.%c.var, %F.call
+// CHECK:STDOUT:   %.loc10: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc10
+// CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific invalid(constants.%S);
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%struct) {
+// CHECK:STDOUT:   %import_ref => <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific invalid(constants.%struct);
 // CHECK:STDOUT:
@@ -415,9 +432,15 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT: generic class @C(constants.%S: %.3) {
+// CHECK:STDOUT:   %import_ref: %.3 = import_ref Implicit//default, inst+100, loaded [symbolic = %import_ref (constants.%S)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.5
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %C.3;
@@ -449,7 +472,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.5: i32 = int_literal 4 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %struct.1: %.3 = struct_value (%.4, %.5) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, invalid(%struct.1) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%struct.1) [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 1 [template]
@@ -501,9 +524,15 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT: generic class @C(constants.%S: %.3) {
+// CHECK:STDOUT:   %import_ref: %.3 = import_ref Implicit//default, inst+100, loaded [symbolic = %import_ref (constants.%S)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.5
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %C.4;
@@ -519,7 +548,11 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific invalid(constants.%S);
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific invalid(constants.%struct.1);
+// CHECK:STDOUT: specific @C(constants.%struct.1) {
+// CHECK:STDOUT:   %import_ref => <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific invalid(constants.%struct.2);
 // CHECK:STDOUT:

@@ -267,6 +267,14 @@ class ImportRefResolver {
     llvm::SmallVector<SemIR::ImportIRInst> indirect_insts = {};
   };
 
+  // Local information associated with an imported generic.
+  struct GenericData {
+    llvm::SmallVector<SemIR::InstId> bindings;
+    // TODO: Add data for the self specific.
+    llvm::SmallVector<SemIR::InstId> decl_block;
+    llvm::SmallVector<SemIR::InstId> definition_block;
+  };
+
   // Looks to see if an instruction has been resolved. If a constant is only
   // found indirectly, sets the constant for any indirect steps that don't
   // already have the constant. If a constant isn't found, returns the indirect
@@ -397,6 +405,18 @@ class ImportRefResolver {
     return inst_ids;
   }
 
+  // Gets a local instruction block ID corresponding to an imported inst block
+  // whose contents were already imported, for example by
+  // GetLocalInstBlockContents.
+  auto GetLocalInstBlockId(SemIR::InstBlockId import_block_id,
+                           llvm::ArrayRef<SemIR::InstId> contents)
+      -> SemIR::InstBlockId {
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+    return context_.inst_blocks().Add(contents);
+  }
+
   // Gets a local canonical instruction block ID corresponding to an imported
   // inst block whose contents were already imported, for example by
   // GetLocalInstBlockContents.
@@ -409,16 +429,92 @@ class ImportRefResolver {
     return context_.inst_blocks().AddCanonical(contents);
   }
 
-  // Gets a local version of an imported generic.
-  auto GetLocalGeneric(SemIR::GenericId generic_id) -> SemIR::GenericId {
+  // Gets an incomplete local version of an imported generic. Most fields are
+  // set in the second pass.
+  auto GetIncompleteLocalGeneric(
+      SemIR::InstId decl_id, SemIR::GenericId generic_id) -> SemIR::GenericId {
     if (!generic_id.is_valid()) {
       return SemIR::GenericId::Invalid;
     }
 
-    // TODO: Support importing generics. Note that this comes up in the prelude,
-    // so for now we fall back to producing `Invalid` and treating imported
-    // generics as non-generic.
-    return SemIR::GenericId::Invalid;
+    return context_.generics().Add(
+        {.decl_id = decl_id,
+         .bindings_id = SemIR::InstBlockId::Invalid,
+         .self_specific_id = SemIR::SpecificId::Invalid});
+  }
+
+  // Gets a local version of the data associated with a generic.
+  auto GetLocalGenericData(SemIR::GenericId generic_id) -> GenericData {
+    if (!generic_id.is_valid()) {
+      return GenericData();
+    }
+
+    const auto& generic = import_ir_.generics().Get(generic_id);
+
+    GenericData result = {
+        .bindings = GetLocalInstBlockContents(generic.bindings_id),
+        .decl_block = GetLocalInstBlockContents(generic.decl_block_id),
+        .definition_block =
+            GetLocalInstBlockContents(generic.definition_block_id),
+    };
+    return result;
+  }
+
+  // Given the local constant values for the elements of the eval block, builds
+  // and returns the eval block for a region of a generic.
+  auto GetLocalEvalBlock(
+      const SemIR::Generic& import_generic, SemIR::GenericId generic_id,
+      SemIR::GenericInstIndex::Region region,
+      llvm::SmallVector<SemIR::InstId>&& inst_ids) -> SemIR::InstBlockId {
+    auto import_block_id = import_generic.GetEvalBlock(region);
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+
+    auto import_block = import_ir_.inst_blocks().Get(import_block_id);
+    for (auto [i, const_inst_id, import_inst_id] :
+         llvm::enumerate(inst_ids, import_block)) {
+      // Build an ImportRef to represent an instruction from an eval block that
+      // was imported from another IR.
+      auto import_ir_inst_id = context_.import_ir_insts().Add(
+          {.ir_id = import_ir_id_, .inst_id = import_inst_id});
+      SemIR::ImportRefLoaded inst = {
+          .type_id = context_.insts().Get(const_inst_id).type_id(),
+          .import_ir_inst_id = import_ir_inst_id,
+          .entity_name_id = SemIR::EntityNameId::Invalid};
+      auto import_ref_id = context_.AddPlaceholderInstInNoBlock(
+          SemIR::LocIdAndInst(import_ir_inst_id, inst));
+      context_.constant_values().Set(
+          import_ref_id, context_.constant_values().AddSymbolicConstant(
+                             {.inst_id = const_inst_id,
+                              .generic_id = generic_id,
+                              .index = SemIR::GenericInstIndex(region, i)}));
+      inst_ids[i] = import_ref_id;
+    }
+    return GetLocalInstBlockId(import_block_id, inst_ids);
+  }
+
+  // Adds the given local generic data to the given generic.
+  auto SetGenericData(SemIR::GenericId import_generic_id,
+                      SemIR::GenericId new_generic_id,
+                      GenericData&& generic_data) -> void {
+    if (!import_generic_id.is_valid()) {
+      return;
+    }
+
+    const auto& import_generic = import_ir_.generics().Get(import_generic_id);
+    auto& new_generic = context_.generics().Get(new_generic_id);
+    new_generic.bindings_id = GetLocalCanonicalInstBlockId(
+        import_generic.bindings_id, generic_data.bindings);
+    // TODO: Import or rebuild the self specific.
+    new_generic.decl_block_id =
+        GetLocalEvalBlock(import_generic, new_generic_id,
+                          SemIR::GenericInstIndex::Region::Declaration,
+                          std::move(generic_data.decl_block));
+    new_generic.definition_block_id =
+        GetLocalEvalBlock(import_generic, new_generic_id,
+                          SemIR::GenericInstIndex::Region::Definition,
+                          std::move(generic_data.definition_block));
   }
 
   // Gets a local argument list corresponding to the arguments of an imported
@@ -656,7 +752,8 @@ class ImportRefResolver {
     return {
         .name_id = GetLocalNameId(import_base.name_id),
         .parent_scope_id = SemIR::NameScopeId::Invalid,
-        .generic_id = GetLocalGeneric(import_base.generic_id),
+        .generic_id =
+            GetIncompleteLocalGeneric(decl_id, import_base.generic_id),
         .first_param_node_id = Parse::NodeId::Invalid,
         .last_param_node_id = Parse::NodeId::Invalid,
         .implicit_param_refs_id = import_base.implicit_param_refs_id.is_valid()
@@ -1012,6 +1109,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_class.param_refs_id);
+    auto generic_data = GetLocalGenericData(import_class.generic_id);
     auto self_const_id = GetLocalConstantId(import_class.self_type_id);
     auto object_repr_const_id =
         import_class.object_repr_id.is_valid()
@@ -1031,6 +1129,8 @@ class ImportRefResolver {
         import_class.implicit_param_refs_id, implicit_param_const_ids);
     new_class.param_refs_id =
         GetLocalParamRefsId(import_class.param_refs_id, param_const_ids);
+    SetGenericData(import_class.generic_id, new_class.generic_id,
+                   std::move(generic_data));
     new_class.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
     if (import_class.is_defined()) {
@@ -1119,6 +1219,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(function.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(function.param_refs_id);
+    auto generic_data = GetLocalGenericData(function.generic_id);
 
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
@@ -1133,7 +1234,9 @@ class ImportRefResolver {
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
     // TODO: Implement import for generics.
-    auto generic_id = GetLocalGeneric(function.generic_id);
+    auto generic_id =
+        GetIncompleteLocalGeneric(function_decl_id, function.generic_id);
+    SetGenericData(function.generic_id, generic_id, std::move(generic_data));
 
     auto new_return_storage = SemIR::InstId::Invalid;
     if (function.return_storage_id.is_valid()) {
@@ -1325,6 +1428,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
+    auto generic_data = GetLocalGenericData(import_interface.generic_id);
 
     std::optional<SemIR::InstId> self_param_id;
     if (import_interface.is_defined()) {
@@ -1341,6 +1445,8 @@ class ImportRefResolver {
         import_interface.implicit_param_refs_id, implicit_param_const_ids);
     new_interface.param_refs_id =
         GetLocalParamRefsId(import_interface.param_refs_id, param_const_ids);
+    SetGenericData(import_interface.generic_id, new_interface.generic_id,
+                   std::move(generic_data));
 
     if (import_interface.is_defined()) {
       CARBON_CHECK(self_param_id);

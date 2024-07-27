@@ -82,7 +82,7 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C1.1: %C1.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+18 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+19 [symbolic]
 // CHECK:STDOUT:   %C1.2: type = class_type @C1, invalid(%T) [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [template]
 // CHECK:STDOUT:   %C2.1: %C2.type = struct_value () [template]
@@ -106,9 +106,17 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.2 [template = constants.%C2.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C1;
+// CHECK:STDOUT: generic class @C1(constants.%T: type) {
+// CHECK:STDOUT:   %import_ref: type = import_ref Foo//a, inst+5, loaded [symbolic = %import_ref (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C2;
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C2(constants.%T: type) {
+// CHECK:STDOUT:   %import_ref: type = import_ref Foo//a, inst+13, loaded [symbolic = %import_ref (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific invalid(constants.%T);
 // CHECK:STDOUT:

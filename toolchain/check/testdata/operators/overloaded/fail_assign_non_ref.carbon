@@ -186,11 +186,21 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[addr @impl.1.%self.loc16_14.3: %.3]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[addr %self: %.5]();
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
+// CHECK:STDOUT:   %import_ref.1: %.2 = import_ref Core//prelude/operators/arithmetic, inst+65, loaded [symbolic = %import_ref.1 (constants.%Self.1)]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+66, loaded [symbolic = %import_ref.2 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: %.5]();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc19_14.3: %.3](@impl.2.%other.loc19_24.2: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.7) {
+// CHECK:STDOUT:   %import_ref.1: %.7 = import_ref Core//prelude/operators/arithmetic, inst+45, loaded [symbolic = %import_ref.1 (constants.%Self.2)]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+46, loaded [symbolic = %import_ref.2 (constants.%.8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestIncNonRef(%a: %C) {
 // CHECK:STDOUT: !entry:

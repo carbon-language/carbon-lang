@@ -83,5 +83,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: generic fn @Op(constants.%Self: %.4) {
+// CHECK:STDOUT:   %import_ref: %.4 = import_ref Core//prelude/operators/arithmetic, inst+20, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
