@@ -118,11 +118,6 @@ class Tree : public Printable<Tree> {
   // descendants in depth-first postorder.
   auto postorder(NodeId n) const -> llvm::iterator_range<PostorderIterator>;
 
-  // Returns an iterable range between the two parse tree nodes, in depth-first
-  // postorder. The range is inclusive of the bounds: [begin, end].
-  auto postorder(NodeId begin, NodeId end) const
-      -> llvm::iterator_range<PostorderIterator>;
-
   // Returns an iterable range over the direct children of a node in the parse
   // tree. This is a forward range, but is constant time to increment. The order
   // of children is the same as would be found in a reverse postorder traversal.
@@ -408,6 +403,15 @@ class Tree::PostorderIterator
                                         int, const NodeId*, NodeId>,
       public Printable<Tree::PostorderIterator> {
  public:
+  // Returns an iterable range between the two parse tree nodes, in depth-first
+  // postorder. The range is inclusive of the bounds: [begin, end].
+  static auto MakeRange(NodeId begin, NodeId end)
+      -> llvm::iterator_range<PostorderIterator>;
+
+  // Prefer using the `postorder` range calls, but direct construction is
+  // allowed if needed.
+  explicit PostorderIterator(NodeId n) : node_(n) {}
+
   PostorderIterator() = delete;
 
   auto operator==(const PostorderIterator& rhs) const -> bool {
@@ -441,8 +445,6 @@ class Tree::PostorderIterator
 
  private:
   friend class Tree;
-
-  explicit PostorderIterator(NodeId n) : node_(n) {}
 
   NodeId node_;
 };
