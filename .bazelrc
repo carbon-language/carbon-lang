@@ -109,7 +109,9 @@ build --enable_platform_specific_config
 build:linux --define=pfm=1
 
 # Enable TCMalloc on Linux as well.
-build:linux --custom_malloc=@tcmalloc//tcmalloc
+# TODO: tcmalloc needs to support compiler-explorer; see:
+# https://github.com/carbon-language/carbon-lang/issues/4176
+# build:linux --custom_malloc=@tcmalloc//tcmalloc
 
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
