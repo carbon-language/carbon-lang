@@ -392,11 +392,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
     -> bool {
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
-
-  // TODO: Remove this once we import generics properly.
-  if (!generic_id.is_valid()) {
-    return true;
-  }
+  CARBON_CHECK(generic_id.is_valid()) << "Specific with no generic ID";
 
   if (!specific.definition_block_id.is_valid()) {
     // Evaluate the eval block for the definition of the generic.
