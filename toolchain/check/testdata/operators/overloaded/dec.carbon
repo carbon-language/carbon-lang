@@ -110,8 +110,8 @@ fn TestOp() {
 // CHECK:STDOUT: fn @Op.1[addr @impl.%self.loc18_14.3: %.3]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %import_ref.1: %.2 = import_ref Core//prelude/operators/arithmetic, inst+155, loaded [symbolic = %import_ref.1 (constants.%Self)]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+156, loaded [symbolic = %import_ref.2 (constants.%.5)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self) [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self: %.5]();
 // CHECK:STDOUT: }

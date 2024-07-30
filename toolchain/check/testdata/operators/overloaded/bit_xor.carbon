@@ -193,7 +193,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/bitwise, inst+141, loaded [symbolic = %import_ref (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self.1](%other: %Self.1) -> %Self.1;
 // CHECK:STDOUT: }
@@ -204,8 +204,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.6) {
-// CHECK:STDOUT:   %import_ref.1: %.6 = import_ref Core//prelude/operators/bitwise, inst+165, loaded [symbolic = %import_ref.1 (constants.%Self.2)]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/bitwise, inst+166, loaded [symbolic = %import_ref.2 (constants.%.8)]
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self: %.8](%other: %Self.2);
 // CHECK:STDOUT: }

@@ -89,7 +89,7 @@ var b: i32 = a[-10];
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.8) {
-// CHECK:STDOUT:   %import_ref: %.8 = import_ref Core//prelude/operators/arithmetic, inst+86, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self]() -> %Self;
 // CHECK:STDOUT: }

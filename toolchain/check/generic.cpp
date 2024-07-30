@@ -39,6 +39,7 @@ static auto AddGenericConstantInstToEvalBlock(
   auto index = SemIR::GenericInstIndex(
       region, context.inst_block_stack().PeekCurrentBlockContents().size());
   context.inst_block_stack().AddInstId(generic_inst_id);
+  // TODO: Set a location on generic_inst_id.
   return context.constant_values().AddSymbolicConstant(
       {.inst_id = const_inst_id, .generic_id = generic_id, .index = index});
 }
@@ -62,6 +63,14 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   // block, and substitute them for the instructions in the eval block.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
     auto const_id = context_.constant_values().Get(inst_id);
+    if (!const_id.is_valid()) {
+      // An unloaded import ref should never contain anything we need to
+      // substitute into. Don't trigger loading it here.
+      CARBON_CHECK(context_.insts().Is<SemIR::ImportRefUnloaded>(inst_id))
+          << "Substituting into instruction with invalid constant ID: "
+          << context_.insts().Get(inst_id);
+      return true;
+    }
     if (!const_id.is_symbolic()) {
       // This instruction doesn't have a symbolic constant value, so can't
       // contain any bindings that need to be substituted.
@@ -156,6 +165,10 @@ static auto AddGenericConstantToEvalBlock(
       SubstInst(context, const_inst_id,
                 RebuildGenericConstantInEvalBlockCallbacks(
                     context, generic_id, region, constants_in_generic));
+  // TODO: Remove
+  if (new_inst_id == const_inst_id) {
+    return SemIR::ConstantId::Error;
+  }
   CARBON_CHECK(new_inst_id != const_inst_id)
       << "Did not apply any substitutions to symbolic constant "
       << context.insts().Get(const_inst_id);
@@ -227,6 +240,46 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       << context.insts().Get(context.generic_region_stack()
                                  .PeekDependentInsts()[num_dependent_insts]
                                  .inst_id);
+
+  return context.inst_block_stack().Pop();
+}
+
+// Builds and returns an eval block, given the list of canonical symbolic
+// constants that the instructions in the eval block should produce. This is
+// used when importing a generic.
+auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
+                             SemIR::GenericInstIndex::Region region,
+                             llvm::ArrayRef<SemIR::InstId> const_ids)
+    -> SemIR::InstBlockId {
+  context.inst_block_stack().Push();
+
+  Map<SemIR::InstId, SemIR::InstId> constants_in_generic;
+
+  // For the definition region, populate constants from the declaration.
+  if (region == SemIR::GenericInstIndex::Region::Definition) {
+    auto decl_eval_block = context.inst_blocks().Get(
+        context.generics().Get(generic_id).decl_block_id);
+    for (auto inst_id : decl_eval_block) {
+      constants_in_generic.Insert(
+          context.constant_values().GetConstantInstId(inst_id), inst_id);
+    }
+  }
+
+  for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
+    // Build a constant in the inst block.
+    context.constant_values().Set(inst_id,
+          AddGenericConstantToEvalBlock(context, generic_id, region,
+                                        constants_in_generic, inst_id));
+    if (context.inst_block_stack().PeekCurrentBlockContents().size() < i + 1) {
+      // TODO: Remove.
+      context.inst_block_stack().AddInstId(SemIR::InstId::BuiltinError);
+    }
+    CARBON_CHECK(context.inst_block_stack().PeekCurrentBlockContents().size() ==
+                 i + 1)
+        << "Produced "
+        << (context.inst_block_stack().PeekCurrentBlockContents().size() - i)
+        << " instructions when importing " << context.insts().Get(inst_id);
+  }
 
   return context.inst_block_stack().Pop();
 }

@@ -202,7 +202,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc17_9.2: %C](@impl.1.%other.loc17_18.2: %C) -> %C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/arithmetic, inst+20, loaded [symbolic = %import_ref (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self.1](%other: %Self.1) -> %Self.1;
 // CHECK:STDOUT: }
@@ -210,8 +210,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc20_14.3: %.6](@impl.2.%other.loc20_24.2: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.5) {
-// CHECK:STDOUT:   %import_ref.1: %.5 = import_ref Core//prelude/operators/arithmetic, inst+45, loaded [symbolic = %import_ref.1 (constants.%Self.2)]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+46, loaded [symbolic = %import_ref.2 (constants.%.7)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self: %.7](%other: %Self.2);
 // CHECK:STDOUT: }

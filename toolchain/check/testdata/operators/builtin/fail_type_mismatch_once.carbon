@@ -91,7 +91,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.4) {
-// CHECK:STDOUT:   %import_ref: %.4 = import_ref Core//prelude/operators/arithmetic, inst+20, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
 // CHECK:STDOUT: }

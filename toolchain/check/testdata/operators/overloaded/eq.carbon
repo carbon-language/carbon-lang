@@ -225,13 +225,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: fn @NotEqual.1[@impl.%self.loc8_15.2: %C](@impl.%other.loc8_24.2: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/comparison, inst+27, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/comparison, inst+48, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
 // CHECK:STDOUT: }
@@ -366,7 +366,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal(constants.%Self: %.4) {
-// CHECK:STDOUT:   %import_ref: %.4 = import_ref Core//prelude/operators/comparison, inst+27, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
 // CHECK:STDOUT: }
@@ -379,7 +379,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual(constants.%Self: %.4) {
-// CHECK:STDOUT:   %import_ref: %.4 = import_ref Core//prelude/operators/comparison, inst+48, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
 // CHECK:STDOUT: }
@@ -538,13 +538,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: fn @NotEqual.1[@impl.%self.loc9_15.2: %C](@impl.%other.loc9_24.2: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/comparison, inst+27, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Core//prelude/operators/comparison, inst+48, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
 // CHECK:STDOUT: }

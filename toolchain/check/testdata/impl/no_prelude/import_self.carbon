@@ -171,7 +171,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %import_ref: %.2 = import_ref Main//a, inst+20, loaded [symbolic = %import_ref (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
 // CHECK:STDOUT: }
