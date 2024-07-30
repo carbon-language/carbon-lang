@@ -165,10 +165,6 @@ static auto AddGenericConstantToEvalBlock(
       SubstInst(context, const_inst_id,
                 RebuildGenericConstantInEvalBlockCallbacks(
                     context, generic_id, region, constants_in_generic));
-  // TODO: Remove
-  if (new_inst_id == const_inst_id) {
-    return SemIR::ConstantId::Error;
-  }
   CARBON_CHECK(new_inst_id != const_inst_id)
       << "Did not apply any substitutions to symbolic constant "
       << context.insts().Get(const_inst_id);
@@ -267,13 +263,8 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 
   for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
     // Build a constant in the inst block.
-    context.constant_values().Set(inst_id,
-          AddGenericConstantToEvalBlock(context, generic_id, region,
-                                        constants_in_generic, inst_id));
-    if (context.inst_block_stack().PeekCurrentBlockContents().size() < i + 1) {
-      // TODO: Remove.
-      context.inst_block_stack().AddInstId(SemIR::InstId::BuiltinError);
-    }
+    AddGenericConstantToEvalBlock(context, generic_id, region,
+                                  constants_in_generic, inst_id);
     CARBON_CHECK(context.inst_block_stack().PeekCurrentBlockContents().size() ==
                  i + 1)
         << "Produced "
@@ -345,11 +336,6 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
 auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId {
   auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
-
-  // TODO: Remove this once we import generics properly.
-  if (!generic_id.is_valid()) {
-    return specific_id;
-  }
 
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.

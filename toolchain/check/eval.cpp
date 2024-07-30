@@ -1483,6 +1483,10 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
     -> SemIR::InstBlockId {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
+  if (!generic_id.is_valid()) {
+    // TODO: Remove
+    return SemIR::InstBlockId::Empty;
+  }
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 
