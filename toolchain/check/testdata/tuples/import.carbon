@@ -248,7 +248,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.14: type = struct_type {} [template]
-// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0, <unexpected>.inst+101 [symbolic]
+// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.16: i32 = int_literal 2 [template]
@@ -335,7 +335,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.8) {
-// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0, <unexpected>.inst+101 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -411,7 +411,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected>.inst+17 [symbolic]
+// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
@@ -467,7 +467,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.3) {
-// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected>.inst+17 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -502,7 +502,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected>.inst+17 [symbolic]
+// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 4 [template]
@@ -561,7 +561,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.3) {
-// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0, <unexpected>.inst+17 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X: %.3 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

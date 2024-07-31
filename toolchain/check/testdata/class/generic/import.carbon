@@ -76,10 +76,15 @@ fn Use() {
 
 impl library "foo";
 
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+5]]:13: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class Class(U:! type) {
 // CHECK:STDERR:             ^
-// CHECK:STDERR: fail_bad_foo.impl.carbon: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "foo";
+// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: class Class(T:! type);
+// CHECK:STDERR:             ^
 // CHECK:STDERR:
 class Class(U:! type) {
   // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+3]]:10: ERROR: Name `T` not found.
@@ -222,7 +227,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: --- foo.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+42 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
@@ -298,7 +303,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+16 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
@@ -315,7 +320,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+42 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
@@ -383,7 +388,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+35 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -438,7 +443,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+35 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
@@ -514,7 +519,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+35 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -569,7 +574,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+35 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
@@ -651,7 +656,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+26 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -705,7 +710,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+26 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
@@ -785,7 +790,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+17 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
@@ -818,29 +823,29 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %U.loc9_13.1: type = param U
-// CHECK:STDOUT:     %U.loc9_13.2: type = bind_symbolic_name U 0, %U.loc9_13.1 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %U.loc14_13.1: type = param U
+// CHECK:STDOUT:     %U.loc14_13.2: type = bind_symbolic_name U 0, %U.loc14_13.1 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, <unexpected>.inst+17 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(file.%U.loc9_13.2: type) {
+// CHECK:STDOUT: generic class @.1(file.%U.loc14_13.2: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc13: <error> = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc18: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.3
-// CHECK:STDOUT:     .x = %.loc13
+// CHECK:STDOUT:     .x = %.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
