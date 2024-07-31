@@ -16,7 +16,7 @@ namespace Carbon::Parse {
 static auto OnParseError(Context& context, Context::StateStackEntry state,
                          NodeKind declaration) -> void {
   return context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
-                         state.subtree_start, /*has_error=*/true);
+                         /*has_error=*/true);
 }
 
 // Determines whether the specified modifier appears within the introducer of
@@ -109,7 +109,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
       context.set_packaging_decl(names, is_impl);
     }
 
-    context.AddNode(declaration, *semi, state.subtree_start, state.has_error);
+    context.AddNode(declaration, *semi, state.has_error);
   } else {
     context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
     on_parse_error();

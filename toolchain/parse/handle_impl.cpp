@@ -54,8 +54,7 @@ auto HandleImplAfterForall(Context& context) -> void {
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
-  context.AddNode(NodeKind::ImplForall, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::ImplForall, state.token, state.has_error);
   // One of:
   //   as <expression> ...
   //   <expression> as <expression>...
@@ -65,8 +64,7 @@ auto HandleImplAfterForall(Context& context) -> void {
 auto HandleImplBeforeAs(Context& context) -> void {
   auto state = context.PopState();
   if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
-    context.AddNode(NodeKind::TypeImplAs, *as, state.subtree_start,
-                    state.has_error);
+    context.AddNode(NodeKind::TypeImplAs, *as, state.has_error);
     context.PushState(State::Expr);
   } else {
     if (!state.has_error) {

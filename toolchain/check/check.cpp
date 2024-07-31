@@ -65,7 +65,7 @@ struct UnitInfo {
       : check_ir_id(check_ir_id),
         unit(&unit),
         converter(unit.tokens, unit.tokens->source().filename(),
-                  unit.parse_tree),
+                  unit.get_parse_tree_and_subtrees),
         err_tracker(*unit.consumer),
         emitter(converter, err_tracker) {}
 
@@ -891,7 +891,8 @@ static auto CheckParseTree(
   SemIRDiagnosticConverter converter(node_converters, &sem_ir);
   Context::DiagnosticEmitter emitter(converter, unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
-                  sem_ir, vlog_stream);
+                  unit_info.unit->get_parse_tree_and_subtrees, sem_ir,
+                  vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 

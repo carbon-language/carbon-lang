@@ -27,6 +27,7 @@
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/inst_namer.h"
 #include "toolchain/source/source_buffer.h"
@@ -599,7 +600,12 @@ class Driver::CompilationUnit {
     });
     if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
-      parse_tree_->Print(driver_->output_stream_, options_.preorder_parse_tree);
+      const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
+      if (options_.preorder_parse_tree) {
+        tree_and_subtrees.PrintPreorder(driver_->output_stream_);
+      } else {
+        tree_and_subtrees.Print(driver_->output_stream_);
+      }
     }
     if (mem_usage_) {
       mem_usage_->Collect("parse_tree_", *parse_tree_);
@@ -613,11 +619,15 @@ class Driver::CompilationUnit {
   // Returns information needed to check this unit.
   auto GetCheckUnit() -> Check::Unit {
     CARBON_CHECK(parse_tree_);
-    return {.value_stores = &value_stores_,
-            .tokens = &*tokens_,
-            .parse_tree = &*parse_tree_,
-            .consumer = consumer_,
-            .sem_ir = &sem_ir_};
+    return {
+        .value_stores = &value_stores_,
+        .tokens = &*tokens_,
+        .parse_tree = &*parse_tree_,
+        .consumer = consumer_,
+        .get_parse_tree_and_subtrees = [&]() -> const Parse::TreeAndSubtrees& {
+          return GetParseTreeAndSubtrees();
+        },
+        .sem_ir = &sem_ir_};
   }
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
@@ -778,6 +788,19 @@ class Driver::CompilationUnit {
     return true;
   }
 
+  // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
+  // significant overhead. Avoid constructing it when unused.
+  auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees& {
+    if (!parse_tree_and_subtrees_) {
+      parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
+      if (mem_usage_) {
+        mem_usage_->Collect("parse_tree_and_subtrees_",
+                            *parse_tree_and_subtrees_);
+      }
+    }
+    return *parse_tree_and_subtrees_;
+  }
+
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
       -> void {
@@ -814,6 +837,7 @@ class Driver::CompilationUnit {
   std::optional<SourceBuffer> source_;
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
+  std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;

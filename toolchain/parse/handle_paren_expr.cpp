@@ -21,8 +21,7 @@ auto HandleOnlyParenExpr(Context& context) -> void {
 
 static auto FinishParenExpr(Context& context,
                             const Context::StateStackEntry& state) -> void {
-  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.has_error);
 }
 
 auto HandleOnlyParenExprFinish(Context& context) -> void {
@@ -108,8 +107,7 @@ auto HandleTupleLiteralFinish(Context& context) -> void {
 
   context.ReplacePlaceholderNode(state.subtree_start,
                                  NodeKind::TupleLiteralStart, state.token);
-  context.AddNode(NodeKind::TupleLiteral, context.Consume(),
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::TupleLiteral, context.Consume(), state.has_error);
 }
 
 }  // namespace Carbon::Parse

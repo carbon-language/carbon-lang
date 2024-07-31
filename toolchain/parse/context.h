@@ -100,8 +100,7 @@ class Context {
       -> void;
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
-               bool has_error) -> void;
+  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void;
 
   // Replaces the placeholder node at the indicated position with a leaf node.
   //
@@ -328,12 +327,11 @@ class Context {
 
   // Adds a function definition start node, and begins tracking a deferred
   // definition if necessary.
-  auto AddFunctionDefinitionStart(Lex::TokenIndex token, int subtree_start,
-                                  bool has_error) -> void;
+  auto AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
+      -> void;
   // Adds a function definition node, and ends tracking a deferred definition if
   // necessary.
-  auto AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
-                             bool has_error) -> void;
+  auto AddFunctionDefinition(Lex::TokenIndex token, bool has_error) -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

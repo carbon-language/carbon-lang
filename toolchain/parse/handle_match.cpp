@@ -20,8 +20,8 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
     }
 
     context.AddLeafNode(equal_greater, *context.position(), true);
-    context.AddNode(starter, *context.position(), state.subtree_start, true);
-    context.AddNode(complete, *context.position(), state.subtree_start, true);
+    context.AddNode(starter, *context.position(), true);
+    context.AddNode(complete, *context.position(), true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -35,14 +35,13 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
       context.emitter().Emit(*context.position(), ExpectedMatchCaseBlock);
     }
 
-    context.AddNode(starter, *context.position(), state.subtree_start, true);
-    context.AddNode(complete, *context.position(), state.subtree_start, true);
+    context.AddNode(starter, *context.position(), true);
+    context.AddNode(complete, *context.position(), true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
 
-  context.AddNode(starter, context.Consume(), state.subtree_start,
-                  state.has_error);
+  context.AddNode(starter, context.Consume(), state.has_error);
   context.PushState(state, finish);
   context.PushState(State::StatementScopeLoop);
 }
@@ -77,16 +76,14 @@ auto HandleMatchConditionFinish(Context& context) -> void {
       context.emitter().Emit(*context.position(), ExpectedMatchCasesBlock);
     }
 
-    context.AddNode(NodeKind::MatchStatementStart, *context.position(),
-                    state.subtree_start, true);
-    context.AddNode(NodeKind::MatchStatement, *context.position(),
-                    state.subtree_start, true);
+    context.AddNode(NodeKind::MatchStatementStart, *context.position(), true);
+    context.AddNode(NodeKind::MatchStatement, *context.position(), true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
 
   context.AddNode(NodeKind::MatchStatementStart, context.Consume(),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 
   state.has_error = false;
   if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
@@ -145,10 +142,8 @@ auto HandleMatchCaseIntroducer(Context& context) -> void {
 auto HandleMatchCaseAfterPattern(Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
-    context.AddNode(NodeKind::MatchCaseStart, *context.position(),
-                    state.subtree_start, true);
-    context.AddNode(NodeKind::MatchCase, *context.position(),
-                    state.subtree_start, true);
+    context.AddNode(NodeKind::MatchCaseStart, *context.position(), true);
+    context.AddNode(NodeKind::MatchCase, *context.position(), true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -166,13 +161,10 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
                           true);
       context.AddLeafNode(NodeKind::InvalidParse, *context.position(), true);
       state = context.PopState();
-      context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
-                      state.subtree_start, true);
+      context.AddNode(NodeKind::MatchCaseGuard, *context.position(), true);
       state = context.PopState();
-      context.AddNode(NodeKind::MatchCaseStart, *context.position(),
-                      state.subtree_start, true);
-      context.AddNode(NodeKind::MatchCase, *context.position(),
-                      state.subtree_start, true);
+      context.AddNode(NodeKind::MatchCaseStart, *context.position(), true);
+      context.AddNode(NodeKind::MatchCase, *context.position(), true);
       context.SkipPastLikelyEnd(*context.position());
       return;
     }
@@ -184,11 +176,9 @@ auto HandleMatchCaseGuardFinish(Context& context) -> void {
 
   auto close_paren = context.ConsumeIf(Lex::TokenKind::CloseParen);
   if (close_paren) {
-    context.AddNode(NodeKind::MatchCaseGuard, *close_paren, state.subtree_start,
-                    state.has_error);
+    context.AddNode(NodeKind::MatchCaseGuard, *close_paren, state.has_error);
   } else {
-    context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
-                    state.subtree_start, true);
+    context.AddNode(NodeKind::MatchCaseGuard, *context.position(), true);
     context.ReturnErrorOnState();
     context.SkipPastLikelyEnd(*context.position());
     return;
@@ -205,7 +195,7 @@ auto HandleMatchCaseFinish(Context& context) -> void {
   auto state = context.PopState();
   context.AddNode(NodeKind::MatchCase,
                   context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 }
 
 auto HandleMatchDefaultIntroducer(Context& context) -> void {
@@ -220,14 +210,14 @@ auto HandleMatchDefaultFinish(Context& context) -> void {
   auto state = context.PopState();
   context.AddNode(NodeKind::MatchDefault,
                   context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 }
 
 auto HandleMatchStatementFinish(Context& context) -> void {
   auto state = context.PopState();
   context.AddNode(NodeKind::MatchStatement,
                   context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 }
 
 }  // namespace Carbon::Parse
