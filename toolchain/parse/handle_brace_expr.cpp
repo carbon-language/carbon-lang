@@ -151,8 +151,7 @@ static auto HandleBraceExprParamFinish(Context& context, NodeKind node_kind,
                         /*has_error=*/true);
     context.ReturnErrorOnState();
   } else {
-    context.AddNode(node_kind, state.token, state.subtree_start,
-                    /*has_error=*/false);
+    context.AddNode(node_kind, state.token, /*has_error=*/false);
   }
 
   if (context.ConsumeListToken(
@@ -183,8 +182,7 @@ static auto HandleBraceExprFinish(Context& context, NodeKind start_kind,
   auto state = context.PopState();
 
   context.ReplacePlaceholderNode(state.subtree_start, start_kind, state.token);
-  context.AddNode(end_kind, context.Consume(), state.subtree_start,
-                  state.has_error);
+  context.AddNode(end_kind, context.Consume(), state.has_error);
 }
 
 auto HandleBraceExprFinishAsType(Context& context) -> void {

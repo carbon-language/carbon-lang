@@ -106,8 +106,12 @@ cc_library(
     srcs = [
         "extract.cpp",
         "tree.cpp",
+        "tree_and_subtrees.cpp",
     ],
-    hdrs = ["tree.h"],
+    hdrs = [
+        "tree.h",
+        "tree_and_subtrees.h",
+    ],
     deps = [
         ":node_kind",
         "//common:check",

@@ -141,7 +141,8 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // The explicit self type is the same as the default self type, so suggest
     // removing it and recover as if it were not present.
     if (auto self_as =
-            context.parse_tree().ExtractAs<Parse::TypeImplAs>(self_type_node)) {
+            context.parse_tree_and_subtrees().ExtractAs<Parse::TypeImplAs>(
+                self_type_node)) {
       CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
                         "Remove the explicit `Self` type here.");
       diag.Note(self_as->type_expr, ExtendImplSelfAsDefault);

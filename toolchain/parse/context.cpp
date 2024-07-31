@@ -68,18 +68,15 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
 
 auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
     -> void {
-  tree_->node_impls_.push_back(
-      Tree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
+  tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
   if (has_error) {
     tree_->has_errors_ = true;
   }
 }
 
-auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
-                      bool has_error) -> void {
-  int subtree_size = tree_->size() - subtree_start + 1;
-  tree_->node_impls_.push_back(
-      Tree::NodeImpl(kind, has_error, token, subtree_size));
+auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
+    -> void {
+  tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
   if (has_error) {
     tree_->has_errors_ = true;
   }
@@ -91,7 +88,6 @@ auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
   CARBON_CHECK(position >= 0 && position < tree_->size())
       << "position: " << position << " size: " << tree_->size();
   auto* node_impl = &tree_->node_impls_[position];
-  CARBON_CHECK(node_impl->subtree_size == 1);
   CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
   node_impl->kind = kind;
   node_impl->has_error = has_error;
@@ -123,9 +119,9 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
-    AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
+    AddNode(close_kind, state.token, /*has_error=*/true);
   } else if (auto close_token = ConsumeIf(open_token_kind.closing_symbol())) {
-    AddNode(close_kind, *close_token, state.subtree_start, state.has_error);
+    AddNode(close_kind, *close_token, state.has_error);
   } else {
     // TODO: Include the location of the matching opening delimiter in the
     // diagnostic.
@@ -135,7 +131,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
                    open_token_kind.closing_symbol().fixed_spelling());
 
     SkipTo(tokens().GetMatchedClosingToken(expected_open));
-    AddNode(close_kind, Consume(), state.subtree_start, /*has_error=*/true);
+    AddNode(close_kind, Consume(), /*has_error=*/true);
   }
 }
 
@@ -415,7 +411,7 @@ auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
   }
 
   if (auto semi = ConsumeIf(Lex::TokenKind::Semi)) {
-    AddNode(node_kind, *semi, state.subtree_start, /*has_error=*/false);
+    AddNode(node_kind, *semi, /*has_error=*/false);
   } else {
     if (is_def_allowed) {
       DiagnoseExpectedDeclSemiOrDefinition(decl_kind);
@@ -433,8 +429,7 @@ auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
   if (skip_past_likely_end) {
     token = SkipPastLikelyEnd(token);
   }
-  AddNode(node_kind, token, state.subtree_start,
-          /*has_error=*/true);
+  AddNode(node_kind, token, /*has_error=*/true);
 }
 
 auto Context::ParseLibraryName(bool accept_default)
@@ -464,13 +459,11 @@ auto Context::ParseLibraryName(bool accept_default)
 auto Context::ParseLibrarySpecifier(bool accept_default)
     -> std::optional<StringLiteralValueId> {
   auto library_token = ConsumeChecked(Lex::TokenKind::Library);
-  auto library_subtree_start = tree().size();
   auto library_id = ParseLibraryName(accept_default);
   if (!library_id) {
     AddLeafNode(NodeKind::LibraryName, *position_, /*has_error=*/true);
   }
-  AddNode(NodeKind::LibrarySpecifier, library_token, library_subtree_start,
-          /*has_error=*/false);
+  AddNode(NodeKind::LibrarySpecifier, library_token, /*has_error=*/false);
   return library_id;
 }
 
@@ -503,8 +496,7 @@ static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
          state == State::DeclDefinitionFinishAsNamedConstraint;
 }
 
-auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
-                                         int subtree_start, bool has_error)
+auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
     -> void {
   if (ParsingInDeferredDefinitionScope(*this)) {
     deferred_definition_stack_.push_back(tree_->deferred_definitions_.Add(
@@ -512,11 +504,11 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
              FunctionDefinitionStartId(NodeId(tree_->node_impls_.size()))}));
   }
 
-  AddNode(NodeKind::FunctionDefinitionStart, token, subtree_start, has_error);
+  AddNode(NodeKind::FunctionDefinitionStart, token, has_error);
 }
 
-auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
-                                    bool has_error) -> void {
+auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
+    -> void {
   if (ParsingInDeferredDefinitionScope(*this)) {
     auto definition_index = deferred_definition_stack_.pop_back_val();
     auto& definition = tree_->deferred_definitions_.Get(definition_index);
@@ -526,7 +518,7 @@ auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
         DeferredDefinitionIndex(tree_->deferred_definitions().size());
   }
 
-  AddNode(NodeKind::FunctionDefinition, token, subtree_start, has_error);
+  AddNode(NodeKind::FunctionDefinition, token, has_error);
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

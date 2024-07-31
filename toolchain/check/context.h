@@ -19,6 +19,7 @@
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -53,6 +54,8 @@ class Context {
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
+                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
+                       get_parse_tree_and_subtrees,
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
@@ -360,6 +363,10 @@ class Context {
 
   auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
+  auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
+    return get_parse_tree_and_subtrees_();
+  }
+
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
@@ -485,6 +492,10 @@ class Context {
 
   // The file's parse tree.
   const Parse::Tree* parse_tree_;
+
+  // Returns a lazily constructed TreeAndSubtrees.
+  llvm::function_ref<const Parse::TreeAndSubtrees&()>
+      get_parse_tree_and_subtrees_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
