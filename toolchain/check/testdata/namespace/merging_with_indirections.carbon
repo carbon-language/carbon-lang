@@ -153,10 +153,10 @@ fn Run() {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %A: type = class_type @A [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
