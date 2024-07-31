@@ -39,7 +39,6 @@ static auto AddGenericConstantInstToEvalBlock(
   auto index = SemIR::GenericInstIndex(
       region, context.inst_block_stack().PeekCurrentBlockContents().size());
   context.inst_block_stack().AddInstId(generic_inst_id);
-  // TODO: Set a location on generic_inst_id.
   return context.constant_values().AddSymbolicConstant(
       {.inst_id = const_inst_id, .generic_id = generic_id, .index = index});
 }
@@ -113,6 +112,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
       // constant value for it.
+      // TODO: Provide a location based on the location of the instruction
+      // that uses the constant.
       auto inst_id = context_.sem_ir().insts().AddInNoBlock(
           SemIR::LocIdAndInst::NoLoc(new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(
