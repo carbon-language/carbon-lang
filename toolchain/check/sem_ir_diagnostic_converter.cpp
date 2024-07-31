@@ -113,6 +113,21 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
 }
 
 auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
+  if (auto* library_name_id = llvm::any_cast<SemIR::LibraryNameId>(&arg)) {
+    std::string library_name;
+    if (*library_name_id == SemIR::LibraryNameId::Default) {
+      library_name = "default library";
+    } else if (!library_name_id->is_valid()) {
+      library_name = "library <invalid>";
+    } else {
+      llvm::raw_string_ostream stream(library_name);
+      stream << "library \"";
+      stream << sem_ir_->string_literal_values().Get(
+          library_name_id->AsStringLiteralValueId());
+      stream << "\"";
+    }
+    return library_name;
+  }
   if (auto* name_id = llvm::any_cast<SemIR::NameId>(&arg)) {
     return sem_ir_->names().GetFormatted(*name_id).str();
   }

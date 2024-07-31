@@ -54,7 +54,8 @@ static auto BuildInterfaceDecl(Context& context,
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
-      name, interface_decl_id, /*is_extern=*/false)};
+      name, interface_decl_id, /*is_extern=*/false,
+      SemIR::LibraryNameId::Invalid)};
   RequireGenericParams(context, interface_info.implicit_param_refs_id);
   RequireGenericParams(context, interface_info.param_refs_id);
 
@@ -75,15 +76,12 @@ static auto BuildInterfaceDecl(Context& context,
         // TODO: This should be refactored a little, particularly for
         // prev_import_ir_id. See similar logic for classes and functions, which
         // might also be refactored to merge.
-        CheckIsAllowedRedecl(context, Lex::TokenKind::Interface,
-                             existing_interface.name_id,
-                             {.loc = node_id,
-                              .is_definition = is_definition,
-                              .is_extern = false},
-                             {.loc = existing_interface.latest_decl_id(),
-                              .is_definition = existing_interface.is_defined(),
-                              .is_extern = false},
-                             /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
+        CheckIsAllowedRedecl(
+            context, Lex::TokenKind::Interface, existing_interface.name_id,
+            RedeclInfo(interface_info, node_id, is_definition),
+            RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
+                       existing_interface.is_defined()),
+            /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
 
         // Can't merge interface definitions due to the generic requirements.
         // TODO: Should this also be mirrored to classes/functions for generics?

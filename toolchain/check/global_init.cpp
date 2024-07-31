@@ -43,7 +43,7 @@ auto GlobalInit::Finalize() -> void {
         .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
         .param_refs_id = SemIR::InstBlockId::Empty,
         .is_extern = false,
-        .extern_library_id = StringLiteralValueId::Invalid,
+        .extern_library_id = SemIR::LibraryNameId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,
         .first_owning_decl_id = SemIR::InstId::Invalid},
        {.return_storage_id = SemIR::InstId::Invalid,

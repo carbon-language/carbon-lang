@@ -82,12 +82,9 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   }
 
   CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
-                       {.loc = new_loc,
-                        .is_definition = new_is_definition,
-                        .is_extern = new_function.is_extern},
-                       {.loc = prev_function.latest_decl_id(),
-                        .is_definition = prev_function.definition_id.is_valid(),
-                        .is_extern = prev_function.is_extern},
+                       RedeclInfo(new_function, new_loc, new_is_definition),
+                       RedeclInfo(prev_function, prev_function.latest_decl_id(),
+                                  prev_function.definition_id.is_valid()),
                        prev_import_ir_id);
 
   if (new_is_definition) {
@@ -216,9 +213,10 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info = SemIR::Function{
-      {name_context.MakeEntityWithParamsBase(name, decl_id, is_extern)},
-      {.return_storage_id = return_storage_id}};
+  auto function_info =
+      SemIR::Function{{name_context.MakeEntityWithParamsBase(
+                          name, decl_id, is_extern, introducer.extern_library)},
+                      {.return_storage_id = return_storage_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }

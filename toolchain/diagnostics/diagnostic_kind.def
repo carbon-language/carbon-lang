@@ -155,7 +155,6 @@ CARBON_DIAGNOSTIC_KIND(MissingDefinitionInImpl)
 // Merge-related redeclaration checking.
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDecl)
 CARBON_DIAGNOSTIC_KIND(RedeclRedundant)
-CARBON_DIAGNOSTIC_KIND(RedeclNonExtern)
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDef)
 CARBON_DIAGNOSTIC_KIND(RedeclRedef)
 CARBON_DIAGNOSTIC_KIND(RedeclExternMismatch)
@@ -167,6 +166,9 @@ CARBON_DIAGNOSTIC_KIND(RedeclParamDiffers)
 CARBON_DIAGNOSTIC_KIND(RedeclParamPrevious)
 CARBON_DIAGNOSTIC_KIND(RedeclParamSyntaxDiffers)
 CARBON_DIAGNOSTIC_KIND(RedeclParamSyntaxPrevious)
+CARBON_DIAGNOSTIC_KIND(ExternLibraryInImporter)
+CARBON_DIAGNOSTIC_KIND(ExternLibraryIncorrect)
+CARBON_DIAGNOSTIC_KIND(ExternLibraryExpected)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
@@ -335,6 +337,8 @@ CARBON_DIAGNOSTIC_KIND(ModifierRepeated)
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWith)
 CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
 CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
+CARBON_DIAGNOSTIC_KIND(ExternLibraryOnDefinition)
+CARBON_DIAGNOSTIC_KIND(ExternLibraryIsCurrentLibrary)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
