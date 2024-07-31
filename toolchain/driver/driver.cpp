@@ -789,7 +789,7 @@ class Driver::CompilationUnit {
   }
 
   // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
-  // significant overhead. Avoid constructing it otherwise.
+  // significant overhead. Avoid constructing it when unused.
   auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees& {
     if (!parse_tree_and_subtrees_) {
       parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
