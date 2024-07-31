@@ -531,18 +531,15 @@ class ImportRefResolver {
             break;
           }
           case SemIR::BindSymbolicName::Kind: {
-            // The symbolic name will be created on first reference, so might
-            // already exist. Update the value in it to refer to the parameter.
+            // We already imported a constant value for this symbolic binding.
+            // We can reuse most of it.
             auto new_bind_inst_id = GetLocalConstantInstId(bind_id);
             auto new_bind_inst =
                 context_.insts().GetAs<SemIR::BindSymbolicName>(
                     new_bind_inst_id);
             new_bind_inst.value_id = new_param_id;
-            // This is not before constant use, but doesn't change the
-            // constant value of the instruction.
-            context_.ReplaceInstBeforeConstantUse(new_bind_inst_id,
-                                                  new_bind_inst);
-            new_param_id = new_bind_inst_id;
+            new_param_id = context_.AddInstInNoBlock(AddImportIRInst(bind_id),
+                                                     new_bind_inst);
             break;
           }
           default: {
