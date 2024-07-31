@@ -439,8 +439,9 @@ class ImportRefResolver {
 
   // Gets an incomplete local version of an imported generic. Most fields are
   // set in the second pass.
-  auto GetIncompleteLocalGeneric(
-      SemIR::InstId decl_id, SemIR::GenericId generic_id) -> SemIR::GenericId {
+  auto GetIncompleteLocalGeneric(SemIR::InstId decl_id,
+                                 SemIR::GenericId generic_id)
+      -> SemIR::GenericId {
     if (!generic_id.is_valid()) {
       return SemIR::GenericId::Invalid;
     }
@@ -470,10 +471,11 @@ class ImportRefResolver {
 
   // Given the local constant values for the elements of the eval block, builds
   // and returns the eval block for a region of a generic.
-  auto GetLocalEvalBlock(
-      const SemIR::Generic& import_generic, SemIR::GenericId generic_id,
-      SemIR::GenericInstIndex::Region region,
-      llvm::ArrayRef<SemIR::InstId> inst_ids) -> SemIR::InstBlockId {
+  auto GetLocalEvalBlock(const SemIR::Generic& import_generic,
+                         SemIR::GenericId generic_id,
+                         SemIR::GenericInstIndex::Region region,
+                         llvm::ArrayRef<SemIR::InstId> inst_ids)
+      -> SemIR::InstBlockId {
     auto import_block_id = import_generic.GetEvalBlock(region);
     if (!import_block_id.is_valid()) {
       return SemIR::InstBlockId::Invalid;
@@ -494,10 +496,9 @@ class ImportRefResolver {
     new_generic.bindings_id = GetLocalCanonicalInstBlockId(
         import_generic.bindings_id, generic_data.bindings);
     // TODO: Import or rebuild the self specific.
-    new_generic.decl_block_id =
-        GetLocalEvalBlock(import_generic, new_generic_id,
-                          SemIR::GenericInstIndex::Region::Declaration,
-                          generic_data.decl_block);
+    new_generic.decl_block_id = GetLocalEvalBlock(
+        import_generic, new_generic_id,
+        SemIR::GenericInstIndex::Region::Declaration, generic_data.decl_block);
     new_generic.definition_block_id =
         GetLocalEvalBlock(import_generic, new_generic_id,
                           SemIR::GenericInstIndex::Region::Definition,
@@ -532,7 +533,9 @@ class ImportRefResolver {
         return context_.classes().Get(class_type.class_id).generic_id;
       }
       case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
-        return context_.interfaces().Get(interface_type.interface_id).generic_id;
+        return context_.interfaces()
+            .Get(interface_type.interface_id)
+            .generic_id;
       }
       default: {
         CARBON_FATAL() << "Unexpected type for generic declaration: " << type;
