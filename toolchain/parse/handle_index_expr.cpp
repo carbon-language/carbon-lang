@@ -13,7 +13,7 @@ auto HandleIndexExpr(Context& context) -> void {
   context.PushState(state, State::IndexExprFinish);
   context.AddNode(NodeKind::IndexExprStart,
                   context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
   context.PushState(State::Expr);
 }
 

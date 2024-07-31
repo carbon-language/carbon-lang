@@ -31,11 +31,9 @@ auto HandleCodeBlockFinish(Context& context) -> void {
 
   // If the block started with an open curly, this is a close curly.
   if (context.tokens().GetKind(state.token) == Lex::TokenKind::OpenCurlyBrace) {
-    context.AddNode(NodeKind::CodeBlock, context.Consume(), state.subtree_start,
-                    state.has_error);
+    context.AddNode(NodeKind::CodeBlock, context.Consume(), state.has_error);
   } else {
-    context.AddNode(NodeKind::CodeBlock, state.token, state.subtree_start,
-                    /*has_error=*/true);
+    context.AddNode(NodeKind::CodeBlock, state.token, /*has_error=*/true);
   }
 }
 

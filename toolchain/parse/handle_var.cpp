@@ -85,8 +85,7 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
     state.has_error = true;
     end_token = context.SkipPastLikelyEnd(state.token);
   }
-  context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::VariableDecl, end_token, state.has_error);
 }
 
 auto HandleVarFinishAsFor(Context& context) -> void {
@@ -108,8 +107,7 @@ auto HandleVarFinishAsFor(Context& context) -> void {
     state.has_error = true;
   }
 
-  context.AddNode(NodeKind::ForIn, end_token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::ForIn, end_token, state.has_error);
 }
 
 }  // namespace Carbon::Parse

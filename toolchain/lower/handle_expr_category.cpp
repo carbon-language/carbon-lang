@@ -9,7 +9,7 @@ namespace Carbon::Lower {
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindValue inst) -> void {
-  switch (auto rep = SemIR::GetValueRepr(context.sem_ir(), inst.type_id);
+  switch (auto rep = SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id);
           rep.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL()
@@ -51,7 +51,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueAsRef inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.value_id) ==
                SemIR::ExprCategory::Value);
-  CARBON_CHECK(SemIR::GetValueRepr(context.sem_ir(), inst.type_id).kind ==
+  CARBON_CHECK(SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id).kind ==
                SemIR::ValueRepr::Pointer);
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
@@ -60,9 +60,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
                SemIR::ExprCategory::Initializing);
-  CARBON_CHECK(SemIR::GetValueRepr(context.sem_ir(), inst.type_id).kind ==
+  CARBON_CHECK(SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id).kind ==
                SemIR::ValueRepr::Copy);
-  CARBON_CHECK(SemIR::GetInitRepr(context.sem_ir(), inst.type_id).kind ==
+  CARBON_CHECK(SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==
                SemIR::InitRepr::ByCopy);
   context.SetLocal(inst_id, context.GetValue(inst.init_id));
 }

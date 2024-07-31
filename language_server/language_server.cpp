@@ -10,6 +10,7 @@
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/parse.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LS {
@@ -79,11 +80,12 @@ auto LanguageServer::onReply(llvm::json::Value /*id*/,
 // Returns the text of first child of kind Parse::NodeKind::IdentifierName.
 static auto GetIdentifierName(const SharedValueStores& value_stores,
                               const Lex::TokenizedBuffer& tokens,
-                              const Parse::Tree& p, Parse::NodeId node)
+                              const Parse::TreeAndSubtrees& p,
+                              Parse::NodeId node)
     -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
-    if (p.node_kind(ch) == Parse::NodeKind::IdentifierName) {
-      auto token = p.node_token(ch);
+    if (p.tree().node_kind(ch) == Parse::NodeKind::IdentifierName) {
+      auto token = p.tree().node_token(ch);
       if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
         return value_stores.identifiers().Get(tokens.GetIdentifier(token));
       }
@@ -104,6 +106,7 @@ void LanguageServer::OnDocumentSymbol(
   auto buf = SourceBuffer::MakeFromFile(vfs, file, NullDiagnosticConsumer());
   auto lexed = Lex::Lex(value_stores, *buf, NullDiagnosticConsumer());
   auto parsed = Parse::Parse(lexed, NullDiagnosticConsumer(), nullptr);
+  Parse::TreeAndSubtrees tree_and_subtrees(lexed, parsed);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
@@ -126,7 +129,8 @@ void LanguageServer::OnDocumentSymbol(
         continue;
     }
 
-    if (auto name = GetIdentifierName(value_stores, lexed, parsed, node)) {
+    if (auto name =
+            GetIdentifierName(value_stores, lexed, tree_and_subtrees, node)) {
       auto tok = parsed.node_token(node);
       clang::clangd::Position pos{lexed.GetLineNumber(tok) - 1,
                                   lexed.GetColumnNumber(tok) - 1};

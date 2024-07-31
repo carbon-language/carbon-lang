@@ -41,7 +41,7 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     case Lex::TokenKind::Period:
       context.AddNode(NodeKind::NameQualifier,
                       context.ConsumeChecked(Lex::TokenKind::Period),
-                      state.subtree_start, state.has_error);
+                      state.has_error);
       context.PushState(State::DeclNameAndParams);
       break;
 
@@ -83,8 +83,7 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
-    context.AddNode(NodeKind::NameQualifier, *period, state.subtree_start,
-                    state.has_error);
+    context.AddNode(NodeKind::NameQualifier, *period, state.has_error);
     context.PushState(State::DeclNameAndParams);
   }
 }
