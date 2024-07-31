@@ -356,7 +356,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%S) {}
+// CHECK:STDOUT: specific @C(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct) {
 // CHECK:STDOUT:   %S => constants.%struct
@@ -447,9 +449,13 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%S) {}
+// CHECK:STDOUT: specific @C(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct) {
+// CHECK:STDOUT:   %S => constants.%struct
+// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -541,7 +547,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%S) {}
+// CHECK:STDOUT: specific @C(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.1) {
 // CHECK:STDOUT:   %S => constants.%struct.1
@@ -550,6 +558,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.2) {
+// CHECK:STDOUT:   %S => constants.%struct.2
+// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

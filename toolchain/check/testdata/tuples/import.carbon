@@ -395,7 +395,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%X) {}
+// CHECK:STDOUT: specific @C(constants.%X) {
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple) {
 // CHECK:STDOUT:   %X => constants.%tuple
@@ -488,9 +490,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%X) {}
+// CHECK:STDOUT: specific @C(constants.%X) {
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple) {
+// CHECK:STDOUT:   %X => constants.%tuple
+// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -582,7 +588,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%X) {}
+// CHECK:STDOUT: specific @C(constants.%X) {
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.1) {
 // CHECK:STDOUT:   %X => constants.%tuple.1
@@ -591,6 +599,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.2) {
+// CHECK:STDOUT:   %X => constants.%tuple.2
+// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

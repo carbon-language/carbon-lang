@@ -355,13 +355,17 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return %.loc9_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%T) {}
+// CHECK:STDOUT: specific @Class(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(constants.%T) {}
+// CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -492,7 +496,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(constants.%T) {}
+// CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -622,11 +628,13 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => <error>
-// CHECK:STDOUT:   %.1 => <error>
-// CHECK:STDOUT:   %F.type => <error>
-// CHECK:STDOUT:   %F => <error>
+// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.2
+// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
@@ -641,10 +649,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.1 => constants.%.4
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(<error>) {
-// CHECK:STDOUT:   %T => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_arg_mismatch.carbon
@@ -674,6 +678,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.4: type = class_type @CompleteClass, @CompleteClass(i32) [template]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type %CompleteClass.4, i32 [template]
+// CHECK:STDOUT:   %F.type.5: type = fn_type @F.1, @CompleteClass(i32) [template]
+// CHECK:STDOUT:   %F.5: %F.type.5 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -755,7 +762,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.4;
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(constants.%T) {}
+// CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -772,15 +781,13 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(i32) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => <error>
-// CHECK:STDOUT:   %.1 => <error>
-// CHECK:STDOUT:   %F.type => <error>
-// CHECK:STDOUT:   %F => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(<error>) {
-// CHECK:STDOUT:   %T => <error>
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.4
+// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %F.type => constants.%F.type.5
+// CHECK:STDOUT:   %F => constants.%F.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_foo.impl.carbon
@@ -849,7 +856,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%T) {}
+// CHECK:STDOUT: specific @Class(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U

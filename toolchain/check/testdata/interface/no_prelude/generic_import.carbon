@@ -181,7 +181,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith(constants.%T) {}
+// CHECK:STDOUT: specific @AddWith(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(@AddWith.%T) {
 // CHECK:STDOUT:   %T => constants.%T

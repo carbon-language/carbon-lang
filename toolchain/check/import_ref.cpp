@@ -279,6 +279,8 @@ class ImportRefResolver {
   struct SpecificData {
     SemIR::ConstantId generic_const_id;
     llvm::SmallVector<SemIR::InstId> args;
+    llvm::SmallVector<SemIR::InstId> decl_block;
+    llvm::SmallVector<SemIR::InstId> definition_block;
   };
 
   // Looks to see if an instruction has been resolved. If a constant is only
@@ -547,20 +549,39 @@ class ImportRefResolver {
     return {
         .generic_const_id = GetLocalConstantId(specific.generic_id),
         .args = GetLocalInstBlockContents(specific.args_id),
+        .decl_block = GetLocalInstBlockContents(specific.decl_block_id),
+        .definition_block =
+            GetLocalInstBlockContents(specific.definition_block_id),
     };
   }
 
   // Gets a local specific whose data was already imported by
   // GetLocalSpecificData. Does not add any new work.
-  auto GetLocalSpecific(SemIR::SpecificId specific_id,
+  auto GetLocalSpecific(SemIR::SpecificId import_specific_id,
                         const SpecificData& data) -> SemIR::SpecificId {
-    if (!specific_id.is_valid()) {
+    if (!import_specific_id.is_valid()) {
       return SemIR::SpecificId::Invalid;
     }
-    const auto& specific = import_ir_.specifics().Get(specific_id);
+
+    // Form a corresponding local specific ID.
+    const auto& import_specific =
+        import_ir_.specifics().Get(import_specific_id);
     auto generic_id = GetLocalGenericId(data.generic_const_id);
-    auto args_id = GetLocalCanonicalInstBlockId(specific.args_id, data.args);
-    // TODO: Also import the value blocks.
+    auto args_id =
+        GetLocalCanonicalInstBlockId(import_specific.args_id, data.args);
+
+    // Populate the specific. Note that we might get data from multiple
+    // different import IRs, so only import data we don't already have.
+    auto specific_id = context_.specifics().GetOrAdd(generic_id, args_id);
+    auto& specific = context_.specifics().Get(specific_id);
+    if (!specific.decl_block_id.is_valid()) {
+      specific.decl_block_id =
+          GetLocalInstBlockId(import_specific.decl_block_id, data.decl_block);
+    }
+    if (!specific.definition_block_id.is_valid()) {
+      specific.definition_block_id = GetLocalInstBlockId(
+          import_specific.definition_block_id, data.definition_block);
+    }
     return context_.specifics().GetOrAdd(generic_id, args_id);
   }
 

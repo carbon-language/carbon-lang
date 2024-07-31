@@ -118,7 +118,11 @@ export C2(T:! type);
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C1(constants.%T) {}
+// CHECK:STDOUT: specific @C1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C2(constants.%T) {}
+// CHECK:STDOUT: specific @C2(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
