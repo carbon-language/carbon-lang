@@ -192,7 +192,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%self: %Self.1]() -> %Self.1;
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self.1]() -> %Self.1;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestBinary(%a: %C, %b: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
@@ -201,7 +205,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self.2](%other: %Self.2) -> %Self.2;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %.7) {
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self.2](%other: %Self.2) -> %Self.2;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b: %C) {
 // CHECK:STDOUT: !entry:
@@ -218,7 +226,17 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr %self: %.11](%other: %Self.3);
+// CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %.10) {
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.2 (constants.%.11)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self: %.15]();
+// CHECK:STDOUT:   fn[addr %self: %.11](%other: %Self.3);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %.14) {
+// CHECK:STDOUT:   %Self: %.14 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.4)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.4) [symbolic = %.2 (constants.%.15)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: %.15]();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

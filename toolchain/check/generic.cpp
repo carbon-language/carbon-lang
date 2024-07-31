@@ -44,6 +44,14 @@ static auto AddGenericConstantInstToEvalBlock(
 }
 
 namespace {
+// A map from an instruction ID representing a canonical symbolic constant to an
+// instruction within an eval block of the generic that computes the specific
+// value for that constant.
+//
+// We arbitrarily use a small size of 256 bytes for the map.
+// TODO: Determine a better number based on measurements.
+using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
+
 // Substitution callbacks to rebuild a generic constant in the eval block for a
 // generic region.
 class RebuildGenericConstantInEvalBlockCallbacks final
@@ -52,7 +60,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   RebuildGenericConstantInEvalBlockCallbacks(
       Context& context, SemIR::GenericId generic_id,
       SemIR::GenericInstIndex::Region region,
-      Map<SemIR::InstId, SemIR::InstId>& constants_in_generic)
+      ConstantsInGenericMap& constants_in_generic)
       : context_(context),
         generic_id_(generic_id),
         region_(region),
@@ -62,6 +70,14 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   // block, and substitute them for the instructions in the eval block.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
     auto const_id = context_.constant_values().Get(inst_id);
+    if (!const_id.is_valid()) {
+      // An unloaded import ref should never contain anything we need to
+      // substitute into. Don't trigger loading it here.
+      CARBON_CHECK(context_.insts().Is<SemIR::ImportRefUnloaded>(inst_id))
+          << "Substituting into instruction with invalid constant ID: "
+          << context_.insts().Get(inst_id);
+      return true;
+    }
     if (!const_id.is_symbolic()) {
       // This instruction doesn't have a symbolic constant value, so can't
       // contain any bindings that need to be substituted.
@@ -104,6 +120,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
       // constant value for it.
+      // TODO: Provide a location based on the location of the instruction
+      // that uses the constant.
       auto inst_id = context_.sem_ir().insts().AddInNoBlock(
           SemIR::LocIdAndInst::NoLoc(new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(
@@ -118,7 +136,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   Context& context_;
   SemIR::GenericId generic_id_;
   SemIR::GenericInstIndex::Region region_;
-  Map<SemIR::InstId, SemIR::InstId>& constants_in_generic_;
+  ConstantsInGenericMap& constants_in_generic_;
 };
 }  // namespace
 
@@ -129,8 +147,8 @@ class RebuildGenericConstantInEvalBlockCallbacks final
 static auto AddGenericTypeToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
     SemIR::GenericInstIndex::Region region,
-    Map<SemIR::InstId, SemIR::InstId>& constants_in_generic,
-    SemIR::TypeId type_id) -> SemIR::TypeId {
+    ConstantsInGenericMap& constants_in_generic, SemIR::TypeId type_id)
+    -> SemIR::TypeId {
   // Substitute into the type's constant instruction and rebuild it in the eval
   // block.
   auto type_inst_id =
@@ -147,8 +165,8 @@ static auto AddGenericTypeToEvalBlock(
 static auto AddGenericConstantToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
     SemIR::GenericInstIndex::Region region,
-    Map<SemIR::InstId, SemIR::InstId>& constants_in_generic,
-    SemIR::InstId inst_id) -> SemIR::ConstantId {
+    ConstantsInGenericMap& constants_in_generic, SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
   // Substitute into the constant value and rebuild it in the eval block if
   // we've not encountered it before.
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
@@ -162,6 +180,24 @@ static auto AddGenericConstantToEvalBlock(
   return context.constant_values().Get(new_inst_id);
 }
 
+// Populates a map of constants in a generic from the constants in the
+// declaration region, in preparation for building the definition region.
+static auto PopulateConstantsFromDeclaration(
+    Context& context, SemIR::GenericId generic_id,
+    ConstantsInGenericMap& constants_in_generic) {
+  // For the definition region, populate constants from the declaration.
+  auto decl_eval_block = context.inst_blocks().Get(
+      context.generics().Get(generic_id).decl_block_id);
+  constants_in_generic.GrowForInsertCount(decl_eval_block.size());
+  for (auto inst_id : decl_eval_block) {
+    auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+    auto result = constants_in_generic.Insert(const_inst_id, inst_id);
+    CARBON_CHECK(result.is_inserted())
+        << "Duplicate constant in generic decl eval block: "
+        << context.insts().Get(const_inst_id);
+  }
+}
+
 // Builds and returns a block of instructions whose constant values need to be
 // evaluated in order to resolve a generic to a specific.
 static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
@@ -169,16 +205,11 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
     -> SemIR::InstBlockId {
   context.inst_block_stack().Push();
 
-  Map<SemIR::InstId, SemIR::InstId> constants_in_generic;
+  ConstantsInGenericMap constants_in_generic;
 
   // For the definition region, populate constants from the declaration.
   if (region == SemIR::GenericInstIndex::Region::Definition) {
-    auto decl_eval_block = context.inst_blocks().Get(
-        context.generics().Get(generic_id).decl_block_id);
-    for (auto inst_id : decl_eval_block) {
-      constants_in_generic.Insert(
-          context.constant_values().GetConstantInstId(inst_id), inst_id);
-    }
+    PopulateConstantsFromDeclaration(context, generic_id, constants_in_generic);
   }
 
   // The work done in this loop might invalidate iterators into the generic
@@ -227,6 +258,37 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       << context.insts().Get(context.generic_region_stack()
                                  .PeekDependentInsts()[num_dependent_insts]
                                  .inst_id);
+
+  return context.inst_block_stack().Pop();
+}
+
+// Builds and returns an eval block, given the list of canonical symbolic
+// constants that the instructions in the eval block should produce. This is
+// used when importing a generic.
+auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
+                             SemIR::GenericInstIndex::Region region,
+                             llvm::ArrayRef<SemIR::InstId> const_ids)
+    -> SemIR::InstBlockId {
+  context.inst_block_stack().Push();
+
+  ConstantsInGenericMap constants_in_generic;
+
+  // For the definition region, populate constants from the declaration.
+  if (region == SemIR::GenericInstIndex::Region::Definition) {
+    PopulateConstantsFromDeclaration(context, generic_id, constants_in_generic);
+  }
+
+  constants_in_generic.GrowForInsertCount(const_ids.size());
+  for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
+    // Build a constant in the inst block.
+    AddGenericConstantToEvalBlock(context, generic_id, region,
+                                  constants_in_generic, inst_id);
+    CARBON_CHECK(context.inst_block_stack().PeekCurrentBlockContents().size() ==
+                 i + 1)
+        << "Produced "
+        << (context.inst_block_stack().PeekCurrentBlockContents().size() - i)
+        << " instructions when importing " << context.insts().Get(inst_id);
+  }
 
   return context.inst_block_stack().Pop();
 }
@@ -293,11 +355,6 @@ auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId {
   auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
 
-  // TODO: Remove this once we import generics properly.
-  if (!generic_id.is_valid()) {
-    return specific_id;
-  }
-
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.is_valid()) {
@@ -339,11 +396,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
     -> bool {
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
-
-  // TODO: Remove this once we import generics properly.
-  if (!generic_id.is_valid()) {
-    return true;
-  }
+  CARBON_CHECK(generic_id.is_valid()) << "Specific with no generic ID";
 
   if (!specific.definition_block_id.is_valid()) {
     // Evaluate the eval block for the definition of the generic.

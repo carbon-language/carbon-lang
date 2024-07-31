@@ -83,5 +83,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: generic fn @Op(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

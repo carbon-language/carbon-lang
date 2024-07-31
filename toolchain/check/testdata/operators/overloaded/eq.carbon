@@ -224,9 +224,17 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEqual.1[@impl.%self.loc8_15.2: %C](@impl.%other.loc8_24.2: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @Equal.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestEqual(%a: %C, %b: %C) -> bool {
 // CHECK:STDOUT: !entry:
@@ -357,7 +365,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @Equal(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestNotEqual(%a: %D, %b: %D) -> bool {
 // CHECK:STDOUT: !entry:
@@ -366,7 +378,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @NotEqual(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl_for_args.carbon
 // CHECK:STDOUT:
@@ -521,9 +537,17 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEqual.1[@impl.%self.loc9_15.2: %C](@impl.%other.loc9_24.2: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @Equal.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRhsBad(%a: %C, %b: %D) -> bool {
 // CHECK:STDOUT: !entry:

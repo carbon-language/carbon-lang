@@ -12,21 +12,21 @@
 
 // --- int_match.carbon
 
-class C(a: i32) {}
-class D(b: C(1_000));
-class D(b: C(1_000)) {}
+class C(a:! i32) {}
+class D(b:! C(1_000));
+class D(b:! C(1_000)) {}
 
 // --- fail_int_mismatch.carbon
 
-class C(a: i32) {}
-class D(b: C(1000));
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+6]]:14: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: class D(b: C(1_000)) {}
-// CHECK:STDERR:              ^~~~~
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:14: Comparing with previous declaration here.
-// CHECK:STDERR: class D(b: C(1000));
-// CHECK:STDERR:              ^~~~
-class D(b: C(1_000)) {}
+class C(a:! i32) {}
+class D(b:! C(1000));
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+6]]:15: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: class D(b:! C(1_000)) {}
+// CHECK:STDERR:               ^~~~~
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:15: Comparing with previous declaration here.
+// CHECK:STDERR: class D(b:! C(1000));
+// CHECK:STDERR:               ^~~~
+class D(b:! C(1_000)) {}
 
 // CHECK:STDOUT: --- int_match.carbon
 // CHECK:STDOUT:
@@ -34,15 +34,17 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %a: i32 = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1000 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, invalid(%.3) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.3) [template]
+// CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b 0 [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
-// CHECK:STDOUT:   %D.2: type = class_type @D [template]
+// CHECK:STDOUT:   %D.2: type = class_type @D, @D(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -68,44 +70,66 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc2_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc2_12.2: type = converted %int.make_type_32, %.loc2_12.1 [template = i32]
+// CHECK:STDOUT:     %.loc2_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc2_13.2: type = converted %int.make_type_32, %.loc2_13.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_9.1: i32 = param a
-// CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_name a, %a.loc2_9.1
+// CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_symbolic_name a 0, %a.loc2_9.1 [symbolic = @C.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc3: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc3_14: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc3_13: init type = call %C.ref.loc3(%.loc3_14) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %.loc3_13 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_19.2: type = converted %.loc3_13, %.loc3_19.1 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc3_15: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc3_14: init type = call %C.ref.loc3(%.loc3_15) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc3_20.1: type = value_of_initializer %.loc3_14 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc3_20.2: type = converted %.loc3_14, %.loc3_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:     %b.loc3_9.1: %C.3 = param b
-// CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_name b, %b.loc3_9.1
+// CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_symbolic_name b 0, %b.loc3_9.1 [symbolic = @D.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc4: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %C.ref.loc4: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc4_14: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc4_13: init type = call %C.ref.loc4(%.loc4_14) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %.loc4_13 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc4_19.2: type = converted %.loc4_13, %.loc4_19.1 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc4_15: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc4_14: init type = call %C.ref.loc4(%.loc4_15) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc4_20.1: type = value_of_initializer %.loc4_14 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc4_20.2: type = converted %.loc4_14, %.loc4_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:     %b.loc4_9.1: %C.3 = param b
-// CHECK:STDOUT:     %b.loc4_9.2: %C.3 = bind_name b, %b.loc4_9.1
+// CHECK:STDOUT:     %b.loc4_9.2: %C.3 = bind_symbolic_name b 0, %b.loc4_9.1 [symbolic = constants.%b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C.2
+// CHECK:STDOUT: generic class @C(file.%a.loc2_9.2: i32) {
+// CHECK:STDOUT:   %a: i32 = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @D {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D.2
+// CHECK:STDOUT: generic class @D(file.%b.loc3_9.2: %C.3) {
+// CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b 0 [symbolic = %b (constants.%b)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%D.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific invalid(constants.%.3);
+// CHECK:STDOUT: specific @C(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%.3) {
+// CHECK:STDOUT:   %a => constants.%.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @D(constants.%b) {
+// CHECK:STDOUT:   %b => constants.%b
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon
 // CHECK:STDOUT:
@@ -113,18 +137,20 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %a: i32 = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1000 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, invalid(%.3) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.3) [template]
+// CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b 0 [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
-// CHECK:STDOUT:   %D.2: type = class_type @D [template]
+// CHECK:STDOUT:   %D.2: type = class_type @D, @D(%b) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.4: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.5: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -150,44 +176,74 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc2_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc2_12.2: type = converted %int.make_type_32, %.loc2_12.1 [template = i32]
+// CHECK:STDOUT:     %.loc2_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc2_13.2: type = converted %int.make_type_32, %.loc2_13.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_9.1: i32 = param a
-// CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_name a, %a.loc2_9.1
+// CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_symbolic_name a 0, %a.loc2_9.1 [symbolic = @C.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc3_14: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc3_13: init type = call %C.ref.loc3(%.loc3_14) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_18.1: type = value_of_initializer %.loc3_13 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_18.2: type = converted %.loc3_13, %.loc3_18.1 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc3_15: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc3_14: init type = call %C.ref.loc3(%.loc3_15) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %.loc3_14 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc3_19.2: type = converted %.loc3_14, %.loc3_19.1 [template = constants.%C.3]
 // CHECK:STDOUT:     %b.loc3_9.1: %C.3 = param b
-// CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_name b, %b.loc3_9.1
+// CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_symbolic_name b 0, %b.loc3_9.1 [symbolic = @D.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc10_14: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc10_13: init type = call %C.ref.loc10(%.loc10_14) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc10_19.1: type = value_of_initializer %.loc10_13 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc10_19.2: type = converted %.loc10_13, %.loc10_19.1 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc10_15: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc10_14: init type = call %C.ref.loc10(%.loc10_15) [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc10_20.1: type = value_of_initializer %.loc10_14 [template = constants.%C.3]
+// CHECK:STDOUT:     %.loc10_20.2: type = converted %.loc10_14, %.loc10_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:     %b.loc10_9.1: %C.3 = param b
-// CHECK:STDOUT:     %b.loc10_9.2: %C.3 = bind_name b, %b.loc10_9.1
+// CHECK:STDOUT:     %b.loc10_9.2: %C.3 = bind_symbolic_name b 0, %b.loc10_9.1 [symbolic = @.1.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C.2
+// CHECK:STDOUT: generic class @C(file.%a.loc2_9.2: i32) {
+// CHECK:STDOUT:   %a: i32 = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @D;
+// CHECK:STDOUT: generic class @D(file.%b.loc3_9.2: %C.3) {
+// CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b 0 [symbolic = %b (constants.%b)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.5
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @.1(file.%b.loc10_9.2: %C.3) {
+// CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b 0 [symbolic = %b (constants.%b)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%.5
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific invalid(constants.%.3);
+// CHECK:STDOUT: specific @C(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%.3) {
+// CHECK:STDOUT:   %a => constants.%.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @D(constants.%b) {
+// CHECK:STDOUT:   %b => constants.%b
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%b) {
+// CHECK:STDOUT:   %b => constants.%b
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

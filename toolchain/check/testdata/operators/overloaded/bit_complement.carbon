@@ -120,7 +120,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   return %.loc19_14 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self]() -> %Self;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self]() -> %Self;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:

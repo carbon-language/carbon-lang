@@ -267,6 +267,22 @@ class ImportRefResolver {
     llvm::SmallVector<SemIR::ImportIRInst> indirect_insts = {};
   };
 
+  // Local information associated with an imported generic.
+  struct GenericData {
+    llvm::SmallVector<SemIR::InstId> bindings;
+    // TODO: Add data for the self specific.
+    llvm::SmallVector<SemIR::InstId> decl_block;
+    llvm::SmallVector<SemIR::InstId> definition_block;
+  };
+
+  // Local information associated with an imported specific.
+  struct SpecificData {
+    SemIR::ConstantId generic_const_id;
+    llvm::SmallVector<SemIR::InstId> args;
+    llvm::SmallVector<SemIR::InstId> decl_block;
+    llvm::SmallVector<SemIR::InstId> definition_block;
+  };
+
   // Looks to see if an instruction has been resolved. If a constant is only
   // found indirectly, sets the constant for any indirect steps that don't
   // already have the constant. If a constant isn't found, returns the indirect
@@ -397,6 +413,18 @@ class ImportRefResolver {
     return inst_ids;
   }
 
+  // Gets a local instruction block ID corresponding to an imported inst block
+  // whose contents were already imported, for example by
+  // GetLocalInstBlockContents.
+  auto GetLocalInstBlockId(SemIR::InstBlockId import_block_id,
+                           llvm::ArrayRef<SemIR::InstId> contents)
+      -> SemIR::InstBlockId {
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+    return context_.inst_blocks().Add(contents);
+  }
+
   // Gets a local canonical instruction block ID corresponding to an imported
   // inst block whose contents were already imported, for example by
   // GetLocalInstBlockContents.
@@ -409,43 +437,153 @@ class ImportRefResolver {
     return context_.inst_blocks().AddCanonical(contents);
   }
 
-  // Gets a local version of an imported generic.
-  auto GetLocalGeneric(SemIR::GenericId generic_id) -> SemIR::GenericId {
+  // Gets an incomplete local version of an imported generic. Most fields are
+  // set in the second pass.
+  auto MakeIncompleteGeneric(SemIR::InstId decl_id, SemIR::GenericId generic_id)
+      -> SemIR::GenericId {
     if (!generic_id.is_valid()) {
       return SemIR::GenericId::Invalid;
     }
 
-    // TODO: Support importing generics. Note that this comes up in the prelude,
-    // so for now we fall back to producing `Invalid` and treating imported
-    // generics as non-generic.
-    return SemIR::GenericId::Invalid;
+    return context_.generics().Add(
+        {.decl_id = decl_id,
+         .bindings_id = SemIR::InstBlockId::Invalid,
+         .self_specific_id = SemIR::SpecificId::Invalid});
   }
 
-  // Gets a local argument list corresponding to the arguments of an imported
-  // specific.
-  auto GetLocalSpecificArgs(SemIR::SpecificId specific_id)
-      -> llvm::SmallVector<SemIR::InstId> {
-    if (!specific_id.is_valid()) {
-      return {};
+  // Gets a local version of the data associated with a generic.
+  auto GetLocalGenericData(SemIR::GenericId generic_id) -> GenericData {
+    if (!generic_id.is_valid()) {
+      return GenericData();
     }
-    return GetLocalInstBlockContents(
-        import_ir_.specifics().Get(specific_id).args_id);
+
+    const auto& generic = import_ir_.generics().Get(generic_id);
+    return {
+        .bindings = GetLocalInstBlockContents(generic.bindings_id),
+        .decl_block = GetLocalInstBlockContents(generic.decl_block_id),
+        .definition_block =
+            GetLocalInstBlockContents(generic.definition_block_id),
+    };
   }
 
-  // Gets a local specific whose arguments were already imported by
-  // GetLocalSpecificArgs. Does not add any new work.
-  auto GetLocalSpecific(SemIR::SpecificId specific_id,
-                        llvm::ArrayRef<SemIR::InstId> args)
-      -> SemIR::SpecificId {
+  // Given the local constant values for the elements of the eval block, builds
+  // and returns the eval block for a region of a generic.
+  auto GetLocalEvalBlock(const SemIR::Generic& import_generic,
+                         SemIR::GenericId generic_id,
+                         SemIR::GenericInstIndex::Region region,
+                         llvm::ArrayRef<SemIR::InstId> inst_ids)
+      -> SemIR::InstBlockId {
+    auto import_block_id = import_generic.GetEvalBlock(region);
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+    return RebuildGenericEvalBlock(context_, generic_id, region, inst_ids);
+  }
+
+  // Adds the given local generic data to the given generic.
+  auto SetGenericData(SemIR::GenericId import_generic_id,
+                      SemIR::GenericId new_generic_id,
+                      const GenericData& generic_data) -> void {
+    if (!import_generic_id.is_valid()) {
+      return;
+    }
+
+    const auto& import_generic = import_ir_.generics().Get(import_generic_id);
+    auto& new_generic = context_.generics().Get(new_generic_id);
+    new_generic.bindings_id = GetLocalCanonicalInstBlockId(
+        import_generic.bindings_id, generic_data.bindings);
+    // TODO: Import or rebuild the self specific.
+    new_generic.decl_block_id = GetLocalEvalBlock(
+        import_generic, new_generic_id,
+        SemIR::GenericInstIndex::Region::Declaration, generic_data.decl_block);
+    new_generic.definition_block_id =
+        GetLocalEvalBlock(import_generic, new_generic_id,
+                          SemIR::GenericInstIndex::Region::Definition,
+                          generic_data.definition_block);
+  }
+
+  // Gets a local constant value corresponding to an imported generic ID. May
+  // add work to the work stack and return `Invalid`.
+  auto GetLocalConstantId(SemIR::GenericId generic_id) -> SemIR::ConstantId {
+    if (!generic_id.is_valid()) {
+      return SemIR::ConstantId::Invalid;
+    }
+    return GetLocalConstantId(
+        import_ir_.insts()
+            .Get(import_ir_.generics().Get(generic_id).decl_id)
+            .type_id());
+  }
+
+  // Gets a local generic ID given the corresponding local constant ID returned
+  // by GetLocalConstantId for the imported generic. Does not add any new work.
+  auto GetLocalGenericId(SemIR::ConstantId local_const_id) -> SemIR::GenericId {
+    if (!local_const_id.is_valid()) {
+      return SemIR::GenericId::Invalid;
+    }
+    auto type = context_.insts().Get(
+        context_.constant_values().GetInstId(local_const_id));
+    CARBON_KIND_SWITCH(type) {
+      case CARBON_KIND(SemIR::FunctionType fn_type): {
+        return context_.functions().Get(fn_type.function_id).generic_id;
+      }
+      case CARBON_KIND(SemIR::GenericClassType class_type): {
+        return context_.classes().Get(class_type.class_id).generic_id;
+      }
+      case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
+        return context_.interfaces()
+            .Get(interface_type.interface_id)
+            .generic_id;
+      }
+      default: {
+        CARBON_FATAL() << "Unexpected type for generic declaration: " << type;
+      }
+    }
+  }
+
+  // Gets local information about an imported specific.
+  auto GetLocalSpecificData(SemIR::SpecificId specific_id) -> SpecificData {
     if (!specific_id.is_valid()) {
+      return {.generic_const_id = SemIR::ConstantId::Invalid, .args = {}};
+    }
+
+    const auto& specific = import_ir_.specifics().Get(specific_id);
+    return {
+        .generic_const_id = GetLocalConstantId(specific.generic_id),
+        .args = GetLocalInstBlockContents(specific.args_id),
+        .decl_block = GetLocalInstBlockContents(specific.decl_block_id),
+        .definition_block =
+            GetLocalInstBlockContents(specific.definition_block_id),
+    };
+  }
+
+  // Gets a local specific whose data was already imported by
+  // GetLocalSpecificData. Does not add any new work.
+  auto GetOrAddLocalSpecific(SemIR::SpecificId import_specific_id,
+                             const SpecificData& data) -> SemIR::SpecificId {
+    if (!import_specific_id.is_valid()) {
       return SemIR::SpecificId::Invalid;
     }
-    const auto& specific = import_ir_.specifics().Get(specific_id);
-    // TODO: Import the generic.
-    auto generic_id = SemIR::GenericId::Invalid;
-    auto args_id = GetLocalCanonicalInstBlockId(specific.args_id, args);
-    // TODO: Also import the specific.
-    return context_.specifics().GetOrAdd(generic_id, args_id);
+
+    // Form a corresponding local specific ID.
+    const auto& import_specific =
+        import_ir_.specifics().Get(import_specific_id);
+    auto generic_id = GetLocalGenericId(data.generic_const_id);
+    auto args_id =
+        GetLocalCanonicalInstBlockId(import_specific.args_id, data.args);
+
+    // Populate the specific. Note that we might get data from multiple
+    // different import IRs, so only import data we don't already have.
+    auto specific_id = context_.specifics().GetOrAdd(generic_id, args_id);
+    auto& specific = context_.specifics().Get(specific_id);
+    if (!specific.decl_block_id.is_valid()) {
+      specific.decl_block_id =
+          GetLocalInstBlockId(import_specific.decl_block_id, data.decl_block);
+    }
+    if (!specific.definition_block_id.is_valid()) {
+      specific.definition_block_id = GetLocalInstBlockId(
+          import_specific.definition_block_id, data.definition_block);
+    }
+    return specific_id;
   }
 
   // Returns the ConstantId for each parameter's type. Adds unresolved constants
@@ -653,7 +791,7 @@ class ImportRefResolver {
     return {
         .name_id = GetLocalNameId(import_base.name_id),
         .parent_scope_id = SemIR::NameScopeId::Invalid,
-        .generic_id = GetLocalGeneric(import_base.generic_id),
+        .generic_id = MakeIncompleteGeneric(decl_id, import_base.generic_id),
         .first_param_node_id = Parse::NodeId::Invalid,
         .last_param_node_id = Parse::NodeId::Invalid,
         .implicit_param_refs_id = import_base.implicit_param_refs_id.is_valid()
@@ -854,11 +992,22 @@ class ImportRefResolver {
       return ResolveResult::Retry();
     }
 
+    // TODO: Track an interface type, not an interface ID, on
+    // AssociatedEntityType.
+    auto interface_inst = context_.insts().Get(interface_inst_id);
+    SemIR::InterfaceId interface_id = SemIR::InterfaceId::Invalid;
+    if (interface_inst.Is<SemIR::InterfaceType>()) {
+      interface_id = interface_inst.As<SemIR::InterfaceType>().interface_id;
+    } else {
+      interface_id =
+          context_.types()
+              .GetAs<SemIR::GenericInterfaceType>(interface_inst.type_id())
+              .interface_id;
+    }
+
     return ResolveAs<SemIR::AssociatedEntityType>(
         {.type_id = SemIR::TypeId::TypeType,
-         .interface_id = context_.insts()
-                             .GetAs<SemIR::InterfaceType>(interface_inst_id)
-                             .interface_id,
+         .interface_id = interface_id,
          .entity_type_id =
              context_.GetTypeIdForTypeConstant(entity_type_const_id)});
   }
@@ -1009,6 +1158,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_class.param_refs_id);
+    auto generic_data = GetLocalGenericData(import_class.generic_id);
     auto self_const_id = GetLocalConstantId(import_class.self_type_id);
     auto object_repr_const_id =
         import_class.object_repr_id.is_valid()
@@ -1028,6 +1178,7 @@ class ImportRefResolver {
         import_class.implicit_param_refs_id, implicit_param_const_ids);
     new_class.param_refs_id =
         GetLocalParamRefsId(import_class.param_refs_id, param_const_ids);
+    SetGenericData(import_class.generic_id, new_class.generic_id, generic_data);
     new_class.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
     if (import_class.is_defined()) {
@@ -1043,7 +1194,7 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_const_id =
         GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
-    auto args = GetLocalSpecificArgs(inst.specific_id);
+    auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
@@ -1058,7 +1209,7 @@ class ImportRefResolver {
     } else {
       auto generic_class_type = context_.types().GetAs<SemIR::GenericClassType>(
           class_const_inst.type_id());
-      auto specific_id = GetLocalSpecific(inst.specific_id, args);
+      auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
       return ResolveAs<SemIR::ClassType>(
           {.type_id = SemIR::TypeId::TypeType,
            .class_id = generic_class_type.class_id,
@@ -1116,6 +1267,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(function.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(function.param_refs_id);
+    auto generic_data = GetLocalGenericData(function.generic_id);
 
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
@@ -1130,7 +1282,9 @@ class ImportRefResolver {
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
     // TODO: Implement import for generics.
-    auto generic_id = GetLocalGeneric(function.generic_id);
+    auto generic_id =
+        MakeIncompleteGeneric(function_decl_id, function.generic_id);
+    SetGenericData(function.generic_id, generic_id, generic_data);
 
     auto new_return_storage = SemIR::InstId::Invalid;
     if (function.return_storage_id.is_valid()) {
@@ -1173,14 +1327,18 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto fn_val_id = GetLocalConstantInstId(
         import_ir_.functions().Get(inst.function_id).decl_id);
+    auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
-    auto fn_val = context_.insts().Get(fn_val_id);
-    CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id()));
-    // TODO: Import the correct specific and build a function type constant
-    // using it.
-    return {.const_id = context_.types().GetConstantId(fn_val.type_id())};
+    auto fn_type_id = context_.insts().Get(fn_val_id).type_id();
+    return ResolveAs<SemIR::FunctionType>(
+        {.type_id = SemIR::TypeId::TypeType,
+         .function_id = context_.types()
+                            .GetAs<SemIR::FunctionType>(fn_type_id)
+                            .function_id,
+         .specific_id =
+             GetOrAddLocalSpecific(inst.specific_id, specific_data)});
   }
 
   auto TryResolveTypedInst(SemIR::GenericClassType inst) -> ResolveResult {
@@ -1322,6 +1480,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
+    auto generic_data = GetLocalGenericData(import_interface.generic_id);
 
     std::optional<SemIR::InstId> self_param_id;
     if (import_interface.is_defined()) {
@@ -1338,6 +1497,8 @@ class ImportRefResolver {
         import_interface.implicit_param_refs_id, implicit_param_const_ids);
     new_interface.param_refs_id =
         GetLocalParamRefsId(import_interface.param_refs_id, param_const_ids);
+    SetGenericData(import_interface.generic_id, new_interface.generic_id,
+                   generic_data);
 
     if (import_interface.is_defined()) {
       CARBON_CHECK(self_param_id);
@@ -1351,7 +1512,7 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_const_id = GetLocalConstantId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
-    auto args = GetLocalSpecificArgs(inst.specific_id);
+    auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
@@ -1368,7 +1529,7 @@ class ImportRefResolver {
       auto generic_interface_type =
           context_.types().GetAs<SemIR::GenericInterfaceType>(
               interface_const_inst.type_id());
-      auto specific_id = GetLocalSpecific(inst.specific_id, args);
+      auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
       return ResolveAs<SemIR::InterfaceType>(
           {.type_id = SemIR::TypeId::TypeType,
            .interface_id = generic_interface_type.interface_id,
