@@ -299,13 +299,29 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GreaterOrEquivalent.1[@impl.%self.loc10_26.2: %C](@impl.%other.loc10_35.2: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @Less.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @LessOrEquivalent.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent.2[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Greater.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @GreaterOrEquivalent.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a: %C, %b: %C) -> bool {
 // CHECK:STDOUT: !entry:
@@ -506,7 +522,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @Less(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a: %D, %b: %D) -> bool {
 // CHECK:STDOUT: !entry:
@@ -515,7 +535,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @LessOrEquivalent(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a: %D, %b: %D) -> bool {
 // CHECK:STDOUT: !entry:
@@ -524,7 +548,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @Greater(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a: %D, %b: %D) -> bool {
 // CHECK:STDOUT: !entry:
@@ -533,5 +561,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: generic fn @GreaterOrEquivalent(constants.%Self: %.4) {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> bool;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

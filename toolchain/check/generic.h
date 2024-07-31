@@ -31,6 +31,14 @@ auto FinishGenericRedecl(Context& context, SemIR::InstId decl_id,
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     -> void;
 
+// Builds and returns an eval block, given the list of canonical symbolic
+// constants that the instructions in the eval block should produce. This is
+// used when importing a generic.
+auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
+                             SemIR::GenericInstIndex::Region region,
+                             llvm::ArrayRef<SemIR::InstId> const_ids)
+    -> SemIR::InstBlockId;
+
 // Builds a new specific, or finds an existing one if this generic has already
 // been referenced with these arguments. Performs substitution into the
 // declaration, but not the definition, of the generic.

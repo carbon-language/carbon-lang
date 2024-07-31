@@ -281,9 +281,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
+// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %.3) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2();
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %.4) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

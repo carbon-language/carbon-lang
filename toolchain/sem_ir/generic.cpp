@@ -32,6 +32,7 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
 
 auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
     -> SpecificId {
+  CARBON_CHECK(generic_id.is_valid());
   return lookup_table_
       .Insert(
           KeyContext::Key{.generic_id = generic_id, .args_id = args_id},

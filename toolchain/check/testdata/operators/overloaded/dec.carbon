@@ -109,7 +109,12 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[addr @impl.%self.loc18_14.3: %.3]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[addr %self: %.5]();
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: %.5]();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
