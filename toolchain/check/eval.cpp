@@ -1500,10 +1500,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
 
-    if (!result[i].is_valid()) {
-      // TODO: Produce a diagnostic.
-      result[i] = SemIR::InstId::BuiltinError;
-    }
+    // TODO: If this becomes possible through monomorphization failure, produce
+    // a diagnostic and put `SemIR::InstId::BuiltinError` in the table entry.
+    CARBON_CHECK(result[i].is_valid());
   }
 
   return context.inst_blocks().Add(result);
