@@ -182,7 +182,7 @@ Edit snippet in /docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="/docs/images/cpp_snippet.svg" width="600"
-     alt="A snippet of C++ code. Follow the link to read it.">
+     alt="A snippet of C++ code. Follow the link to read it."/>
 </a>
 
 It's possible to migrate a single function to Carbon:
@@ -193,7 +193,7 @@ Edit snippet in /docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="/docs/images/mixed_snippet.svg" width="600"
-     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
+     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it."/>
 </a>
 
 References:

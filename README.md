@@ -24,7 +24,7 @@ Edit snippet in docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
-     alt="Quicksort code in Carbon. Follow the link to read more.">
+     alt="Quicksort code in Carbon. Follow the link to read more."/>
 </a>
 
 <!--
@@ -32,7 +32,7 @@ Don't let the text wrap too narrowly to the left of the above image.
 The `div` reduces the vertical height.
 GitHub will autolink `img`, but won't produce a link when `href="#"`.
 -->
-<div><a href="#"><img src="docs/images/bumper.png"></a></div>
+<div><a href="#"><img src="docs/images/bumper.png"/></a></div>
 
 **Fast and works with C++**
 
@@ -177,7 +177,7 @@ Edit snippet in docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="docs/images/cpp_snippet.svg" width="600"
-     alt="A snippet of C++ code. Follow the link to read it.">
+     alt="A snippet of C++ code. Follow the link to read it."/>
 </a>
 
 corresponds to this Carbon code:
@@ -188,7 +188,7 @@ Edit snippet in docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="docs/images/carbon_snippet.svg" width="600"
-     alt="A snippet of converted Carbon code. Follow the link to read it.">
+     alt="A snippet of converted Carbon code. Follow the link to read it."/>
 </a>
 
 You can call Carbon from C++ without overhead and the other way around. This
@@ -201,7 +201,7 @@ Edit snippet in docs/images/snippets.md and:
 https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="docs/images/mixed_snippet.svg" width="600"
-     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
+     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it."/>
 </a>
 
 Read more about

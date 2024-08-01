@@ -3658,7 +3658,7 @@ and [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
 will be migrated using a combination of Carbon features. Carbon mixins support
 implementation reuse and Carbon interfaces allow a type to implement multiple
 APIs. However, there may be limits on the degree of interop available with
-multiple inheritance across the C++ <-> Carbon boundaries.
+multiple inheritance across the C++ \<-> Carbon boundaries.
 
 Carbon dyn-safe interfaces may be exported to C++ as an
 [abstract base class](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>).

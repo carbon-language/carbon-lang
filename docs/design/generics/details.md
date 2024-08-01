@@ -4034,8 +4034,8 @@ The syntax for an out-of-line parameterized `impl` declaration is:
 
 <!-- The following triggers a bug in prettier where it adds an `>` -->
 
-> `impl forall [`_<parameter-bindings>_`]` _<type-expression>_ `as`
-> _<facet-type-expression> [_ `where` _<optional-rewrite-constraints> ]_ `;`
+> `impl forall [`_\<parameter-bindings>_`]` _\<type-expression>_ `as`
+> _\<facet-type-expression> [_ `where` _\<optional-rewrite-constraints> ]_ `;`
 
 <!-- prettier-ignore-end -->
 

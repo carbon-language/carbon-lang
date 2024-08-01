@@ -100,51 +100,67 @@ Expected difference between checked and template parameters:
 
 <table>
   <tr>
-   <td><strong>Checked</strong>
+   <td>
+    <strong>Checked</strong>
    </td>
-   <td><strong>Template</strong>
-   </td>
-  </tr>
-  <tr>
-   <td>bounded parametric polymorphism
-   </td>
-   <td>compile-time duck typing and ad-hoc polymorphism
+   <td>
+    <strong>Template</strong>
    </td>
   </tr>
   <tr>
-   <td>constrained genericity
+   <td>
+    bounded parametric polymorphism
    </td>
-   <td>optional constraints
-   </td>
-  </tr>
-  <tr>
-   <td>name lookup resolved for definitions in isolation ("early")
-   </td>
-   <td>name lookup can use information from arguments (name lookup may be "late")
+   <td>
+    compile-time duck typing and ad-hoc polymorphism
    </td>
   </tr>
   <tr>
-   <td>sound to typecheck definitions in isolation ("early")
+   <td>
+    constrained genericity
    </td>
-   <td>complete type checking may require information from calls (may be "late")
-   </td>
-  </tr>
-  <tr>
-   <td>supports separate type checking; may also support separate compilation
-   </td>
-   <td>separate compilation only to the extent that C++ supports it
+   <td>
+    optional constraints
    </td>
   </tr>
   <tr>
-   <td>allowed but not required to be implemented using dynamic dispatch
+   <td>
+    name lookup resolved for definitions in isolation ("early")
    </td>
-   <td>does not support implementation by way of dynamic dispatch, just static by way of <a href="#instantiation">instantiation</a>
+   <td>
+    name lookup can use information from arguments (name lookup may be "late")
    </td>
   </tr>
   <tr>
-   <td>monomorphization is an optional optimization that cannot render the program invalid
+   <td>
+    sound to typecheck definitions in isolation ("early")
    </td>
-   <td>monomorphization is mandatory and can fail, resulting in the program being invalid
+   <td>
+    complete type checking may require information from calls (may be "late")
+   </td>
+  </tr>
+  <tr>
+   <td>
+    supports separate type checking; may also support separate compilation
+   </td>
+   <td>
+    separate compilation only to the extent that C++ supports it
+   </td>
+  </tr>
+  <tr>
+   <td>
+    allowed but not required to be implemented using dynamic dispatch
+   </td>
+   <td>
+    does not support implementation by way of dynamic dispatch, just static by way of <a href="#instantiation">instantiation</a>
+   </td>
+  </tr>
+  <tr>
+   <td>
+    monomorphization is an optional optimization that cannot render the program invalid
+   </td>
+   <td>
+    monomorphization is mandatory and can fail, resulting in the program being invalid
    </td>
   </tr>
 </table>
