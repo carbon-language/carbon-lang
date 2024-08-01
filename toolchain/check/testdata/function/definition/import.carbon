@@ -235,9 +235,9 @@ fn D() {}
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
-// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
