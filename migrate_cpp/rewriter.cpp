@@ -222,7 +222,7 @@ auto RewriteBuilder::VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool {
       c = '_';
     }
   }
-  SetReplacement(expr, {OutputSegment(std::move(text))});
+  SetReplacement(expr, OutputSegment(std::move(text)));
   return true;
 }
 
