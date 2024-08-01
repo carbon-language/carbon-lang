@@ -131,30 +131,38 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 //    - If `retry` is set, we process it again, because it didn't complete last
 //      time, even though we have a constant value already.
 // 2. Resolve the instruction: (TryResolveInst/TryResolveTypedInst)
+//    - For a symbolic constant within a generic, find the generic itself. If it
+//      needs to be imported, return Retry() to import the generic before we
+//      import the constant.
 //    - For instructions that can be forward declared, if we don't already have
 //      a constant value from a previous attempt at resolution, start by making
 //      a forward declared constant value to address circular references.
 //    - Gather all input constants.
 //      - Gathering constants directly adds unresolved values to work_stack_.
 //    - If any need to be resolved (HasNewWork), return Retry(): this
-//      instruction needs two calls to complete.
+//      instruction needs another call to complete.
 //      - If the constant value is already known because we have made a forward
 //        declaration, pass it to Retry(). It will be passed to future attempts
 //        to resolve this instruction so the earlier work can be found, and will
 //        be made available for other instructions to use.
-//      - The second attempt to resolve this instruction must produce the same
-//        constant, because the value may have already been used by resolved
-//        instructions.
+//      - The subsequent attempt to resolve this instruction must produce the
+//        same constant, because the value may have already been used by
+//        resolved instructions.
 //    - Build any necessary IR structures, and return the output constant.
 // 3. If resolve didn't return Retry(), pop the work. Otherwise, it needs to
 //    remain, and may no longer be at the top of the stack; set `retry` on it so
 //    we'll make sure to run it again later.
 //
-// TryResolveInst/TryResolveTypedInst can complete in one call for a given
-// instruction, but should always complete within two calls. However, due to the
-// chance of a second call, it's important to reserve all expensive logic until
-// it's been established that input constants are available; this in particular
-// includes GetTypeIdForTypeConstant calls which do a hash table lookup.
+// TryResolveInst can complete in one call for a given instruction, but should
+// always complete within three calls:
+//
+// - TryResolveInst can retry once if the generic is not yet loaded.
+// - TryResolveTypedInst can retry once if its inputs are not yet loaded.
+// - The third call should succeed.
+//
+// Due to the chance of a second call to TryResolveTypedInst, it's important to
+// reserve all expensive logic until it's been established that input constants
+// are available.
 //
 // TODO: Fix class `extern` handling and merging, rewrite tests.
 // - check/testdata/class/cross_package_import.carbon
@@ -210,20 +218,52 @@ class ImportRefResolver {
     return constant_id;
   }
 
+  // Wraps constant evaluation with logic to handle constants.
+  auto ResolveConstant(SemIR::ConstantId import_const_id) -> SemIR::ConstantId {
+    if (!import_const_id.is_valid()) {
+      return import_const_id;
+    }
+
+    // For template constants, the corresponding instruction has the desired
+    // constant value.
+    if (!import_const_id.is_symbolic()) {
+      return Resolve(import_ir_.constant_values().GetInstId(import_const_id));
+    }
+
+    // For abstract symbolic constants, the corresponding instruction has the
+    // desired constant value.
+    const auto& symbolic_const =
+        import_ir_.constant_values().GetSymbolicConstant(import_const_id);
+    if (!symbolic_const.generic_id.is_valid()) {
+      return Resolve(import_ir_.constant_values().GetInstId(import_const_id));
+    }
+
+    // For a symbolic constant in a generic, pick the corresponding instruction
+    // out of the eval block for the generic and resolve its constant value.
+    const auto& generic = import_ir_.generics().Get(symbolic_const.generic_id);
+    auto block = generic.GetEvalBlock(symbolic_const.index.region());
+    return Resolve(
+        import_ir_.inst_blocks().Get(block)[symbolic_const.index.index()]);
+  }
+
   // Wraps constant evaluation with logic to handle types.
   auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId {
     if (!import_type_id.is_valid()) {
       return import_type_id;
     }
 
-    auto import_type_inst_id = import_ir_.types().GetInstId(import_type_id);
-    CARBON_CHECK(import_type_inst_id.is_valid());
+    auto import_type_const_id =
+        import_ir_.types().GetConstantId(import_type_id);
+    CARBON_CHECK(import_type_const_id.is_valid());
 
-    if (import_type_inst_id.is_builtin()) {
+    if (auto import_type_inst_id =
+            import_ir_.constant_values().GetInstId(import_type_const_id);
+        import_type_inst_id.is_builtin()) {
       // Builtins don't require constant resolution; we can use them directly.
       return context_.GetBuiltinType(import_type_inst_id.builtin_inst_kind());
     } else {
-      return context_.GetTypeIdForTypeConstant(Resolve(import_type_inst_id));
+      return context_.GetTypeIdForTypeConstant(
+          ResolveConstant(import_type_id.AsConstantId()));
     }
   }
 
@@ -847,6 +887,39 @@ class ImportRefResolver {
   // TODO: Error is returned when support is missing, but that should go away.
   auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id)
       -> ResolveResult {
+    auto inst_const_id = import_ir_.constant_values().Get(inst_id);
+    if (!inst_const_id.is_valid() || !inst_const_id.is_symbolic() ||
+        const_id.is_valid()) {
+      return TryResolveInstCanonical(inst_id, const_id);
+    }
+
+    // Try to import the generic, and retry if it's not ready yet. Note that if
+    // this retries, we can require three passes to import an instruction.
+    const auto& symbolic_const =
+        import_ir_.constant_values().GetSymbolicConstant(inst_const_id);
+    auto initial_work = work_stack_.size();
+    auto generic_const_id = GetLocalConstantId(symbolic_const.generic_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+
+    // Import the constant and rebuild the symbolic constant data.
+    auto result = TryResolveInstCanonical(inst_id, const_id);
+    if (result.const_id.is_valid()) {
+      result.const_id = context_.constant_values().AddSymbolicConstant(
+          {.inst_id = context_.constant_values().GetInstId(result.const_id),
+           .generic_id = GetLocalGenericId(generic_const_id),
+           .index = symbolic_const.index});
+    }
+    return result;
+  }
+
+  // Tries to resolve the InstId, returning a canonical constant when ready, or
+  // Invalid if more has been added to the stack. This is the same as
+  // TryResolveInst, except that it may resolve symbolic constants as canonical
+  // constants instead of as constants associated with a particular generic.
+  auto TryResolveInstCanonical(SemIR::InstId inst_id,
+                               SemIR::ConstantId const_id) -> ResolveResult {
     if (inst_id.is_builtin()) {
       CARBON_CHECK(!const_id.is_valid());
       // Constants for builtins can be directly copied.
@@ -890,7 +963,7 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst, inst_id);
       }
       case CARBON_KIND(SemIR::FunctionDecl inst): {
-        return TryResolveTypedInst(inst);
+        return TryResolveTypedInst(inst, const_id);
       }
       case CARBON_KIND(SemIR::FunctionType inst): {
         return TryResolveTypedInst(inst);
@@ -1253,73 +1326,101 @@ class ImportRefResolver {
     return {.const_id = context_.constant_values().Get(inst_id)};
   }
 
-  auto TryResolveTypedInst(SemIR::FunctionDecl inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
-
-    const auto& function = import_ir_.functions().Get(inst.function_id);
-    auto return_type_const_id = SemIR::ConstantId::Invalid;
-    if (function.return_storage_id.is_valid()) {
-      return_type_const_id =
-          GetLocalConstantId(function.GetDeclaredReturnType(import_ir_));
-    }
-    auto parent_scope_id = GetLocalNameScopeId(function.parent_scope_id);
-    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
-        GetLocalParamConstantIds(function.implicit_param_refs_id);
-    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
-        GetLocalParamConstantIds(function.param_refs_id);
-    auto generic_data = GetLocalGenericData(function.generic_id);
-
-    if (HasNewWork(initial_work)) {
-      return ResolveResult::Retry();
-    }
-
-    // Add the function declaration.
+  // Make a declaration of a function. This is done as a separate step from
+  // importing the function declaration in order to resolve cycles.
+  auto MakeFunctionDecl(const SemIR::Function& import_function)
+      -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
     SemIR::FunctionDecl function_decl = {
         .type_id = SemIR::TypeId::Invalid,
         .function_id = SemIR::FunctionId::Invalid,
         .decl_block_id = SemIR::InstBlockId::Empty};
-    auto import_ir_inst_id = AddImportIRInst(function.latest_decl_id());
-    auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
-        SemIR::LocIdAndInst(import_ir_inst_id, function_decl));
-    // TODO: Implement import for generics.
-    auto generic_id =
-        MakeIncompleteGeneric(function_decl_id, function.generic_id);
-    SetGenericData(function.generic_id, generic_id, generic_data);
+    auto function_decl_id =
+        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+            AddImportIRInst(import_function.latest_decl_id()), function_decl));
 
-    auto new_return_storage = SemIR::InstId::Invalid;
-    if (function.return_storage_id.is_valid()) {
-      // Recreate the return slot from scratch.
-      // TODO: Once we import function definitions, we'll need to make sure we
-      // use the same return storage variable in the declaration and definition.
-      new_return_storage = context_.AddInstInNoBlock<SemIR::VarStorage>(
-          AddImportIRInst(function.return_storage_id),
-          {.type_id = context_.GetTypeIdForTypeConstant(return_type_const_id),
-           .name_id = SemIR::NameId::ReturnSlot});
-    }
+    // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
-        {{.name_id = GetLocalNameId(function.name_id),
-          .parent_scope_id = parent_scope_id,
-          .generic_id = generic_id,
-          .first_param_node_id = Parse::NodeId::Invalid,
-          .last_param_node_id = Parse::NodeId::Invalid,
-          .implicit_param_refs_id = GetLocalParamRefsId(
-              function.implicit_param_refs_id, implicit_param_const_ids),
-          .param_refs_id =
-              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
-          .decl_id = function_decl_id,
-          .definition_id = function.definition_id.is_valid()
-                               ? function_decl_id
-                               : SemIR::InstId::Invalid},
-         {.return_storage_id = new_return_storage,
-          .is_extern = function.is_extern,
-          .builtin_function_kind = function.builtin_function_kind}});
+        {GetIncompleteLocalEntityBase(function_decl_id, import_function),
+         {.return_storage_id = SemIR::InstId::Invalid,
+          .is_extern = import_function.is_extern,
+          .builtin_function_kind = import_function.builtin_function_kind}});
+
     // TODO: Import this or recompute it.
     auto specific_id = SemIR::SpecificId::Invalid;
     function_decl.type_id =
         context_.GetFunctionType(function_decl.function_id, specific_id);
-    // Write the function ID into the FunctionDecl.
+
+    // Write the function ID and type into the FunctionDecl.
     context_.ReplaceInstBeforeConstantUse(function_decl_id, function_decl);
-    return {.const_id = context_.constant_values().Get(function_decl_id)};
+    return {function_decl.function_id,
+            context_.constant_values().Get(function_decl_id)};
+  }
+
+  auto TryResolveTypedInst(SemIR::FunctionDecl inst,
+                           SemIR::ConstantId function_const_id)
+      -> ResolveResult {
+    const auto& import_function = import_ir_.functions().Get(inst.function_id);
+
+    SemIR::FunctionId function_id = SemIR::FunctionId::Invalid;
+    if (!function_const_id.is_valid()) {
+      // On the first pass, create a forward declaration of the interface.
+      std::tie(function_id, function_const_id) =
+          MakeFunctionDecl(import_function);
+    } else {
+      // On the second pass, compute the function ID from the constant value of
+      // the declaration.
+      auto function_const_inst = context_.insts().Get(
+          context_.constant_values().GetInstId(function_const_id));
+      auto function_type = context_.types().GetAs<SemIR::FunctionType>(
+          function_const_inst.type_id());
+      function_id = function_type.function_id;
+    }
+
+    auto initial_work = work_stack_.size();
+
+    auto return_type_const_id = SemIR::ConstantId::Invalid;
+    if (import_function.return_storage_id.is_valid()) {
+      return_type_const_id =
+          GetLocalConstantId(import_function.GetDeclaredReturnType(import_ir_));
+    }
+    auto parent_scope_id = GetLocalNameScopeId(import_function.parent_scope_id);
+    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
+        GetLocalParamConstantIds(import_function.implicit_param_refs_id);
+    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
+        GetLocalParamConstantIds(import_function.param_refs_id);
+    auto generic_data = GetLocalGenericData(import_function.generic_id);
+
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry(function_const_id);
+    }
+
+    // Add the function declaration.
+    auto& new_function = context_.functions().Get(function_id);
+    new_function.parent_scope_id = parent_scope_id;
+    new_function.implicit_param_refs_id = GetLocalParamRefsId(
+        import_function.implicit_param_refs_id, implicit_param_const_ids);
+    new_function.param_refs_id =
+        GetLocalParamRefsId(import_function.param_refs_id, param_const_ids);
+    SetGenericData(import_function.generic_id, new_function.generic_id,
+                   generic_data);
+
+    if (import_function.return_storage_id.is_valid()) {
+      // Recreate the return slot from scratch.
+      // TODO: Once we import function definitions, we'll need to make sure we
+      // use the same return storage variable in the declaration and definition.
+      new_function.return_storage_id =
+          context_.AddInstInNoBlock<SemIR::VarStorage>(
+              AddImportIRInst(import_function.return_storage_id),
+              {.type_id =
+                   context_.GetTypeIdForTypeConstant(return_type_const_id),
+               .name_id = SemIR::NameId::ReturnSlot});
+    }
+
+    if (import_function.definition_id.is_valid()) {
+      new_function.definition_id = new_function.decl_id;
+    }
+
+    return {.const_id = function_const_id};
   }
 
   auto TryResolveTypedInst(SemIR::FunctionType inst) -> ResolveResult {

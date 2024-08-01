@@ -420,10 +420,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4, %.5) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple) [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -516,12 +516,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.1: %.3 = tuple_value (%.4, %.5) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple.1) [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %tuple.2: %.3 = tuple_value (%.9, %.8) [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%tuple.2) [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

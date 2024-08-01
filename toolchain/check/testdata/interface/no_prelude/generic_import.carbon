@@ -118,7 +118,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+12, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+10, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.5: %F.type.2 = import_ref Main//a, inst+12, loaded [template = constants.%F.1]
+// CHECK:STDOUT:   %import_ref.5: @AddWith.%F.type (%F.type.2) = import_ref Main//a, inst+12, loaded [symbolic = @AddWith.%F (constants.%F.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
