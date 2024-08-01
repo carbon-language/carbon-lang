@@ -131,9 +131,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 //    - If `retry` is set, we process it again, because it didn't complete last
 //      time, even though we have a constant value already.
 // 2. Resolve the instruction: (TryResolveInst/TryResolveTypedInst)
-//    - For a symbolic constant within a generic, find the generic itself. If it
-//      needs to be imported, return Retry() to import the generic before we
-//      import the constant.
+//    - For a symbolic constant within a generic, find the generic itself.
 //    - For instructions that can be forward declared, if we don't already have
 //      a constant value from a previous attempt at resolution, start by making
 //      a forward declared constant value to address circular references.
@@ -156,13 +154,19 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 // TryResolveInst can complete in one call for a given instruction, but should
 // always complete within three calls:
 //
-// - TryResolveInst can retry once if the generic is not yet loaded.
-// - TryResolveTypedInst can retry once if its inputs are not yet loaded.
-// - The third call should succeed.
+// - The first call adds to the work stack the information needed to build the
+//   initial constant value for the instruction.
+// - The second call builds the initial constant value for the instruction and
+//   adds to the work stack the information needed to finish importing the parts
+//   of the instruction that don't contribute to its constant value.
+// - The third call fills in the information gathered by the second call.
 //
-// Due to the chance of a second call to TryResolveTypedInst, it's important to
-// reserve all expensive logic until it's been established that input constants
-// are available.
+// Due to the chance of a second or third call to TryResolveTypedInst, it's
+// important to reserve all expensive logic until it's been established that
+// input constants are available.
+//
+// A retry should always be performed any time a resolution function is about to
+// create new SemIR entities but already has new work.
 //
 // TODO: Fix class `extern` handling and merging, rewrite tests.
 // - check/testdata/class/cross_package_import.carbon
@@ -194,23 +198,30 @@ class ImportRefResolver {
       }
 
       // Step 2: resolve the instruction.
-      auto initial_work = work_stack_.size();
-      auto [new_const_id, finished] =
-          TryResolveInst(work.inst_id, existing.const_id);
-      CARBON_CHECK(finished == !HasNewWork(initial_work));
+      initial_work_ = work_stack_.size();
+      auto [new_const_id, state] = TryResolveInst(
+          work.inst_id, existing.const_id, work.abstract_const_id);
+      CARBON_CHECK((state != ResolveResult::Finished) == HasNewWork());
 
-      CARBON_CHECK(!existing.const_id.is_valid() ||
-                   existing.const_id == new_const_id)
-          << "Constant value changed in second pass.";
-      if (!existing.const_id.is_valid()) {
-        SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
+      if (state == ResolveResult::NeedToRebuildConstant) {
+        CARBON_CHECK(new_const_id.is_valid())
+            << "Not ready to rebuild constant";
+        work_stack_[initial_work_ - 1].abstract_const_id = new_const_id;
+      } else {
+        CARBON_CHECK(!existing.const_id.is_valid() ||
+                     existing.const_id == new_const_id)
+            << "Constant value changed in second pass.";
+        if (!existing.const_id.is_valid()) {
+          SetResolvedConstId(work.inst_id, existing.indirect_insts,
+                             new_const_id);
+        }
       }
 
       // Step 3: pop or retry.
-      if (finished) {
+      if (state == ResolveResult::Finished) {
         work_stack_.pop_back();
       } else {
-        work_stack_[initial_work - 1].retry = true;
+        work_stack_[initial_work_ - 1].retry = true;
       }
     }
     auto constant_id = import_ir_constant_values().Get(inst_id);
@@ -275,25 +286,36 @@ class ImportRefResolver {
 
     // True if another pass was requested last time this was run.
     bool retry = false;
+
+    // The abstract constant produced by resolving a symbolic constant in a
+    // generic. This is used in the case where we need an extra step to form the
+    // generic symbolic constant.
+    SemIR::ConstantId abstract_const_id = SemIR::ConstantId::Invalid;
   };
 
   // The result of attempting to resolve an imported instruction to a constant.
   struct ResolveResult {
-    // Try resolving this function again. If `const_id` is specified, it will be
-    // passed to the next resolution attempt.
+    enum State : uint8_t {
+      // Resolution has finished.
+      Finished,
+      // Resolution has finished, except that we still need to rebuild a
+      // symbolic constant value.
+      NeedToRebuildConstant,
+      // Resolution needs to be retried.
+      NeedRetry,
+    };
+
+    // Try resolving this instruction again. If `const_id` is specified, it will
+    // be passed to the next resolution attempt.
     static auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
         -> ResolveResult {
-      return {.const_id = const_id, .finished = false};
+      return {.const_id = const_id, .state = NeedRetry};
     }
 
     // The new constant value, if known.
     SemIR::ConstantId const_id;
-    // Whether resolution has finished. If false, `TryResolveInst` will be
-    // called again. Note that this is not strictly necessary, and we can get
-    // the same information by checking whether new work was added to the stack.
-    // However, we use this for consistency checks between resolve actions and
-    // the work stack.
-    bool finished = true;
+    // Whether resolution has or needs to be retried.
+    State state = Finished;
   };
 
   // The constant found by FindResolvedConstId.
@@ -390,16 +412,12 @@ class ImportRefResolver {
     }
   }
 
-  // Returns true if new unresolved constants were found.
-  //
-  // At the start of a function, do:
-  //   auto initial_work = work_stack_.size();
-  // Then when determining:
-  //   if (HasNewWork(initial_work)) { ... }
-  auto HasNewWork(size_t initial_work) -> bool {
-    CARBON_CHECK(initial_work <= work_stack_.size())
+  // Returns true if new unresolved constants were found as part of this
+  // `Resolve` step.
+  auto HasNewWork() -> bool {
+    CARBON_CHECK(initial_work_ <= work_stack_.size())
         << "Work shouldn't decrease";
-    return initial_work < work_stack_.size();
+    return initial_work_ < work_stack_.size();
   }
 
   auto AddImportIRInst(SemIR::InstId inst_id) -> SemIR::ImportIRInstId {
@@ -885,27 +903,40 @@ class ImportRefResolver {
   // before, in which case it's the previous result.
   //
   // TODO: Error is returned when support is missing, but that should go away.
-  auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id)
-      -> ResolveResult {
+  auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id,
+                      SemIR::ConstantId abstract_const_id) -> ResolveResult {
     auto inst_const_id = import_ir_.constant_values().Get(inst_id);
     if (!inst_const_id.is_valid() || !inst_const_id.is_symbolic() ||
         const_id.is_valid()) {
+      CARBON_CHECK(!abstract_const_id.is_valid())
+          << "Should not have an abstract constant from a previous pass when "
+             "not resolving a symbolic constant";
       return TryResolveInstCanonical(inst_id, const_id);
     }
 
-    // Try to import the generic, and retry if it's not ready yet. Note that if
-    // this retries, we can require three passes to import an instruction.
+    // Try to import the generic. This might add new work.
     const auto& symbolic_const =
         import_ir_.constant_values().GetSymbolicConstant(inst_const_id);
-    auto initial_work = work_stack_.size();
     auto generic_const_id = GetLocalConstantId(symbolic_const.generic_id);
-    if (HasNewWork(initial_work)) {
-      return ResolveResult::Retry();
-    }
+    bool need_to_import_generic = HasNewWork();
 
     // Import the constant and rebuild the symbolic constant data.
-    auto result = TryResolveInstCanonical(inst_id, const_id);
-    if (result.const_id.is_valid()) {
+    auto result = abstract_const_id.is_valid()
+                      ? ResolveResult{.const_id = abstract_const_id}
+                      : TryResolveInstCanonical(inst_id, const_id);
+
+    if (need_to_import_generic) {
+      if (result.const_id.is_valid()) {
+        CARBON_CHECK(result.state == ResolveResult::Finished)
+            << "Should not retry with a constant result with if we already "
+               "added new work";
+        // We need another pass, but `TryResolveInstCanonical` does not. Make
+        // sure we don't call it again.
+        result.state = ResolveResult::NeedToRebuildConstant;
+      } else {
+        CARBON_CHECK(result.state == ResolveResult::NeedRetry);
+      }
+    } else if (result.const_id.is_valid()) {
       result.const_id = context_.constant_values().AddSymbolicConstant(
           {.inst_id = context_.constant_values().GetInstId(result.const_id),
            .generic_id = GetLocalGenericId(generic_const_id),
@@ -1037,9 +1068,8 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::AssociatedEntity inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto type_const_id = GetLocalConstantId(inst.type_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1057,11 +1087,10 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::AssociatedEntityType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
-    auto initial_work = work_stack_.size();
     auto entity_type_const_id = GetLocalConstantId(inst.entity_type_id);
     auto interface_inst_id = GetLocalConstantInstId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1087,10 +1116,9 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::BaseDecl inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto type_const_id = GetLocalConstantId(inst.type_id);
     auto base_type_const_id = GetLocalConstantId(inst.base_type_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1105,18 +1133,16 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::BindAlias inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto value_id = GetLocalConstantId(inst.value_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     return {.const_id = value_id};
   }
 
   auto TryResolveTypedInst(SemIR::BindSymbolicName inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto type_id = GetLocalConstantId(inst.type_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1205,6 +1231,10 @@ class ImportRefResolver {
 
     SemIR::ClassId class_id = SemIR::ClassId::Invalid;
     if (!class_const_id.is_valid()) {
+      if (HasNewWork()) {
+        // Don't make a new class yet if we already have new work.
+        return ResolveResult::Retry();
+      }
       // On the first pass, create a forward declaration of the class for any
       // recursive references.
       std::tie(class_id, class_const_id) = MakeIncompleteClass(import_class);
@@ -1224,8 +1254,6 @@ class ImportRefResolver {
     }
 
     // Load constants for the definition.
-    auto initial_work = work_stack_.size();
-
     auto parent_scope_id = GetLocalNameScopeId(import_class.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
@@ -1241,7 +1269,7 @@ class ImportRefResolver {
                        ? GetLocalConstantInstId(import_class.base_id)
                        : SemIR::InstId::Invalid;
 
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry(class_const_id);
     }
 
@@ -1263,12 +1291,11 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::ClassType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_const_id =
         GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
     auto specific_data = GetLocalSpecificData(inst.specific_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1291,10 +1318,9 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::ConstType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto inner_const_id = GetLocalConstantId(inst.inner_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     auto inner_type_id = context_.GetTypeIdForTypeConstant(inner_const_id);
@@ -1303,9 +1329,8 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::ExportDecl inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto value_id = GetLocalConstantId(inst.value_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     return {.const_id = value_id};
@@ -1313,9 +1338,8 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::FieldDecl inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto const_id = GetLocalConstantId(inst.type_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     auto inst_id = context_.AddInstInNoBlock<SemIR::FieldDecl>(
@@ -1363,6 +1387,10 @@ class ImportRefResolver {
 
     SemIR::FunctionId function_id = SemIR::FunctionId::Invalid;
     if (!function_const_id.is_valid()) {
+      if (HasNewWork()) {
+        // Don't make a new function yet if we already have new work.
+        return ResolveResult::Retry();
+      }
       // On the first pass, create a forward declaration of the interface.
       std::tie(function_id, function_const_id) =
           MakeFunctionDecl(import_function);
@@ -1376,8 +1404,6 @@ class ImportRefResolver {
       function_id = function_type.function_id;
     }
 
-    auto initial_work = work_stack_.size();
-
     auto return_type_const_id = SemIR::ConstantId::Invalid;
     if (import_function.return_storage_id.is_valid()) {
       return_type_const_id =
@@ -1390,7 +1416,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_function.param_refs_id);
     auto generic_data = GetLocalGenericData(import_function.generic_id);
 
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry(function_const_id);
     }
 
@@ -1424,12 +1450,11 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::FunctionType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto fn_val_id = GetLocalConstantInstId(
         import_ir_.functions().Get(inst.function_id).decl_id);
     auto specific_data = GetLocalSpecificData(inst.specific_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     auto fn_type_id = context_.insts().Get(fn_val_id).type_id();
@@ -1443,11 +1468,10 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::GenericClassType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_val_id =
         GetLocalConstantInstId(import_ir_.classes().Get(inst.class_id).decl_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     auto class_val = context_.insts().Get(class_val_id);
@@ -1457,11 +1481,10 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::GenericInterfaceType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_val_id = GetLocalConstantInstId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
     auto interface_val = context_.insts().Get(interface_val_id);
@@ -1473,7 +1496,6 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::ImportRefLoaded /*inst*/,
                            SemIR::InstId inst_id) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     // Return the constant for the instruction of the imported constant.
     auto constant_id = import_ir_.constant_values().Get(inst_id);
     if (!constant_id.is_valid()) {
@@ -1487,7 +1509,7 @@ class ImportRefResolver {
 
     auto new_constant_id =
         GetLocalConstantId(import_ir_.constant_values().GetInstId(constant_id));
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1554,6 +1576,10 @@ class ImportRefResolver {
 
     SemIR::InterfaceId interface_id = SemIR::InterfaceId::Invalid;
     if (!interface_const_id.is_valid()) {
+      if (HasNewWork()) {
+        // Don't make a new interface yet if we already have new work.
+        return ResolveResult::Retry();
+      }
       // On the first pass, create a forward declaration of the interface.
       std::tie(interface_id, interface_const_id) =
           MakeInterfaceDecl(import_interface);
@@ -1573,8 +1599,6 @@ class ImportRefResolver {
       }
     }
 
-    auto initial_work = work_stack_.size();
-
     auto parent_scope_id =
         GetLocalNameScopeId(import_interface.parent_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
@@ -1588,7 +1612,7 @@ class ImportRefResolver {
       self_param_id = GetLocalConstantInstId(import_interface.self_param_id);
     }
 
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry(interface_const_id);
     }
 
@@ -1609,12 +1633,11 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::InterfaceType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_const_id = GetLocalConstantId(
         import_ir_.interfaces().Get(inst.interface_id).decl_id);
     auto specific_data = GetLocalSpecificData(inst.specific_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1639,9 +1662,8 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::InterfaceWitness inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto elements = GetLocalInstBlockContents(inst.elements_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1653,9 +1675,8 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::IntLiteral inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto type_id = GetLocalConstantId(inst.type_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1665,10 +1686,9 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto pointee_const_id = GetLocalConstantId(inst.pointee_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1680,7 +1700,6 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::StructType inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
     // Collect all constants first, locating unresolved ones in a single pass.
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto orig_fields = import_ir_.inst_blocks().Get(inst.fields_id);
     llvm::SmallVector<SemIR::ConstantId> field_const_ids;
@@ -1689,7 +1708,7 @@ class ImportRefResolver {
       auto field = import_ir_.insts().GetAs<SemIR::StructTypeField>(field_id);
       field_const_ids.push_back(GetLocalConstantId(field.field_type_id));
     }
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1714,10 +1733,9 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::StructValue inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto type_id = GetLocalConstantId(inst.type_id);
     auto elems = GetLocalInstBlockContents(inst.elements_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1730,14 +1748,13 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
     // Collect all constants first, locating unresolved ones in a single pass.
-    auto initial_work = work_stack_.size();
     auto orig_elem_type_ids = import_ir_.type_blocks().Get(inst.elements_id);
     llvm::SmallVector<SemIR::ConstantId> elem_const_ids;
     elem_const_ids.reserve(orig_elem_type_ids.size());
     for (auto elem_type_id : orig_elem_type_ids) {
       elem_const_ids.push_back(GetLocalConstantId(elem_type_id));
     }
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1753,10 +1770,9 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::TupleValue inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     auto type_id = GetLocalConstantId(inst.type_id);
     auto elems = GetLocalInstBlockContents(inst.elements_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1766,11 +1782,10 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::UnboundElementType inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto class_const_id = GetLocalConstantId(inst.class_type_id);
     auto elem_const_id = GetLocalConstantId(inst.element_type_id);
-    if (HasNewWork(initial_work)) {
+    if (HasNewWork()) {
       return ResolveResult::Retry();
     }
 
@@ -1788,6 +1803,7 @@ class ImportRefResolver {
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
   llvm::SmallVector<Work> work_stack_;
+  std::size_t initial_work_ = 0;
 };
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being
