@@ -214,20 +214,52 @@ class ImportRefResolver {
     return constant_id;
   }
 
+  // Wraps constant evaluation with logic to handle constants.
+  auto ResolveConstant(SemIR::ConstantId import_const_id) -> SemIR::ConstantId {
+    if (!import_const_id.is_valid()) {
+      return import_const_id;
+    }
+
+    // For template constants, the corresponding instruction has the desired
+    // constant value.
+    if (!import_const_id.is_symbolic()) {
+      return Resolve(import_ir_.constant_values().GetInstId(import_const_id));
+    }
+
+    // For abstract symbolic constants, the corresponding instruction has the
+    // desired constant value.
+    const auto& symbolic_const =
+        import_ir_.constant_values().GetSymbolicConstant(import_const_id);
+    if (!symbolic_const.generic_id.is_valid()) {
+      return Resolve(import_ir_.constant_values().GetInstId(import_const_id));
+    }
+
+    // For a symbolic constant in a generic, pick the corresponding instruction
+    // out of the eval block for the generic and resolve its constant value.
+    const auto& generic = import_ir_.generics().Get(symbolic_const.generic_id);
+    auto block = generic.GetEvalBlock(symbolic_const.index.region());
+    return Resolve(
+        import_ir_.inst_blocks().Get(block)[symbolic_const.index.index()]);
+  }
+
   // Wraps constant evaluation with logic to handle types.
   auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId {
     if (!import_type_id.is_valid()) {
       return import_type_id;
     }
 
-    auto import_type_inst_id = import_ir_.types().GetInstId(import_type_id);
-    CARBON_CHECK(import_type_inst_id.is_valid());
+    auto import_type_const_id =
+        import_ir_.types().GetConstantId(import_type_id);
+    CARBON_CHECK(import_type_const_id.is_valid());
 
-    if (import_type_inst_id.is_builtin()) {
+    if (auto import_type_inst_id =
+            import_ir_.constant_values().GetInstId(import_type_const_id);
+        import_type_inst_id.is_builtin()) {
       // Builtins don't require constant resolution; we can use them directly.
       return context_.GetBuiltinType(import_type_inst_id.builtin_inst_kind());
     } else {
-      return context_.GetTypeIdForTypeConstant(Resolve(import_type_inst_id));
+      return context_.GetTypeIdForTypeConstant(
+          ResolveConstant(import_type_id.AsConstantId()));
     }
   }
 
@@ -849,8 +881,8 @@ class ImportRefResolver {
   // before, in which case it's the previous result.
   //
   // TODO: Error is returned when support is missing, but that should go away.
-  auto TryResolveInst(SemIR::InstId inst_id,
-                      SemIR::ConstantId const_id) -> ResolveResult {
+  auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id)
+      -> ResolveResult {
     auto inst_const_id = import_ir_.constant_values().Get(inst_id);
     if (!inst_const_id.is_valid() || !inst_const_id.is_symbolic() ||
         const_id.is_valid()) {
