@@ -154,11 +154,15 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 //    we'll make sure to run it again later.
 //
 // TryResolveInst can complete in one call for a given instruction, but should
-// always complete within three calls, and TryResolveTypedInst should always
-// complete within two calls. However, due to the chance of a second call, it's
-// important to reserve all expensive logic until it's been established that
-// input constants are available; this in particular includes
-// GetTypeIdForTypeConstant calls which do a hash table lookup.
+// always complete within three calls:
+//
+// - TryResolveInst can retry once if the generic is not yet loaded.
+// - TryResolveTypedInst can retry once if its inputs are not yet loaded.
+// - The third call should succeed.
+//
+// Due to the chance of a second call to TryResolveTypedInst, it's important to
+// reserve all expensive logic until it's been established that input constants
+// are available.
 //
 // TODO: Fix class `extern` handling and merging, rewrite tests.
 // - check/testdata/class/cross_package_import.carbon
