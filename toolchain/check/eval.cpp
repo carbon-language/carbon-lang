@@ -305,8 +305,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.inst_blocks().AddCanonical(const_insts);
 }
 
-// The constant value of a type block is that type block, but we still need to
-// extract its phase.
+// Compute the constant value of a type block. This may be different from the
+// input type block if we have known generic arguments.
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::TypeBlockId type_block_id, Phase* phase)
     -> SemIR::TypeBlockId {
@@ -314,10 +314,25 @@ static auto GetConstantValue(EvalContext& eval_context,
     return SemIR::TypeBlockId::Invalid;
   }
   auto types = eval_context.type_blocks().Get(type_block_id);
+  llvm::SmallVector<SemIR::TypeId> new_types;
   for (auto type_id : types) {
-    GetConstantValue(eval_context, type_id, phase);
+    auto new_type_id = GetConstantValue(eval_context, type_id, phase);
+    if (!new_type_id.is_valid()) {
+      return SemIR::TypeBlockId::Invalid;
+    }
+
+    // Once we leave the small buffer, we know the first few elements are all
+    // constant, so it's likely that the entire block is constant. Resize to the
+    // target size given that we're going to allocate memory now anyway.
+    if (new_types.size() == new_types.capacity()) {
+      new_types.reserve(types.size());
+    }
+
+    new_types.push_back(new_type_id);
   }
-  return type_block_id;
+  // TODO: If the new block is identical to the original block, and we know the
+  // old ID was canonical, return the original ID.
+  return eval_context.type_blocks().AddCanonical(new_types);
 }
 
 // The constant value of a specific is the specific with the corresponding

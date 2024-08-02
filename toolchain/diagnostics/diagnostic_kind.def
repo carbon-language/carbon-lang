@@ -204,6 +204,11 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclRepeated)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
 
+// Deduction.
+CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
+CARBON_DIAGNOSTIC_KIND(DeductionInconsistent)
+CARBON_DIAGNOSTIC_KIND(DeductionGenericHere)
+
 // Export checking.
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntitySource)
