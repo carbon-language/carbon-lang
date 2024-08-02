@@ -58,7 +58,7 @@ def _carbon_binary_impl(ctx):
         mnemonic = "CarbonLink",
         progress_message = "Linking " + bin.short_path,
     )
-    return [DefaultInfo(files = depset([bin]))]
+    return [DefaultInfo(files = depset([bin]), executable = bin)]
 
 _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
@@ -92,6 +92,7 @@ _carbon_binary_internal = rule(
         ),
         "srcs": attr.label_list(allow_files = [".carbon"]),
     },
+    executable = True,
 )
 
 def carbon_binary(name, srcs):
