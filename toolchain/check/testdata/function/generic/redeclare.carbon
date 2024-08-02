@@ -32,10 +32,12 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! type, U:! type) -> U* {
+  // TODO: This diagnostic is not very good. We should check the arity in a
+  // function call before, or as part of, deduction.
   // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: ERROR: Cannot deduce value for generic parameter `T`.
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-15]]:1: While deducing parameters of generic declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
