@@ -32,14 +32,12 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! type, U:! type) -> U* {
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+11]]:3: ERROR: Cannot implicitly convert from `T*` to `U*`.
-  // CHECK:STDERR:   return F(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
+  // TODO: This diagnostic is not very good. We should check the arity in a
+  // function call before, or as part of, deduction.
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: ERROR: Cannot deduce value for generic parameter `T`.
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-17]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-15]]:1: While deducing parameters of generic declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -60,14 +58,10 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> T* {
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+11]]:3: ERROR: Cannot implicitly convert from `T*` to `T*`.
-  // CHECK:STDERR:   return F(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: ERROR: Cannot deduce value for generic parameter `T`.
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-17]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: While deducing parameters of generic declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -88,14 +82,10 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> U* {
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE+10]]:3: ERROR: Cannot implicitly convert from `T*` to `U*`.
-  // CHECK:STDERR:   return F(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: ERROR: Cannot deduce value for generic parameter `T`.
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE-17]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: While deducing parameters of generic declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F(T);
@@ -233,13 +223,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.1: type = ptr_type @.1.%U.1 (%U) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.2: type = ptr_type @.1.%T.1 (%T) [symbolic = %.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc13: type, %U.loc13: type) -> @.1.%.1 (%.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %F.call: init @.1.%.2 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -324,14 +312,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.1: type = ptr_type @.1.%T.1 (%T.2) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
-// CHECK:STDOUT:   %.2: type = ptr_type @.1.%T.2 (%T.1) [symbolic = %.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.loc13: type, %T.loc13: type) -> @.1.%.1 (%.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %F.call: init @.1.%.2 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -416,14 +401,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.1: type = ptr_type @.1.%U.1 (%U.2) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
-// CHECK:STDOUT:   %.2: type = ptr_type @.1.%T.2 (%T.1) [symbolic = %.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.loc13: type, %T.loc13: type) -> @.1.%.1 (%.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %F.call: init @.1.%.2 (%.1) = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
