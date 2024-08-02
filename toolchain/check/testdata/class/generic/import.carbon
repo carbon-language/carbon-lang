@@ -417,7 +417,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+18, unloaded
 // CHECK:STDOUT:   %import_ref.6: @CompleteClass.%.1 (%.3) = import_ref Main//foo, inst+28, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%F.type (%F.type.2) = import_ref Main//foo, inst+35, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%F.type (%F.type.2) = import_ref Main//foo, inst+35, loaded [symbolic = constants.%F.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -480,8 +480,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.3 = call %F.ref.loc6() to %.loc6_7
 // CHECK:STDOUT:   assign %v.var, %F.call.loc6
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.3 = name_ref v, %v
-// CHECK:STDOUT:   %.loc7_11: %F.type.3 = specific_constant imports.%import_ref.7, @CompleteClass(i32) [template = constants.%F.3]
-// CHECK:STDOUT:   %F.ref.loc7: %F.type.3 = name_ref F, %.loc7_11 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc7_11: %F.type.3 = specific_constant imports.%import_ref.7, @CompleteClass(i32) [symbolic = constants.%F.1]
+// CHECK:STDOUT:   %F.ref.loc7: %F.type.3 = name_ref F, %.loc7_11 [symbolic = constants.%F.1]
 // CHECK:STDOUT:   %F.call.loc7: init i32 = call %F.ref.loc7()
 // CHECK:STDOUT:   %.loc7_15.1: i32 = value_of_initializer %F.call.loc7
 // CHECK:STDOUT:   %.loc7_15.2: i32 = converted %F.call.loc7, %.loc7_15.1
@@ -535,8 +535,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_arg_mismatch.carbon
 // CHECK:STDOUT:

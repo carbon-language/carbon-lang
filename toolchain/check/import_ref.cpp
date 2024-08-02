@@ -128,45 +128,39 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 // 1. If a constant value is already known for the work item, and we're
 //    processing it for the first time, it's considered resolved.
 //    - The constant check avoids performance costs of deduplication on add.
-//    - If `retry` is set, we process it again, because it didn't complete last
-//      time, even though we have a constant value already.
-// 2. Resolve the instruction: (TryResolveInst/TryResolveTypedInst)
-//    - For a symbolic constant within a generic, find the generic itself.
-//    - For instructions that can be forward declared, if we don't already have
-//      a constant value from a previous attempt at resolution, start by making
-//      a forward declared constant value to address circular references.
-//    - Gather all input constants.
+//    - If we've processed this work item before, then we now process it again,
+//      because it didn't complete last time, even though we have a constant
+//      value already.
+// 2. Resolve the instruction (TryResolveInst/TryResolveTypedInst):
+//    - Gather all input constants necessary to form the constant value of the
+//      instruction.
 //      - Gathering constants directly adds unresolved values to work_stack_.
-//    - If any need to be resolved (HasNewWork), return Retry(): this
-//      instruction needs another call to complete.
-//      - If the constant value is already known because we have made a forward
-//        declaration, pass it to Retry(). It will be passed to future attempts
-//        to resolve this instruction so the earlier work can be found, and will
-//        be made available for other instructions to use.
-//      - The subsequent attempt to resolve this instruction must produce the
-//        same constant, because the value may have already been used by
-//        resolved instructions.
-//    - Build any necessary IR structures, and return the output constant.
+//      - If HasNewWork() reports that any work was added, then return Retry():
+//        this instruction needs another call to complete. Continue to the next
+//        step once the retry happens.
+//    - Build the constant value of the instruction, and gather all input
+//      constants necessary to finish importing the instruction.
+//      - If HasNewWork() reports that any work was added, then return
+//        Retry(constant_value): this instruction needs another call to
+//        complete. This will typically happen for instructions like classes
+//        that can be forward-declared. Continue to the next step once the retry
+//        happens. After this point, the constant value for the instruction is
+//        already set, so the added work will be done with the constant value
+//        for this instruction available, addressing circular references. The
+//        constant value is also passed onto the next call to TryResolveInst.
+//    - Fill in any remaining information to complete the import of the
+//      instruction. For example, when importing a class declaration, build the
+//      class scope and information about the definition. For a symbolic
+//      constant, this step also fills in the generic ID in the constant
+//      representation.
 // 3. If resolve didn't return Retry(), pop the work. Otherwise, it needs to
-//    remain, and may no longer be at the top of the stack; set `retry` on it so
-//    we'll make sure to run it again later.
+//    remain, and may no longer be at the top of the stack; update the state of
+//    the work item to track what work still needs to be done.
 //
 // TryResolveInst can complete in one call for a given instruction, but should
-// always complete within three calls:
-//
-// - The first call adds to the work stack the information needed to build the
-//   initial constant value for the instruction.
-// - The second call builds the initial constant value for the instruction and
-//   adds to the work stack the information needed to finish importing the parts
-//   of the instruction that don't contribute to its constant value.
-// - The third call fills in the information gathered by the second call.
-//
-// Due to the chance of a second or third call to TryResolveTypedInst, it's
-// important to reserve all expensive logic until it's been established that
-// input constants are available.
-//
-// A retry should always be performed any time a resolution function is about to
-// create new SemIR entities but already has new work.
+// always complete within three calls. Due to the chance of a second or third
+// call to TryResolveTypedInst, it's important to reserve all expensive logic
+// until it's been established that input constants are available.
 //
 // TODO: Fix class `extern` handling and merging, rewrite tests.
 // - check/testdata/class/cross_package_import.carbon
@@ -192,36 +186,29 @@ class ImportRefResolver {
 
       // Step 1: check for a constant value.
       auto existing = FindResolvedConstId(work.inst_id);
-      if (existing.const_id.is_valid() && !work.retry) {
+      if (existing.const_id.is_valid() && work.state == ResolveState::New) {
         work_stack_.pop_back();
         continue;
       }
 
       // Step 2: resolve the instruction.
       initial_work_ = work_stack_.size();
-      auto [new_const_id, state] = TryResolveInst(
-          work.inst_id, existing.const_id, work.abstract_const_id);
-      CARBON_CHECK((state != ResolveResult::Finished) == HasNewWork());
+      auto [new_const_id, state] =
+          TryResolveInst(work.inst_id, existing.const_id, work.state);
+      CARBON_CHECK((state != ResolveState::Finished) == HasNewWork());
 
-      if (state == ResolveResult::NeedToRebuildConstant) {
-        CARBON_CHECK(new_const_id.is_valid())
-            << "Not ready to rebuild constant";
-        work_stack_[initial_work_ - 1].abstract_const_id = new_const_id;
-      } else {
-        CARBON_CHECK(!existing.const_id.is_valid() ||
-                     existing.const_id == new_const_id)
-            << "Constant value changed in second pass.";
-        if (!existing.const_id.is_valid()) {
-          SetResolvedConstId(work.inst_id, existing.indirect_insts,
-                             new_const_id);
-        }
+      CARBON_CHECK(!existing.const_id.is_valid() ||
+                    existing.const_id == new_const_id)
+          << "Constant value changed in second pass.";
+      if (!existing.const_id.is_valid()) {
+        SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
       }
 
       // Step 3: pop or retry.
-      if (state == ResolveResult::Finished) {
+      if (state == ResolveState::Finished) {
         work_stack_.pop_back();
       } else {
-        work_stack_[initial_work_ - 1].retry = true;
+        work_stack_[initial_work_ - 1].state = state;
       }
     }
     auto constant_id = import_ir_constant_values().Get(inst_id);
@@ -279,43 +266,48 @@ class ImportRefResolver {
   }
 
  private:
-  // A step in work_stack_.
-  struct Work {
-    // The instruction to work on.
-    SemIR::InstId inst_id;
-
-    // True if another pass was requested last time this was run.
-    bool retry = false;
-
-    // The abstract constant produced by resolving a symbolic constant in a
-    // generic. This is used in the case where we need an extra step to form the
-    // generic symbolic constant.
-    SemIR::ConstantId abstract_const_id = SemIR::ConstantId::Invalid;
+  enum class ResolveState : uint8_t {
+    // This work item has not been processed before.
+    New,
+    // Resolution needs to be retried.
+    NeedRetry,
+    // Resolution has finished, except that we still need to rebuild a
+    // symbolic constant value.
+    NeedToRebuildConstant,
+    // Resolution has finished.
+    Finished,
   };
 
   // The result of attempting to resolve an imported instruction to a constant.
   struct ResolveResult {
-    enum State : uint8_t {
-      // Resolution has finished.
-      Finished,
-      // Resolution has finished, except that we still need to rebuild a
-      // symbolic constant value.
-      NeedToRebuildConstant,
-      // Resolution needs to be retried.
-      NeedRetry,
-    };
-
     // Try resolving this instruction again. If `const_id` is specified, it will
     // be passed to the next resolution attempt.
     static auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
         -> ResolveResult {
-      return {.const_id = const_id, .state = NeedRetry};
+      return {.const_id = const_id, .state = ResolveState::NeedRetry};
+    }
+    // Try rebuilding the symbolic constant value of this instruction again. If
+    // `const_id` is specified, it will be passed to the next resolution
+    // attempt.
+    static auto RebuildConstant(
+        SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
+        -> ResolveResult {
+      return {.const_id = const_id,
+              .state = ResolveState::NeedToRebuildConstant};
     }
 
     // The new constant value, if known.
     SemIR::ConstantId const_id;
     // Whether resolution has or needs to be retried.
-    State state = Finished;
+    ResolveState state = ResolveState::Finished;
+  };
+
+  // A step in work_stack_.
+  struct Work {
+    // The instruction to work on.
+    SemIR::InstId inst_id;
+    // The result state from last time we attempted this step.
+    ResolveState state = ResolveState::New;
   };
 
   // The constant found by FindResolvedConstId.
@@ -904,13 +896,10 @@ class ImportRefResolver {
   //
   // TODO: Error is returned when support is missing, but that should go away.
   auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id,
-                      SemIR::ConstantId abstract_const_id) -> ResolveResult {
+                      ResolveState state) -> ResolveResult {
     auto inst_const_id = import_ir_.constant_values().Get(inst_id);
     if (!inst_const_id.is_valid() || !inst_const_id.is_symbolic() ||
         const_id.is_valid()) {
-      CARBON_CHECK(!abstract_const_id.is_valid())
-          << "Should not have an abstract constant from a previous pass when "
-             "not resolving a symbolic constant";
       return TryResolveInstCanonical(inst_id, const_id);
     }
 
@@ -918,31 +907,56 @@ class ImportRefResolver {
     const auto& symbolic_const =
         import_ir_.constant_values().GetSymbolicConstant(inst_const_id);
     auto generic_const_id = GetLocalConstantId(symbolic_const.generic_id);
-    bool need_to_import_generic = HasNewWork();
 
-    // Import the constant and rebuild the symbolic constant data.
-    auto result = abstract_const_id.is_valid()
-                      ? ResolveResult{.const_id = abstract_const_id}
-                      : TryResolveInstCanonical(inst_id, const_id);
-
-    if (need_to_import_generic) {
-      if (result.const_id.is_valid()) {
-        CARBON_CHECK(result.state == ResolveResult::Finished)
-            << "Should not retry with a constant result with if we already "
-               "added new work";
-        // We need another pass, but `TryResolveInstCanonical` does not. Make
-        // sure we don't call it again.
-        result.state = ResolveResult::NeedToRebuildConstant;
-      } else {
-        CARBON_CHECK(result.state == ResolveResult::NeedRetry);
+    bool need_retry = false;
+    if (state != ResolveState::NeedToRebuildConstant) {
+      auto inner_const_id = SemIR::ConstantId::Invalid;
+      if (const_id.is_valid()) {
+        // For the third pass, extract the constant value that
+        // TryResolveInstCanonical produced previously.
+        inner_const_id = context_.constant_values().Get(
+            context_.constant_values().GetInstId(const_id));
       }
-    } else if (result.const_id.is_valid()) {
-      result.const_id = context_.constant_values().AddSymbolicConstant(
-          {.inst_id = context_.constant_values().GetInstId(result.const_id),
-           .generic_id = GetLocalGenericId(generic_const_id),
-           .index = symbolic_const.index});
+
+      // Import the constant and rebuild the symbolic constant data.
+      auto result = TryResolveInstCanonical(inst_id, inner_const_id);
+      need_retry = result.state == ResolveState::NeedRetry;
+      if (!result.const_id.is_valid()) {
+        // First pass: TryResolveInstCanoncial needs a retry.
+        CARBON_CHECK(need_retry);
+        return result;
+      }
+
+      if (!const_id.is_valid()) {
+        // Second pass: we have created an abstract constant. Create a
+        // correspnding generic constant.
+        if (symbolic_const.generic_id.is_valid()) {
+          const_id = context_.constant_values().AddSymbolicConstant(
+              {.inst_id = context_.constant_values().GetInstId(result.const_id),
+               .generic_id = SemIR::GenericId::Invalid,
+               .index = symbolic_const.index});
+        } else {
+          const_id = result.const_id;
+        }
+      }
     }
-    return result;
+    CARBON_CHECK(const_id.is_valid());
+
+    if (HasNewWork()) {
+      // End of second pass. If `TryResolveInstCanonical` asked for another
+      // pass, then ask for a full retry, and otherwise just populate the
+      // generic ID in the third pass.
+      if (need_retry) {
+        return ResolveResult::Retry(const_id);
+      }
+      return ResolveResult::RebuildConstant(const_id);
+    }
+
+    if (symbolic_const.generic_id.is_valid()) {
+      context_.constant_values().GetSymbolicConstant(const_id).generic_id =
+          GetLocalGenericId(generic_const_id);
+    }
+    return {.const_id = const_id};
   }
 
   // Tries to resolve the InstId, returning a canonical constant when ready, or
@@ -1804,7 +1818,7 @@ class ImportRefResolver {
   const SemIR::File& import_ir_;
   llvm::SmallVector<Work> work_stack_;
   std::size_t initial_work_ = 0;
-};
+  };
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being
 // loaded (including the one pointed at directly by the ImportRef), and the
