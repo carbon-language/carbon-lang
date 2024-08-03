@@ -859,7 +859,7 @@ struct MemberAccessExpr {
 
   AnyExprId lhs;
   Lex::PeriodTokenIndex token;
-  AnyMemberNameOrMemberExprId rhs;
+  AnyMemberAccessId rhs;
 };
 
 // An indirect member access expression: `a->b` or `a->(b)`.
@@ -869,7 +869,7 @@ struct PointerMemberAccessExpr {
 
   AnyExprId lhs;
   Lex::MinusGreaterTokenIndex token;
-  AnyMemberNameOrMemberExprId rhs;
+  AnyMemberAccessId rhs;
 };
 
 // A prefix operator expression.
@@ -1109,6 +1109,9 @@ struct StructTypeLiteral {
   CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
   Lex::CloseCurlyBraceTokenIndex token;
 };
+
+using IntLiteral = LeafNode<NodeKind::IntLiteral, Lex::IntLiteralTokenIndex,
+                            NodeCategory::Expr | NodeCategory::IntConst>;
 
 // `class` declarations and definitions
 // ------------------------------------

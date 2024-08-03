@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/index_not_literal.carbon
 
 var a: (i32, i32) = (12, 34);
-var b: i32 = a[{.index = 1}.index];
+// CHECK:STDERR: index_not_literal.carbon:[[@LINE+3]]:14: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+// CHECK:STDERR: var b: i32 = a.({.index = 1}.index);
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
+var b: i32 = a.({.index = 1}.index);
 
 // CHECK:STDOUT: --- index_not_literal.carbon
 // CHECK:STDOUT:
@@ -59,9 +62,9 @@ var b: i32 = a[{.index = 1}.index];
 // CHECK:STDOUT:   %.loc11_17.6: type = converted %.loc11_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
 // CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_8.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
-// CHECK:STDOUT:   %.loc12_8.2: type = converted %int.make_type_32.loc12, %.loc12_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -81,14 +84,12 @@ var b: i32 = a[{.index = 1}.index];
 // CHECK:STDOUT:   %.loc11_29: init %.3 = converted %.loc11_28.1, %.loc11_28.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_29
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12_26: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc12_27.1: %.8 = struct_literal (%.loc12_26)
-// CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc12_26) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_27.2: %.8 = converted %.loc12_27.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_28: i32 = struct_access %.loc12_27.2, element0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc12_34.1: ref i32 = tuple_index %a.ref, %.loc12_28
-// CHECK:STDOUT:   %.loc12_34.2: i32 = bind_value %.loc12_34.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc12_34.2
+// CHECK:STDOUT:   %.loc15_27: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_28.1: %.8 = struct_literal (%.loc15_27)
+// CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc15_27) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_28.2: %.8 = converted %.loc15_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_29: i32 = struct_access %.loc15_28.2, element0 [template = constants.%.7]
+// CHECK:STDOUT:   assign file.%b.var, %.loc15_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

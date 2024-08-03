@@ -23,6 +23,10 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id) -> SemIR::InstId;
 
+auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
+                       SemIR::InstId tuple_inst_id, SemIR::InstId index_inst_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_MEMBER_ACCESS_H_

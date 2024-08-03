@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -967,10 +968,10 @@ struct TupleAccess {
   ElementIndex index;
 };
 
-// Access to a tuple member by index, such as `tuple[index]`.
+// Access to a tuple member by index, such as `tuple.0`.
 struct TupleIndex {
-  static constexpr auto Kind = InstKind::TupleIndex.Define<Parse::IndexExprId>(
-      {.ir_name = "tuple_index"});
+  static constexpr auto Kind =
+      InstKind::TupleIndex.Define<Parse::NodeId>({.ir_name = "tuple_index"});
 
   TypeId type_id;
   InstId tuple_id;

@@ -10,7 +10,7 @@
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-var c: i32 = b[0];
+var c: i32 = b.0;
 
 // CHECK:STDOUT: --- tuple_element_access.carbon
 // CHECK:STDOUT:
@@ -85,9 +85,9 @@ var c: i32 = b[0];
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_18
 // CHECK:STDOUT:   %b.ref: ref %.3 = name_ref b, file.%b
 // CHECK:STDOUT:   %.loc13_16: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_17.1: ref i32 = tuple_index %b.ref, %.loc13_16
-// CHECK:STDOUT:   %.loc13_17.2: i32 = bind_value %.loc13_17.1
-// CHECK:STDOUT:   assign file.%c.var, %.loc13_17.2
+// CHECK:STDOUT:   %.loc13_15.1: ref i32 = tuple_index %b.ref, %.loc13_16
+// CHECK:STDOUT:   %.loc13_15.2: i32 = bind_value %.loc13_15.1
+// CHECK:STDOUT:   assign file.%c.var, %.loc13_15.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

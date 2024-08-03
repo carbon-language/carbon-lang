@@ -23,6 +23,8 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     // OK, `.` identifier.
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
+  } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+                                             NodeKind::IntLiteral)) {
     // OK, `.base`.
   } else if (paren_state != State::Invalid &&
              context.PositionIs(Lex::TokenKind::OpenParen)) {
@@ -30,6 +32,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     context.PushState(state);
     context.PushState(State::OnlyParenExpr);
     return;
+
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringLiteral);
