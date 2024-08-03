@@ -12,8 +12,8 @@ fn F() -> i32 {
   var a: (i32, i32, i32) = (1, 2, 3);
   var b: (i32, i32) = (4, 5);
   let c: ((i32, i32, i32), (i32, i32)) = (a, b);
-  // CHECK:STDERR: tuple.carbon:[[@LINE+3]]:10: ERROR: Type `((i32, i32, i32), (i32, i32))` does not support indexing.
-  // CHECK:STDERR:   return c[1][1];
-  // CHECK:STDERR:          ^~~~
-  return c[1][1];
+  // CHECK:STDERR: tuple.carbon:[[@LINE+3]]:10: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+  // CHECK:STDERR:   return c.1.(1);
+  // CHECK:STDERR:          ^~~~~~~
+  return c.1.(1);
 }

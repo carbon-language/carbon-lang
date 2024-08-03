@@ -13,15 +13,8 @@ fn Main() {
   a = 9;
 
   var b: (i32, i32) = (1, 2);
-  // CHECK:STDERR: assignment.carbon:[[@LINE+4]]:3: ERROR: Type `(i32, i32)` does not support indexing.
-  // CHECK:STDERR:   b[0] = 3;
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR:
-  b[0] = 3;
-  // CHECK:STDERR: assignment.carbon:[[@LINE+3]]:3: ERROR: Type `(i32, i32)` does not support indexing.
-  // CHECK:STDERR:   b[1] = 4;
-  // CHECK:STDERR:   ^~~~
-  b[1] = 4;
+  b.0 = 3;
+  b.1 = 4;
 
   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
   c.a = 3;
@@ -118,12 +111,14 @@ fn Main() {
 // CHECK:STDOUT:   assign %b.var, %.loc15_29
 // CHECK:STDOUT:   %b.ref.loc20: ref %.5 = name_ref b, %b
 // CHECK:STDOUT:   %.loc20_5: i32 = int_literal 0 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc20_10: i32 = int_literal 3 [template = constants.%.10]
-// CHECK:STDOUT:   assign <error>, <error>
+// CHECK:STDOUT:   %.loc20_4: ref i32 = tuple_index %b.ref.loc20, %.loc20_5
+// CHECK:STDOUT:   %.loc20_9: i32 = int_literal 3 [template = constants.%.10]
+// CHECK:STDOUT:   assign %.loc20_4, %.loc20_9
 // CHECK:STDOUT:   %b.ref.loc24: ref %.5 = name_ref b, %b
 // CHECK:STDOUT:   %.loc24_5: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc24_10: i32 = int_literal 4 [template = constants.%.11]
-// CHECK:STDOUT:   assign <error>, <error>
+// CHECK:STDOUT:   %.loc24_4: ref i32 = tuple_index %b.ref.loc24, %.loc24_5
+// CHECK:STDOUT:   %.loc24_9: i32 = int_literal 4 [template = constants.%.11]
+// CHECK:STDOUT:   assign %.loc24_4, %.loc24_9
 // CHECK:STDOUT:   %int.make_type_32.loc26_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc26_15.1: type = value_of_initializer %int.make_type_32.loc26_15 [template = i32]
 // CHECK:STDOUT:   %.loc26_15.2: type = converted %int.make_type_32.loc26_15, %.loc26_15.1 [template = i32]
