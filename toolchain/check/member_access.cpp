@@ -4,8 +4,6 @@
 
 #include "toolchain/check/member_access.h"
 
-#include <optional>
-
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
