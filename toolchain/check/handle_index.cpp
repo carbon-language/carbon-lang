@@ -16,26 +16,6 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
-// Validates that the index (required to be an IntLiteral) is valid within the
-// tuple size. Returns the index on success, or nullptr on failure.
-static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
-                               SemIR::Inst operand_inst,
-                               SemIR::IntLiteral index_inst, int size)
-    -> const llvm::APInt* {
-  const auto& index_val = context.ints().Get(index_inst.int_id);
-  if (index_val.uge(size)) {
-    CARBON_DIAGNOSTIC(
-        TupleIndexOutOfBounds, Error,
-        "Tuple element index `{0}` is past the end of type `{1}`.", TypedInt,
-        SemIR::TypeId);
-    context.emitter().Emit(node_id, TupleIndexOutOfBounds,
-                           {.type = index_inst.type_id, .value = index_val},
-                           operand_inst.type_id());
-    return nullptr;
-  }
-  return &index_val;
-}
-
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
@@ -70,39 +50,6 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
         elem_id = ConvertToValueExpr(context, elem_id);
       }
       context.node_stack().Push(node_id, elem_id);
-      return true;
-    }
-    case CARBON_KIND(SemIR::TupleType tuple_type): {
-      SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      auto index_node_id = context.insts().GetLocId(index_inst_id);
-      index_inst_id = ConvertToValueOfType(
-          context, index_node_id, index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
-      auto index_const_id = context.constant_values().Get(index_inst_id);
-      if (index_const_id == SemIR::ConstantId::Error) {
-        index_inst_id = SemIR::InstId::BuiltinError;
-      } else if (!index_const_id.is_template()) {
-        // TODO: Decide what to do if the index is a symbolic constant.
-        CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
-                          "Tuple index must be a constant.");
-        context.emitter().Emit(node_id, TupleIndexNotConstant);
-        index_inst_id = SemIR::InstId::BuiltinError;
-      } else {
-        auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
-            context.constant_values().GetInstId(index_const_id));
-        auto type_block = context.type_blocks().Get(tuple_type.elements_id);
-        if (const auto* index_val =
-                ValidateTupleIndex(context, node_id, operand_inst,
-                                   index_literal, type_block.size())) {
-          element_type_id = type_block[index_val->getZExtValue()];
-        } else {
-          index_inst_id = SemIR::InstId::BuiltinError;
-        }
-      }
-      context.AddInstAndPush<SemIR::TupleIndex>(node_id,
-                                                {.type_id = element_type_id,
-                                                 .tuple_id = operand_inst_id,
-                                                 .index_id = index_inst_id});
       return true;
     }
     default: {

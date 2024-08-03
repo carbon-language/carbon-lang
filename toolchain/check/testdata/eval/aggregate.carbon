@@ -12,7 +12,7 @@ var tuple_copy: (i32, i32) = (1, 2) as (i32, i32);
 
 var struct_copy: {.a: i32, .b: i32, .c: i32} = {.c = 3, .b = 2, .a = 1} as {.b: i32, .a: i32, .c: i32};
 
-var tuple_index: [i32; 1] = (0,) as [i32; (5, 7, 1, 9)[2]];
+var tuple_index: [i32; 1] = (0,) as [i32; (5, 7, 1, 9).2];
 
 var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 
@@ -174,10 +174,10 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc15_56: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %tuple: %.20 = tuple_value (%.loc15_44, %.loc15_47, %.loc15_50, %.loc15_53) [template = constants.%tuple.2]
 // CHECK:STDOUT:   %.loc15_54.2: %.20 = converted %.loc15_54.1, %tuple [template = constants.%tuple.2]
-// CHECK:STDOUT:   %.loc15_57: i32 = tuple_index %.loc15_54.2, %.loc15_56 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_55: i32 = tuple_index %.loc15_54.2, %.loc15_56 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_38.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_38.2: type = converted %int.make_type_32.loc15, %.loc15_38.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_58: type = array_type %.loc15_57, i32 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc15_57: type = array_type %.loc15_55, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc15_5: ref %.13 = splice_block file.%tuple_index.var {}
 // CHECK:STDOUT:   %.loc15_32.2: i32 = int_literal 0 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc15_32.3: ref i32 = array_index %.loc15_5, %.loc15_32.2

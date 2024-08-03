@@ -86,10 +86,10 @@ fn AddressOfType() {
 
 fn AddressOfTupleElementValue() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+4]]:3: ERROR: Cannot take the address of non-reference expression.
-  // CHECK:STDERR:   &((1, 2)[0]);
+  // CHECK:STDERR:   &((1, 2).0);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
-  &((1, 2)[0]);
+  &((1, 2).0);
 }
 
 fn AddressOfParam(param: i32) {
@@ -277,7 +277,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc92_12: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %tuple: %.13 = tuple_value (%.loc92_6, %.loc92_9) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc92_10.2: %.13 = converted %.loc92_10.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc92_13: i32 = tuple_index %.loc92_10.2, %.loc92_12 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc92_11: i32 = tuple_index %.loc92_10.2, %.loc92_12 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc92_3: %.4 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

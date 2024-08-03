@@ -13,7 +13,7 @@ fn Foo(a: i32, b: i32) {}
 fn Main() {
   var x: (i32,) = (1,);
   // Generates multiple IR instructions for the first parameter.
-  Foo(x[0], 6);
+  Foo(x.0, 6);
 }
 
 // CHECK:STDOUT: --- more_param_ir.carbon
@@ -94,10 +94,10 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %.3 = name_ref x, %x
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc16_10.1: ref i32 = tuple_index %x.ref, %.loc16_9
-// CHECK:STDOUT:   %.loc16_13: i32 = int_literal 6 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc16_10.2: i32 = bind_value %.loc16_10.1
-// CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_10.2, %.loc16_13)
+// CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_index %x.ref, %.loc16_9
+// CHECK:STDOUT:   %.loc16_12: i32 = int_literal 6 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16_8.2: i32 = bind_value %.loc16_8.1
+// CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_8.2, %.loc16_12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

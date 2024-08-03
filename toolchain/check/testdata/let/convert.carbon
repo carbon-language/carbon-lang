@@ -12,7 +12,7 @@ fn F() -> i32 {
   var v: (i32, i32, i32) = (1, 2, 3);
   // Convert from object representation to value representation.
   let w: (i32, i32, i32) = v;
-  return w[1];
+  return w.1;
 }
 
 // CHECK:STDOUT: --- convert.carbon
@@ -113,7 +113,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %w: %.3 = bind_name w, %.loc14_29
 // CHECK:STDOUT:   %w.ref: %.3 = name_ref w, %w
 // CHECK:STDOUT:   %.loc15_12: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_13: i32 = tuple_index %w.ref, %.loc15_12
-// CHECK:STDOUT:   return %.loc15_13
+// CHECK:STDOUT:   %.loc15_11: i32 = tuple_index %w.ref, %.loc15_12
+// CHECK:STDOUT:   return %.loc15_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
