@@ -203,10 +203,11 @@ class SourceGen {
   };
 
   class UniqueIdPopper;
+  friend UniqueIdPopper;
 
   auto IsCpp() -> bool { return language_ == Language::Cpp; }
 
-  auto GenerateRandomIdentifier(int length) -> std::string;
+  auto GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage) -> void;
   auto AppendUniqueIdentifiers(int length, int number,
                                llvm::SmallVectorImpl<llvm::StringRef>& dest)
       -> void;
@@ -226,11 +227,11 @@ class SourceGen {
   auto GenerateClassDef(const ClassParams& params, ClassGenState& state,
                         llvm::raw_ostream& os) -> void;
 
-  absl::BitGen rng;
-  llvm::BumpPtrAllocator storage;
+  absl::BitGen rng_;
+  llvm::BumpPtrAllocator storage_;
 
-  Map<int, llvm::SmallVector<llvm::StringRef>> ids_by_length;
-  Map<int, std::pair<int, Set<llvm::StringRef>>> unique_ids_by_length;
+  Map<int, llvm::SmallVector<llvm::StringRef>> ids_by_length_;
+  Map<int, std::pair<int, Set<llvm::StringRef>>> unique_ids_by_length_;
 
   Language language_;
 };

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "common/bazel_working_dir.h"
 #include "common/command_line.h"
 #include "common/init_llvm.h"
 #include "common/ostream.h"
@@ -105,6 +106,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 auto main(int argc, char** argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
   Carbon::InitLLVM init_llvm(argc, argv);
+
+  Carbon::SetWorkingDirForBazel();
 
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   bool success = Carbon::Testing::Run(args);

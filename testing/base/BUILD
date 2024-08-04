@@ -75,6 +75,7 @@ cc_binary(
     srcs = ["source_gen_main.cpp"],
     deps = [
         ":source_gen_lib",
+        "//common:bazel_working_dir",
         "//common:command_line",
         "//common:init_llvm",
         "//common:ostream",

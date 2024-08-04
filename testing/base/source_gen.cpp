@@ -55,9 +55,9 @@ static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params)
 
 // Note that this should match the heuristics used when formatting.
 // TODO: See top-level TODO about line estimates and formatting.
-static auto EstimateAvgClassLines(SourceGen::ClassParams params) -> double {
-  // Blank line, comment line, and class open line.
-  double avg = 3.0;
+static auto EstimateAvgClassDefLines(SourceGen::ClassParams params) -> double {
+  // Comment line, and class open line.
+  double avg = 2.0;
 
   // One comment line and blank line per function, plus the function lines.
   avg +=
@@ -86,19 +86,28 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
   std::string source;
   llvm::raw_string_ostream os(source);
 
-  double avg_class_lines = EstimateAvgClassLines(params.class_params);
-  int num_classes = static_cast<double>(target_lines) / avg_class_lines;
-  int expected_lines = num_classes * avg_class_lines;
+  // Figure out how many classes fit in our target lines, each separated by a
+  // blank line. We need to account the comment lines below to start the file.
+  // Note that we want a blank line after our file comment block, so every class
+  // needs a blank line.
+  constexpr int NumFileCommentLines = 4;
+  double avg_class_lines = EstimateAvgClassDefLines(params.class_params);
+  CARBON_CHECK(target_lines > NumFileCommentLines + avg_class_lines)
+      << "Not enough target lines to generate a single class!";
+  int num_classes = static_cast<double>(target_lines - NumFileCommentLines) /
+                    (avg_class_lines + 1);
+  int expected_lines =
+      NumFileCommentLines + num_classes * (avg_class_lines + 1);
+
   os << "// Generated " << (!IsCpp() ? "Carbon" : "C++") << " source file.\n";
   os << llvm::formatv("// {0} target lines: {1} classes, {2} expected lines",
                       target_lines, num_classes, expected_lines)
      << "\n";
-  os << "//\n// Generating as an API file with dense declarations.\n\n";
+  os << "//\n// Generating as an API file with dense declarations.\n";
 
   auto class_gen_state = GetClassGenState(num_classes, params.class_params);
-  llvm::ListSeparator line_sep("\n");
   for ([[maybe_unused]] int i : llvm::seq(num_classes)) {
-    os << line_sep;
+    os << "\n";
     GenerateClassDef(params.class_params, class_gen_state, os);
   }
 
@@ -117,7 +126,7 @@ auto SourceGen::GetShuffledIds(int number, int min_length, int max_length,
     -> llvm::SmallVector<llvm::StringRef> {
   llvm::SmallVector<llvm::StringRef> ids =
       GetIds(number, min_length, max_length, uniform);
-  std::shuffle(ids.begin(), ids.end(), rng);
+  std::shuffle(ids.begin(), ids.end(), rng_);
   return ids;
 }
 
@@ -129,8 +138,173 @@ auto SourceGen::GetShuffledUniqueIds(int number, int min_length, int max_length,
          "lengths <= 3";
   llvm::SmallVector<llvm::StringRef> ids =
       GetUniqueIds(number, min_length, max_length, uniform);
-  std::shuffle(ids.begin(), ids.end(), rng);
+  std::shuffle(ids.begin(), ids.end(), rng_);
   return ids;
+}
+
+
+auto SourceGen::GetIds(int number, int min_length, int max_length, bool uniform)
+    -> llvm::SmallVector<llvm::StringRef> {
+  llvm::SmallVector<llvm::StringRef> ids =
+      GetIdsImpl(number, min_length, max_length, uniform,
+                 [this](int length, int length_count,
+                        llvm::SmallVectorImpl<llvm::StringRef>& dest) {
+                   auto length_ids = GetSingleLengthIds(length, length_count);
+                   dest.append(length_ids.begin(), length_ids.end());
+                 });
+
+  return ids;
+}
+
+auto SourceGen::GetUniqueIds(int number, int min_length, int max_length,
+                             bool uniform)
+    -> llvm::SmallVector<llvm::StringRef> {
+  CARBON_CHECK(min_length >= 4)
+      << "Cannot trivially guarantee enough distinct, unique identifiers for "
+         "lengths <= 3";
+  llvm::SmallVector<llvm::StringRef> ids =
+      GetIdsImpl(number, min_length, max_length, uniform,
+                 [this](int length, int length_count,
+                        llvm::SmallVectorImpl<llvm::StringRef>& dest) {
+                   AppendUniqueIdentifiers(length, length_count, dest);
+                 });
+
+  return ids;
+}
+
+auto SourceGen::GetSingleLengthIds(int length, int number)
+    -> llvm::ArrayRef<llvm::StringRef> {
+  llvm::SmallVector<llvm::StringRef>& ids =
+      ids_by_length_.Insert(length, {}).value();
+
+  if (static_cast<int>(ids.size()) < number) {
+    ids.reserve(number);
+    for (int _ : llvm::seq<int>(ids.size(), number)) {
+      auto id_storage = llvm::MutableArrayRef(reinterpret_cast<char*>(
+          storage_.Allocate(/*Size=*/length, /*Alignment=*/1)), length);
+      GenerateRandomIdentifier(id_storage);
+      llvm::StringRef new_id(id_storage.data(), length);
+      ids.push_back(new_id);
+    }
+    CARBON_CHECK(static_cast<int>(ids.size()) == number);
+  }
+  return llvm::ArrayRef(ids).slice(0, number);
+}
+
+static auto IdentifierStartChars() -> llvm::ArrayRef<char> {
+  static llvm::SmallVector<char> chars = [] {
+    llvm::SmallVector<char> chars;
+    for (char c : llvm::seq_inclusive('A', 'Z')) {
+      chars.push_back(c);
+    }
+    for (char c : llvm::seq_inclusive('a', 'z')) {
+      chars.push_back(c);
+    }
+    return chars;
+  }();
+  return chars;
+}
+
+static auto IdentifierChars() -> llvm::ArrayRef<char> {
+  static llvm::SmallVector<char> chars = [] {
+    llvm::ArrayRef<char> start_chars = IdentifierStartChars();
+    llvm::SmallVector<char> chars(start_chars.begin(), start_chars.end());
+    chars.push_back('_');
+    for (char c : llvm::seq_inclusive('0', '9')) {
+      chars.push_back(c);
+    }
+    return chars;
+  }();
+  return chars;
+}
+
+constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
+    "asm", "do",     "double", "float", "int",      "long",
+    "new", "signed", "try",    "unix",  "unsigned", "xor",
+};
+
+// Returns a random identifier string of the specified length.
+//
+// Ensures this is a valid identifier, avoiding any overlapping syntaxes or
+// keywords both in Carbon and C++.
+//
+// This routine is somewhat expensive and so is useful to cache and reduce the
+// frequency of calls. However, each time it is called it computes a completely
+// new random identifier and so can be useful to eventually find a distinct
+// identifier when needed.
+auto SourceGen::GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage) -> void {
+  llvm::ArrayRef<char> start_chars = IdentifierStartChars();
+  llvm::ArrayRef<char> chars = IdentifierChars();
+
+  auto id = llvm::StringRef(id_storage.data(), id_storage.size());
+  do {
+    id_storage[0] = start_chars[absl::Uniform<int>(rng_, 0, start_chars.size())];
+    for (int i : llvm::seq<int>(1, id_storage.size())) {
+      id_storage[i] = chars[absl::Uniform<int>(rng_, 0, chars.size())];
+    }
+  } while (
+      // TODO: Clean up and simplify this code. With some small refactorings and
+      // post-processing we should be able to make this both easier to read and
+      // less inefficient.
+      llvm::any_of(Lex::TokenKind::KeywordTokens,
+                   [id](auto token) { return id == token.fixed_spelling(); }) ||
+      llvm::is_contained(NonCarbonCppKeywords, id) ||
+      (llvm::is_contained({'i', 'u', 'f'}, id[0]) &&
+       llvm::all_of(id.substr(1),
+                    [](const char c) { return llvm::isDigit(c); })));
+}
+
+// Appends a number of unique, random identifiers with a particular length to
+// the provided destination vector.
+//
+// Uses, and when necessary grows, a cached sequence of random identifiers with
+// the specified length. Because these are cached, this is efficient to call
+// repeatedly, but will not produce a different sequence of identifiers.
+auto SourceGen::AppendUniqueIdentifiers(
+    int length, int number, llvm::SmallVectorImpl<llvm::StringRef>& dest)
+    -> void {
+  auto& [count, unique_ids] = unique_ids_by_length_.Insert(length, {}).value();
+
+  // See if we need to grow our pool of unique identifiers with the requested
+  // length.
+  if (count < number) {
+    // We'll need to insert exactly the requested new unique identifiers. All
+    // our other inserts will find an existing entry.
+    unique_ids.GrowForInsertCount(count - number);
+
+    // Generate the needed number of identifiers.
+    for ([[maybe_unused]] int i : llvm::seq<int>(count, number)) {
+      // Allocate stable storage for the identifier so we can form stable
+      // `StringRef`s to it.
+      auto id_storage = llvm::MutableArrayRef(reinterpret_cast<char*>(
+          storage_.Allocate(/*Size=*/length, /*Alignment=*/1)), length);
+      // Repeatedly generate novel identifiers of this length until we find a
+      // new unique one.
+      for (;;) {
+        GenerateRandomIdentifier(id_storage);
+        auto result =
+            unique_ids.Insert(llvm::StringRef(id_storage.data(), length));
+        if (result.is_inserted()) {
+          break;
+        }
+      }
+    }
+    count = number;
+  }
+  // Append all the identifiers directly out of the set. We make no guarantees
+  // about the relative order so we just use the non-deterministic order of the
+  // set and avoid additional storage.
+  //
+  // TODO: It's awkward the `ForEach` here can't early-exit. This just walks the
+  // whole set which is harmless if inefficient. We should add early exiting
+  // the loop support to `Set` and update this code.
+  unique_ids.ForEach([&](llvm::StringRef id) {
+    if (number > 0) {
+      dest.push_back(id);
+      --number;
+    }
+  });
+  CARBON_CHECK(number == 0);
 }
 
 // An array of the counts that should be used for each identifier length to
@@ -227,16 +401,24 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
   llvm::SmallVector<llvm::StringRef> ids;
   ids.reserve(number);
 
-  // First, compute how many identifiers of each size we'll need.
+  // First, compute the total weight of the distribution so we know how many
+  // identifiers we'll get each time we collect from it.
   int count_sum =
       uniform ? (max_length - min_length) + 1
               : Sum(llvm::ArrayRef(IdLengthCounts)
                         .slice(min_length - 1, max_length - min_length + 1));
   CARBON_CHECK(count_sum >= 1);
+
+  // Now compute how many times we'll have to sample across the distribution.
   int number_rem = number % count_sum;
+
+  // Finally, walk through each length in the distribution.
   for (int length : llvm::seq_inclusive(min_length, max_length)) {
-    // Scale this length if non-uniform.
+    // Scale how many identifiers we want of this length if computing a
+    // non-uniform distribution. For uniform, we always take one.
     int scale = uniform ? 1 : IdLengthCounts[length - 1];
+
+    // Now we can compute how many identifiers of this length to request.
     int length_count = (number * scale) / count_sum;
     if (number_rem > 0 && length_count * count_sum < number * scale) {
       ++length_count;
@@ -247,185 +429,6 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
   CARBON_CHECK(static_cast<int>(ids.size()) == number);
 
   return ids;
-}
-
-auto SourceGen::GetIds(int number, int min_length, int max_length, bool uniform)
-    -> llvm::SmallVector<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef> ids =
-      GetIdsImpl(number, min_length, max_length, uniform,
-                 [this](int length, int length_count,
-                        llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-                   auto length_ids = GetSingleLengthIds(length, length_count);
-                   dest.append(length_ids.begin(), length_ids.end());
-                 });
-
-  return ids;
-}
-
-auto SourceGen::GetUniqueIds(int number, int min_length, int max_length,
-                             bool uniform)
-    -> llvm::SmallVector<llvm::StringRef> {
-  CARBON_CHECK(min_length >= 4)
-      << "Cannot trivially guarantee enough distinct, unique identifiers for "
-         "lengths <= 3";
-  llvm::SmallVector<llvm::StringRef> ids =
-      GetIdsImpl(number, min_length, max_length, uniform,
-                 [this](int length, int length_count,
-                        llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-                   AppendUniqueIdentifiers(length, length_count, dest);
-                 });
-
-  return ids;
-}
-
-auto SourceGen::GetSingleLengthIds(int length, int number)
-    -> llvm::ArrayRef<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef>& ids =
-      ids_by_length.Insert(length, {}).value();
-
-  if (static_cast<int>(ids.size()) < number) {
-    ids.reserve(number);
-    for (int _ : llvm::seq<int>(ids.size(), number)) {
-      char* id_storage = reinterpret_cast<char*>(
-          storage.Allocate(/*Size=*/length, /*Alignment=*/1));
-      std::string new_id_tmp = GenerateRandomIdentifier(length);
-      memcpy(id_storage, new_id_tmp.data(), length);
-      llvm::StringRef new_id(id_storage, length);
-      ids.push_back(new_id);
-    }
-    CARBON_CHECK(static_cast<int>(ids.size()) == number);
-  }
-  return llvm::ArrayRef(ids).slice(0, number);
-}
-
-static auto IdentifierStartChars() -> llvm::ArrayRef<char> {
-  static llvm::SmallVector<char> chars = [] {
-    llvm::SmallVector<char> chars;
-    for (char c : llvm::seq_inclusive('A', 'Z')) {
-      chars.push_back(c);
-    }
-    for (char c : llvm::seq_inclusive('a', 'z')) {
-      chars.push_back(c);
-    }
-    return chars;
-  }();
-  return chars;
-}
-
-static auto IdentifierChars() -> llvm::ArrayRef<char> {
-  static llvm::SmallVector<char> chars = [] {
-    llvm::ArrayRef<char> start_chars = IdentifierStartChars();
-    llvm::SmallVector<char> chars(start_chars.begin(), start_chars.end());
-    chars.push_back('_');
-    for (char c : llvm::seq_inclusive('0', '9')) {
-      chars.push_back(c);
-    }
-    return chars;
-  }();
-  return chars;
-}
-
-constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
-    "asm", "do",     "double", "float", "int",      "long",
-    "new", "signed", "try",    "unix",  "unsigned", "xor",
-};
-
-// Returns a random identifier string of the specified length.
-//
-// Ensures this is a valid identifier, avoiding any overlapping syntaxes or
-// keywords both in Carbon and C++.
-//
-// This routine is somewhat expensive and so is useful to cache and reduce the
-// frequency of calls. However, each time it is called it computes a completely
-// new random identifier and so can be useful to eventually find a distinct
-// identifier when needed.
-auto SourceGen::GenerateRandomIdentifier(int length) -> std::string {
-  llvm::ArrayRef<char> start_chars = IdentifierStartChars();
-  llvm::ArrayRef<char> chars = IdentifierChars();
-
-  std::string id_result;
-  llvm::raw_string_ostream os(id_result);
-  llvm::StringRef id;
-  do {
-    // Erase any prior attempts to find an identifier.
-    id_result.clear();
-    os << start_chars[absl::Uniform<int>(rng, 0, start_chars.size())];
-    for (int j : llvm::seq(1, length)) {
-      static_cast<void>(j);
-      os << chars[absl::Uniform<int>(rng, 0, chars.size())];
-    }
-    // Check if we ended up forming an integer type literal or a keyword, and
-    // try again.
-    id = llvm::StringRef(id_result);
-  } while (
-      // TODO: Clean up and simplify this code. With some small refactorings and
-      // post-processing we should be able to make this both easier to read and
-      // less inefficient.
-      llvm::any_of(Lex::TokenKind::KeywordTokens,
-                   [id](auto token) { return id == token.fixed_spelling(); }) ||
-      llvm::is_contained(NonCarbonCppKeywords, id) ||
-      (llvm::is_contained({'i', 'u', 'f'}, id[0]) &&
-       llvm::all_of(id.substr(1),
-                    [](const char c) { return llvm::isDigit(c); })));
-  CARBON_CHECK(id == id_result);
-  CARBON_CHECK(static_cast<int>(id.size()) == length);
-  return id_result;
-}
-
-// Appends a number of unique, random identifiers with a particular length to
-// the provided destination vector.
-//
-// Uses, and when necessary grows, a cached sequence of random identifiers with
-// the specified length. Because these are cached, this is efficient to call
-// repeatedly, but will not produce a different sequence of identifiers.
-auto SourceGen::AppendUniqueIdentifiers(
-    int length, int number, llvm::SmallVectorImpl<llvm::StringRef>& dest)
-    -> void {
-  auto& [count, unique_ids] = unique_ids_by_length.Insert(length, {}).value();
-
-  // See if we need to grow our pool of unique identifiers with the requested
-  // length.
-  if (count < number) {
-    // We'll need to insert exactly the requested new unique identifiers. All
-    // our other inserts will find an existing entry.
-    unique_ids.GrowForInsertCount(count - number);
-
-    // Generate the needed number of identifiers.
-    for ([[maybe_unused]] int i : llvm::seq<int>(count, number)) {
-      // Allocate stable storage for the identifier so we can form stable
-      // `StringRef`s to it.
-      char* id_storage = reinterpret_cast<char*>(
-          storage.Allocate(/*Size=*/length, /*Alignment=*/1));
-      // Repeatedly generate novel identifiers of this length until we find a
-      // new unique one.
-      for (;;) {
-        std::string new_id_tmp = GenerateRandomIdentifier(length);
-        // Copy the new identifier into our stable storage before trying to
-        // insert it into the set so the inserted string ref is stable.
-        memcpy(id_storage, new_id_tmp.data(), length);
-        llvm::StringRef new_id(id_storage, length);
-        auto result = unique_ids.Insert(new_id);
-        if (result.is_inserted()) {
-          break;
-        }
-      }
-    }
-    count = number;
-  }
-  // Append all the identifiers directly out of the set. We make no guarantees
-  // about the relative order so we just use the non-deterministic order of the
-  // set and avoid additional storage.
-  //
-  // TODO: It's awkward the `ForEach` here can't early-exit. This just walks the
-  // whole set which is harmless if inefficient. We should add early exiting
-  // the loop support to `Set` and update this code.
-  unique_ids.ForEach([&](llvm::StringRef id) {
-    if (number > 0) {
-      dest.push_back(id);
-      --number;
-    }
-  });
-  CARBON_CHECK(number == 0);
 }
 
 // Returns a shuffled sequence of integers in the range [min, max].
@@ -445,7 +448,7 @@ auto SourceGen::GetShuffledInts(int number, int min, int max)
   }
   CARBON_CHECK(static_cast<int>(ints.size()) == number);
 
-  std::shuffle(ints.begin(), ints.end(), rng);
+  std::shuffle(ints.begin(), ints.end(), rng_);
   return ints;
 }
 
@@ -534,17 +537,19 @@ class SourceGen::UniqueIdPopper {
       return data_->pop_back_val();
     }
 
-    // Out of unique elements. Pop the back and use its length to generate new
-    // identifiers until we find a unique one and return that. This ensures we
-    // continue to consume the structure and produce the same size identifiers
-    // even in the fallback. Note that fallback identifiers only live to the end
-    // of the popper.
+    // Out of unique elements. Overwrite the back, preserving its length,
+    // generating a new identifiers until we find a unique one and return that.
+    // This ensures we continue to consume the structure and produce the same
+    // size identifiers even in the fallback.
     int length = data_->pop_back_val().size();
-    fallback_ids_.push_back("");
-    std::string& fallback_id = fallback_ids_.back();
+    auto fallback_id_storage =
+        llvm::MutableArrayRef(reinterpret_cast<char*>(gen_->storage_.Allocate(
+                                  /*Size=*/length, /*Alignment=*/1)),
+                              length);
     for (;;) {
-      fallback_id = gen_->GenerateRandomIdentifier(length);
-      if (set_.Insert(llvm::StringRef(fallback_id)).is_inserted()) {
+      gen_->GenerateRandomIdentifier(fallback_id_storage);
+      auto fallback_id = llvm::StringRef(fallback_id_storage.data(), length);
+      if (set_.Insert(fallback_id).is_inserted()) {
         return fallback_id;
       }
     }
@@ -554,7 +559,6 @@ class SourceGen::UniqueIdPopper {
   SourceGen* gen_;
   llvm::SmallVectorImpl<llvm::StringRef>* data_;
   llvm::SmallVectorImpl<llvm::StringRef>::reverse_iterator it_;
-  llvm::SmallVector<std::string> fallback_ids_;
   Set<llvm::StringRef> set_;
 };
 
