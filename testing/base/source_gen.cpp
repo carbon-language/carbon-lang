@@ -237,10 +237,10 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
   for (int length : llvm::seq_inclusive(min_length, max_length)) {
     // Scale this length if non-uniform.
     int scale = uniform ? 1 : IdLengthCounts[length - 1];
-    int length_count = (number / count_sum) * scale;
-    if (number_rem > 0) {
-      length_count += std::min(scale, number_rem);
-      number_rem -= scale;
+    int length_count = (number * scale) / count_sum;
+    if (number_rem > 0 && length_count * count_sum < number * scale) {
+      ++length_count;
+      --number_rem;
     }
     append_ids(length, length_count, ids);
   }
@@ -285,7 +285,7 @@ auto SourceGen::GetSingleLengthIds(int length, int number)
 
   if (static_cast<int>(ids.size()) < number) {
     ids.reserve(number);
-    for ([[maybe_unused]] int i : llvm::seq<int>(ids.size(), number)) {
+    for (int _ : llvm::seq<int>(ids.size(), number)) {
       char* id_storage = reinterpret_cast<char*>(
           storage.Allocate(/*Size=*/length, /*Alignment=*/1));
       std::string new_id_tmp = GenerateRandomIdentifier(length);
@@ -430,9 +430,7 @@ auto SourceGen::AppendUniqueIdentifiers(
 
 // Returns a shuffled sequence of integers in the range [min, max].
 //
-// These order of the returned integers is random, but the distribution is
-// computed by appending numbers in round robin over the range up to the
-// requested number.
+// The order of the returned integers is random, but each integer in the range appears the same number of times in the result, with the number of appearances rounded up for lower numbers and rounded down for higher numbers in order to exactly produce `number` results.
 auto SourceGen::GetShuffledInts(int number, int min, int max)
     -> llvm::SmallVector<int> {
   llvm::SmallVector<int> ints;
