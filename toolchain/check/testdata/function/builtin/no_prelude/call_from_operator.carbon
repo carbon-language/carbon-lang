@@ -40,7 +40,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Add, %Op.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.2, %Op.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,7 +108,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type @Add, %Op.type.2 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %.2, %Op.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.8: <bound method> = bound_method %.4, %Op.1 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]

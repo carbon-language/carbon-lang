@@ -75,7 +75,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @WithAssocFn(%T.1) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @WithAssocFn, %F.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %F.type.1 [symbolic]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @WithAssocFn.%F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.7: type = interface_type @Simple, @Simple(%C) [template]
@@ -167,7 +167,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @WithAssocFn(%T) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @WithAssocFn.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @WithAssocFn, @WithAssocFn.%F.type (%F.type.1) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @WithAssocFn.%.1 (%.4), @WithAssocFn.%F.type (%F.type.1) [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:   %.3: @WithAssocFn.%.2 (%.5) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {

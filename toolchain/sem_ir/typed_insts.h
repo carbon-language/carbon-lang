@@ -213,7 +213,7 @@ struct AssociatedEntityType {
            .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
-  InterfaceId interface_id;
+  TypeId interface_type_id;
   TypeId entity_type_id;
 };
 

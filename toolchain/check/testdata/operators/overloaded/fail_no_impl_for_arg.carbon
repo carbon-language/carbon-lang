@@ -68,12 +68,12 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type @Add, %Op.type.2 [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %.2, %Op.type.2 [template]
 // CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.9 [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, %Op.type.4 [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type %.5, %Op.type.4 [template]
 // CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

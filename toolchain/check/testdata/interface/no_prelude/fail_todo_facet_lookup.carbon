@@ -33,7 +33,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Interface, %F.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %CallStatic.type: type = fn_type @CallStatic [template]

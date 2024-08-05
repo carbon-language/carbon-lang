@@ -245,11 +245,12 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
           out << "<associated ";
           steps.push_back(step.Next());
           push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
+        } else if (step.index == 1) {
+          out << " in ";
+          steps.push_back(step.Next());
+          push_inst_id(sem_ir.types().GetInstId(inst.interface_type_id));
         } else {
-          auto interface_name_id =
-              sem_ir.interfaces().Get(inst.interface_id).name_id;
-          out << " in " << sem_ir.names().GetFormatted(interface_name_id)
-              << ">";
+          out << ">";
         }
         break;
       }

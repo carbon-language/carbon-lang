@@ -20,7 +20,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @UseSelf, %F.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @UseSelf.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

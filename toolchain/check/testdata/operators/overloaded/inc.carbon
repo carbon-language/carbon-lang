@@ -42,7 +42,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type @Inc, %Op.type.2 [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %.2, %Op.type.2 [template]
 // CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

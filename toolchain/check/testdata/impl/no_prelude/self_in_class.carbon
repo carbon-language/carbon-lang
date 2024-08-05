@@ -30,7 +30,7 @@ class A {
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @DefaultConstructible, %Make.type.1 [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %Make.type.1 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]

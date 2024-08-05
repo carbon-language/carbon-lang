@@ -18,12 +18,12 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @I, type [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @I, i32 [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, i32 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
