@@ -66,11 +66,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [template]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type @Inc, %Op.type.2 [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type %.2, %Op.type.2 [template]
 // CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.9 [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, %Op.type.4 [template]
+// CHECK:STDOUT:   %.13: type = assoc_entity_type %.7, %Op.type.4 [template]
 // CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -27,7 +27,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = assoc_entity_type @ForwardDeclared, %F.type [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.2, %F.type [template]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @ForwardDeclared.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

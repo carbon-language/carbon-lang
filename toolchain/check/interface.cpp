@@ -21,6 +21,10 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
     return SemIR::InstId::BuiltinError;
   }
 
+  // The interface type is the type of `Self`.
+  auto self_type_id =
+      context.insts().Get(interface_info.self_param_id).type_id();
+
   // Register this declaration as declaring an associated entity.
   auto index = SemIR::ElementIndex(
       context.args_type_info_stack().PeekCurrentBlockContents().size());
@@ -29,7 +33,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
   auto type_id = context.GetAssociatedEntityType(
-      interface_id, context.insts().Get(decl_id).type_id());
+      self_type_id, context.insts().Get(decl_id).type_id());
   return context.AddInst<SemIR::AssociatedEntity>(
       context.insts().GetLocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});

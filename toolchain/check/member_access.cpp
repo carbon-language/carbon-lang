@@ -128,7 +128,7 @@ static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
 // Returns an invalid InstId if no matching impl is found.
 static auto LookupInterfaceWitness(Context& context,
                                    SemIR::ConstantId type_const_id,
-                                   SemIR::InterfaceId interface_id)
+                                   SemIR::TypeId interface_type_id)
     -> SemIR::InstId {
   // TODO: Add a better impl lookup system. At the very least, we should only be
   // considering impls that are for the same interface we're querying. We can
@@ -138,14 +138,9 @@ static auto LookupInterfaceWitness(Context& context,
             context.types().GetConstantId(impl.self_id), type_const_id)) {
       continue;
     }
-    auto interface_type =
-        context.types().TryGetAs<SemIR::InterfaceType>(impl.constraint_id);
-    if (!interface_type) {
+    if (impl.constraint_id != interface_type_id) {
       // TODO: An impl of a constraint type should be treated as implementing
       // the constraint's interfaces.
-      continue;
-    }
-    if (interface_type->interface_id != interface_id) {
       continue;
     }
     if (!impl.witness_id.is_valid()) {
@@ -164,9 +159,11 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
                               SemIR::ConstantId type_const_id,
                               SemIR::AssociatedEntityType assoc_type,
                               SemIR::InstId member_id) -> SemIR::InstId {
-  auto& interface = context.interfaces().Get(assoc_type.interface_id);
-  auto witness_id =
-      LookupInterfaceWitness(context, type_const_id, assoc_type.interface_id);
+  auto interface_type =
+      context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
+  auto& interface = context.interfaces().Get(interface_type.interface_id);
+  auto witness_id = LookupInterfaceWitness(context, type_const_id,
+                                           assoc_type.interface_type_id);
   if (!witness_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
                       "Cannot access member of interface {0} in type {1} "
@@ -194,6 +191,7 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
   }
 
   // Substitute into the type declared in the interface.
+  // TODO: Also substitute the arguments from interface_type.specific_id.
   auto self_param =
       context.insts().GetAs<SemIR::BindSymbolicName>(interface.self_param_id);
   Substitution substitutions[1] = {
@@ -252,8 +250,8 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   // TODO: We need to do this as part of searching extended scopes, because a
   // lookup that finds an associated entity and also finds the corresponding
   // impl member is not supposed to be treated as ambiguous.
-  if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
-          inst.type_id())) {
+  if (auto assoc_type =
+          context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (ScopeNeedsImplLookup(context, lookup_scope)) {
       member_id = PerformImplLookup(context, node_id, name_scope_const_id,
                                     *assoc_type, member_id);
