@@ -216,6 +216,8 @@ repos:
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
+              website/.ruby-version|
+              website/Gemfile.lock|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|

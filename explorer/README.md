@@ -6,6 +6,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!--
+{% raw %}
+Hides `{{` from jekyll's liquid parsing. Note endraw at the bottom.
+-->
+
 `explorer` is an implementation of Carbon whose primary purpose is to act as a
 clear specification of the language. As an extension of that goal, it can also
 be used as a platform for prototyping and validating changes to the language.
@@ -334,3 +339,7 @@ information and provide visual separation for different sections.
 - - - - -  Sub Heading - - - - -
 --------------------------------
 ```
+
+<!--
+{% endraw %}
+-->
