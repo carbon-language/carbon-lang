@@ -50,19 +50,24 @@ interface I {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @I[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(@I.%Self: %.1) {
+// CHECK:STDOUT: generic class @C(@I.%Self.1: %.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -74,6 +79,10 @@ interface I {
 // CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}

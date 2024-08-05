@@ -77,16 +77,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+22, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/bitwise, inst+45, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+40, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+47, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+49, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/bitwise, inst+70, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+64, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+40, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+23, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/bitwise, inst+47, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+42, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+49, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/bitwise, inst+73, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+67, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+67, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -129,14 +129,26 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @BitAnd {
+// CHECK:STDOUT: interface @BitAnd[constants.%Self.1: %.2] {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .Op = imports.%import_ref.3
 // CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @BitAndAssign {
+// CHECK:STDOUT: interface @BitAndAssign[constants.%Self.2: %.6] {
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .Op = imports.%import_ref.7

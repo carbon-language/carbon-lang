@@ -57,23 +57,41 @@ protected interface Protected;
 // CHECK:STDOUT:   %Protected.decl: type = interface_decl @Protected [template = constants.%.4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Abstract {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT: interface @Abstract[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Virtual {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT: interface @Virtual[%Self.1: %.3] {
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Protected;
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Abstract[constants.%Self.1] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Virtual[constants.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

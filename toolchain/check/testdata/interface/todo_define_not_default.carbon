@@ -67,8 +67,13 @@ interface I {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @I[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %.loc13: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
@@ -106,7 +111,7 @@ interface I {
 // CHECK:STDOUT:   %.loc19_19: %.12 = assoc_entity element3, %N [template = constants.%.13]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .F = %.loc13
 // CHECK:STDOUT:   .G = %.loc14_31
 // CHECK:STDOUT:   .T = %.loc18_28.6
@@ -114,7 +119,7 @@ interface I {
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl, %T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@I.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F(@I.%Self.1: %.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -125,9 +130,13 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(@I.%Self: %.1) {
+// CHECK:STDOUT: generic fn @G(@I.%Self.1: %.1) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(@I.%a.loc14_8.2: i32, @I.%b.loc14_16.2: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

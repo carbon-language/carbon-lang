@@ -82,10 +82,15 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @I[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self.1 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc14_8.1: @F.1.%Self (%Self) = param self
@@ -98,7 +103,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc14_28: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .F = %.loc14_28
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
@@ -132,7 +137,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F.1(@I.%Self.1: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[@I.%self.loc14_8.2: @F.1.%Self (%Self)]() -> i32;
@@ -150,6 +155,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc24_15.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc24_15.2: i32 = converted %F.call, %.loc24_15.1
 // CHECK:STDOUT:   return %.loc24_15.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {

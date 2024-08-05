@@ -60,8 +60,13 @@ interface I {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @I[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %int.make_type_32.loc16_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc16_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc16_35: %.3 = tuple_literal (%int.make_type_32.loc16_27, %int.make_type_32.loc16_32)
@@ -80,11 +85,15 @@ interface I {
 // CHECK:STDOUT:   %.loc20_27: %.8 = assoc_entity element1, %N [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .T = %.loc16_36.6
 // CHECK:STDOUT:   .N = %.loc20_27
 // CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

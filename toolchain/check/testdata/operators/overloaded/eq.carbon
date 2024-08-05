@@ -123,13 +123,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+31, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref Core//prelude/operators/comparison, inst+26, loaded [template = constants.%Equal.2]
-// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+47, loaded [template = constants.%NotEqual.2]
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+32, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+53, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref Core//prelude/operators/comparison, inst+27, loaded [template = constants.%Equal.2]
+// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+48, loaded [template = constants.%NotEqual.2]
 // CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+48, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -172,7 +172,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Eq {
+// CHECK:STDOUT: interface @Eq[constants.%Self: %.2] {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .Equal = imports.%import_ref.3
@@ -300,12 +306,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+31, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+32, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+53, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/comparison, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/comparison, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+48, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -343,7 +349,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Eq {
+// CHECK:STDOUT: interface @Eq[constants.%Self: %.4] {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .Equal = imports.%import_ref.4
@@ -429,13 +441,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+3, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+31, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+52, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref Core//prelude/operators/comparison, inst+26, loaded [template = constants.%Equal.2]
-// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+47, loaded [template = constants.%NotEqual.2]
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+32, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+53, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %Equal.type.2 = import_ref Core//prelude/operators/comparison, inst+27, loaded [template = constants.%Equal.2]
+// CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+48, loaded [template = constants.%NotEqual.2]
 // CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+47, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+48, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -480,7 +492,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Eq {
+// CHECK:STDOUT: interface @Eq[constants.%Self: %.2] {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .Equal = imports.%import_ref.3

@@ -90,53 +90,80 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f_ref: ref %.13 = bind_name f_ref, %f_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT: interface @Empty[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Basic {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT: interface @Basic[%Self.1: %.2] {
+// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.2 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc8: %.3 = assoc_entity element0, %T [template = constants.%.4]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
 // CHECK:STDOUT:   %.loc9: %.6 = assoc_entity element1, %F.decl [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .T = %.loc8
 // CHECK:STDOUT:   .F = %.loc9
 // CHECK:STDOUT:   witness = (%T, %F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = constants.%Self.3]
+// CHECK:STDOUT: interface @ForwardDeclared[%Self.1: %.8] {
+// CHECK:STDOUT:   %Self.2: %.8 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.8 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.3)]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc16: %.9 = assoc_entity element0, %T [template = constants.%.10]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
 // CHECK:STDOUT:   %.loc17: %.11 = assoc_entity element1, %F.decl [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .T = %.loc16
 // CHECK:STDOUT:   .F = %.loc17
 // CHECK:STDOUT:   witness = (%T, %F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@Basic.%Self: %.2) {
+// CHECK:STDOUT: generic fn @F.1(@Basic.%Self.1: %.2) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@ForwardDeclared.%Self: %.8) {
+// CHECK:STDOUT: generic fn @F.2(@ForwardDeclared.%Self.1: %.8) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty[constants.%Self.1] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Basic[constants.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ForwardDeclared[constants.%Self.3] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.3
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Self.3) {}
 // CHECK:STDOUT:
@@ -175,24 +202,24 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+20, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.4: ref %.14 = import_ref Main//a, inst+42, loaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+6, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+22, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.4: ref %.14 = import_ref Main//a, inst+45, loaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.5 = import_ref Main//a, inst+11, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.8: %.7 = import_ref Main//a, inst+18, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.12: %.9 = import_ref Main//a, inst+26, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.13: %.11 = import_ref Main//a, inst+32, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//a, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//a, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//a, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.5 = import_ref Main//a, inst+13, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.8: %.7 = import_ref Main//a, inst+20, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.12: %.9 = import_ref Main//a, inst+29, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.13: %.11 = import_ref Main//a, inst+35, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//a, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//a, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//a, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//a, inst+31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -244,13 +271,25 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f.loc16: ref %.13 = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT: interface @Empty[constants.%Self.1: %.1] {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Basic {
+// CHECK:STDOUT: interface @Basic[constants.%Self.2: %.3] {
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .T = imports.%import_ref.7
@@ -258,7 +297,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%import_ref.9, imports.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @ForwardDeclared {
+// CHECK:STDOUT: interface @ForwardDeclared[constants.%Self.3: %.4] {
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.11
 // CHECK:STDOUT:   .T = imports.%import_ref.12

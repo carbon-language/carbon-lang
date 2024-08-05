@@ -48,11 +48,11 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+72, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.9 = import_ref Core//prelude/operators/arithmetic, inst+90, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+75, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+77, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.9 = import_ref Core//prelude/operators/arithmetic, inst+94, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+89, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+89, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,7 +79,13 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Negate {
+// CHECK:STDOUT: interface @Negate[constants.%Self: %.8] {
+// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .Op = imports.%import_ref.4

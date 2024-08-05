@@ -72,7 +72,12 @@ interface Class { }
 // CHECK:STDOUT:   %.decl.loc43: type = interface_decl @.2 [template = constants.%.4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Interface {
+// CHECK:STDOUT: interface @Interface[<unexpected>.inst+3: %.1] {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -83,11 +88,16 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @.2 {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT: interface @.2[%Self.1: %.4] {
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.4 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,4 +106,12 @@ interface Class { }
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Function();
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface[constants.%Self.1] {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.2[constants.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

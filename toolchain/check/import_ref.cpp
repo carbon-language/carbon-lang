@@ -574,6 +574,11 @@ class ImportRefResolver {
             .Get(interface_type.interface_id)
             .generic_id;
       }
+      case CARBON_KIND(SemIR::InterfaceType interface_type): {
+        return context_.interfaces()
+            .Get(interface_type.interface_id)
+            .generic_with_self_id;
+      }
       default: {
         CARBON_FATAL() << "Unexpected type for generic declaration: " << type;
       }
@@ -1496,7 +1501,8 @@ class ImportRefResolver {
     // Start with an incomplete interface.
     interface_decl.interface_id = context_.interfaces().Add(
         {GetIncompleteLocalEntityBase(interface_decl_id, import_interface),
-         {}});
+         {.generic_with_self_id = MakeIncompleteGeneric(
+              SemIR::InstId::Invalid, import_interface.generic_with_self_id)}});
 
     if (import_interface.is_generic()) {
       interface_decl.type_id =
@@ -1513,7 +1519,9 @@ class ImportRefResolver {
   // declaration.
   auto AddInterfaceDefinition(const SemIR::Interface& import_interface,
                               SemIR::Interface& new_interface,
-                              SemIR::InstId self_param_id) -> void {
+                              SemIR::InstId self_param_id,
+                              const GenericData& generic_with_self_data)
+      -> void {
     new_interface.scope_id = context_.name_scopes().Add(
         new_interface.decl_id, SemIR::NameId::Invalid,
         new_interface.parent_scope_id);
@@ -1528,6 +1536,12 @@ class ImportRefResolver {
         AddAssociatedEntities(import_interface.associated_entities_id);
     new_interface.body_block_id = context_.inst_block_stack().Pop();
     new_interface.self_param_id = self_param_id;
+
+    // Import the generic corresponding to the interface body.
+    context_.generics().Get(new_interface.generic_with_self_id).decl_id =
+        new_interface.self_param_id;
+    SetGenericData(import_interface.generic_with_self_id,
+                   new_interface.generic_with_self_id, generic_with_self_data);
 
     CARBON_CHECK(import_scope.extended_scopes.empty())
         << "Interfaces don't currently have extended scopes to support.";
@@ -1569,6 +1583,8 @@ class ImportRefResolver {
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
     auto generic_data = GetLocalGenericData(import_interface.generic_id);
+    auto generic_with_self_data =
+        GetLocalGenericData(import_interface.generic_with_self_id);
 
     std::optional<SemIR::InstId> self_param_id;
     if (import_interface.is_defined()) {
@@ -1590,7 +1606,8 @@ class ImportRefResolver {
 
     if (import_interface.is_defined()) {
       CARBON_CHECK(self_param_id);
-      AddInterfaceDefinition(import_interface, new_interface, *self_param_id);
+      AddInterfaceDefinition(import_interface, new_interface, *self_param_id,
+                             generic_with_self_data);
     }
     return {.const_id = interface_const_id};
   }

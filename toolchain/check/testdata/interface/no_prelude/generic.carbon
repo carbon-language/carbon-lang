@@ -108,12 +108,12 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.decl: %Simple.type = interface_decl @Simple [template = constants.%Simple] {
 // CHECK:STDOUT:     %T.loc4_18.1: type = param T
-// CHECK:STDOUT:     %T.loc4_18.2: type = bind_symbolic_name T 0, %T.loc4_18.1 [symbolic = @Simple.%T (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc4_18.2: type = bind_symbolic_name T 0, %T.loc4_18.1 [symbolic = @Simple.%T.1 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %WithAssocFn.decl: %WithAssocFn.type = interface_decl @WithAssocFn [template = constants.%WithAssocFn] {
 // CHECK:STDOUT:     %T.loc8_23.1: type = param T
-// CHECK:STDOUT:     %T.loc8_23.2: type = bind_symbolic_name T 0, %T.loc8_23.1 [symbolic = @WithAssocFn.%T (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc8_23.2: type = bind_symbolic_name T 0, %T.loc8_23.1 [symbolic = @WithAssocFn.%T.1 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %WithImplicitArgs.decl: %WithImplicitArgs.type = interface_decl @WithImplicitArgs [template = constants.%WithImplicitArgs] {
@@ -144,13 +144,16 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Simple(file.%T.loc4_18.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Simple, @Simple(%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:   interface[file.%T.loc4_18.2: type, %Self.1: @Simple.%.1 (%.2)] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.1: type = interface_type @Simple, @Simple(%T.2) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
 // CHECK:STDOUT:     %Self.1: @Simple.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -160,17 +163,20 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @WithAssocFn(file.%T.loc8_23.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @WithAssocFn, @WithAssocFn(%T) [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @WithAssocFn(%T) [symbolic = %F.type (constants.%F.type.1)]
-// CHECK:STDOUT:   %F: @WithAssocFn.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @WithAssocFn.%.1 (%.4), @WithAssocFn.%F.type (%F.type.1) [symbolic = %.2 (constants.%.5)]
-// CHECK:STDOUT:   %.3: @WithAssocFn.%.2 (%.5) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.6)]
+// CHECK:STDOUT:   interface[file.%T.loc8_23.2: type, %Self.1: @WithAssocFn.%.1 (%.4)] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.1: type = interface_type @WithAssocFn, @WithAssocFn(%T.2) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:     %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %F.type: type = fn_type @F.1, @WithAssocFn(%T.2) [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:     %F: @WithAssocFn.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @WithAssocFn.%.1 (%.4), @WithAssocFn.%F.type (%F.type.1) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:     %.3: @WithAssocFn.%.2 (%.5) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
 // CHECK:STDOUT:     %Self.1: @WithAssocFn.%.1 (%.4) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:     %F.decl: @WithAssocFn.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
@@ -270,29 +276,41 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.1) {
-// CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.1 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(@Simple.%T) {
-// CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT: specific @Simple(@Simple.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple(constants.%T.1)[constants.%Self.1] {
+// CHECK:STDOUT:   %T.2 => constants.%T.1
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.1) {
-// CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithAssocFn(@WithAssocFn.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithAssocFn(constants.%T.1)[constants.%Self.2] {
+// CHECK:STDOUT:   %T.2 => constants.%T.1
+// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn(@WithAssocFn.%T) {
-// CHECK:STDOUT:   %T => constants.%T.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
-// CHECK:STDOUT:   %T => constants.%C
+// CHECK:STDOUT:   %T.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%C) {
-// CHECK:STDOUT:   %T => constants.%C
+// CHECK:STDOUT:   %T.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.1, constants.%N) {
@@ -340,7 +358,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @Generic.%T (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @Generic.%T.1 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
@@ -365,13 +383,16 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Generic(file.%T.loc4_19.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Generic, @Generic(%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   interface[file.%T.loc4_19.2: type, %Self.1: @Generic.%.1 (%.2)] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.1: type = interface_type @Generic, @Generic(%T.2) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
 // CHECK:STDOUT:     %Self.1: @Generic.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -411,15 +432,21 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
-// CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.1 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@Generic.%T) {
-// CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT: specific @Generic(@Generic.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(constants.%T.1)[constants.%Self] {
+// CHECK:STDOUT:   %T.2 => constants.%T.1
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
-// CHECK:STDOUT:   %T => constants.%A
+// CHECK:STDOUT:   %T.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.2) {
@@ -427,7 +454,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
-// CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT:   %T.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.3) {

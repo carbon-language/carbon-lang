@@ -82,8 +82,13 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @BeingDefined {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @BeingDefined[%Self.1: %.4] {
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.4 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%.4]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
@@ -93,7 +98,7 @@ interface BeingDefined {
 // CHECK:STDOUT:   %.decl: %.type.2 = fn_decl @.2 [template = constants.%.7] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .H = %.loc45
 // CHECK:STDOUT:   witness = (%H.decl)
 // CHECK:STDOUT: }
@@ -107,14 +112,18 @@ interface BeingDefined {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @H(@BeingDefined.%Self: %.4) {
+// CHECK:STDOUT: generic fn @H(@BeingDefined.%Self.1: %.4) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.2(@BeingDefined.%Self: %.4) {
+// CHECK:STDOUT: generic fn @.2(@BeingDefined.%Self.1: %.4) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @BeingDefined[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%Self) {}

@@ -53,10 +53,15 @@ class A {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @DefaultConstructible {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @DefaultConstructible[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self.1 [symbolic = @Make.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = @Make.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = @Make.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @Make.1.%Self (%Self) = var <return slot>
@@ -64,7 +69,7 @@ class A {
 // CHECK:STDOUT:   %.loc12_20: %.3 = assoc_entity element0, %Make.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .Make = %.loc12_20
 // CHECK:STDOUT:   witness = (%Make.decl)
 // CHECK:STDOUT: }
@@ -96,7 +101,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self: %.1) {
+// CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self.1: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%Self (%Self);
@@ -108,6 +113,10 @@ class A {
 // CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), @impl.%return.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc21_34 to @impl.%return.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @DefaultConstructible[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {

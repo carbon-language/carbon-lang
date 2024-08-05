@@ -48,22 +48,25 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @AddWith, @AddWith(%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith.%.1 (%.2), @AddWith.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   interface[file.%T.loc4_19.2: type, %Self.1: @AddWith.%.1 (%.2)] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T)]
+// CHECK:STDOUT:     %.1: type = interface_type @AddWith, @AddWith(%T.2) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %F.type: type = fn_type @F, @AddWith(%T.2) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:     %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @AddWith.%.1 (%.2), @AddWith.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:     %.3: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
 // CHECK:STDOUT:     %Self.1: @AddWith.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {}
 // CHECK:STDOUT:     %.loc5: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
@@ -81,14 +84,20 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddWith(@AddWith.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddWith(constants.%T)[constants.%Self] {
+// CHECK:STDOUT:   %T.2 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith(@AddWith.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -115,10 +124,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+4, loaded [template = constants.%AddWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.5: @AddWith.%F.type (%F.type.2) = import_ref Main//a, inst+12, loaded [symbolic = @AddWith.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.5: @AddWith.%F.type (%F.type.2) = import_ref Main//a, inst+15, loaded [symbolic = @AddWith.%F (constants.%F.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -139,17 +148,21 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @AddWith, @AddWith(%T) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.2)]
-// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith.%.1 (%.3), @AddWith.%F.type (%F.type.2) [symbolic = %.2 (constants.%.4)]
-// CHECK:STDOUT:   %.3: @AddWith.%.2 (%.4) = assoc_entity element0, imports.%import_ref.2 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:   interface[constants.%T: type, constants.%Self: %.3] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T)]
+// CHECK:STDOUT:     %.1: type = interface_type @AddWith, @AddWith(%T.2) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:     %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %F.type: type = fn_type @F.1, @AddWith(%T.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:     %F: @AddWith.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @AddWith.%.1 (%.3), @AddWith.%F.type (%F.type.2) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:     %.3: @AddWith.%.2 (%.4) = assoc_entity element0, imports.%import_ref.2 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.3
 // CHECK:STDOUT:     .F = imports.%import_ref.4
@@ -182,14 +195,14 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith(@AddWith.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: specific @AddWith(@AddWith.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%C) {
-// CHECK:STDOUT:   %T => constants.%C
+// CHECK:STDOUT:   %T.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

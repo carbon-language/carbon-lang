@@ -62,8 +62,13 @@ interface Interface {
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @Interface[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %.loc16: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
@@ -85,13 +90,13 @@ interface Interface {
 // CHECK:STDOUT:   %.loc21_39: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .F = %.loc16
 // CHECK:STDOUT:   .G = %.loc21_39
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F(@Interface.%Self.1: %.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -102,9 +107,13 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(@Interface.%Self: %.1) {
+// CHECK:STDOUT: generic fn @G(@Interface.%Self.1: %.1) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(@Interface.%a.loc21_16.2: i32, @Interface.%b.loc21_24.2: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

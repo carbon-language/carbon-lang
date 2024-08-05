@@ -60,13 +60,18 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @HasF {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @HasF[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
 // CHECK:STDOUT:   %.loc5: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .F = %.loc5
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
@@ -85,7 +90,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@HasF.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F.1(@HasF.%Self.1: %.1) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -93,6 +98,10 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
@@ -123,14 +132,14 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     .HasF = %import_ref.7
 // CHECK:STDOUT:     import Impl//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Impl//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Impl//default, inst+10, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+21, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Impl//default, inst+11, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+22, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.7: type = import_ref Impl//default, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Impl//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Impl//default, inst+6, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,7 +156,13 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @HasF {
+// CHECK:STDOUT: interface @HasF[constants.%Self: %.2] {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .F = imports.%import_ref.3

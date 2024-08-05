@@ -43,21 +43,26 @@ interface Modifiers {
 // CHECK:STDOUT:   %Modifiers.decl: type = interface_decl @Modifiers [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @Modifiers[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {}
 // CHECK:STDOUT:   %.loc16: %.3 = assoc_entity element0, %Final.decl [template = constants.%.4]
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [template = constants.%Default] {}
 // CHECK:STDOUT:   %.loc20: %.5 = assoc_entity element1, %Default.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .Final = %.loc16
 // CHECK:STDOUT:   .Default = %.loc20
 // CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Final(@Modifiers.%Self: %.1) {
+// CHECK:STDOUT: generic fn @Final(@Modifiers.%Self.1: %.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -66,13 +71,17 @@ interface Modifiers {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Default(@Modifiers.%Self: %.1) {
+// CHECK:STDOUT: generic fn @Default(@Modifiers.%Self.1: %.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Modifiers[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Final(constants.%Self) {}

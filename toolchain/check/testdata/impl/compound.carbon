@@ -129,12 +129,17 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @Simple[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self.1 [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc13_8.1: @G.1.%Self (%Self) = param self
@@ -143,7 +148,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %.loc13_21: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .F = %.loc12
 // CHECK:STDOUT:   .G = %.loc13_21
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
@@ -166,12 +171,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %.1) {
+// CHECK:STDOUT: generic fn @F.1(@Simple.%Self.1: %.1) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %.1) {
+// CHECK:STDOUT: generic fn @G.1(@Simple.%Self.1: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[@Simple.%self.loc13_8.2: @G.1.%Self (%Self)]();
@@ -226,6 +231,10 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %.loc34_4.3: i32 = bind_value %.loc34_4.1
 // CHECK:STDOUT:   %G.call: init %.2 = call %.loc34_4.2(%.loc34_4.3)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}

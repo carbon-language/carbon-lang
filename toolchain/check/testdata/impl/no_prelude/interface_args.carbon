@@ -28,6 +28,10 @@ impl A as Action(B) {
 
 impl library "action";
 
+// CHECK:STDERR: action.impl.carbon:[[@LINE+4]]:14: ERROR: Cannot access member of interface Action in type A that does not implement that interface.
+// CHECK:STDERR: fn F(a: A) { a.(Action(B).Op)(); }
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(a: A) { a.(Action(B).Op)(); }
 
 // --- fail_action.impl.carbon
@@ -93,7 +97,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Action.decl: %Action.type = interface_decl @Action [template = constants.%Action] {
 // CHECK:STDOUT:     %T.loc4_18.1: type = param T
-// CHECK:STDOUT:     %T.loc4_18.2: type = bind_symbolic_name T 0, %T.loc4_18.1 [symbolic = @Action.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_18.2: type = bind_symbolic_name T 0, %T.loc4_18.1 [symbolic = @Action.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
@@ -109,17 +113,20 @@ impl A as Factory(B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Action(file.%T.loc4_18.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Action(%T) [symbolic = %Op.type (constants.%Op.type.1)]
-// CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.1) = struct_value () [symbolic = %Op (constants.%Op.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.2), @Action.%Op.type (%Op.type.1) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: @Action.%.2 (%.3) = assoc_entity element0, %Op.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   interface[file.%T.loc4_18.2: type, %Self.1: @Action.%.1 (%.2)] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T)]
+// CHECK:STDOUT:     %.1: type = interface_type @Action, @Action(%T.2) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %Op.type: type = fn_type @Op.1, @Action(%T.2) [symbolic = %Op.type (constants.%Op.type.1)]
+// CHECK:STDOUT:     %Op: @Action.%Op.type (%Op.type.1) = struct_value () [symbolic = %Op (constants.%Op.1)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @Action.%.1 (%.2), @Action.%Op.type (%Op.type.1) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:     %.3: @Action.%.2 (%.3) = assoc_entity element0, %Op.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
 // CHECK:STDOUT:     %Self.1: @Action.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Op.decl: @Action.%Op.type (%Op.type.1) = fn_decl @Op.1 [symbolic = %Op (constants.%Op.1)] {}
 // CHECK:STDOUT:     %.loc5: @Action.%.2 (%.3) = assoc_entity element0, %Op.decl [symbolic = %.3 (constants.%.4)]
@@ -166,17 +173,23 @@ impl A as Factory(B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Action(@Action.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Action(constants.%T)[constants.%Self] {
+// CHECK:STDOUT:   %T.2 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(@Action.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%B) {
-// CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT:   %T.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- action.impl.carbon
@@ -191,9 +204,9 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @Action, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.1, @Action(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Op.type.2 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [symbolic]
@@ -201,29 +214,22 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.1, @Action(%B) [template]
-// CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.6, %Op.type.3 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.7 [template]
-// CHECK:STDOUT:   %.10: %.4 = assoc_entity element0, imports.%import_ref.12 [symbolic]
-// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.11: <witness> = interface_witness (%Op.4) [template]
+// CHECK:STDOUT:   %.8: %.4 = assoc_entity element0, imports.%import_ref.12 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Action.type = import_ref Main//action, inst+4, loaded [template = constants.%Action]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+24, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, inst+27, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+25, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, inst+28, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+29, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//action, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.9: @Action.%.2 (%.4) = import_ref Main//action, inst+16, loaded [symbolic = @Action.%.3 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//action, inst+42, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.9: @Action.%.2 (%.4) = import_ref Main//action, inst+19, loaded [symbolic = @Action.%.3 (constants.%.8)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//action, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst+15, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -238,23 +244,27 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %a.loc4_6.1: %A = param a
-// CHECK:STDOUT:     @F.%a: %A = bind_name a, %a.loc4_6.1
+// CHECK:STDOUT:     %a.loc8_6.1: %A = param a
+// CHECK:STDOUT:     @F.%a: %A = bind_name a, %a.loc8_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Action(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Action(%T) [symbolic = %Op.type (constants.%Op.type.2)]
-// CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.3), @Action.%Op.type (%Op.type.2) [symbolic = %.2 (constants.%.4)]
-// CHECK:STDOUT:   %.3: @Action.%.2 (%.4) = assoc_entity element0, imports.%import_ref.7 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:   interface[constants.%T: type, constants.%Self: %.3] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T)]
+// CHECK:STDOUT:     %.1: type = interface_type @Action, @Action(%T.2) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:     %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %Op.type: type = fn_type @Op, @Action(%T.2) [symbolic = %Op.type (constants.%Op.type.2)]
+// CHECK:STDOUT:     %Op: @Action.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @Action.%.1 (%.3), @Action.%Op.type (%Op.type.2) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:     %.3: @Action.%.2 (%.4) = assoc_entity element0, imports.%import_ref.7 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.8
 // CHECK:STDOUT:     .Op = imports.%import_ref.9
@@ -274,7 +284,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self: %.3) {
+// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self: %.3) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -284,34 +294,22 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Action.ref: %Action.type = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
-// CHECK:STDOUT:   %.loc4_23: init type = call %Action.ref(%B.ref) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc4_26: %.8 = specific_constant imports.%import_ref.9, @Action(constants.%B) [template = constants.%.9]
-// CHECK:STDOUT:   %Op.ref: %.8 = name_ref Op, %.loc4_26 [template = constants.%.9]
-// CHECK:STDOUT:   %.1: %Op.type.3 = interface_witness_access imports.%import_ref.11, element0 [template = constants.%Op.4]
-// CHECK:STDOUT:   %Op.call: init %.2 = call %.1()
+// CHECK:STDOUT:   %.loc8_23: init type = call %Action.ref(%B.ref) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc8_26: %.4 = specific_constant imports.%import_ref.9, @Action(constants.%B) [symbolic = constants.%.8]
+// CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, %.loc8_26 [symbolic = constants.%.8]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2();
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(@Action.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: specific @Action(@Action.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%B) {
-// CHECK:STDOUT:   %T => constants.%B
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.6
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Op.type => constants.%Op.type.3
-// CHECK:STDOUT:   %Op => constants.%Op.3
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %T.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_action.impl.carbon
@@ -338,27 +336,23 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.8: type = interface_type @Action, @Action(%C) [template]
-// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op, @Action(%C) [template]
-// CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = assoc_entity_type %.8, %Op.type.3 [template]
-// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.7 [template]
-// CHECK:STDOUT:   %.11: %.4 = assoc_entity element0, imports.%import_ref.13 [symbolic]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, imports.%import_ref.13 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Action.type = import_ref Main//action, inst+4, loaded [template = constants.%Action]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+24, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, inst+29, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+25, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, inst+30, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+29, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//action, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.9: @Action.%.2 (%.4) = import_ref Main//action, inst+16, loaded [symbolic = @Action.%.3 (constants.%.11)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//action, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//action, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.9: @Action.%.2 (%.4) = import_ref Main//action, inst+19, loaded [symbolic = @Action.%.3 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//action, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//action, inst+15, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -379,17 +373,21 @@ impl A as Factory(B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Action(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op, @Action(%T) [symbolic = %Op.type (constants.%Op.type.2)]
-// CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.3), @Action.%Op.type (%Op.type.2) [symbolic = %.2 (constants.%.4)]
-// CHECK:STDOUT:   %.3: @Action.%.2 (%.4) = assoc_entity element0, imports.%import_ref.7 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:   interface[constants.%T: type, constants.%Self: %.3] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T)]
+// CHECK:STDOUT:     %.1: type = interface_type @Action, @Action(%T.2) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:     %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %Op.type: type = fn_type @Op, @Action(%T.2) [symbolic = %Op.type (constants.%Op.type.2)]
+// CHECK:STDOUT:     %Op: @Action.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @Action.%.1 (%.3), @Action.%Op.type (%Op.type.2) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:     %.3: @Action.%.2 (%.4) = assoc_entity element0, imports.%import_ref.7 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.8
 // CHECK:STDOUT:     .Op = imports.%import_ref.9
@@ -425,33 +423,25 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %Action.ref: %Action.type = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8_23: init type = call %Action.ref(%C.ref) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc8_26: %.9 = specific_constant imports.%import_ref.9, @Action(constants.%C) [template = constants.%.10]
-// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, %.loc8_26 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc8_26: %.4 = specific_constant imports.%import_ref.9, @Action(constants.%C) [symbolic = constants.%.9]
+// CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, %.loc8_26 [symbolic = constants.%.9]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(@Action.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: specific @Action(@Action.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%B) {
-// CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT:   %T.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%C) {
-// CHECK:STDOUT:   %T => constants.%C
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.8
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Op.type => constants.%Op.type.3
-// CHECK:STDOUT:   %Op => constants.%Op.3
-// CHECK:STDOUT:   %.2 => constants.%.9
-// CHECK:STDOUT:   %.3 => constants.%.10
+// CHECK:STDOUT:   %T.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_factory.carbon
@@ -483,7 +473,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Factory.decl: %Factory.type = interface_decl @Factory [template = constants.%Factory] {
 // CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @Factory.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @Factory.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
@@ -498,17 +488,20 @@ impl A as Factory(B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(file.%T.loc4_19.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Factory, @Factory(%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make.1, @Factory(%T) [symbolic = %Make.type (constants.%Make.type.1)]
-// CHECK:STDOUT:   %Make: @Factory.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Factory.%.1 (%.2), @Factory.%Make.type (%Make.type.1) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: @Factory.%.2 (%.3) = assoc_entity element0, %Make.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   interface[file.%T.loc4_19.2: type, %Self.1: @Factory.%.1 (%.2)] {
+// CHECK:STDOUT:     %T.2: type = bind_symbolic_name T 0 [symbolic = %T.2 (constants.%T)]
+// CHECK:STDOUT:     %.1: type = interface_type @Factory, @Factory(%T.2) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !definition:
+// CHECK:STDOUT:     %Make.type: type = fn_type @Make.1, @Factory(%T.2) [symbolic = %Make.type (constants.%Make.type.1)]
+// CHECK:STDOUT:     %Make: @Factory.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
+// CHECK:STDOUT:     %.2: type = assoc_entity_type @Factory.%.1 (%.2), @Factory.%Make.type (%Make.type.1) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:     %.3: @Factory.%.2 (%.3) = assoc_entity element0, %Make.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !body:
 // CHECK:STDOUT:     %Self.1: @Factory.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Make.decl: @Factory.%Make.type (%Make.type.1) = fn_decl @Make.1 [symbolic = %Make (constants.%Make.1)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc4_19.2 [symbolic = @Make.1.%T (constants.%T)]
@@ -554,18 +547,24 @@ impl A as Factory(B) {
 // CHECK:STDOUT: fn @Make.2() -> %B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Factory(@Factory.%T.2) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Factory(constants.%T)[constants.%Self] {
+// CHECK:STDOUT:   %T.2 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(@Factory.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%B) {
-// CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT:   %T.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

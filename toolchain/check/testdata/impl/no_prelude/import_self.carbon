@@ -49,20 +49,25 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @Add[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
-// CHECK:STDOUT:     %Self.ref.loc5_15: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc5_15: %.1 = name_ref Self, %Self.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc5_9.1: @Op.%Self (%Self) = param self
 // CHECK:STDOUT:     %self.loc5_9.2: @Op.%Self (%Self) = bind_name self, %self.loc5_9.1
-// CHECK:STDOUT:     %Self.ref.loc5_28: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc5_28: %.1 = name_ref Self, %Self.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %other.loc5_21.1: @Op.%Self (%Self) = param other
 // CHECK:STDOUT:     %other.loc5_21.2: @Op.%Self (%Self) = bind_name other, %other.loc5_21.1
-// CHECK:STDOUT:     %Self.ref.loc5_37: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc5_37: %.1 = name_ref Self, %Self.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @Op.%Self (%Self) = var <return slot>
@@ -70,15 +75,19 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %.loc5_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .Op = %.loc5_41
 // CHECK:STDOUT:   witness = (%Op.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(@Add.%Self: %.1) {
+// CHECK:STDOUT: generic fn @Op(@Add.%Self.1: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[@Add.%self.loc5_9.2: @Op.%Self (%Self)](@Add.%other.loc5_21.2: @Op.%Self (%Self)) -> @Op.%Self (%Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
@@ -106,9 +115,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref Main//a, inst+25, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+19, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref Main//a, inst+26, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+20, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+20, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -137,7 +146,13 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Add {
+// CHECK:STDOUT: interface @Add[constants.%Self: %.2] {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .Op = imports.%import_ref.3

@@ -145,7 +145,6 @@ auto HandleParseNode(Context& context,
   context.scope_stack().Push(
       interface_decl_id, interface_info.scope_id,
       context.generics().GetSelfSpecific(interface_info.generic_id));
-  StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);
@@ -155,6 +154,10 @@ auto HandleParseNode(Context& context,
 
   // Declare and introduce `Self`.
   if (!interface_info.is_defined()) {
+    // The body of the interface is treated as a separate generic because it has
+    // an extra generic parameter: the implicit `Self` parameter.
+    StartGenericDecl(context);
+
     SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
     if (interface_info.is_generic()) {
       auto specific_id =
@@ -183,7 +186,14 @@ auto HandleParseNode(Context& context,
     context.name_scopes().AddRequiredName(interface_info.scope_id,
                                           SemIR::NameId::SelfType,
                                           interface_info.self_param_id);
+
+    interface_info.generic_with_self_id =
+        FinishGenericDecl(context, interface_info.self_param_id);
+    CARBON_CHECK(interface_info.generic_with_self_id.is_valid())
+        << "Interface should always have a generic definition.";
   }
+
+  StartGenericDefinition(context);
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:
@@ -211,7 +221,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
     interface_info.associated_entities_id = associated_entities_id;
   }
 
-  FinishGenericDefinition(context, interface_info.generic_id);
+  FinishGenericDefinition(context, interface_info.generic_with_self_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

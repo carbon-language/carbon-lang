@@ -94,6 +94,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
                   interface_loc);
     CollectNamesInBlock(interface_scope, interface_info.body_block_id);
     CollectNamesInGeneric(interface_scope, interface_info.generic_id);
+    CollectNamesInGeneric(interface_scope, interface_info.generic_with_self_id);
   }
 
   // Build each impl scope.

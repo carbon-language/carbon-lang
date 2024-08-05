@@ -1014,10 +1014,6 @@ auto Context::TryToDefineType(
       builder.Emit();
       return false;
     }
-
-    if (interface->specific_id.is_valid()) {
-      ResolveSpecificDefinition(*this, interface->specific_id);
-    }
   }
 
   return true;

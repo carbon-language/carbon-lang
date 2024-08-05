@@ -78,10 +78,15 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @Simple[%Self.1: %.1] {
+// CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !body:
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self.1 [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref, %.loc12_14.1 [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc12_8.1: @G.1.%Self (%Self) = param self
@@ -90,7 +95,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %.loc12_21: %.3 = assoc_entity element0, %G.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Self = %Self.1
 // CHECK:STDOUT:   .G = %.loc12_21
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
@@ -108,7 +113,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %.1) {
+// CHECK:STDOUT: generic fn @G.1(@Simple.%Self.1: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[@Simple.%self.loc12_8.2: @G.1.%Self (%Self)]();
@@ -126,6 +131,10 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %.1: %G.type.1 = interface_witness_access @impl.%.1, element0 [template = <error>]
 // CHECK:STDOUT:   %.loc23: <bound method> = bound_method %n.ref, %.1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple[constants.%Self] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self) {

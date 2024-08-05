@@ -21,6 +21,10 @@ struct InterfaceFields {
   InstBlockId body_block_id = InstBlockId::Invalid;
   // The implicit `Self` parameter. This is a BindSymbolicName instruction.
   InstId self_param_id = InstId::Invalid;
+  // The generic portion of the interface parameterized by `Self`. This always
+  // has one more parameter than the interface's `generic_id`, or has exactly
+  // one parameter if the interface has an invalid `generic_id`.
+  GenericId generic_with_self_id = GenericId::Invalid;
 
   // The following members are set at the `}` of the interface definition.
   InstBlockId associated_entities_id = InstBlockId::Invalid;

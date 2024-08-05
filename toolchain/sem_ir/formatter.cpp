@@ -196,8 +196,16 @@ class FormatterImpl {
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (interface_info.scope_id.is_valid()) {
+      const auto& generic_with_self =
+          sem_ir_.generics().Get(interface_info.generic_with_self_id);
+      FormatParamList(generic_with_self.bindings_id, /*is_implicit=*/true);
       out_ << ' ';
       OpenBrace();
+
+      FormatGenericEvalBlocks(generic_with_self);
+
+      IndentLabel();
+      out_ << "!body:\n";
       FormatCodeBlock(interface_info.body_block_id);
 
       // Always include the !members label because we always list the witness in
@@ -353,18 +361,11 @@ class FormatterImpl {
     out_ << "specific ";
     FormatName(id);
 
-    // TODO: Remove once we stop forming generic specifics with no generic
-    // during import.
-    if (!specific.generic_id.is_valid()) {
-      out_ << ";\n";
-      return;
-    }
-    out_ << " ";
-
     const auto& generic = sem_ir_.generics().Get(specific.generic_id);
     llvm::SaveAndRestore generic_scope(
         scope_, inst_namer_->GetScopeFor(specific.generic_id));
 
+    out_ << " ";
     OpenBrace();
     FormatSpecificRegion(generic, specific,
                          GenericInstIndex::Region::Declaration, "");
@@ -373,6 +374,16 @@ class FormatterImpl {
     CloseBrace();
 
     out_ << "\n";
+  }
+
+  // Handles generic-specific setup for FormatEntityStart.
+  auto FormatGenericEvalBlocks(const Generic& generic) -> void {
+    FormatCodeBlock(generic.decl_block_id);
+    if (generic.definition_block_id.is_valid()) {
+      IndentLabel();
+      out_ << "!definition:\n";
+      FormatCodeBlock(generic.definition_block_id);
+    }
   }
 
   // Handles generic-specific setup for FormatEntityStart.
@@ -391,12 +402,7 @@ class FormatterImpl {
 
     out_ << " ";
     OpenBrace();
-    FormatCodeBlock(generic.decl_block_id);
-    if (generic.definition_block_id.is_valid()) {
-      IndentLabel();
-      out_ << "!definition:\n";
-      FormatCodeBlock(generic.definition_block_id);
-    }
+    FormatGenericEvalBlocks(generic);
   }
 
   // Provides common formatting for entities, paired with FormatEntityEnd.
@@ -723,13 +729,7 @@ class FormatterImpl {
       args = args.drop_back();
     }
 
-    llvm::ListSeparator sep;
-    out_ << '(';
-    for (auto inst_id : args) {
-      out_ << sep;
-      FormatArg(inst_id);
-    }
-    out_ << ')';
+    FormatArgList(args);
 
     if (has_return_slot) {
       FormatReturnSlot(return_slot_id);
@@ -937,19 +937,24 @@ class FormatterImpl {
     CloseBrace();
   }
 
+  template <typename ArgT>
+  auto FormatArgList(llvm::ArrayRef<ArgT> args) -> void {
+    llvm::ListSeparator sep;
+    out_ << '(';
+    for (auto inst_id : args) {
+      out_ << sep;
+      FormatArg(inst_id);
+    }
+    out_ << ')';
+  }
+
   auto FormatArg(InstBlockId id) -> void {
     if (!id.is_valid()) {
       out_ << "invalid";
       return;
     }
 
-    out_ << '(';
-    llvm::ListSeparator sep;
-    for (auto inst_id : sem_ir_.inst_blocks().Get(id)) {
-      out_ << sep;
-      FormatArg(inst_id);
-    }
-    out_ << ')';
+    FormatArgList(sem_ir_.inst_blocks().Get(id));
   }
 
   auto FormatArg(RealId id) -> void {
@@ -969,13 +974,7 @@ class FormatterImpl {
   auto FormatArg(TypeId id) -> void { FormatType(id); }
 
   auto FormatArg(TypeBlockId id) -> void {
-    out_ << '(';
-    llvm::ListSeparator sep;
-    for (auto type_id : sem_ir_.type_blocks().Get(id)) {
-      out_ << sep;
-      FormatArg(type_id);
-    }
-    out_ << ')';
+    FormatArgList(sem_ir_.type_blocks().Get(id));
   }
 
   auto FormatReturnSlot(InstId dest_id) -> void {
@@ -1002,7 +1001,28 @@ class FormatterImpl {
   auto FormatName(SpecificId id) -> void {
     const auto& specific = sem_ir_.specifics().Get(id);
     FormatName(specific.generic_id);
-    FormatArg(specific.args_id);
+
+    // For most specifics, we format the name as `@scope(args)`. But for an
+    // interface specific with a fixed `Self` type, we instead use
+    // `@scope(args)[self]` to distinguish it from `@scope(args)`, which would
+    // be a specific for the generic interface type without `Self`.
+    auto args = sem_ir_.inst_blocks().Get(specific.args_id);
+    auto self_id = InstId::Invalid;
+    if (sem_ir_.insts().Is<BindSymbolicName>(
+            sem_ir_.generics().Get(specific.generic_id).decl_id)) {
+      self_id = args.back();
+      args = args.drop_back();
+    }
+
+    if (!args.empty()) {
+      FormatArgList(args);
+    }
+
+    if (self_id.is_valid()) {
+      out_ << "[";
+      FormatArg(self_id);
+      out_ << "]";
+    }
   }
 
   auto FormatLabel(InstBlockId id) -> void {
