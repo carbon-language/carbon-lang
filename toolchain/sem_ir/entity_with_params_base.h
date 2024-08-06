@@ -54,8 +54,8 @@ struct EntityWithParamsBase {
     return definition_id.is_valid() ? definition_id : decl_id;
   }
 
-  // Determines whether this is a generic entity.
-  auto is_generic() const -> bool {
+  // Determines whether this entity has any parameter lists.
+  auto has_parameters() const -> bool {
     return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
   }
 
