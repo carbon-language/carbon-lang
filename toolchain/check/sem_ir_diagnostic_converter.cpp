@@ -28,7 +28,7 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
       // For imports in the current file, the location is simple.
       in_import_loc = ConvertLocInFile(cursor_ir, import_loc_id.node_id(),
                                        loc.token_only, context_fn);
-    } else {
+    } else if (import_loc_id.is_import_ir_inst_id()) {
       // For implicit imports, we need to unravel the location a little
       // further.
       auto implicit_import_ir_inst =
@@ -43,8 +43,13 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
           ConvertLocInFile(implicit_ir.sem_ir, implicit_loc_id.node_id(),
                            loc.token_only, context_fn);
     }
-    CARBON_DIAGNOSTIC(InImport, Note, "In import.");
-    context_fn(in_import_loc, InImport);
+
+    // TODO: Add an "In implicit import of prelude." note for the case where we
+    // don't have a location.
+    if (import_loc_id.is_valid()) {
+      CARBON_DIAGNOSTIC(InImport, Note, "In import.");
+      context_fn(in_import_loc, InImport);
+    }
 
     cursor_ir = import_ir.sem_ir;
     cursor_inst_id = import_ir_inst.inst_id;
