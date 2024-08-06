@@ -1,0 +1,22 @@
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+<script type="text/javascript">
+  /* Adds a "not ready" warning with a link to project status, above content. */
+  function AddNotReadyForUse() {
+    var main = document.getElementsByTagName('main')[0];
+    main.insertAdjacentHTML(
+      'beforebegin',
+      "<div>⚠ Carbon is <a href='/#project-status'>not ready for use</a>.</div>"
+    );
+  }
+
+  if (window.addEventListener) {
+    window.addEventListener('load', AddNotReadyForUse);
+  } else {
+    window.attachEvent('onload', AddNotReadyForUse);
+  }
+</script>
