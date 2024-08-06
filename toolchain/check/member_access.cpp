@@ -8,7 +8,6 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -410,6 +409,8 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
           member.type_id())) {
     member_id = PerformImplLookup(context, node_id, base_type_const_id,
                                   *assoc_type, member_id);
+  } else if (context.types().Is<SemIR::TupleType>(base_type_id)) {
+    return PerformTupleIndex(context, node_id, base_id, member_expr_id);
   }
 
   // Perform instance binding if we found an instance member.
@@ -456,50 +457,47 @@ auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
   auto tuple_inst = context.insts().Get(tuple_inst_id);
   auto tuple_type_id = tuple_inst.type_id();
 
-  CARBON_KIND_SWITCH(context.types().GetAsInst(tuple_type_id)) {
-    case CARBON_KIND(SemIR::TupleType tuple_type): {
-      SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      auto index_node_id = context.insts().GetLocId(index_inst_id);
-      index_inst_id = ConvertToValueOfType(
-          context, index_node_id, index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
-      auto index_const_id = context.constant_values().Get(index_inst_id);
-      if (index_const_id == SemIR::ConstantId::Error) {
-        index_inst_id = SemIR::InstId::BuiltinError;
-      } else if (!index_const_id.is_template()) {
-        // TODO: Decide what to do if the index is a symbolic constant.
-        CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
-                          "Tuple index must be a constant.");
-        context.emitter().Emit(node_id, TupleIndexNotConstant);
-        index_inst_id = SemIR::InstId::BuiltinError;
+  if (auto tuple_type =
+          context.types().TryGetAs<SemIR::TupleType>(tuple_type_id)) {
+    SemIR::TypeId element_type_id = SemIR::TypeId::Error;
+    auto index_node_id = context.insts().GetLocId(index_inst_id);
+    index_inst_id = ConvertToValueOfType(
+        context, index_node_id, index_inst_id,
+        context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+    auto index_const_id = context.constant_values().Get(index_inst_id);
+    if (index_const_id == SemIR::ConstantId::Error) {
+      index_inst_id = SemIR::InstId::BuiltinError;
+    } else if (!index_const_id.is_template()) {
+      // TODO: Decide what to do if the index is a symbolic constant.
+      CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
+                        "Tuple index must be a constant.");
+      context.emitter().Emit(node_id, TupleIndexNotConstant);
+      index_inst_id = SemIR::InstId::BuiltinError;
+    } else {
+      auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
+          context.constant_values().GetInstId(index_const_id));
+      auto type_block = context.type_blocks().Get(tuple_type->elements_id);
+      if (const auto* index_val = ValidateTupleIndex(
+              context, node_id, tuple_inst, index_literal, type_block.size())) {
+        element_type_id = type_block[index_val->getZExtValue()];
       } else {
-        auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
-            context.constant_values().GetInstId(index_const_id));
-        auto type_block = context.type_blocks().Get(tuple_type.elements_id);
-        if (const auto* index_val =
-                ValidateTupleIndex(context, node_id, tuple_inst, index_literal,
-                                   type_block.size())) {
-          element_type_id = type_block[index_val->getZExtValue()];
-        } else {
-          index_inst_id = SemIR::InstId::BuiltinError;
-        }
+        index_inst_id = SemIR::InstId::BuiltinError;
       }
+    }
 
-      return context.AddInst<SemIR::TupleIndex>(node_id,
-                                                {.type_id = element_type_id,
-                                                 .tuple_id = tuple_inst_id,
-                                                 .index_id = index_inst_id});
+    return context.AddInst<SemIR::TupleIndex>(node_id,
+                                              {.type_id = element_type_id,
+                                               .tuple_id = tuple_inst_id,
+                                               .index_id = index_inst_id});
+  } else {
+    if (tuple_type_id != SemIR::TypeId::Error) {
+      CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
+                        "Type `{0}` does not support tuple indexing. Only "
+                        "tuples can be indexed that way.",
+                        SemIR::TypeId);
+      context.emitter().Emit(node_id, TupleIndexOnANonTupleType, tuple_type_id);
     }
-    default: {
-      if (tuple_type_id != SemIR::TypeId::Error) {
-        CARBON_DIAGNOSTIC(
-            TupleWrongIndexSyntax, Error,
-            "Type `{0}` does not support array indexing. Did you mean tuple.0?",
-            SemIR::TypeId);
-        context.emitter().Emit(node_id, TupleWrongIndexSyntax, tuple_type_id);
-      }
-      context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
-    }
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
   }
 
   return SemIR::InstId::BuiltinError;
