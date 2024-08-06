@@ -57,11 +57,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.9: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type @LeftShift, %Op.type.2 [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %.2, %Op.type.2 [template]
 // CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.9 [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type @LeftShiftAssign, %Op.type.4 [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type %.6, %Op.type.4 [template]
 // CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

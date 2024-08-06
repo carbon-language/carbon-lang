@@ -30,10 +30,10 @@ interface I {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @I, type [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 42 [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type @I, i32 [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %.1, i32 [template]
 // CHECK:STDOUT:   %.9: %.8 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -305,8 +305,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.inst_blocks().AddCanonical(const_insts);
 }
 
-// The constant value of a type block is that type block, but we still need to
-// extract its phase.
+// Compute the constant value of a type block. This may be different from the
+// input type block if we have known generic arguments.
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::TypeBlockId type_block_id, Phase* phase)
     -> SemIR::TypeBlockId {
@@ -314,10 +314,25 @@ static auto GetConstantValue(EvalContext& eval_context,
     return SemIR::TypeBlockId::Invalid;
   }
   auto types = eval_context.type_blocks().Get(type_block_id);
+  llvm::SmallVector<SemIR::TypeId> new_types;
   for (auto type_id : types) {
-    GetConstantValue(eval_context, type_id, phase);
+    auto new_type_id = GetConstantValue(eval_context, type_id, phase);
+    if (!new_type_id.is_valid()) {
+      return SemIR::TypeBlockId::Invalid;
+    }
+
+    // Once we leave the small buffer, we know the first few elements are all
+    // constant, so it's likely that the entire block is constant. Resize to the
+    // target size given that we're going to allocate memory now anyway.
+    if (new_types.size() == new_types.capacity()) {
+      new_types.reserve(types.size());
+    }
+
+    new_types.push_back(new_type_id);
   }
-  return type_block_id;
+  // TODO: If the new block is identical to the original block, and we know the
+  // old ID was canonical, return the original ID.
+  return eval_context.type_blocks().AddCanonical(new_types);
 }
 
 // The constant value of a specific is the specific with the corresponding
@@ -1094,7 +1109,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
       eval_context.insts().Get(call.callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::GenericClassType generic_class): {
-      auto specific_id = MakeSpecific(
+      auto specific_id = MakeSpecificIfGeneric(
           eval_context.context(),
           eval_context.classes().Get(generic_class.class_id).generic_id,
           call.args_id);
@@ -1106,11 +1121,12 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
           phase);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-      auto specific_id = MakeSpecific(eval_context.context(),
-                                      eval_context.interfaces()
-                                          .Get(generic_interface.interface_id)
-                                          .generic_id,
-                                      call.args_id);
+      auto specific_id =
+          MakeSpecificIfGeneric(eval_context.context(),
+                                eval_context.interfaces()
+                                    .Get(generic_interface.interface_id)
+                                    .generic_id,
+                                call.args_id);
       return MakeConstantResult(
           eval_context.context(),
           SemIR::InterfaceType{.type_id = call.type_id,
@@ -1175,10 +1191,10 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::AssociatedEntity::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::AssociatedEntity::type_id);
-
     case SemIR::AssociatedEntityType::Kind:
       return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::AssociatedEntityType::entity_type_id);
+          eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id,
+          &SemIR::AssociatedEntityType::entity_type_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::BoundMethod::type_id,
@@ -1271,7 +1287,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       // If the class has generic parameters, we don't produce a class type, but
       // a callable whose return value is a class type.
-      if (eval_context.classes().Get(class_decl.class_id).is_generic()) {
+      if (eval_context.classes().Get(class_decl.class_id).has_parameters()) {
         return TransformIfFieldsAreConstant(
             eval_context, class_decl,
             [&](SemIR::ClassDecl result) {
@@ -1294,7 +1310,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       // type, but a callable whose return value is an interface type.
       if (eval_context.interfaces()
               .Get(interface_decl.interface_id)
-              .is_generic()) {
+              .has_parameters()) {
         return TransformIfFieldsAreConstant(
             eval_context, interface_decl,
             [&](SemIR::InterfaceDecl result) {

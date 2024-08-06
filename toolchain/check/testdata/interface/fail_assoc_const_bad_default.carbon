@@ -21,7 +21,7 @@ interface I {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: i32 = int_literal 42 [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

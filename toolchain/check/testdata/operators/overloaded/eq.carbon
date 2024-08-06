@@ -101,11 +101,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type @Eq, %Equal.type.2 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %.2, %Equal.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
 // CHECK:STDOUT:   %TestNotEqual: %TestNotEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type @Eq, %NotEqual.type.2 [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %.2, %NotEqual.type.2 [template]
 // CHECK:STDOUT:   %.9: %.8 = assoc_entity element1, imports.%import_ref.9 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,13 +275,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [template]
 // CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @Eq, %Equal.type [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %Equal.type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
 // CHECK:STDOUT:   %TestNotEqual: %TestNotEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.type: type = fn_type @NotEqual [template]
 // CHECK:STDOUT:   %NotEqual: %NotEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type @Eq, %NotEqual.type [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.4, %NotEqual.type [template]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element1, imports.%import_ref.9 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -407,11 +407,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [template]
 // CHECK:STDOUT:   %TestRhsBad: %TestRhsBad.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type @Eq, %Equal.type.2 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %.2, %Equal.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %TestLhsBad.type: type = fn_type @TestLhsBad [template]
 // CHECK:STDOUT:   %TestLhsBad: %TestLhsBad.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type @Eq, %NotEqual.type.2 [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %.2, %NotEqual.type.2 [template]
 // CHECK:STDOUT:   %.9: %.8 = assoc_entity element1, imports.%import_ref.9 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

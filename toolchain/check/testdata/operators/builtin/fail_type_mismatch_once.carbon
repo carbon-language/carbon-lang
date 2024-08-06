@@ -35,7 +35,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @Add, %Op.type [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %Op.type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

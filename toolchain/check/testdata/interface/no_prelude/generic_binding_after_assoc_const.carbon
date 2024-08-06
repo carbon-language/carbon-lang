@@ -25,13 +25,13 @@ interface I {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, %F.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @I, type [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @I.%U [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type @I, %G.type [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.1, %G.type [template]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element2, @I.%G.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

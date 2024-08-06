@@ -31,7 +31,7 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = assoc_entity_type @Negate, %Op.type [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type %.8, %Op.type [template]
 // CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -63,16 +63,17 @@ static auto CheckAssociatedFunctionImplementation(
 
 // Builds a witness that the specified impl implements the given interface.
 static auto BuildInterfaceWitness(
-    Context& context, const SemIR::Impl& impl, SemIR::InterfaceId interface_id,
+    Context& context, const SemIR::Impl& impl,
+    SemIR::InterfaceType interface_type,
     llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> SemIR::InstId {
-  const auto& interface = context.interfaces().Get(interface_id);
+  const auto& interface = context.interfaces().Get(interface_type.interface_id);
   if (!interface.is_defined()) {
     CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
                       "Implementation of undefined interface {0}.",
                       SemIR::NameId);
     auto builder = context.emitter().Build(
         impl.definition_id, ImplOfUndefinedInterface, interface.name_id);
-    context.NoteUndefinedInterface(interface_id, builder);
+    context.NoteUndefinedInterface(interface_type.interface_id, builder);
     builder.Emit();
     return SemIR::InstId::BuiltinError;
   }
@@ -85,6 +86,7 @@ static auto BuildInterfaceWitness(
   table.reserve(assoc_entities.size());
 
   // Substitute `Self` with the impl's self type when associated functions.
+  // TODO: Also substitute the arguments from interface_type.specific_id.
   auto self_bind =
       context.insts().GetAs<SemIR::BindSymbolicName>(interface.self_param_id);
   Substitution substitutions[1] = {
@@ -160,8 +162,8 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
-  auto witness_id = BuildInterfaceWitness(
-      context, impl, interface_type->interface_id, used_decl_ids);
+  auto witness_id =
+      BuildInterfaceWitness(context, impl, *interface_type, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 

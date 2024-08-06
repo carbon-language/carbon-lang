@@ -38,7 +38,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Add, %Op.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %Op.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,7 +99,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = assoc_entity_type @Add, %Op.type.2 [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.2, %Op.type.2 [template]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

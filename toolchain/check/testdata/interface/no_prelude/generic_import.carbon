@@ -38,7 +38,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @AddWith, %F.type [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.2, %F.type [symbolic]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @AddWith.%F.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +60,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith, @AddWith.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith.%.1 (%.2), @AddWith.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:   %.3: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -104,7 +104,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @AddWith(%T) [symbolic]
-// CHECK:STDOUT:   %.4: type = assoc_entity_type @AddWith, %F.type.2 [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %F.type.2 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.2 [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.6: type = interface_type @AddWith, @AddWith(%C) [template]
@@ -146,7 +146,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith, @AddWith.%F.type (%F.type.2) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith.%.1 (%.3), @AddWith.%F.type (%F.type.2) [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:   %.3: @AddWith.%.2 (%.4) = assoc_entity element0, imports.%import_ref.2 [symbolic = %.3 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {

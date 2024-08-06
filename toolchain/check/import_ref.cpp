@@ -1097,28 +1097,15 @@ class ImportRefResolver {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
     auto entity_type_const_id = GetLocalConstantId(inst.entity_type_id);
-    auto interface_inst_id = GetLocalConstantInstId(
-        import_ir_.interfaces().Get(inst.interface_id).decl_id);
+    auto interface_inst_id = GetLocalConstantId(inst.interface_type_id);
     if (HasNewWork()) {
       return Retry();
     }
 
-    // TODO: Track an interface type, not an interface ID, on
-    // AssociatedEntityType.
-    auto interface_inst = context_.insts().Get(interface_inst_id);
-    SemIR::InterfaceId interface_id = SemIR::InterfaceId::Invalid;
-    if (interface_inst.Is<SemIR::InterfaceType>()) {
-      interface_id = interface_inst.As<SemIR::InterfaceType>().interface_id;
-    } else {
-      interface_id =
-          context_.types()
-              .GetAs<SemIR::GenericInterfaceType>(interface_inst.type_id())
-              .interface_id;
-    }
-
     return ResolveAs<SemIR::AssociatedEntityType>(
         {.type_id = SemIR::TypeId::TypeType,
-         .interface_id = interface_id,
+         .interface_type_id =
+             context_.GetTypeIdForTypeConstant(interface_inst_id),
          .entity_type_id =
              context_.GetTypeIdForTypeConstant(entity_type_const_id)});
   }
@@ -1182,7 +1169,7 @@ class ImportRefResolver {
          {.self_type_id = SemIR::TypeId::Invalid,
           .inheritance_kind = import_class.inheritance_kind}});
 
-    if (import_class.is_generic()) {
+    if (import_class.has_parameters()) {
       class_decl.type_id = context_.GetGenericClassType(class_decl.class_id);
     }
 
@@ -1535,7 +1522,7 @@ class ImportRefResolver {
         {GetIncompleteLocalEntityBase(interface_decl_id, import_interface),
          {}});
 
-    if (import_interface.is_generic()) {
+    if (import_interface.has_parameters()) {
       interface_decl.type_id =
           context_.GetGenericInterfaceType(interface_decl.interface_id);
     }
