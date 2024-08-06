@@ -28,17 +28,18 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
+// CHECK:STDOUT:   %G.type.1: type = fn_type @G.1, @Simple[%Self] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %G.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Simple.%G.decl [template]
+// CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %G.type.1 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Simple.%G.decl [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [template]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
+// CHECK:STDOUT:   %G.type.3: type = fn_type @G.1, @Simple[i32] [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,17 +83,22 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %G.type: type = fn_type @G.1, @Simple[%Self.2] [symbolic = %G.type (constants.%G.type.1)]
+// CHECK:STDOUT:   %G: @Simple.%G.type (%G.type.1) = struct_value () [symbolic = %G (constants.%G.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @Simple.%G.type (%G.type.1) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @Simple.%.1 (%.3) = assoc_entity element0, %G.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self.1 [symbolic = @G.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref [symbolic = @G.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref, %.loc12_14.1 [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:   %G.decl: @Simple.%G.type (%G.type.1) = fn_decl @G.1 [symbolic = %G (constants.%G.1)] {
+// CHECK:STDOUT:     %.loc12_14.1: %.1 = specific_constant %Self.1, @Simple[constants.%Self] [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %.loc12_14.1 [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.2: type = facet_type_access %Self.ref [symbolic = @G.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.3: type = converted %Self.ref, %.loc12_14.2 [symbolic = @G.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc12_8.1: @G.1.%Self (%Self) = param self
 // CHECK:STDOUT:     %self.loc12_8.2: @G.1.%Self (%Self) = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_21: %.3 = assoc_entity element0, %G.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_21: @Simple.%.1 (%.3) = assoc_entity element0, %G.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -127,8 +133,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
-// CHECK:STDOUT:   %G.ref: %.3 = name_ref G, @Simple.%.loc12_21 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %G.type.1 = interface_witness_access @impl.%.1, element0 [template = <error>]
+// CHECK:STDOUT:   %G.ref: %.3 = name_ref G, @Simple.%.loc12_21 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.1: %G.type.3 = interface_witness_access @impl.%.1, element0 [template = <error>]
 // CHECK:STDOUT:   %.loc23: <bound method> = bound_method %n.ref, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -139,5 +145,13 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple[@Simple.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple[i32] {
+// CHECK:STDOUT:   %Self.2 => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

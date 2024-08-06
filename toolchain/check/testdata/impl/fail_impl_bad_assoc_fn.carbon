@@ -218,11 +218,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @I[%Self.1] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %NoF: type = class_type @NoF [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %FNotFunction: type = class_type @FNotFunction [template]
@@ -243,10 +243,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.5: %F.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = interface_type @J [template]
 // CHECK:STDOUT:   %Self.2: %.6 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type.5: type = fn_type @F.5 [template]
-// CHECK:STDOUT:   %F.6: %F.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %F.type.5 [template]
-// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, @J.%F.decl [template]
+// CHECK:STDOUT:   %F.type.5: type = fn_type @F.5, @J[%Self.2] [symbolic]
+// CHECK:STDOUT:   %F.6: %F.type.5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %F.type.5 [symbolic]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, @J.%F.decl [symbolic]
 // CHECK:STDOUT:   %FMissingParam: type = class_type @FMissingParam [template]
 // CHECK:STDOUT:   %F.type.6: type = fn_type @F.6 [template]
 // CHECK:STDOUT:   %F.7: %F.type.6 = struct_value () [template]
@@ -278,10 +278,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.13: type = tuple_type (%.10, %.11) [symbolic]
 // CHECK:STDOUT:   %.14: i32 = int_literal 4 [template]
 // CHECK:STDOUT:   %.15: type = array_type %.14, %Self.3 [symbolic]
-// CHECK:STDOUT:   %F.type.13: type = fn_type @F.13 [template]
-// CHECK:STDOUT:   %F.14: %F.type.13 = struct_value () [template]
-// CHECK:STDOUT:   %.16: type = assoc_entity_type %.9, %F.type.13 [template]
-// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, @SelfNested.%F.decl [template]
+// CHECK:STDOUT:   %F.type.13: type = fn_type @F.13, @SelfNested[%Self.3] [symbolic]
+// CHECK:STDOUT:   %F.14: %F.type.13 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.16: type = assoc_entity_type %.9, %F.type.13 [symbolic]
+// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, @SelfNested.%F.decl [symbolic]
 // CHECK:STDOUT:   %SelfNestedBadParam: type = class_type @SelfNestedBadParam [template]
 // CHECK:STDOUT:   %.18: type = ptr_type %SelfNestedBadParam [template]
 // CHECK:STDOUT:   %.19: type = struct_type {.x: i32, .y: i32} [template]
@@ -365,11 +365,15 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @I[%Self.2] [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:   %F: @I.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @I.%F.type (%F.type.1) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @I.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.1)]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.loc11: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: @I.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {}
+// CHECK:STDOUT:   %.loc11: @I.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -381,10 +385,14 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.2: %.6 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.5, @J[%Self.2] [symbolic = %F.type (constants.%F.type.5)]
+// CHECK:STDOUT:   %F: @J.%F.type (%F.type.5) = struct_value () [symbolic = %F (constants.%F.6)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.6, @J.%F.type (%F.type.5) [symbolic = %.1 (constants.%.7)]
+// CHECK:STDOUT:   %.2: @J.%.1 (%.7) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.6 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
-// CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.5 [template = constants.%F.6] {
+// CHECK:STDOUT:   %F.decl: @J.%F.type (%F.type.5) = fn_decl @F.5 [symbolic = %F (constants.%F.6)] {
 // CHECK:STDOUT:     %bool.make_type.loc93_26: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc93_26.1: type = value_of_initializer %bool.make_type.loc93_26 [template = bool]
 // CHECK:STDOUT:     %.loc93_26.2: type = converted %bool.make_type.loc93_26, %.loc93_26.1 [template = bool]
@@ -400,7 +408,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc93_44.2: type = converted %bool.make_type.loc93_44, %.loc93_44.1 [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc93_48: %.7 = assoc_entity element0, %F.decl [template = constants.%.8]
+// CHECK:STDOUT:   %.loc93_48: @J.%.1 (%.7) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -412,17 +420,23 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.2: %.9 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.13, @SelfNested[%Self.2] [symbolic = %F.type (constants.%F.type.13)]
+// CHECK:STDOUT:   %F: @SelfNested.%F.type (%F.type.13) = struct_value () [symbolic = %F (constants.%F.14)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.9, @SelfNested.%F.type (%F.type.13) [symbolic = %.1 (constants.%.16)]
+// CHECK:STDOUT:   %.2: @SelfNested.%.1 (%.16) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.17)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.9 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.3)]
-// CHECK:STDOUT:   %F.decl: %F.type.13 = fn_decl @F.13 [template = constants.%F.14] {
-// CHECK:STDOUT:     %Self.ref.loc188_12: %.9 = name_ref Self, %Self.1 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:   %F.decl: @SelfNested.%F.type (%F.type.13) = fn_decl @F.13 [symbolic = %F (constants.%F.14)] {
+// CHECK:STDOUT:     %.loc188_12: %.9 = specific_constant %Self.1, @SelfNested[constants.%Self.3] [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %Self.ref.loc188_12: %.9 = name_ref Self, %.loc188_12 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_16.1: type = facet_type_access %Self.ref.loc188_12 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_16.2: type = converted %Self.ref.loc188_12, %.loc188_16.1 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_16.3: type = ptr_type %Self.3 [symbolic = @F.13.%.1 (constants.%.10)]
-// CHECK:STDOUT:     %Self.ref.loc188_24: %.9 = name_ref Self, %Self.1 [symbolic = @F.13.%Self (constants.%Self.3)]
-// CHECK:STDOUT:     %.loc188_24.1: type = facet_type_access %Self.ref.loc188_24 [symbolic = @F.13.%Self (constants.%Self.3)]
-// CHECK:STDOUT:     %.loc188_24.2: type = converted %Self.ref.loc188_24, %.loc188_24.1 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_24.1: %.9 = specific_constant %Self.1, @SelfNested[constants.%Self.3] [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %Self.ref.loc188_24: %.9 = name_ref Self, %.loc188_24.1 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_24.2: type = facet_type_access %Self.ref.loc188_24 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_24.3: type = converted %Self.ref.loc188_24, %.loc188_24.2 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc188_34.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc188_34.2: type = converted %int.make_type_32, %.loc188_34.1 [template = i32]
@@ -431,14 +445,15 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc188_38.2: type = converted %.loc188_38.1, constants.%.13 [symbolic = @F.13.%.3 (constants.%.13)]
 // CHECK:STDOUT:     %x.loc188_8.1: @F.13.%.3 (%.13) = param x
 // CHECK:STDOUT:     %x.loc188_8.2: @F.13.%.3 (%.13) = bind_name x, %x.loc188_8.1
-// CHECK:STDOUT:     %Self.ref.loc188_45: %.9 = name_ref Self, %Self.1 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_45.1: %.9 = specific_constant %Self.1, @SelfNested[constants.%Self.3] [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %Self.ref.loc188_45: %.9 = name_ref Self, %.loc188_45.1 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_51: i32 = int_literal 4 [template = constants.%.14]
-// CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = @F.13.%Self (constants.%Self.3)]
-// CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_45.2: type = facet_type_access %Self.ref.loc188_45 [symbolic = @F.13.%Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_45.3: type = converted %Self.ref.loc188_45, %.loc188_45.2 [symbolic = @F.13.%Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_52: type = array_type %.loc188_51, %Self.3 [symbolic = @F.13.%.4 (constants.%.15)]
 // CHECK:STDOUT:     %return.var: ref @F.13.%.4 (%.15) = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc188_53: %.16 = assoc_entity element0, %F.decl [template = constants.%.17]
+// CHECK:STDOUT:   %.loc188_53: @SelfNested.%.1 (%.16) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.17)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -907,11 +922,19 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[@I.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J[constants.%Self.2] {
 // CHECK:STDOUT:   %Self.2 => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.5(constants.%Self.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J[@J.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SelfNested[constants.%Self.3] {
 // CHECK:STDOUT:   %Self.2 => constants.%Self.3
@@ -923,5 +946,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.2 => constants.%.11
 // CHECK:STDOUT:   %.3 => constants.%.13
 // CHECK:STDOUT:   %.4 => constants.%.15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @SelfNested[@SelfNested.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

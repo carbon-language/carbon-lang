@@ -53,34 +53,42 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (%Op.1) [template]
-// CHECK:STDOUT:   %.5: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.6: type = ptr_type %C [template]
-// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.1, @Add[%Self.1] [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.2, %Op.type.2 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.2 [symbolic]
+// CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %.7: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %Self.2 [symbolic]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %Op.type.5: type = fn_type @Op.3, @AddAssign[%Self.2] [symbolic]
+// CHECK:STDOUT:   %.8: type = ptr_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type %.7, %Op.type.5 [symbolic]
+// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.7 [symbolic]
+// CHECK:STDOUT:   %Op.5: %Op.type.5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.11: type = ptr_type %C [template]
+// CHECK:STDOUT:   %Op.type.6: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %Op.6: %Op.type.6 = struct_value () [template]
+// CHECK:STDOUT:   %.12: <witness> = interface_witness (%Op.6) [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type %.2, %Op.type.2 [template]
-// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %.13: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.14: %.4 = assoc_entity element0, imports.%import_ref.11 [symbolic]
+// CHECK:STDOUT:   %Op.type.7: type = fn_type @Op.1, @Add[%C] [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type %.5, %Op.type.4 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.15: %.9 = assoc_entity element0, imports.%import_ref.12 [symbolic]
+// CHECK:STDOUT:   %Op.type.8: type = fn_type @Op.3, @AddAssign[%C] [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Add = %import_ref.1
-// CHECK:STDOUT:     .AddAssign = %import_ref.5
+// CHECK:STDOUT:     .AddAssign = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -90,15 +98,17 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/arithmetic, inst+26, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+20, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+28, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+46, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+46, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4: @Add.%.1 (%.4) = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [symbolic = @Add.%.2 (constants.%.14)]
+// CHECK:STDOUT:   %import_ref.5: @Add.%Op.type (%Op.type.2) = import_ref Core//prelude/operators/arithmetic, inst+23, loaded [symbolic = @Add.%Op (constants.%Op.1)]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Core//prelude/operators/arithmetic, inst+35, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/arithmetic, inst+37, unloaded
+// CHECK:STDOUT:   %import_ref.9: @AddAssign.%.1 (%.9) = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [symbolic = @AddAssign.%.2 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.10: @AddAssign.%Op.type (%Op.type.5) = import_ref Core//prelude/operators/arithmetic, inst+55, loaded [symbolic = @AddAssign.%Op (constants.%Op.4)]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -120,7 +130,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc19: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.6 [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
 // CHECK:STDOUT:     %C.ref.loc23_12: type = name_ref C, %C.decl [template = constants.%C]
@@ -143,30 +153,38 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Add[%Self] [symbolic = %Op.type (constants.%Op.type.2)]
+// CHECK:STDOUT:   %Op: @Add.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.2, @Add.%Op.type (%Op.type.2) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %.2: @Add.%.1 (%.4) = assoc_entity element0, imports.%import_ref.2 [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .Op = imports.%import_ref.3
-// CHECK:STDOUT:   witness = (imports.%import_ref.4)
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .Op = imports.%import_ref.4
+// CHECK:STDOUT:   witness = (imports.%import_ref.5)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @AddAssign[constants.%Self.2: %.5] {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT: interface @AddAssign[constants.%Self.2: %.7] {
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.3, @AddAssign[%Self] [symbolic = %Op.type (constants.%Op.type.5)]
+// CHECK:STDOUT:   %Op: @AddAssign.%Op.type (%Op.type.5) = struct_value () [symbolic = %Op (constants.%Op.5)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.7, @AddAssign.%Op.type (%Op.type.5) [symbolic = %.1 (constants.%.9)]
+// CHECK:STDOUT:   %.2: @AddAssign.%.1 (%.9) = assoc_entity element0, imports.%import_ref.7 [symbolic = %.2 (constants.%.10)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6
-// CHECK:STDOUT:   .Op = imports.%import_ref.7
-// CHECK:STDOUT:   witness = (imports.%import_ref.8)
+// CHECK:STDOUT:   .Self = imports.%import_ref.8
+// CHECK:STDOUT:   .Op = imports.%import_ref.9
+// CHECK:STDOUT:   witness = (imports.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {
-// CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
+// CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.2 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %C.ref.loc17_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc17_9.1: %C = param self
 // CHECK:STDOUT:     %self.loc17_9.2: %C = bind_name self, %self.loc17_9.1
@@ -176,25 +194,25 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %C.ref.loc17_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.5 {
-// CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
+// CHECK:STDOUT: impl @impl.2: %C as %.7 {
+// CHECK:STDOUT:   %Op.decl: %Op.type.6 = fn_decl @Op.4 [template = constants.%Op.6] {
 // CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc20_21: type = ptr_type %C [template = constants.%.6]
-// CHECK:STDOUT:     %self.loc20_14.1: %.6 = param self
-// CHECK:STDOUT:     %self.loc20_14.3: %.6 = bind_name self, %self.loc20_14.1
-// CHECK:STDOUT:     %.loc20_9: %.6 = addr_pattern %self.loc20_14.3
+// CHECK:STDOUT:     %.loc20_21: type = ptr_type %C [template = constants.%.11]
+// CHECK:STDOUT:     %self.loc20_14.1: %.11 = param self
+// CHECK:STDOUT:     %self.loc20_14.3: %.11 = bind_name self, %self.loc20_14.1
+// CHECK:STDOUT:     %.loc20_9: %.11 = addr_pattern %self.loc20_14.3
 // CHECK:STDOUT:     %C.ref.loc20_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc20_24.1: %C = param other
 // CHECK:STDOUT:     %other.loc20_24.2: %C = bind_name other, %other.loc20_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
@@ -211,28 +229,28 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc17_9.2: %C](@impl.1.%other.loc17_18.2: %C) -> %C;
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self.1](%other: %Self.1) -> %Self.1;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc20_14.3: %.6](@impl.2.%other.loc20_24.2: %C);
+// CHECK:STDOUT: fn @Op.2[@impl.1.%self.loc17_9.2: %C](@impl.1.%other.loc17_18.2: %C) -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.7)]
+// CHECK:STDOUT: generic fn @Op.3(constants.%Self.2: %.7) {
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.2) [symbolic = %.2 (constants.%.8)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: %.7](%other: %Self.2);
+// CHECK:STDOUT:   fn[addr %self: %.8](%other: %Self.2);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Op.4[addr @impl.2.%self.loc20_14.3: %.11](@impl.2.%other.loc20_24.2: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test(%a: %C, %b: %D) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.1: %Op.type.7 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc31_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc31_12.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %Op.call: init %C = call %.loc31_12.1(<invalid>) [template = <error>]
@@ -250,10 +268,34 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   assign %a.var, %.loc35_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.1: %Op.type.8 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.6]
 // CHECK:STDOUT:   %.loc42_5: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc42_3: %.6 = addr_of %a.ref
+// CHECK:STDOUT:   %.loc42_3: %.11 = addr_of %a.ref
 // CHECK:STDOUT:   %Op.call: init %.3 = call %.loc42_5(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add[constants.%Self.1] {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add[@Add.%Self] {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddAssign[constants.%Self.2] {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddAssign[@AddAssign.%Self] {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add[constants.%C] {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddAssign[constants.%C] {
+// CHECK:STDOUT:   %Self => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

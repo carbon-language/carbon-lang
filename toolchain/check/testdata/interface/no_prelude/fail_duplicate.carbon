@@ -47,9 +47,9 @@ interface Class { }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Interface[%Self.1] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = interface_type @.1 [template]
@@ -76,9 +76,11 @@ interface Class { }
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Interface[%Self] [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @Interface.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: @Interface.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = <unexpected>.inst+3
@@ -108,6 +110,10 @@ interface Class { }
 // CHECK:STDOUT: fn @Function();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface[constants.%Self.1] {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface[@Interface.%Self] {
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

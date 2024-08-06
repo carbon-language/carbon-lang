@@ -24,11 +24,11 @@ impl as Simple {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @Simple[%Self] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Simple.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Simple.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
@@ -62,11 +62,15 @@ impl as Simple {
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @Simple[%Self.2] [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:   %F: @Simple.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @Simple.%F.type (%F.type.1) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @Simple.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: @Simple.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {}
+// CHECK:STDOUT:   %.loc12: @Simple.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -98,4 +102,8 @@ impl as Simple {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple[@Simple.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

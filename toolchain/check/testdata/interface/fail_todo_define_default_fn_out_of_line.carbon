@@ -68,17 +68,17 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Interface[%Self] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, %G.type [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @Interface.%G.decl [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G, @Interface[%Self] [symbolic]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, %G.type [symbolic]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @Interface.%G.decl [symbolic]
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.7: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
@@ -129,12 +129,20 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Interface[%Self.2] [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @Interface.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @Interface.%F.type (%F.type) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @Interface.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %G.type: type = fn_type @G, @Interface[%Self.2] [symbolic = %G.type (constants.%G.type)]
+// CHECK:STDOUT:   %G: @Interface.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, @Interface.%G.type (%G.type) [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:   %.4: @Interface.%.3 (%.5) = assoc_entity element1, %G.decl [symbolic = %.4 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %.loc7: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %F.decl: @Interface.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {}
+// CHECK:STDOUT:   %.loc7: @Interface.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %G.decl: @Interface.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
 // CHECK:STDOUT:     %int.make_type_32.loc13_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_19.1: type = value_of_initializer %int.make_type_32.loc13_19 [template = i32]
 // CHECK:STDOUT:     %.loc13_19.2: type = converted %int.make_type_32.loc13_19, %.loc13_19.1 [template = i32]
@@ -150,7 +158,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %.loc13_35.2: type = converted %int.make_type_32.loc13_35, %.loc13_35.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_38: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_38: @Interface.%.3 (%.5) = assoc_entity element1, %G.decl [symbolic = %.4 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -193,6 +201,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface[@Interface.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.2(constants.%Self) {}
@@ -202,7 +214,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %C.1: type = class_type @C [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
@@ -232,9 +245,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F.1] {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc20_18.1: %C = param self
-// CHECK:STDOUT:     @F.%self: %C = bind_name self, %self.loc20_18.1
+// CHECK:STDOUT:     %.loc20: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc20 [symbolic = constants.%C.2]
+// CHECK:STDOUT:     %self.loc20_18.1: %C.2 = param self
+// CHECK:STDOUT:     @F.%self: %C.2 = bind_name self, %self.loc20_18.1
 // CHECK:STDOUT:     %U.loc20_30.1: type = param U
 // CHECK:STDOUT:     @F.%U.loc20: type = bind_symbolic_name U 1, %U.loc20_30.1 [symbolic = constants.%U]
 // CHECK:STDOUT:     %U.ref.loc20_43: type = name_ref U, @F.%U.loc20 [symbolic = constants.%U]
@@ -252,7 +266,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -268,9 +282,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:       %self.loc14_10.1: %C = param self
-// CHECK:STDOUT:       %self.loc14_10.2: %C = bind_name self, %self.loc14_10.1
+// CHECK:STDOUT:       %.loc14: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = @F.%C (constants.%C.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14 [symbolic = @F.%C (constants.%C.2)]
+// CHECK:STDOUT:       %self.loc14_10.1: @F.%C (%C.2) = param self
+// CHECK:STDOUT:       %self.loc14_10.2: @F.%C (%C.2) = bind_name self, %self.loc14_10.1
 // CHECK:STDOUT:       %U.loc14_22.1: type = param U
 // CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U 1, %U.loc14_22.1 [symbolic = @F.%U.1 (constants.%U)]
 // CHECK:STDOUT:       %U.ref.loc14_35: type = name_ref U, %U.loc14_22.2 [symbolic = @F.%U.1 (constants.%U)]
@@ -281,17 +296,19 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C
+// CHECK:STDOUT:     .Self = constants.%C.2
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Interface.%Self.1: %.1, @C.%U.loc14_22.2: type) {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: %C](%U.loc20: type, %u: %U) -> %U {
+// CHECK:STDOUT:   fn[%self: %C.2](%U.loc20: type, %u: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.1 (%U) = name_ref u, %u
 // CHECK:STDOUT:     return %u.ref
@@ -309,7 +326,11 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F => constants.%F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@F.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self, constants.%U) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %C => constants.%C.2
 // CHECK:STDOUT:   %U.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

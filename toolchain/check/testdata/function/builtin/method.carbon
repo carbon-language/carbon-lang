@@ -23,17 +23,18 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @I[%Self] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @I[i32] [template]
 // CHECK:STDOUT:   %.7: <bound method> = bound_method %.6, %F.2 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
@@ -72,8 +73,8 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_16: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %I.ref.loc19: type = name_ref I, %I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc12_40 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc12_40 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.1: %F.type.3 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc19_17: <bound method> = bound_method %.loc19_16, %.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc19_24: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc19_17(%.loc19_16, %.loc19_24) [template = constants.%.9]
@@ -88,26 +89,33 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @I[%Self.2] [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:   %F: @I.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @I.%F.type (%F.type.1) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @I.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, %Self.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:   %F.decl: @I.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {
+// CHECK:STDOUT:     %.loc12_14.1: %.1 = specific_constant %Self.1, @I[constants.%Self] [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, %.loc12_14.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.2: type = facet_type_access %Self.ref.loc12_14 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.3: type = converted %Self.ref.loc12_14, %.loc12_14.2 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %self.loc12_8.1: @F.1.%Self (%Self) = param self
 // CHECK:STDOUT:     %self.loc12_8.2: @F.1.%Self (%Self) = bind_name self, %self.loc12_8.1
-// CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_27.1: %.1 = specific_constant %Self.1, @I[constants.%Self] [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %.loc12_27.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_27.2: type = facet_type_access %Self.ref.loc12_27 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_27.3: type = converted %Self.ref.loc12_27, %.loc12_27.2 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %other.loc12_20.1: @F.1.%Self (%Self) = param other
 // CHECK:STDOUT:     %other.loc12_20.2: @F.1.%Self (%Self) = bind_name other, %other.loc12_20.1
-// CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_36.1: %.1 = specific_constant %Self.1, @I[constants.%Self] [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_36.2: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_36.3: type = converted %Self.ref.loc12_36, %.loc12_36.2 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @F.1.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_40: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_40: @I.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -155,5 +163,13 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[@I.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I[i32] {
+// CHECK:STDOUT:   %Self.2 => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

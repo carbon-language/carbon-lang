@@ -32,11 +32,11 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @Interface[%Self] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @Interface.%T [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -56,11 +56,15 @@ fn F() {
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @Interface[%Self.2] [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:   %F: @Interface.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @Interface.%F.type (%F.type.1) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @Interface.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: @Interface.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {}
+// CHECK:STDOUT:   %.loc12: @Interface.%.1 (%.3) = assoc_entity element0, %F.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc14: %.5 = assoc_entity element1, %T [template = constants.%.6]
 // CHECK:STDOUT:
@@ -79,7 +83,7 @@ fn F() {
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc12 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc12 [symbolic = constants.%.4]
 // CHECK:STDOUT:   %Interface.ref.loc27: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %T.ref: %.5 = name_ref T, @Interface.%.loc14 [template = constants.%.6]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
@@ -92,4 +96,8 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Interface[@Interface.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -27,10 +27,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.3: i32 = int_literal 34 [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Add [template]
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
-// CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %Op.type [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op [template]
+// CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op, @Add[%Self] [symbolic]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %Op.type.2 [symbolic]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.3 [symbolic]
+// CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.7: %.5 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,10 +50,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/arithmetic, inst+26, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.5: @Add.%.1 (%.5) = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [symbolic = @Add.%.2 (constants.%.7)]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -71,13 +75,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op, @Add[%Self] [symbolic = %Op.type (constants.%Op.type.2)]
+// CHECK:STDOUT:   %Op: @Add.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.4, @Add.%Op.type (%Op.type.2) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:   %.2: @Add.%.1 (%.5) = assoc_entity element0, imports.%import_ref.3 [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   .Op = imports.%import_ref.4
-// CHECK:STDOUT:   witness = (imports.%import_ref.5)
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   .Op = imports.%import_ref.5
+// CHECK:STDOUT:   witness = (imports.%import_ref.6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -93,5 +101,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add[constants.%Self] {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add[@Add.%Self] {
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

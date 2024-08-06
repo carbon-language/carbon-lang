@@ -42,9 +42,10 @@ interface Outer {
 // CHECK:STDOUT:   %.3: type = interface_type @Outer [template]
 // CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_type @Inner [template]
-// CHECK:STDOUT:   %Self.3: %.4 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2) [symbolic]
-// CHECK:STDOUT:   %.5: %.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.5: type = interface_type @Inner, @Inner(%Self.2) [symbolic]
+// CHECK:STDOUT:   %Self.3: %.5 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2)[%Self.3] [symbolic]
+// CHECK:STDOUT:   %.6: %.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @Inner(%Self.2) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
@@ -93,17 +94,18 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Inner(@Outer.%Self.1: %.3) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   interface[@Outer.%Self.1: %.3, %Self.1: %.4] {
-// CHECK:STDOUT:     %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
+// CHECK:STDOUT:   interface[@Outer.%Self.1: %.3, %Self.1: @Inner.%.1 (%.5)] {
+// CHECK:STDOUT:     %Self.2: %.3 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self.2)]
+// CHECK:STDOUT:     %.1: type = interface_type @Inner, @Inner(%Self.2) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:     %Self.3: %.5 = bind_symbolic_name Self 1 [symbolic = %Self.3 (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !definition:
-// CHECK:STDOUT:     %Self.3: %.3 = bind_symbolic_name Self 0 [symbolic = %Self.3 (constants.%Self.2)]
-// CHECK:STDOUT:     %.type: type = fn_type @.1, @Inner(%Self.3) [symbolic = %.type (constants.%.type)]
-// CHECK:STDOUT:     %.1: @Inner.%.type (%.type) = struct_value () [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:     %.type: type = fn_type @.1, @Inner(%Self.2)[%Self.3] [symbolic = %.type (constants.%.type)]
+// CHECK:STDOUT:     %.2: @Inner.%.type (%.type) = struct_value () [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !body:
-// CHECK:STDOUT:     %Self.1: %.4 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self.3)]
-// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = %.1 (constants.%.5)] {}
+// CHECK:STDOUT:     %Self.1: @Inner.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.3 (constants.%Self.3)]
+// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = %.2 (constants.%.6)] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -121,12 +123,12 @@ interface Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(@Outer.%Self.1: %.3, @Inner.%Self.1: %.4) {
+// CHECK:STDOUT: generic fn @.1(@Outer.%Self.1: %.3, @Inner.%Self.1: @Inner.%.1 (%.5)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@Outer.%Self.1: %.3, @Inner.%Self.1: %.4) {
+// CHECK:STDOUT: generic fn @F.2(@Outer.%Self.1: %.3, @Inner.%Self.1: @Inner.%.1 (%.5)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -143,13 +145,21 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.2) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@Inner.%Self.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.2)[constants.%Self.3] {
-// CHECK:STDOUT:   %Self.2 => constants.%Self.3
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
+// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %Self.3 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Inner.%Self.3) {}
+// CHECK:STDOUT: specific @Inner(@Inner.%Self.2)[@Inner.%Self.3] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2
+// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %Self.3 => constants.%Self.3
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:

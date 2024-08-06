@@ -47,37 +47,45 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Inc [template]
 // CHECK:STDOUT:   %Self.1: %.2 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %Self.1 [symbolic]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%Op.1) [template]
-// CHECK:STDOUT:   %.7: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
+// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.1, @Inc[%Self.1] [symbolic]
+// CHECK:STDOUT:   %.4: type = ptr_type %Self.1 [symbolic]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.2, %Op.type.2 [symbolic]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.2 [symbolic]
+// CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.7: type = ptr_type %C [template]
+// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %.9: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: %.9 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %Self.2 [symbolic]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %Op.type.5: type = fn_type @Op.3, @AddAssign[%Self.2] [symbolic]
+// CHECK:STDOUT:   %.10: type = ptr_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type %.9, %Op.type.5 [symbolic]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.7 [symbolic]
+// CHECK:STDOUT:   %Op.5: %Op.type.5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Op.type.6: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %Op.6: %Op.type.6 = struct_value () [template]
+// CHECK:STDOUT:   %.13: <witness> = interface_witness (%Op.6) [template]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [template]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type %.2, %Op.type.2 [template]
-// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %.14: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.15: %.5 = assoc_entity element0, imports.%import_ref.11 [symbolic]
+// CHECK:STDOUT:   %Op.type.7: type = fn_type @Op.1, @Inc[%C] [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type %.7, %Op.type.4 [template]
-// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.16: %.11 = assoc_entity element0, imports.%import_ref.12 [symbolic]
+// CHECK:STDOUT:   %Op.type.8: type = fn_type @Op.3, @AddAssign[%C] [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Inc = %import_ref.1
-// CHECK:STDOUT:     .AddAssign = %import_ref.5
+// CHECK:STDOUT:     .AddAssign = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -86,16 +94,18 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+54, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/arithmetic, inst+73, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+67, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+28, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+46, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+67, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+46, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+67, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+81, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.4: @Inc.%.1 (%.5) = import_ref Core//prelude/operators/arithmetic, inst+87, loaded [symbolic = @Inc.%.2 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.5: @Inc.%Op.type (%Op.type.2) = import_ref Core//prelude/operators/arithmetic, inst+81, loaded [symbolic = @Inc.%Op (constants.%Op.1)]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Core//prelude/operators/arithmetic, inst+35, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/arithmetic, inst+37, unloaded
+// CHECK:STDOUT:   %import_ref.9: @AddAssign.%.1 (%.11) = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [symbolic = @AddAssign.%.2 (constants.%.16)]
+// CHECK:STDOUT:   %import_ref.10: @AddAssign.%Op.type (%Op.type.5) = import_ref Core//prelude/operators/arithmetic, inst+55, loaded [symbolic = @AddAssign.%Op (constants.%Op.4)]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/arithmetic, inst+81, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -115,7 +125,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc18: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.5 [template = constants.%.7]
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.6 [template = constants.%.9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
@@ -136,55 +146,63 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Inc[%Self] [symbolic = %Op.type (constants.%Op.type.2)]
+// CHECK:STDOUT:   %Op: @Inc.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.2, @Inc.%Op.type (%Op.type.2) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:   %.2: @Inc.%.1 (%.5) = assoc_entity element0, imports.%import_ref.2 [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .Op = imports.%import_ref.3
-// CHECK:STDOUT:   witness = (imports.%import_ref.4)
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .Op = imports.%import_ref.4
+// CHECK:STDOUT:   witness = (imports.%import_ref.5)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @AddAssign[constants.%Self.2: %.7] {
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT: interface @AddAssign[constants.%Self.2: %.9] {
+// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.3, @AddAssign[%Self] [symbolic = %Op.type (constants.%Op.type.5)]
+// CHECK:STDOUT:   %Op: @AddAssign.%Op.type (%Op.type.5) = struct_value () [symbolic = %Op (constants.%Op.5)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.9, @AddAssign.%Op.type (%Op.type.5) [symbolic = %.1 (constants.%.11)]
+// CHECK:STDOUT:   %.2: @AddAssign.%.1 (%.11) = assoc_entity element0, imports.%import_ref.7 [symbolic = %.2 (constants.%.12)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6
-// CHECK:STDOUT:   .Op = imports.%import_ref.7
-// CHECK:STDOUT:   witness = (imports.%import_ref.8)
+// CHECK:STDOUT:   .Self = imports.%import_ref.8
+// CHECK:STDOUT:   .Op = imports.%import_ref.9
+// CHECK:STDOUT:   witness = (imports.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {
-// CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
+// CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.2 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.3]
-// CHECK:STDOUT:     %self.loc16_14.1: %.3 = param self
-// CHECK:STDOUT:     %self.loc16_14.3: %.3 = bind_name self, %self.loc16_14.1
-// CHECK:STDOUT:     %.loc16_9: %.3 = addr_pattern %self.loc16_14.3
+// CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.7]
+// CHECK:STDOUT:     %self.loc16_14.1: %.7 = param self
+// CHECK:STDOUT:     %self.loc16_14.3: %.7 = bind_name self, %self.loc16_14.1
+// CHECK:STDOUT:     %.loc16_9: %.7 = addr_pattern %self.loc16_14.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.7 {
-// CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
+// CHECK:STDOUT: impl @impl.2: %C as %.9 {
+// CHECK:STDOUT:   %Op.decl: %Op.type.6 = fn_decl @Op.4 [template = constants.%Op.6] {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.3]
-// CHECK:STDOUT:     %self.loc19_14.1: %.3 = param self
-// CHECK:STDOUT:     %self.loc19_14.3: %.3 = bind_name self, %self.loc19_14.1
-// CHECK:STDOUT:     %.loc19_9: %.3 = addr_pattern %self.loc19_14.3
+// CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.7]
+// CHECK:STDOUT:     %self.loc19_14.1: %.7 = param self
+// CHECK:STDOUT:     %self.loc19_14.3: %.7 = bind_name self, %self.loc19_14.1
+// CHECK:STDOUT:     %.loc19_9: %.7 = addr_pattern %self.loc19_14.3
 // CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc19_24.1: %C = param other
 // CHECK:STDOUT:     %other.loc19_24.2: %C = bind_name other, %other.loc19_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.9]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.13]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
@@ -196,30 +214,30 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[addr @impl.1.%self.loc16_14.3: %.3]();
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self.1) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.1.%Self (%Self.1) [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: %.5]();
+// CHECK:STDOUT:   fn[addr %self: %.4]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc19_14.3: %.3](@impl.2.%other.loc19_24.2: %C);
+// CHECK:STDOUT: fn @Op.2[addr @impl.1.%self.loc16_14.3: %.7]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.7) {
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.8)]
+// CHECK:STDOUT: generic fn @Op.3(constants.%Self.2: %.9) {
+// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.2) [symbolic = %.2 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT:   fn[addr %self: %.10](%other: %Self.2);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Op.4[addr @impl.2.%self.loc19_14.3: %.7](@impl.2.%other.loc19_24.2: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestIncNonRef(%a: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.1: %Op.type.7 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc30: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc30(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc30(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,9 +245,33 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.1: %Op.type.8 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.6]
 // CHECK:STDOUT:   %.loc40: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc40(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc40(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inc[constants.%Self.1] {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inc[@Inc.%Self] {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddAssign[constants.%Self.2] {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddAssign[@AddAssign.%Self] {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inc[constants.%C] {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AddAssign[constants.%C] {
+// CHECK:STDOUT:   %Self => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

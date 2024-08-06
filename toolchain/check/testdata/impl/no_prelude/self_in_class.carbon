@@ -27,11 +27,11 @@ class A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @DefaultConstructible [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
+// CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1, @DefaultConstructible[%Self] [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %Make.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
+// CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %Make.type.1 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @DefaultConstructible.%Make.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
@@ -57,16 +57,21 @@ class A {
 // CHECK:STDOUT:   %Self.2: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make.1, @DefaultConstructible[%Self.2] [symbolic = %Make.type (constants.%Make.type.1)]
+// CHECK:STDOUT:   %Make: @DefaultConstructible.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %.1, @DefaultConstructible.%Make.type (%Make.type.1) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.2: @DefaultConstructible.%.1 (%.3) = assoc_entity element0, %Make.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !body:
 // CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self.1 [symbolic = @Make.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = @Make.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:   %Make.decl: @DefaultConstructible.%Make.type (%Make.type.1) = fn_decl @Make.1 [symbolic = %Make (constants.%Make.1)] {
+// CHECK:STDOUT:     %.loc12_16.1: %.1 = specific_constant %Self.1, @DefaultConstructible[constants.%Self] [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %.loc12_16.1 [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.2: type = facet_type_access %Self.ref [symbolic = @Make.1.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.3: type = converted %Self.ref, %.loc12_16.2 [symbolic = @Make.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @Make.1.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_20: %.3 = assoc_entity element0, %Make.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_20: @DefaultConstructible.%.1 (%.3) = assoc_entity element0, %Make.decl [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self.1
@@ -121,5 +126,9 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @DefaultConstructible[@DefaultConstructible.%Self.2] {
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

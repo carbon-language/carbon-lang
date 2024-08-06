@@ -236,7 +236,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // here. We should keep track of it even if the name is invalid.
     class_info.generic_id = FinishGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
-    if (class_info.is_generic()) {
+    if (class_info.has_parameters()) {
       class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
     }
   } else {
@@ -251,17 +251,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: Form this as part of building the definition, not as part of the
     // declaration.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    if (class_info.is_generic()) {
-      auto specific_id =
-          context.generics().GetSelfSpecific(class_info.generic_id);
-      class_info.self_type_id = context.GetTypeIdForTypeConstant(
-          TryEvalInst(context, SemIR::InstId::Invalid,
-                      SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
-                                       .class_id = class_decl.class_id,
-                                       .specific_id = specific_id}));
-    } else {
-      class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
-    }
+    auto specific_id =
+        context.generics().GetSelfSpecific(class_info.generic_id);
+    class_info.self_type_id = context.GetTypeIdForTypeConstant(
+        TryEvalInst(context, SemIR::InstId::Invalid,
+                    SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
+                                     .class_id = class_decl.class_id,
+                                     .specific_id = specific_id}));
   }
 
   if (!is_definition && context.IsImplFile() && !is_extern) {
