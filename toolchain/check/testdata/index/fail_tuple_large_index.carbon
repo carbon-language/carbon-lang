@@ -15,7 +15,7 @@ var b: (i32,) = a;
 // CHECK:STDERR:              ^~~~
 // CHECK:STDERR:
 var c: i32 = b[1];
-// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2147483647` is past the end of type `(i32,)`.
 // CHECK:STDERR: var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
 var d: i32 = b.(0x7FFF_FFFF);
@@ -102,8 +102,9 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %.loc17: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %b.ref.loc21: ref %.3 = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 2147483647 [template = constants.%.6]
-// CHECK:STDOUT:   assign file.%d.var, %.loc21
+// CHECK:STDOUT:   %.loc21_17: i32 = int_literal 2147483647 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21_15: ref <error> = tuple_index %b.ref.loc21, <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

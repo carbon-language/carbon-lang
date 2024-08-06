@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_out_of_bound_not_literal.carbon
 
 var a: (i32, i32) = (12, 34);
-// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+3]]:14: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2` is past the end of type `(i32, i32)`.
 // CHECK:STDERR: var b: i32 = a.({.index = 2}.index);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
 var b: i32 = a.({.index = 2}.index);
@@ -89,7 +89,8 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc15_27) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_28.2: %.8 = converted %.loc15_28.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_29: i32 = struct_access %.loc15_28.2, element0 [template = constants.%.7]
-// CHECK:STDOUT:   assign file.%b.var, %.loc15_29
+// CHECK:STDOUT:   %.loc15_15: ref <error> = tuple_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
