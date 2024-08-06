@@ -25,28 +25,18 @@ jobs:
           # When adding endpoints, see README.md.
           # prettier-ignore
           allowed-endpoints: >
+            *.dl.sourceforge.net:443
             bcr.bazel.build:443
-            cfhcable.dl.sourceforge.net:443
-            cytranet-dal.dl.sourceforge.net:443
-            cytranet.dl.sourceforge.net:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
-            gigenet.dl.sourceforge.net:443
             github.com:443
             mirror.bazel.build:443
-            netactuate.dl.sourceforge.net:443
-            newcontinuum.dl.sourceforge.net:443
             nodejs.org:443
             objects.githubusercontent.com:443
-            phoenixnap.dl.sourceforge.net:443
-            pilotfiber.dl.sourceforge.net:443
-            psychz.dl.sourceforge.net:443
             pypi.org:443
             registry.npmjs.org:443
             releases.bazel.build:443
-            sfcdn.dl.sourceforge.net:443
             sourceforge.net:443
-            versaweb.dl.sourceforge.net:443
 
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0

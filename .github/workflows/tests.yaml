@@ -45,29 +45,19 @@ jobs:
           # When adding endpoints, see README.md.
           # prettier-ignore
           allowed-endpoints: >
+            *.dl.sourceforge.net:443
             api.github.com:443
             bcr.bazel.build:443
-            cfhcable.dl.sourceforge.net:443
-            cytranet-dal.dl.sourceforge.net:443
-            cytranet.dl.sourceforge.net:443
             downloads.sourceforge.net:443
-            gigenet.dl.sourceforge.net:443
             github.com:443
             mirrors.kernel.org:443
-            netactuate.dl.sourceforge.net:443
-            newcontinuum.dl.sourceforge.net:443
             nodejs.org:443
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
-            phoenixnap.dl.sourceforge.net:443
-            pilotfiber.dl.sourceforge.net:443
-            psychz.dl.sourceforge.net:443
             pypi.org:443
             releases.bazel.build:443
-            sfcdn.dl.sourceforge.net:443
             sourceforge.net:443
             storage.googleapis.com:443
-            versaweb.dl.sourceforge.net:443
 
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
