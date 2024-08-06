@@ -141,9 +141,6 @@ auto HandleParseNode(Context& context,
                                   interface_info.parent_scope_id);
   }
 
-  auto self_specific_id =
-      context.generics().GetSelfSpecific(interface_info.generic_id);
-
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);
 
@@ -156,10 +153,12 @@ auto HandleParseNode(Context& context,
     // an extra generic parameter: the implicit `Self` parameter.
     StartGenericDecl(context);
 
-    auto interface_type =
-        SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
-                             .interface_id = interface_id,
-                             .specific_id = self_specific_id};
+    auto interface_type = SemIR::InterfaceType{
+        .type_id = SemIR::TypeId::TypeType,
+        .interface_id = interface_id,
+        .specific_id =
+            context.generics().GetSelfSpecific(interface_info.generic_id)};
+
     SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
         TryEvalInst(context, SemIR::InstId::Invalid, interface_type));
 
