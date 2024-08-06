@@ -85,11 +85,11 @@ In Carbon, developers will focus on particular areas, loosely broken down as:
     -   We split out auto-assignment by explorer, toolchain, and other files
         (including documentation).
 
-[Auto-assignment](/.github/workflows/assign_prs.yaml) will help find owners, but
-won't always be perfect -- developers may take a PR they weren't auto-assigned
-in order to help review go quickly. Contributors can also request multiple
-reviewers, but it can be daunting to get feedback from a large number of
-reviewers, so we suggest keeping the number of reviewers reasonably small.
+[Auto-assignment](/.github/workflows/auto_assign_prs.yaml) will help find
+owners, but won't always be perfect -- developers may take a PR they weren't
+auto-assigned in order to help review go quickly. Contributors can also request
+multiple reviewers, but it can be daunting to get feedback from a large number
+of reviewers, so we suggest keeping the number of reviewers reasonably small.
 
 Any reviews that explicitly request changes should be addressed, either with the
 changes or an explanation of why not, before a pull request is merged. Further,
