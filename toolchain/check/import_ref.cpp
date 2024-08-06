@@ -1806,7 +1806,8 @@ class ImportRefResolver {
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
   llvm::SmallVector<Work> work_stack_;
-  std::size_t initial_work_ = 0;
+  // The size of work_stack_ at the start of resolving the current instruction.
+  size_t initial_work_ = 0;
 };
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being
