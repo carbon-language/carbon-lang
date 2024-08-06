@@ -472,7 +472,6 @@ auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
                           "Tuple index must be a constant.");
         context.emitter().Emit(node_id, TupleIndexNotConstant);
         index_inst_id = SemIR::InstId::BuiltinError;
-
       } else {
         auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
             context.constant_values().GetInstId(index_const_id));
