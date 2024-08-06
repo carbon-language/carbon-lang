@@ -41,8 +41,6 @@ GEM
       jekyll (>= 3.0, < 5.0)
     jekyll-include-cache (0.2.1)
       jekyll (>= 3.7, < 5.0)
-    jekyll-optional-front-matter (0.3.2)
-      jekyll (>= 3.0, < 5.0)
     jekyll-readme-index (0.3.0)
       jekyll (>= 3.0, < 5.0)
     jekyll-relative-links (0.7.0)
@@ -51,8 +49,6 @@ GEM
       sass-embedded (~> 1.54)
     jekyll-seo-tag (2.8.0)
       jekyll (>= 3.8, < 5.0)
-    jekyll-titles-from-headings (0.5.3)
-      jekyll (>= 3.3, < 5.0)
     jekyll-watch (2.2.1)
       listen (~> 3.0)
     just-the-docs (0.8.2)
@@ -96,10 +92,8 @@ PLATFORMS
 DEPENDENCIES
   jekyll (= 4.3.3)
   jekyll-default-layout (= 0.1.5)
-  jekyll-optional-front-matter (= 0.3.2)
   jekyll-readme-index (= 0.3.0)
   jekyll-relative-links (= 0.7.0)
-  jekyll-titles-from-headings (= 0.5.3)
   just-the-docs (= 0.8.2)
 
 BUNDLED WITH
