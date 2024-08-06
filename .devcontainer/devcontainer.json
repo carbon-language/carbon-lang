@@ -5,8 +5,20 @@
 {
   "name": "carbon-lang",
   "build": {
-    "dockerfile": "../docker/ubuntu2204/base/Dockerfile"
+    "dockerfile": "../docker/ubuntu2404/base/Dockerfile"
   },
+  "mounts": [
+    {
+      "source": "carbon-cache",
+      "target": "/home/ubuntu/.cache",
+      "type": "volume"
+    }
+  ],
+  "containerUser": "ubuntu",
+  "remoteUser": "ubuntu",
+  "runArgs": [
+    "--userns=keep-id"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
