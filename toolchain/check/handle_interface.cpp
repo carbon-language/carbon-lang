@@ -97,7 +97,7 @@ static auto BuildInterfaceDecl(Context& context,
          .param_refs_id = name.params_id,
          .decl_id = interface_decl_id}};
     interface_decl.interface_id = context.interfaces().Add(interface_info);
-    if (interface_info.is_generic()) {
+    if (interface_info.has_parameters()) {
       interface_decl.type_id =
           context.GetGenericInterfaceType(interface_decl.interface_id);
     }
@@ -141,10 +141,9 @@ auto HandleParseNode(Context& context,
                                   interface_info.parent_scope_id);
   }
 
-  // Enter the interface scope.
-  context.scope_stack().Push(
-      interface_decl_id, interface_info.scope_id,
-      context.generics().GetSelfSpecific(interface_info.generic_id));
+  auto self_specific_id =
+      context.generics().GetSelfSpecific(interface_info.generic_id);
+
   StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
@@ -155,18 +154,12 @@ auto HandleParseNode(Context& context,
 
   // Declare and introduce `Self`.
   if (!interface_info.is_defined()) {
-    SemIR::TypeId self_type_id = SemIR::TypeId::Invalid;
-    if (interface_info.is_generic()) {
-      auto specific_id =
-          context.generics().GetSelfSpecific(interface_info.generic_id);
-      self_type_id = context.GetTypeIdForTypeConstant(
-          TryEvalInst(context, SemIR::InstId::Invalid,
-                      SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
-                                           .interface_id = interface_id,
-                                           .specific_id = specific_id}));
-    } else {
-      self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
-    }
+    auto interface_type =
+        SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
+                             .interface_id = interface_id,
+                             .specific_id = self_specific_id};
+    SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
+        TryEvalInst(context, SemIR::InstId::Invalid, interface_type));
 
     // We model `Self` as a symbolic binding whose type is the interface.
     // Because there is no equivalent non-symbolic value, we use `Invalid` as
@@ -184,6 +177,10 @@ auto HandleParseNode(Context& context,
                                           SemIR::NameId::SelfType,
                                           interface_info.self_param_id);
   }
+
+  // Enter the interface scope.
+  context.scope_stack().Push(interface_decl_id, interface_info.scope_id,
+                             self_specific_id);
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:

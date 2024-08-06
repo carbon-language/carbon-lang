@@ -1137,7 +1137,7 @@ class ImportRefResolver {
          {.self_type_id = SemIR::TypeId::Invalid,
           .inheritance_kind = import_class.inheritance_kind}});
 
-    if (import_class.is_generic()) {
+    if (import_class.has_parameters()) {
       class_decl.type_id = context_.GetGenericClassType(class_decl.class_id);
     }
 
@@ -1498,7 +1498,7 @@ class ImportRefResolver {
         {GetIncompleteLocalEntityBase(interface_decl_id, import_interface),
          {}});
 
-    if (import_interface.is_generic()) {
+    if (import_interface.has_parameters()) {
       interface_decl.type_id =
           context_.GetGenericInterfaceType(interface_decl.interface_id);
     }
