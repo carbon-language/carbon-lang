@@ -490,14 +490,11 @@ auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
                                                .tuple_id = tuple_inst_id,
                                                .index_id = index_inst_id});
   } else {
-    if (tuple_type_id != SemIR::TypeId::Error) {
-      CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
-                        "Type `{0}` does not support tuple indexing. Only "
-                        "tuples can be indexed that way.",
-                        SemIR::TypeId);
-      context.emitter().Emit(node_id, TupleIndexOnANonTupleType, tuple_type_id);
-    }
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+    CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
+                      "Type `{0}` does not support tuple indexing. Only "
+                      "tuples can be indexed that way.",
+                      SemIR::TypeId);
+    context.emitter().Emit(node_id, TupleIndexOnANonTupleType, tuple_type_id);
   }
 
   return SemIR::InstId::BuiltinError;
