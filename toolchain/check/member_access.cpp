@@ -391,6 +391,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
 
   return member_id;
 }
+
 auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id)
