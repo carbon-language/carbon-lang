@@ -14,5 +14,5 @@ fn Run() {
   // CHECK:STDERR: tuple_return_value_access.carbon:[[@LINE+3]]:16: ERROR: Type `(i32, i32)` does not support indexing.
   // CHECK:STDERR:   var t: i32 = F()[1];
   // CHECK:STDERR:                ^~~~~~
-  var t: i32 = F()[1];
+  var t: i32 = F().1;
 }
