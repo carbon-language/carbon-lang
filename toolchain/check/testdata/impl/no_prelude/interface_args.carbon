@@ -190,13 +190,14 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %Action: %Action.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @Action, @Action(%T) [symbolic]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @Action.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.1, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Op.type.2 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %.6: type = interface_type @Action, @Action(%B) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -248,7 +249,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Action(%T) [symbolic = %Op.type (constants.%Op.type.2)]
 // CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.3), @Action.%Op.type (%Op.type.2) [symbolic = %.2 (constants.%.4)]
@@ -274,7 +275,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self: %.3) {
+// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self.1: @Action.%.1 (%.3)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -307,7 +308,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1 => constants.%.6
-// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.3
 // CHECK:STDOUT:   %Op => constants.%Op.3
 // CHECK:STDOUT:   %.2 => constants.%.8
@@ -325,13 +326,14 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   %Action: %Action.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @Action, @Action(%T) [symbolic]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @Action.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Op.type.2 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %.6: type = interface_type @Action, @Action(%B) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -383,7 +385,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op, @Action(%T) [symbolic = %Op.type (constants.%Op.type.2)]
 // CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.2) = struct_value () [symbolic = %Op (constants.%Op.2)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.3), @Action.%Op.type (%Op.type.2) [symbolic = %.2 (constants.%.4)]
@@ -414,7 +416,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   .Self = imports.%import_ref.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self: %.3) {
+// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self.1: @Action.%.1 (%.3)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -447,7 +449,7 @@ impl A as Factory(B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1 => constants.%.8
-// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.3
 // CHECK:STDOUT:   %Op => constants.%Op.3
 // CHECK:STDOUT:   %.2 => constants.%.9

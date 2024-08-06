@@ -173,7 +173,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: %Self](%other: %Self) -> %Self;
+// CHECK:STDOUT:   fn[%self: @Op.2.%Self (%Self)](%other: @Op.2.%Self (%Self)) -> @Op.2.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x: %.1, %y: %.1) -> %.1 {
