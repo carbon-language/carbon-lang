@@ -32,7 +32,6 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     context.PushState(state);
     context.PushState(State::OnlyParenExpr);
     return;
-
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringLiteral);
