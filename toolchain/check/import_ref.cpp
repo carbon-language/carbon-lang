@@ -132,50 +132,53 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 //      It didn't complete last time, even though we have a constant value
 //      already.
 //
-// 2. Resolve the instruction (TryResolveInst/TryResolveTypedInst), in up to
-//    three passes. First pass:
-//    - Gather all input constants necessary to form the constant value of the
-//      instruction.
-//      - Gathering constants directly adds unresolved values to work_stack_.
-//    - If HasNewWork() reports that any work was added, then return Retry():
-//      this instruction needs another call to complete. Gather the now-resolved
-//      constants and continue to the next step once the retry happens.
+// 2. Resolve the instruction (TryResolveInst/TryResolveTypedInst). This is done
+//    in three phases. The first and second phases can add work to the worklist
+//    and end in a retry, in which case those phases will be rerun once the
+//    added work is done. The rerun cannot also end in a retry, so this results
+//    in at most three calls, but in practice one or two calls is almost always
+//    sufficient. Due to the chance of a second or third call to TryResolveInst,
+//    it's important to only perform expensive work once, even when the same
+//    phase is rerun.
 //
-//    Second pass:
-//    - Build the constant value of the instruction.
-//    - Gather all input constants necessary to finish importing the
-//      instruction. This is only necessary for instructions like classes that
-//      can be forward-declared. For these instructions, we first import the
-//      constant value and then later import the rest of the declaration in
-//      order to break cycles.
-//    - If HasNewWork() reports that any work was added, then return
-//      Retry(constant_value): this instruction needs another call to complete.
-//      Gather the now-resolved constants and continue to the next step once the
-//      retry happens.
+//    - First phase:
+//      - Gather all input constants necessary to form the constant value of the
+//        instruction. Gathering constants directly adds unresolved values to
+//        work_stack_.
+//      - If HasNewWork() reports that any work was added, then return Retry():
+//        this instruction needs another call to complete. Gather the
+//        now-resolved constants and continue to the next step once the retry
+//        happens.
 //
-//    Third pass:
-//    - After the second pass, the constant value for the instruction is already set,
-//      and will be passed back into TryResolve*Inst on retry. It should not be
-//      created again.
-//    - Fill in any remaining information to complete the import of the
-//      instruction. For example, when importing a class declaration, build the
-//      class scope and information about the definition.
-//    - Return ResolveAs/ResolveAsConstant to finish the resolution process.
-//      This will cause the Resolve loop to set a constant value if we didn't
-//      retry at the end of the second pass.
+//    - Second phase:
+//      - Build the constant value of the instruction.
+//      - Gather all input constants necessary to finish importing the
+//        instruction. This is only necessary for instructions like classes that
+//        can be forward-declared. For these instructions, we first import the
+//        constant value and then later import the rest of the declaration in
+//        order to break cycles.
+//      - If HasNewWork() reports that any work was added, then return
+//        Retry(constant_value): this instruction needs another call to
+//        complete.  Gather the now-resolved constants and continue to the next
+//        step once the retry happens.
+//
+//    - Third phase:
+//      - After the second phase, the constant value for the instruction is
+//        already set, and will be passed back into TryResolve*Inst on retry. It
+//        should not be created again.
+//      - Fill in any remaining information to complete the import of the
+//        instruction. For example, when importing a class declaration, build
+//        the class scope and information about the definition.
+//      - Return ResolveAs/ResolveAsConstant to finish the resolution process.
+//        This will cause the Resolve loop to set a constant value if we didn't
+//        retry at the end of the second phase.
 //
 // 3. If resolve didn't return Retry(), pop the work. Otherwise, it needs to
 //    remain, and may no longer be at the top of the stack; update the state of
 //    the work item to track what work still needs to be done.
 //
-// TryResolveInst can complete in one call for a given instruction. It should
-// always complete within three calls, although it is expected to be rare for
-// three calls to be needed. Due to the chance of a second or third call to
-// TryResolveInst, it's important to reserve all expensive logic until it's
-// been established that input constants are available.
-//
 // The same instruction can be enqueued for resolution multiple times. However,
-// we will only reach the second pass once: once a constant value is set, only
+// we will only reach the second phase once: once a constant value is set, only
 // the resolution step that set it will retry.
 //
 // TODO: Fix class `extern` handling and merging, rewrite tests.
@@ -214,7 +217,7 @@ class ImportRefResolver {
 
       CARBON_CHECK(!existing.const_id.is_valid() ||
                    existing.const_id == new_const_id)
-          << "Constant value changed in third pass.";
+          << "Constant value changed in third phase.";
       if (!existing.const_id.is_valid()) {
         SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
       }
@@ -477,7 +480,7 @@ class ImportRefResolver {
   }
 
   // Gets an incomplete local version of an imported generic. Most fields are
-  // set in the second pass.
+  // set in the third phase.
   auto MakeIncompleteGeneric(SemIR::InstId decl_id, SemIR::GenericId generic_id)
       -> SemIR::GenericId {
     if (!generic_id.is_valid()) {
@@ -818,7 +821,7 @@ class ImportRefResolver {
 
   // Given an imported entity base, returns an incomplete, local version of it.
   //
-  // Most fields are set in the second pass once they're imported. Import enough
+  // Most fields are set in the third phase once they're imported. Import enough
   // of the parameter lists that we know whether this interface is a generic
   // interface and can build the right constant value for it.
   //
@@ -898,7 +901,7 @@ class ImportRefResolver {
 
     auto inner_const_id = SemIR::ConstantId::Invalid;
     if (const_id.is_valid()) {
-      // For the third pass, extract the constant value that
+      // For the third phase, extract the constant value that
       // TryResolveInstCanonical produced previously.
       inner_const_id = context_.constant_values().Get(
           context_.constant_values().GetSymbolicConstant(const_id).inst_id);
@@ -907,12 +910,12 @@ class ImportRefResolver {
     // Import the constant and rebuild the symbolic constant data.
     auto result = TryResolveInstCanonical(inst_id, inner_const_id);
     if (!result.const_id.is_valid()) {
-      // First pass: TryResolveInstCanoncial needs a retry.
+      // First phase: TryResolveInstCanoncial needs a retry.
       return result;
     }
 
     if (!const_id.is_valid()) {
-      // Second pass: we have created an abstract constant. Create a
+      // Second phase: we have created an abstract constant. Create a
       // corresponding generic constant.
       if (symbolic_const.generic_id.is_valid()) {
         result.const_id = context_.constant_values().AddSymbolicConstant(
@@ -921,10 +924,10 @@ class ImportRefResolver {
              .index = symbolic_const.index});
       }
     } else {
-      // Third pass: perform a consistency check and produce the constant we
-      // created in the second pass.
+      // Third phase: perform a consistency check and produce the constant we
+      // created in the second phase.
       CARBON_CHECK(result.const_id == inner_const_id)
-          << "Constant value changed in third pass.";
+          << "Constant value changed in third phase.";
       result.const_id = const_id;
     }
 
@@ -1033,9 +1036,9 @@ class ImportRefResolver {
   }
 
   // Produces a resolve result that tries resolving this instruction again. If
-  // `const_id` is specified, then this is the end of the second pass, and the
+  // `const_id` is specified, then this is the end of the second phase, and the
   // constant value will be passed to the next resolution attempt. Otherwise,
-  // this is the end of the first pass.
+  // this is the end of the first phase.
   auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
       -> ResolveResult {
     CARBON_CHECK(HasNewWork());
@@ -1225,15 +1228,15 @@ class ImportRefResolver {
     SemIR::ClassId class_id = SemIR::ClassId::Invalid;
     if (!class_const_id.is_valid()) {
       if (HasNewWork()) {
-        // This is the end of the first pass. Don't make a new class yet if we
+        // This is the end of the first phase. Don't make a new class yet if we
         // already have new work.
         return Retry();
       }
-      // On the second pass, create a forward declaration of the class for any
+      // On the second phase, create a forward declaration of the class for any
       // recursive references.
       std::tie(class_id, class_const_id) = MakeIncompleteClass(import_class);
     } else {
-      // On the third pass, compute the class ID from the constant
+      // On the third phase, compute the class ID from the constant
       // value of the declaration.
       auto class_const_inst = context_.insts().Get(
           context_.constant_values().GetInstId(class_const_id));
@@ -1379,15 +1382,15 @@ class ImportRefResolver {
     SemIR::FunctionId function_id = SemIR::FunctionId::Invalid;
     if (!function_const_id.is_valid()) {
       if (HasNewWork()) {
-        // This is the end of the first pass. Don't make a new function yet if
+        // This is the end of the first phase. Don't make a new function yet if
         // we already have new work.
         return Retry();
       }
-      // On the second pass, create a forward declaration of the interface.
+      // On the second phase, create a forward declaration of the interface.
       std::tie(function_id, function_const_id) =
           MakeFunctionDecl(import_function);
     } else {
-      // On the third pass, compute the function ID from the constant value of
+      // On the third phase, compute the function ID from the constant value of
       // the declaration.
       auto function_const_inst = context_.insts().Get(
           context_.constant_values().GetInstId(function_const_id));
@@ -1566,15 +1569,15 @@ class ImportRefResolver {
     SemIR::InterfaceId interface_id = SemIR::InterfaceId::Invalid;
     if (!interface_const_id.is_valid()) {
       if (HasNewWork()) {
-        // This is the end of the first pass. Don't make a new interface yet if
+        // This is the end of the first phase. Don't make a new interface yet if
         // we already have new work.
         return Retry();
       }
-      // On the second pass, create a forward declaration of the interface.
+      // On the second phase, create a forward declaration of the interface.
       std::tie(interface_id, interface_const_id) =
           MakeInterfaceDecl(import_interface);
     } else {
-      // On the third pass, compute the interface ID from the constant value of
+      // On the third phase, compute the interface ID from the constant value of
       // the declaration.
       auto interface_const_inst = context_.insts().Get(
           context_.constant_values().GetInstId(interface_const_id));
@@ -1689,7 +1692,6 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::StructType inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
-    // Collect all constants first, locating unresolved ones in a single pass.
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto orig_fields = import_ir_.inst_blocks().Get(inst.fields_id);
     llvm::SmallVector<SemIR::ConstantId> field_const_ids;
@@ -1737,7 +1739,6 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::TupleType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
-    // Collect all constants first, locating unresolved ones in a single pass.
     auto orig_elem_type_ids = import_ir_.type_blocks().Get(inst.elements_id);
     llvm::SmallVector<SemIR::ConstantId> elem_const_ids;
     elem_const_ids.reserve(orig_elem_type_ids.size());
