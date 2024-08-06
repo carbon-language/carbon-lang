@@ -31,7 +31,6 @@ auto HandleParseNode(Context& context, Parse::MemberAccessExprId node_id)
         PerformTupleIndex(context, node_id, tuple_inst_id, index_inst_id);
 
     context.node_stack().Push(node_id, tuple_value_inst_id);
-
   } else {
     SemIR::NameId name_id = context.node_stack().PopName();
     auto base_id = context.node_stack().PopExpr();
