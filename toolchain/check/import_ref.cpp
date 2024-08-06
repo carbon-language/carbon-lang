@@ -128,9 +128,9 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 // 1. If a constant value is already known for the work item and was not set by
 //    this work item, it's considered resolved.
 //    - The constant check avoids performance costs of deduplication on add.
-//    - If we've processed this work item before, then we now process it again,
-//      because it didn't complete last time, even though we have a constant
-//      value already.
+//    - If we've processed this work item before, then we now process it again.
+//      It didn't complete last time, even though we have a constant value
+//      already.
 //
 // 2. Resolve the instruction (TryResolveInst/TryResolveTypedInst), in up to
 //    three passes. First pass:
@@ -154,7 +154,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 //      retry happens.
 //
 //    Third pass:
-//    - After this point, the constant value for the instruction is already set,
+//    - After the second pass, the constant value for the instruction is already set,
 //      and will be passed back into TryResolve*Inst on retry. It should not be
 //      created again.
 //    - Fill in any remaining information to complete the import of the
