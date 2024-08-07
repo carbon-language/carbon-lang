@@ -114,13 +114,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %F.1: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %G.1: %G.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: %T} [symbolic]
-// CHECK:STDOUT:   %F.2: %F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %G.2: %G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,7 +144,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F.1] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %T.loc10_10.1: type = param T
 // CHECK:STDOUT:     %T.loc10_10.2: type = bind_symbolic_name T 0, %T.loc10_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10_10.2 [symbolic = constants.%T]
@@ -155,7 +153,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10_10.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G.1] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %T.loc14_10.1: type = param T
 // CHECK:STDOUT:     %T.loc14_10.2: type = bind_symbolic_name T 0, %T.loc14_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
@@ -172,21 +170,21 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T) [symbolic = %G.type (constants.%G.type)]
-// CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G.1)]
+// CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {
+// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
 // CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %n.loc5_8.1: @F.%T (%T) = param n
 // CHECK:STDOUT:       %n.loc5_8.2: @F.%T (%T) = bind_name n, %n.loc5_8.1
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc5: ref @F.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G.1)] {
+// CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
 // CHECK:STDOUT:       %.loc6: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc6 [symbolic = @G.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %self.loc6_8.1: @G.%Class (%Class.2) = param self
@@ -239,9 +237,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT:   %G.type => constants.%G.type
-// CHECK:STDOUT:   %G => constants.%G.2
+// CHECK:STDOUT:   %G => constants.%G
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
@@ -276,9 +274,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B.1: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %B.2: type = class_type @B, @B(%T, %N) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @B(%T, %N) [symbolic]
-// CHECK:STDOUT:   %F.1: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %F.2: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,7 +301,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = @A.%T (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F.1] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %T.loc10_6.1: type = param T
 // CHECK:STDOUT:     %T.loc10_6.2: type = bind_symbolic_name T 0, %T.loc10_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10_6.2 [symbolic = constants.%T]
@@ -344,10 +341,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @B(%T, %N) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @B.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %F: @B.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %F.decl: @B.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {
+// CHECK:STDOUT:     %F.decl: @B.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
 // CHECK:STDOUT:       %.loc6: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = @F.%B (constants.%B.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc6 [symbolic = @F.%B (constants.%B.2)]
 // CHECK:STDOUT:       %self.loc6_10.1: @F.%B (%B.2) = param self
@@ -388,7 +385,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(@F.%T, @F.%N) {

@@ -86,7 +86,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+26':         {kind: InitializeFrom, arg0: inst+22, arg1: inst+25, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+27':         {kind: TupleAccess, arg0: inst+15, arg1: element1, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+28':         {kind: TupleInit, arg0: empty, arg1: inst+27, type: type(inst+8)}
-// CHECK:STDOUT:     'inst+29':         {kind: TupleValue, arg0: block15, type: type(inst+8)}
+// CHECK:STDOUT:     'inst+29':         {kind: TupleValue, arg0: empty, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+30':         {kind: Converted, arg0: inst+23, arg1: inst+28, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+31':         {kind: TupleInit, arg0: block14, arg1: inst+15, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+32':         {kind: Converted, arg0: inst+24, arg1: inst+31, type: type(symbolicConstant3)}
@@ -170,8 +170,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     block14:
 // CHECK:STDOUT:       0:               inst+26
 // CHECK:STDOUT:       1:               inst+30
-// CHECK:STDOUT:     block15:         {}
-// CHECK:STDOUT:     block16:
+// CHECK:STDOUT:     block15:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+16
 // CHECK:STDOUT: ...

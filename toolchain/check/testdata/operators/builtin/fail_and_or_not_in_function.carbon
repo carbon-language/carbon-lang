@@ -77,7 +77,7 @@ var or_: F(true or true);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block21> [template = constants.%.3]
+// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block20> [template = constants.%.3]
 // CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+60.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1

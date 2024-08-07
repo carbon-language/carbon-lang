@@ -198,9 +198,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %F.2: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,7 +222,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F.1] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %.loc20: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc20 [symbolic = constants.%C.2]
 // CHECK:STDOUT:     %self.loc20_18.1: %C.2 = param self
@@ -252,10 +251,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @C.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %F: @C.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {
+// CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
 // CHECK:STDOUT:       %.loc14: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = @F.%C (constants.%C.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14 [symbolic = @F.%C (constants.%C.2)]
 // CHECK:STDOUT:       %self.loc14_10.1: @F.%C (%C.2) = param self
@@ -293,7 +292,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@F.%Self) {}

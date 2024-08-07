@@ -575,8 +575,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   using ElementType = InstId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
-  // An empty block, reused to avoid allocating empty vectors. Always the
-  // 0-index block.
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
   static const InstBlockId Empty;
 
   // Exported instructions. Empty until the File is fully checked; intermediate

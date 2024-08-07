@@ -31,10 +31,9 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.2: type = interface_type @I, @I(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic]
-// CHECK:STDOUT:   %F.1: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %.2, %F.type [symbolic]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [symbolic]
-// CHECK:STDOUT:   %F.2: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @I(%T) [symbolic]
 // CHECK:STDOUT:   %.5: %.type = struct_value () [symbolic]
 // CHECK:STDOUT: }
@@ -71,13 +70,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @I.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %F: @I.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I.%.1 (%.2), @I.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:   %.3: @I.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {
+// CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
 // CHECK:STDOUT:       %.loc13_14.1: @F.%.1 (%.2) = specific_constant %Self.1, @I(constants.%T) [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_14: @F.%.1 (%.2) = name_ref Self, %.loc13_14.1 [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc13_14.2: type = facet_type_access %Self.ref.loc13_14 [symbolic = @F.%Self (constants.%Self)]
@@ -128,7 +127,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT:   %.2 => constants.%.3
 // CHECK:STDOUT:   %.3 => constants.%.4
 // CHECK:STDOUT: }

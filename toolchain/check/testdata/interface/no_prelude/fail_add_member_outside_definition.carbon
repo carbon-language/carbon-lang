@@ -46,7 +46,6 @@ interface Outer {
 // CHECK:STDOUT:   %Self.3: %.5 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2) [symbolic]
 // CHECK:STDOUT:   %.6: %.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.7: %.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @Inner(%Self.2) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
@@ -127,7 +126,7 @@ interface Outer {
 // CHECK:STDOUT:   %.1 => constants.%.5
 // CHECK:STDOUT:   %Self.3 => constants.%Self.3
 // CHECK:STDOUT:   %.type => constants.%.type
-// CHECK:STDOUT:   %.2 => constants.%.7
+// CHECK:STDOUT:   %.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}

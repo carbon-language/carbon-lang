@@ -28,15 +28,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %MakeSelf.type: type = fn_type @MakeSelf, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %MakeSelf.1: %MakeSelf.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %MakeSelf: %MakeSelf.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %MakeClass.type: type = fn_type @MakeClass, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %MakeClass.1: %MakeClass.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %MakeClass: %MakeClass.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %F.1: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %MakeSelf.2: %MakeSelf.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %MakeClass.2: %MakeClass.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.2: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,19 +66,19 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %MakeSelf.type: type = fn_type @MakeSelf, @Class(%T) [symbolic = %MakeSelf.type (constants.%MakeSelf.type)]
-// CHECK:STDOUT:   %MakeSelf: @Class.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf.1)]
+// CHECK:STDOUT:   %MakeSelf: @Class.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:   %MakeClass.type: type = fn_type @MakeClass, @Class(%T) [symbolic = %MakeClass.type (constants.%MakeClass.type)]
-// CHECK:STDOUT:   %MakeClass: @Class.%MakeClass.type (%MakeClass.type) = struct_value () [symbolic = %MakeClass (constants.%MakeClass.1)]
+// CHECK:STDOUT:   %MakeClass: @Class.%MakeClass.type (%MakeClass.type) = struct_value () [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F.1)]
+// CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = %MakeSelf (constants.%MakeSelf.1)] {
+// CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = %MakeSelf (constants.%MakeSelf)] {
 // CHECK:STDOUT:       %.loc14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @MakeSelf.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14 [symbolic = @MakeSelf.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %return.var.loc14: ref @MakeSelf.%Class (%Class.2) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = %MakeClass (constants.%MakeClass.1)] {
+// CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = %MakeClass (constants.%MakeClass)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = @MakeClass.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc15_26: init type = call %Class.ref(%T.ref) [symbolic = @MakeClass.%Class (constants.%Class.2)]
@@ -89,7 +86,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %.loc15_28.2: type = converted %.loc15_26, %.loc15_28.1 [symbolic = @MakeClass.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %return.var.loc15: ref @MakeClass.%Class (%Class.2) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F.1)] {}
+// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
@@ -118,9 +115,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %MakeSelf.type: type = fn_type @MakeSelf, @Class(%T) [symbolic = %MakeSelf.type (constants.%MakeSelf.type)]
-// CHECK:STDOUT:   %MakeSelf: @F.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf.2)]
+// CHECK:STDOUT:   %MakeSelf: @F.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:   %MakeClass.type: type = fn_type @MakeClass, @Class(%T) [symbolic = %MakeClass.type (constants.%MakeClass.type)]
-// CHECK:STDOUT:   %MakeClass: @F.%MakeClass.type (%MakeClass.type) = struct_value () [symbolic = %MakeClass (constants.%MakeClass.2)]
+// CHECK:STDOUT:   %MakeClass: @F.%MakeClass.type (%MakeClass.type) = struct_value () [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -131,8 +128,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %.loc17_19.2: type = converted %.loc17_17, %.loc17_19.1 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:     %c.var: ref @F.%Class (%Class.2) = var c
 // CHECK:STDOUT:     %c: ref @F.%Class (%Class.2) = bind_name c, %c.var
-// CHECK:STDOUT:     %.loc17_23: @F.%MakeSelf.type (%MakeSelf.type) = specific_constant @Class.%MakeSelf.decl, @Class(constants.%T) [symbolic = %MakeSelf (constants.%MakeSelf.2)]
-// CHECK:STDOUT:     %MakeSelf.ref: @F.%MakeSelf.type (%MakeSelf.type) = name_ref MakeSelf, %.loc17_23 [symbolic = %MakeSelf (constants.%MakeSelf.2)]
+// CHECK:STDOUT:     %.loc17_23: @F.%MakeSelf.type (%MakeSelf.type) = specific_constant @Class.%MakeSelf.decl, @Class(constants.%T) [symbolic = %MakeSelf (constants.%MakeSelf)]
+// CHECK:STDOUT:     %MakeSelf.ref: @F.%MakeSelf.type (%MakeSelf.type) = name_ref MakeSelf, %.loc17_23 [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %.loc17_9: ref @F.%Class (%Class.2) = splice_block %c.var {}
 // CHECK:STDOUT:     %MakeSelf.call: init @F.%Class (%Class.2) = call %MakeSelf.ref() to %.loc17_9
 // CHECK:STDOUT:     assign %c.var, %MakeSelf.call
@@ -140,8 +137,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc18_12 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:     %s.var: ref @F.%Class (%Class.2) = var s
 // CHECK:STDOUT:     %s: ref @F.%Class (%Class.2) = bind_name s, %s.var
-// CHECK:STDOUT:     %.loc18_19: @F.%MakeClass.type (%MakeClass.type) = specific_constant @Class.%MakeClass.decl, @Class(constants.%T) [symbolic = %MakeClass (constants.%MakeClass.2)]
-// CHECK:STDOUT:     %MakeClass.ref: @F.%MakeClass.type (%MakeClass.type) = name_ref MakeClass, %.loc18_19 [symbolic = %MakeClass (constants.%MakeClass.2)]
+// CHECK:STDOUT:     %.loc18_19: @F.%MakeClass.type (%MakeClass.type) = specific_constant @Class.%MakeClass.decl, @Class(constants.%T) [symbolic = %MakeClass (constants.%MakeClass)]
+// CHECK:STDOUT:     %MakeClass.ref: @F.%MakeClass.type (%MakeClass.type) = name_ref MakeClass, %.loc18_19 [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %.loc18_9: ref @F.%Class (%Class.2) = splice_block %s.var {}
 // CHECK:STDOUT:     %MakeClass.call: init @F.%Class (%Class.2) = call %MakeClass.ref() to %.loc18_9
 // CHECK:STDOUT:     assign %s.var, %MakeClass.call
@@ -154,11 +151,11 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %MakeSelf.type => constants.%MakeSelf.type
-// CHECK:STDOUT:   %MakeSelf => constants.%MakeSelf.2
+// CHECK:STDOUT:   %MakeSelf => constants.%MakeSelf
 // CHECK:STDOUT:   %MakeClass.type => constants.%MakeClass.type
-// CHECK:STDOUT:   %MakeClass => constants.%MakeClass.2
+// CHECK:STDOUT:   %MakeClass => constants.%MakeClass
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@MakeSelf.%T) {
