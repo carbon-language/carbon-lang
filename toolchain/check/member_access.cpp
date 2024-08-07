@@ -138,7 +138,8 @@ static auto LookupInterfaceWitness(Context& context,
             context.types().GetConstantId(impl.self_id), type_const_id)) {
       continue;
     }
-    if (impl.constraint_id != interface_type_id) {
+    if (!context.types().AreEqualAcrossDeclarations(impl.constraint_id,
+                                                    interface_type_id)) {
       // TODO: An impl of a constraint type should be treated as implementing
       // the constraint's interfaces.
       continue;
