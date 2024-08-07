@@ -58,6 +58,19 @@
 
 namespace Carbon::Testing::Yaml {
 
+// Adds the specified indentation before each newline in the given string.
+inline auto IndentString(std::string_view str, std::string_view indent = "  ")
+    -> std::string {
+  std::string result;
+  for (auto c : str) {
+    result.push_back(c);
+    if (c == '\n') {
+      result += indent;
+    }
+  }
+  return result;
+}
+
 struct EmptyComparable {
   friend auto operator==(EmptyComparable /*lhs*/, EmptyComparable /*rhs*/)
       -> bool {
@@ -88,9 +101,10 @@ struct Value : std::variant<NullValue, ScalarValue, MappingValue, SequenceValue,
 
 // Used to examine the results of Value::FromText.
 // NOLINTNEXTLINE: Expands from GoogleTest.
-MATCHER_P(IsYaml, matcher,
-          "is yaml root sequence that " +
-              ::testing::DescribeMatcher<SequenceValue>(matcher)) {
+MATCHER_P(
+    IsYaml, matcher,
+    "is yaml root sequence that " +
+        IndentString(::testing::DescribeMatcher<SequenceValue>(matcher))) {
   const ErrorOr<SequenceValue>& yaml = arg;
   const ::testing::Matcher<SequenceValue>& typed_matcher = matcher;
   if (yaml.ok()) {
@@ -110,7 +124,7 @@ MATCHER_P(IsYaml, matcher,
 // NOLINTNEXTLINE: Expands from GoogleTest.
 MATCHER_P(Mapping, matcher,
           "is mapping that " +
-              ::testing::DescribeMatcher<MappingValue>(matcher)) {
+              IndentString(::testing::DescribeMatcher<MappingValue>(matcher))) {
   const Value& val = arg;
   const ::testing::Matcher<MappingValue>& typed_matcher = matcher;
   if (const auto* map = std::get_if<MappingValue>(&val)) {
@@ -125,9 +139,10 @@ MATCHER_P(Mapping, matcher,
 // Similar to testing::VariantWith<SequenceValue>(matcher), but with better
 // descriptions.
 // NOLINTNEXTLINE: Expands from GoogleTest.
-MATCHER_P(Sequence, matcher,
-          "is sequence that " +
-              ::testing::DescribeMatcher<SequenceValue>(matcher)) {
+MATCHER_P(
+    Sequence, matcher,
+    "is sequence that " +
+        IndentString(::testing::DescribeMatcher<SequenceValue>(matcher))) {
   const Value& val = arg;
   const ::testing::Matcher<SequenceValue>& typed_matcher = matcher;
   if (const auto* map = std::get_if<SequenceValue>(&val)) {
@@ -144,7 +159,7 @@ MATCHER_P(Sequence, matcher,
 // NOLINTNEXTLINE: Expands from GoogleTest.
 MATCHER_P(Scalar, matcher,
           "has scalar value " +
-              ::testing::DescribeMatcher<ScalarValue>(matcher)) {
+              IndentString(::testing::DescribeMatcher<ScalarValue>(matcher))) {
   const Value& val = arg;
   const ::testing::Matcher<ScalarValue>& typed_matcher = matcher;
   if (const auto* map = std::get_if<ScalarValue>(&val)) {
