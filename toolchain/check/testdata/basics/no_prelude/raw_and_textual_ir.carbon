@@ -68,13 +68,13 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+20':         {kind: TupleLiteral, arg0: block8, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+21':         {kind: TupleAccess, arg0: inst+13, arg1: element0, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+22':         {kind: TupleInit, arg0: block9, arg1: inst+21, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+23':         {kind: TupleValue, arg0: block10, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+23':         {kind: TupleValue, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+24':         {kind: Converted, arg0: inst+18, arg1: inst+22, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+25':         {kind: TupleAccess, arg0: inst+13, arg1: element1, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+26':         {kind: TupleInit, arg0: empty, arg1: inst+25, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+27':         {kind: Converted, arg0: inst+19, arg1: inst+26, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+28':         {kind: TupleInit, arg0: block11, arg1: inst+13, type: type(inst+8)}
-// CHECK:STDOUT:     'inst+29':         {kind: TupleValue, arg0: block12, type: type(inst+8)}
+// CHECK:STDOUT:     'inst+28':         {kind: TupleInit, arg0: block10, arg1: inst+13, type: type(inst+8)}
+// CHECK:STDOUT:     'inst+29':         {kind: TupleValue, arg0: block11, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+30':         {kind: Converted, arg0: inst+20, arg1: inst+28, type: type(inst+8)}
 // CHECK:STDOUT:     'inst+31':         {kind: ReturnExpr, arg0: inst+30, arg1: inst+13}
 // CHECK:STDOUT:   constant_values:
@@ -138,14 +138,13 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       0:               inst+18
 // CHECK:STDOUT:       1:               inst+19
 // CHECK:STDOUT:     block9:          {}
-// CHECK:STDOUT:     block10:         {}
-// CHECK:STDOUT:     block11:
+// CHECK:STDOUT:     block10:
 // CHECK:STDOUT:       0:               inst+24
 // CHECK:STDOUT:       1:               inst+27
-// CHECK:STDOUT:     block12:
+// CHECK:STDOUT:     block11:
 // CHECK:STDOUT:       0:               inst+23
 // CHECK:STDOUT:       1:               inst+23
-// CHECK:STDOUT:     block13:
+// CHECK:STDOUT:     block12:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+14
 // CHECK:STDOUT: ...

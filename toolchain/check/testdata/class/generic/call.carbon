@@ -449,19 +449,15 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %struct.1: %Outer.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct.2: %Outer.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %A.2: %A.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %B.2: %B.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %C.2: %C.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %D.2: %D.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct.3: %Inner.3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %A.type.2: type = fn_type @A, @Inner(%U, %U) [symbolic]
-// CHECK:STDOUT:   %A.3: %A.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %A.2: %A.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %B.type.2: type = fn_type @B, @Inner(%U, %U) [symbolic]
-// CHECK:STDOUT:   %B.3: %B.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %B.2: %B.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.type.2: type = fn_type @C, @Inner(%U, %U) [symbolic]
-// CHECK:STDOUT:   %C.3: %C.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %C.2: %C.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %D.type.2: type = fn_type @D, @Inner(%U, %U) [symbolic]
-// CHECK:STDOUT:   %D.3: %D.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %D.2: %D.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct.4: %Inner.4 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -667,13 +663,13 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %A.type => constants.%A.type.1
-// CHECK:STDOUT:   %A => constants.%A.2
+// CHECK:STDOUT:   %A => constants.%A.1
 // CHECK:STDOUT:   %B.type => constants.%B.type.1
-// CHECK:STDOUT:   %B => constants.%B.2
+// CHECK:STDOUT:   %B => constants.%B.1
 // CHECK:STDOUT:   %C.type => constants.%C.type.1
-// CHECK:STDOUT:   %C => constants.%C.2
+// CHECK:STDOUT:   %C => constants.%C.1
 // CHECK:STDOUT:   %D.type => constants.%D.type.1
-// CHECK:STDOUT:   %D => constants.%D.2
+// CHECK:STDOUT:   %D => constants.%D.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(@C.%T) {
@@ -691,13 +687,13 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%U
 // CHECK:STDOUT:   %A.type => constants.%A.type.2
-// CHECK:STDOUT:   %A => constants.%A.3
+// CHECK:STDOUT:   %A => constants.%A.2
 // CHECK:STDOUT:   %B.type => constants.%B.type.2
-// CHECK:STDOUT:   %B => constants.%B.3
+// CHECK:STDOUT:   %B => constants.%B.2
 // CHECK:STDOUT:   %C.type => constants.%C.type.2
-// CHECK:STDOUT:   %C => constants.%C.3
+// CHECK:STDOUT:   %C => constants.%C.2
 // CHECK:STDOUT:   %D.type => constants.%D.type.2
-// CHECK:STDOUT:   %D => constants.%D.3
+// CHECK:STDOUT:   %D => constants.%D.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(@D.%U) {

@@ -448,7 +448,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
-    auto empty_id = AddDefaultValue();
+    auto empty_id = AddCanonical({});
     CARBON_CHECK(empty_id == InstBlockId::Empty);
     auto exports_id = AddDefaultValue();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
@@ -464,7 +464,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   }
 
   // Returns the contents of the specified block, or an empty array if the block
-  // is empty.
+  // is invalid.
   auto GetOrEmpty(InstBlockId block_id) const -> llvm::ArrayRef<InstId> {
     return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
   }
