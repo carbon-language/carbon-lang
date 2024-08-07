@@ -53,22 +53,15 @@
 #include <iostream>
 #include <variant>
 
+#include "absl/strings/str_replace.h"
 #include "common/error.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Testing::Yaml {
 
 // Adds the specified indentation before each newline in the given string.
-inline auto IndentString(std::string_view str, std::string_view indent = "  ")
-    -> std::string {
-  std::string result;
-  for (auto c : str) {
-    result.push_back(c);
-    if (c == '\n') {
-      result += indent;
-    }
-  }
-  return result;
+inline auto IndentString(std::string_view str) -> std::string {
+  return absl::StrReplaceAll(str, {{"\n", "\n  "}});
 }
 
 struct EmptyComparable {

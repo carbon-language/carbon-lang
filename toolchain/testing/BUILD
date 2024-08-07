@@ -37,6 +37,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
+        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
