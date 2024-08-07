@@ -167,6 +167,7 @@ def main() -> None:
     label_subdir("docs/guides", next(nav_order))
     label_subdir("docs/project", next(nav_order), grandchild_dirs=True)
     label_subdir("docs/spec", next(nav_order))
+    # Provide a small file to cluster implementation-related directories.
     label_root_file(
         "implementation.md",
         "Implementation",
