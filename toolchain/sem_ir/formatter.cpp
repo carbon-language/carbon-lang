@@ -1030,13 +1030,13 @@ class FormatterImpl {
             symbolic_constant.index
                 .region()))[symbolic_constant.index.index()]);
         out_ << " (";
-        FormatName(sem_ir_.constant_values().GetInstIdIfValid(id));
+        FormatName(sem_ir_.constant_values().GetInstId(id));
         out_ << ")";
         return;
       }
     }
 
-    FormatName(sem_ir_.constant_values().GetInstIdIfValid(id));
+    FormatName(sem_ir_.constant_values().GetInstId(id));
   }
 
   auto FormatType(TypeId id) -> void {

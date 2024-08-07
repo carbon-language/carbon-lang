@@ -59,8 +59,6 @@ static auto BuildInterfaceDecl(Context& context,
   if (existing_id.is_valid()) {
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
-      // TODO: Implement full redeclaration checking. See `MergeClassDecl`. For
-      // now we just check the generic parameters match.
       auto existing_interface =
           context.interfaces().Get(existing_interface_decl->interface_id);
       if (CheckRedeclParamsMatch(
