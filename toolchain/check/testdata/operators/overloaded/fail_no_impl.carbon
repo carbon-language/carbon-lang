@@ -240,3 +240,21 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   fn[addr %self: @Op.4.%.2 (%.15)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Self.1) {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%Self.2) {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.3(constants.%Self.3) {
+// CHECK:STDOUT:   %Self => constants.%Self.3
+// CHECK:STDOUT:   %.2 => constants.%.11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.4(constants.%Self.4) {
+// CHECK:STDOUT:   %Self => constants.%Self.4
+// CHECK:STDOUT:   %.2 => constants.%.15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

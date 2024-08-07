@@ -96,3 +96,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   fn[%self: @Op.%Self (%Self)](%other: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

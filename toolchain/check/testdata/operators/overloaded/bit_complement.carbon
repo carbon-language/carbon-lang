@@ -136,3 +136,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
