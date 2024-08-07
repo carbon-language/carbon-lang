@@ -552,7 +552,8 @@ class FormatterImpl {
     out_ << InstT::Kind.ir_name();
     pending_constant_value_ = sem_ir_.constant_values().Get(inst_id);
     pending_constant_value_is_self_ =
-        sem_ir_.constant_values().GetInstId(pending_constant_value_) == inst_id;
+        sem_ir_.constant_values().GetInstIdIfValid(pending_constant_value_) ==
+        inst_id;
     FormatInstRHS(inst);
     FormatPendingConstantValue(AddSpace::Before);
     out_ << "\n";
