@@ -154,7 +154,10 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.2;
+// CHECK:STDOUT: impl @impl: %C as %.2 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = imports.%import_ref.5
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:

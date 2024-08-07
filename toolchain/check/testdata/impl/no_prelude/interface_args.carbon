@@ -262,7 +262,10 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %A as %.6;
+// CHECK:STDOUT: impl @impl: %A as %.6 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = imports.%import_ref.11
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT: !members:
@@ -397,7 +400,10 @@ impl A as Factory(B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %A as %.6;
+// CHECK:STDOUT: impl @impl: %A as %.6 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = imports.%import_ref.11
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT: !members:
