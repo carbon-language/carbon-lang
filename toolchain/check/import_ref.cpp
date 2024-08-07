@@ -665,14 +665,14 @@ class ImportRefResolver {
       // If the parameter is a symbolic binding, build the BindSymbolicName
       // constant.
       auto bind_id = inst_id;
-      if (auto addr =
-              import_ir_.insts().TryGetAs<SemIR::AddrPattern>(bind_id)) {
+      auto bind_inst = import_ir_.insts().Get(bind_id);
+      if (auto addr = bind_inst.TryAs<SemIR::AddrPattern>()) {
         bind_id = addr->inner_id;
+        bind_inst = import_ir_.insts().Get(bind_id);
       }
-      auto bind_const_id =
-          import_ir_.insts().Is<SemIR::BindSymbolicName>(bind_id)
-              ? GetLocalConstantId(bind_id)
-              : SemIR::ConstantId::Invalid;
+      auto bind_const_id = bind_inst.Is<SemIR::BindSymbolicName>()
+                               ? GetLocalConstantId(bind_id)
+                               : SemIR::ConstantId::Invalid;
       param_data.push_back(
           {.type_const_id = type_const_id, .bind_const_id = bind_const_id});
     }
