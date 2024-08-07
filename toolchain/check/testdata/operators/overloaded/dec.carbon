@@ -113,7 +113,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self) [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: %.5]();
+// CHECK:STDOUT:   fn[addr %self: @Op.2.%.2 (%.5)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {

@@ -190,7 +190,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self.1) [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: %.5]();
+// CHECK:STDOUT:   fn[addr %self: @Op.2.%.2 (%.5)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc19_14.3: %.3](@impl.2.%other.loc19_24.2: %C);
@@ -199,7 +199,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.8)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT:   fn[addr %self: @Op.4.%.2 (%.8)](%other: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestIncNonRef(%a: %C) {

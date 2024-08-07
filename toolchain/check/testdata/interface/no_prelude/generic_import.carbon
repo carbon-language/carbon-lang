@@ -100,13 +100,14 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith: %AddWith.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @AddWith, @AddWith(%T) [symbolic]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @AddWith.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %F.type.2 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.2 [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %.6: type = interface_type @AddWith, @AddWith(%C) [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
@@ -143,7 +144,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @AddWith, @AddWith(%T) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith.%.1 (%.3), @AddWith.%F.type (%F.type.2) [symbolic = %.2 (constants.%.4)]
@@ -171,7 +172,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %.3) {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self.1: @AddWith.%.1 (%.3)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

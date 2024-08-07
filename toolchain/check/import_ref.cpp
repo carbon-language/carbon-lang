@@ -119,6 +119,35 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
   context.DiagnoseDuplicateName(conflict_id, prev_id);
 }
 
+// Returns an instruction that has the specified constant value.
+static auto GetInstWithConstantValue(const SemIR::File& file,
+                                     SemIR::ConstantId const_id)
+    -> SemIR::InstId {
+  if (!const_id.is_valid()) {
+    return SemIR::InstId::Invalid;
+  }
+
+  // For template constants, the corresponding instruction has the desired
+  // constant value.
+  if (!const_id.is_symbolic()) {
+    return file.constant_values().GetInstId(const_id);
+  }
+
+  // For abstract symbolic constants, the corresponding instruction has the
+  // desired constant value.
+  const auto& symbolic_const =
+      file.constant_values().GetSymbolicConstant(const_id);
+  if (!symbolic_const.generic_id.is_valid()) {
+    return file.constant_values().GetInstId(const_id);
+  }
+
+  // For a symbolic constant in a generic, pick the corresponding instruction
+  // out of the eval block for the generic.
+  const auto& generic = file.generics().Get(symbolic_const.generic_id);
+  auto block = generic.GetEvalBlock(symbolic_const.index.region());
+  return file.inst_blocks().Get(block)[symbolic_const.index.index()];
+}
+
 // Resolves an instruction from an imported IR into a constant referring to the
 // current IR.
 //
@@ -237,30 +266,7 @@ class ImportRefResolver {
 
   // Wraps constant evaluation with logic to handle constants.
   auto ResolveConstant(SemIR::ConstantId import_const_id) -> SemIR::ConstantId {
-    if (!import_const_id.is_valid()) {
-      return import_const_id;
-    }
-
-    // For template constants, the corresponding instruction has the desired
-    // constant value.
-    if (!import_const_id.is_symbolic()) {
-      return Resolve(import_ir_.constant_values().GetInstId(import_const_id));
-    }
-
-    // For abstract symbolic constants, the corresponding instruction has the
-    // desired constant value.
-    const auto& symbolic_const =
-        import_ir_.constant_values().GetSymbolicConstant(import_const_id);
-    if (!symbolic_const.generic_id.is_valid()) {
-      return Resolve(import_ir_.constant_values().GetInstId(import_const_id));
-    }
-
-    // For a symbolic constant in a generic, pick the corresponding instruction
-    // out of the eval block for the generic and resolve its constant value.
-    const auto& generic = import_ir_.generics().Get(symbolic_const.generic_id);
-    auto block = generic.GetEvalBlock(symbolic_const.index.region());
-    return Resolve(
-        import_ir_.inst_blocks().Get(block)[symbolic_const.index.index()]);
+    return Resolve(GetInstWithConstantValue(import_ir_, import_const_id));
   }
 
   // Wraps constant evaluation with logic to handle types.
@@ -311,6 +317,12 @@ class ImportRefResolver {
     // being resolved, and should have their constant set to the same. Empty
     // when const_id is valid.
     llvm::SmallVector<SemIR::ImportIRInst> indirect_insts = {};
+  };
+
+  // Local information associated with an imported parameter.
+  struct ParamData {
+    SemIR::ConstantId type_const_id;
+    SemIR::ConstantId bind_const_id;
   };
 
   // Local information associated with an imported generic.
@@ -419,6 +431,12 @@ class ImportRefResolver {
     return const_id;
   }
 
+  // Returns the ConstantId for an imported ConstantId. Adds unresolved
+  // constants to work_stack_.
+  auto GetLocalConstantId(SemIR::ConstantId const_id) -> SemIR::ConstantId {
+    return GetLocalConstantId(GetInstWithConstantValue(import_ir_, const_id));
+  }
+
   // Returns the local constant InstId for an imported InstId.
   auto GetLocalConstantInstId(SemIR::InstId inst_id) -> SemIR::InstId {
     auto const_id = import_ir_constant_values().Get(inst_id);
@@ -432,7 +450,7 @@ class ImportRefResolver {
   // Returns the ConstantId for a TypeId. Adds unresolved constants to
   // work_stack_.
   auto GetLocalConstantId(SemIR::TypeId type_id) -> SemIR::ConstantId {
-    return GetLocalConstantId(import_ir_.types().GetInstId(type_id));
+    return GetLocalConstantId(import_ir_.types().GetConstantId(type_id));
   }
 
   // Gets the local constant values corresponding to an imported inst block.
@@ -631,36 +649,40 @@ class ImportRefResolver {
   // Returns the ConstantId for each parameter's type. Adds unresolved constants
   // to work_stack_.
   auto GetLocalParamConstantIds(SemIR::InstBlockId param_refs_id)
-      -> llvm::SmallVector<SemIR::ConstantId> {
-    llvm::SmallVector<SemIR::ConstantId> const_ids;
+      -> llvm::SmallVector<ParamData> {
+    llvm::SmallVector<ParamData> param_data;
     if (!param_refs_id.is_valid() ||
         param_refs_id == SemIR::InstBlockId::Empty) {
-      return const_ids;
+      return param_data;
     }
 
     const auto& param_refs = import_ir_.inst_blocks().Get(param_refs_id);
-    const_ids.reserve(param_refs.size());
+    param_data.reserve(param_refs.size());
     for (auto inst_id : param_refs) {
-      const_ids.push_back(
-          GetLocalConstantId(import_ir_.insts().Get(inst_id).type_id()));
+      auto type_const_id =
+          GetLocalConstantId(import_ir_.insts().Get(inst_id).type_id());
 
       // If the parameter is a symbolic binding, build the BindSymbolicName
       // constant.
       auto bind_id = inst_id;
-      if (auto addr =
-              import_ir_.insts().TryGetAs<SemIR::AddrPattern>(bind_id)) {
+      auto bind_inst = import_ir_.insts().Get(bind_id);
+      if (auto addr = bind_inst.TryAs<SemIR::AddrPattern>()) {
         bind_id = addr->inner_id;
+        bind_inst = import_ir_.insts().Get(bind_id);
       }
-      GetLocalConstantId(bind_id);
+      auto bind_const_id = bind_inst.Is<SemIR::BindSymbolicName>()
+                               ? GetLocalConstantId(bind_id)
+                               : SemIR::ConstantId::Invalid;
+      param_data.push_back(
+          {.type_const_id = type_const_id, .bind_const_id = bind_const_id});
     }
-    return const_ids;
+    return param_data;
   }
 
   // Given a param_refs_id and const_ids from GetLocalParamConstantIds, returns
   // a version of param_refs_id localized to the current IR.
-  auto GetLocalParamRefsId(
-      SemIR::InstBlockId param_refs_id,
-      const llvm::SmallVector<SemIR::ConstantId>& const_ids)
+  auto GetLocalParamRefsId(SemIR::InstBlockId param_refs_id,
+                           const llvm::SmallVector<ParamData>& params_data)
       -> SemIR::InstBlockId {
     if (!param_refs_id.is_valid() ||
         param_refs_id == SemIR::InstBlockId::Empty) {
@@ -668,7 +690,7 @@ class ImportRefResolver {
     }
     const auto& param_refs = import_ir_.inst_blocks().Get(param_refs_id);
     llvm::SmallVector<SemIR::InstId> new_param_refs;
-    for (auto [ref_id, const_id] : llvm::zip(param_refs, const_ids)) {
+    for (auto [ref_id, param_data] : llvm::zip(param_refs, params_data)) {
       // Figure out the param structure. This echoes
       // Function::GetParamFromParamRefId.
       // TODO: Consider a different parameter handling to simplify import logic.
@@ -693,7 +715,8 @@ class ImportRefResolver {
 
       // Rebuild the param instruction.
       auto name_id = GetLocalNameId(param_inst.name_id);
-      auto type_id = context_.GetTypeIdForTypeConstant(const_id);
+      auto type_id =
+          context_.GetTypeIdForTypeConstant(param_data.type_const_id);
 
       auto new_param_id = context_.AddInstInNoBlock<SemIR::Param>(
           AddImportIRInst(param_id), {.type_id = type_id, .name_id = name_id});
@@ -712,14 +735,17 @@ class ImportRefResolver {
           }
           case SemIR::BindSymbolicName::Kind: {
             // We already imported a constant value for this symbolic binding.
-            // We can reuse most of it.
-            auto new_bind_inst_id = GetLocalConstantInstId(bind_id);
+            // We can reuse most of it, but update the value to point to our
+            // specific parameter, and preserve the constant value.
             auto new_bind_inst =
                 context_.insts().GetAs<SemIR::BindSymbolicName>(
-                    new_bind_inst_id);
+                    context_.constant_values().GetInstId(
+                        param_data.bind_const_id));
             new_bind_inst.value_id = new_param_id;
             new_param_id = context_.AddInstInNoBlock(AddImportIRInst(bind_id),
                                                      new_bind_inst);
+            context_.constant_values().Set(new_param_id,
+                                           param_data.bind_const_id);
             break;
           }
           default: {
@@ -1252,10 +1278,9 @@ class ImportRefResolver {
 
     // Load constants for the definition.
     auto parent_scope_id = GetLocalNameScopeId(import_class.parent_scope_id);
-    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
+    auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
-    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
-        GetLocalParamConstantIds(import_class.param_refs_id);
+    auto param_const_ids = GetLocalParamConstantIds(import_class.param_refs_id);
     auto generic_data = GetLocalGenericData(import_class.generic_id);
     auto self_const_id = GetLocalConstantId(import_class.self_type_id);
     auto object_repr_const_id =
@@ -1401,13 +1426,13 @@ class ImportRefResolver {
 
     auto return_type_const_id = SemIR::ConstantId::Invalid;
     if (import_function.return_storage_id.is_valid()) {
-      return_type_const_id =
-          GetLocalConstantId(import_function.GetDeclaredReturnType(import_ir_));
+      return_type_const_id = GetLocalConstantId(
+          import_ir_.insts().Get(import_function.return_storage_id).type_id());
     }
     auto parent_scope_id = GetLocalNameScopeId(import_function.parent_scope_id);
-    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
+    auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_function.implicit_param_refs_id);
-    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
+    auto param_const_ids =
         GetLocalParamConstantIds(import_function.param_refs_id);
     auto generic_data = GetLocalGenericData(import_function.generic_id);
 
@@ -1594,9 +1619,9 @@ class ImportRefResolver {
 
     auto parent_scope_id =
         GetLocalNameScopeId(import_interface.parent_scope_id);
-    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
+    auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
-    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
+    auto param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
     auto generic_data = GetLocalGenericData(import_interface.generic_id);
 
