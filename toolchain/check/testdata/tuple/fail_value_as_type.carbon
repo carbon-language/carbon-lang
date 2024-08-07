@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuples/fail_value_as_type.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuple/fail_value_as_type.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuples/fail_value_as_type.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/fail_value_as_type.carbon
 
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var x: (1, );
