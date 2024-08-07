@@ -4,7 +4,7 @@
 
 """Bazel modules.
 
-`MODULE.bazel.lock` may change locally when `bazel` is exexcuted. This means one
+`MODULE.bazel.lock` may change locally when `bazel` is executed. This means one
 of:
 
 1.  `MODULE.bazel` is changing.
