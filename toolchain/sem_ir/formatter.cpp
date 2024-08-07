@@ -233,7 +233,7 @@ class FormatterImpl {
 
     llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    if (impl_info.scope_id.is_valid()) {
+    if (impl_info.is_defined()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
@@ -242,7 +242,9 @@ class FormatterImpl {
       // always list the witness in this section.
       IndentLabel();
       out_ << "!members:\n";
-      FormatNameScope(impl_info.scope_id);
+      if (impl_info.scope_id.is_valid()) {
+        FormatNameScope(impl_info.scope_id);
+      }
 
       Indent();
       out_ << "witness = ";
