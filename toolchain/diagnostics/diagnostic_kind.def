@@ -216,8 +216,6 @@ CARBON_DIAGNOSTIC_KIND(ExportRedundant)
 CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 
 // Interface checking.
-CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)
-CARBON_DIAGNOSTIC_KIND(InterfaceRedefinition)
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 

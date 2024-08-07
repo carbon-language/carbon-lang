@@ -136,21 +136,11 @@ auto HandleParseNode(Context& context,
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  if (interface_info.is_defined()) {
-    CARBON_DIAGNOSTIC(InterfaceRedefinition, Error,
-                      "Redefinition of interface {0}.", SemIR::NameId);
-    CARBON_DIAGNOSTIC(InterfacePreviousDefinition, Note,
-                      "Previous definition was here.");
-    context.emitter()
-        .Build(node_id, InterfaceRedefinition, interface_info.name_id)
-        .Note(interface_info.definition_id, InterfacePreviousDefinition)
-        .Emit();
-  } else {
-    interface_info.definition_id = interface_decl_id;
-    interface_info.scope_id =
-        context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
-                                  interface_info.parent_scope_id);
-  }
+  CARBON_CHECK(!interface_info.is_defined());
+  interface_info.definition_id = interface_decl_id;
+  interface_info.scope_id =
+      context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
+                                interface_info.parent_scope_id);
 
   auto self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);
