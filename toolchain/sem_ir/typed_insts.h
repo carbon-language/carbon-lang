@@ -179,7 +179,7 @@ struct Assign {
   InstId rhs_id;
 };
 
-// An associated type declaration in an interface, such as `let T:! type;`.
+// An associated constant declaration in an interface, such as `let T:! type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl.Define<Parse::NodeId>(
