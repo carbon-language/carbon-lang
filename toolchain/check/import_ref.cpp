@@ -1800,6 +1800,8 @@ class ImportRefResolver {
 
   // Perform any work that we deferred until the end of the main Resolve loop.
   auto PerformPendingWork() -> void {
+    // Note that the individual Finish steps can add new pending work, so keep
+    // going until we have no more work to do.
     while (!pending_generics_.empty() || !pending_specifics_.empty()) {
       while (!pending_generics_.empty()) {
         FinishPendingGeneric(pending_generics_.pop_back_val());
@@ -1844,24 +1846,26 @@ class ImportRefResolver {
   auto FinishPendingGeneric(PendingGeneric pending) -> void {
     const auto& import_generic = import_ir_.generics().Get(pending.import_id);
 
-    // Note that the generics list can be reallocated by ResolveLocalEvalBlock
-    // importing more generics.
+    // Don't store this between calls: the generics list can be reallocated by
+    // ResolveLocalEvalBlock importing more generics.
+    auto local_generic = [&]() -> auto& {
+      return context_.generics().Get(pending.local_id);
+    };
+
     auto decl_block_id =
         ResolveLocalEvalBlock(import_generic, pending.local_id,
                               SemIR::GenericInstIndex::Region::Declaration);
-    auto* local_generic = &context_.generics().Get(pending.local_id);
-    local_generic->decl_block_id = decl_block_id;
+    local_generic().decl_block_id = decl_block_id;
 
     auto self_specific_id = MakeSelfSpecific(context_, pending.local_id);
-    local_generic->self_specific_id = self_specific_id;
+    local_generic().self_specific_id = self_specific_id;
     pending_specifics_.push_back({.import_id = import_generic.self_specific_id,
                                   .local_id = self_specific_id});
 
     auto definition_block_id =
         ResolveLocalEvalBlock(import_generic, pending.local_id,
                               SemIR::GenericInstIndex::Region::Definition);
-    local_generic = &context_.generics().Get(pending.local_id);
-    local_generic->definition_block_id = definition_block_id;
+    local_generic().definition_block_id = definition_block_id;
   }
 
   // Resolves and returns a local inst block of constant instructions
@@ -1880,21 +1884,22 @@ class ImportRefResolver {
   auto FinishPendingSpecific(PendingSpecific pending) -> void {
     const auto& import_specific = import_ir_.specifics().Get(pending.import_id);
 
-    // Note that the specifics list can be reallocated by ResolveLocalInstBlock
-    // importing more specifics.
-    auto* local_specific = &context_.specifics().Get(pending.local_id);
-    if (!local_specific->decl_block_id.is_valid()) {
+    // Don't store this between calls: the specifics list can be reallocated by
+    // ResolveLocalInstBlock importing more specifics.
+    auto local_specific = [&]() -> auto& {
+      return context_.specifics().Get(pending.local_id);
+    };
+
+    if (!local_specific().decl_block_id.is_valid()) {
       auto decl_block_id = ResolveLocalInstBlock(import_specific.decl_block_id);
-      local_specific = &context_.specifics().Get(pending.local_id);
-      local_specific->decl_block_id = decl_block_id;
+      local_specific().decl_block_id = decl_block_id;
     }
 
-    if (!local_specific->definition_block_id.is_valid() &&
+    if (!local_specific().definition_block_id.is_valid() &&
         import_specific.definition_block_id.is_valid()) {
       auto definition_block_id =
           ResolveLocalInstBlock(import_specific.definition_block_id);
-      local_specific = &context_.specifics().Get(pending.local_id);
-      local_specific->definition_block_id = definition_block_id;
+      local_specific().definition_block_id = definition_block_id;
     }
   }
 
