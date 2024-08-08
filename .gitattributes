@@ -3,5 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # This tells Github to detect files having the extension `.def` as `C++` files, which
-# ensures that these files get syntax highlighted prpperly.
+# ensures that these files get syntax highlighted properly.
 *.def linguist-language=C++
