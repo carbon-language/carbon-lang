@@ -44,6 +44,13 @@ TEST(SourceGenTest, Ids) {
     EXPECT_THAT(id, MatchesRegex("[A-Za-z][A-Za-z0-9_]*"));
   }
 
+  // We should have at least one identifier of each length [1, 64]. The exact
+  // distribution is an implementation detail designed to vaguely match the
+  // expected distribution in source code.
+  for (int size : llvm::seq_inclusive(1, 64)) {
+    EXPECT_THAT(ids, Contains(SizeIs(size)));
+  }
+
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t ids_size_sum = SumSizes(ids);
@@ -61,7 +68,7 @@ TEST(SourceGenTest, Ids) {
   EXPECT_THAT(ids, Each(SizeIs(AllOf(Ge(10), Le(20)))));
 
   // Check that uniform id length results in exact coverage of each possible
-  // length for an easy case.
+  // length for an easy case, both without and with a remainder.
   ids = gen.GetShuffledIds(100, /*min_length=*/10, /*max_length=*/19,
                            /*uniform=*/true);
   EXPECT_THAT(ids, Contains(SizeIs(10)).Times(10));
@@ -74,6 +81,18 @@ TEST(SourceGenTest, Ids) {
   EXPECT_THAT(ids, Contains(SizeIs(17)).Times(10));
   EXPECT_THAT(ids, Contains(SizeIs(18)).Times(10));
   EXPECT_THAT(ids, Contains(SizeIs(19)).Times(10));
+  ids = gen.GetShuffledIds(97, /*min_length=*/10, /*max_length=*/19,
+                           /*uniform=*/true);
+  EXPECT_THAT(ids, Contains(SizeIs(10)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(11)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(12)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(13)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(14)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(15)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(16)).Times(10));
+  EXPECT_THAT(ids, Contains(SizeIs(17)).Times(9));
+  EXPECT_THAT(ids, Contains(SizeIs(18)).Times(9));
+  EXPECT_THAT(ids, Contains(SizeIs(19)).Times(9));
 }
 
 // Largely covered by `Ids`, but need to check for uniqueness specifically.
@@ -127,8 +146,8 @@ TEST(SourceGenTest, GenAPIFileDenseDeclsTest) {
 
   std::string source =
       gen.GenAPIFileDenseDecls(1000, SourceGen::DenseDeclParams{});
-  // Should be within 10% of the requested line count.
-  EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(900), Le(1100))));
+  // Should be within 1% of the requested line count.
+  EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(950), Le(1050))));
 
   // Make sure we generated valid Carbon code.
   EXPECT_TRUE(TestCompile(source));

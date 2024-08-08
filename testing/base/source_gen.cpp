@@ -142,7 +142,6 @@ auto SourceGen::GetShuffledUniqueIds(int number, int min_length, int max_length,
   return ids;
 }
 
-
 auto SourceGen::GetIds(int number, int min_length, int max_length, bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   llvm::SmallVector<llvm::StringRef> ids =
@@ -180,8 +179,10 @@ auto SourceGen::GetSingleLengthIds(int length, int number)
   if (static_cast<int>(ids.size()) < number) {
     ids.reserve(number);
     for (int _ : llvm::seq<int>(ids.size(), number)) {
-      auto id_storage = llvm::MutableArrayRef(reinterpret_cast<char*>(
-          storage_.Allocate(/*Size=*/length, /*Alignment=*/1)), length);
+      auto id_storage =
+          llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
+                                    /*Size=*/length, /*Alignment=*/1)),
+                                length);
       GenerateRandomIdentifier(id_storage);
       llvm::StringRef new_id(id_storage.data(), length);
       ids.push_back(new_id);
@@ -232,13 +233,15 @@ constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
 // frequency of calls. However, each time it is called it computes a completely
 // new random identifier and so can be useful to eventually find a distinct
 // identifier when needed.
-auto SourceGen::GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage) -> void {
+auto SourceGen::GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage)
+    -> void {
   llvm::ArrayRef<char> start_chars = IdentifierStartChars();
   llvm::ArrayRef<char> chars = IdentifierChars();
 
   auto id = llvm::StringRef(id_storage.data(), id_storage.size());
   do {
-    id_storage[0] = start_chars[absl::Uniform<int>(rng_, 0, start_chars.size())];
+    id_storage[0] =
+        start_chars[absl::Uniform<int>(rng_, 0, start_chars.size())];
     for (int i : llvm::seq<int>(1, id_storage.size())) {
       id_storage[i] = chars[absl::Uniform<int>(rng_, 0, chars.size())];
     }
@@ -276,8 +279,10 @@ auto SourceGen::AppendUniqueIdentifiers(
     for ([[maybe_unused]] int i : llvm::seq<int>(count, number)) {
       // Allocate stable storage for the identifier so we can form stable
       // `StringRef`s to it.
-      auto id_storage = llvm::MutableArrayRef(reinterpret_cast<char*>(
-          storage_.Allocate(/*Size=*/length, /*Alignment=*/1)), length);
+      auto id_storage =
+          llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
+                                    /*Size=*/length, /*Alignment=*/1)),
+                                length);
       // Repeatedly generate novel identifiers of this length until we find a
       // new unique one.
       for (;;) {
@@ -437,7 +442,10 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
 
 // Returns a shuffled sequence of integers in the range [min, max].
 //
-// The order of the returned integers is random, but each integer in the range appears the same number of times in the result, with the number of appearances rounded up for lower numbers and rounded down for higher numbers in order to exactly produce `number` results.
+// The order of the returned integers is random, but each integer in the range
+// appears the same number of times in the result, with the number of
+// appearances rounded up for lower numbers and rounded down for higher numbers
+// in order to exactly produce `number` results.
 auto SourceGen::GetShuffledInts(int number, int min, int max)
     -> llvm::SmallVector<int> {
   llvm::SmallVector<int> ints;
