@@ -11,20 +11,12 @@
 // TODO: Should this be valid?
 fn F(a: i32) -> i32 {
   let T:! type = i32;
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+8]]:3: ERROR: Name `ImplicitAs` not found.
-  // CHECK:STDERR:   let x: T = 5;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
   let x: T = 5;
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
-  // CHECK:STDERR:   return x;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
   return x;
@@ -84,11 +76,11 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc13_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc22_14: i32 = int_literal 5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc22_15: %T = converted %.loc22_14, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_14: i32 = int_literal 5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_15: %T = converted %.loc18_14, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
-// CHECK:STDOUT:   %.loc30: i32 = converted %x.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22: i32 = converted %x.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

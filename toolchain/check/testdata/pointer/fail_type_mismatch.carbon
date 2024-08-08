@@ -9,11 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_type_mismatch.carbon
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   return p;
@@ -68,7 +64,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc19: %.5 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15: %.5 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

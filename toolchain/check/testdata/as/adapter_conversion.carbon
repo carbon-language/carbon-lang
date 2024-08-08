@@ -97,11 +97,7 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+7]]:12: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: var b: B = {.x = 1} as B;
-// CHECK:STDERR:            ^~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: ERROR: Name `Core.As` implicitly referenced here but not found.
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
 var b: B = {.x = 1} as B;
@@ -527,6 +523,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %struct: %.3 = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -581,10 +578,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_18: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc22_19: %.3 = struct_literal (%.loc22_18)
+// CHECK:STDOUT:   %.loc18_18: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18_19.1: %.3 = struct_literal (%.loc18_18)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc22_21: %B = converted %.loc22_19, <error> [template = <error>]
+// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc18_18) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc18_19.2: %.3 = converted %.loc18_19.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc18_21: %B = converted %.loc18_19.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

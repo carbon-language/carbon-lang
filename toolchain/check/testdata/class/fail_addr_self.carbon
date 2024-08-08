@@ -35,17 +35,10 @@ fn F(c: Class, p: Class*) {
   // This call is OK.
   (*p).F();
 
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+13]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-28]]:13: Initializing `addr self` parameter of method declared here.
-  // CHECK:STDERR:   fn G[addr self: Class]();
-  // CHECK:STDERR:             ^~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
-  // CHECK:STDERR:   (*p).G();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-35]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
   (*p).G();
@@ -139,13 +132,13 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc36_7: <bound method> = bound_method %.loc36_4.1, %F.ref.loc36
 // CHECK:STDOUT:   %.loc36_4.2: %.1 = addr_of %.loc36_4.1
 // CHECK:STDOUT:   %F.call.loc36: init %.2 = call %.loc36_7(%.loc36_4.2)
-// CHECK:STDOUT:   %p.ref.loc51: %.1 = name_ref p, %p
-// CHECK:STDOUT:   %.loc51_4.1: ref %Class = deref %p.ref.loc51
-// CHECK:STDOUT:   %G.ref.loc51: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc51_7: <bound method> = bound_method %.loc51_4.1, %G.ref.loc51
-// CHECK:STDOUT:   %.loc51_4.2: %.1 = addr_of %.loc51_4.1
-// CHECK:STDOUT:   %.loc51_9: %Class = converted %.loc51_4.2, <error> [template = <error>]
-// CHECK:STDOUT:   %G.call.loc51: init %.2 = call %.loc51_7(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %p.ref.loc44: %.1 = name_ref p, %p
+// CHECK:STDOUT:   %.loc44_4.1: ref %Class = deref %p.ref.loc44
+// CHECK:STDOUT:   %G.ref.loc44: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
+// CHECK:STDOUT:   %.loc44_7: <bound method> = bound_method %.loc44_4.1, %G.ref.loc44
+// CHECK:STDOUT:   %.loc44_4.2: %.1 = addr_of %.loc44_4.1
+// CHECK:STDOUT:   %.loc44_9: %Class = converted %.loc44_4.2, <error> [template = <error>]
+// CHECK:STDOUT:   %G.call.loc44: init %.2 = call %.loc44_7(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

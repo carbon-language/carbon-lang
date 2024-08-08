@@ -9,11 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: ERROR: Name `ImplicitAs` not found.
-  // CHECK:STDERR:   while ("Hello") {}
-  // CHECK:STDERR:         ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}
@@ -55,8 +51,8 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc19_10: String = string_literal "Hello" [template = constants.%.3]
-// CHECK:STDOUT:   %.loc19_17: bool = converted %.loc19_10, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_10: String = string_literal "Hello" [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_17: bool = converted %.loc15_10, <error> [template = <error>]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

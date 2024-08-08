@@ -395,18 +395,19 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
   auto core_inst_id = context.LookupNameInExactScope(
       loc, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
-  if (!core_inst_id.is_valid()) {
-    context.DiagnoseNameNotFound(loc, core_name_id);
-    return SemIR::NameScopeId::Invalid;
+  if (core_inst_id.is_valid()) {
+    // We expect it to be a namespace.
+    if (auto namespace_inst =
+            context.insts().TryGetAs<SemIR::Namespace>(core_inst_id)) {
+      return namespace_inst->name_scope_id;
+    }
   }
 
-  // We expect it to be a namespace.
-  if (auto namespace_inst =
-          context.insts().TryGetAs<SemIR::Namespace>(core_inst_id)) {
-    return namespace_inst->name_scope_id;
-  }
-  // TODO: This should really diagnose the name issue.
-  context.DiagnoseNameNotFound(loc, core_name_id);
+  CARBON_DIAGNOSTIC(
+      CoreNotFound, Error,
+      "Package `Core` implicitly referenced here but not found.",
+      SemIR::NameId);
+  context.emitter().Emit(loc, CoreNotFound, core_name_id);
   return SemIR::NameScopeId::Invalid;
 }
 
@@ -421,7 +422,11 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   auto inst_id = LookupNameInExactScope(loc, name_id, core_package_id,
                                         name_scopes().Get(core_package_id));
   if (!inst_id.is_valid()) {
-    DiagnoseNameNotFound(loc, name_id);
+    CARBON_DIAGNOSTIC(
+        CoreNameNotFound, Error,
+        "Name `Core.{0}` implicitly referenced here but not found.",
+        SemIR::NameId);
+    emitter_->Emit(loc, CoreNameNotFound, name_id);
     return SemIR::InstId::BuiltinError;
   }
 

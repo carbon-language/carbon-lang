@@ -13,11 +13,7 @@
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   return p;
@@ -82,7 +78,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: fn @G(%p: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc23: %.6 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: %.6 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

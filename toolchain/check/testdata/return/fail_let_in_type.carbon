@@ -17,11 +17,7 @@ fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+8]]:23: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: fn HalfDozen() -> y { return 6; }
-// CHECK:STDERR:                       ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
 // CHECK:STDERR:
@@ -65,8 +61,8 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc28_30: i32 = int_literal 6 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc28_31: @HalfDozen.%y (%y) = converted %.loc28_30, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc24_30: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc24_31: @HalfDozen.%y (%y) = converted %.loc24_30, <error> [template = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

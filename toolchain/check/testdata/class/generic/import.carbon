@@ -55,11 +55,7 @@ import library "foo";
 
 fn Use() {
   // TODO: Include the generic arguments in the formatted type name.
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+8]]:3: ERROR: Name `ImplicitAs` not found.
-  // CHECK:STDERR:   var v: CompleteClass(i32*) = F();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   var v: CompleteClass(i32*) = F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -626,18 +622,19 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc15_27.2: type = converted %int.make_type_32, %.loc15_27.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_27.3: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc15_23: init type = call %CompleteClass.ref(%.loc15_27.3) [template = constants.%CompleteClass.3]
-// CHECK:STDOUT:   %.loc15_28.1: type = value_of_initializer %.loc15_23 [template = constants.%CompleteClass.3]
-// CHECK:STDOUT:   %.loc15_28.2: type = converted %.loc15_23, %.loc15_28.1 [template = constants.%CompleteClass.3]
+// CHECK:STDOUT:   %.loc11_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc11_27.2: type = converted %int.make_type_32, %.loc11_27.1 [template = i32]
+// CHECK:STDOUT:   %.loc11_27.3: type = ptr_type i32 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_23: init type = call %CompleteClass.ref(%.loc11_27.3) [template = constants.%CompleteClass.3]
+// CHECK:STDOUT:   %.loc11_28.1: type = value_of_initializer %.loc11_23 [template = constants.%CompleteClass.3]
+// CHECK:STDOUT:   %.loc11_28.2: type = converted %.loc11_23, %.loc11_28.1 [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref: %F.type.3 = name_ref F, imports.%import_ref.3 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc15_33: ref %CompleteClass.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %CompleteClass.4 = call %F.ref() to %.loc15_33
-// CHECK:STDOUT:   %.loc15_35: %CompleteClass.3 = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc11_33.1: ref %CompleteClass.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %CompleteClass.4 = call %F.ref() to %.loc11_33.1
+// CHECK:STDOUT:   %.loc11_33.2: ref %CompleteClass.4 = temporary %.loc11_33.1, %F.call
+// CHECK:STDOUT:   %.loc11_35: %CompleteClass.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

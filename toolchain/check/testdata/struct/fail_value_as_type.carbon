@@ -8,11 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_value_as_type.carbon
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+7]]:8: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: var x: {.a = 1};
-// CHECK:STDERR:        ^~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:        ^~~~~~~~
 var x: {.a = 1};
@@ -22,6 +18,7 @@ var x: {.a = 1};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %struct: %.2 = struct_value (%.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -42,9 +39,11 @@ var x: {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc18_14: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_15.1: %.2 = struct_literal (%.loc18_14)
-// CHECK:STDOUT:   %.loc18_15.2: type = converted %.loc18_15.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_15.1: %.2 = struct_literal (%.loc14_14)
+// CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc14_14) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc14_15.2: %.2 = converted %.loc14_15.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc14_15.3: type = converted %.loc14_15.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }

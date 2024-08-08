@@ -21,11 +21,7 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:10: ERROR: Name `Core` not found.
-  // CHECK:STDERR:   var v: Interface.T;
-  // CHECK:STDERR:          ^~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: ERROR: Package `Core` implicitly referenced here but not found.
   // CHECK:STDERR:   var v: Interface.T;
   // CHECK:STDERR:          ^~~~~~~~~~~
   var v: Interface.T;
@@ -79,9 +75,9 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %Interface.ref.loc31: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:   %Interface.ref.loc27: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %T.ref: %.5 = name_ref T, @Interface.%.loc14 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc31: type = converted %T.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27: type = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT:   return

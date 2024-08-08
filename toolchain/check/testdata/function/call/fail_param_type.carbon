@@ -11,17 +11,10 @@
 fn G(a: i32) {}
 
 fn F() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+13]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.
-  // CHECK:STDERR: fn G(a: i32) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
-  // CHECK:STDERR:   G(1.0);
-  // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-13]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn G(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~
   G(1.0);
@@ -81,8 +74,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc27_5: f64 = float_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc27_4: i32 = converted %.loc27_5, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20_5: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc20_4: i32 = converted %.loc20_5, <error> [template = <error>]
 // CHECK:STDOUT:   %G.call: init %.1 = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

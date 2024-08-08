@@ -16,16 +16,24 @@ struct Operator {
   llvm::StringLiteral op_name = "Op";
 };
 
+// A function that is called to diagnose a failure to build a call to an
+// operator interface.
+using BadOperatorDiagnoser =
+    std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>;
+
 // Checks and builds SemIR for a unary operator expression. For example,
 // `$operand` or `operand$`.
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
-                        SemIR::InstId operand_id) -> SemIR::InstId;
+                        SemIR::InstId operand_id,
+                        BadOperatorDiagnoser diagnoser = std::nullopt)
+    -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
 // `lhs_id $ rhs_id`.
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
-                         SemIR::InstId lhs_id,
-                         SemIR::InstId rhs_id) -> SemIR::InstId;
+                         SemIR::InstId lhs_id, SemIR::InstId rhs_id,
+                         BadOperatorDiagnoser diagnoser = std::nullopt)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

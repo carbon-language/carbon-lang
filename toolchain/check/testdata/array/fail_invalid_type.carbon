@@ -8,11 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_invalid_type.carbon
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+7]]:9: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: var a: [1; 1];
-// CHECK:STDERR:         ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: var a: [1; 1];
 // CHECK:STDERR:         ^
 var a: [1; 1];
@@ -41,10 +37,10 @@ var a: [1; 1];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc18_9.1: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_12: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_9.2: type = converted %.loc18_9.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_13: type = array_type %.loc18_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14_9.1: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_12: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14_13: type = array_type %.loc14_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

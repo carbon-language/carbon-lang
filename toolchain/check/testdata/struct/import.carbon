@@ -45,11 +45,7 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C({.a = 3, .b = 4}) = F();
@@ -517,14 +513,14 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_28: i32 = int_literal 4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_29: %.3 = struct_literal (%.loc10_20, %.loc10_28)
-// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc10_20, %.loc10_28) [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc10_13.1: %.3 = converted %.loc10_29, %struct [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc10_13.2: init type = call %C.ref(%.loc10_13.1) [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc10_30.1: type = value_of_initializer %.loc10_13.2 [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc10_30.2: type = converted %.loc10_13.2, %.loc10_30.1 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_20: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6_28: i32 = int_literal 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc6_29: %.3 = struct_literal (%.loc6_20, %.loc6_28)
+// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc6_20, %.loc6_28) [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc6_13.1: %.3 = converted %.loc6_29, %struct [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc6_13.2: init type = call %C.ref(%.loc6_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_30.1: type = value_of_initializer %.loc6_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc6_30.2: type = converted %.loc6_13.2, %.loc6_30.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
@@ -545,9 +541,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc10_35: ref %C.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc10_35
-// CHECK:STDOUT:   %.loc10_37: %C.3 = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc6_35.1: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc6_35.1
+// CHECK:STDOUT:   %.loc6_35.2: ref %C.4 = temporary %.loc6_35.1, %F.call
+// CHECK:STDOUT:   %.loc6_37: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

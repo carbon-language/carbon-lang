@@ -55,17 +55,10 @@ library "no_conversion";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+13]]:8: ERROR: Name `ImplicitAs` not found.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-5]]:1: Initializing parameter 1 of function declared here.
-// CHECK:STDERR: class Class(T:! type, N:! i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
-// CHECK:STDERR: var a: Class(5, i32*);
-// CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-12]]:1: Initializing parameter 1 of function declared here.
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var a: Class(5, i32*);
@@ -398,15 +391,15 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = @Class.%N (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:   %.loc19_14: i32 = int_literal 5 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc19_20.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:   %.loc19_20.2: type = converted %int.make_type_32.loc19, %.loc19_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_20.3: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc19_13.1: type = converted %.loc19_14, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc19_13.2: init type = call %Class.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc19_21.1: type = value_of_initializer %.loc19_13.2 [template = <error>]
-// CHECK:STDOUT:   %.loc19_21.2: type = converted %.loc19_13.2, %.loc19_21.1 [template = <error>]
+// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 5 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc12_20.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_20.2: type = converted %int.make_type_32.loc12, %.loc12_20.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_20.3: type = ptr_type i32 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_13.1: type = converted %.loc12_14, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc12_13.2: init type = call %Class.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %.loc12_13.2 [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.2: type = converted %.loc12_13.2, %.loc12_21.1 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

@@ -52,21 +52,13 @@ let a: C = {.a = 1, .b = 2};
 
 // Cannot implicitly convert between a type and an adapter for the type.
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+8]]:1: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: let b: AdaptC = a;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: let b: AdaptC = a;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: AdaptC = a;
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+8]]:1: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: let c: C = b;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: let c: C = b;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -76,21 +68,13 @@ fn MakeC() -> C;
 
 fn MakeAdaptC() -> AdaptC;
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+8]]:1: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: var d: AdaptC = MakeC();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: var d: AdaptC = MakeC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var d: AdaptC = MakeC();
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: ERROR: Name `ImplicitAs` not found.
-// CHECK:STDERR: var e: C = MakeAdaptC();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
 // CHECK:STDERR: var e: C = MakeAdaptC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 var e: C = MakeAdaptC();
@@ -287,20 +271,20 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %AdaptC.decl: type = class_decl @AdaptC [template = constants.%AdaptC] {}
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %AdaptC.ref.loc25: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
-// CHECK:STDOUT:   %C.ref.loc35: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [template = constants.%MakeC] {
-// CHECK:STDOUT:     %C.ref.loc37: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @MakeC.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeAdaptC.decl: %MakeAdaptC.type = fn_decl @MakeAdaptC [template = constants.%MakeAdaptC] {
-// CHECK:STDOUT:     %AdaptC.ref.loc39: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:     %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:     @MakeAdaptC.%return: ref %AdaptC = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptC.ref.loc49: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %AdaptC.ref.loc37: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var d
 // CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var
-// CHECK:STDOUT:   %C.ref.loc58: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc42: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %e.var: ref %C = var e
 // CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var
 // CHECK:STDOUT: }
@@ -351,20 +335,22 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
 // CHECK:STDOUT:   %a: %C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc25: %AdaptC = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21: %AdaptC = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, %b
-// CHECK:STDOUT:   %.loc35: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c: %C = bind_name c, <error>
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [template = constants.%MakeC]
-// CHECK:STDOUT:   %.loc49_22: ref %C = temporary_storage
-// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc49_22
-// CHECK:STDOUT:   %.loc49_24: %AdaptC = converted %MakeC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc37_22.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc37_22.1
+// CHECK:STDOUT:   %.loc37_22.2: ref %C = temporary %.loc37_22.1, %MakeC.call
+// CHECK:STDOUT:   %.loc37_24: %AdaptC = converted %MakeC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc58_22: ref %AdaptC = temporary_storage
-// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc58_22
-// CHECK:STDOUT:   %.loc58_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc42_22.1: ref %AdaptC = temporary_storage
+// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc42_22.1
+// CHECK:STDOUT:   %.loc42_22.2: ref %AdaptC = temporary %.loc42_22.1, %MakeAdaptC.call
+// CHECK:STDOUT:   %.loc42_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

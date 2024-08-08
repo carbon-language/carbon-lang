@@ -409,7 +409,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // If we didn't perform impl lookup or instance binding, that's an error
   // because the base expression is not used for anything.
-  if (member_id == member_expr_id) {
+  if (member_id != SemIR::InstId::BuiltinError && member_id == member_expr_id) {
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "Member name of type `{0}` in compound member access is "
                       "not an instance member or an interface member.",
