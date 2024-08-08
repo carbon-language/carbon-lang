@@ -403,13 +403,12 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
 
   // First, compute the total weight of the distribution so we know how many
   // identifiers we'll get each time we collect from it.
-  int count_sum =
-      uniform ? (max_length - min_length) + 1
-              : Sum(llvm::ArrayRef(IdLengthCounts)
-                        .slice(min_length - 1, max_length - min_length + 1));
+  int num_lengths = max_length - min_length + 1;
+  auto length_counts =
+      llvm::ArrayRef(IdLengthCounts).slice(min_length - 1, num_lengths);
+  int count_sum = uniform ? num_lengths : Sum(length_counts);
   CARBON_CHECK(count_sum >= 1);
 
-  // Now compute how many times we'll have to sample across the distribution.
   int number_rem = number % count_sum;
 
   // Finally, walk through each length in the distribution.
@@ -419,14 +418,19 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
     int scale = uniform ? 1 : IdLengthCounts[length - 1];
 
     // Now we can compute how many identifiers of this length to request.
-    int length_count = (number * scale) / count_sum;
-    if (number_rem > 0 && length_count * count_sum < number * scale) {
-      ++length_count;
-      --number_rem;
+    int length_count = (number / count_sum) * scale;
+    if (number_rem > 0) {
+      int rem_adjustment = std::min(scale, number_rem);
+      length_count += rem_adjustment;
+      number_rem -= rem_adjustment;
     }
     append_ids(length, length_count, ids);
   }
-  CARBON_CHECK(static_cast<int>(ids.size()) == number);
+  CARBON_CHECK(number_rem == 0)
+      << "Unexpected number remaining: " << number_rem;
+  CARBON_CHECK(static_cast<int>(ids.size()) == number)
+      << "Ended up with " << ids.size()
+      << " identifiers instead of the requested " << number;
 
   return ids;
 }
