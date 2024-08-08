@@ -409,7 +409,7 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
           member.type_id())) {
     member_id = PerformImplLookup(context, node_id, base_type_const_id,
                                   *assoc_type, member_id);
-  } else if (context.types().Is<SemIR::TupleType>(base_type_id)) {
+  } else if (context.constant_values().GetAsInst(base_type_const_id).Is<SemIR::TupleType>()) {
     return PerformTupleIndex(context, node_id, base_id, member_expr_id);
   }
 
