@@ -970,6 +970,7 @@ struct TupleAccess {
 
 // Access to a tuple member by index, such as `tuple.0`.
 struct TupleIndex {
+  // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::TupleIndex.Define<Parse::NodeId>({.ir_name = "tuple_index"});
 
