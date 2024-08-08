@@ -23,6 +23,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     // OK, `.` identifier.
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
+    // OK, '.42'.
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
                                              NodeKind::IntLiteral)) {
     // OK, `.base`.
