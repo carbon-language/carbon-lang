@@ -1193,7 +1193,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     context.emitter()
         .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(callee.decl_id, InCallToFunction)
+        .Note(callee.latest_decl_id(), InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
   }
@@ -1210,9 +1210,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     auto [param_id, param] = SemIR::Function::GetParamFromParamRefId(
         context.sem_ir(), implicit_param_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
-      auto converted_self_id =
-          ConvertSelf(context, call_loc_id, callee.decl_id, callee_specific_id,
-                      addr_pattern, param_id, param, self_id);
+      auto converted_self_id = ConvertSelf(
+          context, call_loc_id, callee.latest_decl_id(), callee_specific_id,
+          addr_pattern, param_id, param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
@@ -1230,7 +1230,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(callee.decl_id, InCallToFunctionParam,
+        builder.Note(callee.latest_decl_id(), InCallToFunctionParam,
                      diag_param_index + 1);
       });
 

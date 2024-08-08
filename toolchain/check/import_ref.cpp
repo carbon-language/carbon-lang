@@ -851,6 +851,7 @@ class ImportRefResolver {
   // of the parameter lists that we know whether this interface is a generic
   // interface and can build the right constant value for it.
   //
+  // TODO: Support extern.
   // TODO: Add a better way to represent a generic prior to importing the
   // parameters.
   auto GetIncompleteLocalEntityBase(
@@ -868,7 +869,10 @@ class ImportRefResolver {
         .param_refs_id = import_base.param_refs_id.is_valid()
                              ? SemIR::InstBlockId::Empty
                              : SemIR::InstBlockId::Invalid,
-        .decl_id = decl_id,
+        .is_extern = import_base.is_extern,
+        .extern_library_id = StringLiteralValueId::Invalid,
+        .non_owning_decl_id = SemIR::InstId::Invalid,
+        .first_owning_decl_id = decl_id,
     };
   }
 
@@ -1189,8 +1193,9 @@ class ImportRefResolver {
     SemIR::ClassDecl class_decl = {.type_id = SemIR::TypeId::TypeType,
                                    .class_id = SemIR::ClassId::Invalid,
                                    .decl_block_id = SemIR::InstBlockId::Empty};
-    auto class_decl_id = context_.AddPlaceholderInstInNoBlock(
-        SemIR::LocIdAndInst(AddImportIRInst(import_class.decl_id), class_decl));
+    auto class_decl_id =
+        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+            AddImportIRInst(import_class.latest_decl_id()), class_decl));
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
     class_decl.class_id = context_.classes().Add(
@@ -1213,13 +1218,14 @@ class ImportRefResolver {
                           SemIR::Class& new_class,
                           SemIR::ConstantId object_repr_const_id,
                           SemIR::InstId base_id) -> void {
-    new_class.definition_id = new_class.decl_id;
+    new_class.definition_id = new_class.first_owning_decl_id;
 
     new_class.object_repr_id =
         context_.GetTypeIdForTypeConstant(object_repr_const_id);
 
     new_class.scope_id = context_.name_scopes().Add(
-        new_class.decl_id, SemIR::NameId::Invalid, new_class.parent_scope_id);
+        new_class.first_owning_decl_id, SemIR::NameId::Invalid,
+        new_class.parent_scope_id);
     auto& new_scope = context_.name_scopes().Get(new_class.scope_id);
     const auto& import_scope =
         import_ir_.name_scopes().Get(import_class.scope_id);
@@ -1314,8 +1320,8 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::ClassType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto class_const_id =
-        GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
+    auto class_const_id = GetLocalConstantId(
+        import_ir_.classes().Get(inst.class_id).first_owning_decl_id);
     auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork()) {
       return Retry();
@@ -1385,7 +1391,6 @@ class ImportRefResolver {
     function_decl.function_id = context_.functions().Add(
         {GetIncompleteLocalEntityBase(function_decl_id, import_function),
          {.return_storage_id = SemIR::InstId::Invalid,
-          .is_extern = import_function.is_extern,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
     // TODO: Import this or recompute it.
@@ -1463,7 +1468,7 @@ class ImportRefResolver {
     }
 
     if (import_function.definition_id.is_valid()) {
-      new_function.definition_id = new_function.decl_id;
+      new_function.definition_id = new_function.first_owning_decl_id;
     }
 
     return ResolveAsConstant(function_const_id);
@@ -1472,7 +1477,7 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::FunctionType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto fn_val_id = GetLocalConstantInstId(
-        import_ir_.functions().Get(inst.function_id).decl_id);
+        import_ir_.functions().Get(inst.function_id).first_owning_decl_id);
     auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork()) {
       return Retry();
@@ -1489,8 +1494,8 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::GenericClassType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto class_val_id =
-        GetLocalConstantInstId(import_ir_.classes().Get(inst.class_id).decl_id);
+    auto class_val_id = GetLocalConstantInstId(
+        import_ir_.classes().Get(inst.class_id).first_owning_decl_id);
     if (HasNewWork()) {
       return Retry();
     }
@@ -1504,7 +1509,7 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::GenericInterfaceType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_val_id = GetLocalConstantInstId(
-        import_ir_.interfaces().Get(inst.interface_id).decl_id);
+        import_ir_.interfaces().Get(inst.interface_id).first_owning_decl_id);
     if (HasNewWork()) {
       return Retry();
     }
@@ -1543,7 +1548,8 @@ class ImportRefResolver {
         .decl_block_id = SemIR::InstBlockId::Empty};
     auto interface_decl_id =
         context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
-            AddImportIRInst(import_interface.decl_id), interface_decl));
+            AddImportIRInst(import_interface.first_owning_decl_id),
+            interface_decl));
 
     // Start with an incomplete interface.
     interface_decl.interface_id = context_.interfaces().Add(
@@ -1567,7 +1573,7 @@ class ImportRefResolver {
                               SemIR::Interface& new_interface,
                               SemIR::InstId self_param_id) -> void {
     new_interface.scope_id = context_.name_scopes().Add(
-        new_interface.decl_id, SemIR::NameId::Invalid,
+        new_interface.first_owning_decl_id, SemIR::NameId::Invalid,
         new_interface.parent_scope_id);
     auto& new_scope = context_.name_scopes().Get(new_interface.scope_id);
     const auto& import_scope =
@@ -1653,7 +1659,7 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::InterfaceType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto interface_const_id = GetLocalConstantId(
-        import_ir_.interfaces().Get(inst.interface_id).decl_id);
+        import_ir_.interfaces().Get(inst.interface_id).first_owning_decl_id);
     auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork()) {
       return Retry();

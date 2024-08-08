@@ -33,7 +33,7 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
                                      const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeOmittedNote, Note,
                     "There was no return type provided.");
-  diag.Note(function.decl_id, ReturnTypeOmittedNote);
+  diag.Note(function.latest_decl_id(), ReturnTypeOmittedNote);
 }
 
 // Produces a note describing the return type of the given function.

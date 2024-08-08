@@ -24,7 +24,8 @@ static auto NoteAssociatedFunction(Context& context,
   CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
                     "Associated function {0} declared here.", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(function.decl_id, ImplAssociatedFunctionHere, function.name_id);
+  builder.Note(function.latest_decl_id(), ImplAssociatedFunctionHere,
+               function.name_id);
 }
 
 // Checks that `impl_function_id` is a valid implementation of the function

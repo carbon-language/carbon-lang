@@ -51,7 +51,13 @@ struct EntityWithParamsBase {
 
   // Returns the instruction for the latest declaration.
   auto latest_decl_id() const -> SemIR::InstId {
-    return definition_id.is_valid() ? definition_id : decl_id;
+    if (definition_id.is_valid()) {
+      return definition_id;
+    }
+    if (first_owning_decl_id.is_valid()) {
+      return first_owning_decl_id;
+    }
+    return non_owning_decl_id;
   }
 
   // Determines whether this entity has any parameter lists.
@@ -77,12 +83,21 @@ struct EntityWithParamsBase {
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.
   InstBlockId param_refs_id;
-  // The first declaration of the entity. This will be a <entity>Decl.
-  InstId decl_id = InstId::Invalid;
+  // True if declarations are `extern`.
+  bool is_extern;
+  // For an `extern library` declaration, the library name.
+  StringLiteralValueId extern_library_id;
+  // The non-owning declaration of the entity, if present. This will be a
+  // <entity>Decl.
+  InstId non_owning_decl_id;
+  // The first owning declaration of the entity, if present. This will be a
+  // <entity>Decl. It may either be a forward declaration, or the same as
+  // `definition_id`.
+  InstId first_owning_decl_id;
 
   // The following members are set at the `{` of the definition.
 
-  // The first declaration of the entity. This will be a <entity>Decl.
+  // The definition of the entity. This will be a <entity>Decl.
   InstId definition_id = InstId::Invalid;
 };
 
