@@ -5,18 +5,22 @@
 // This is modifying the builtin scss, particularly:
 // https://github.com/just-the-docs/just-the-docs/blob/main/_sass/layout.scss
 
-.side-bar {
-  // Allow left alignment instead of centering.
-  width: #{$nav-width};
-}
-
 .site-nav {
   // The navbar will typically overflow, so keep a scrollbar so that the zippies
   // don't move on open/close.
   overflow-y: scroll;
 }
 
-.main {
-  // Allow left alignment instead of centering.
-  margin-left: #{$nav-width};
+.side-bar {
+  @include mq(lg) {
+    // Allow left alignment instead of centering.
+    width: #{$nav-width};
+  }
+
+  & + .main {
+    @include mq(lg) {
+      // Allow left alignment instead of centering.
+      margin-left: #{$nav-width};
+    }
+  }
 }
