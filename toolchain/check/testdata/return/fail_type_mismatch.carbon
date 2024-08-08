@@ -9,7 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_type_mismatch.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   return 1.0;
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
   return 1.0;
@@ -58,7 +62,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_10: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_13: i32 = converted %.loc19_10, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

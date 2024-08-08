@@ -9,7 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_init_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `()` to `{}`.
+  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+7]]:3: ERROR: Name `Core` not found.
+  // CHECK:STDERR:   var x: {} = ();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   var x: {} = ();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   var x: {} = ();
@@ -33,11 +37,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_11.1: %.2 = struct_literal ()
-// CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_11.1: %.2 = struct_literal ()
+// CHECK:STDOUT:   %.loc19_11.2: type = converted %.loc19_11.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
 // CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_16: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc19_16: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc19_17: %.2 = converted %.loc19_16, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

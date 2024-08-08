@@ -19,7 +19,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
 // Creates SemIR to perform a compound member access with base expression
 // `base_id` and member name expression `member_expr_id`. Returns the result of
 // the access.
-auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
+auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id) -> SemIR::InstId;
 

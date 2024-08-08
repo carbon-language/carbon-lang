@@ -48,10 +48,17 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: ERROR: Cannot implicitly convert from `SomeClassAdapter` to `SomeClass`.
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+14]]:3: ERROR: Name `ImplicitAs` not found.
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-11]]:8: Initializing `self` parameter of method declared here.
+  // CHECK:STDERR:   fn F[self: Self]();
+  // CHECK:STDERR:        ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR:   a.F();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-18]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
@@ -72,7 +79,11 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: ERROR: Cannot implicitly convert from `SomeClassAdapter` to `SomeClass`.
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+8]]:10: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   return a.b;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -275,8 +286,9 @@ class StructAdapter {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc20: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc20(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc27_4: <bound method> = bound_method %a.ref, %F.ref
+// CHECK:STDOUT:   %.loc27_6: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc27_4(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -361,7 +373,8 @@ class StructAdapter {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
-// CHECK:STDOUT:   %.loc18: i32 = class_element_access <error>, element1 [template = <error>]
+// CHECK:STDOUT:   %.loc22_11.1: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22_11.2: i32 = class_element_access <error>, element1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

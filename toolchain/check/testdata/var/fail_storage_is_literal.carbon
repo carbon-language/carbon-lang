@@ -9,7 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+7]]:10: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   var x: 1 = 1;
+  // CHECK:STDERR:          ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
   var x: 1 = 1;
@@ -47,10 +51,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_10.1: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_10.2: type = converted %.loc19_10.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_14: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

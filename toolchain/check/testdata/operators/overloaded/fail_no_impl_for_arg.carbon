@@ -21,10 +21,17 @@ impl C as Core.AddAssign {
 }
 
 fn Test(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+14]]:10: ERROR: Name `ImplicitAs` not found.
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-10]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:10: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR:   return a + b;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-17]]:3: Initializing parameter 1 of function declared here.
   // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -33,10 +40,17 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+13]]:3: ERROR: Name `ImplicitAs` not found.
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-19]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-26]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR:   fn Op[addr self: C*](other: C);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR:   a += b;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-33]]:3: Initializing parameter 1 of function declared here.
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   a += b;
@@ -133,9 +147,9 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     @Test.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
-// CHECK:STDOUT:     %D.ref.loc34: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc34_15.1: %D = param b
-// CHECK:STDOUT:     @TestAssign.%b: %D = bind_name b, %b.loc34_15.1
+// CHECK:STDOUT:     %D.ref.loc41: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc41_15.1: %D = param b
+// CHECK:STDOUT:     @TestAssign.%b: %D = bind_name b, %b.loc41_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,10 +234,11 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc31_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc31_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc31_12.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc38_12.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc38_12.2: <bound method> = bound_method %a.ref, %.loc38_12.1
+// CHECK:STDOUT:   %.loc38_12.3: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc38_12.4: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc38_12.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,16 +247,17 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
 // CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc35_15.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc35_15.2: init %C = class_init (), %a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc35_16: init %C = converted %.loc35_15.1, %.loc35_15.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign %a.var, %.loc35_16
+// CHECK:STDOUT:   %.loc42_15.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc42_15.2: init %C = class_init (), %a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc42_16: init %C = converted %.loc42_15.1, %.loc42_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign %a.var, %.loc42_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %.loc42_5: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc42_3: %.6 = addr_of %a.ref
-// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc42_5(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc56_5.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc56_5.2: <bound method> = bound_method %a.ref, %.loc56_5.1
+// CHECK:STDOUT:   %.loc56_3: %.6 = addr_of %a.ref
+// CHECK:STDOUT:   %.loc56_5.3: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc56_5.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

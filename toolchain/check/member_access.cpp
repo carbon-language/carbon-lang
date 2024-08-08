@@ -155,7 +155,7 @@ static auto LookupInterfaceWitness(Context& context,
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
-static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
+static auto PerformImplLookup(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId type_const_id,
                               SemIR::AssociatedEntityType assoc_type,
                               SemIR::InstId member_id) -> SemIR::InstId {
@@ -169,7 +169,7 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
                       "Cannot access member of interface {0} in type {1} "
                       "that does not implement that interface.",
                       SemIR::NameId, std::string);
-    context.emitter().Emit(node_id, MissingImplInMemberAccess,
+    context.emitter().Emit(loc_id, MissingImplInMemberAccess,
                            interface.name_id,
                            context.sem_ir().StringifyType(type_const_id));
     return SemIR::InstId::BuiltinError;
@@ -196,11 +196,10 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
   auto subst_type_id = SemIR::GetTypeInSpecific(
       context.sem_ir(), interface_type.specific_id, assoc_type.entity_type_id);
 
-  return context.AddInst(
-      SemIR::LocIdAndInst::NoLoc<SemIR::InterfaceWitnessAccess>(
-          {.type_id = subst_type_id,
-           .witness_id = witness_id,
-           .index = assoc_entity->index}));
+  return context.AddInst<SemIR::InterfaceWitnessAccess>(
+      loc_id, {.type_id = subst_type_id,
+               .witness_id = witness_id,
+               .index = assoc_entity->index});
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -259,14 +258,14 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
 // Performs the instance binding step in member access. If the found member is a
 // field, forms a class member access. If the found member is an instance
 // method, forms a bound method. Otherwise, the member is returned unchanged.
-static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
+static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   auto member_type_id = context.insts().Get(member_id).type_id();
   CARBON_KIND_SWITCH(context.types().GetAsInst(member_type_id)) {
     case CARBON_KIND(SemIR::UnboundElementType unbound_element_type): {
       // Convert the base to the type of the element if necessary.
-      base_id = ConvertToValueOrRefOfType(context, node_id, base_id,
+      base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
                                           unbound_element_type.class_type_id);
 
       // Find the specified element, which could be either a field or a base
@@ -277,7 +276,7 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
           << " of unbound element type";
       auto index = GetClassElementIndex(context, element_id);
       auto access_id = context.AddInst<SemIR::ClassElementAccess>(
-          node_id, {.type_id = unbound_element_type.element_type_id,
+          loc_id, {.type_id = unbound_element_type.element_type_id,
                     .base_id = base_id,
                     .index = index});
       if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
@@ -296,7 +295,7 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
         return context.AddInst<SemIR::BoundMethod>(
-            node_id, {.type_id = context.GetBuiltinType(
+            loc_id, {.type_id = context.GetBuiltinType(
                           SemIR::BuiltinInstKind::BoundMethodType),
                       .object_id = base_id,
                       .function_id = member_id});
@@ -385,7 +384,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
   return member_id;
 }
 
-auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
+auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id)
     -> SemIR::InstId {
@@ -401,12 +400,12 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
   // performed using the type of the base expression.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           member.type_id())) {
-    member_id = PerformImplLookup(context, node_id, base_type_const_id,
+    member_id = PerformImplLookup(context, loc_id, base_type_const_id,
                                   *assoc_type, member_id);
   }
 
   // Perform instance binding if we found an instance member.
-  member_id = PerformInstanceBinding(context, node_id, base_id, member_id);
+  member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
 
   // If we didn't perform impl lookup or instance binding, that's an error
   // because the base expression is not used for anything.
@@ -415,7 +414,7 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
                       "Member name of type `{0}` in compound member access is "
                       "not an instance member or an interface member.",
                       SemIR::TypeId);
-    context.emitter().Emit(node_id, CompoundMemberAccessDoesNotUseBase,
+    context.emitter().Emit(loc_id, CompoundMemberAccessDoesNotUseBase,
                            member.type_id());
   }
 

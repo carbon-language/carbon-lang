@@ -10,7 +10,11 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: ERROR: Cannot implicitly convert from `bool` to `type`.
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+7]]:6: ERROR: Name `Core` not found.
+// CHECK:STDERR: impl true as I {}
+// CHECK:STDERR:      ^~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: impl true as I {}
 // CHECK:STDERR:      ^~~~
 impl true as I {}
@@ -31,7 +35,8 @@ impl true as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %.loc16: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:     %.loc20_6.1: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:     %.loc20_6.2: type = converted %.loc20_6.1, <error> [template = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

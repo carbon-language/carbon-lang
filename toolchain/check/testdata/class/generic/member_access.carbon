@@ -39,7 +39,11 @@ class Class(T:! type) {
 }
 
 fn StaticMemberFunctionCall(T:! type) -> Class(T) {
-  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `Class` to `Class`.
+  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   return Class(T).Make();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   return Class(T).Make();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   return Class(T).Make();
@@ -436,11 +440,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc12_15: init type = call %Class.ref(%T.ref) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc12_18: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc12_18 [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %.loc12_23: ref @StaticMemberFunctionCall.%Class (%Class.2) = temporary_storage
-// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class (%Class.2) = call %Make.ref() to %.loc12_23
+// CHECK:STDOUT:     %.loc16_15: init type = call %Class.ref(%T.ref) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:     %.loc16_18: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc16_18 [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %.loc16_23: ref @StaticMemberFunctionCall.%Class (%Class.2) = temporary_storage
+// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class (%Class.2) = call %Make.ref() to %.loc16_23
+// CHECK:STDOUT:     %.loc16_25: @StaticMemberFunctionCall.%Class (%Class.2) = converted %Make.call, <error> [template = <error>]
 // CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

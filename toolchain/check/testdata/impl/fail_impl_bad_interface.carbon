@@ -8,11 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_interface.carbon
 
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+7]]:1: ERROR: Semantics TODO: `impl as non-interface`.
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `impl as non-interface`.
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: ERROR: Cannot implicitly convert from `bool` to `type`.
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+7]]:13: ERROR: Name `ImplicitAs` not found.
+// CHECK:STDERR: impl i32 as false {}
+// CHECK:STDERR:             ^~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR:             ^~~~~
 impl i32 as false {}
@@ -45,11 +49,12 @@ impl i32 as false {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %.loc22_13.1: type = converted %.loc22_13.2, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc18_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc18_6.2: type = converted %int.make_type_32, %.loc18_6.1 [template = i32]
-// CHECK:STDOUT:     %.loc18_13: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:     %.loc22_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc22_6.2: type = converted %int.make_type_32, %.loc22_6.1 [template = i32]
+// CHECK:STDOUT:     %.loc22_13.2: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

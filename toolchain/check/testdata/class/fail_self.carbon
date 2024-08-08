@@ -43,10 +43,17 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `WrongSelf` to `Class`.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+13]]:3: ERROR: Name `ImplicitAs` not found.
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
+  // CHECK:STDERR:   fn F[self: Class]();
+  // CHECK:STDERR:        ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+  // CHECK:STDERR:   ws.F();
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-14]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~
   ws.F();
@@ -158,8 +165,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc52: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc52(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc59_5: <bound method> = bound_method %ws.ref, %F.ref
+// CHECK:STDOUT:   %.loc59_7: %Class = converted %ws.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc59_5(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

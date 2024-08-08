@@ -15,9 +15,9 @@ namespace Carbon::Check {
 
 // Returns the name scope of the operator interface for the specified operator
 // from the Core package.
-static auto GetOperatorInterface(Context& context, Parse::AnyExprId node_id,
+static auto GetOperatorInterface(Context& context, SemIR::LocId loc_id,
                                  Operator op) -> SemIR::NameScopeId {
-  auto interface_id = context.LookupNameInCore(node_id, op.interface_name);
+  auto interface_id = context.LookupNameInCore(loc_id, op.interface_name);
   if (interface_id == SemIR::InstId::BuiltinError) {
     return SemIR::NameScopeId::Invalid;
   }
@@ -31,9 +31,9 @@ static auto GetOperatorInterface(Context& context, Parse::AnyExprId node_id,
 }
 
 // Returns the `Op` function for the specified operator.
-static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
+static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                                   Operator op) -> SemIR::InstId {
-  auto interface_scope_id = GetOperatorInterface(context, node_id, op);
+  auto interface_scope_id = GetOperatorInterface(context, loc_id, op);
   if (!interface_scope_id.is_valid()) {
     return SemIR::InstId::Invalid;
   }
@@ -45,7 +45,7 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
   // Lookup `Interface.Op`.
   auto op_ident_id = context.identifiers().Add(op.op_name);
   auto op_result = context.LookupQualifiedName(
-      node_id, SemIR::NameId::ForIdentifier(op_ident_id), scope,
+      loc_id, SemIR::NameId::ForIdentifier(op_ident_id), scope,
       /*required=*/false);
   if (!op_result.inst_id.is_valid()) {
     return SemIR::InstId::Invalid;
@@ -63,11 +63,11 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
   return SemIR::InstId::Invalid;
 }
 
-auto BuildUnaryOperator(Context& context, Parse::AnyExprId node_id, Operator op,
+auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id) -> SemIR::InstId {
-  auto op_fn = GetOperatorOpFunction(context, node_id, op);
+  auto op_fn = GetOperatorOpFunction(context, loc_id, op);
   if (!op_fn.is_valid()) {
-    context.TODO(node_id,
+    context.TODO(loc_id,
                  "missing or invalid operator interface, also avoid duplicate "
                  "diagnostic if prelude is unavailable");
     return SemIR::InstId::BuiltinError;
@@ -75,33 +75,33 @@ auto BuildUnaryOperator(Context& context, Parse::AnyExprId node_id, Operator op,
 
   // Form `operand.(Op)`.
   auto bound_op_id =
-      PerformCompoundMemberAccess(context, node_id, operand_id, op_fn);
+      PerformCompoundMemberAccess(context, loc_id, operand_id, op_fn);
   if (bound_op_id == SemIR::InstId::BuiltinError) {
     return SemIR::InstId::BuiltinError;
   }
 
   // Form `bound_op()`.
-  return PerformCall(context, node_id, bound_op_id, {});
+  return PerformCall(context, loc_id, bound_op_id, {});
 }
 
-auto BuildBinaryOperator(Context& context, Parse::AnyExprId node_id,
-                         Operator op, SemIR::InstId lhs_id,
+auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                         SemIR::InstId lhs_id,
                          SemIR::InstId rhs_id) -> SemIR::InstId {
-  auto op_fn = GetOperatorOpFunction(context, node_id, op);
+  auto op_fn = GetOperatorOpFunction(context, loc_id, op);
   if (!op_fn.is_valid()) {
-    context.TODO(node_id, "missing or invalid operator interface");
+    context.TODO(loc_id, "missing or invalid operator interface");
     return SemIR::InstId::BuiltinError;
   }
 
   // Form `lhs.(Op)`.
   auto bound_op_id =
-      PerformCompoundMemberAccess(context, node_id, lhs_id, op_fn);
+      PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn);
   if (bound_op_id == SemIR::InstId::BuiltinError) {
     return SemIR::InstId::BuiltinError;
   }
 
   // Form `bound_op(rhs)`.
-  return PerformCall(context, node_id, bound_op_id, {rhs_id});
+  return PerformCall(context, loc_id, bound_op_id, {rhs_id});
 }
 
 }  // namespace Carbon::Check

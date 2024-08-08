@@ -96,8 +96,8 @@ class C {
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     %F.ref: %.3 = name_ref F, @I.%.loc14 [template = constants.%.4]
-// CHECK:STDOUT:     %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:     %F.call: init %.2 = call %.1()
+// CHECK:STDOUT:     %.loc17: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:     %F.call: init %.2 = call %.loc17()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

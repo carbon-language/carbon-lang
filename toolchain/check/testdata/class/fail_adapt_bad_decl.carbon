@@ -13,7 +13,11 @@
 library "not_type";
 
 class Bad {
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+8]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   adapt 100;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -31,7 +35,11 @@ fn Use(b: Bad) { b.F(); }
 library "extend_not_type";
 
 class Bad {
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+8]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   extend adapt 100;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -128,13 +136,14 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.1
+// CHECK:STDOUT:     %b.loc20_8.1: %Bad = param b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc20_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13_9: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13_12: type = converted %.loc13_9, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -180,13 +189,14 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc13_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc13_8.1
+// CHECK:STDOUT:     %b.loc17_8.1: %Bad = param b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc17_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13_16: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13_19: type = converted %.loc13_16, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

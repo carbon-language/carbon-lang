@@ -17,7 +17,11 @@ class B {
 }
 
 fn AccessBInA(a: A) -> i32 {
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `A` to `B`.
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+7]]:10: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   return a.(B.b);
+  // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
   return a.(B.b);
@@ -105,7 +109,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %.4 = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
-// CHECK:STDOUT:   %.loc23: i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.1: %B = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.2: i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

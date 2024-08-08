@@ -19,7 +19,11 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `i32` to `T`.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+7]]:1: ERROR: Name `ImplicitAs` not found.
+// CHECK:STDERR: let a: T = 0;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 let a: T = 0;
@@ -100,7 +104,8 @@ let a: T = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_12: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_13: %T = converted %.loc12_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a: %T = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -82,9 +82,9 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Calculate(ptr sret({ i1 }) %return, ptr %a, ptr %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_10.2.temp = alloca { i1 }, align 8
-// CHECK:STDOUT:   call void @Op(ptr %.loc28_10.2.temp, ptr %a)
-// CHECK:STDOUT:   call void @Op.1(ptr %return, ptr %.loc28_10.2.temp, ptr %b)
+// CHECK:STDOUT:   %.loc28_10.3.temp = alloca { i1 }, align 8
+// CHECK:STDOUT:   call void @Op(ptr %.loc28_10.3.temp, ptr %a)
+// CHECK:STDOUT:   call void @Op.1(ptr %return, ptr %.loc28_10.3.temp, ptr %b)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

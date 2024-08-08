@@ -12,6 +12,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -958,11 +959,23 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return expr_id;
   }
 
-  // If the types don't match at this point, we can't perform the conversion.
-  // TODO: Look for an `ImplicitAs` impl, or an `As` impl in the case where
-  // `target.kind == ConversionTarget::ExplicitAs`.
+  // If this is not a builtin conversion, try an `ImplicitAs` conversion.
   SemIR::Inst expr = sem_ir.insts().Get(expr_id);
   if (expr.type_id() != target.type_id) {
+    constexpr Operator ImplicitAsConvert = {
+      .interface_name = "ImplicitAs",
+      .op_name = "Convert",
+    };
+    constexpr Operator AsConvert = {
+      .interface_name = "ImplicitAs",
+      .op_name = "Convert",
+    };
+    expr_id = BuildUnaryOperator(context, loc_id,
+                                 target.kind == ConversionTarget::ExplicitAs
+                                     ? AsConvert
+                                     : ImplicitAsConvert,
+                                 expr_id);
+#if 0
     CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
                       "Cannot implicitly convert from `{0}` to `{1}`.",
                       SemIR::TypeId, SemIR::TypeId);
@@ -977,6 +990,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                expr.type_id(), target.type_id)
         .Emit();
     return SemIR::InstId::BuiltinError;
+#endif
   }
 
   // Track that we performed a type conversion, if we did so.

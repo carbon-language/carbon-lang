@@ -154,7 +154,7 @@ class Context {
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
+  auto LookupQualifiedName(SemIRLoc loc_id, SemIR::NameId name_id,
                            LookupScope scope, bool required = true)
       -> LookupResult;
 

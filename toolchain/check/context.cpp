@@ -319,9 +319,9 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
   return SemIR::InstId::Invalid;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                                  LookupScope scope, bool required)
-    -> LookupResult {
+auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
+                                  LookupScope scope,
+                                  bool required) -> LookupResult {
   llvm::SmallVector<LookupScope> scopes = {scope};
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::Invalid};
@@ -334,7 +334,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
     has_error |= name_scope.has_error;
 
     auto scope_result_id =
-        LookupNameInExactScope(node_id, name_id, scope_id, name_scope);
+        LookupNameInExactScope(loc, name_id, scope_id, name_scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = name_scope.extended_scopes;
@@ -357,7 +357,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
           NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
           SemIR::NameId);
-      emitter_->Emit(node_id, NameAmbiguousDueToExtend, name_id);
+      emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::Invalid,
               .inst_id = SemIR::InstId::BuiltinError};
@@ -369,7 +369,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
 
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(node_id, name_id);
+      DiagnoseNameNotFound(loc, name_id);
     }
     return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = SemIR::InstId::BuiltinError};

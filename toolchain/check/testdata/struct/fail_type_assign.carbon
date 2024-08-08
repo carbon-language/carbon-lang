@@ -8,7 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_type_assign.carbon
 
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `type` to `{.a: i32}`.
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+7]]:1: ERROR: Name `ImplicitAs` not found.
+// CHECK:STDERR: var x: {.a: i32} = {.a: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var x: {.a: i32} = {.a: i32};
@@ -43,9 +47,9 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32, %.loc14_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc18_13.2: type = converted %int.make_type_32, %.loc18_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc18_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
 // CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -55,9 +59,10 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_28: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc18_25.2: type = converted %int.make_type_32, %.loc18_25.1 [template = i32]
+// CHECK:STDOUT:   %.loc18_28: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_29: %.2 = converted %.loc18_28, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

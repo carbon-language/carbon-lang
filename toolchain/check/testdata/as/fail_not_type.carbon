@@ -8,7 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_not_type.carbon
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:19: ERROR: Name `ImplicitAs` not found.
+// CHECK:STDERR: let n: i32 = 1 as 2;
+// CHECK:STDERR:                   ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
 let n: i32 = 1 as 2;
@@ -44,16 +48,17 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc14_8.2: type = converted %int.make_type_32, %.loc14_8.1 [template = i32]
+// CHECK:STDOUT:   %.loc18_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc18_8.2: type = converted %int.make_type_32, %.loc18_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_19: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_19.1: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_19.2: type = converted %.loc18_19.1, <error> [template = <error>]
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

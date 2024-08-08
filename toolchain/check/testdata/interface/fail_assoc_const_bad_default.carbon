@@ -9,7 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   let T:! type = 42;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   let T:! type = 42;
@@ -48,13 +52,14 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %.loc15_18: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_18: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_20.1: type = converted %.loc19_18, <error> [template = <error>]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc15_20: %.3 = assoc_entity element0, %T [template = constants.%.4]
+// CHECK:STDOUT:   %.loc19_20.2: %.3 = assoc_entity element0, %T [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc15_20
+// CHECK:STDOUT:   .T = %.loc19_20.2
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -10,7 +10,11 @@
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+7]]:3: ERROR: Name `ImplicitAs` not found.
+  // CHECK:STDERR:   a = 5.6;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
   // CHECK:STDERR:   a = 5.6;
   // CHECK:STDERR:   ^~~~~~~
   a = 5.6;
@@ -61,7 +65,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc16: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20_7: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20_5: i32 = converted %.loc20_7, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

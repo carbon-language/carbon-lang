@@ -717,7 +717,7 @@ struct InterfaceWitness {
 // Accesses an element of an interface witness by index.
 struct InterfaceWitnessAccess {
   static constexpr auto Kind =
-      InstKind::InterfaceWitnessAccess.Define<Parse::InvalidNodeId>(
+      InstKind::InterfaceWitnessAccess.Define<Parse::NodeId>(
           {.ir_name = "interface_witness_access",
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,

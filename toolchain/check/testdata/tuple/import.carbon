@@ -47,7 +47,11 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: ERROR: Name `ImplicitAs` not found.
+// CHECK:STDERR: var c_bad: C((3, 4)) = F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C((3, 4)) = F();
@@ -554,14 +558,14 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc7_15: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_19: %.3 = tuple_literal (%.loc7_15, %.loc7_18)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13.1: %.3 = converted %.loc7_19, %tuple [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13.2: init type = call %C.ref(%.loc7_13.1) [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_13.2 [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_13.2, %.loc7_20.1 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc11_15: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_19: %.3 = tuple_literal (%.loc11_15, %.loc11_18)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc11_15, %.loc11_18) [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc11_13.1: %.3 = converted %.loc11_19, %tuple [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc11_13.2: init type = call %C.ref(%.loc11_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc11_20.1: type = value_of_initializer %.loc11_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc11_20.2: type = converted %.loc11_13.2, %.loc11_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
@@ -582,8 +586,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc7: ref %C.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc7
+// CHECK:STDOUT:   %.loc11_25: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc11_25
+// CHECK:STDOUT:   %.loc11_27: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
