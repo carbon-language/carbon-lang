@@ -81,10 +81,11 @@ struct DeclParams {
 // Checks that the parameters in a redeclaration of an entity match the
 // parameters in the prior declaration. If not, produces a diagnostic and
 // returns false.
-auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
-                            const DeclParams& prev_entity,
-                            Substitutions substitutions = Substitutions(),
-                            bool check_syntax = true) -> bool;
+auto CheckRedeclParamsMatch(
+    Context& context, const DeclParams& new_entity,
+    const DeclParams& prev_entity,
+    SemIR::SpecificId prev_specific_id = SemIR::SpecificId::Invalid,
+    bool check_syntax = true) -> bool;
 
 }  // namespace Carbon::Check
 

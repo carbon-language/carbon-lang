@@ -5,7 +5,6 @@
 #include "toolchain/check/function.h"
 
 #include "toolchain/check/merge.h"
-#include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -13,10 +12,10 @@ namespace Carbon::Check {
 auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
-                              Substitutions substitutions, bool check_syntax)
-    -> bool {
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax) -> bool {
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
-                              DeclParams(prev_function), substitutions,
+                              DeclParams(prev_function), prev_specific_id,
                               check_syntax)) {
     return false;
   }
@@ -25,15 +24,11 @@ auto CheckFunctionTypeMatches(Context& context,
   // use it here.
   auto new_return_type_id =
       new_function.GetDeclaredReturnType(context.sem_ir());
-  auto prev_return_type_id = prev_function.GetDeclaredReturnType(
-      context.sem_ir(), SemIR::SpecificId::Invalid);
+  auto prev_return_type_id =
+      prev_function.GetDeclaredReturnType(context.sem_ir(), prev_specific_id);
   if (new_return_type_id == SemIR::TypeId::Error ||
       prev_return_type_id == SemIR::TypeId::Error) {
     return false;
-  }
-  if (prev_return_type_id.is_valid()) {
-    prev_return_type_id =
-        SubstType(context, prev_return_type_id, substitutions);
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {

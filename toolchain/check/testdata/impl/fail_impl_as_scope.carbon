@@ -90,3 +90,5 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(<error>) {}
+// CHECK:STDOUT:

@@ -57,6 +57,7 @@ impl X as C(X).GenericAndParams(X) {}
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %.12: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X) [template]
+// CHECK:STDOUT:   %.13: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X, %U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -266,6 +267,10 @@ impl X as C(X).GenericAndParams(X) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%X) {
 // CHECK:STDOUT:   %T => constants.%X
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %Self.2 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
@@ -275,6 +280,15 @@ impl X as C(X).GenericAndParams(X) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%X) {
+// CHECK:STDOUT:   %U => constants.%U
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%X
+// CHECK:STDOUT:   %.1 => constants.%.13
+// CHECK:STDOUT:   %Self.2 => constants.%Self.5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericAndParams.2(constants.%X, constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

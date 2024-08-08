@@ -77,8 +77,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                                 SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function, {},
-                                /*check_syntax=*/true)) {
+  if (!CheckFunctionTypeMatches(context, new_function, prev_function)) {
     return false;
   }
 

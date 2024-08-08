@@ -109,3 +109,5 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%C) {}
+// CHECK:STDOUT:

@@ -1358,7 +1358,8 @@ class ImportRefResolver {
 
   // Make a declaration of a function. This is done as a separate step from
   // importing the function declaration in order to resolve cycles.
-  auto MakeFunctionDecl(const SemIR::Function& import_function)
+  auto MakeFunctionDecl(const SemIR::Function& import_function,
+                        SemIR::SpecificId specific_id)
       -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
     SemIR::FunctionDecl function_decl = {
         .type_id = SemIR::TypeId::Invalid,
@@ -1375,8 +1376,6 @@ class ImportRefResolver {
           .is_extern = import_function.is_extern,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
-    // TODO: Import this or recompute it.
-    auto specific_id = SemIR::SpecificId::Invalid;
     function_decl.type_id =
         context_.GetFunctionType(function_decl.function_id, specific_id);
 
@@ -1393,14 +1392,22 @@ class ImportRefResolver {
 
     SemIR::FunctionId function_id = SemIR::FunctionId::Invalid;
     if (!function_const_id.is_valid()) {
+      auto import_specific_id = import_ir_.types()
+                                    .GetAs<SemIR::FunctionType>(inst.type_id)
+                                    .specific_id;
+      auto specific_data = GetLocalSpecificData(import_specific_id);
       if (HasNewWork()) {
         // This is the end of the first phase. Don't make a new function yet if
         // we already have new work.
         return Retry();
       }
+
+      auto specific_id =
+          GetOrAddLocalSpecific(import_specific_id, specific_data);
+
       // On the second phase, create a forward declaration of the interface.
       std::tie(function_id, function_const_id) =
-          MakeFunctionDecl(import_function);
+          MakeFunctionDecl(import_function, specific_id);
     } else {
       // On the third phase, compute the function ID from the constant value of
       // the declaration.

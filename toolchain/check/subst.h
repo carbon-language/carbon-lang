@@ -53,11 +53,6 @@ using Substitutions = llvm::ArrayRef<Substitution>;
 auto SubstConstant(Context& context, SemIR::ConstantId const_id,
                    Substitutions substitutions) -> SemIR::ConstantId;
 
-// Replaces the `BindSymbolicName` instruction `bind_id` with `replacement_id`
-// throughout the type `type_id`, and returns the substituted value.
-auto SubstType(Context& context, SemIR::TypeId type_id,
-               Substitutions substitutions) -> SemIR::TypeId;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_SUBST_H_

@@ -288,10 +288,32 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%D) {
+// CHECK:STDOUT:   %Self => constants.%D
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.4(constants.%Self.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %.1 => constants.%.10
 // CHECK:STDOUT:   %.2 => constants.%.11
 // CHECK:STDOUT:   %.3 => constants.%.13
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.4(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %.1 => constants.%.16
+// CHECK:STDOUT:   %.2 => constants.%.17
+// CHECK:STDOUT:   %.3 => constants.%.18
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.4(constants.%D) {
+// CHECK:STDOUT:   %Self => constants.%D
+// CHECK:STDOUT:   %.1 => constants.%.20
+// CHECK:STDOUT:   %.2 => constants.%.21
+// CHECK:STDOUT:   %.3 => constants.%.22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -153,7 +153,7 @@ static auto CheckRedeclParam(Context& context,
                              int32_t param_index,
                              SemIR::InstId new_param_ref_id,
                              SemIR::InstId prev_param_ref_id,
-                             Substitutions substitutions) -> bool {
+                             SemIR::SpecificId prev_specific_id) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -171,14 +171,13 @@ static auto CheckRedeclParam(Context& context,
         .Emit();
   };
 
-  // TODO: Pass in a specific ID for the previous declaration instead of
-  // substitutions.
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
       !context.types().AreEqualAcrossDeclarations(
           new_param_ref.type_id(),
-          SubstType(context, prev_param_ref.type_id(), substitutions))) {
+          SemIR::GetTypeInSpecific(context.sem_ir(), prev_specific_id,
+                                   prev_param_ref.type_id()))) {
     diagnose();
     return false;
   }
@@ -217,7 +216,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_refs_id,
                               llvm::StringLiteral param_diag_label,
-                              Substitutions substitutions) -> bool {
+                              SemIR::SpecificId prev_specific_id) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -263,7 +262,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
     if (!CheckRedeclParam(context, param_diag_label, index, new_param_ref_id,
-                          prev_param_ref_id, substitutions)) {
+                          prev_param_ref_id, prev_specific_id)) {
       return false;
     }
   }
@@ -341,8 +340,8 @@ static auto CheckRedeclParamSyntax(Context& context,
 
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            Substitutions substitutions, bool check_syntax)
-    -> bool {
+                            SemIR::SpecificId prev_specific_id,
+                            bool check_syntax) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -350,12 +349,12 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(context, new_entity.loc,
                          new_entity.implicit_param_refs_id, prev_entity.loc,
                          prev_entity.implicit_param_refs_id, "implicit ",
-                         substitutions)) {
+                         prev_specific_id)) {
     return false;
   }
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
                          prev_entity.loc, prev_entity.param_refs_id, "",
-                         substitutions)) {
+                         prev_specific_id)) {
     return false;
   }
   if (check_syntax &&

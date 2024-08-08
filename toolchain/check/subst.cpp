@@ -319,10 +319,4 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
   return context.constant_values().Get(subst_inst_id);
 }
 
-auto SubstType(Context& context, SemIR::TypeId type_id,
-               Substitutions substitutions) -> SemIR::TypeId {
-  return context.GetTypeIdForTypeConstant(SubstConstant(
-      context, context.types().GetConstantId(type_id), substitutions));
-}
-
 }  // namespace Carbon::Check
