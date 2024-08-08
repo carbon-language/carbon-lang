@@ -52,15 +52,17 @@ let a: C = {.a = 1, .b = 2};
 
 // Cannot implicitly convert between a type and an adapter for the type.
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+5]]:1: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: let b: AdaptC = a;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_implicit.carbon: Name declared here.
 // CHECK:STDERR:
 let b: AdaptC = a;
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+5]]:1: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: let c: C = b;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_implicit.carbon: Name declared here.
 // CHECK:STDERR:
 let c: C = b;
 
@@ -68,15 +70,17 @@ fn MakeC() -> C;
 
 fn MakeAdaptC() -> AdaptC;
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+5]]:1: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: var d: AdaptC = MakeC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_implicit.carbon: Name declared here.
 // CHECK:STDERR:
 var d: AdaptC = MakeC();
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: var e: C = MakeAdaptC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_implicit.carbon: Name declared here.
 var e: C = MakeAdaptC();
 
 // CHECK:STDOUT: --- init_adapt.carbon
@@ -106,6 +110,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -234,6 +239,12 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.5, %.6) [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.7: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.7) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [template]
@@ -242,16 +253,20 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -271,22 +286,36 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %AdaptC.decl: type = class_decl @AdaptC [template = constants.%AdaptC] {}
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
-// CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %AdaptC.ref.loc22: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [template = constants.%MakeC] {
-// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @MakeC.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeAdaptC.decl: %MakeAdaptC.type = fn_decl @MakeAdaptC [template = constants.%MakeAdaptC] {
-// CHECK:STDOUT:     %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:     %AdaptC.ref.loc33: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:     @MakeAdaptC.%return: ref %AdaptC = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptC.ref.loc37: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %AdaptC.ref.loc40: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var d
 // CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var
-// CHECK:STDOUT:   %C.ref.loc42: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc46: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %e.var: ref %C = var e
 // CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.7)]
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -335,23 +364,31 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
 // CHECK:STDOUT:   %a: %C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc21: %AdaptC = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22: %AdaptC = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, %b
-// CHECK:STDOUT:   %.loc27: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc29: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c: %C = bind_name c, <error>
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [template = constants.%MakeC]
-// CHECK:STDOUT:   %.loc37_22.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc37_22.1
-// CHECK:STDOUT:   %.loc37_22.2: ref %C = temporary %.loc37_22.1, %MakeC.call
-// CHECK:STDOUT:   %.loc37_24: %AdaptC = converted %MakeC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc40_22.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc40_22.1
+// CHECK:STDOUT:   %.loc40_22.2: ref %C = temporary %.loc40_22.1, %MakeC.call
+// CHECK:STDOUT:   %.loc40_24: %AdaptC = converted %MakeC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc42_22.1: ref %AdaptC = temporary_storage
-// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc42_22.1
-// CHECK:STDOUT:   %.loc42_22.2: ref %AdaptC = temporary %.loc42_22.1, %MakeAdaptC.call
-// CHECK:STDOUT:   %.loc42_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc46_22.1: ref %AdaptC = temporary_storage
+// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc46_22.1
+// CHECK:STDOUT:   %.loc46_22.2: ref %AdaptC = temporary %.loc46_22.1, %MakeAdaptC.call
+// CHECK:STDOUT:   %.loc46_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

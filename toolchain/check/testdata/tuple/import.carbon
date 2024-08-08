@@ -47,9 +47,10 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+4]]:1: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_value.impl.carbon: Name declared here.
 var c_bad: C((3, 4)) = F();
 
 // CHECK:STDOUT: --- implicit.carbon
@@ -96,6 +97,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -270,6 +272,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -437,6 +440,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -522,6 +526,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.9: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %tuple.2: %.3 = tuple_value (%.9, %.8) [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%tuple.2) [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.10: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.10) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.10 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -530,15 +540,19 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+103, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+121, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+107, unloaded
+// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -554,16 +568,30 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc7_15: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_19: %.3 = tuple_literal (%.loc7_15, %.loc7_18)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13.1: %.3 = converted %.loc7_19, %tuple [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13.2: init type = call %C.ref(%.loc7_13.1) [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_13.2 [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_13.2, %.loc7_20.1 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc8_15: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_18: i32 = int_literal 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_19: %.3 = tuple_literal (%.loc8_15, %.loc8_18)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc8_15, %.loc8_18) [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc8_13.1: %.3 = converted %.loc8_19, %tuple [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc8_13.2: init type = call %C.ref(%.loc8_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc8_20.1: type = value_of_initializer %.loc8_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc8_20.2: type = converted %.loc8_13.2, %.loc8_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.10)]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.7
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.3) {
@@ -582,10 +610,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc7_25.1: ref %C.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc7_25.1
-// CHECK:STDOUT:   %.loc7_25.2: ref %C.4 = temporary %.loc7_25.1, %F.call
-// CHECK:STDOUT:   %.loc7_27: %C.3 = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc8_25.1: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc8_25.1
+// CHECK:STDOUT:   %.loc8_25.2: ref %C.4 = temporary %.loc8_25.1, %F.call
+// CHECK:STDOUT:   %.loc8_27: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -604,5 +632,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X => constants.%tuple.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

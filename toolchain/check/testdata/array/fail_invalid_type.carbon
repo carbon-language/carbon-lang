@@ -8,27 +8,39 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_invalid_type.carbon
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+4]]:9: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: var a: [1; 1];
 // CHECK:STDERR:         ^
+// CHECK:STDERR: fail_invalid_type.carbon: Name declared here.
 var a: [1; 1];
 
 // CHECK:STDOUT: --- fail_invalid_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,11 +49,33 @@ var a: [1; 1];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_9.1: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_12: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc14_13: type = array_type %.loc14_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_9.1: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_12: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_13: type = array_type %.loc15_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -10,9 +10,10 @@
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+4]]:3: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
   // CHECK:STDERR:   a = 5.6;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon: Name declared here.
   a = 5.6;
 }
 
@@ -26,20 +27,30 @@ fn Main() {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 5.6000000000000005 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.4) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -49,6 +60,20 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -61,11 +86,19 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc16_7: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc16_5: i32 = converted %.loc16_7, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_7: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc17_5: i32 = converted %.loc17_7, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

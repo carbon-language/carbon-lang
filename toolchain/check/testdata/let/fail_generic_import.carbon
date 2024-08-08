@@ -19,9 +19,10 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_implicit.impl.carbon: Name declared here.
 let a: T = 0;
 
 // CHECK:STDOUT: --- implicit.carbon
@@ -40,6 +41,7 @@ let a: T = 0;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -71,38 +73,71 @@ let a: T = 0;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, inst+3, loaded [symbolic = constants.%T]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Implicit//default, inst+3, loaded [symbolic = constants.%T]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .T = imports.%import_ref
+// CHECK:STDOUT:     .T = imports.%import_ref.1
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = @__global_init.%a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%import_ref [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%import_ref.1 [symbolic = constants.%T]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_12: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_13: %T = converted %.loc8_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc9_12: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_13: %T = converted %.loc9_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a: %T = bind_name a, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

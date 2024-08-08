@@ -43,10 +43,11 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:3: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
+  // CHECK:STDERR: fail_self.carbon: Name declared here.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-8]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~
   ws.F();
@@ -68,18 +69,28 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %CallWrongSelf.type: type = fn_type @CallWrongSelf [template]
 // CHECK:STDOUT:   %CallWrongSelf: %CallWrongSelf.type = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.4) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -105,6 +116,20 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
 // CHECK:STDOUT:     %ws.loc45_18.1: %WrongSelf = param ws
 // CHECK:STDOUT:     @CallWrongSelf.%ws: %WrongSelf = bind_name ws, %ws.loc45_18.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,9 +183,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc52_5: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc52_7: %Class = converted %ws.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc52_5(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc53_5: <bound method> = bound_method %ws.ref, %F.ref
+// CHECK:STDOUT:   %.loc53_7: %Class = converted %ws.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc53_5(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

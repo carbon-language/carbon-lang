@@ -55,10 +55,11 @@ library "no_conversion";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:8: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-5]]:1: Initializing parameter 1 of function declared here.
+// CHECK:STDERR: fail_no_conversion.carbon: Name declared here.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var a: Class(5, i32*);
@@ -109,6 +110,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -210,6 +212,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -288,6 +291,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -358,20 +362,30 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.5: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -391,17 +405,31 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = @Class.%N (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 5 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_20.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
-// CHECK:STDOUT:   %.loc12_20.2: type = converted %int.make_type_32.loc12, %.loc12_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_20.3: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_13.1: type = converted %.loc12_14, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc12_13.2: init type = call %Class.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %.loc12_13.2 [template = <error>]
-// CHECK:STDOUT:   %.loc12_21.2: type = converted %.loc12_13.2, %.loc12_21.1 [template = <error>]
+// CHECK:STDOUT:   %.loc13_14: i32 = int_literal 5 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_20.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_20.2: type = converted %int.make_type_32.loc13, %.loc13_20.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_20.3: type = ptr_type i32 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_13.1: type = converted %.loc13_14, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc13_13.2: init type = call %Class.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %.loc13_13.2 [template = <error>]
+// CHECK:STDOUT:   %.loc13_21.2: type = converted %.loc13_13.2, %.loc13_21.1 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(file.%T.loc4_13.2: type, file.%N.loc4_23.2: i32) {
@@ -421,6 +449,14 @@ class Outer(T:! type) {
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_in_nested_return_type.carbon
@@ -468,6 +504,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

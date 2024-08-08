@@ -13,9 +13,10 @@
 library "not_type";
 
 class Bad {
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+5]]:3: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_not_type.carbon: Name declared here.
   // CHECK:STDERR:
   adapt 100;
 }
@@ -31,9 +32,10 @@ fn Use(b: Bad) { b.F(); }
 library "extend_not_type";
 
 class Bad {
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+5]]:3: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_not_type.carbon: Name declared here.
   // CHECK:STDERR:
   extend adapt 100;
 }
@@ -101,21 +103,31 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
 // CHECK:STDOUT:   %.1: i32 = int_literal 100 [template]
-// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -128,14 +140,28 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.1
+// CHECK:STDOUT:     %b.loc17_8.1: %Bad = param b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc17_8.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc9_9: i32 = int_literal 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_12: type = converted %.loc9_9, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_12: type = converted %.loc10_9, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -149,26 +175,44 @@ class C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_not_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
 // CHECK:STDOUT:   %.1: i32 = int_literal 100 [template]
-// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -181,14 +225,28 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc13_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc13_8.1
+// CHECK:STDOUT:     %b.loc14_8.1: %Bad = param b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc14_8.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_19: type = converted %.loc9_16, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_19: type = converted %.loc10_16, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -201,6 +259,14 @@ class C {
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeated.carbon
@@ -218,6 +284,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -272,6 +339,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

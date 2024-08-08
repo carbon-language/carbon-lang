@@ -11,9 +11,10 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+4]]:3: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
   // CHECK:STDERR:   var x: i32 = Foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_return_type_mismatch.carbon: Name declared here.
   var x: i32 = Foo();
 }
 
@@ -31,22 +32,32 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.4) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Float = %import_ref.1
 // CHECK:STDOUT:     .Int32 = %import_ref.2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.3: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,6 +77,20 @@ fn Run() {
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.4
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
@@ -77,18 +102,26 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32, %.loc17_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32, %.loc18_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc17_19.1: ref f64 = temporary_storage
-// CHECK:STDOUT:   %.loc17_19.2: ref f64 = temporary %.loc17_19.1, %Foo.call
-// CHECK:STDOUT:   %.loc17_21: i32 = converted %Foo.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_19.1: ref f64 = temporary_storage
+// CHECK:STDOUT:   %.loc18_19.2: ref f64 = temporary %.loc18_19.1, %Foo.call
+// CHECK:STDOUT:   %.loc18_21: i32 = converted %Foo.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

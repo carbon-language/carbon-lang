@@ -35,10 +35,11 @@ fn F(c: Class, p: Class*) {
   // This call is OK.
   (*p).F();
 
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Name `Core.ImplicitAs` implicitly referenced here but not found.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:3: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-28]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon: Name declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-29]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
   (*p).G();
@@ -58,18 +59,28 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.5: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -88,6 +99,20 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %p.loc16_16.1: %.1 = param p
 // CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %p.loc16_16.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -132,13 +157,21 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc36_7: <bound method> = bound_method %.loc36_4.1, %F.ref.loc36
 // CHECK:STDOUT:   %.loc36_4.2: %.1 = addr_of %.loc36_4.1
 // CHECK:STDOUT:   %F.call.loc36: init %.2 = call %.loc36_7(%.loc36_4.2)
-// CHECK:STDOUT:   %p.ref.loc44: %.1 = name_ref p, %p
-// CHECK:STDOUT:   %.loc44_4.1: ref %Class = deref %p.ref.loc44
-// CHECK:STDOUT:   %G.ref.loc44: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc44_7: <bound method> = bound_method %.loc44_4.1, %G.ref.loc44
-// CHECK:STDOUT:   %.loc44_4.2: %.1 = addr_of %.loc44_4.1
-// CHECK:STDOUT:   %.loc44_9: %Class = converted %.loc44_4.2, <error> [template = <error>]
-// CHECK:STDOUT:   %G.call.loc44: init %.2 = call %.loc44_7(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %p.ref.loc45: %.1 = name_ref p, %p
+// CHECK:STDOUT:   %.loc45_4.1: ref %Class = deref %p.ref.loc45
+// CHECK:STDOUT:   %G.ref.loc45: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
+// CHECK:STDOUT:   %.loc45_7: <bound method> = bound_method %.loc45_4.1, %G.ref.loc45
+// CHECK:STDOUT:   %.loc45_4.2: %.1 = addr_of %.loc45_4.1
+// CHECK:STDOUT:   %.loc45_9: %Class = converted %.loc45_4.2, <error> [template = <error>]
+// CHECK:STDOUT:   %G.call.loc45: init %.2 = call %.loc45_7(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

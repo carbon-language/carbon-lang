@@ -97,9 +97,10 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: ERROR: Name `Core.As` implicitly referenced here but not found.
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+4]]:12: ERROR: Expected name `Core.As` implicitly referenced here to name an interface.
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon: Name declared here.
 var b: B = {.x = 1} as B;
 
 // CHECK:STDOUT: --- adapt_class.carbon
@@ -128,6 +129,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -260,6 +262,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -332,6 +335,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -422,6 +426,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -523,21 +528,38 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %As.type: type = generic_interface_type @As [template]
+// CHECK:STDOUT:   %As: %As.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.6: type = interface_type @As, @As(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @As.%.1 (%.6) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.6 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @As(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type [symbolic]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.6 [symbolic]
 // CHECK:STDOUT:   %struct: %.3 = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .As = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %As.type = import_ref Core//prelude/operators/as, inst+4, loaded [template = constants.%As]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+20, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -553,6 +575,25 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref %B = var b
 // CHECK:STDOUT:   %b: ref %B = bind_name b, %b.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @As(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @As, @As(%Dest) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @As(%Dest) [symbolic = %Convert.type (constants.%Convert.type)]
+// CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @As.%.1 (%.6), @As.%Convert.type (%Convert.type) [symbolic = %.2 (constants.%.7)]
+// CHECK:STDOUT:   %.3: @As.%.2 (%.7) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.3 (constants.%.8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     .Convert = imports.%import_ref.4
+// CHECK:STDOUT:     witness = (imports.%import_ref.5)
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -576,15 +617,41 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @As.%.1 (%.6)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %.1: type = interface_type @As, @As(%Dest) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_18: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_19.1: %.3 = struct_literal (%.loc18_18)
+// CHECK:STDOUT:   %.loc19_18: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_19.1: %.3 = struct_literal (%.loc19_18)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc18_18) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc18_19.2: %.3 = converted %.loc18_19.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc18_21: %B = converted %.loc18_19.1, <error> [template = <error>]
+// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc19_18) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_19.2: %.3 = converted %.loc19_19.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_21: %B = converted %.loc19_19.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(@As.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
