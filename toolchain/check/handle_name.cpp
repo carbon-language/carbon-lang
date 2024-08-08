@@ -2,14 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -17,13 +16,15 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::MemberAccessExprId node_id)
     -> bool {
-  if (context.node_stack().PeekIs<Parse::NodeKind::ParenExpr>()) {
+  auto node_kind = context.node_stack().PeekNodeKind();
+
+  if (node_kind == Parse::NodeKind::ParenExpr) {
     auto member_expr_id = context.node_stack().PopExpr();
     auto base_id = context.node_stack().PopExpr();
     auto member_id =
         PerformCompoundMemberAccess(context, node_id, base_id, member_expr_id);
     context.node_stack().Push(node_id, member_id);
-  } else if (context.node_stack().PeekIs<Parse::NodeKind::IntLiteral>()) {
+  } else if (node_kind == Parse::NodeKind::IntLiteral) {
     auto index_inst_id = context.node_stack().PopExpr();
     auto tuple_inst_id = context.node_stack().PopExpr();
 
@@ -53,7 +54,9 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
     builder.Emit();
   };
 
-  if (context.node_stack().PeekIs<Parse::NodeKind::ParenExpr>()) {
+  auto node_kind = context.node_stack().PeekNodeKind();
+
+  if (node_kind == Parse::NodeKind::ParenExpr) {
     auto member_expr_id = context.node_stack().PopExpr();
     auto base_id = context.node_stack().PopExpr();
     auto deref_base_id = PerformPointerDereference(context, node_id, base_id,
@@ -61,7 +64,7 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
     auto member_id = PerformCompoundMemberAccess(context, node_id,
                                                  deref_base_id, member_expr_id);
     context.node_stack().Push(node_id, member_id);
-  } else if (context.node_stack().PeekIs<Parse::NodeKind::IntLiteral>()) {
+  } else if (node_kind == Parse::NodeKind::IntLiteral) {
     auto index_inst_id = context.node_stack().PopExpr();
     auto tuple_pointer_inst_id = context.node_stack().PopExpr();
     auto tuple_inst_id = PerformPointerDereference(
