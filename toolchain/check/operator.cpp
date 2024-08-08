@@ -13,78 +13,20 @@
 
 namespace Carbon::Check {
 
-// Returns the name scope of the operator interface for the specified operator
-// from the Core package.
-static auto GetOperatorInterface(Context& context, SemIR::LocId loc_id,
-                                 Operator op) -> SemIR::NameScopeId {
-  auto interface_id = context.LookupNameInCore(loc_id, op.interface_name);
-  if (interface_id == SemIR::InstId::BuiltinError) {
-    return SemIR::NameScopeId::Invalid;
-  }
-
-  // We expect it to be an interface.
-  if (auto interface_inst =
-          context.insts().TryGetAs<SemIR::InterfaceType>(interface_id)) {
-    return context.interfaces().Get(interface_inst->interface_id).scope_id;
-  }
-
-  CARBON_DIAGNOSTIC(CoreNameNotInterface, Error,
-                    "Expected name `Core.{0}` implicitly referenced here to "
-                    "name an interface.",
-                    llvm::StringLiteral);
-  CARBON_DIAGNOSTIC(CoreNameNotInterfacePrevious, Note,
-                    "Name declared here.");
-  context.emitter()
-      .Build(loc_id, CoreNameNotInterface, op.interface_name)
-      .Note(interface_id, CoreNameNotInterfacePrevious)
-      .Emit();
-  return SemIR::NameScopeId::Invalid;
-}
-
 // Returns the `Op` function for the specified operator.
 static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                                   Operator op) -> SemIR::InstId {
-  auto interface_scope_id = GetOperatorInterface(context, loc_id, op);
-  if (!interface_scope_id.is_valid()) {
-    return SemIR::InstId::BuiltinError;
+  // Look up the interface, and pass it any generic arguments.
+  auto interface_id = context.LookupNameInCore(loc_id, op.interface_name);
+  if (!op.interface_args.empty()) {
+    interface_id =
+        PerformCall(context, loc_id, interface_id, op.interface_args);
   }
 
-  // TODO: For a parameterized interface, find the corresponding specific.
-  // TODO: Require the interface to be a complete type.
-  LookupScope scope = {.name_scope_id = interface_scope_id,
-                       .specific_id = SemIR::SpecificId::Invalid};
-
-  // Lookup `Interface.Op`.
-  auto op_ident_id = context.identifiers().Add(op.op_name);
-  auto op_result = context.LookupQualifiedName(
-      loc_id, SemIR::NameId::ForIdentifier(op_ident_id), scope,
-      /*required=*/false);
-  if (op_result.inst_id.is_valid()) {
-    // Look through import_refs and aliases.
-    auto op_const_id = GetConstantValueInSpecific(
-        context.sem_ir(), op_result.specific_id, op_result.inst_id);
-    auto op_id = context.constant_values().GetInstId(op_const_id);
-
-    // We expect it to be an associated function.
-    if (context.insts().Is<SemIR::AssociatedEntity>(op_id)) {
-      return op_id;
-    }
-  }
-
-  CARBON_DIAGNOSTIC(
-      CoreNameNotAssociatedFunction, Error,
-      "Expected name `Core.{0}.{1}` implicitly referenced here to "
-      "name an associated function.",
-      llvm::StringLiteral, llvm::StringLiteral);
-  CARBON_DIAGNOSTIC(CoreNameNotAssociatedFunctionPrevious, Note,
-                    "Name declared here.");
-  auto emitter = context.emitter().Build(loc_id, CoreNameNotAssociatedFunction,
-                                         op.interface_name, op.op_name);
-  if (op_result.inst_id.is_valid()) {
-    emitter.Note(op_result.inst_id, CoreNameNotAssociatedFunctionPrevious);
-  }
-  emitter.Emit();
-  return SemIR::InstId::BuiltinError;
+  // Look up the interface member.
+  auto op_name_id =
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(op.op_name));
+  return PerformMemberAccess(context, loc_id, interface_id, op_name_id);
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,

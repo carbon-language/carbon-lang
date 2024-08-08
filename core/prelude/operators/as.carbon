@@ -10,4 +10,5 @@ interface As(Dest:! type) {
 
 interface ImplicitAs(Dest:! type) {
   // TODO: extend As(Dest);
+  fn Convert[self: Self]() -> Dest;
 }

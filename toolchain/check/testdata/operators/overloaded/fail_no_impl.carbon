@@ -190,6 +190,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestUnary(%a: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
+// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.3 [template = constants.%.6]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -203,6 +204,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
+// CHECK:STDOUT:   %Op.ref: %.8 = name_ref Op, imports.%import_ref.8 [template = constants.%.9]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,7 +225,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
+// CHECK:STDOUT:   %Op.ref.loc37: %.12 = name_ref Op, imports.%import_ref.13 [template = constants.%.13]
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %Op.ref.loc41: %.16 = name_ref Op, imports.%import_ref.18 [template = constants.%.17]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

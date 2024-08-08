@@ -13,6 +13,7 @@ namespace Carbon::Check {
 
 struct Operator {
   llvm::StringLiteral interface_name;
+  llvm::ArrayRef<SemIR::InstId> interface_args = {};
   llvm::StringLiteral op_name = "Op";
 };
 

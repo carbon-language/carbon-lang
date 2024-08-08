@@ -109,6 +109,7 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15_17: i32 = int_literal 10 [template = constants.%.7]
+// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.4 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc15_19: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return

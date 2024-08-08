@@ -19,7 +19,7 @@ namespace Carbon::Check {
 
 // Returns the lookup scope corresponding to base_id, or nullopt if not a scope.
 // On invalid scopes, prints a diagnostic and still returns the scope.
-static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
+static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
                              SemIR::ConstantId base_const_id)
     -> std::optional<LookupScope> {
   auto base_id = context.constant_values().GetInstId(base_const_id);
@@ -37,7 +37,7 @@ static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
                             "Member access into incomplete class `{0}`.",
                             std::string);
           return context.emitter().Build(
-              node_id, QualifiedExprInIncompleteClassScope,
+              loc_id, QualifiedExprInIncompleteClassScope,
               context.sem_ir().StringifyType(base_const_id));
         });
     auto& class_info = context.classes().Get(base_as_class->class_id);
@@ -51,7 +51,7 @@ static auto GetAsLookupScope(Context& context, Parse::NodeId node_id,
                             "Member access into undefined interface `{0}`.",
                             std::string);
           return context.emitter().Build(
-              node_id, QualifiedExprInUndefinedInterfaceScope,
+              loc_id, QualifiedExprInUndefinedInterfaceScope,
               context.sem_ir().StringifyType(base_const_id));
         });
     auto& interface_info =
@@ -205,7 +205,7 @@ static auto PerformImplLookup(Context& context, SemIR::LocId loc_id,
 // Performs a member name lookup into the specified scope, including performing
 // impl lookup if necessary. If the scope is invalid, assume an error has
 // already been diagnosed, and return BuiltinError.
-static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
+static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::InstId /*base_id*/,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
@@ -213,7 +213,7 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::BuiltinError};
   if (lookup_scope.name_scope_id.is_valid()) {
-    result = context.LookupQualifiedName(node_id, name_id, lookup_scope);
+    result = context.LookupQualifiedName(loc_id, name_id, lookup_scope);
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
@@ -227,15 +227,15 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   if (result.specific_id.is_valid() &&
       context.constant_values().Get(result.inst_id).is_symbolic()) {
     result.inst_id = context.AddInst<SemIR::SpecificConstant>(
-        node_id, {.type_id = type_id,
-                  .inst_id = result.inst_id,
-                  .specific_id = result.specific_id});
+        loc_id, {.type_id = type_id,
+                 .inst_id = result.inst_id,
+                 .specific_id = result.specific_id});
   }
 
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
   auto member_id = context.AddInst<SemIR::NameRef>(
-      node_id,
+      loc_id,
       {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
 
   // If member name lookup finds an associated entity name, and the scope is not
@@ -247,7 +247,7 @@ static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
   if (auto assoc_type =
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (ScopeNeedsImplLookup(context, lookup_scope)) {
-      member_id = PerformImplLookup(context, node_id, name_scope_const_id,
+      member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
                                     *assoc_type, member_id);
     }
   }
@@ -308,15 +308,15 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
-                         SemIR::InstId base_id, SemIR::NameId name_id)
-    -> SemIR::InstId {
+auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
+                         SemIR::InstId base_id,
+                         SemIR::NameId name_id) -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
-    if (auto lookup_scope = GetAsLookupScope(context, node_id, base_const_id)) {
-      return LookupMemberNameInScope(context, node_id, base_id, name_id,
+    if (auto lookup_scope = GetAsLookupScope(context, loc_id, base_const_id)) {
+      return LookupMemberNameInScope(context, loc_id, base_id, name_id,
                                      base_const_id, *lookup_scope);
     }
   }
@@ -339,7 +339,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
   // Find the scope corresponding to the base type.
-  auto lookup_scope = GetAsLookupScope(context, node_id, base_type_const_id);
+  auto lookup_scope = GetAsLookupScope(context, loc_id, base_type_const_id);
   if (!lookup_scope) {
     // The base type is not a name scope. Try some fallback options.
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
@@ -352,7 +352,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
           // TODO: Model this as producing a lookup result, and do instance
           // binding separately. Perhaps a struct type should be a name scope.
           return context.AddInst<SemIR::StructAccess>(
-              node_id, {.type_id = field.field_type_id,
+              loc_id, {.type_id = field.field_type_id,
                         .struct_id = base_id,
                         .index = SemIR::ElementIndex(i)});
         }
@@ -360,7 +360,7 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.",
                         SemIR::TypeId, SemIR::NameId);
-      context.emitter().Emit(node_id, QualifiedExprNameNotFound, base_type_id,
+      context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_type_id,
                              name_id);
       return SemIR::InstId::BuiltinError;
     }
@@ -369,17 +369,17 @@ auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "Type `{0}` does not support qualified expressions.",
                         SemIR::TypeId);
-      context.emitter().Emit(node_id, QualifiedExprUnsupported, base_type_id);
+      context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_type_id);
     }
     return SemIR::InstId::BuiltinError;
   }
 
   // Perform lookup into the base type.
-  auto member_id = LookupMemberNameInScope(context, node_id, base_id, name_id,
+  auto member_id = LookupMemberNameInScope(context, loc_id, base_id, name_id,
                                            base_type_const_id, *lookup_scope);
 
   // Perform instance binding if we found an instance member.
-  member_id = PerformInstanceBinding(context, node_id, base_id, member_id);
+  member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);
 
   return member_id;
 }
@@ -409,7 +409,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // If we didn't perform impl lookup or instance binding, that's an error
   // because the base expression is not used for anything.
-  if (member_id != SemIR::InstId::BuiltinError && member_id == member_expr_id) {
+  if (member_id == member_expr_id && member.type_id() != SemIR::TypeId::Error) {
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "Member name of type `{0}` in compound member access is "
                       "not an instance member or an interface member.",

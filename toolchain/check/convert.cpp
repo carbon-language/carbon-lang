@@ -966,7 +966,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         .interface_name = target.kind == ConversionTarget::ExplicitAs
                               ? llvm::StringLiteral("As")
                               : llvm::StringLiteral("ImplicitAs"),
-        // TODO: Pass destination type as interface argument.
+        .interface_args = {context.types().GetInstId(target.type_id)},
         .op_name = "Convert",
     };
     expr_id =

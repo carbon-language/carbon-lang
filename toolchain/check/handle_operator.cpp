@@ -94,23 +94,23 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorEqualEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"Eq", "Equal"});
+  return HandleBinaryOperator(context, node_id, {"Eq", {}, "Equal"});
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorExclaimEqualId node_id) -> bool {
-  return HandleBinaryOperator(context, node_id, {"Eq", "NotEqual"});
+  return HandleBinaryOperator(context, node_id, {"Eq", {}, "NotEqual"});
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorGreaterId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"Ordered", "Greater"});
+  return HandleBinaryOperator(context, node_id, {"Ordered", {}, "Greater"});
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorGreaterEqualId node_id) -> bool {
   return HandleBinaryOperator(context, node_id,
-                              {"Ordered", "GreaterOrEquivalent"});
+                              {"Ordered", {}, "GreaterOrEquivalent"});
 }
 
 auto HandleParseNode(Context& context,
@@ -126,13 +126,13 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorLessId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"Ordered", "Less"});
+  return HandleBinaryOperator(context, node_id, {"Ordered", {}, "Less"});
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorLessEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id,
-                              {"Ordered", "LessOrEquivalent"});
+                              {"Ordered", {}, "LessOrEquivalent"});
 }
 
 auto HandleParseNode(Context& context,

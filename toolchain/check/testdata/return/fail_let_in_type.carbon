@@ -17,10 +17,9 @@ fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+5]]:23: ERROR: Expected name `Core.ImplicitAs` implicitly referenced here to name an interface.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
-// CHECK:STDERR: fail_let_in_type.carbon: Name declared here.
 // CHECK:STDERR:
 fn HalfDozen() -> y { return 6; }
 
@@ -49,6 +48,16 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, <unexpected>.inst+54 [symbolic]
+// CHECK:STDOUT:   %.6: type = interface_type @ImplicitAs, @ImplicitAs(%y) [symbolic]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%y) [symbolic]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type.2 [symbolic]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, <unexpected>.inst+54 [symbolic]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, <unexpected>.inst+71 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
@@ -59,11 +68,16 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.3), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.4) = assoc_entity element0, <unexpected>.inst+54 [symbolic = %.3 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = <unexpected>.inst+42
-// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:     .Convert = <unexpected>.inst+43
+// CHECK:STDOUT:     witness = (<unexpected>.inst+44)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,13 +93,28 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic = %y (constants.%y)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%y) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%y) [symbolic = %Convert.type (constants.%Convert.type.2)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @HalfDozen.%.1 (%.6), @HalfDozen.%Convert.type (%Convert.type.2) [symbolic = %.2 (constants.%.7)]
+// CHECK:STDOUT:   %.3: @HalfDozen.%.2 (%.7) = assoc_entity element0, <unexpected>.inst+54 [symbolic = %.3 (constants.%.8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc25_30: i32 = int_literal 6 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc25_31: @HalfDozen.%y (%y) = converted %.loc25_30, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc24_30: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc24_31.1: init type = call constants.%ImplicitAs(constants.%y) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc24_31.2: @HalfDozen.%.2 (%.7) = specific_constant <unexpected>.inst+43, @ImplicitAs(constants.%y) [symbolic = %.3 (constants.%.8)]
+// CHECK:STDOUT:     %Convert.ref: @HalfDozen.%.2 (%.7) = name_ref Convert, %.loc24_31.2 [symbolic = %.3 (constants.%.8)]
+// CHECK:STDOUT:     %.loc24_31.3: @HalfDozen.%y (%y) = converted %.loc24_30, <error> [template = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HalfDozen(constants.%y) {
@@ -98,5 +127,31 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%y) {
+// CHECK:STDOUT:   %Dest => constants.%y
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.2 => constants.%.7
+// CHECK:STDOUT:   %.3 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@HalfDozen.%y) {
+// CHECK:STDOUT:   %Dest => constants.%y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

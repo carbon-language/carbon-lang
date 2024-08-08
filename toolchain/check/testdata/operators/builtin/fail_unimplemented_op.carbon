@@ -81,6 +81,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_10: i32 = int_literal 12 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_15: i32 = int_literal 34 [template = constants.%.3]
+// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.4 [template = constants.%.6]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

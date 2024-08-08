@@ -8,10 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_no_conversion.carbon
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:21: ERROR: Expected name `Core.As` implicitly referenced here to name an interface.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: ERROR: Cannot access member of interface As in type i32 that does not implement that interface.
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon: Name declared here.
 let n: (i32, i32) = 1 as (i32, i32);
 
 // CHECK:STDOUT: --- fail_no_conversion.carbon
@@ -30,10 +29,16 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.6: type = interface_type @As, @As(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.1: @As.%.1 (%.6) = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %Self.2: %.6 = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @As(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @As(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %.9: type = interface_type @As, @As(%.3) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @As(%.3) [template]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %.9, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.12: %.7 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,9 +57,10 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %As.type = import_ref Core//prelude/operators/as, inst+4, loaded [template = constants.%As]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.4: @As.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+27, loaded [symbolic = @As.%.3 (constants.%.12)]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+20, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+20, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -63,14 +69,14 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:     .n = @__global_init.%n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int.make_type_32.loc15_9: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc15_14: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_17.1: %.2 = tuple_literal (%int.make_type_32.loc15_9, %int.make_type_32.loc15_14)
-// CHECK:STDOUT:   %.loc15_17.2: type = value_of_initializer %int.make_type_32.loc15_9 [template = i32]
-// CHECK:STDOUT:   %.loc15_17.3: type = converted %int.make_type_32.loc15_9, %.loc15_17.2 [template = i32]
-// CHECK:STDOUT:   %.loc15_17.4: type = value_of_initializer %int.make_type_32.loc15_14 [template = i32]
-// CHECK:STDOUT:   %.loc15_17.5: type = converted %int.make_type_32.loc15_14, %.loc15_17.4 [template = i32]
-// CHECK:STDOUT:   %.loc15_17.6: type = converted %.loc15_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_14: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc14_17.1: %.2 = tuple_literal (%int.make_type_32.loc14_9, %int.make_type_32.loc14_14)
+// CHECK:STDOUT:   %.loc14_17.2: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.3: type = converted %int.make_type_32.loc14_9, %.loc14_17.2 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.4: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(constants.%Dest: type) {
@@ -79,9 +85,9 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @As, @As(%Dest) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @As(%Dest) [symbolic = %Convert.type (constants.%Convert.type)]
-// CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @As.%.1 (%.6), @As.%Convert.type (%Convert.type) [symbolic = %.2 (constants.%.7)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @As(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @As.%.1 (%.6), @As.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.7)]
 // CHECK:STDOUT:   %.3: @As.%.2 (%.7) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.3 (constants.%.8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -104,17 +110,20 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %int.make_type_32.loc15_27: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc15_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_35.1: %.2 = tuple_literal (%int.make_type_32.loc15_27, %int.make_type_32.loc15_32)
-// CHECK:STDOUT:   %.loc15_35.2: type = value_of_initializer %int.make_type_32.loc15_27 [template = i32]
-// CHECK:STDOUT:   %.loc15_35.3: type = converted %int.make_type_32.loc15_27, %.loc15_35.2 [template = i32]
-// CHECK:STDOUT:   %.loc15_35.4: type = value_of_initializer %int.make_type_32.loc15_32 [template = i32]
-// CHECK:STDOUT:   %.loc15_35.5: type = converted %int.make_type_32.loc15_32, %.loc15_35.4 [template = i32]
-// CHECK:STDOUT:   %.loc15_35.6: type = converted %.loc15_35.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_23.1: %.3 = converted %.loc15_21, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_23.2: i32 = tuple_access %.loc15_23.1, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc14_35.1: %.2 = tuple_literal (%int.make_type_32.loc14_27, %int.make_type_32.loc14_32)
+// CHECK:STDOUT:   %.loc14_35.2: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
+// CHECK:STDOUT:   %.loc14_35.3: type = converted %int.make_type_32.loc14_27, %.loc14_35.2 [template = i32]
+// CHECK:STDOUT:   %.loc14_35.4: type = value_of_initializer %int.make_type_32.loc14_32 [template = i32]
+// CHECK:STDOUT:   %.loc14_35.5: type = converted %int.make_type_32.loc14_32, %.loc14_35.4 [template = i32]
+// CHECK:STDOUT:   %.loc14_35.6: type = converted %.loc14_35.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_23.1: init type = call constants.%As(constants.%.3) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14_23.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%.3) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc14_23.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc14_23.3: %.3 = converted %.loc14_21, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14_23.4: i32 = tuple_access %.loc14_23.3, element0 [template = <error>]
 // CHECK:STDOUT:   %n: %.3 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -135,5 +144,17 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(constants.%.3) {
+// CHECK:STDOUT:   %Dest => constants.%.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.9
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.2 => constants.%.10
+// CHECK:STDOUT:   %.3 => constants.%.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
