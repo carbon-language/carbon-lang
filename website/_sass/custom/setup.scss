@@ -2,5 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// This is modifying the builtin scss, particularly:
+// https://github.com/just-the-docs/just-the-docs/blob/main/_sass/layout.scss
+
 // Prefer wider content.
 $content-width: 60rem;
