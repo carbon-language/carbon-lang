@@ -69,7 +69,7 @@ TEST(SourceGenTest, Ids) {
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t ids_size_sum = SumSizes(ids);
-  for ([[maybe_unused]] int i : llvm::seq(10)) {
+  for ([[maybe_unused]] int _ : llvm::seq(10)) {
     auto ids2 = gen.GetShuffledIds(1000);
     EXPECT_THAT(ids2, SizeIs(1000));
     // Should be (at least) a different shuffle of identifiers.

@@ -110,7 +110,7 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
   os << "//\n// Generating as an API file with dense declarations.\n";
 
   auto class_gen_state = GetClassGenState(num_classes, params.class_params);
-  for ([[maybe_unused]] int i : llvm::seq(num_classes)) {
+  for ([[maybe_unused]] int _ : llvm::seq(num_classes)) {
     os << "\n";
     GenerateClassDef(params.class_params, class_gen_state, os);
   }
@@ -182,7 +182,7 @@ auto SourceGen::GetSingleLengthIds(int length, int number)
 
   if (static_cast<int>(ids.size()) < number) {
     ids.reserve(number);
-    for (int _ : llvm::seq<int>(ids.size(), number)) {
+    for ([[maybe_unused]] int _ : llvm::seq<int>(ids.size(), number)) {
       auto id_storage =
           llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
                                     /*Size=*/length, /*Alignment=*/1)),
@@ -280,7 +280,7 @@ auto SourceGen::AppendUniqueIdentifiers(
     unique_ids.GrowForInsertCount(count - number);
 
     // Generate the needed number of identifiers.
-    for ([[maybe_unused]] int i : llvm::seq<int>(count, number)) {
+    for ([[maybe_unused]] int _ : llvm::seq<int>(count, number)) {
       // Allocate stable storage for the identifier so we can form stable
       // `StringRef`s to it.
       auto id_storage =
@@ -645,14 +645,14 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
 
   UniqueIdPopper unique_member_names(*this, state.member_names);
   llvm::ListSeparator line_sep("\n");
-  for ([[maybe_unused]] int i : llvm::seq(params.public_function_decls)) {
+  for ([[maybe_unused]] int _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
                          /*is_method=*/false,
                          state.public_function_param_counts.pop_back_val(),
                          /*indent=*/"  ", state.param_names, os);
   }
-  for ([[maybe_unused]] int i : llvm::seq(params.public_method_decls)) {
+  for ([[maybe_unused]] int _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
     GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
                          /*is_method=*/true,
@@ -666,14 +666,14 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     line_sep = llvm::ListSeparator("\n");
   }
 
-  for ([[maybe_unused]] int i : llvm::seq(params.private_function_decls)) {
+  for ([[maybe_unused]] int _ : llvm::seq(params.private_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
                          /*is_method=*/false,
                          state.private_function_param_counts.pop_back_val(),
                          /*indent=*/"  ", state.param_names, os);
   }
-  for ([[maybe_unused]] int i : llvm::seq(params.private_method_decls)) {
+  for ([[maybe_unused]] int _ : llvm::seq(params.private_method_decls)) {
     os << line_sep;
     GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
                          /*is_method=*/true,
@@ -681,7 +681,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
                          /*indent=*/"  ", state.param_names, os);
   }
   os << line_sep;
-  for ([[maybe_unused]] int i : llvm::seq(params.private_field_decls)) {
+  for ([[maybe_unused]] int _ : llvm::seq(params.private_field_decls)) {
     if (!IsCpp()) {
       os << "  private var " << unique_member_names.Pop() << ": i32;\n";
     } else {
