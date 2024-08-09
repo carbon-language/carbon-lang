@@ -273,8 +273,8 @@ class Context {
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType.
-  auto AsCompleteType(SemIR::TypeId type_id,
-                      Diagnoser diagnoser) -> SemIR::TypeId {
+  auto AsCompleteType(SemIR::TypeId type_id, Diagnoser diagnoser)
+      -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser) ? type_id
                                                  : SemIR::TypeId::Error;
   }

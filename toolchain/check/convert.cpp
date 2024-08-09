@@ -969,21 +969,19 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         .interface_args = {context.types().GetInstId(target.type_id)},
         .op_name = "Convert",
     };
-    expr_id =
-        BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
-          CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                            "Cannot implicitly convert from `{0}` to `{1}`.",
-                            SemIR::TypeId, SemIR::TypeId);
-          CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                            "Cannot convert from `{0}` to `{1}` with `as`.",
-                            SemIR::TypeId, SemIR::TypeId);
-          return context.emitter().Build(
-              loc_id,
-              target.kind == ConversionTarget::ExplicitAs
-                  ? ExplicitAsConversionFailure
-                  : ImplicitAsConversionFailure,
-              expr.type_id(), target.type_id);
-        });
+    expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
+      CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
+                        "Cannot implicitly convert from `{0}` to `{1}`.",
+                        SemIR::TypeId, SemIR::TypeId);
+      CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
+                        "Cannot convert from `{0}` to `{1}` with `as`.",
+                        SemIR::TypeId, SemIR::TypeId);
+      return context.emitter().Build(loc_id,
+                                     target.kind == ConversionTarget::ExplicitAs
+                                         ? ExplicitAsConversionFailure
+                                         : ImplicitAsConversionFailure,
+                                     expr.type_id(), target.type_id);
+    });
   }
 
   // Track that we performed a type conversion, if we did so.

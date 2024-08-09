@@ -320,8 +320,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
 }
 
 auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                                  LookupScope scope,
-                                  bool required) -> LookupResult {
+                                  LookupScope scope, bool required)
+    -> LookupResult {
   llvm::SmallVector<LookupScope> scopes = {scope};
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::Invalid};
@@ -403,10 +403,9 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
     }
   }
 
-  CARBON_DIAGNOSTIC(
-      CoreNotFound, Error,
-      "Package `Core` implicitly referenced here but not found.",
-      SemIR::NameId);
+  CARBON_DIAGNOSTIC(CoreNotFound, Error,
+                    "Package `Core` implicitly referenced here but not found.",
+                    SemIR::NameId);
   context.emitter().Emit(loc, CoreNotFound, core_name_id);
   return SemIR::NameScopeId::Invalid;
 }

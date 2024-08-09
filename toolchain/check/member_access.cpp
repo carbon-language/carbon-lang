@@ -287,8 +287,8 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
       auto index = GetClassElementIndex(context, element_id);
       auto access_id = context.AddInst<SemIR::ClassElementAccess>(
           loc_id, {.type_id = unbound_element_type.element_type_id,
-                    .base_id = base_id,
-                    .index = index});
+                   .base_id = base_id,
+                   .index = index});
       if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
               SemIR::ExprCategory::Value &&
           SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -306,9 +306,9 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
       if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
         return context.AddInst<SemIR::BoundMethod>(
             loc_id, {.type_id = context.GetBuiltinType(
-                          SemIR::BuiltinInstKind::BoundMethodType),
-                      .object_id = base_id,
-                      .function_id = member_id});
+                         SemIR::BuiltinInstKind::BoundMethodType),
+                     .object_id = base_id,
+                     .function_id = member_id});
       }
       [[fallthrough]];
     }
@@ -319,8 +319,8 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
 }
 
 auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
-                         SemIR::InstId base_id,
-                         SemIR::NameId name_id) -> SemIR::InstId {
+                         SemIR::InstId base_id, SemIR::NameId name_id)
+    -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
@@ -363,8 +363,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
           // binding separately. Perhaps a struct type should be a name scope.
           return context.AddInst<SemIR::StructAccess>(
               loc_id, {.type_id = field.field_type_id,
-                        .struct_id = base_id,
-                        .index = SemIR::ElementIndex(i)});
+                       .struct_id = base_id,
+                       .index = SemIR::ElementIndex(i)});
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,

@@ -17,10 +17,11 @@ namespace Carbon::Check {
 
 // Performs a call where the callee is the name of a generic class, such as
 // `Vector(i32)`.
-static auto PerformCallToGenericClass(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-    SemIR::ClassId class_id,
-    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId callee_id,
+                                      SemIR::ClassId class_id,
+                                      llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
 
   // TODO: Pass in information about the specific in which the generic class
@@ -41,10 +42,11 @@ static auto PerformCallToGenericClass(
 // Performs a call where the callee is the name of a generic interface, such as
 // `AddWith(i32)`.
 // TODO: Refactor with PerformCallToGenericClass.
-static auto PerformCallToGenericInterface(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-    SemIR::InterfaceId interface_id,
-    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+static auto PerformCallToGenericInterface(Context& context, SemIR::LocId loc_id,
+                                          SemIR::InstId callee_id,
+                                          SemIR::InterfaceId interface_id,
+                                          llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // TODO: Pass in information about the specific in which the generic interface

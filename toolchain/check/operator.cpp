@@ -37,8 +37,8 @@ auto BuildUnaryOperator(
   auto op_fn = GetOperatorOpFunction(context, loc_id, op);
 
   // Form `operand.(Op)`.
-  auto bound_op_id =
-      PerformCompoundMemberAccess(context, loc_id, operand_id, op_fn, missing_impl_diagnoser);
+  auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
+                                                 op_fn, missing_impl_diagnoser);
   if (bound_op_id == SemIR::InstId::BuiltinError) {
     return SemIR::InstId::BuiltinError;
   }
