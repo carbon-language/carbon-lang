@@ -99,6 +99,7 @@ static constexpr auto DeclIntroducers = [] {
   set(Lex::TokenKind::Interface, NodeKind::InterfaceIntroducer,
       State::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart, State::Namespace);
+  set(Lex::TokenKind::Require, NodeKind::RequireIntroducer, State::Require);
   set(Lex::TokenKind::Let, NodeKind::LetIntroducer, State::Let);
   set(Lex::TokenKind::Var, NodeKind::VariableIntroducer, State::VarAsDecl);
 

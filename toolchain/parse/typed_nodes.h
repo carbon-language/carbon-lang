@@ -410,6 +410,28 @@ struct BuiltinFunctionDefinition {
   Lex::SemiTokenIndex token;
 };
 
+// `require` nodes
+// -------------
+using RequireIntroducer =
+    LeafNode<NodeKind::RequireIntroducer, Lex::RequireTokenIndex>;
+
+struct Impls {
+  static constexpr auto Kind = NodeKind::Impls.Define(
+      {.category = NodeCategory::Decl, .child_count = 2});
+  AnyExprId lhs;
+  Lex::ImplsTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct Require {
+  static constexpr auto Kind =
+      NodeKind::Require.Define({.category = NodeCategory::Decl,
+                                .bracketed_by = RequireIntroducer::Kind});
+  RequireIntroducerId introducer;
+  ImplsId impls;
+  Lex::SemiTokenIndex token;
+};
+
 // `alias` nodes
 // -------------
 
