@@ -305,11 +305,15 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {
+  // Used when there is no associated location. Note, we should generally do our
+  // best to associate a location for diagnostics.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
   }
 
+  // Used when a location comes from some other place, and can't trivially be
+  // validated to match the InstT's expected node ID.
   template <typename InstT>
   static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
@@ -321,18 +325,11 @@ struct LocIdAndInst {
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
 
-  // If TypedNodeId is Parse::NodeId, allow construction with a LocId.
-  // TODO: This is somewhat historical due to fetching the NodeId from insts()
-  // for things like Temporary; should we require Untyped in these cases?
-  template <typename InstT>
-    requires(std::same_as<typename decltype(InstT::Kind)::TypedNodeId,
-                          Parse::NodeId>)
-  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
-
   // Imports can pass an ImportIRInstId instead of another location.
   template <typename InstT>
   LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
       : loc_id(import_ir_inst_id), inst(inst) {}
+
   LocId loc_id;
   Inst inst;
 
