@@ -50,6 +50,9 @@ class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+  // A function that forms a diagnostic for some kind of problem. The
+  // DiagnosticBuilder is returned rather than emitted so that the caller can
+  // add contextual notes as appropriate.
   using Diagnoser = llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
   // Stores references for work.

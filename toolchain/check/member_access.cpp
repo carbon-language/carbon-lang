@@ -168,19 +168,19 @@ static auto PerformImplLookup(
     if (missing_impl_diagnoser) {
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
                         "Type `{1}` does not implement interface `{0}`.",
-                        SemIR::NameId, std::string);
+                        SemIR::NameId, SemIR::TypeId);
       (*missing_impl_diagnoser)()
           .Note(loc_id, MissingImplInMemberAccessNote, interface.name_id,
-                context.sem_ir().StringifyType(type_const_id))
+                context.GetTypeIdForTypeConstant(type_const_id))
           .Emit();
     } else {
       CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
                         "Cannot access member of interface `{0}` in type `{1}` "
                         "that does not implement that interface.",
-                        SemIR::NameId, std::string);
+                        SemIR::NameId, SemIR::TypeId);
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,
                              interface.name_id,
-                             context.sem_ir().StringifyType(type_const_id));
+                             context.GetTypeIdForTypeConstant(type_const_id));
     }
     return SemIR::InstId::BuiltinError;
   }
