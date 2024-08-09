@@ -29,7 +29,10 @@ class Class(T:! type) {
 
 // TODO: The following should work.
 fn InitFromStructSpecific() -> i32 {
-  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+3]]:23: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+6]]:23: ERROR: Cannot implicitly convert from `i32` to `T`.
+  // CHECK:STDERR:   var v: Class(i32) = {.k = 0};
+  // CHECK:STDERR:                       ^~~~~~~~
+  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+3]]:23: Type `i32` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   var v: Class(i32) = {.k = 0};
   // CHECK:STDERR:                       ^~~~~~~~
   var v: Class(i32) = {.k = 0};
@@ -275,25 +278,25 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc13_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc13_15.2: type = converted %int.make_type_32, %.loc13_15.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_15.3: init type = call %Class.ref(%.loc13_15.2) [template = constants.%Class.3]
-// CHECK:STDOUT:   %.loc13_19.1: type = value_of_initializer %.loc13_15.3 [template = constants.%Class.3]
-// CHECK:STDOUT:   %.loc13_19.2: type = converted %.loc13_15.3, %.loc13_19.1 [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc16_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc16_15.2: type = converted %int.make_type_32, %.loc16_15.1 [template = i32]
+// CHECK:STDOUT:   %.loc16_15.3: init type = call %Class.ref(%.loc16_15.2) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc16_19.1: type = value_of_initializer %.loc16_15.3 [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc16_19.2: type = converted %.loc16_15.3, %.loc16_19.1 [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
 // CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc13_29: i32 = int_literal 0 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc13_30.1: %.7 = struct_literal (%.loc13_29)
-// CHECK:STDOUT:   %.loc13_30.2: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.11]
-// CHECK:STDOUT:   %.loc13_30.3: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc13_30.3 [symbolic = constants.%.13]
-// CHECK:STDOUT:   %.loc13_30.4: %T = converted %.loc13_29, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc16_29: i32 = int_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16_30.1: %.7 = struct_literal (%.loc16_29)
+// CHECK:STDOUT:   %.loc16_30.2: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.11]
+// CHECK:STDOUT:   %.loc16_30.3: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.13]
+// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc16_30.3 [symbolic = constants.%.13]
+// CHECK:STDOUT:   %.loc16_30.4: %T = converted %.loc16_29, <error> [template = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %v.ref: ref %Class.3 = name_ref v, %v
 // CHECK:STDOUT:   %k.ref: %.4 = name_ref k, @Class.%.loc5 [template = @Class.%.loc5]
-// CHECK:STDOUT:   %.loc14_11.1: ref i32 = class_element_access %v.ref, element0
-// CHECK:STDOUT:   %.loc14_11.2: i32 = bind_value %.loc14_11.1
-// CHECK:STDOUT:   return %.loc14_11.2
+// CHECK:STDOUT:   %.loc17_11.1: ref i32 = class_element_access %v.ref, element0
+// CHECK:STDOUT:   %.loc17_11.2: i32 = bind_value %.loc17_11.1
+// CHECK:STDOUT:   return %.loc17_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.8)) {

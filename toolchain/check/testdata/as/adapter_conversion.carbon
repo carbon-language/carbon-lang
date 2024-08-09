@@ -97,7 +97,10 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: ERROR: Cannot access member of interface As in type {.x: i32} that does not implement that interface.
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+6]]:12: ERROR: Cannot convert from `{.x: i32}` to `B` with `as`.
+// CHECK:STDERR: var b: B = {.x = 1} as B;
+// CHECK:STDERR:            ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: Type `{.x: i32}` does not implement interface `As`.
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
 var b: B = {.x = 1} as B;
@@ -633,15 +636,15 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_18: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_19.1: %.3 = struct_literal (%.loc18_18)
+// CHECK:STDOUT:   %.loc21_18: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc21_19.1: %.3 = struct_literal (%.loc21_18)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc18_21.1: init type = call constants.%As(constants.%B) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc18_21.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%B) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc18_21.2 [template = constants.%.11]
-// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc18_18) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc18_19.2: %.3 = converted %.loc18_19.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc18_21.3: %B = converted %.loc18_19.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_21.1: init type = call constants.%As(constants.%B) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc21_21.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%B) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc21_21.2 [template = constants.%.11]
+// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc21_18) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc21_19.2: %.3 = converted %.loc21_19.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc21_21.3: %B = converted %.loc21_19.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

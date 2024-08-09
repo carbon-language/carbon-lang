@@ -235,6 +235,7 @@ CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
+CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)

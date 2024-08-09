@@ -11,7 +11,10 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface ImplicitAs in type f64 that does not implement that interface.
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   var x: i32 = Foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3: Type `f64` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   var x: i32 = Foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   var x: i32 = Foo();
@@ -120,18 +123,18 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32, %.loc17_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc20_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc20_10.2: type = converted %int.make_type_32, %.loc20_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc17_21.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc17_21.2: %.8 = specific_constant imports.%import_ref.5, @ImplicitAs(i32) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_21.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc17_19.1: ref f64 = temporary_storage
-// CHECK:STDOUT:   %.loc17_19.2: ref f64 = temporary %.loc17_19.1, %Foo.call
-// CHECK:STDOUT:   %.loc17_21.3: i32 = converted %Foo.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20_21.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc20_21.2: %.8 = specific_constant imports.%import_ref.5, @ImplicitAs(i32) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc20_21.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc20_19.1: ref f64 = temporary_storage
+// CHECK:STDOUT:   %.loc20_19.2: ref f64 = temporary %.loc20_19.1, %Foo.call
+// CHECK:STDOUT:   %.loc20_21.3: i32 = converted %Foo.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

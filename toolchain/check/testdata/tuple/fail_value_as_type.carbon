@@ -8,7 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/fail_value_as_type.carbon
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: var x: (1, );
+// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var x: (1, );
 // CHECK:STDERR:        ^~~~~
 var x: (1, );
@@ -63,12 +66,12 @@ var x: (1, );
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_9: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_12.1: %.2 = tuple_literal (%.loc14_9)
-// CHECK:STDOUT:   %.loc14_12.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_12.3: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc14_12.3 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc14_12.4: type = converted %.loc14_9, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_12.1: %.2 = tuple_literal (%.loc17_9)
+// CHECK:STDOUT:   %.loc17_12.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_12.3: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_12.3 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17_12.4: type = converted %.loc17_9, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }

@@ -13,7 +13,10 @@
 library "not_type";
 
 class Bad {
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR:   adapt 100;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: Type `i32` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -31,7 +34,10 @@ fn Use(b: Bad) { b.F(); }
 library "extend_not_type";
 
 class Bad {
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR:   extend adapt 100;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: Type `i32` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -152,8 +158,8 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.1
+// CHECK:STDOUT:     %b.loc19_8.1: %Bad = param b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc19_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,11 +183,11 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc9_9: i32 = int_literal 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_12.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_12.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc9_12.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_12.3: type = converted %.loc9_9, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc12_9: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_12.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_12.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc12_12.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12_12.3: type = converted %.loc12_9, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -289,8 +295,8 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc13_8.1: %Bad = param b
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc13_8.1
+// CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b
+// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -314,11 +320,11 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_19.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_19.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc9_19.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_19.3: type = converted %.loc9_16, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 100 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_19.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_19.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc12_19.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12_19.3: type = converted %.loc12_16, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

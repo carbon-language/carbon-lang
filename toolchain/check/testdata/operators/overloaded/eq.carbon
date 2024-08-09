@@ -34,7 +34,7 @@ package FailNoImpl;
 class D {};
 
 fn TestEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface `Eq` in type `D` that does not implement that interface.
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -42,7 +42,7 @@ fn TestEqual(a: D, b: D) -> bool {
 }
 
 fn TestNotEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface `Eq` in type `D` that does not implement that interface.
   // CHECK:STDERR:   return a != b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -62,10 +62,13 @@ impl C as Core.Eq {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:10: ERROR: Cannot access member of interface ImplicitAs in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-8]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:10: Type `D` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR:   return a == b;
+  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:3: Initializing parameter 1 of function declared here.
   // CHECK:STDERR:   fn Equal[self: C](other: C) -> bool;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -73,7 +76,7 @@ fn TestRhsBad(a: C, b: D) -> bool {
 }
 
 fn TestLhsBad(a: D, b: C) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `Eq` in type `D` that does not implement that interface.
   // CHECK:STDERR:   return a != b;
   // CHECK:STDERR:          ^~~~~~
   return a != b;
@@ -521,15 +524,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestRhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLhsBad.decl: %TestLhsBad.type = fn_decl @TestLhsBad [template = constants.%TestLhsBad] {
-// CHECK:STDOUT:     %D.ref.loc23: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc23_15.1: %D = param a
-// CHECK:STDOUT:     @TestLhsBad.%a: %D = bind_name a, %a.loc23_15.1
-// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc23_21.1: %C = param b
-// CHECK:STDOUT:     @TestLhsBad.%b: %C = bind_name b, %b.loc23_21.1
-// CHECK:STDOUT:     %bool.make_type.loc23: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc23_30.1: type = value_of_initializer %bool.make_type.loc23 [template = bool]
-// CHECK:STDOUT:     %.loc23_30.2: type = converted %bool.make_type.loc23, %.loc23_30.1 [template = bool]
+// CHECK:STDOUT:     %D.ref.loc26: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %a.loc26_15.1: %D = param a
+// CHECK:STDOUT:     @TestLhsBad.%a: %D = bind_name a, %a.loc26_15.1
+// CHECK:STDOUT:     %C.ref.loc26: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc26_21.1: %C = param b
+// CHECK:STDOUT:     @TestLhsBad.%b: %C = bind_name b, %b.loc26_21.1
+// CHECK:STDOUT:     %bool.make_type.loc26: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc26_30.1: type = value_of_initializer %bool.make_type.loc26 [template = bool]
+// CHECK:STDOUT:     %.loc26_30.2: type = converted %bool.make_type.loc26, %.loc26_30.1 [template = bool]
 // CHECK:STDOUT:     @TestLhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -627,16 +630,16 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %Equal.ref: %.6 = name_ref Equal, imports.%import_ref.3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc20_12.1: %Equal.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %.loc20_12.2: <bound method> = bound_method %a.ref, %.loc20_12.1
-// CHECK:STDOUT:   %.loc20_12.3: init type = call constants.%ImplicitAs(constants.%C) [template = constants.%.11]
-// CHECK:STDOUT:   %.loc20_12.4: %.12 = specific_constant imports.%import_ref.11, @ImplicitAs(constants.%C) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc20_12.4 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc20_12.5: %C = converted %b.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %Equal.call: init bool = call %.loc20_12.2(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc20_16.1: bool = value_of_initializer %Equal.call [template = <error>]
-// CHECK:STDOUT:   %.loc20_16.2: bool = converted %Equal.call, %.loc20_16.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc20_16.2
+// CHECK:STDOUT:   %.loc23_12.1: %Equal.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %.loc23_12.2: <bound method> = bound_method %a.ref, %.loc23_12.1
+// CHECK:STDOUT:   %.loc23_12.3: init type = call constants.%ImplicitAs(constants.%C) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc23_12.4: %.12 = specific_constant imports.%import_ref.11, @ImplicitAs(constants.%C) [template = constants.%.13]
+// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc23_12.4 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc23_12.5: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %Equal.call: init bool = call %.loc23_12.2(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc23_16.1: bool = value_of_initializer %Equal.call [template = <error>]
+// CHECK:STDOUT:   %.loc23_16.2: bool = converted %Equal.call, %.loc23_16.1 [template = <error>]
+// CHECK:STDOUT:   return %.loc23_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.8)) {

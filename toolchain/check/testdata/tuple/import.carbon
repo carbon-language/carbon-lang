@@ -47,7 +47,10 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Cannot access member of interface ImplicitAs in type C that does not implement that interface.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
+// CHECK:STDERR: var c_bad: C((3, 4)) = F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: Type `C` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C((3, 4)) = F();
@@ -581,14 +584,14 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc7_15: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_19: %.3 = tuple_literal (%.loc7_15, %.loc7_18)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13.1: %.3 = converted %.loc7_19, %tuple [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc7_13.2: init type = call %C.ref(%.loc7_13.1) [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_13.2 [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_13.2, %.loc7_20.1 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc10_15: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_18: i32 = int_literal 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_19: %.3 = tuple_literal (%.loc10_15, %.loc10_18)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc10_15, %.loc10_18) [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc10_13.1: %.3 = converted %.loc10_19, %tuple [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc10_13.2: init type = call %C.ref(%.loc10_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc10_20.1: type = value_of_initializer %.loc10_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc10_20.2: type = converted %.loc10_13.2, %.loc10_20.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
@@ -636,13 +639,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc7_25.1: ref %C.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc7_25.1
-// CHECK:STDOUT:   %.loc7_27.1: init type = call constants.%ImplicitAs(constants.%C.3) [template = constants.%.13]
-// CHECK:STDOUT:   %.loc7_27.2: %.14 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%C.3) [template = constants.%.15]
-// CHECK:STDOUT:   %Convert.ref: %.14 = name_ref Convert, %.loc7_27.2 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc7_25.2: ref %C.4 = temporary %.loc7_25.1, %F.call
-// CHECK:STDOUT:   %.loc7_27.3: %C.3 = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc10_25.1: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc10_25.1
+// CHECK:STDOUT:   %.loc10_27.1: init type = call constants.%ImplicitAs(constants.%C.3) [template = constants.%.13]
+// CHECK:STDOUT:   %.loc10_27.2: %.14 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%C.3) [template = constants.%.15]
+// CHECK:STDOUT:   %Convert.ref: %.14 = name_ref Convert, %.loc10_27.2 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc10_25.2: ref %C.4 = temporary %.loc10_25.1, %F.call
+// CHECK:STDOUT:   %.loc10_27.3: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

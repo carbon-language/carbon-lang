@@ -8,7 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_non_type_as_type.carbon
 
-// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:1: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: var x: type = 42;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:1: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var x: type = 42;
@@ -95,11 +98,11 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 42 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_17.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_17.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc14_17.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_17.3: type = converted %.loc14_15, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_15: i32 = int_literal 42 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_17.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_17.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc17_17.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc17_17.3: type = converted %.loc17_15, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

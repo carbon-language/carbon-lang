@@ -19,7 +19,10 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `i32` to `T`.
+// CHECK:STDERR: let a: T = 0;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 let a: T = 0;
@@ -153,11 +156,11 @@ let a: T = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_12: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_13.1: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.6]
-// CHECK:STDOUT:   %.loc8_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc8_13.2 [symbolic = constants.%.8]
-// CHECK:STDOUT:   %.loc8_13.3: %T = converted %.loc8_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_13.1: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.6]
+// CHECK:STDOUT:   %.loc11_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc11_13.2 [symbolic = constants.%.8]
+// CHECK:STDOUT:   %.loc11_13.3: %T = converted %.loc11_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a: %T = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

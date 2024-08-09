@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_tuple_non_int_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_tuple_non_int_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface ImplicitAs in type f64 that does not implement that interface.
+// CHECK:STDERR: fail_tuple_non_int_indexing.carbon:[[@LINE+6]]:16: ERROR: Cannot implicitly convert from `f64` to `i32`.
+// CHECK:STDERR: var b: i32 = a[2.6];
+// CHECK:STDERR:                ^~~
+// CHECK:STDERR: fail_tuple_non_int_indexing.carbon:[[@LINE+3]]:16: Type `f64` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                ^~~
 var b: i32 = a[2.6];
@@ -84,9 +87,9 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc11_17.6: type = converted %.loc11_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
 // CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
-// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc18_8.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
+// CHECK:STDOUT:   %.loc18_8.2: type = converted %int.make_type_32.loc18, %.loc18_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -133,12 +136,12 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc11_28: init %.3 = converted %.loc11_27.1, %.loc11_27.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc15_16.1: f64 = float_literal 2.6000000000000001 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_16.2: init type = call constants.%ImplicitAs(i32) [template = constants.%.11]
-// CHECK:STDOUT:   %.loc15_16.3: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc15_16.3 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc15_16.4: i32 = converted %.loc15_16.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_19: ref <error> = tuple_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_16.1: f64 = float_literal 2.6000000000000001 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_16.2: init type = call constants.%ImplicitAs(i32) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc18_16.3: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.13]
+// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc18_16.3 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc18_16.4: i32 = converted %.loc18_16.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_19: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

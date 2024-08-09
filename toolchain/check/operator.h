@@ -17,23 +17,24 @@ struct Operator {
   llvm::StringLiteral op_name = "Op";
 };
 
-// A function that is called to diagnose a failure to build a call to an
-// operator interface.
-using BadOperatorDiagnoser =
-    std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>;
-
 // Checks and builds SemIR for a unary operator expression. For example,
-// `$operand` or `operand$`.
-auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
-                        SemIR::InstId operand_id,
-                        BadOperatorDiagnoser diagnoser = std::nullopt)
+// `$operand` or `operand$`. If specified, `missing_impl_diagnoser` is used to
+// build a custom error diagnostic for the case where impl lookup for the
+// operator fails.
+auto BuildUnaryOperator(
+    Context& context, SemIR::LocId loc_id, Operator op,
+    SemIR::InstId operand_id,
+    std::optional<Context::Diagnoser> missing_impl_diagnoser = std::nullopt)
     -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
-// `lhs_id $ rhs_id`.
-auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
-                         SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         BadOperatorDiagnoser diagnoser = std::nullopt)
+// `lhs_id $ rhs_id`. If specified, `missing_impl_diagnoser` is used to build a
+// custom error diagnostic for the case where impl lookup for the operator
+// fails.
+auto BuildBinaryOperator(
+    Context& context, SemIR::LocId loc_id, Operator op, SemIR::InstId lhs_id,
+    SemIR::InstId rhs_id,
+    std::optional<Context::Diagnoser> missing_impl_diagnoser = std::nullopt)
     -> SemIR::InstId;
 
 }  // namespace Carbon::Check

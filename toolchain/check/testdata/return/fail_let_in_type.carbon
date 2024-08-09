@@ -17,7 +17,10 @@ fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:23: ERROR: Cannot implicitly convert from `i32` to `y`.
+// CHECK:STDERR: fn HalfDozen() -> y { return 6; }
+// CHECK:STDERR:                       ^~~~~~~~~
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
 // CHECK:STDERR:
@@ -100,11 +103,11 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc24_30: i32 = int_literal 6 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc24_31.1: init type = call constants.%ImplicitAs(constants.%y) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:     %.loc24_31.2: @HalfDozen.%.2 (%.7) = specific_constant <unexpected>.inst+43, @ImplicitAs(constants.%y) [symbolic = %.3 (constants.%.8)]
-// CHECK:STDOUT:     %Convert.ref: @HalfDozen.%.2 (%.7) = name_ref Convert, %.loc24_31.2 [symbolic = %.3 (constants.%.8)]
-// CHECK:STDOUT:     %.loc24_31.3: @HalfDozen.%y (%y) = converted %.loc24_30, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc27_30: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc27_31.1: init type = call constants.%ImplicitAs(constants.%y) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc27_31.2: @HalfDozen.%.2 (%.7) = specific_constant <unexpected>.inst+43, @ImplicitAs(constants.%y) [symbolic = %.3 (constants.%.8)]
+// CHECK:STDOUT:     %Convert.ref: @HalfDozen.%.2 (%.7) = name_ref Convert, %.loc27_31.2 [symbolic = %.3 (constants.%.8)]
+// CHECK:STDOUT:     %.loc27_31.3: @HalfDozen.%y (%y) = converted %.loc27_30, <error> [template = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

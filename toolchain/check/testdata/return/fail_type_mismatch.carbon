@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_type_mismatch.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface ImplicitAs in type f64 that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   return 1.0;
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: Type `f64` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
   return 1.0;
@@ -101,11 +104,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_10: f64 = float_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_13.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc15_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc15_13.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_13.3: i32 = converted %.loc15_10, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_10: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_13.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_13.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc18_13.3: i32 = converted %.loc18_10, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

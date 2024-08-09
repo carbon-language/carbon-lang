@@ -11,10 +11,13 @@
 fn G(a: i32) {}
 
 fn F() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:3: ERROR: Cannot access member of interface ImplicitAs in type f64 that does not implement that interface.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+9]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:3: Type `f64` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR:   G(1.0);
+  // CHECK:STDERR:   ^~
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn G(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~
   G(1.0);
@@ -117,11 +120,11 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc20_5: f64 = float_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_4.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc20_4.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc20_4.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc20_4.3: i32 = converted %.loc20_5, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_5: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc23_4.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc23_4.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc23_4.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc23_4.3: i32 = converted %.loc23_5, <error> [template = <error>]
 // CHECK:STDOUT:   %G.call: init %.1 = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

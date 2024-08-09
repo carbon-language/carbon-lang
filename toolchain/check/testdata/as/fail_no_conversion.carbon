@@ -8,7 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_no_conversion.carbon
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: ERROR: Cannot access member of interface As in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:21: ERROR: Cannot convert from `i32` to `(i32, i32)` with `as`.
+// CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: Type `i32` does not implement interface `As`.
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
 let n: (i32, i32) = 1 as (i32, i32);
@@ -69,14 +72,14 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:     .n = @__global_init.%n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc14_14: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_17.1: %.2 = tuple_literal (%int.make_type_32.loc14_9, %int.make_type_32.loc14_14)
-// CHECK:STDOUT:   %.loc14_17.2: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
-// CHECK:STDOUT:   %.loc14_17.3: type = converted %int.make_type_32.loc14_9, %.loc14_17.2 [template = i32]
-// CHECK:STDOUT:   %.loc14_17.4: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
-// CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
-// CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc17_9: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc17_14: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc17_17.1: %.2 = tuple_literal (%int.make_type_32.loc17_9, %int.make_type_32.loc17_14)
+// CHECK:STDOUT:   %.loc17_17.2: type = value_of_initializer %int.make_type_32.loc17_9 [template = i32]
+// CHECK:STDOUT:   %.loc17_17.3: type = converted %int.make_type_32.loc17_9, %.loc17_17.2 [template = i32]
+// CHECK:STDOUT:   %.loc17_17.4: type = value_of_initializer %int.make_type_32.loc17_14 [template = i32]
+// CHECK:STDOUT:   %.loc17_17.5: type = converted %int.make_type_32.loc17_14, %.loc17_17.4 [template = i32]
+// CHECK:STDOUT:   %.loc17_17.6: type = converted %.loc17_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(constants.%Dest: type) {
@@ -110,20 +113,20 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc14_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_35.1: %.2 = tuple_literal (%int.make_type_32.loc14_27, %int.make_type_32.loc14_32)
-// CHECK:STDOUT:   %.loc14_35.2: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
-// CHECK:STDOUT:   %.loc14_35.3: type = converted %int.make_type_32.loc14_27, %.loc14_35.2 [template = i32]
-// CHECK:STDOUT:   %.loc14_35.4: type = value_of_initializer %int.make_type_32.loc14_32 [template = i32]
-// CHECK:STDOUT:   %.loc14_35.5: type = converted %int.make_type_32.loc14_32, %.loc14_35.4 [template = i32]
-// CHECK:STDOUT:   %.loc14_35.6: type = converted %.loc14_35.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_23.1: init type = call constants.%As(constants.%.3) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc14_23.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%.3) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc14_23.2 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc14_23.3: %.3 = converted %.loc14_21, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc14_23.4: i32 = tuple_access %.loc14_23.3, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.make_type_32.loc17_27: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc17_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc17_35.1: %.2 = tuple_literal (%int.make_type_32.loc17_27, %int.make_type_32.loc17_32)
+// CHECK:STDOUT:   %.loc17_35.2: type = value_of_initializer %int.make_type_32.loc17_27 [template = i32]
+// CHECK:STDOUT:   %.loc17_35.3: type = converted %int.make_type_32.loc17_27, %.loc17_35.2 [template = i32]
+// CHECK:STDOUT:   %.loc17_35.4: type = value_of_initializer %int.make_type_32.loc17_32 [template = i32]
+// CHECK:STDOUT:   %.loc17_35.5: type = converted %int.make_type_32.loc17_32, %.loc17_35.4 [template = i32]
+// CHECK:STDOUT:   %.loc17_35.6: type = converted %.loc17_35.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc17_23.1: init type = call constants.%As(constants.%.3) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17_23.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%.3) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc17_23.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc17_23.3: %.3 = converted %.loc17_21, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.4: i32 = tuple_access %.loc17_23.3, element0 [template = <error>]
 // CHECK:STDOUT:   %n: %.3 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

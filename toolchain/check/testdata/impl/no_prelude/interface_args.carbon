@@ -36,7 +36,7 @@ fn G(a: A) { a.(Action(B).Op)(); }
 
 impl library "action";
 
-// CHECK:STDERR: fail_action.impl.carbon:[[@LINE+4]]:14: ERROR: Cannot access member of interface Action in type A that does not implement that interface.
+// CHECK:STDERR: fail_action.impl.carbon:[[@LINE+4]]:14: ERROR: Cannot access member of interface `Action` in type `A` that does not implement that interface.
 // CHECK:STDERR: fn G(a: A) { a.(Action(C).Op)(); }
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -72,7 +72,7 @@ impl library "factory";
 class C {}
 
 fn MakeC(a: A) -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Factory in type A that does not implement that interface.
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `Factory` in type `A` that does not implement that interface.
   // CHECK:STDERR:   return a.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   return a.(Factory(C).Make)();

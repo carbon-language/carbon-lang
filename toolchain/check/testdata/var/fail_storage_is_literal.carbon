@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR:   var x: 1 = 1;
+  // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: Type `i32` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
   var x: 1 = 1;
@@ -90,14 +93,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_10.1: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_10.2: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc15_10.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc15_10.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_10.4: type = converted %.loc15_10.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_10.1: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_10.2: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_10.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_10.3 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc18_10.4: type = converted %.loc18_10.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_14: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

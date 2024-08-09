@@ -8,7 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_value_as_type.carbon
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: ERROR: Cannot access member of interface ImplicitAs in type {.a: i32} that does not implement that interface.
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: ERROR: Cannot implicitly convert from `{.a: i32}` to `type`.
+// CHECK:STDERR: var x: {.a = 1};
+// CHECK:STDERR:        ^~~~~~~~
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: Type `{.a: i32}` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:        ^~~~~~~~
 var x: {.a = 1};
@@ -64,14 +67,14 @@ var x: {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_15.1: %.2 = struct_literal (%.loc14_14)
-// CHECK:STDOUT:   %.loc14_15.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_15.3: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc14_15.3 [template = constants.%.9]
-// CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc14_14) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc14_15.4: %.2 = converted %.loc14_15.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc14_15.5: type = converted %.loc14_15.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_14: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_15.1: %.2 = struct_literal (%.loc17_14)
+// CHECK:STDOUT:   %.loc17_15.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_15.3: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_15.3 [template = constants.%.9]
+// CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc17_14) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_15.4: %.2 = converted %.loc17_15.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_15.5: type = converted %.loc17_15.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }

@@ -21,7 +21,10 @@ class B2 {
   var b: i32;
 }
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:38: ERROR: Cannot access member of interface ImplicitAs in type B2* that does not implement that interface.
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+7]]:38: ERROR: Cannot implicitly convert from `B2*` to `A1*`.
+// CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
+// CHECK:STDERR:                                      ^~~~~~~~~
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:38: Type `B2*` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                      ^~~~~~~~~
 // CHECK:STDERR:
@@ -29,7 +32,10 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
 class Incomplete;
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47: ERROR: Cannot access member of interface ImplicitAs in type Incomplete* that does not implement that interface.
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+6]]:47: ERROR: Cannot implicitly convert from `Incomplete*` to `A2*`.
+// CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
+// CHECK:STDERR:                                               ^~~~~~~~~
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47: Type `Incomplete*` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
 fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
@@ -123,21 +129,21 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
 // CHECK:STDOUT:   %ConvertUnrelated.decl: %ConvertUnrelated.type = fn_decl @ConvertUnrelated [template = constants.%ConvertUnrelated] {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, %B2.decl [template = constants.%B2]
-// CHECK:STDOUT:     %.loc28_26: type = ptr_type %B2 [template = constants.%.9]
-// CHECK:STDOUT:     %p.loc28_21.1: %.9 = param p
-// CHECK:STDOUT:     @ConvertUnrelated.%p: %.9 = bind_name p, %p.loc28_21.1
+// CHECK:STDOUT:     %.loc31_26: type = ptr_type %B2 [template = constants.%.9]
+// CHECK:STDOUT:     %p.loc31_21.1: %.9 = param p
+// CHECK:STDOUT:     @ConvertUnrelated.%p: %.9 = bind_name p, %p.loc31_21.1
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, %A1.decl [template = constants.%A1]
-// CHECK:STDOUT:     %.loc28_34: type = ptr_type %A1 [template = constants.%.10]
+// CHECK:STDOUT:     %.loc31_34: type = ptr_type %A1 [template = constants.%.10]
 // CHECK:STDOUT:     @ConvertUnrelated.%return: ref %.10 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc35_35: type = ptr_type %Incomplete [template = constants.%.21]
-// CHECK:STDOUT:     %p.loc35_22.1: %.21 = param p
-// CHECK:STDOUT:     @ConvertIncomplete.%p: %.21 = bind_name p, %p.loc35_22.1
+// CHECK:STDOUT:     %.loc41_35: type = ptr_type %Incomplete [template = constants.%.21]
+// CHECK:STDOUT:     %p.loc41_22.1: %.21 = param p
+// CHECK:STDOUT:     @ConvertIncomplete.%p: %.21 = bind_name p, %p.loc41_22.1
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, %A2.decl [template = constants.%A2]
-// CHECK:STDOUT:     %.loc35_43: type = ptr_type %A2 [template = constants.%.22]
+// CHECK:STDOUT:     %.loc41_43: type = ptr_type %A2 [template = constants.%.22]
 // CHECK:STDOUT:     @ConvertIncomplete.%return: ref %.22 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -205,10 +211,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertUnrelated(%p: %.9) -> %.10 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.9 = name_ref p, %p
-// CHECK:STDOUT:   %.loc28_46.1: init type = call constants.%ImplicitAs(constants.%.10) [template = constants.%.17]
-// CHECK:STDOUT:   %.loc28_46.2: %.18 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.10) [template = constants.%.19]
-// CHECK:STDOUT:   %Convert.ref: %.18 = name_ref Convert, %.loc28_46.2 [template = constants.%.19]
-// CHECK:STDOUT:   %.loc28_46.3: %.10 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc31_46.1: init type = call constants.%ImplicitAs(constants.%.10) [template = constants.%.17]
+// CHECK:STDOUT:   %.loc31_46.2: %.18 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.10) [template = constants.%.19]
+// CHECK:STDOUT:   %Convert.ref: %.18 = name_ref Convert, %.loc31_46.2 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc31_46.3: %.10 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,10 +229,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertIncomplete(%p: %.21) -> %.22 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.21 = name_ref p, %p
-// CHECK:STDOUT:   %.loc35_55.1: init type = call constants.%ImplicitAs(constants.%.22) [template = constants.%.23]
-// CHECK:STDOUT:   %.loc35_55.2: %.24 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.22) [template = constants.%.25]
-// CHECK:STDOUT:   %Convert.ref: %.24 = name_ref Convert, %.loc35_55.2 [template = constants.%.25]
-// CHECK:STDOUT:   %.loc35_55.3: %.22 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc41_55.1: init type = call constants.%ImplicitAs(constants.%.22) [template = constants.%.23]
+// CHECK:STDOUT:   %.loc41_55.2: %.24 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.22) [template = constants.%.25]
+// CHECK:STDOUT:   %Convert.ref: %.24 = name_ref Convert, %.loc41_55.2 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc41_55.3: %.22 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

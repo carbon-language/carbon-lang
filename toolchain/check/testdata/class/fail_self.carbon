@@ -43,10 +43,13 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: ERROR: Cannot access member of interface ImplicitAs in type WrongSelf that does not implement that interface.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: ERROR: Cannot implicitly convert from `WrongSelf` to `Class`.
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: Type `WrongSelf` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR:   ws.F();
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~
   ws.F();
@@ -201,12 +204,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc52_5: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc52_7.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc52_7.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc52_7.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc52_7.3: %Class = converted %ws.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc52_5(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc55_5: <bound method> = bound_method %ws.ref, %F.ref
+// CHECK:STDOUT:   %.loc55_7.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc55_7.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc55_7.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc55_7.3: %Class = converted %ws.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc55_5(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

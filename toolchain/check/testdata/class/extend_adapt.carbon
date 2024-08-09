@@ -48,10 +48,13 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: ERROR: Cannot access member of interface ImplicitAs in type SomeClassAdapter that does not implement that interface.
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: ERROR: Cannot implicitly convert from `SomeClassAdapter` to `SomeClass`.
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-11]]:8: Initializing `self` parameter of method declared here.
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: Type `SomeClassAdapter` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR:   a.F();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
@@ -72,7 +75,10 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface ImplicitAs in type SomeClassAdapter that does not implement that interface.
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+7]]:10: ERROR: Cannot implicitly convert from `SomeClassAdapter` to `SomeClass`.
+  // CHECK:STDERR:   return a.b;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: Type `SomeClassAdapter` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -319,12 +325,12 @@ class StructAdapter {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc20_4: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc20_6.1: init type = call constants.%ImplicitAs(constants.%SomeClass) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc20_6.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%SomeClass) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc20_6.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc20_6.3: %SomeClass = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc20_4(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc23_4: <bound method> = bound_method %a.ref, %F.ref
+// CHECK:STDOUT:   %.loc23_6.1: init type = call constants.%ImplicitAs(constants.%SomeClass) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc23_6.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%SomeClass) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc23_6.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc23_6.3: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc23_4(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -490,11 +496,11 @@ class StructAdapter {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
-// CHECK:STDOUT:   %.loc18_11.1: init type = call constants.%ImplicitAs(constants.%SomeClass) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc18_11.2: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%SomeClass) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc18_11.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc18_11.3: %SomeClass = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_11.4: i32 = class_element_access <error>, element1 [template = <error>]
+// CHECK:STDOUT:   %.loc21_11.1: init type = call constants.%ImplicitAs(constants.%SomeClass) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc21_11.2: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%SomeClass) [template = constants.%.10]
+// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc21_11.2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc21_11.3: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_11.4: i32 = class_element_access <error>, element1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

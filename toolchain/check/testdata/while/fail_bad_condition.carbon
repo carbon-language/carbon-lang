@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: ERROR: Cannot access member of interface ImplicitAs in type String that does not implement that interface.
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `String` to `bool`.
+  // CHECK:STDERR:   while ("Hello") {}
+  // CHECK:STDERR:         ^~~~~~~~~
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: Type `String` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}
@@ -94,11 +97,11 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc15_10: String = string_literal "Hello" [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_17.1: init type = call constants.%ImplicitAs(bool) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_17.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(bool) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc15_17.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc15_17.3: bool = converted %.loc15_10, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_10: String = string_literal "Hello" [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_17.1: init type = call constants.%ImplicitAs(bool) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_17.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(bool) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc18_17.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18_17.3: bool = converted %.loc18_10, <error> [template = <error>]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

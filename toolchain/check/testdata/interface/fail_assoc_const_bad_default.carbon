@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR:   let T:! type = 42;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: Type `i32` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   let T:! type = 42;
@@ -73,17 +76,17 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
-// CHECK:STDOUT:   %.loc15_18: i32 = int_literal 42 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_20.1: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_20.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc15_20.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc15_20.3: type = converted %.loc15_18, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_18: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_20.1: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_20.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc18_20.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18_20.3: type = converted %.loc18_18, <error> [template = <error>]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc15_20.4: %.11 = assoc_entity element0, %T [template = constants.%.12]
+// CHECK:STDOUT:   %.loc18_20.4: %.11 = assoc_entity element0, %T [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc15_20.4
+// CHECK:STDOUT:   .T = %.loc18_20.4
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

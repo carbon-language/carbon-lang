@@ -8,7 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_not_type.carbon
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+6]]:19: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: let n: i32 = 1 as 2;
+// CHECK:STDERR:                   ^
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
 let n: i32 = 1 as 2;
@@ -68,8 +71,8 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc14_8.2: type = converted %int.make_type_32, %.loc14_8.1 [template = i32]
+// CHECK:STDOUT:   %.loc17_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc17_8.2: type = converted %int.make_type_32, %.loc17_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
@@ -103,12 +106,12 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_19.1: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_19.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_19.3: %.8 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc14_19.3 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc14_19.4: type = converted %.loc14_19.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc17_19.1: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc17_19.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_19.3: %.8 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_19.3 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17_19.4: type = converted %.loc17_19.1, <error> [template = <error>]
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

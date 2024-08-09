@@ -10,7 +10,10 @@
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface ImplicitAs in type f64 that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   a = 5.6;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:3: Type `f64` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   a = 5.6;
   // CHECK:STDERR:   ^~~~~~~
   a = 5.6;
@@ -104,11 +107,11 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc16_7: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc16_5.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc16_5.2: %.8 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc16_5.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc16_5.3: i32 = converted %.loc16_7, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_7: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc19_5.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc19_5.2: %.8 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.9]
+// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc19_5.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc19_5.3: i32 = converted %.loc19_7, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

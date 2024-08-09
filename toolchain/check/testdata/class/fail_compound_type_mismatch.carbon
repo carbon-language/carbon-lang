@@ -17,7 +17,10 @@ class B {
 }
 
 fn AccessBInA(a: A) -> i32 {
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface ImplicitAs in type A that does not implement that interface.
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `A` to `B`.
+  // CHECK:STDERR:   return a.(B.b);
+  // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10: Type `A` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
   return a.(B.b);
@@ -148,11 +151,11 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %.4 = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
-// CHECK:STDOUT:   %.loc23_11.1: init type = call constants.%ImplicitAs(constants.%B) [template = constants.%.11]
-// CHECK:STDOUT:   %.loc23_11.2: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%B) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc23_11.2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc23_11.3: %B = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc23_11.4: i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc26_11.1: init type = call constants.%ImplicitAs(constants.%B) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc26_11.2: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%B) [template = constants.%.13]
+// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc26_11.2 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc26_11.3: %B = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc26_11.4: i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

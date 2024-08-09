@@ -13,7 +13,10 @@
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface ImplicitAs in type const i32** that does not implement that interface.
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `const i32**` to `i32**`.
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: Type `const i32**` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   return p;
@@ -121,10 +124,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: fn @G(%p: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc19_11.1: init type = call constants.%ImplicitAs(constants.%.6) [template = constants.%.10]
-// CHECK:STDOUT:   %.loc19_11.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.6) [template = constants.%.12]
-// CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc19_11.2 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc19_11.3: %.6 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22_11.1: init type = call constants.%ImplicitAs(constants.%.6) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc22_11.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.6) [template = constants.%.12]
+// CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc22_11.2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc22_11.3: %.6 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

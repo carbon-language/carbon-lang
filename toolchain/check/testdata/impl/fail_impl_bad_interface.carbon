@@ -8,11 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_interface.carbon
 
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+7]]:1: ERROR: Semantics TODO: `impl as non-interface`.
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+10]]:1: ERROR: Semantics TODO: `impl as non-interface`.
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: ERROR: Cannot access member of interface ImplicitAs in type bool that does not implement that interface.
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+6]]:13: ERROR: Cannot implicitly convert from `bool` to `type`.
+// CHECK:STDERR: impl i32 as false {}
+// CHECK:STDERR:             ^~~~~
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: Type `bool` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR:             ^~~~~
 impl i32 as false {}
@@ -69,15 +72,15 @@ impl i32 as false {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc18_13.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_13.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc18_13.3: type = converted %.loc18_13.4, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_13.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc21_13.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc21_13.3: type = converted %.loc21_13.4, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc18_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc18_6.2: type = converted %int.make_type_32, %.loc18_6.1 [template = i32]
-// CHECK:STDOUT:     %.loc18_13.4: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc21_6.2: type = converted %int.make_type_32, %.loc21_6.1 [template = i32]
+// CHECK:STDOUT:     %.loc21_13.4: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

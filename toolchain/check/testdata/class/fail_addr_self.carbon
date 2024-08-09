@@ -35,10 +35,13 @@ fn F(c: Class, p: Class*) {
   // This call is OK.
   (*p).F();
 
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Cannot access member of interface ImplicitAs in type Class* that does not implement that interface.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+9]]:3: ERROR: Cannot implicitly convert from `Class*` to `Class`.
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-28]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: Type `Class*` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR:   (*p).G();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-31]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
   (*p).G();
@@ -175,16 +178,16 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc36_7: <bound method> = bound_method %.loc36_4.1, %F.ref.loc36
 // CHECK:STDOUT:   %.loc36_4.2: %.1 = addr_of %.loc36_4.1
 // CHECK:STDOUT:   %F.call.loc36: init %.2 = call %.loc36_7(%.loc36_4.2)
-// CHECK:STDOUT:   %p.ref.loc44: %.1 = name_ref p, %p
-// CHECK:STDOUT:   %.loc44_4.1: ref %Class = deref %p.ref.loc44
-// CHECK:STDOUT:   %G.ref.loc44: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc44_7: <bound method> = bound_method %.loc44_4.1, %G.ref.loc44
-// CHECK:STDOUT:   %.loc44_4.2: %.1 = addr_of %.loc44_4.1
-// CHECK:STDOUT:   %.loc44_9.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc44_9.2: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc44_9.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc44_9.3: %Class = converted %.loc44_4.2, <error> [template = <error>]
-// CHECK:STDOUT:   %G.call.loc44: init %.2 = call %.loc44_7(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %p.ref.loc47: %.1 = name_ref p, %p
+// CHECK:STDOUT:   %.loc47_4.1: ref %Class = deref %p.ref.loc47
+// CHECK:STDOUT:   %G.ref.loc47: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
+// CHECK:STDOUT:   %.loc47_7: <bound method> = bound_method %.loc47_4.1, %G.ref.loc47
+// CHECK:STDOUT:   %.loc47_4.2: %.1 = addr_of %.loc47_4.1
+// CHECK:STDOUT:   %.loc47_9.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc47_9.2: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.10]
+// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc47_9.2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc47_9.3: %Class = converted %.loc47_4.2, <error> [template = <error>]
+// CHECK:STDOUT:   %G.call.loc47: init %.2 = call %.loc47_7(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

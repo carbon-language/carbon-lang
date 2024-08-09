@@ -605,10 +605,7 @@ namespace {
 //   complete.
 class TypeCompleter {
  public:
-  TypeCompleter(
-      Context& context,
-      std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>
-          diagnoser)
+  TypeCompleter(Context& context, std::optional<Context::Diagnoser> diagnoser)
       : context_(context), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
@@ -991,22 +988,17 @@ class TypeCompleter {
 
   Context& context_;
   llvm::SmallVector<WorkItem> work_list_;
-  std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>
-      diagnoser_;
+  std::optional<Context::Diagnoser> diagnoser_;
 };
 }  // namespace
 
-auto Context::TryToCompleteType(
-    SemIR::TypeId type_id,
-    std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser)
-    -> bool {
+auto Context::TryToCompleteType(SemIR::TypeId type_id,
+                                std::optional<Diagnoser> diagnoser) -> bool {
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
-auto Context::TryToDefineType(
-    SemIR::TypeId type_id,
-    std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser)
-    -> bool {
+auto Context::TryToDefineType(SemIR::TypeId type_id,
+                              std::optional<Diagnoser> diagnoser) -> bool {
   if (!TryToCompleteType(type_id, diagnoser)) {
     return false;
   }

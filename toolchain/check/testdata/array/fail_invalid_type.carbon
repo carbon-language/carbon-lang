@@ -8,7 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_invalid_type.carbon
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: var a: [1; 1];
+// CHECK:STDERR:         ^
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var a: [1; 1];
 // CHECK:STDERR:         ^
 var a: [1; 1];
@@ -62,13 +65,13 @@ var a: [1; 1];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_9.1: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_12: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_9.2: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_9.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc14_9.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_9.4: type = converted %.loc14_9.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc14_13: type = array_type %.loc14_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_9.1: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_12: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_9.2: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_9.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc17_9.3 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc17_9.4: type = converted %.loc17_9.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_13: type = array_type %.loc17_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

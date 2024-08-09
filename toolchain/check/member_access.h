@@ -18,10 +18,13 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
 // Creates SemIR to perform a compound member access with base expression
 // `base_id` and member name expression `member_expr_id`. Returns the result of
-// the access.
-auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
-                                 SemIR::InstId base_id,
-                                 SemIR::InstId member_expr_id) -> SemIR::InstId;
+// the access. If specified, `missing_impl_diagnoser()` is used to build an
+// error diagnostic when impl binding fails due to a missing `impl`.
+auto PerformCompoundMemberAccess(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
+    SemIR::InstId member_expr_id,
+    std::optional<Context::Diagnoser> missing_impl_diagnoser = std::nullopt)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

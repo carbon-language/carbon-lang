@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: ERROR: Cannot access member of interface ImplicitAs in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:17: ERROR: Cannot implicitly convert from `i32` to `bool`.
+  // CHECK:STDERR:   var x: bool = not 12;
+  // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: Type `i32` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
   var x: bool = not 12;
@@ -95,16 +98,16 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc15_10.2: type = converted %bool.make_type, %.loc15_10.1 [template = bool]
+// CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc18_10.2: type = converted %bool.make_type, %.loc18_10.1 [template = bool]
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 12 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_17.1: init type = call constants.%ImplicitAs(bool) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc15_17.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(bool) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc15_17.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_17.3: bool = converted %.loc15_21, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_17.4: <error> = not <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_21: i32 = int_literal 12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_17.1: init type = call constants.%ImplicitAs(bool) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_17.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(bool) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_17.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc18_17.3: bool = converted %.loc18_21, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_17.4: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

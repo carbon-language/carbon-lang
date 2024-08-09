@@ -9,7 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_type_mismatch.carbon
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface ImplicitAs in type const {}* that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `const {}*` to `const ({}*)`.
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: Type `const {}*` does not implement interface `ImplicitAs`.
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   return p;
@@ -107,10 +110,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc15_11.1: init type = call constants.%ImplicitAs(constants.%.5) [template = constants.%.10]
-// CHECK:STDOUT:   %.loc15_11.2: %.11 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.5) [template = constants.%.12]
-// CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc15_11.2 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc15_11.3: %.5 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_11.1: init type = call constants.%ImplicitAs(constants.%.5) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc18_11.2: %.11 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.5) [template = constants.%.12]
+// CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc18_11.2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc18_11.3: %.5 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
