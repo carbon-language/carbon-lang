@@ -669,9 +669,11 @@ struct ImportRefLoaded {
 // `src_id`, by performing a final copy from source to destination, for types
 // whose initialization is not in-place.
 struct InitializeFrom {
-  static constexpr auto Kind =
-      InstKind::InitializeFrom.Define<Parse::InvalidNodeId>(
-          {.ir_name = "initialize_from"});
+  // Note this Parse::NodeId is unused. InitializeFrom is only constructed by
+  // reusing locations.
+  // TODO: Figure out if there's a better way to handle this case.
+  static constexpr auto Kind = InstKind::InitializeFrom.Define<Parse::NodeId>(
+      {.ir_name = "initialize_from"});
 
   TypeId type_id;
   InstId src_id;
