@@ -226,7 +226,7 @@ class ImportRefResolver {
   // Iteratively resolves an imported instruction's inner references until a
   // constant ID referencing the current IR is produced. See the class comment
   // for more details.
-  auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
+  auto ResolveOneInst(SemIR::InstId inst_id) -> SemIR::ConstantId {
     work_stack_.push_back({.inst_id = inst_id});
     while (!work_stack_.empty()) {
       auto work = work_stack_.back();
@@ -262,6 +262,14 @@ class ImportRefResolver {
     auto constant_id = import_ir_constant_values().Get(inst_id);
     CARBON_CHECK(constant_id.is_valid());
     return constant_id;
+  }
+
+  // Performs resolution for one instruction and then performs all work we
+  // deferred.
+  auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
+    auto const_id = ResolveOneInst(inst_id);
+    PerformPendingWork();
+    return const_id;
   }
 
   // Wraps constant evaluation with logic to handle constants.
@@ -328,17 +336,24 @@ class ImportRefResolver {
   // Local information associated with an imported generic.
   struct GenericData {
     llvm::SmallVector<SemIR::InstId> bindings;
-    // TODO: Add data for the self specific.
-    llvm::SmallVector<SemIR::InstId> decl_block;
-    llvm::SmallVector<SemIR::InstId> definition_block;
   };
 
   // Local information associated with an imported specific.
   struct SpecificData {
     SemIR::ConstantId generic_const_id;
     llvm::SmallVector<SemIR::InstId> args;
-    llvm::SmallVector<SemIR::InstId> decl_block;
-    llvm::SmallVector<SemIR::InstId> definition_block;
+  };
+
+  // A generic that we have partially imported.
+  struct PendingGeneric {
+    SemIR::GenericId import_id;
+    SemIR::GenericId local_id;
+  };
+
+  // A specific that we have partially imported.
+  struct PendingSpecific {
+    SemIR::SpecificId import_id;
+    SemIR::SpecificId local_id;
   };
 
   // Looks to see if an instruction has been resolved. If a constant is only
@@ -518,26 +533,7 @@ class ImportRefResolver {
     }
 
     const auto& generic = import_ir_.generics().Get(generic_id);
-    return {
-        .bindings = GetLocalInstBlockContents(generic.bindings_id),
-        .decl_block = GetLocalInstBlockContents(generic.decl_block_id),
-        .definition_block =
-            GetLocalInstBlockContents(generic.definition_block_id),
-    };
-  }
-
-  // Given the local constant values for the elements of the eval block, builds
-  // and returns the eval block for a region of a generic.
-  auto GetLocalEvalBlock(const SemIR::Generic& import_generic,
-                         SemIR::GenericId generic_id,
-                         SemIR::GenericInstIndex::Region region,
-                         llvm::ArrayRef<SemIR::InstId> inst_ids)
-      -> SemIR::InstBlockId {
-    auto import_block_id = import_generic.GetEvalBlock(region);
-    if (!import_block_id.is_valid()) {
-      return SemIR::InstBlockId::Invalid;
-    }
-    return RebuildGenericEvalBlock(context_, generic_id, region, inst_ids);
+    return {.bindings = GetLocalInstBlockContents(generic.bindings_id)};
   }
 
   // Adds the given local generic data to the given generic.
@@ -552,14 +548,9 @@ class ImportRefResolver {
     auto& new_generic = context_.generics().Get(new_generic_id);
     new_generic.bindings_id = GetLocalCanonicalInstBlockId(
         import_generic.bindings_id, generic_data.bindings);
-    // TODO: Import or rebuild the self specific.
-    new_generic.decl_block_id = GetLocalEvalBlock(
-        import_generic, new_generic_id,
-        SemIR::GenericInstIndex::Region::Declaration, generic_data.decl_block);
-    new_generic.definition_block_id =
-        GetLocalEvalBlock(import_generic, new_generic_id,
-                          SemIR::GenericInstIndex::Region::Definition,
-                          generic_data.definition_block);
+    // Fill in the remaining information in FinishPendingGeneric.
+    pending_generics_.push_back(
+        {.import_id = import_generic_id, .local_id = new_generic_id});
   }
 
   // Gets a local constant value corresponding to an imported generic ID. May
@@ -610,9 +601,6 @@ class ImportRefResolver {
     return {
         .generic_const_id = GetLocalConstantId(specific.generic_id),
         .args = GetLocalInstBlockContents(specific.args_id),
-        .decl_block = GetLocalInstBlockContents(specific.decl_block_id),
-        .definition_block =
-            GetLocalInstBlockContents(specific.definition_block_id),
     };
   }
 
@@ -631,17 +619,16 @@ class ImportRefResolver {
     auto args_id =
         GetLocalCanonicalInstBlockId(import_specific.args_id, data.args);
 
-    // Populate the specific. Note that we might get data from multiple
-    // different import IRs, so only import data we don't already have.
+    // Get the specific.
     auto specific_id = context_.specifics().GetOrAdd(generic_id, args_id);
+
+    // Fill in the remaining information in FinishPendingSpecific, if necessary.
     auto& specific = context_.specifics().Get(specific_id);
-    if (!specific.decl_block_id.is_valid()) {
-      specific.decl_block_id =
-          GetLocalInstBlockId(import_specific.decl_block_id, data.decl_block);
-    }
-    if (!specific.definition_block_id.is_valid()) {
-      specific.definition_block_id = GetLocalInstBlockId(
-          import_specific.definition_block_id, data.definition_block);
+    if (!specific.decl_block_id.is_valid() ||
+        (import_specific.definition_block_id.is_valid() &&
+         !specific.definition_block_id.is_valid())) {
+      pending_specifics_.push_back(
+          {.import_id = import_specific_id, .local_id = specific_id});
     }
     return specific_id;
   }
@@ -1811,6 +1798,110 @@ class ImportRefResolver {
          .element_type_id = context_.GetTypeIdForTypeConstant(elem_const_id)});
   }
 
+  // Perform any work that we deferred until the end of the main Resolve loop.
+  auto PerformPendingWork() -> void {
+    // Note that the individual Finish steps can add new pending work, so keep
+    // going until we have no more work to do.
+    while (!pending_generics_.empty() || !pending_specifics_.empty()) {
+      while (!pending_generics_.empty()) {
+        FinishPendingGeneric(pending_generics_.pop_back_val());
+      }
+      while (!pending_specifics_.empty()) {
+        FinishPendingSpecific(pending_specifics_.pop_back_val());
+      }
+    }
+  }
+
+  // Resolves and returns the local contents for an imported instruction block
+  // of constant instructions.
+  auto ResolveLocalInstBlockContents(SemIR::InstBlockId import_block_id)
+      -> llvm::SmallVector<SemIR::InstId> {
+    auto import_block = import_ir_.inst_blocks().Get(import_block_id);
+
+    llvm::SmallVector<SemIR::InstId> inst_ids;
+    inst_ids.reserve(import_block.size());
+    for (auto import_inst_id : import_block) {
+      inst_ids.push_back(
+          context_.constant_values().GetInstId(ResolveOneInst(import_inst_id)));
+    }
+    return inst_ids;
+  }
+
+  // Resolves and returns a local eval block for a region of an imported
+  // generic.
+  auto ResolveLocalEvalBlock(const SemIR::Generic& import_generic,
+                             SemIR::GenericId generic_id,
+                             SemIR::GenericInstIndex::Region region)
+      -> SemIR::InstBlockId {
+    auto import_block_id = import_generic.GetEvalBlock(region);
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+
+    auto inst_ids = ResolveLocalInstBlockContents(import_block_id);
+    return RebuildGenericEvalBlock(context_, generic_id, region, inst_ids);
+  }
+
+  // Fills in the remaining information in a partially-imported generic.
+  auto FinishPendingGeneric(PendingGeneric pending) -> void {
+    const auto& import_generic = import_ir_.generics().Get(pending.import_id);
+
+    // Don't store the local generic between calls: the generics list can be
+    // reallocated by ResolveLocalEvalBlock importing more specifics.
+
+    auto decl_block_id =
+        ResolveLocalEvalBlock(import_generic, pending.local_id,
+                              SemIR::GenericInstIndex::Region::Declaration);
+    context_.generics().Get(pending.local_id).decl_block_id = decl_block_id;
+
+    auto self_specific_id = MakeSelfSpecific(context_, pending.local_id);
+    context_.generics().Get(pending.local_id).self_specific_id =
+        self_specific_id;
+    pending_specifics_.push_back({.import_id = import_generic.self_specific_id,
+                                  .local_id = self_specific_id});
+
+    auto definition_block_id =
+        ResolveLocalEvalBlock(import_generic, pending.local_id,
+                              SemIR::GenericInstIndex::Region::Definition);
+    context_.generics().Get(pending.local_id).definition_block_id =
+        definition_block_id;
+  }
+
+  // Resolves and returns a local inst block of constant instructions
+  // corresponding to an imported inst block.
+  auto ResolveLocalInstBlock(SemIR::InstBlockId import_block_id)
+      -> SemIR::InstBlockId {
+    if (!import_block_id.is_valid()) {
+      return SemIR::InstBlockId::Invalid;
+    }
+
+    auto inst_ids = ResolveLocalInstBlockContents(import_block_id);
+    return context_.inst_blocks().Add(inst_ids);
+  }
+
+  // Fills in the remaining information in a partially-imported specific.
+  auto FinishPendingSpecific(PendingSpecific pending) -> void {
+    const auto& import_specific = import_ir_.specifics().Get(pending.import_id);
+
+    // Don't store the local specific between calls: the specifics list can be
+    // reallocated by ResolveLocalInstBlock importing more specifics.
+
+    if (!context_.specifics().Get(pending.local_id).decl_block_id.is_valid()) {
+      auto decl_block_id = ResolveLocalInstBlock(import_specific.decl_block_id);
+      context_.specifics().Get(pending.local_id).decl_block_id = decl_block_id;
+    }
+
+    if (!context_.specifics()
+             .Get(pending.local_id)
+             .definition_block_id.is_valid() &&
+        import_specific.definition_block_id.is_valid()) {
+      auto definition_block_id =
+          ResolveLocalInstBlock(import_specific.definition_block_id);
+      context_.specifics().Get(pending.local_id).definition_block_id =
+          definition_block_id;
+    }
+  }
+
   auto import_ir_constant_values() -> SemIR::ConstantValueStore& {
     return context_.import_ir_constant_values()[import_ir_id_.index];
   }
@@ -1821,6 +1912,10 @@ class ImportRefResolver {
   llvm::SmallVector<Work> work_stack_;
   // The size of work_stack_ at the start of resolving the current instruction.
   size_t initial_work_ = 0;
+  // Generics that we have partially imported but not yet finished importing.
+  llvm::SmallVector<PendingGeneric> pending_generics_;
+  // Specifics that we have partially imported but not yet finished importing.
+  llvm::SmallVector<PendingSpecific> pending_specifics_;
 };
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being

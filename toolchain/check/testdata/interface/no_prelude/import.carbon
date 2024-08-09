@@ -300,3 +300,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%Self.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%Self.3) {}
+// CHECK:STDOUT:

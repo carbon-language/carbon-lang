@@ -207,3 +207,5 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT:

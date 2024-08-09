@@ -320,8 +320,9 @@ class FormatterImpl {
       out_ << "!" << region_name << ":\n";
     }
     for (auto [generic_inst_id, specific_inst_id] : llvm::zip_longest(
-             sem_ir_.inst_blocks().Get(generic.GetEvalBlock(region)),
-             sem_ir_.inst_blocks().Get(specific.GetValueBlock(region)))) {
+             sem_ir_.inst_blocks().GetOrEmpty(generic.GetEvalBlock(region)),
+             sem_ir_.inst_blocks().GetOrEmpty(
+                 specific.GetValueBlock(region)))) {
       if (generic_inst_id && specific_inst_id &&
           sem_ir_.insts().Is<StructTypeField>(*generic_inst_id) &&
           sem_ir_.insts().Is<StructTypeField>(*specific_inst_id)) {

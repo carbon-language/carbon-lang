@@ -82,7 +82,9 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
 
   auto value_block_id = specific.GetValueBlock(symbolic.index.region());
   CARBON_CHECK(value_block_id.is_valid())
-      << "Queried region of " << specific_id << " before it was resolved.";
+      << "Queried " << symbolic.index << " in " << specific_id << " for "
+      << sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id)
+      << " before it was resolved.";
   return sem_ir.constant_values().Get(
       sem_ir.inst_blocks().Get(value_block_id)[symbolic.index.index()]);
 }
