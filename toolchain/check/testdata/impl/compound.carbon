@@ -234,3 +234,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(i32) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G.1(i32) {
+// CHECK:STDOUT:   %Self => i32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

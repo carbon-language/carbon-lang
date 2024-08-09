@@ -8,10 +8,9 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
-#include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -191,16 +190,11 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  // Substitute into the type declared in the interface.
-  // TODO: Also substitute the arguments from interface_type.specific_id.
-  auto self_param =
-      context.insts().GetAs<SemIR::BindSymbolicName>(interface.self_param_id);
-  Substitution substitutions[1] = {
-      {.bind_id =
-           context.entity_names().Get(self_param.entity_name_id).bind_index,
-       .replacement_id = type_const_id}};
-  auto subst_type_id =
-      SubstType(context, assoc_type.entity_type_id, substitutions);
+  // TODO: This produces the type of the associated entity with no value for
+  // `Self`. The type `Self` might appear in the type of an associated constant,
+  // and if so, we'll need to substitute it here somehow.
+  auto subst_type_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), interface_type.specific_id, assoc_type.entity_type_id);
 
   return context.AddInst(
       SemIR::LocIdAndInst::NoLoc<SemIR::InterfaceWitnessAccess>(

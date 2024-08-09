@@ -97,3 +97,5 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%T) {}
+// CHECK:STDOUT:

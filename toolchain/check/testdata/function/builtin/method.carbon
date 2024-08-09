@@ -148,3 +148,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(i32) {
+// CHECK:STDOUT:   %Self => i32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

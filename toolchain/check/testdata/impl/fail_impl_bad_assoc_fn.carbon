@@ -888,7 +888,27 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%FExtraParam) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%FExtraImplicitParam) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%FExtraReturnType) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.5(constants.%Self.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FMissingParam) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FMissingImplicitParam) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FMissingReturnType) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FDifferentParamType) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FDifferentImplicitParamType) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FDifferentReturnType) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.5(constants.%FDifferentParamName) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.13(constants.%Self.3) {
 // CHECK:STDOUT:   %Self => constants.%Self.3
@@ -896,5 +916,21 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.2 => constants.%.11
 // CHECK:STDOUT:   %.3 => constants.%.13
 // CHECK:STDOUT:   %.4 => constants.%.15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.13(constants.%SelfNestedBadParam) {
+// CHECK:STDOUT:   %Self => constants.%SelfNestedBadParam
+// CHECK:STDOUT:   %.1 => constants.%.18
+// CHECK:STDOUT:   %.2 => constants.%.22
+// CHECK:STDOUT:   %.3 => constants.%.23
+// CHECK:STDOUT:   %.4 => constants.%.21
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.13(constants.%SelfNestedBadReturnType) {
+// CHECK:STDOUT:   %Self => constants.%SelfNestedBadReturnType
+// CHECK:STDOUT:   %.1 => constants.%.24
+// CHECK:STDOUT:   %.2 => constants.%.25
+// CHECK:STDOUT:   %.3 => constants.%.26
+// CHECK:STDOUT:   %.4 => constants.%.27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
