@@ -20,6 +20,7 @@ using ::testing::Contains;
 using ::testing::Each;
 using ::testing::Eq;
 using ::testing::Ge;
+using ::testing::Gt;
 using ::testing::Le;
 using ::testing::MatchesRegex;
 using ::testing::SizeIs;
@@ -51,6 +52,20 @@ TEST(SourceGenTest, Ids) {
     EXPECT_THAT(ids, Contains(SizeIs(size)));
   }
 
+  // Check that identifiers 4 characters or shorter are more common than longer
+  // lengths. This is a very rough way of double checking that we got the
+  // intended distribution.
+  for (int short_size : llvm::seq_inclusive(1, 4)) {
+    int short_count = llvm::count_if(ids, [&](auto id) {
+      return static_cast<int>(id.size()) == short_size;
+    });
+    for (int long_size : llvm::seq_inclusive(5, 64)) {
+      EXPECT_THAT(short_count, Gt(llvm::count_if(ids, [&](auto id) {
+                    return static_cast<int>(id.size()) == long_size;
+                  })));
+    }
+  }
+
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t ids_size_sum = SumSizes(ids);
@@ -66,11 +81,14 @@ TEST(SourceGenTest, Ids) {
   // Check length constraints have the desired effect.
   ids = gen.GetShuffledIds(1000, /*min_length=*/10, /*max_length=*/20);
   EXPECT_THAT(ids, Each(SizeIs(AllOf(Ge(10), Le(20)))));
+}
 
+TEST(SourceGenTest, UniformIds) {
+  SourceGen gen;
   // Check that uniform id length results in exact coverage of each possible
   // length for an easy case, both without and with a remainder.
-  ids = gen.GetShuffledIds(100, /*min_length=*/10, /*max_length=*/19,
-                           /*uniform=*/true);
+  auto ids = gen.GetShuffledIds(100, /*min_length=*/10, /*max_length=*/19,
+                                /*uniform=*/true);
   EXPECT_THAT(ids, Contains(SizeIs(10)).Times(10));
   EXPECT_THAT(ids, Contains(SizeIs(11)).Times(10));
   EXPECT_THAT(ids, Contains(SizeIs(12)).Times(10));
@@ -81,6 +99,7 @@ TEST(SourceGenTest, Ids) {
   EXPECT_THAT(ids, Contains(SizeIs(17)).Times(10));
   EXPECT_THAT(ids, Contains(SizeIs(18)).Times(10));
   EXPECT_THAT(ids, Contains(SizeIs(19)).Times(10));
+
   ids = gen.GetShuffledIds(97, /*min_length=*/10, /*max_length=*/19,
                            /*uniform=*/true);
   EXPECT_THAT(ids, Contains(SizeIs(10)).Times(10));
@@ -95,7 +114,8 @@ TEST(SourceGenTest, Ids) {
   EXPECT_THAT(ids, Contains(SizeIs(19)).Times(9));
 }
 
-// Largely covered by `Ids`, but need to check for uniqueness specifically.
+// Largely covered by `Ids` and `UniformIds`, but need to check for uniqueness
+// specifically.
 TEST(SourceGenTest, UniqueIds) {
   SourceGen gen;
 

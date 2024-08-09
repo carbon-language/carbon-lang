@@ -22,7 +22,11 @@ auto SourceGen::Global() -> SourceGen& {
 
 SourceGen::SourceGen(Language language) : language_(language) {}
 
-// Some heuristic numbers used when formatting generated code.
+// Some heuristic numbers used when formatting generated code. These heuristics
+// are loosely based on what we expect to make Carbon code readable, and might
+// not fit as well in C++, but we use the same heuristics across languages for
+// simplicity and to make the output in different languages more directly
+// comparable.
 constexpr static int NumSingleLineFunctionParams = 3;
 constexpr static int NumSingleLineMethodParams = 2;
 constexpr static int MaxParamsPerLine = 4;

@@ -28,6 +28,7 @@ auto GetBenchmarkExePath() -> llvm::StringRef {
 
 }  // namespace Carbon::Testing
 
+// TODO: Refactor this to share code with `gtest_main.cpp`.
 auto main(int orig_argc, char** orig_argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
   Carbon::InitLLVM init_llvm(orig_argc, orig_argv);
