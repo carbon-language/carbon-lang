@@ -118,6 +118,10 @@ graph BT
            x >> y"]
     click shift "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
+    binaryOps((" "))
+
+    where["T where R"]
+
     comparison["x == y<br>
                 x != y<br>
                 x < y<br>
@@ -155,19 +159,31 @@ graph BT
 
     constType --> suffixOps
     pointerType --> constType
-    as --> pointerType
 
     pointer --> suffixOps
     negation & complement & incDec --> pointer
-    unary --> negation & complement
-    %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -------> suffixOps
-    as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    unary --> pointerType & negation & complement
+
+    %% Use a longer arrow here to put `not` next to other unary operators
+    not ---> suffixOps
+
+    %% `as` at the same level as `where` and comparisons
+    as -----> unary
+
+    multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
-    comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
+    binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
+
+    where --> binaryOps
+    comparison --> binaryOps
     logicalOperand --> comparison & not
+
+    %% This helps group `and` and `or` together
+    classDef hidden display: none;
+    HIDDEN:::hidden ~~~ logicalOperand
+
     and & or --> logicalOperand
-    logicalExpression --> and & or
+    logicalExpression --> as & where & and & or
     if & expressionStatement --> logicalExpression
     insideParens & assignment --> if
 ```
