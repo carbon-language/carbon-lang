@@ -125,8 +125,8 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
   return source;
 }
 
-auto SourceGen::GetShuffledIdentifiers(int number, int min_length, int max_length,
-                               bool uniform)
+auto SourceGen::GetShuffledIdentifiers(int number, int min_length,
+                                       int max_length, bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   llvm::SmallVector<llvm::StringRef> idents =
       GetIdentifiers(number, min_length, max_length, uniform);
@@ -134,8 +134,8 @@ auto SourceGen::GetShuffledIdentifiers(int number, int min_length, int max_lengt
   return idents;
 }
 
-auto SourceGen::GetShuffledUniqueIdentifiers(int number, int min_length, int max_length,
-                                     bool uniform)
+auto SourceGen::GetShuffledUniqueIdentifiers(int number, int min_length,
+                                             int max_length, bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length >= 4)
       << "Cannot trivially guarantee enough distinct, unique identifiers for "
@@ -146,7 +146,8 @@ auto SourceGen::GetShuffledUniqueIdentifiers(int number, int min_length, int max
   return idents;
 }
 
-auto SourceGen::GetIdentifiers(int number, int min_length, int max_length, bool uniform)
+auto SourceGen::GetIdentifiers(int number, int min_length, int max_length,
+                               bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   llvm::SmallVector<llvm::StringRef> idents = GetIdentifiersImpl(
       number, min_length, max_length, uniform,
@@ -160,17 +161,17 @@ auto SourceGen::GetIdentifiers(int number, int min_length, int max_length, bool 
 }
 
 auto SourceGen::GetUniqueIdentifiers(int number, int min_length, int max_length,
-                             bool uniform)
+                                     bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length >= 4)
       << "Cannot trivially guarantee enough distinct, unique identifiers for "
          "lengths <= 3";
   llvm::SmallVector<llvm::StringRef> idents =
       GetIdentifiersImpl(number, min_length, max_length, uniform,
-                 [this](int length, int length_count,
-                        llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-                   AppendUniqueIdentifiers(length, length_count, dest);
-                 });
+                         [this](int length, int length_count,
+                                llvm::SmallVectorImpl<llvm::StringRef>& dest) {
+                           AppendUniqueIdentifiers(length, length_count, dest);
+                         });
 
   return idents;
 }
@@ -253,8 +254,9 @@ auto SourceGen::GenerateRandomIdentifier(
       // TODO: Clean up and simplify this code. With some small refactorings and
       // post-processing we should be able to make this both easier to read and
       // less inefficient.
-      llvm::any_of(Lex::TokenKind::KeywordTokens,
-                   [ident](auto token) { return ident == token.fixed_spelling(); }) ||
+      llvm::any_of(
+          Lex::TokenKind::KeywordTokens,
+          [ident](auto token) { return ident == token.fixed_spelling(); }) ||
       llvm::is_contained(NonCarbonCppKeywords, ident) ||
       (llvm::is_contained({'i', 'u', 'f'}, ident[0]) &&
        llvm::all_of(ident.substr(1),
@@ -270,7 +272,8 @@ auto SourceGen::GenerateRandomIdentifier(
 auto SourceGen::AppendUniqueIdentifiers(
     int length, int number, llvm::SmallVectorImpl<llvm::StringRef>& dest)
     -> void {
-  auto& [count, unique_idents] = unique_identifiers_by_length_.Insert(length, {}).value();
+  auto& [count, unique_idents] =
+      unique_identifiers_by_length_.Insert(length, {}).value();
 
   // See if we need to grow our pool of unique identifiers with the requested
   // length.
@@ -388,8 +391,8 @@ static auto Sum(const T& range) -> int {
 
 // A template function that implements the common logic of `GetIdentifiers` and
 // `GetUniqueIdentifiers`. Most parameters correspond to the parameters of those
-// functions. Additionally, an `AppendFunc` callable is provided to implement the
-// appending operation.
+// functions. Additionally, an `AppendFunc` callable is provided to implement
+// the appending operation.
 //
 // The main functionality provided here is collecting the correct number of
 // identifiers from each of the lengths in the range [min_length, max_length]
@@ -399,7 +402,7 @@ static auto Sum(const T& range) -> int {
 // Note that this template must be defined prior to its use below.
 template <typename AppendFunc>
 auto SourceGen::GetIdentifiersImpl(int number, int min_length, int max_length,
-                           bool uniform, AppendFunc append)
+                                   bool uniform, AppendFunc append)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length <= max_length);
   CARBON_CHECK(uniform || max_length <= 64)
@@ -530,7 +533,7 @@ auto SourceGen::GetClassGenState(int number, ClassParams params)
 class SourceGen::UniqueIdentifierPopper {
  public:
   explicit UniqueIdentifierPopper(SourceGen& gen,
-                          llvm::SmallVectorImpl<llvm::StringRef>& data)
+                                  llvm::SmallVectorImpl<llvm::StringRef>& data)
       : gen_(&gen), data_(&data), it_(data_->rbegin()) {}
 
   // Pop the next unique identifier that can be found in the data, or synthesize

@@ -79,7 +79,8 @@ TEST(SourceGenTest, Identifiers) {
   }
 
   // Check length constraints have the desired effect.
-  idents = gen.GetShuffledIdentifiers(1000, /*min_length=*/10, /*max_length=*/20);
+  idents =
+      gen.GetShuffledIdentifiers(1000, /*min_length=*/10, /*max_length=*/20);
   EXPECT_THAT(idents, Each(SizeIs(AllOf(Ge(10), Le(20)))));
 }
 
@@ -87,8 +88,9 @@ TEST(SourceGenTest, UniformIdentifiers) {
   SourceGen gen;
   // Check that uniform identifier length results in exact coverage of each
   // possible length for an easy case, both without and with a remainder.
-  auto idents = gen.GetShuffledIdentifiers(100, /*min_length=*/10, /*max_length=*/19,
-                                /*uniform=*/true);
+  auto idents =
+      gen.GetShuffledIdentifiers(100, /*min_length=*/10, /*max_length=*/19,
+                                 /*uniform=*/true);
   EXPECT_THAT(idents, Contains(SizeIs(10)).Times(10));
   EXPECT_THAT(idents, Contains(SizeIs(11)).Times(10));
   EXPECT_THAT(idents, Contains(SizeIs(12)).Times(10));
@@ -101,7 +103,7 @@ TEST(SourceGenTest, UniformIdentifiers) {
   EXPECT_THAT(idents, Contains(SizeIs(19)).Times(10));
 
   idents = gen.GetShuffledIdentifiers(97, /*min_length=*/10, /*max_length=*/19,
-                           /*uniform=*/true);
+                                      /*uniform=*/true);
   EXPECT_THAT(idents, Contains(SizeIs(10)).Times(10));
   EXPECT_THAT(idents, Contains(SizeIs(11)).Times(10));
   EXPECT_THAT(idents, Contains(SizeIs(12)).Times(10));
@@ -130,7 +132,8 @@ TEST(SourceGenTest, UniqueIdentifiers) {
 
   // Check single length specifically where uniqueness is the most challenging.
   set.Clear();
-  unique = gen.GetShuffledUniqueIdentifiers(1000, /*min_length=*/4, /*max_length=*/4);
+  unique = gen.GetShuffledUniqueIdentifiers(1000, /*min_length=*/4,
+                                            /*max_length=*/4);
   for (llvm::StringRef ident : unique) {
     EXPECT_TRUE(set.Insert(ident).is_inserted())
         << "Colliding identifier: " << ident;

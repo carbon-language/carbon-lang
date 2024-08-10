@@ -150,13 +150,13 @@ class SourceGen {
   //
   // Callers can request a uniform distribution across [min_length, max_length],
   // and when it is requested there is no limit on `max_length`.
-  auto GetShuffledIdentifiers(int number, int min_length = 1, int max_length = 64,
-                      bool uniform = false)
+  auto GetShuffledIdentifiers(int number, int min_length = 1,
+                              int max_length = 64, bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
 
   // Same as `GetShuffledIdentifiers`, but ensures there are no collisions.
-  auto GetShuffledUniqueIdentifiers(int number, int min_length = 4, int max_length = 64,
-                            bool uniform = false)
+  auto GetShuffledUniqueIdentifiers(int number, int min_length = 4,
+                                    int max_length = 64, bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a collection of un-shuffled identifiers, otherwise the same as
@@ -166,7 +166,8 @@ class SourceGen {
   // useful when there is already a post-processing step to shuffle things as it
   // is *dramatically* more efficient, especially in debug builds.
   auto GetIdentifiers(int number, int min_length = 1, int max_length = 64,
-              bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
+                      bool uniform = false)
+      -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a collection of un-shuffled unique identifiers, otherwise the same
   // as `GetShuffledUniqueIdentifiers`.
@@ -174,7 +175,8 @@ class SourceGen {
   // Usually, benchmarks should use the shuffled version. However, this is
   // useful when there is already a post-processing step to shuffle things.
   auto GetUniqueIdentifiers(int number, int min_length = 1, int max_length = 64,
-                    bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
+                            bool uniform = false)
+      -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a shared collection of random identifiers of a specific length.
   //
@@ -207,7 +209,8 @@ class SourceGen {
 
   auto IsCpp() -> bool { return language_ == Language::Cpp; }
 
-  auto GenerateRandomIdentifier(llvm::MutableArrayRef<char> dest_storage) -> void;
+  auto GenerateRandomIdentifier(llvm::MutableArrayRef<char> dest_storage)
+      -> void;
   auto AppendUniqueIdentifiers(int length, int number,
                                llvm::SmallVectorImpl<llvm::StringRef>& dest)
       -> void;
