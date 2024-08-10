@@ -33,7 +33,7 @@ static auto RandomIdentifierSeq(int min_length, int max_length, bool uniform,
     -> std::string {
   auto& gen = Testing::SourceGen::Global();
   llvm::SmallVector<llvm::StringRef> ids =
-      gen.GetShuffledIds(NumTokens, min_length, max_length, uniform);
+      gen.GetShuffledIdentifiers(NumTokens, min_length, max_length, uniform);
   return llvm::join(ids, separator);
 }
 
@@ -147,7 +147,7 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
          "reasonable number of samples to end up with a reasonable "
          "distribution of lengths.";
   llvm::SmallVector<llvm::StringRef> ids =
-      Testing::SourceGen::Global().GetIds(num_identifiers);
+      Testing::SourceGen::Global().GetIdentifiers(num_identifiers);
 
   for (int i : llvm::seq(num_symbols)) {
     tokens[i] = symbols[i % symbols.size()].fixed_spelling();
@@ -291,7 +291,7 @@ BENCHMARK(BM_ValidKeywordsAsRawIdentifiers);
 // to directly compare raw and non-raw performance.
 void BM_RawIdentifierFocus(benchmark::State& state) {
   llvm::SmallVector<llvm::StringRef> ids =
-      Testing::SourceGen::Global().GetIds(NumTokens / 2);
+      Testing::SourceGen::Global().GetIdentifiers(NumTokens / 2);
 
   llvm::SmallVector<std::string> modified_ids;
   // As we resize, start with the in-use prefix. Note that `r#` uses the first
@@ -417,7 +417,7 @@ void BM_GroupingSymbols(benchmark::State& state) {
   // whitespace and keywords to make sure *some* other parts of the benchmark
   // are also active and have some reasonable icache pressure.
   llvm::SmallVector<llvm::StringRef> ids =
-      Testing::SourceGen::Global().GetShuffledIds(NumTokens);
+      Testing::SourceGen::Global().GetShuffledIdentifiers(NumTokens);
   std::string source;
   llvm::raw_string_ostream os(source);
   int num_tokens_per_nest =

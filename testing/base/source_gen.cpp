@@ -125,75 +125,75 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
   return source;
 }
 
-auto SourceGen::GetShuffledIds(int number, int min_length, int max_length,
+auto SourceGen::GetShuffledIdentifiers(int number, int min_length, int max_length,
                                bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef> ids =
-      GetIds(number, min_length, max_length, uniform);
-  std::shuffle(ids.begin(), ids.end(), rng_);
-  return ids;
+  llvm::SmallVector<llvm::StringRef> idents =
+      GetIdentifiers(number, min_length, max_length, uniform);
+  std::shuffle(idents.begin(), idents.end(), rng_);
+  return idents;
 }
 
-auto SourceGen::GetShuffledUniqueIds(int number, int min_length, int max_length,
+auto SourceGen::GetShuffledUniqueIdentifiers(int number, int min_length, int max_length,
                                      bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length >= 4)
       << "Cannot trivially guarantee enough distinct, unique identifiers for "
          "lengths <= 3";
-  llvm::SmallVector<llvm::StringRef> ids =
-      GetUniqueIds(number, min_length, max_length, uniform);
-  std::shuffle(ids.begin(), ids.end(), rng_);
-  return ids;
+  llvm::SmallVector<llvm::StringRef> idents =
+      GetUniqueIdentifiers(number, min_length, max_length, uniform);
+  std::shuffle(idents.begin(), idents.end(), rng_);
+  return idents;
 }
 
-auto SourceGen::GetIds(int number, int min_length, int max_length, bool uniform)
+auto SourceGen::GetIdentifiers(int number, int min_length, int max_length, bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef> ids =
-      GetIdsImpl(number, min_length, max_length, uniform,
-                 [this](int length, int length_count,
-                        llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-                   auto length_ids = GetSingleLengthIds(length, length_count);
-                   dest.append(length_ids.begin(), length_ids.end());
-                 });
+  llvm::SmallVector<llvm::StringRef> idents = GetIdentifiersImpl(
+      number, min_length, max_length, uniform,
+      [this](int length, int length_count,
+             llvm::SmallVectorImpl<llvm::StringRef>& dest) {
+        auto length_idents = GetSingleLengthIdentifiers(length, length_count);
+        dest.append(length_idents.begin(), length_idents.end());
+      });
 
-  return ids;
+  return idents;
 }
 
-auto SourceGen::GetUniqueIds(int number, int min_length, int max_length,
+auto SourceGen::GetUniqueIdentifiers(int number, int min_length, int max_length,
                              bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length >= 4)
       << "Cannot trivially guarantee enough distinct, unique identifiers for "
          "lengths <= 3";
-  llvm::SmallVector<llvm::StringRef> ids =
-      GetIdsImpl(number, min_length, max_length, uniform,
+  llvm::SmallVector<llvm::StringRef> idents =
+      GetIdentifiersImpl(number, min_length, max_length, uniform,
                  [this](int length, int length_count,
                         llvm::SmallVectorImpl<llvm::StringRef>& dest) {
                    AppendUniqueIdentifiers(length, length_count, dest);
                  });
 
-  return ids;
+  return idents;
 }
 
-auto SourceGen::GetSingleLengthIds(int length, int number)
+auto SourceGen::GetSingleLengthIdentifiers(int length, int number)
     -> llvm::ArrayRef<llvm::StringRef> {
-  llvm::SmallVector<llvm::StringRef>& ids =
-      ids_by_length_.Insert(length, {}).value();
+  llvm::SmallVector<llvm::StringRef>& idents =
+      identifiers_by_length_.Insert(length, {}).value();
 
-  if (static_cast<int>(ids.size()) < number) {
-    ids.reserve(number);
-    for ([[maybe_unused]] int _ : llvm::seq<int>(ids.size(), number)) {
-      auto id_storage =
+  if (static_cast<int>(idents.size()) < number) {
+    idents.reserve(number);
+    for ([[maybe_unused]] int _ : llvm::seq<int>(idents.size(), number)) {
+      auto ident_storage =
           llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
                                     /*Size=*/length, /*Alignment=*/1)),
                                 length);
-      GenerateRandomIdentifier(id_storage);
-      llvm::StringRef new_id(id_storage.data(), length);
-      ids.push_back(new_id);
+      GenerateRandomIdentifier(ident_storage);
+      llvm::StringRef new_id(ident_storage.data(), length);
+      idents.push_back(new_id);
     }
-    CARBON_CHECK(static_cast<int>(ids.size()) == number);
+    CARBON_CHECK(static_cast<int>(idents.size()) == number);
   }
-  return llvm::ArrayRef(ids).slice(0, number);
+  return llvm::ArrayRef(idents).slice(0, number);
 }
 
 static auto IdentifierStartChars() -> llvm::ArrayRef<char> {
@@ -237,27 +237,27 @@ constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
 // frequency of calls. However, each time it is called it computes a completely
 // new random identifier and so can be useful to eventually find a distinct
 // identifier when needed.
-auto SourceGen::GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage)
-    -> void {
+auto SourceGen::GenerateRandomIdentifier(
+    llvm::MutableArrayRef<char> dest_storage) -> void {
   llvm::ArrayRef<char> start_chars = IdentifierStartChars();
   llvm::ArrayRef<char> chars = IdentifierChars();
 
-  auto id = llvm::StringRef(id_storage.data(), id_storage.size());
+  auto ident = llvm::StringRef(dest_storage.data(), dest_storage.size());
   do {
-    id_storage[0] =
+    dest_storage[0] =
         start_chars[absl::Uniform<int>(rng_, 0, start_chars.size())];
-    for (int i : llvm::seq<int>(1, id_storage.size())) {
-      id_storage[i] = chars[absl::Uniform<int>(rng_, 0, chars.size())];
+    for (int i : llvm::seq<int>(1, dest_storage.size())) {
+      dest_storage[i] = chars[absl::Uniform<int>(rng_, 0, chars.size())];
     }
   } while (
       // TODO: Clean up and simplify this code. With some small refactorings and
       // post-processing we should be able to make this both easier to read and
       // less inefficient.
       llvm::any_of(Lex::TokenKind::KeywordTokens,
-                   [id](auto token) { return id == token.fixed_spelling(); }) ||
-      llvm::is_contained(NonCarbonCppKeywords, id) ||
-      (llvm::is_contained({'i', 'u', 'f'}, id[0]) &&
-       llvm::all_of(id.substr(1),
+                   [ident](auto token) { return ident == token.fixed_spelling(); }) ||
+      llvm::is_contained(NonCarbonCppKeywords, ident) ||
+      (llvm::is_contained({'i', 'u', 'f'}, ident[0]) &&
+       llvm::all_of(ident.substr(1),
                     [](const char c) { return llvm::isDigit(c); })));
 }
 
@@ -270,29 +270,29 @@ auto SourceGen::GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage)
 auto SourceGen::AppendUniqueIdentifiers(
     int length, int number, llvm::SmallVectorImpl<llvm::StringRef>& dest)
     -> void {
-  auto& [count, unique_ids] = unique_ids_by_length_.Insert(length, {}).value();
+  auto& [count, unique_idents] = unique_identifiers_by_length_.Insert(length, {}).value();
 
   // See if we need to grow our pool of unique identifiers with the requested
   // length.
   if (count < number) {
     // We'll need to insert exactly the requested new unique identifiers. All
     // our other inserts will find an existing entry.
-    unique_ids.GrowForInsertCount(count - number);
+    unique_idents.GrowForInsertCount(count - number);
 
     // Generate the needed number of identifiers.
     for ([[maybe_unused]] int _ : llvm::seq<int>(count, number)) {
       // Allocate stable storage for the identifier so we can form stable
       // `StringRef`s to it.
-      auto id_storage =
+      auto ident_storage =
           llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
                                     /*Size=*/length, /*Alignment=*/1)),
                                 length);
       // Repeatedly generate novel identifiers of this length until we find a
       // new unique one.
       for (;;) {
-        GenerateRandomIdentifier(id_storage);
+        GenerateRandomIdentifier(ident_storage);
         auto result =
-            unique_ids.Insert(llvm::StringRef(id_storage.data(), length));
+            unique_idents.Insert(llvm::StringRef(ident_storage.data(), length));
         if (result.is_inserted()) {
           break;
         }
@@ -307,9 +307,9 @@ auto SourceGen::AppendUniqueIdentifiers(
   // TODO: It's awkward the `ForEach` here can't early-exit. This just walks the
   // whole set which is harmless if inefficient. We should add early exiting
   // the loop support to `Set` and update this code.
-  unique_ids.ForEach([&](llvm::StringRef id) {
+  unique_idents.ForEach([&](llvm::StringRef ident) {
     if (number > 0) {
-      dest.push_back(id);
+      dest.push_back(ident);
       --number;
     }
   });
@@ -321,8 +321,8 @@ auto SourceGen::AppendUniqueIdentifiers(
 //
 // Note that the zero-based index corresponds to a 1-based length, so the count
 // for identifiers of length 1 is at index 0.
-static constexpr std::array<int, 64> IdLengthCounts = [] {
-  std::array<int, 64> id_length_counts;
+static constexpr std::array<int, 64> IdentifierLengthCounts = [] {
+  std::array<int, 64> ident_length_counts;
   // For non-uniform distribution, we simulate a distribution roughly based on
   // the observed histogram of identifier lengths, but smoothed a bit and
   // reduced to small counts so that we cycle through all the lengths
@@ -338,46 +338,46 @@ static constexpr std::array<int, 64> IdLengthCounts = [] {
   // rough shape we're aiming for.
   //
   // 1 characters   [3976]  ███████████████████████████████▊
-  id_length_counts[0] = 40;
+  ident_length_counts[0] = 40;
   // 2 characters   [3724]  █████████████████████████████▊
-  id_length_counts[1] = 40;
+  ident_length_counts[1] = 40;
   // 3 characters   [4173]  █████████████████████████████████▍
-  id_length_counts[2] = 40;
+  ident_length_counts[2] = 40;
   // 4 characters   [5000]  ████████████████████████████████████████
-  id_length_counts[3] = 50;
+  ident_length_counts[3] = 50;
   // 5 characters   [1568]  ████████████▌
-  id_length_counts[4] = 20;
+  ident_length_counts[4] = 20;
   // 6 characters   [2226]  █████████████████▊
-  id_length_counts[5] = 20;
+  ident_length_counts[5] = 20;
   // 7 characters   [2380]  ███████████████████
-  id_length_counts[6] = 20;
+  ident_length_counts[6] = 20;
   // 8 characters   [1786]  ██████████████▎
-  id_length_counts[7] = 18;
+  ident_length_counts[7] = 18;
   // 9 characters   [1397]  ███████████▏
-  id_length_counts[8] = 12;
+  ident_length_counts[8] = 12;
   // 10 characters  [ 739]  █████▉
-  id_length_counts[9] = 12;
+  ident_length_counts[9] = 12;
   // 11 characters  [ 779]  ██████▎
-  id_length_counts[10] = 12;
+  ident_length_counts[10] = 12;
   // 12 characters  [1344]  ██████████▊
-  id_length_counts[11] = 12;
+  ident_length_counts[11] = 12;
   // 13 characters  [ 498]  ████
-  id_length_counts[12] = 5;
+  ident_length_counts[12] = 5;
   // 14 characters  [ 284]  ██▎
-  id_length_counts[13] = 3;
+  ident_length_counts[13] = 3;
   // 15 characters  [ 172]  █▍
   // 16 characters  [ 278]  ██▎
   // 17 characters  [ 191]  █▌
   // 18 characters  [ 207]  █▋
   for (int i = 14; i < 18; ++i) {
-    id_length_counts[i] = 2;
+    ident_length_counts[i] = 2;
   }
   // 19 - 63 characters are all <100 but non-zero, and we map them to 1 for
   // coverage despite slightly over weighting the tail.
   for (int i = 18; i < 64; ++i) {
-    id_length_counts[i] = 1;
+    ident_length_counts[i] = 1;
   }
-  return id_length_counts;
+  return ident_length_counts;
 }();
 
 // A helper to sum elements of a range.
@@ -386,9 +386,9 @@ static auto Sum(const T& range) -> int {
   return std::accumulate(range.begin(), range.end(), 0);
 }
 
-// A template function that implements the common logic of `GetIds` and
-// `GetUniqueIds`. Most parameters correspond to the parameters of those
-// functions. Additionally, an `AppendIds` callable is provided to implement the
+// A template function that implements the common logic of `GetIdentifiers` and
+// `GetUniqueIdentifiers`. Most parameters correspond to the parameters of those
+// functions. Additionally, an `AppendFunc` callable is provided to implement the
 // appending operation.
 //
 // The main functionality provided here is collecting the correct number of
@@ -397,9 +397,9 @@ static auto Sum(const T& range) -> int {
 // distribution.
 //
 // Note that this template must be defined prior to its use below.
-template <typename AppendIds>
-auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
-                           bool uniform, AppendIds append_ids)
+template <typename AppendFunc>
+auto SourceGen::GetIdentifiersImpl(int number, int min_length, int max_length,
+                           bool uniform, AppendFunc append)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length <= max_length);
   CARBON_CHECK(uniform || max_length <= 64)
@@ -407,14 +407,14 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
          "longer than 64 as those are exceedingly rare in our observed data "
          "sets.";
 
-  llvm::SmallVector<llvm::StringRef> ids;
-  ids.reserve(number);
+  llvm::SmallVector<llvm::StringRef> idents;
+  idents.reserve(number);
 
   // First, compute the total weight of the distribution so we know how many
   // identifiers we'll get each time we collect from it.
   int num_lengths = max_length - min_length + 1;
   auto length_counts =
-      llvm::ArrayRef(IdLengthCounts).slice(min_length - 1, num_lengths);
+      llvm::ArrayRef(IdentifierLengthCounts).slice(min_length - 1, num_lengths);
   int count_sum = uniform ? num_lengths : Sum(length_counts);
   CARBON_CHECK(count_sum >= 1);
 
@@ -424,7 +424,7 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
   for (int length : llvm::seq_inclusive(min_length, max_length)) {
     // Scale how many identifiers we want of this length if computing a
     // non-uniform distribution. For uniform, we always take one.
-    int scale = uniform ? 1 : IdLengthCounts[length - 1];
+    int scale = uniform ? 1 : IdentifierLengthCounts[length - 1];
 
     // Now we can compute how many identifiers of this length to request.
     int length_count = (number / count_sum) * scale;
@@ -433,15 +433,15 @@ auto SourceGen::GetIdsImpl(int number, int min_length, int max_length,
       length_count += rem_adjustment;
       number_rem -= rem_adjustment;
     }
-    append_ids(length, length_count, ids);
+    append(length, length_count, idents);
   }
   CARBON_CHECK(number_rem == 0)
       << "Unexpected number remaining: " << number_rem;
-  CARBON_CHECK(static_cast<int>(ids.size()) == number)
-      << "Ended up with " << ids.size()
+  CARBON_CHECK(static_cast<int>(idents.size()) == number)
+      << "Ended up with " << idents.size()
       << " identifiers instead of the requested " << number;
 
-  return ids;
+  return idents;
 }
 
 // Returns a shuffled sequence of integers in the range [min, max].
@@ -490,34 +490,34 @@ auto SourceGen::GetClassGenState(int number, ClassParams params)
       GetShuffledInts(number * params.private_method_decls, 0,
                       params.private_method_decl_params.max_params);
 
-  state.class_names = GetShuffledUniqueIds(number, /*min_length=*/5);
+  state.class_names = GetShuffledUniqueIdentifiers(number, /*min_length=*/5);
   int num_members =
       number * (params.public_function_decls + params.public_method_decls +
                 params.private_function_decls + params.private_method_decls +
                 params.private_field_decls);
-  state.member_names = GetShuffledIds(num_members, /*min_length=*/4);
+  state.member_names = GetShuffledIdentifiers(num_members, /*min_length=*/4);
   int num_params = Sum(state.public_function_param_counts) +
                    Sum(state.public_method_param_counts) +
                    Sum(state.private_function_param_counts) +
                    Sum(state.private_method_param_counts);
-  state.param_names = GetShuffledIds(num_params);
+  state.param_names = GetShuffledIdentifiers(num_params);
   return state;
 }
 
-// A helper to pop series of unique IDs off a sequence of random IDs that may
-// have duplicates.
+// A helper to pop series of unique identifiers off a sequence of random
+// identifiers that may have duplicates.
 //
-// This is particularly designed to work with the sequences of non-unique IDs
-// produced by `GetShuffledIds` with the important property that while popping
-// off unique IDs found in the shuffled list, we don't change the distribution
-// of ID lengths.
+// This is particularly designed to work with the sequences of non-unique
+// identifiers produced by `GetShuffledIdentifiers` with the important property
+// that while popping off unique identifiers found in the shuffled list, we
+// don't change the distribution of identifier lengths.
 //
 // The uniqueness is only per-instance of the class, and so an instance can be
 // used to extract a series of names that share a scope.
 //
-// It works by scanning the sequence to extract each unique ID found, swapping
-// it to the back and popping it off the list. This does shuffle the order, but
-// it isn't expected to do so in an interesting way.
+// It works by scanning the sequence to extract each unique identifier found,
+// swapping it to the back and popping it off the list. This does shuffle the
+// order, but it isn't expected to do so in an interesting way.
 //
 // It also provides a fallback path in case there are no unique identifiers left
 // which computes fresh, random identifiers with the same length as the next one
@@ -526,10 +526,10 @@ auto SourceGen::GetClassGenState(int number, ClassParams params)
 // For simplicity of the fallback path, the lifetime of the identifiers produced
 // is bound to the lifetime of the popper instance, and not the generator as a
 // whole. If this is ever a problematic constraint, we can start copying
-// fallback IDs into the generator's storage.
-class SourceGen::UniqueIdPopper {
+// fallback identifiers into the generator's storage.
+class SourceGen::UniqueIdentifierPopper {
  public:
-  explicit UniqueIdPopper(SourceGen& gen,
+  explicit UniqueIdentifierPopper(SourceGen& gen,
                           llvm::SmallVectorImpl<llvm::StringRef>& data)
       : gen_(&gen), data_(&data), it_(data_->rbegin()) {}
 
@@ -558,13 +558,13 @@ class SourceGen::UniqueIdPopper {
     // This ensures we continue to consume the structure and produce the same
     // size identifiers even in the fallback.
     int length = data_->pop_back_val().size();
-    auto fallback_id_storage =
+    auto fallback_ident_storage =
         llvm::MutableArrayRef(reinterpret_cast<char*>(gen_->storage_.Allocate(
                                   /*Size=*/length, /*Alignment=*/1)),
                               length);
     for (;;) {
-      gen_->GenerateRandomIdentifier(fallback_id_storage);
-      auto fallback_id = llvm::StringRef(fallback_id_storage.data(), length);
+      gen_->GenerateRandomIdentifier(fallback_ident_storage);
+      auto fallback_id = llvm::StringRef(fallback_ident_storage.data(), length);
       if (set_.Insert(fallback_id).is_inserted()) {
         return fallback_id;
       }
@@ -611,7 +611,7 @@ auto SourceGen::GenerateFunctionDecl(
       (is_method ? NumSingleLineMethodParams : NumSingleLineFunctionParams)) {
     os << "\n" << indent << "    ";
   }
-  UniqueIdPopper unique_param_names(*this, param_names);
+  UniqueIdentifierPopper unique_param_names(*this, param_names);
   for (int i : llvm::seq(param_count)) {
     if (i > 0) {
       if ((i % MaxParamsPerLine) == 0) {
@@ -643,7 +643,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     os << " public:\n";
   }
 
-  UniqueIdPopper unique_member_names(*this, state.member_names);
+  UniqueIdentifierPopper unique_member_names(*this, state.member_names);
   llvm::ListSeparator line_sep("\n");
   for ([[maybe_unused]] int _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;

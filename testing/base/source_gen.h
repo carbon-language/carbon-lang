@@ -150,30 +150,30 @@ class SourceGen {
   //
   // Callers can request a uniform distribution across [min_length, max_length],
   // and when it is requested there is no limit on `max_length`.
-  auto GetShuffledIds(int number, int min_length = 1, int max_length = 64,
+  auto GetShuffledIdentifiers(int number, int min_length = 1, int max_length = 64,
                       bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
 
-  // Same as `GetShuffledIds`, but ensures there are no collisions.
-  auto GetShuffledUniqueIds(int number, int min_length = 4, int max_length = 64,
+  // Same as `GetShuffledIdentifiers`, but ensures there are no collisions.
+  auto GetShuffledUniqueIdentifiers(int number, int min_length = 4, int max_length = 64,
                             bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a collection of un-shuffled identifiers, otherwise the same as
-  // `GetShuffledIds`.
+  // `GetShuffledIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
   // useful when there is already a post-processing step to shuffle things as it
   // is *dramatically* more efficient, especially in debug builds.
-  auto GetIds(int number, int min_length = 1, int max_length = 64,
+  auto GetIdentifiers(int number, int min_length = 1, int max_length = 64,
               bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a collection of un-shuffled unique identifiers, otherwise the same
-  // as `GetShuffledUniqueIds`.
+  // as `GetShuffledUniqueIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
   // useful when there is already a post-processing step to shuffle things.
-  auto GetUniqueIds(int number, int min_length = 1, int max_length = 64,
+  auto GetUniqueIdentifiers(int number, int min_length = 1, int max_length = 64,
                     bool uniform = false) -> llvm::SmallVector<llvm::StringRef>;
 
   // Returns a shared collection of random identifiers of a specific length.
@@ -182,7 +182,7 @@ class SourceGen {
   // access to a shared collection of identifiers. The order of these is a
   // single fixed random order for a given execution. The returned array
   // reference is only valid until the next call any method on this generator.
-  auto GetSingleLengthIds(int length, int number)
+  auto GetSingleLengthIdentifiers(int length, int number)
       -> llvm::ArrayRef<llvm::StringRef>;
 
  private:
@@ -202,18 +202,19 @@ class SourceGen {
     llvm::SmallVector<llvm::StringRef> param_names;
   };
 
-  class UniqueIdPopper;
-  friend UniqueIdPopper;
+  class UniqueIdentifierPopper;
+  friend UniqueIdentifierPopper;
 
   auto IsCpp() -> bool { return language_ == Language::Cpp; }
 
-  auto GenerateRandomIdentifier(llvm::MutableArrayRef<char> id_storage) -> void;
+  auto GenerateRandomIdentifier(llvm::MutableArrayRef<char> dest_storage) -> void;
   auto AppendUniqueIdentifiers(int length, int number,
                                llvm::SmallVectorImpl<llvm::StringRef>& dest)
       -> void;
-  template <typename AppendIds>
-  auto GetIdsImpl(int number, int min_length, int max_length, bool uniform,
-                  AppendIds append_ids) -> llvm::SmallVector<llvm::StringRef>;
+  template <typename AppendFunc>
+  auto GetIdentifiersImpl(int number, int min_length, int max_length,
+                          bool uniform, AppendFunc append)
+      -> llvm::SmallVector<llvm::StringRef>;
 
   auto GetShuffledInts(int number, int min, int max) -> llvm::SmallVector<int>;
 
@@ -230,8 +231,8 @@ class SourceGen {
   absl::BitGen rng_;
   llvm::BumpPtrAllocator storage_;
 
-  Map<int, llvm::SmallVector<llvm::StringRef>> ids_by_length_;
-  Map<int, std::pair<int, Set<llvm::StringRef>>> unique_ids_by_length_;
+  Map<int, llvm::SmallVector<llvm::StringRef>> identifiers_by_length_;
+  Map<int, std::pair<int, Set<llvm::StringRef>>> unique_identifiers_by_length_;
 
   Language language_;
 };
