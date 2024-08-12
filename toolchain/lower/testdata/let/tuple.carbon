@@ -24,44 +24,44 @@ fn F() -> i32 {
 // CHECK:STDOUT: define i32 @F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc12_36.2.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc12_36.4.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 1
-// CHECK:STDOUT:   %.loc12_36.6.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 2
+// CHECK:STDOUT:   %.loc12_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc12_36.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.1.loc12_37, i64 12, i1 false)
 // CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc13_28.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc13_28.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_28.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_28.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.2.loc13_29, i64 8, i1 false)
-// CHECK:STDOUT:   %.loc14_43.1.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc14_43.1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc14_43.2 = load i32, ptr %.loc14_43.1.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc14_43.3.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc14_43.3.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc14_43.4 = load i32, ptr %.loc14_43.3.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc14_43.5.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 2
+// CHECK:STDOUT:   %.loc14_43.5.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2
 // CHECK:STDOUT:   %.loc14_43.6 = load i32, ptr %.loc14_43.5.tuple.elem, align 4
 // CHECK:STDOUT:   %tuple.loc14_43 = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %tuple.loc14_431 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple.loc14_43, i32 0, i32 0
+// CHECK:STDOUT:   %tuple.loc14_431 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc14_43, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc14_43.2, ptr %tuple.loc14_431, align 4
-// CHECK:STDOUT:   %tuple.loc14_432 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple.loc14_43, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.loc14_432 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc14_43, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc14_43.4, ptr %tuple.loc14_432, align 4
-// CHECK:STDOUT:   %tuple.loc14_433 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple.loc14_43, i32 0, i32 2
+// CHECK:STDOUT:   %tuple.loc14_433 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc14_43, i32 0, i32 2
 // CHECK:STDOUT:   store i32 %.loc14_43.6, ptr %tuple.loc14_433, align 4
-// CHECK:STDOUT:   %.loc14_46.1.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc14_46.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc14_46.2 = load i32, ptr %.loc14_46.1.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc14_46.3.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc14_46.3.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc14_46.4 = load i32, ptr %.loc14_46.3.tuple.elem, align 4
 // CHECK:STDOUT:   %tuple.loc14_46 = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %tuple.loc14_464 = getelementptr inbounds { i32, i32 }, ptr %tuple.loc14_46, i32 0, i32 0
+// CHECK:STDOUT:   %tuple.loc14_464 = getelementptr inbounds nuw { i32, i32 }, ptr %tuple.loc14_46, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc14_46.2, ptr %tuple.loc14_464, align 4
-// CHECK:STDOUT:   %tuple.loc14_465 = getelementptr inbounds { i32, i32 }, ptr %tuple.loc14_46, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.loc14_465 = getelementptr inbounds nuw { i32, i32 }, ptr %tuple.loc14_46, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc14_46.4, ptr %tuple.loc14_465, align 4
 // CHECK:STDOUT:   %tuple.loc14_47 = alloca { ptr, ptr }, align 8
-// CHECK:STDOUT:   %tuple.loc14_476 = getelementptr inbounds { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 0
+// CHECK:STDOUT:   %tuple.loc14_476 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 0
 // CHECK:STDOUT:   store ptr %tuple.loc14_43, ptr %tuple.loc14_476, align 8
-// CHECK:STDOUT:   %tuple.loc14_477 = getelementptr inbounds { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.loc14_477 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %tuple.loc14_46, ptr %tuple.loc14_477, align 8
-// CHECK:STDOUT:   %.loc15_13.tuple.index = getelementptr inbounds { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1
+// CHECK:STDOUT:   %.loc15_13.tuple.index = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1
 // CHECK:STDOUT:   %.loc15_13.tuple.index.load = load ptr, ptr %.loc15_13.tuple.index, align 8
-// CHECK:STDOUT:   %.loc15_16.tuple.index = getelementptr inbounds { i32, i32 }, ptr %.loc15_13.tuple.index.load, i32 0, i32 1
+// CHECK:STDOUT:   %.loc15_16.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_13.tuple.index.load, i32 0, i32 1
 // CHECK:STDOUT:   %.loc15_16.tuple.index.load = load i32, ptr %.loc15_16.tuple.index, align 4
 // CHECK:STDOUT:   ret i32 %.loc15_16.tuple.index.load
 // CHECK:STDOUT: }

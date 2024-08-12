@@ -31,7 +31,7 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_16.1.n = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc21_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc21_16.2 = load i32, ptr %.loc21_16.1.n, align 4
 // CHECK:STDOUT:   ret i32 %.loc21_16.2
 // CHECK:STDOUT: }

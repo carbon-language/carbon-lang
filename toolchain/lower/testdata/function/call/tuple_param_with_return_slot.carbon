@@ -24,15 +24,15 @@ fn Main() {
 // CHECK:STDOUT: define void @F(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_14.tuple.index = extractvalue { i32 } %b, 0
-// CHECK:STDOUT:   %.loc12_20.tuple.index = getelementptr inbounds { i32, i32 }, ptr %c, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_20.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0
 // CHECK:STDOUT:   %.loc12_20.tuple.index.load = load i32, ptr %.loc12_20.tuple.index, align 4
-// CHECK:STDOUT:   %.loc12_26.tuple.index = getelementptr inbounds { i32, i32 }, ptr %c, i32 0, i32 1
+// CHECK:STDOUT:   %.loc12_26.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1
 // CHECK:STDOUT:   %.loc12_26.tuple.index.load = load i32, ptr %.loc12_26.tuple.index, align 4
-// CHECK:STDOUT:   %.loc12_27.2.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_27.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc12_14.tuple.index, ptr %.loc12_27.2.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc12_27.4.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %.loc12_27.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc12_20.tuple.index.load, ptr %.loc12_27.4.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc12_27.6.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 2
+// CHECK:STDOUT:   %.loc12_27.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2
 // CHECK:STDOUT:   store i32 %.loc12_26.tuple.index.load, ptr %.loc12_27.6.tuple.elem, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

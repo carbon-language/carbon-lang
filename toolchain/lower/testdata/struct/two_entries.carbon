@@ -22,17 +22,17 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc12_46.2.a = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc12_46.4.b = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc12_46.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_46.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.loc12_47, i64 8, i1 false)
 // CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc13_31.1.a = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_31.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc13_31.2 = load i32, ptr %.loc13_31.1.a, align 4
-// CHECK:STDOUT:   %.loc13_31.3.a = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_31.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc13_31.2, ptr %.loc13_31.3.a, align 4
-// CHECK:STDOUT:   %.loc13_31.5.b = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_31.5.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc13_31.6 = load i32, ptr %.loc13_31.5.b, align 4
-// CHECK:STDOUT:   %.loc13_31.7.b = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_31.7.b = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc13_31.6, ptr %.loc13_31.7.b, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
