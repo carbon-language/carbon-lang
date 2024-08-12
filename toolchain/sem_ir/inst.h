@@ -305,15 +305,16 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {
-  // Used when there is no associated location. Note, we should generally do our
-  // best to associate a location for diagnostics.
+  // Constructs a LocIdAndInst with no associated location. Note, we should
+  // generally do our best to associate a location for diagnostics.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
   }
 
-  // Used when a location comes from some other place, and can't trivially be
-  // validated to match the InstT's expected node ID.
+  // Constructs a LocIdAndInst that reuses the location associated with some
+  // other inst, typically because `inst` doesn't have an explicit
+  // representation in the parse tree.
   template <typename InstT>
   static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
