@@ -75,7 +75,7 @@ static auto BuildInterfaceDecl(Context& context,
                              {.loc = node_id,
                               .is_definition = is_definition,
                               .is_extern = false},
-                             {.loc = existing_interface.decl_id,
+                             {.loc = existing_interface.latest_decl_id(),
                               .is_definition = existing_interface.is_defined(),
                               .is_extern = false},
                              /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
@@ -103,8 +103,8 @@ static auto BuildInterfaceDecl(Context& context,
     // there was an error in the qualifier, we will have lost track of the
     // interface name here. We should keep track of it even if the name is
     // invalid.
-    SemIR::Interface interface_info = {
-        name_context.MakeEntityWithParamsBase(interface_decl_id, name)};
+    SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
+        name, interface_decl_id, /*is_extern=*/false)};
     interface_info.generic_id = FinishGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {

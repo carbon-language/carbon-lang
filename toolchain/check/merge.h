@@ -45,7 +45,7 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // different kinds of entity such as classes and functions.
 struct DeclParams {
   explicit DeclParams(const SemIR::EntityWithParamsBase& base)
-      : loc(base.decl_id),
+      : loc(base.latest_decl_id()),
         first_param_node_id(base.first_param_node_id),
         last_param_node_id(base.last_param_node_id),
         implicit_param_refs_id(base.implicit_param_refs_id),

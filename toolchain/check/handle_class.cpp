@@ -102,10 +102,10 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
 
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_is_extern && !new_is_extern)) {
-    prev_class.decl_id = new_class.decl_id;
+    prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
     ReplacePrevInstForMerge(
         context, prev_class.parent_scope_id, prev_class.name_id,
-        new_is_import ? new_loc.inst_id : new_class.decl_id);
+        new_is_import ? new_loc.inst_id : new_class.first_owning_decl_id);
   }
   return true;
 }
@@ -219,7 +219,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
-      name_context.MakeEntityWithParamsBase(class_decl_id, name),
+      name_context.MakeEntityWithParamsBase(name, class_decl_id, is_extern),
       {// `.self_type_id` depends on the ClassType, so is set below.
        .self_type_id = SemIR::TypeId::Invalid,
        .inheritance_kind = inheritance_kind}};

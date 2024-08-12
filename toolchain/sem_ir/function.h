@@ -22,8 +22,6 @@ struct FunctionFields {
   // function, depending on whether the return type needs a return slot, but is
   // always present if the function has a declared return type.
   InstId return_storage_id;
-  // Whether the declaration is extern.
-  bool is_extern;
 
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.

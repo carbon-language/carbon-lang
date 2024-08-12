@@ -41,21 +41,21 @@ auto CheckFunctionTypeMatches(Context& context,
         "Function redeclaration differs because no return type is provided.");
     auto diag =
         new_return_type_id.is_valid()
-            ? context.emitter().Build(new_function.decl_id,
+            ? context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffers,
                                       new_return_type_id)
-            : context.emitter().Build(new_function.decl_id,
+            : context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
                         "Previously declared with return type `{0}`.",
                         SemIR::TypeId);
-      diag.Note(prev_function.decl_id, FunctionRedeclReturnTypePrevious,
-                prev_return_type_id);
+      diag.Note(prev_function.latest_decl_id(),
+                FunctionRedeclReturnTypePrevious, prev_return_type_id);
     } else {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePreviousNoReturn, Note,
                         "Previously declared with no return type.");
-      diag.Note(prev_function.decl_id,
+      diag.Note(prev_function.latest_decl_id(),
                 FunctionRedeclReturnTypePreviousNoReturn);
     }
     diag.Emit();

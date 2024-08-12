@@ -100,9 +100,10 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
-    prev_function.decl_id = new_function.decl_id;
+    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
     ReplacePrevInstForMerge(context, prev_function.parent_scope_id,
-                            prev_function.name_id, new_function.decl_id);
+                            prev_function.name_id,
+                            new_function.first_owning_decl_id);
   }
   return true;
 }
@@ -151,7 +152,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.is_valid()) {
-    context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
+    context.DiagnoseDuplicateName(function_info.latest_decl_id(), prev_id);
     return;
   }
 
@@ -216,8 +217,8 @@ static auto BuildFunctionDecl(Context& context,
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
   auto function_info = SemIR::Function{
-      {name_context.MakeEntityWithParamsBase(decl_id, name)},
-      {.return_storage_id = return_storage_id, .is_extern = is_extern}};
+      {name_context.MakeEntityWithParamsBase(name, decl_id, is_extern)},
+      {.return_storage_id = return_storage_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
@@ -244,7 +245,7 @@ static auto BuildFunctionDecl(Context& context,
   if (!name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
-    auto lookup_result_id = function_info.decl_id;
+    auto lookup_result_id = decl_id;
     if (parent_scope_inst && !name_context.has_qualifiers) {
       if (auto interface_scope =
               parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {

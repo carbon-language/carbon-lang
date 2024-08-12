@@ -25,7 +25,8 @@ static auto NoteAssociatedFunction(Context& context,
   CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
                     "Associated function {0} declared here.", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(function.decl_id, ImplAssociatedFunctionHere, function.name_id);
+  builder.Note(function.latest_decl_id(), ImplAssociatedFunctionHere,
+               function.name_id);
 }
 
 // Gets the self specific of a generic declaration that is an interface member,
