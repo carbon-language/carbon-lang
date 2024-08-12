@@ -58,8 +58,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.loc9_28, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -72,7 +72,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @GetB(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds { i32, i32 }, ptr %self, i32 0, i32 1
+// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1
 // CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4
 // CHECK:STDOUT:   ret i32 %.loc22_14.2
 // CHECK:STDOUT: }

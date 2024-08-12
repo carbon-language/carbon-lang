@@ -22,9 +22,9 @@ fn G() {
 // CHECK:STDOUT: define void @G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8
-// CHECK:STDOUT:   %.loc14_74.1.a = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc14_74.1.a = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0
 // CHECK:STDOUT:   call void @F(ptr %.loc14_74.1.a)
-// CHECK:STDOUT:   %.loc14_74.2.b = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc14_74.2.b = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 1
 // CHECK:STDOUT:   call void @F(ptr %.loc14_74.2.b)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

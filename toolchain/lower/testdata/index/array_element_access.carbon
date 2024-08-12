@@ -26,8 +26,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_36.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   %.loc10_36.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %.loc10_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc10_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.loc10_37, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -45,18 +45,18 @@ fn Run() {
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %.loc15_22.1.temp = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   call void @A(ptr %.loc15_22.1.temp)
-// CHECK:STDOUT:   %.loc15_22.3.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %.loc15_22.1.temp, i32 0, i32 0
+// CHECK:STDOUT:   %.loc15_22.3.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_22.1.temp, i32 0, i32 0
 // CHECK:STDOUT:   %.loc15_22.4 = load i32, ptr %.loc15_22.3.tuple.elem, align 4
 // CHECK:STDOUT:   %.loc15_22.6.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc15_22.4, ptr %.loc15_22.6.array.index, align 4
-// CHECK:STDOUT:   %.loc15_22.8.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %.loc15_22.1.temp, i32 0, i32 1
+// CHECK:STDOUT:   %.loc15_22.8.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_22.1.temp, i32 0, i32 1
 // CHECK:STDOUT:   %.loc15_22.9 = load i32, ptr %.loc15_22.8.tuple.elem, align 4
 // CHECK:STDOUT:   %.loc15_22.11.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc15_22.9, ptr %.loc15_22.11.array.index, align 4
 // CHECK:STDOUT:   %b.var = alloca i32, align 4
 // CHECK:STDOUT:   %.loc16_17.1.temp = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   call void @A(ptr %.loc16_17.1.temp)
-// CHECK:STDOUT:   %.loc16_21.1.tuple.index = getelementptr inbounds { i32, i32 }, ptr %.loc16_17.1.temp, i32 0, i32 0
+// CHECK:STDOUT:   %.loc16_21.1.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_17.1.temp, i32 0, i32 0
 // CHECK:STDOUT:   %.loc16_21.2 = load i32, ptr %.loc16_21.1.tuple.index, align 4
 // CHECK:STDOUT:   store i32 %.loc16_21.2, ptr %b.var, align 4
 // CHECK:STDOUT:   %c.var = alloca i32, align 4

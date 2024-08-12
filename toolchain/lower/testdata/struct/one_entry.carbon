@@ -22,7 +22,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8
 // CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x.var, align 4
 // CHECK:STDOUT:   %y.var = alloca { i32 }, align 8
-// CHECK:STDOUT:   %.loc13_22.1.a = getelementptr inbounds { i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_22.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc13_22.2 = load i32, ptr %.loc13_22.1.a, align 4
 // CHECK:STDOUT:   %.loc13_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc13_22.2, 0
 // CHECK:STDOUT:   store { i32 } %.loc13_22.3.struct.init, ptr %y.var, align 4

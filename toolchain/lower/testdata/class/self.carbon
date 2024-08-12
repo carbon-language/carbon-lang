@@ -28,14 +28,14 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Get(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_14.1.a = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc19_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc19_14.2 = load i32, ptr %.loc19_14.1.a, align 4
 // CHECK:STDOUT:   ret i32 %.loc19_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Set(ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_10.a = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc23_10.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %.loc23_10.a, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

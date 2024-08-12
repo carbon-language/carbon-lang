@@ -37,30 +37,30 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ { i32 }, i32 }) %return) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_35.2.base = getelementptr inbounds { { i32 }, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   %.loc22_26.2.b = getelementptr inbounds { i32 }, ptr %.loc22_35.2.base, i32 0, i32 0
-// CHECK:STDOUT:   %.loc22_35.4.d = getelementptr inbounds { { i32 }, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %.loc22_35.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc22_26.2.b = getelementptr inbounds nuw { i32 }, ptr %.loc22_35.2.base, i32 0, i32 0
+// CHECK:STDOUT:   %.loc22_35.4.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.2.loc22_36, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Access(ptr sret({ i32, i32 }) %return, ptr %d) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc26_12.1.d = getelementptr inbounds { { i32 }, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   %.loc26_12.1.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 1
 // CHECK:STDOUT:   %.loc26_12.2 = load i32, ptr %.loc26_12.1.d, align 4
-// CHECK:STDOUT:   %.loc26_17.1.base = getelementptr inbounds { { i32 }, i32 }, ptr %d, i32 0, i32 0
-// CHECK:STDOUT:   %.loc26_22.1.b = getelementptr inbounds { i32 }, ptr %.loc26_17.1.base, i32 0, i32 0
+// CHECK:STDOUT:   %.loc26_17.1.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 0
+// CHECK:STDOUT:   %.loc26_22.1.b = getelementptr inbounds nuw { i32 }, ptr %.loc26_17.1.base, i32 0, i32 0
 // CHECK:STDOUT:   %.loc26_22.2 = load i32, ptr %.loc26_22.1.b, align 4
-// CHECK:STDOUT:   %.loc26_24.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc26_24.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc26_12.2, ptr %.loc26_24.2.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc26_24.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %.loc26_24.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc26_22.2, ptr %.loc26_24.4.tuple.elem, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @Convert(ptr %p) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc30_11.2.base = getelementptr inbounds { { i32 }, i32 }, ptr %p, i32 0, i32 0
+// CHECK:STDOUT:   %.loc30_11.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %p, i32 0, i32 0
 // CHECK:STDOUT:   ret ptr %.loc30_11.2.base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
