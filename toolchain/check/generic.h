@@ -68,6 +68,13 @@ auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
 auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
     -> bool;
 
+// Requires that a param block only contains generics. Diagnoses and updates the
+// block otherwise. This will typically be called once for each of implicit and
+// explicit parameters, and must occur before constant evaluation of the
+// parameterized instruction.
+auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
+    -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_
