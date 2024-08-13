@@ -289,6 +289,7 @@ cc_binary(
         ":tokenized_buffer",
         "//common:benchmark_main",
         "//common:check",
+        "//testing/base:source_gen_lib",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
