@@ -67,7 +67,7 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
-  // Convenience for AddInst on specific instruction types.
+  // Convenience for AddInst with typed nodes.
   template <typename InstT>
     requires(SemIR::Internal::HasNodeId<InstT>)
   auto AddInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
@@ -75,7 +75,8 @@ class Context {
     return AddInst(SemIR::LocIdAndInst(node_id, inst));
   }
 
-  // Convenience for AddInst on specific instruction types.
+  // Convenience for AddInst when reusing a location, which any instruction can
+  // do.
   template <typename InstT>
   auto AddInstReusingLoc(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
     return AddInst(SemIR::LocIdAndInst::ReusingLoc<InstT>(loc_id, inst));
@@ -85,7 +86,7 @@ class Context {
   // rarely.
   auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
-  // Convenience for AddInstInNoBlock on specific instruction types.
+  // Convenience for AddInstInNoBlock with typed nodes.
   template <typename InstT>
     requires(SemIR::Internal::HasNodeId<InstT>)
   auto AddInstInNoBlock(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
