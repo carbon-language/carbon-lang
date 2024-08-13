@@ -177,6 +177,7 @@ CARBON_DIAGNOSTIC_KIND(InCallToFunction)
 CARBON_DIAGNOSTIC_KIND(InCallToFunctionParam)
 CARBON_DIAGNOSTIC_KIND(InCallToFunctionSelf)
 CARBON_DIAGNOSTIC_KIND(MissingObjectInMethodCall)
+CARBON_DIAGNOSTIC_KIND(GenericParamMustBeConstant)
 
 // Function declaration checking.
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffers)
