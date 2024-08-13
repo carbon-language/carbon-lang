@@ -207,6 +207,9 @@ class SourceGen {
   class UniqueIdentifierPopper;
   friend UniqueIdentifierPopper;
 
+  using AppendFn = auto(int length, int number,
+                        llvm::SmallVectorImpl<llvm::StringRef>& dest) -> void;
+
   auto IsCpp() -> bool { return language_ == Language::Cpp; }
 
   auto GenerateRandomIdentifier(llvm::MutableArrayRef<char> dest_storage)
@@ -214,9 +217,8 @@ class SourceGen {
   auto AppendUniqueIdentifiers(int length, int number,
                                llvm::SmallVectorImpl<llvm::StringRef>& dest)
       -> void;
-  template <typename AppendFunc>
   auto GetIdentifiersImpl(int number, int min_length, int max_length,
-                          bool uniform, AppendFunc append)
+                          bool uniform, llvm::function_ref<AppendFn> append)
       -> llvm::SmallVector<llvm::StringRef>;
 
   auto GetShuffledInts(int number, int min, int max) -> llvm::SmallVector<int>;

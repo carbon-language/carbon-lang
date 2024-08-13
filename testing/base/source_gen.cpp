@@ -398,12 +398,9 @@ static auto Sum(const T& range) -> int {
 // identifiers from each of the lengths in the range [min_length, max_length]
 // and either in our default representative distribution or a uniform
 // distribution.
-//
-// Note that this template must be defined prior to its use below.
-template <typename AppendFunc>
-auto SourceGen::GetIdentifiersImpl(int number, int min_length, int max_length,
-                                   bool uniform, AppendFunc append)
-    -> llvm::SmallVector<llvm::StringRef> {
+auto SourceGen::GetIdentifiersImpl(
+    int number, int min_length, int max_length, bool uniform,
+    llvm::function_ref<AppendFn> append) -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length <= max_length);
   CARBON_CHECK(uniform || max_length <= 64)
       << "Cannot produce a meaningful non-uniform distribution of lengths "
