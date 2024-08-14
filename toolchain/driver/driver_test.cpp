@@ -14,7 +14,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "testing/base/gtest_main.h"
+#include "testing/base/global_exe_path.h"
 #include "testing/base/test_raw_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
@@ -43,7 +43,7 @@ class DriverTest : public testing::Test {
  protected:
   DriverTest()
       : installation_(
-            InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath())),
+            InstallPaths::MakeForBazelRunfiles(Testing::GetExePath())),
         driver_(fs_, &installation_, test_output_stream_, test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);

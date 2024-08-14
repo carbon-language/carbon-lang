@@ -2,40 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "common/benchmark_main.h"
-
 #include <benchmark/benchmark.h>
 
-#include <string>
-
 #include "absl/flags/parse.h"
-#include "common/check.h"
-#include "common/exe_path.h"
 #include "common/init_llvm.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
+#include "testing/base/global_exe_path.h"
 
-static bool after_main = false;
-static llvm::StringRef exe_path;
-
-namespace Carbon::Testing {
-
-auto GetBenchmarkExePath() -> llvm::StringRef {
-  CARBON_CHECK(after_main)
-      << "Must not query the executable path until after `main` is entered!";
-  return exe_path;
-}
-
-}  // namespace Carbon::Testing
-
-// TODO: Refactor this to share code with `gtest_main.cpp`.
 auto main(int orig_argc, char** orig_argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
   Carbon::InitLLVM init_llvm(orig_argc, orig_argv);
 
-  std::string exe_path_storage = Carbon::FindExecutablePath(orig_argv[0]);
-  exe_path = exe_path_storage;
-  after_main = true;
+  Carbon::Testing::SetExePath(orig_argv[0]);
 
   // Inject a flag to override the defaults for benchmarks. This can still be
   // disabled by user arguments.

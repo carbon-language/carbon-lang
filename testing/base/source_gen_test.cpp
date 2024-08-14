@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "common/set.h"
-#include "testing/base/gtest_main.h"
+#include "testing/base/global_exe_path.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -144,7 +144,7 @@ TEST(SourceGenTest, UniqueIdentifiers) {
 auto TestCompile(llvm::StringRef source) -> bool {
   llvm::vfs::InMemoryFileSystem fs;
   InstallPaths installation(
-      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath()));
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
   Driver driver(fs, &installation, llvm::outs(), llvm::errs());
 
   // Load the prelude into our VFS.

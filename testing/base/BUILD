@@ -19,23 +19,28 @@ cc_library(
     name = "gtest_main",
     testonly = 1,
     srcs = ["gtest_main.cpp"],
-    hdrs = ["gtest_main.h"],
     deps = [
-        "//common:check",
-        "//common:exe_path",
+        ":global_exe_path",
         "//common:init_llvm",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
 
-cc_test(
-    name = "gtest_main_test",
-    size = "small",
-    srcs = ["gtest_main_test.cpp"],
+# This does extra initialization on top of Google benchmark's main in order to
+# provide stack traces and setup LLVM.
+#
+# This replaces `@google_benchmark//:benchmark_main`;
+# `@google_benchmark//:benchmark` should still be used directly.
+cc_library(
+    name = "benchmark_main",
+    testonly = 1,
+    srcs = ["benchmark_main.cpp"],
     deps = [
-        ":gtest_main",
-        "@googletest//:gtest",
+        ":global_exe_path",
+        "//common:init_llvm",
+        "@abseil-cpp//absl/flags:parse",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -60,6 +65,7 @@ cc_test(
     size = "small",
     srcs = ["source_gen_test.cpp"],
     deps = [
+        ":global_exe_path",
         ":gtest_main",
         ":source_gen_lib",
         "//common:set",
@@ -102,5 +108,29 @@ cc_test(
         ":test_raw_ostream",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "global_exe_path",
+    testonly = 1,
+    srcs = ["global_exe_path.cpp"],
+    hdrs = ["global_exe_path.h"],
+    deps = [
+        "//common:check",
+        "//common:exe_path",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "global_exe_path_test",
+    size = "small",
+    srcs = ["global_exe_path_test.cpp"],
+    deps = [
+        ":global_exe_path",
+        ":gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )

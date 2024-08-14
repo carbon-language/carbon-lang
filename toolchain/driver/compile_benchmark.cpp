@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "common/benchmark_main.h"
+#include "testing/base/global_exe_path.h"
 #include "testing/base/source_gen.h"
 #include "toolchain/driver/driver.h"
 
@@ -20,8 +20,7 @@ namespace {
 class CompileBenchmark {
  public:
   CompileBenchmark()
-      : installation_(
-            InstallPaths::MakeForBazelRunfiles(GetBenchmarkExePath())),
+      : installation_(InstallPaths::MakeForBazelRunfiles(GetExePath())),
         driver_(fs_, &installation_, llvm::outs(), llvm::errs()) {
     // Load the prelude into our VFS.
     //

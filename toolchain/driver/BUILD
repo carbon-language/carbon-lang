@@ -43,6 +43,7 @@ cc_test(
         "//common:all_llvm_targets",
         "//common:check",
         "//common:ostream",
+        "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
@@ -58,8 +59,10 @@ cc_binary(
     srcs = ["compile_benchmark.cpp"],
     deps = [
         ":driver",
-        "//common:benchmark_main",
+        "//testing/base:benchmark_main",
+        "//testing/base:global_exe_path",
         "//testing/base:source_gen_lib",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -110,6 +113,7 @@ cc_test(
     deps = [
         ":driver",
         "//common:all_llvm_targets",
+        "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
