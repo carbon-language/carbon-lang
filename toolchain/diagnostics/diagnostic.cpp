@@ -19,7 +19,8 @@ auto DiagnosticLoc::FormatLocation(llvm::raw_ostream& out) const -> void {
   }
 }
 
-auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out) const -> void {
+auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out, int indent) const
+    -> void {
   if (column_number <= 0) {
     return;
   }
@@ -27,8 +28,9 @@ auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out) const -> void {
   // column_number is 1-based.
   int32_t column = column_number - 1;
 
+  out.indent(indent);
   out << line << "\n";
-  out.indent(column);
+  out.indent(indent + column);
   out << "^";
   // We want to ensure that we don't underline past the end of the line in
   // case of a multiline token.
