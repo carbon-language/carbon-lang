@@ -9,10 +9,21 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_negative_indexing.carbon
 
 let a: [i32; 2] = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface Negate in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+4]]:16: ERROR: Cannot access member of interface Negate in type i32 that does not implement that interface.
 // CHECK:STDERR: var b: i32 = a[-10];
 // CHECK:STDERR:                ^~~
+// CHECK:STDERR:
 var b: i32 = a[-10];
+
+let c: (i32, i32) = (1, 2);
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+7]]:14: ERROR: Member name of type `<error>` in compound member access is not an instance member or an interface member.
+// CHECK:STDERR: let d: i32 = a.(-1);
+// CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:17: ERROR: Cannot access member of interface Negate in type i32 that does not implement that interface.
+// CHECK:STDERR: let d: i32 = a.(-1);
+// CHECK:STDERR:                 ^~
+let d: i32 = a.(-1);
 
 // CHECK:STDOUT: --- fail_negative_indexing.carbon
 // CHECK:STDOUT:
