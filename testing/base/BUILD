@@ -65,9 +65,9 @@ cc_test(
     size = "small",
     srcs = ["source_gen_test.cpp"],
     deps = [
+        ":global_exe_path",
         ":gtest_main",
         ":source_gen_lib",
-        ":global_exe_path",
         "//common:set",
         "//toolchain/driver",
         "@googletest//:gtest",
@@ -128,8 +128,8 @@ cc_test(
     size = "small",
     srcs = ["global_exe_path_test.cpp"],
     deps = [
-        ":gtest_main",
         ":global_exe_path",
+        ":gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

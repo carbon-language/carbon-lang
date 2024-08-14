@@ -196,9 +196,9 @@ cc_test(
     srcs = ["yaml_test.cpp"],
     deps = [
         "//common:ostream",
+        "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "//testing/base:global_exe_path",
         "//toolchain/driver",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
