@@ -409,7 +409,8 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
           member.type_id())) {
     member_id = PerformImplLookup(context, node_id, base_type_const_id,
                                   *assoc_type, member_id);
-  } else if (context.constant_values().GetAsInst(base_type_const_id).Is<SemIR::TupleType>()) {
+  } else if (context.insts().Is<SemIR::TupleType>(
+                 context.constant_values().GetInstId(base_type_const_id))) {
     return PerformTupleIndex(context, node_id, base_id, member_expr_id);
   }
 
@@ -457,8 +458,7 @@ auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
   auto tuple_inst = context.insts().Get(tuple_inst_id);
   auto tuple_type_id = tuple_inst.type_id();
 
-  auto tuple_type =
-      context.types().TryGetAs<SemIR::TupleType>(tuple_type_id));
+  auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(tuple_type_id);
   if (!tuple_type) {
     CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
                       "Type `{0}` does not support tuple indexing. Only "
@@ -467,7 +467,7 @@ auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
     context.emitter().Emit(node_id, TupleIndexOnANonTupleType, tuple_type_id);
     return SemIR::InstId::BuiltinError;
   }
-  
+
   SemIR::TypeId element_type_id = SemIR::TypeId::Error;
   auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
@@ -497,7 +497,7 @@ auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
   return context.AddInst<SemIR::TupleIndex>(node_id,
                                             {.type_id = element_type_id,
                                              .tuple_id = tuple_inst_id,
-                                             .index_id = index_inst_id});  
+                                             .index_id = index_inst_id});
 }
 
 }  // namespace Carbon::Check
