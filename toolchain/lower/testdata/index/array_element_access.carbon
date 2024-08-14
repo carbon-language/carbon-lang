@@ -13,7 +13,7 @@ fn B() -> [i32; 2] { return (1, 2); }
 
 fn Run() {
   var a: [i32; 2] = A();
-  var b: i32 = A().0;
+  var b: i32 = 1;
   var c: i32 = a[b];
   var d: i32 = B()[1];
 }
