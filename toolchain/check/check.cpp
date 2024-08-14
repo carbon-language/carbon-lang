@@ -844,9 +844,9 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
     auto loc = converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
     loc.FormatLocation(output);
-    output << ": Check::Handle" << context.parse_tree().node_kind(node_id)
-           << "\n";
-    loc.FormatSnippet(output);
+    output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
+    // Crash output has a tab indent; try to indent slightly past that.
+    loc.FormatSnippet(output, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
