@@ -198,6 +198,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "//testing/base:testing_exe_path",
         "//toolchain/driver",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",

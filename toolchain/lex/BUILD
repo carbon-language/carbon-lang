@@ -84,8 +84,8 @@ cc_binary(
     srcs = ["numeric_literal_benchmark.cpp"],
     deps = [
         ":numeric_literal",
-        "//common:benchmark_main",
         "//common:check",
+        "//testing/base:benchmark_main",
         "//toolchain/diagnostics:null_diagnostics",
         "@google_benchmark//:benchmark",
     ],
@@ -140,7 +140,7 @@ cc_binary(
     srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
-        "//common:benchmark_main",
+        "//testing/base:benchmark_main",
         "//toolchain/diagnostics:null_diagnostics",
         "@google_benchmark//:benchmark",
     ],
@@ -287,8 +287,8 @@ cc_binary(
         ":lex",
         ":token_kind",
         ":tokenized_buffer",
-        "//common:benchmark_main",
         "//common:check",
+        "//testing/base:benchmark_main",
         "//testing/base:source_gen_lib",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",

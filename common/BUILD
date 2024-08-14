@@ -36,20 +36,6 @@ cc_library(
 )
 
 cc_library(
-    name = "benchmark_main",
-    srcs = ["benchmark_main.cpp"],
-    hdrs = ["benchmark_main.h"],
-    deps = [
-        ":check",
-        ":exe_path",
-        ":init_llvm",
-        "@abseil-cpp//absl/flags:parse",
-        "@google_benchmark//:benchmark",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "command_line",
     srcs = ["command_line.cpp"],
     hdrs = ["command_line.h"],
@@ -196,9 +182,9 @@ cc_binary(
     testonly = 1,
     srcs = ["hashing_benchmark.cpp"],
     deps = [
-        ":benchmark_main",
         ":check",
         ":hashing",
+        "//testing/base:benchmark_main",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",

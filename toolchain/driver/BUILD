@@ -45,6 +45,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "//testing/base:testing_exe_path",
         "@googletest//:gtest",
         "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
@@ -58,8 +59,10 @@ cc_binary(
     srcs = ["compile_benchmark.cpp"],
     deps = [
         ":driver",
-        "//common:benchmark_main",
+        "//testing/base:benchmark_main",
         "//testing/base:source_gen_lib",
+        "//testing/base:testing_exe_path",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -112,6 +115,7 @@ cc_test(
         "//common:all_llvm_targets",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "//testing/base:testing_exe_path",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/install:install_paths",
         "//toolchain/lex:tokenized_buffer_test_helpers",

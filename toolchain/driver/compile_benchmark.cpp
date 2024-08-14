@@ -6,8 +6,8 @@
 
 #include <string>
 
-#include "common/benchmark_main.h"
 #include "testing/base/source_gen.h"
+#include "testing/base/testing_exe_path.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -20,8 +20,7 @@ namespace {
 class CompileBenchmark {
  public:
   CompileBenchmark()
-      : installation_(
-            InstallPaths::MakeForBazelRunfiles(GetBenchmarkExePath())),
+      : installation_(InstallPaths::MakeForBazelRunfiles(GetExePath())),
         driver_(fs_, &installation_, llvm::outs(), llvm::errs()) {
     // Load the prelude into our VFS.
     //
