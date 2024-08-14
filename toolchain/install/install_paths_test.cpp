@@ -12,7 +12,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {

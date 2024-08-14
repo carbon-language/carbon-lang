@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TESTING_BASE_TESTING_EXE_PATH_H_
-#define CARBON_TESTING_BASE_TESTING_EXE_PATH_H_
+#ifndef CARBON_TESTING_BASE_GLOBAL_EXE_PATH_H_
+#define CARBON_TESTING_BASE_GLOBAL_EXE_PATH_H_
 
 #include "llvm/ADT/StringRef.h"
 
@@ -23,4 +23,4 @@ auto SetExePath(const char* argv_zero) -> void;
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TESTING_BASE_TESTING_EXE_PATH_H_
+#endif  // CARBON_TESTING_BASE_GLOBAL_EXE_PATH_H_

@@ -19,7 +19,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
 #include "testing/base/test_raw_ostream.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 
 namespace Carbon {
 namespace {

@@ -6,7 +6,7 @@
 
 #include "absl/flags/parse.h"
 #include "common/init_llvm.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 
 auto main(int orig_argc, char** orig_argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.

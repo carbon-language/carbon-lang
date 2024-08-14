@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "common/init_llvm.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 
 auto main(int argc, char** argv) -> int {
   // Initialize LLVM first, as that will also handle ensuring UTF-8 encoding.

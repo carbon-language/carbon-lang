@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "common/set.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {

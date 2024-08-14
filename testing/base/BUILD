@@ -20,7 +20,7 @@ cc_library(
     testonly = 1,
     srcs = ["gtest_main.cpp"],
     deps = [
-        ":testing_exe_path",
+        ":global_exe_path",
         "//common:init_llvm",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -37,7 +37,7 @@ cc_library(
     testonly = 1,
     srcs = ["benchmark_main.cpp"],
     deps = [
-        ":testing_exe_path",
+        ":global_exe_path",
         "//common:init_llvm",
         "@abseil-cpp//absl/flags:parse",
         "@google_benchmark//:benchmark",
@@ -67,7 +67,7 @@ cc_test(
     deps = [
         ":gtest_main",
         ":source_gen_lib",
-        ":testing_exe_path",
+        ":global_exe_path",
         "//common:set",
         "//toolchain/driver",
         "@googletest//:gtest",
@@ -112,10 +112,10 @@ cc_test(
 )
 
 cc_library(
-    name = "testing_exe_path",
+    name = "global_exe_path",
     testonly = 1,
-    srcs = ["testing_exe_path.cpp"],
-    hdrs = ["testing_exe_path.h"],
+    srcs = ["global_exe_path.cpp"],
+    hdrs = ["global_exe_path.h"],
     deps = [
         "//common:check",
         "//common:exe_path",
@@ -124,12 +124,12 @@ cc_library(
 )
 
 cc_test(
-    name = "testing_exe_path_test",
+    name = "global_exe_path_test",
     size = "small",
-    srcs = ["testing_exe_path_test.cpp"],
+    srcs = ["global_exe_path_test.cpp"],
     deps = [
         ":gtest_main",
-        ":testing_exe_path",
+        ":global_exe_path",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

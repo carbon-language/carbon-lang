@@ -15,7 +15,7 @@
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/test_raw_ostream.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon {

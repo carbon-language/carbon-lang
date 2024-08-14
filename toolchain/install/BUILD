@@ -145,7 +145,7 @@ cc_test(
         "//common:check",
         "//common:ostream",
         "//testing/base:gtest_main",
-        "//testing/base:testing_exe_path",
+        "//testing/base:global_exe_path",
         "@bazel_tools//tools/cpp/runfiles",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

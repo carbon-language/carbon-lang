@@ -9,7 +9,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/base/test_raw_ostream.h"
-#include "testing/base/testing_exe_path.h"
+#include "testing/base/global_exe_path.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
