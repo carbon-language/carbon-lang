@@ -54,11 +54,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc15_22.11.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc15_22.9, ptr %.loc15_22.11.array.index, align 4
 // CHECK:STDOUT:   %b.var = alloca i32, align 4
-// CHECK:STDOUT:   %.loc16_17.1.temp = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   call void @A(ptr %.loc16_17.1.temp)
-// CHECK:STDOUT:   %.loc16_19.1.tuple.index = getelementptr inbounds { i32, i32 }, ptr %.loc16_17.1.temp, i32 0, i32 0
-// CHECK:STDOUT:   %.loc16_19.2 = load i32, ptr %.loc16_19.1.tuple.index, align 4
-// CHECK:STDOUT:   store i32 %.loc16_19.2, ptr %b.var, align 4
+// CHECK:STDOUT:   store i32 1, ptr %b.var, align 4
 // CHECK:STDOUT:   %c.var = alloca i32, align 4
 // CHECK:STDOUT:   %.loc17_18 = load i32, ptr %b.var, align 4
 // CHECK:STDOUT:   %.loc17_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc17_18

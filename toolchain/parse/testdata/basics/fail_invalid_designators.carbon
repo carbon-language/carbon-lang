@@ -19,7 +19,6 @@ fn F() {
   // CHECK:STDERR:   a.fn;
   // CHECK:STDERR:     ^~
   a.fn;
-  a.42;
 }
 
 // CHECK:STDOUT: - filename: fail_invalid_designators.carbon
@@ -38,10 +37,6 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'fn', has_error: yes},
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '42'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
