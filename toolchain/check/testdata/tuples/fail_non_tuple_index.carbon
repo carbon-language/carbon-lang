@@ -72,13 +72,13 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_32.5: init %.3 = array_init (%.loc12_32.4) to %non_tuple.var [template = constants.%array]
 // CHECK:STDOUT:   %.loc12_33: init %.3 = converted %.loc12_32.1, %.loc12_32.5 [template = constants.%array]
 // CHECK:STDOUT:   assign %non_tuple.var, %.loc12_33
-// CHECK:STDOUT:   %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc16_14.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
-// CHECK:STDOUT:   %.loc16_14.2: type = converted %int.make_type_32.loc16, %.loc16_14.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_14.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_14.2: type = converted %int.make_type_32.loc13, %.loc13_14.1 [template = i32]
 // CHECK:STDOUT:   %first.var: ref i32 = var first
 // CHECK:STDOUT:   %first: ref i32 = bind_name first, %first.var
 // CHECK:STDOUT:   %non_tuple.ref: ref %.3 = name_ref non_tuple, %non_tuple
-// CHECK:STDOUT:   %.loc16_30: i32 = int_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_30: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   assign %first.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
