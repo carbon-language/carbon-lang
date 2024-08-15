@@ -70,6 +70,7 @@ class ToolchainFileTest : public FileTestBase {
       args.push_back("--dump-sem-ir");
     } else if (component_ == "lower") {
       args.push_back("--dump-llvm-ir");
+      args.push_back("--debug-info");
     } else {
       CARBON_FATAL() << "Unexpected test component " << component_ << ": "
                      << test_name();

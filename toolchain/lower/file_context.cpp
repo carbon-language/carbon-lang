@@ -20,16 +20,20 @@
 namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
-                         llvm::StringRef module_name, const SemIR::File& sem_ir,
+                         bool include_debug_info, llvm::StringRef module_name,
+                         const SemIR::File& sem_ir,
                          const SemIR::InstNamer* inst_namer,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
+      di_builder_(*llvm_module_),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
-      vlog_stream_(vlog_stream) {
+      vlog_stream_(vlog_stream),
+      include_debug_info_(include_debug_info) {
   CARBON_CHECK(!sem_ir.has_errors())
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";
+  BuildCompileUnit(module_name);
 }
 
 // TODO: Move this to lower.cpp.
@@ -64,6 +68,22 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // TODO: Lower global variable initializers.
 
   return std::move(llvm_module_);
+}
+
+auto FileContext::BuildCompileUnit(llvm::StringRef module_name) -> void {
+  if (!include_debug_info_)
+    return;
+  // FIXME: Include directory path in the cu_file.
+  llvm::DIFile* cu_file = di_builder_.createFile(module_name, "");
+  // FIXME: Introduce a new language code for Carbon. C works well for now since
+  // it's something debuggers will already know/have support for at least.
+  // Probably have to bump to C++ at some point for virtual functions,
+  // templates, etc.
+  di_compile_unit_ = di_builder_.createCompileUnit(
+      llvm::dwarf::DW_LANG_C, cu_file, "carbon", false, "", 0, "");
+  llvm_module_->addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
+  llvm_module_->addModuleFlag(llvm::Module::Warning, "Debug Info Version",
+                              llvm::DEBUG_METADATA_VERSION);
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
