@@ -8,18 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/index/tuple_index.carbon
 
-// CHECK:STDERR: tuple_index.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
-// CHECK:STDERR: let var: i32 = tuple.0;
-// CHECK:STDERR:     ^~~
-let var: i32 = tuple.0;
+let x: i32 = tuple.0;
 
 // CHECK:STDOUT: - filename: tuple_index.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'var', has_error: yes},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'var', has_error: yes},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: 'var', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'tuple'},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
