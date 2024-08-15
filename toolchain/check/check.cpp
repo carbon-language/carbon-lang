@@ -883,7 +883,8 @@ static auto CheckParseTree(
     library_id = packaging->names.library_id;
   }
   unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, package_id, library_id,
+      unit_info.check_ir_id, package_id,
+      SemIR::LibraryNameId::ForStringLiteralValueId(library_id),
       *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 
