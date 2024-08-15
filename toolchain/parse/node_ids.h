@@ -71,8 +71,9 @@ struct NodeIdInCategory : public NodeId {
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
 using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
-using AnyMemberNameOrMemberExprId =
-    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr>;
+using AnyMemberAccessId =
+    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr |
+                     NodeCategory::IntConst>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;

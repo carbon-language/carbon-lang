@@ -23,6 +23,12 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id) -> SemIR::InstId;
 
+// Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
+// and index expression `index_inst_id`. Returns the result of the access.
+auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
+                       SemIR::InstId tuple_inst_id, SemIR::InstId index_inst_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_MEMBER_ACCESS_H_

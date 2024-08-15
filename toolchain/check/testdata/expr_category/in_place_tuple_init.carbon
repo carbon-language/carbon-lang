@@ -17,7 +17,7 @@ fn G() -> (i32, i32) {
 }
 
 fn H() -> i32 {
-  return G()[0];
+  return G().0;
 }
 
 // CHECK:STDOUT: --- in_place_tuple_init.carbon
@@ -128,8 +128,8 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %G.call: init %.3 = call %G.ref() to %.loc20_11.1
 // CHECK:STDOUT:   %.loc20_14: i32 = int_literal 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc20_11.2: ref %.3 = temporary %.loc20_11.1, %G.call
-// CHECK:STDOUT:   %.loc20_15.1: ref i32 = tuple_index %.loc20_11.2, %.loc20_14
-// CHECK:STDOUT:   %.loc20_15.2: i32 = bind_value %.loc20_15.1
-// CHECK:STDOUT:   return %.loc20_15.2
+// CHECK:STDOUT:   %.loc20_13.1: ref i32 = tuple_index %.loc20_11.2, %.loc20_14
+// CHECK:STDOUT:   %.loc20_13.2: i32 = bind_value %.loc20_13.1
+// CHECK:STDOUT:   return %.loc20_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

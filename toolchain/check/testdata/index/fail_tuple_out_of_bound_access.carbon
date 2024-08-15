@@ -10,9 +10,9 @@
 
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_tuple_out_of_bound_access.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2` is past the end of type `(i32, i32)`.
-// CHECK:STDERR: var b: i32 = a[2];
-// CHECK:STDERR:              ^~~~
-var b: i32 = a[2];
+// CHECK:STDERR: var b: i32 = a.2;
+// CHECK:STDERR:              ^~~
+var b: i32 = a.2;
 
 // CHECK:STDOUT: --- fail_tuple_out_of_bound_access.carbon
 // CHECK:STDOUT:
@@ -83,7 +83,7 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15_16: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_17: ref <error> = tuple_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_15: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

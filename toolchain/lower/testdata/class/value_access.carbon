@@ -16,7 +16,7 @@ fn F(c: C) -> i32 {
   // TODO: `c.a` is a value expression here, which forces a value binding as
   // part of the member access, creating a tuple value temporary. We could
   // defer performing the value binding to avoid creating this temporary.
-  return c.a[1];
+  return c.a.1;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'value_access.carbon'
@@ -38,7 +38,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   store i32 %.loc19_11.5, ptr %tuple2, align 4
 // CHECK:STDOUT:   %tuple3 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
 // CHECK:STDOUT:   store i32 %.loc19_11.7, ptr %tuple3, align 4
-// CHECK:STDOUT:   %.loc19_15.tuple.index = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 1
-// CHECK:STDOUT:   %.loc19_15.tuple.index.load = load i32, ptr %.loc19_15.tuple.index, align 4
-// CHECK:STDOUT:   ret i32 %.loc19_15.tuple.index.load
+// CHECK:STDOUT:   %.loc19_13.tuple.index = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 1
+// CHECK:STDOUT:   %.loc19_13.tuple.index.load = load i32, ptr %.loc19_13.tuple.index, align 4
+// CHECK:STDOUT:   ret i32 %.loc19_13.tuple.index.load
 // CHECK:STDOUT: }
