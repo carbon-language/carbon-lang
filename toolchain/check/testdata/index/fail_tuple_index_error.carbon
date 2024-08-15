@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_tuple_index_error.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_tuple_index_error.carbon:[[@LINE+3]]:16: ERROR: Name `oops` not found.
-// CHECK:STDERR: var b: i32 = a[oops];
-// CHECK:STDERR:                ^~~~
-var b: i32 = a[oops];
+// CHECK:STDERR: fail_tuple_index_error.carbon:[[@LINE+3]]:17: ERROR: Name `oops` not found.
+// CHECK:STDERR: var b: i32 = a.(oops);
+// CHECK:STDERR:                 ^~~~
+var b: i32 = a.(oops);
 
 // CHECK:STDOUT: --- fail_tuple_index_error.carbon
 // CHECK:STDOUT:

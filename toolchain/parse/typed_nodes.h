@@ -859,7 +859,7 @@ struct MemberAccessExpr {
 
   AnyExprId lhs;
   Lex::PeriodTokenIndex token;
-  AnyMemberNameOrMemberExprId rhs;
+  AnyMemberAccessId rhs;
 };
 
 // An indirect member access expression: `a->b` or `a->(b)`.
@@ -869,7 +869,7 @@ struct PointerMemberAccessExpr {
 
   AnyExprId lhs;
   Lex::MinusGreaterTokenIndex token;
-  AnyMemberNameOrMemberExprId rhs;
+  AnyMemberAccessId rhs;
 };
 
 // A prefix operator expression.
@@ -923,6 +923,9 @@ struct PostfixOperator {
   using PostfixOperator##Name =                       \
       PostfixOperator<NodeKind::PostfixOperator##Name, Lex::Name##TokenIndex>;
 #include "toolchain/parse/node_kind.def"
+
+using IntLiteral = LeafNode<NodeKind::IntLiteral, Lex::IntLiteralTokenIndex,
+                            NodeCategory::Expr | NodeCategory::IntConst>;
 
 // `extern` as a standalone modifier.
 using ExternModifier = LeafNode<NodeKind::ExternModifier, Lex::ExternTokenIndex,

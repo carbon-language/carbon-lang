@@ -16,12 +16,22 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::MemberAccessExprId node_id)
     -> bool {
-  if (context.node_stack().PeekIs<Parse::NodeKind::ParenExpr>()) {
+  auto node_kind = context.node_stack().PeekNodeKind();
+
+  if (node_kind == Parse::NodeKind::ParenExpr) {
     auto member_expr_id = context.node_stack().PopExpr();
     auto base_id = context.node_stack().PopExpr();
     auto member_id =
         PerformCompoundMemberAccess(context, node_id, base_id, member_expr_id);
     context.node_stack().Push(node_id, member_id);
+  } else if (node_kind == Parse::NodeKind::IntLiteral) {
+    auto index_inst_id = context.node_stack().PopExpr();
+    auto tuple_inst_id = context.node_stack().PopExpr();
+
+    auto tuple_value_inst_id =
+        PerformTupleIndex(context, node_id, tuple_inst_id, index_inst_id);
+
+    context.node_stack().Push(node_id, tuple_value_inst_id);
   } else {
     SemIR::NameId name_id = context.node_stack().PopName();
     auto base_id = context.node_stack().PopExpr();
@@ -44,7 +54,9 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
     builder.Emit();
   };
 
-  if (context.node_stack().PeekIs<Parse::NodeKind::ParenExpr>()) {
+  auto node_kind = context.node_stack().PeekNodeKind();
+
+  if (node_kind == Parse::NodeKind::ParenExpr) {
     auto member_expr_id = context.node_stack().PopExpr();
     auto base_id = context.node_stack().PopExpr();
     auto deref_base_id = PerformPointerDereference(context, node_id, base_id,
@@ -52,6 +64,15 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
     auto member_id = PerformCompoundMemberAccess(context, node_id,
                                                  deref_base_id, member_expr_id);
     context.node_stack().Push(node_id, member_id);
+  } else if (node_kind == Parse::NodeKind::IntLiteral) {
+    auto index_inst_id = context.node_stack().PopExpr();
+    auto tuple_pointer_inst_id = context.node_stack().PopExpr();
+    auto tuple_inst_id = PerformPointerDereference(
+        context, node_id, tuple_pointer_inst_id, diagnose_not_pointer);
+    auto tuple_value_inst_id =
+        PerformTupleIndex(context, node_id, tuple_inst_id, index_inst_id);
+
+    context.node_stack().Push(node_id, tuple_value_inst_id);
   } else {
     SemIR::NameId name_id = context.node_stack().PopName();
     auto base_id = context.node_stack().PopExpr();

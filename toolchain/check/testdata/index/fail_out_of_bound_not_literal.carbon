@@ -10,9 +10,9 @@
 
 var a: (i32, i32) = (12, 34);
 // CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2` is past the end of type `(i32, i32)`.
-// CHECK:STDERR: var b: i32 = a[{.index = 2}.index];
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
-var b: i32 = a[{.index = 2}.index];
+// CHECK:STDERR: var b: i32 = a.({.index = 2}.index);
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
+var b: i32 = a.({.index = 2}.index);
 
 // CHECK:STDOUT: --- fail_out_of_bound_not_literal.carbon
 // CHECK:STDOUT:
@@ -84,12 +84,12 @@ var b: i32 = a[{.index = 2}.index];
 // CHECK:STDOUT:   %.loc11_29: init %.3 = converted %.loc11_28.1, %.loc11_28.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_29
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_27.1: %.8 = struct_literal (%.loc15_26)
-// CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc15_26) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_27.2: %.8 = converted %.loc15_27.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_28: i32 = struct_access %.loc15_27.2, element0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_34: ref <error> = tuple_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_27: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_28.1: %.8 = struct_literal (%.loc15_27)
+// CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc15_27) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_28.2: %.8 = converted %.loc15_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_29: i32 = struct_access %.loc15_28.2, element0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_15: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

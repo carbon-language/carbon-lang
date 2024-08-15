@@ -24,6 +24,9 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
     // OK, `.base`.
+  } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+                                             NodeKind::IntLiteral)) {
+    // OK, '.42'.
   } else if (paren_state != State::Invalid &&
              context.PositionIs(Lex::TokenKind::OpenParen)) {
     state.state = paren_state;

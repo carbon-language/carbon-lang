@@ -18,7 +18,7 @@ library "fns";
 
 fn A() {}
 fn B(b: i32) -> i32 { return b; }
-fn C(c: (i32,)) -> {.c: i32} { return {.c = c[0]}; }
+fn C(c: (i32,)) -> {.c: i32} { return {.c = c.0}; }
 fn D();
 
 // --- extern.carbon
@@ -183,11 +183,11 @@ fn D() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
 // CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc6_48: i32 = tuple_index %c.ref, %.loc6_47
-// CHECK:STDOUT:   %.loc6_49: %.4 = struct_literal (%.loc6_48)
-// CHECK:STDOUT:   %struct: %.4 = struct_value (%.loc6_48)
-// CHECK:STDOUT:   %.loc6_50: %.4 = converted %.loc6_49, %struct
-// CHECK:STDOUT:   return %.loc6_50
+// CHECK:STDOUT:   %.loc6_46: i32 = tuple_index %c.ref, %.loc6_47
+// CHECK:STDOUT:   %.loc6_48: %.4 = struct_literal (%.loc6_46)
+// CHECK:STDOUT:   %struct: %.4 = struct_value (%.loc6_46)
+// CHECK:STDOUT:   %.loc6_49: %.4 = converted %.loc6_48, %struct
+// CHECK:STDOUT:   return %.loc6_49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();

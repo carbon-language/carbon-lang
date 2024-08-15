@@ -309,6 +309,26 @@ static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
   }
 }
 
+// Validates that the index (required to be an IntLiteral) is valid within the
+// tuple size. Returns the index on success, or nullptr on failure.
+static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
+                               SemIR::Inst operand_inst,
+                               SemIR::IntLiteral index_inst, int size)
+    -> const llvm::APInt* {
+  const auto& index_val = context.ints().Get(index_inst.int_id);
+  if (index_val.uge(size)) {
+    CARBON_DIAGNOSTIC(
+        TupleIndexOutOfBounds, Error,
+        "Tuple element index `{0}` is past the end of type `{1}`.", TypedInt,
+        SemIR::TypeId);
+    context.emitter().Emit(node_id, TupleIndexOutOfBounds,
+                           {.type = index_inst.type_id, .value = index_val},
+                           operand_inst.type_id());
+    return nullptr;
+  }
+  return &index_val;
+}
+
 auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId {
@@ -403,6 +423,9 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
           member.type_id())) {
     member_id = PerformImplLookup(context, node_id, base_type_const_id,
                                   *assoc_type, member_id);
+  } else if (context.insts().Is<SemIR::TupleType>(
+                 context.constant_values().GetInstId(base_type_const_id))) {
+    return PerformTupleIndex(context, node_id, base_id, member_expr_id);
   }
 
   // Perform instance binding if we found an instance member.
@@ -420,6 +443,55 @@ auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
   }
 
   return member_id;
+}
+
+auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
+                       SemIR::InstId tuple_inst_id, SemIR::InstId index_inst_id)
+    -> SemIR::InstId {
+  tuple_inst_id = ConvertToValueOrRefExpr(context, tuple_inst_id);
+  auto tuple_inst = context.insts().Get(tuple_inst_id);
+  auto tuple_type_id = tuple_inst.type_id();
+
+  auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(tuple_type_id);
+  if (!tuple_type) {
+    CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
+                      "Type `{0}` does not support tuple indexing. Only "
+                      "tuples can be indexed that way.",
+                      SemIR::TypeId);
+    context.emitter().Emit(node_id, TupleIndexOnANonTupleType, tuple_type_id);
+    return SemIR::InstId::BuiltinError;
+  }
+
+  SemIR::TypeId element_type_id = SemIR::TypeId::Error;
+  auto index_node_id = context.insts().GetLocId(index_inst_id);
+  index_inst_id = ConvertToValueOfType(
+      context, index_node_id, index_inst_id,
+      context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+  auto index_const_id = context.constant_values().Get(index_inst_id);
+  if (index_const_id == SemIR::ConstantId::Error) {
+    index_inst_id = SemIR::InstId::BuiltinError;
+  } else if (!index_const_id.is_template()) {
+    // TODO: Decide what to do if the index is a symbolic constant.
+    CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
+                      "Tuple index must be a constant.");
+    context.emitter().Emit(node_id, TupleIndexNotConstant);
+    index_inst_id = SemIR::InstId::BuiltinError;
+  } else {
+    auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
+        context.constant_values().GetInstId(index_const_id));
+    auto type_block = context.type_blocks().Get(tuple_type->elements_id);
+    if (const auto* index_val = ValidateTupleIndex(
+            context, node_id, tuple_inst, index_literal, type_block.size())) {
+      element_type_id = type_block[index_val->getZExtValue()];
+    } else {
+      index_inst_id = SemIR::InstId::BuiltinError;
+    }
+  }
+
+  return context.AddInst<SemIR::TupleIndex>(node_id,
+                                            {.type_id = element_type_id,
+                                             .tuple_id = tuple_inst_id,
+                                             .index_id = index_inst_id});
 }
 
 }  // namespace Carbon::Check

@@ -13,8 +13,8 @@ fn Main() {
   a = 9;
 
   var b: (i32, i32) = (1, 2);
-  b[0] = 3;
-  b[1] = 4;
+  b.0 = 3;
+  b.1 = 4;
 
   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
   c.a = 3;
@@ -111,14 +111,14 @@ fn Main() {
 // CHECK:STDOUT:   assign %b.var, %.loc15_29
 // CHECK:STDOUT:   %b.ref.loc16: ref %.5 = name_ref b, %b
 // CHECK:STDOUT:   %.loc16_5: i32 = int_literal 0 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc16_6: ref i32 = tuple_index %b.ref.loc16, %.loc16_5
-// CHECK:STDOUT:   %.loc16_10: i32 = int_literal 3 [template = constants.%.10]
-// CHECK:STDOUT:   assign %.loc16_6, %.loc16_10
+// CHECK:STDOUT:   %.loc16_4: ref i32 = tuple_index %b.ref.loc16, %.loc16_5
+// CHECK:STDOUT:   %.loc16_9: i32 = int_literal 3 [template = constants.%.10]
+// CHECK:STDOUT:   assign %.loc16_4, %.loc16_9
 // CHECK:STDOUT:   %b.ref.loc17: ref %.5 = name_ref b, %b
 // CHECK:STDOUT:   %.loc17_5: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc17_6: ref i32 = tuple_index %b.ref.loc17, %.loc17_5
-// CHECK:STDOUT:   %.loc17_10: i32 = int_literal 4 [template = constants.%.11]
-// CHECK:STDOUT:   assign %.loc17_6, %.loc17_10
+// CHECK:STDOUT:   %.loc17_4: ref i32 = tuple_index %b.ref.loc17, %.loc17_5
+// CHECK:STDOUT:   %.loc17_9: i32 = int_literal 4 [template = constants.%.11]
+// CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
 // CHECK:STDOUT:   %int.make_type_32.loc19_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_15.1: type = value_of_initializer %int.make_type_32.loc19_15 [template = i32]
 // CHECK:STDOUT:   %.loc19_15.2: type = converted %int.make_type_32.loc19_15, %.loc19_15.1 [template = i32]

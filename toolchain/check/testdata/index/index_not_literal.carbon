@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/index_not_literal.carbon
 
 var a: (i32, i32) = (12, 34);
-var b: i32 = a[{.index = 1}.index];
+var b: i32 = a.({.index = 1}.index);
 
 // CHECK:STDOUT: --- index_not_literal.carbon
 // CHECK:STDOUT:
@@ -81,14 +81,14 @@ var b: i32 = a[{.index = 1}.index];
 // CHECK:STDOUT:   %.loc11_29: init %.3 = converted %.loc11_28.1, %.loc11_28.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_29
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12_26: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc12_27.1: %.8 = struct_literal (%.loc12_26)
-// CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc12_26) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_27.2: %.8 = converted %.loc12_27.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_28: i32 = struct_access %.loc12_27.2, element0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc12_34.1: ref i32 = tuple_index %a.ref, %.loc12_28
-// CHECK:STDOUT:   %.loc12_34.2: i32 = bind_value %.loc12_34.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc12_34.2
+// CHECK:STDOUT:   %.loc12_27: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_28.1: %.8 = struct_literal (%.loc12_27)
+// CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc12_27) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_28.2: %.8 = converted %.loc12_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_29: i32 = struct_access %.loc12_28.2, element0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_15.1: ref i32 = tuple_index %a.ref, %.loc12_29
+// CHECK:STDOUT:   %.loc12_15.2: i32 = bind_value %.loc12_15.1
+// CHECK:STDOUT:   assign file.%b.var, %.loc12_15.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
