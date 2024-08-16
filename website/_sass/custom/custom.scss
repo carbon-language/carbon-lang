@@ -25,16 +25,23 @@
   }
 }
 
+.site-footer {
+  color: #57606a;
+}
+
+// Comments in code.
 .highlight .c {
   color: #57606a;
 }
 
+// Misc syntax in code.
 .highlight .nb,
 .highlight .nt,
 .highlight .nv {
   color: #a36000;
 }
 
-.site-footer {
-  color: #57606a;
+// Strings in code.
+.highlight .s2 {
+  color: #3f7f3f;
 }
