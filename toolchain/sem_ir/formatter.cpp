@@ -900,10 +900,12 @@ class FormatterImpl {
       out_ << "Main";
     }
     out_ << "//";
-    if (import_ir.library_id().is_valid()) {
-      out_ << import_ir.string_literal_values().Get(import_ir.library_id());
-    } else {
+    CARBON_CHECK(import_ir.library_id().is_valid());
+    if (import_ir.library_id() == LibraryNameId::Default) {
       out_ << "default";
+    } else {
+      out_ << import_ir.string_literal_values().Get(
+          import_ir.library_id().AsStringLiteralValueId());
     }
   }
 
