@@ -164,7 +164,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     return;
   }
 
-  // TODO: Fix prev_is_extern logic.
+  // TODO: Fix `extern` logic. It doesn't work correctly, but doesn't seem worth
+  // ripping out because existing code may incrementally help.
   if (MergeClassRedecl(context, node_id, class_info,
                        /*new_is_import=*/false, is_definition, prev_class_id,
                        prev_import_ir_id)) {
