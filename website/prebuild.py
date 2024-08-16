@@ -149,8 +149,16 @@ def main() -> None:
     # bazel-execroot interferes with jekyll because it's a broken symlink.
     Path("bazel-execroot").unlink()
 
+    # The external symlink is created by scripts/create_compdb.py, and can
+    # interfere with local execution.
+    external = Path("external")
+    if external.exists():
+        external.unlink()
+
     # Move files to the repo root.
     for f in Path("website").iterdir():
+        if f.name == "README.md":
+            continue
         f.rename(f.name)
 
     # Use an object for a reference.
