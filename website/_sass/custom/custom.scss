@@ -25,8 +25,9 @@
   }
 }
 
-.highlight {
-  background-color: #f6f8fa;
+.highlight,
+pre.highlight {
+  background-color: $code-background-color;
   color: #1f2328;
 }
 
