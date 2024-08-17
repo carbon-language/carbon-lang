@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/index/tuple_element_access.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/tuple/access/element_access.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/index/tuple_element_access.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/tuple/access/element_access.carbon
 
 fn Run() -> i32 {
   var a: (i32, i32, i32) = (0, 1, 2);
@@ -15,8 +15,8 @@ fn Run() -> i32 {
   return 0;
 }
 
-// CHECK:STDOUT: ; ModuleID = 'tuple_element_access.carbon'
-// CHECK:STDOUT: source_filename = "tuple_element_access.carbon"
+// CHECK:STDOUT: ; ModuleID = 'element_access.carbon'
+// CHECK:STDOUT: source_filename = "element_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @tuple.loc12_37 = internal constant { i32, i32, i32 } { i32 0, i32 1, i32 2 }
 // CHECK:STDOUT:
