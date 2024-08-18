@@ -163,6 +163,10 @@ class File : public Printable<File> {
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
   }
+  auto global_ctor_id() const -> FunctionId { return global_ctor_id_; }
+  auto set_global_ctor_id(FunctionId function_id) -> void {
+    global_ctor_id_ = function_id;
+  }
 
   // Returns true if there were errors creating the semantics IR.
   auto has_errors() const -> bool { return has_errors_; }
@@ -241,6 +245,9 @@ class File : public Printable<File> {
 
   // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
+
+  // The global constructor function id.
+  FunctionId global_ctor_id_ = FunctionId::Invalid;
 
   // Storage for instructions that represent computed global constants, such as
   // types.
