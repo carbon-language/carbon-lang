@@ -13,7 +13,7 @@ using llvm::isa;
 namespace Carbon {
 
 auto AbstractPattern::kind() const -> Kind {
-  if (const auto* pattern = value_.dyn_cast<const Pattern*>()) {
+  if (value_.is<const Pattern*>()) {
     return Compound;
   }
   if (const auto* value = value_.dyn_cast<const Value*>()) {
@@ -52,7 +52,7 @@ auto AbstractPattern::elements_size() const -> int {
   } else if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (const auto* tuple = dyn_cast<TupleValue>(value)) {
       return tuple->elements().size();
-    } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
+    } else if (isa<AlternativeValue>(value)) {
       return 1;
     }
   }
