@@ -78,13 +78,14 @@ auto FileContext::BuildDICompileUnit(
   llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
   llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                             llvm::DEBUG_METADATA_VERSION);
-  // FIXME: Include directory path in the cu_file.
-  llvm::DIFile* cu_file = di_builder.createFile(module_name, "");
+  // FIXME: Include directory path in the compile_unit_file.
+  llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
   // FIXME: Introduce a new language code for Carbon. C works well for now since
   // it's something debuggers will already know/have support for at least.
   // Probably have to bump to C++ at some point for virtual functions,
   // templates, etc.
-  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, cu_file, "carbon",
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
+                                      "carbon",
                                       /*isOptimized=*/false, /*Flags=*/"",
                                       /*RV=*/0);
 }
