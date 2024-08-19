@@ -81,7 +81,7 @@ auto FileContext::BuildCompileUnit(llvm::StringRef module_name) -> void {
   // Probably have to bump to C++ at some point for virtual functions,
   // templates, etc.
   di_compile_unit_ = di_builder_.createCompileUnit(
-      llvm::dwarf::DW_LANG_C, cu_file, "carbon", false, "", 0, "");
+      llvm::dwarf::DW_LANG_C, cu_file, "carbon", /*isOptimized=*/false, /*Flags=*/"", /*RV=*/0);
   llvm_module_->addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
   llvm_module_->addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                               llvm::DEBUG_METADATA_VERSION);
