@@ -622,8 +622,8 @@ The `export` keyword supports exporting names that come from imported libraries.
 This can be used to create an API file that provides contents from multiple
 other API files.
 
-`export` can be used on either a full import, as a modifier to the `import`
-keyword, or a specific entity, with `export <name>` declarations.
+`export` can be used either as a modifier to the `import`
+keyword to export the entire imported library, or in an `export <name>` declaration to export a specific entity.
 
 For example:
 
