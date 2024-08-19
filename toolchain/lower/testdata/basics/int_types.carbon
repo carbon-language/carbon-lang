@@ -16,22 +16,22 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: ; ModuleID = 'int_types.carbon'
 // CHECK:STDOUT: source_filename = "int_types.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i8 @F_i8(i8 %a) {
+// CHECK:STDOUT: define i8 @F_i8(i8 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i8 %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @F_u16(i16 %a) {
+// CHECK:STDOUT: define i16 @F_u16(i16 %a) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i16 %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @F_i64(i64 %a) {
+// CHECK:STDOUT: define i64 @F_i64(i64 %a) !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i64 %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i65536 @F_u65536(i65536 %a) {
+// CHECK:STDOUT: define i65536 @F_u65536(i65536 %a) !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i65536 %a
 // CHECK:STDOUT: }
@@ -43,3 +43,9 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "int_types.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F_i8", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "F_u16", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F_i64", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F_u65536", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

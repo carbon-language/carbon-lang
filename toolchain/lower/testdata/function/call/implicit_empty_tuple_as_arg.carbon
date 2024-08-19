@@ -20,17 +20,17 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'implicit_empty_tuple_as_arg.carbon'
 // CHECK:STDOUT: source_filename = "implicit_empty_tuple_as_arg.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Foo() {
+// CHECK:STDOUT: define void @Foo() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Bar() {
+// CHECK:STDOUT: define void @Bar() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: define void @Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca {}, align 8
 // CHECK:STDOUT:   call void @Foo()
@@ -46,3 +46,8 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "implicit_empty_tuple_as_arg.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Foo", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Bar", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

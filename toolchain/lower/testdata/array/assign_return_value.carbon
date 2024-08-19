@@ -19,7 +19,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @tuple.loc11_39 = internal constant { i32, i32 } { i32 12, i32 24 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F(ptr sret({ i32, i32 }) %return) {
+// CHECK:STDOUT: define void @F(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc11_38.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc11_38.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1
@@ -27,7 +27,7 @@ fn Run() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @main() {
+// CHECK:STDOUT: define void @main() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %t.var = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %.loc14_22.1.temp = alloca { i32, i32 }, align 8
@@ -55,3 +55,7 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "assign_return_value.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

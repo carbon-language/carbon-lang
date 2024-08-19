@@ -31,18 +31,18 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'extend_impl.carbon'
 // CHECK:STDOUT: source_filename = "extend_impl.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F() {
+// CHECK:STDOUT: define i32 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TypeAccess() {
+// CHECK:STDOUT: define i32 @TypeAccess() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @F()
 // CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @InstanceAccess(ptr %a) {
+// CHECK:STDOUT: define i32 @InstanceAccess(ptr %a) !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @F()
 // CHECK:STDOUT:   ret i32 %F.call
@@ -55,3 +55,8 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "extend_impl.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "TypeAccess", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "InstanceAccess", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

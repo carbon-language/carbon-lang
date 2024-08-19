@@ -19,7 +19,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @F(ptr sret({ i32, i32, i32 }))
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G() {
+// CHECK:STDOUT: define void @G() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8
 // CHECK:STDOUT:   %.loc14_74.1.a = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0
@@ -36,3 +36,6 @@ fn G() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "nested_struct_in_place.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

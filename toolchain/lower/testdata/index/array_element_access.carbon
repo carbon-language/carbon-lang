@@ -24,7 +24,7 @@ fn Run() {
 // CHECK:STDOUT: @tuple.loc10_37 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT: @array.loc12_35 = internal constant [2 x i32] [i32 1, i32 2]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) {
+// CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc10_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1
@@ -32,7 +32,7 @@ fn Run() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @B(ptr sret([2 x i32]) %return) {
+// CHECK:STDOUT: define void @B(ptr sret([2 x i32]) %return) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_34.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc12_34.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 1
@@ -40,7 +40,7 @@ fn Run() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @main() {
+// CHECK:STDOUT: define void @main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %.loc15_22.1.temp = alloca { i32, i32 }, align 8
@@ -84,3 +84,8 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "array_element_access.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "A", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "B", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

@@ -15,7 +15,7 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'empty_block.carbon'
 // CHECK:STDOUT: source_filename = "empty_block.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Select(i1 %b, i1 %c, i1 %d) {
+// CHECK:STDOUT: define i32 @Select(i1 %b, i1 %c, i1 %d) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc12_10, label %if.expr.else.loc12_10
 // CHECK:STDOUT:
@@ -57,3 +57,6 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "empty_block.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Select", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

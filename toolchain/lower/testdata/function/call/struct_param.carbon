@@ -19,12 +19,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @struct.3.loc14_4.3 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F({ i32 } %b, ptr %c) {
+// CHECK:STDOUT: define void @F({ i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: define void @Main() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr @struct.3.loc14_4.3)
 // CHECK:STDOUT:   ret void
@@ -37,3 +37,7 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "struct_param.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

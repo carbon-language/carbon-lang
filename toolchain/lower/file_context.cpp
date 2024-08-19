@@ -289,6 +289,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
+  llvm_function->setSubprogram(BuildSubprogram(function, llvm_function));
+
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
@@ -360,6 +362,18 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
+auto FileContext::BuildSubprogram(
+    const Carbon::SemIR::Function& /*semir_function*/,
+    const llvm::Function* llvm_function) -> llvm::DISubprogram* {
+  if (!di_compile_unit_) {
+    return nullptr;
+  }
+  return di_builder_.createFunction(
+      di_compile_unit_, llvm_function->getName(), "", nullptr, 0,
+      di_builder_.createSubroutineType(
+          di_builder_.getOrCreateTypeArray(std::nullopt)),
+      0, llvm::DINode::FlagZero, llvm::DISubprogram::SPFlagDefinition);
+}
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
   return llvm::ArrayType::get(

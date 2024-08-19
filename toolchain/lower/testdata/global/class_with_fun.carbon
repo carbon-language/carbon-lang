@@ -23,13 +23,13 @@ var a: A = {};
 // CHECK:STDOUT: @struct.loc16_14 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @__global_init, ptr null }]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @ret_a(ptr sret({}) %return) {
+// CHECK:STDOUT: define void @ret_a(ptr sret({}) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @struct.loc13_12, i64 0, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @__global_init() {
+// CHECK:STDOUT: define void @__global_init() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @struct.loc16_14, i64 0, i1 false)
 // CHECK:STDOUT:   ret void
@@ -50,3 +50,7 @@ var a: A = {};
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "class_with_fun.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "ret_a", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "__global_init", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

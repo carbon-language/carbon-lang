@@ -25,7 +25,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @F(ptr sret({ i32, ptr }), ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @main() {
+// CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8
 // CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8
@@ -40,3 +40,6 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
