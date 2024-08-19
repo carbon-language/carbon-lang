@@ -72,9 +72,10 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto FileContext::BuildDICompileUnit(
-    llvm::StringRef module_name, llvm::Module& llvm_module,
-    llvm::DIBuilder& di_builder) -> llvm::DICompileUnit* {
+auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
+                                     llvm::Module& llvm_module,
+                                     llvm::DIBuilder& di_builder)
+    -> llvm::DICompileUnit* {
   llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
   llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                             llvm::DEBUG_METADATA_VERSION);
