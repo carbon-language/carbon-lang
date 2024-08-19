@@ -417,7 +417,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(BindingPattern inst): {
-        // See comment on AddrPattern
+        // TODO: See comment on AddrPattern.
         CollectNamesInBlock(scope_id, inst.bind_inst_id);
         break;
       }

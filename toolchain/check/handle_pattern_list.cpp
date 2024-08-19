@@ -45,8 +45,10 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
   // TODO: do this at full-pattern level.
-  std::vector<SemIR::InstId> inner_param_insts;
-  for (SemIR::InstId inst_id : context.inst_blocks().Get(refs_id)) {
+  llvm::SmallVector<SemIR::InstId> inner_param_insts;
+  auto refs_block = context.inst_blocks().Get(refs_id);
+  inner_param_insts.reserve(refs_block.size());
+  for (SemIR::InstId inst_id : refs_block) {
     // TODO: generalize for other pattern kinds.
     auto binding_pattern =
         context.insts().GetAs<SemIR::BindingPattern>(inst_id);

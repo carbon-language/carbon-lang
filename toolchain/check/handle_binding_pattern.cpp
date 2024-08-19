@@ -67,8 +67,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // TODO: this is a temporary workaround until bind_id has a more
       // consistent kind.
       if (auto binding_pattern =
-              context.insts().TryGetAs<SemIR::BindingPattern>(bind_id);
-          binding_pattern.has_value()) {
+              context.insts().TryGetAs<SemIR::BindingPattern>(bind_id)) {
         bind_id = binding_pattern->bind_inst_id;
       }
       context.scope_stack().PushCompileTimeBinding(bind_id);
