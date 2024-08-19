@@ -81,7 +81,7 @@ class FileContext {
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
   llvm::DIBuilder di_builder_;
-  llvm::DICompileUnit *di_compile_unit_;
+  llvm::DICompileUnit* di_compile_unit_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
