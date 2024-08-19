@@ -59,6 +59,7 @@ The following words are interpreted as keywords:
 -   `default`
 -   `destructor`
 -   `else`
+-   `export`
 -   `extend`
 -   `final`
 -   `fn`
