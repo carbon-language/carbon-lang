@@ -27,7 +27,7 @@ class FileContext {
   auto Run() -> std::unique_ptr<llvm::Module>;
 
   // Create the DICompileUnit metadata for this compilation.
-  auto BuildCompileUnit(llvm::StringRef module_name) -> void;
+  auto BuildDICompileUnit(llvm::StringRef module_name) -> void;
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {

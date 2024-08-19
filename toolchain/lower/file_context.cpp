@@ -33,7 +33,7 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
       include_debug_info_(include_debug_info) {
   CARBON_CHECK(!sem_ir.has_errors())
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";
-  BuildCompileUnit(module_name);
+  BuildDICompileUnit(module_name);
 }
 
 // TODO: Move this to lower.cpp.
@@ -70,7 +70,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto FileContext::BuildCompileUnit(llvm::StringRef module_name) -> void {
+auto FileContext::BuildDICompileUnit(llvm::StringRef module_name) -> void {
   if (!include_debug_info_) {
     return;
   }
