@@ -71,8 +71,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 }
 
 auto FileContext::BuildCompileUnit(llvm::StringRef module_name) -> void {
-  if (!include_debug_info_)
+  if (!include_debug_info_) {
     return;
+  }
   // FIXME: Include directory path in the cu_file.
   llvm::DIFile* cu_file = di_builder_.createFile(module_name, "");
   // FIXME: Introduce a new language code for Carbon. C works well for now since
