@@ -34,9 +34,10 @@ static auto DiagnoseNotAllowedWith(Context& context, Parse::NodeId first_node,
       .Emit();
 }
 
-// Handles the main modifier keyword (either alone, such as `private`, or the
-// first in a complex modifier, such as `extern library ...`). If valid, adds it
-// to the modifier set and returns true. Otherwise, diagnoses and returns false.
+// Handles the keyword that starts a modifier. This may a standalone keyword,
+// such as `private`, or the first in a complex modifier, such as `extern` in
+// `extern library ...`. If valid, adds it to the modifier set and returns true.
+// Otherwise, diagnoses and returns false.
 static auto HandleModifier(Context& context, Parse::NodeId node_id,
                            KeywordModifierSet keyword) -> bool {
   auto& s = context.decl_introducer_state_stack().innermost();
