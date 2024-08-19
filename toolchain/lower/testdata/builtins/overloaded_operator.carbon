@@ -31,10 +31,10 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT:   ret i32 %int.sadd.loc18_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "overloaded_operator.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "overloaded_operator.carbon", directory: "")

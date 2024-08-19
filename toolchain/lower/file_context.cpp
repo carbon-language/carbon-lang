@@ -27,13 +27,15 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       di_builder_(*llvm_module_),
+      di_compile_unit_(
+          include_debug_info
+              ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
+              : nullptr),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
-      vlog_stream_(vlog_stream),
-      include_debug_info_(include_debug_info) {
+      vlog_stream_(vlog_stream) {
   CARBON_CHECK(!sem_ir.has_errors())
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";
-  BuildDICompileUnit(module_name);
 }
 
 // TODO: Move this to lower.cpp.
@@ -70,21 +72,21 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto FileContext::BuildDICompileUnit(llvm::StringRef module_name) -> void {
-  if (!include_debug_info_) {
-    return;
-  }
+auto FileContext::BuildDICompileUnit(
+    llvm::StringRef module_name, llvm::Module& llvm_module,
+    llvm::DIBuilder& di_builder) -> llvm::DICompileUnit* {
+  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
+  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
+                            llvm::DEBUG_METADATA_VERSION);
   // FIXME: Include directory path in the cu_file.
-  llvm::DIFile* cu_file = di_builder_.createFile(module_name, "");
+  llvm::DIFile* cu_file = di_builder.createFile(module_name, "");
   // FIXME: Introduce a new language code for Carbon. C works well for now since
   // it's something debuggers will already know/have support for at least.
   // Probably have to bump to C++ at some point for virtual functions,
   // templates, etc.
-  di_compile_unit_ = di_builder_.createCompileUnit(
-      llvm::dwarf::DW_LANG_C, cu_file, "carbon", /*isOptimized=*/false, /*Flags=*/"", /*RV=*/0);
-  llvm_module_->addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
-  llvm_module_->addModuleFlag(llvm::Module::Warning, "Debug Info Version",
-                              llvm::DEBUG_METADATA_VERSION);
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, cu_file, "carbon",
+                                      /*isOptimized=*/false, /*Flags=*/"",
+                                      /*RV=*/0);
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {

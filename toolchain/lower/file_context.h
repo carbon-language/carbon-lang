@@ -27,7 +27,9 @@ class FileContext {
   auto Run() -> std::unique_ptr<llvm::Module>;
 
   // Create the DICompileUnit metadata for this compilation.
-  auto BuildDICompileUnit(llvm::StringRef module_name) -> void;
+  auto BuildDICompileUnit(llvm::StringRef module_name,
+                          llvm::Module& llvm_module,
+                          llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -80,7 +82,11 @@ class FileContext {
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
+
+  // State for building the LLVM IR debug info metadata.
   llvm::DIBuilder di_builder_;
+
+  // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
 
   // The input SemIR.
@@ -107,9 +113,6 @@ class FileContext {
   // Maps constants to their lowered values.
   // We resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Constant*, 0> constants_;
-
-  // Specify whether to include debug info metadata in the generated LLVM IR.
-  bool include_debug_info_;
 };
 
 }  // namespace Carbon::Lower
