@@ -47,7 +47,7 @@ library "def_ownership";
 
 import library "fns";
 
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn A` without `extern`.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `fn A` is redundant.
 // CHECK:STDERR: fn A() {};
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: In import.
@@ -58,7 +58,7 @@ import library "fns";
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 fn A() {};
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn B` without `extern`.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `fn B` is redundant.
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-16]]:1: In import.
@@ -70,13 +70,24 @@ fn A() {};
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
 
-// --- redecl_then_def.carbon
+// --- fail_redecl_then_def.carbon
 
 library "redecl_then_def";
 
 import library "extern";
 
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import library "extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn A();
+
 fn A() {}
 
 // --- fail_mix_extern_decl.carbon
@@ -85,11 +96,22 @@ library "mix_extern_decl";
 
 import library "fns";
 
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn D` must match use of `extern`.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import library "fns";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fns.carbon:7:1: Previously declared here.
+// CHECK:STDERR: fn D();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 extern fn D();
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclarations of `fn D` in the same library must match use of `extern`.
+
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclarations of `fn D` must match use of `extern`.
 // CHECK:STDERR: fn D() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: Previously declared here.
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 fn D() {}
@@ -379,7 +401,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_then_def.carbon
+// CHECK:STDOUT: --- fail_redecl_then_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
@@ -402,13 +424,13 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.decl.loc6
+// CHECK:STDOUT:     .A = %A.decl.loc16
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %A.decl.loc7: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl.loc16: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl.loc18: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -445,13 +467,13 @@ fn D() {}
 // CHECK:STDOUT:     .A = imports.%import_ref.1
 // CHECK:STDOUT:     .B = imports.%import_ref.2
 // CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = %D.decl.loc13
+// CHECK:STDOUT:     .D = %D.decl.loc24
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.decl.loc6: %D.type = fn_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %D.decl.loc13: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl.loc16: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl.loc24: %D.type = fn_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {

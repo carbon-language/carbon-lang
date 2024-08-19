@@ -29,7 +29,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
 auto HandleParseNode(Context& context,
                      Parse::StructFieldDesignatorId /*node_id*/) -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
-  CARBON_CHECK(context.node_stack().PeekIsName());
+  CARBON_CHECK(context.node_stack().PeekIs<SemIR::NameId>());
   return true;
 }
 
