@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-title: Carbon Language
+title: Carbon language documentation
 description: An experimental successor to C++
 
 # https://just-the-docs.github.io/just-the-docs/
@@ -18,17 +18,6 @@ mermaid:
   # Version of mermaid library
   # Pick an available version from https://cdn.jsdelivr.net/npm/mermaid/
   version: '10.9.1'
-
-# Back to top link.
-back_to_top: true
-back_to_top_text: 'Back to top'
-
-# View on GitHub link.
-gh_edit_link: true
-gh_edit_link_text: 'View on GitHub'
-gh_edit_repository: 'https://github.com/carbon-language/carbon-lang'
-gh_edit_branch: 'trunk'
-gh_edit_view_mode: 'tree'
 
 # We add frontmatter to files, but still want README.md -> index.md.
 readme_index:
