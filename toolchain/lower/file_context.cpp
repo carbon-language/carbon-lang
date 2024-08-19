@@ -54,13 +54,11 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower global variable declarations.
   for (auto inst_id :
        sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
-    // Only `VarStorage` indicates global variable declaration in the
+    // Only `VarStorage` indicates a global variable declaration in the
     // top instruction block.
-    if (auto inst = sem_ir().insts().Get(inst_id);
-        inst.kind() != SemIR::InstKind::VarStorage) {
-      continue;
+    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+      global_variables_.Insert(inst_id, BuildGlobalVariableDecl(*var));
     }
-    global_variables_.Insert(inst_id, BuildGlobalVariableDecl(inst_id));
   }
 
   // Lower constants.
@@ -479,9 +477,9 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
   }
 }
 
-auto FileContext::BuildGlobalVariableDecl(SemIR::InstId inst_id)
+auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  auto var_storage = sem_ir().insts().Get(inst_id).As<SemIR::VarStorage>();
+  // TODO: Mangle name.
   auto mangled_name =
       *sem_ir().names().GetAsStringIfIdentifier(var_storage.name_id);
   auto* type =

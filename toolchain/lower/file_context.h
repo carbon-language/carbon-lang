@@ -76,7 +76,10 @@ class FileContext {
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
-  auto BuildGlobalVariableDecl(SemIR::InstId inst_id) -> llvm::GlobalVariable*;
+  // Builds the global for the given instruction, which should then be cached by
+  // the caller.
+  auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+      -> llvm::GlobalVariable*;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
