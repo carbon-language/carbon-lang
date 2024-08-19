@@ -101,7 +101,7 @@ The following words are interpreted as keywords:
 
 A raw identifier looks like `r#<identifier>`. This can be used for identifiers
 which have the same spelling as keywords; for example, `r#impl`. It can help
-when using C++ code with identifiers that are a keyword in Carbon.
+when using C++ code with identifiers that are keywords in Carbon.
 
 The identifier doesn't need to be a keyword, in order to support forwards
 compatibility when a keyword is planned to be added. When `<identifier>` is not
