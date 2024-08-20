@@ -44,12 +44,21 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   // make use of it.
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
-  // TODO: do this at full-pattern level.
+
+  // Traverse the generated BindingPattern insts and add the corresponding
+  // BindName insts to the current block, while also accumulating them in a
+  // separate block to add to the node stack.
+  //
+  // TODO: This is a step toward the intended design for pattern matching, where
+  // we generate IR that represents an entire pattern, then traverse the pattern
+  // IR to generate the IR that actually performs pattern matching. If the
+  // pattern is part of a function signature, we construct a representation of
+  // the function's params as part of that second traversal, and add it to the
+  // node stack.
   llvm::SmallVector<SemIR::InstId> inner_param_insts;
   auto refs_block = context.inst_blocks().Get(refs_id);
   inner_param_insts.reserve(refs_block.size());
   for (SemIR::InstId inst_id : refs_block) {
-    // TODO: generalize for other pattern kinds.
     auto binding_pattern =
         context.insts().GetAs<SemIR::BindingPattern>(inst_id);
     context.inst_block_stack().AddInstId(binding_pattern.bind_inst_id);

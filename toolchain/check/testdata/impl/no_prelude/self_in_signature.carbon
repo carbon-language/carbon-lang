@@ -118,7 +118,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %self.loc12_8.1: @F.1.%Self (%Self.1) = param self
-// CHECK:STDOUT:     %.loc12_8: @F.1.%Self (%Self.1) = binding_pattern self, %self.loc12_8.2
+// CHECK:STDOUT:     %self.loc12_8.2: @F.1.%Self (%Self.1) = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:     %Self.ref.loc12_23: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_23.1: type = facet_type_access %Self.ref.loc12_23 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %Self.ref.loc12_23, %.loc12_23.1 [symbolic = @F.1.%Self (constants.%Self.1)]
@@ -169,10 +169,10 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %C.ref.loc20_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc20_8.1: %C = param self
-// CHECK:STDOUT:     %.loc20_8: %C = binding_pattern self, %self.loc20_8.2
+// CHECK:STDOUT:     %self.loc20_8.2: %C = bind_name self, %self.loc20_8.1
 // CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.loc20_17.1: %C = param x
-// CHECK:STDOUT:     %.loc20_17: %C = binding_pattern x, %x.loc20_17.3
+// CHECK:STDOUT:     %.loc20: %C = binding_pattern x, %x.loc20_17.3
 // CHECK:STDOUT:     %x.loc20_17.3: %C = bind_name x, %x.loc20_17.1
 // CHECK:STDOUT:     %C.ref.loc20_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
@@ -188,10 +188,10 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %Self.ref.loc24_14: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %self.loc24_8.1: %D = param self
-// CHECK:STDOUT:     %.loc24_8: %D = binding_pattern self, %self.loc24_8.2
+// CHECK:STDOUT:     %self.loc24_8.2: %D = bind_name self, %self.loc24_8.1
 // CHECK:STDOUT:     %Self.ref.loc24_23: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %x.loc24_20.1: %D = param x
-// CHECK:STDOUT:     %.loc24_20: %D = binding_pattern x, %x.loc24_20.3
+// CHECK:STDOUT:     %.loc24: %D = binding_pattern x, %x.loc24_20.3
 // CHECK:STDOUT:     %x.loc24_20.3: %D = bind_name x, %x.loc24_20.1
 // CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %return.var: ref %D = var <return slot>
@@ -258,10 +258,10 @@ impl D as SelfNested {
 // CHECK:STDOUT: generic fn @F.1(@UseSelf.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@UseSelf.%.loc12_8: @F.1.%Self (%Self.1)](@UseSelf.%x.loc12_20.3: @F.1.%Self (%Self.1)) -> @F.1.%Self (%Self.1);
+// CHECK:STDOUT:   fn[@UseSelf.%self.loc12_8.2: @F.1.%Self (%Self.1)](@UseSelf.%x.loc12_20.3: @F.1.%Self (%Self.1)) -> @F.1.%Self (%Self.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@impl.1.%.loc20_8: %C](@impl.1.%x.loc20_17.3: %C) -> @impl.1.%return.var: %C {
+// CHECK:STDOUT: fn @F.2[@impl.1.%self.loc20_8.2: %C](@impl.1.%x.loc20_17.3: %C) -> @impl.1.%return.var: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc20_38.1: %.5 = struct_literal ()
 // CHECK:STDOUT:   %.loc20_38.2: init %C = class_init (), @impl.1.%return.var [template = constants.%struct.1]
@@ -269,7 +269,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   return %.loc20_39 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[@impl.2.%.loc24_8: %D](@impl.2.%x.loc24_20.3: %D) -> @impl.2.%return.var: %D {
+// CHECK:STDOUT: fn @F.3[@impl.2.%self.loc24_8.2: %D](@impl.2.%x.loc24_20.3: %D) -> @impl.2.%return.var: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_47.1: %.5 = struct_literal ()
 // CHECK:STDOUT:   %.loc24_47.2: init %D = class_init (), @impl.2.%return.var [template = constants.%struct.2]

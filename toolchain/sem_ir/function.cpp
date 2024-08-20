@@ -46,11 +46,6 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     -> std::pair<InstId, Param> {
   auto ref = sem_ir.insts().Get(param_ref_id);
 
-  if (auto binding_pattern = ref.TryAs<SemIR::BindingPattern>()) {
-    param_ref_id = binding_pattern->bind_inst_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
-
   if (auto addr_pattern = ref.TryAs<SemIR::AddrPattern>()) {
     param_ref_id = addr_pattern->inner_id;
     ref = sem_ir.insts().Get(param_ref_id);

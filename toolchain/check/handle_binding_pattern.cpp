@@ -156,7 +156,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       break;
     }
 
-    case Parse::NodeKind::ImplicitParamListStart:
+    case Parse::NodeKind::ImplicitParamListStart: {
+      // Parameters can have incomplete types in a function declaration, but not
+      // in a function definition. We don't know which kind we have here.
+      auto param_id = context.AddInst<SemIR::Param>(
+          name_node, {.type_id = cast_type_id, .name_id = name_id});
+      auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
+      push_bind_name(bind_id);
+      // TODO: Bindings should come into scope immediately in other contexts
+      // too.
+      context.AddNameToLookup(name_id, bind_id);
+      break;
+    }
     case Parse::NodeKind::TuplePatternStart: {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
@@ -165,6 +176,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto param_id = context.AddInst<SemIR::Param>(
           name_node, {.type_id = cast_type_id, .name_id = name_id});
       SemIR::LocIdAndInst bind_name = make_bind_name(cast_type_id, param_id);
+      // We need the bind_name inst now so that we can add it to name lookup
+      // (in case it's referenced later in the current pattern). However,
+      // we don't want to add it to a block right now because it belongs in the
+      // pattern-match IR, but we are currently generating the pattern IR.
       auto bind_id = context.AddInstInNoBlock(bind_name);
       SemIR::InstId pattern_id = context.AddInst<SemIR::BindingPattern>(
           name_node,
@@ -225,7 +240,7 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
-          context.insts().TryGetAs<SemIR::BindingPattern>(self_param_id);
+          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
       self_param &&
       context.entity_names().Get(self_param->entity_name_id).name_id ==
           SemIR::NameId::SelfValue) {

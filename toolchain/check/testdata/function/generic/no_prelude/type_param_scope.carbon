@@ -28,7 +28,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     %.loc11_6: type = binding_pattern T 0, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc11_6: type = binding_pattern T 0, @F.%T.loc11
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %n.loc11_16.1: @F.%T.1 (%T) = param n
 // CHECK:STDOUT:     %.loc11_16: @F.%T.1 (%T) = binding_pattern n, @F.%n

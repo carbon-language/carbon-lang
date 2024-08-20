@@ -173,7 +173,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %self.loc12_20.1: %SomeClassAdapter = param self
-// CHECK:STDOUT:     %.loc12: %SomeClassAdapter = binding_pattern self, %self.loc12_20.2
+// CHECK:STDOUT:     %self.loc12_20.2: %SomeClassAdapter = bind_name self, %self.loc12_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -188,7 +188,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @StaticMemberFunction();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdapterMethod[@SomeClass.%.loc12: %SomeClassAdapter]();
+// CHECK:STDOUT: fn @AdapterMethod[@SomeClass.%self.loc12_20.2: %SomeClassAdapter]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestStaticMemberFunction(%a: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
@@ -255,7 +255,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
 // CHECK:STDOUT:     %self.loc5_8.1: %SomeClass = param self
-// CHECK:STDOUT:     %.loc5: %SomeClass = binding_pattern self, %self.loc5_8.2
+// CHECK:STDOUT:     %self.loc5_8.2: %SomeClass = bind_name self, %self.loc5_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -272,7 +272,7 @@ class StructAdapter {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@SomeClass.%.loc5: %SomeClass]();
+// CHECK:STDOUT: fn @F.1[@SomeClass.%self.loc5_8.2: %SomeClass]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:

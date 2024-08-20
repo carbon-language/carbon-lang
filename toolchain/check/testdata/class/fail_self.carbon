@@ -132,7 +132,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc42_8.1: %Class = param self
-// CHECK:STDOUT:     %.loc42: %Class = binding_pattern self, %self.loc42_8.2
+// CHECK:STDOUT:     %self.loc42_8.2: %Class = bind_name self, %self.loc42_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -155,7 +155,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@WrongSelf.%.loc42: %Class]();
+// CHECK:STDOUT: fn @F.2[@WrongSelf.%self.loc42_8.2: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: %WrongSelf) {
 // CHECK:STDOUT: !entry:

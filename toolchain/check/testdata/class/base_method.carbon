@@ -77,8 +77,8 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc17_16.1: %.3 = param self
-// CHECK:STDOUT:     @F.%.loc17_16: %.3 = binding_pattern self, @F.%self
-// CHECK:STDOUT:     @F.%.loc17_11: %.3 = addr_pattern @F.%.loc17_16
+// CHECK:STDOUT:     @F.%self: %.3 = bind_name self, %self.loc17_16.1
+// CHECK:STDOUT:     @F.%.loc17: %.3 = addr_pattern @F.%self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
@@ -99,8 +99,8 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc14_23: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc14_13.1: %.3 = param self
-// CHECK:STDOUT:     %.loc14_13.2: %.3 = binding_pattern self, %self.loc14_13.3
-// CHECK:STDOUT:     %.loc14_8: %.3 = addr_pattern %.loc14_13.2
+// CHECK:STDOUT:     %self.loc14_13.3: %.3 = bind_name self, %self.loc14_13.1
+// CHECK:STDOUT:     %.loc14_8: %.3 = addr_pattern %self.loc14_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -121,7 +121,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %.loc17_16: %.3]() {
+// CHECK:STDOUT: fn @F[addr %self: %.3]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref

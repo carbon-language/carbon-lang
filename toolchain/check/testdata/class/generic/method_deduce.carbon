@@ -84,7 +84,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc14_13.1: type = param T
-// CHECK:STDOUT:     %.loc14: type = binding_pattern T 0, %T.loc14_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc14: type = binding_pattern T 0, %T.loc14_13.3
 // CHECK:STDOUT:     %T.loc14_13.3: type = bind_symbolic_name T 0, %T.loc14_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [template = constants.%CallGenericMethod] {
@@ -141,7 +141,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = %Get (constants.%Get.1)] {
 // CHECK:STDOUT:       %U.loc15_10.1: type = param U
-// CHECK:STDOUT:       %.loc15_10: type = binding_pattern U 1, %U.loc15_10.3 [symbolic = @Get.%U.1 (constants.%U)]
+// CHECK:STDOUT:       %.loc15_10: type = binding_pattern U 1, %U.loc15_10.3
 // CHECK:STDOUT:       %U.loc15_10.3: type = bind_symbolic_name U 1, %U.loc15_10.1 [symbolic = @Get.%U.1 (constants.%U)]
 // CHECK:STDOUT:       %T.ref.loc15: type = name_ref T, file.%T.loc14_13.3 [symbolic = @Get.%T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc15: type = name_ref U, %U.loc15_10.3 [symbolic = @Get.%U.1 (constants.%U)]
@@ -154,7 +154,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %x.loc16_18.1: @GetNoDeduce.%T (%T) = param x
 // CHECK:STDOUT:       %.loc16_18: @GetNoDeduce.%T (%T) = binding_pattern x, %x.loc16_18.3
 // CHECK:STDOUT:       %U.loc16_24.1: type = param U
-// CHECK:STDOUT:       %.loc16_24: type = binding_pattern U 1, %U.loc16_24.3 [symbolic = @GetNoDeduce.%U.1 (constants.%U)]
+// CHECK:STDOUT:       %.loc16_24: type = binding_pattern U 1, %U.loc16_24.3
 // CHECK:STDOUT:       %x.loc16_18.3: @GetNoDeduce.%T (%T) = bind_name x, %x.loc16_18.1
 // CHECK:STDOUT:       %U.loc16_24.3: type = bind_symbolic_name U 1, %U.loc16_24.1 [symbolic = @GetNoDeduce.%U.1 (constants.%U)]
 // CHECK:STDOUT:       %T.ref.loc16_38: type = name_ref T, file.%T.loc14_13.3 [symbolic = @GetNoDeduce.%T (constants.%T)]

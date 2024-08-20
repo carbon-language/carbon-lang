@@ -1401,14 +1401,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
     }
 
-    // TODO: Does it make sense to evaluate both BindSymbolicName and
-    // BindingPattern?
-    case CARBON_KIND(SemIR::BindingPattern pattern): {
-      auto bind_inst = eval_context.insts().Get(pattern.bind_inst_id);
-      return TryEvalInstInContext(eval_context, pattern.bind_inst_id,
-                                  bind_inst);
-    }
-
     // These semantic wrappers don't change the constant value.
     case CARBON_KIND(SemIR::AsCompatible inst): {
       return eval_context.GetConstantValue(inst.source_id);
@@ -1476,6 +1468,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
     case SemIR::BindName::Kind:
+    case SemIR::BindingPattern::Kind:
     case SemIR::BlockArg::Kind:
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:

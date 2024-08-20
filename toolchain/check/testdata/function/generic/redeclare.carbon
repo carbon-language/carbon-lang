@@ -121,7 +121,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, %T.loc4_6.3 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, %T.loc4_6.3
 // CHECK:STDOUT:     %T.loc4_6.3: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.3 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_20: type = ptr_type %T [symbolic = @F.%.1 (constants.%.1)]
@@ -129,7 +129,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc6: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc6_6.1: type = param T
-// CHECK:STDOUT:     %.loc6_6: type = binding_pattern T 0, @F.%T.loc6 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc6_6: type = binding_pattern T 0, @F.%T.loc6
 // CHECK:STDOUT:     @F.%T.loc6: type = bind_symbolic_name T 0, %T.loc6_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, @F.%T.loc6 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc6_20: type = ptr_type %T [symbolic = constants.%.1]
@@ -193,9 +193,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, @F.%T.loc4 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, @F.%T.loc4
 // CHECK:STDOUT:     %U.loc4_16.1: type = param U
-// CHECK:STDOUT:     %.loc4_16: type = binding_pattern U 1, @F.%U.loc4 [symbolic = @F.%U.1 (constants.%U)]
+// CHECK:STDOUT:     %.loc4_16: type = binding_pattern U 1, @F.%U.loc4
 // CHECK:STDOUT:     @F.%T.loc4: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @F.%U.loc4: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = @F.%U.1 (constants.%U)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @F.%T.loc4 [symbolic = @F.%T.1 (constants.%T)]
@@ -204,9 +204,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %T.loc13_6.1: type = param T
-// CHECK:STDOUT:     %.loc13_6: type = binding_pattern T 0, @.1.%T.loc13 [symbolic = @.1.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc13_6: type = binding_pattern T 0, @.1.%T.loc13
 // CHECK:STDOUT:     %U.loc13_16.1: type = param U
-// CHECK:STDOUT:     %.loc13_16: type = binding_pattern U 1, @.1.%U.loc13 [symbolic = @.1.%U.1 (constants.%U)]
+// CHECK:STDOUT:     %.loc13_16: type = binding_pattern U 1, @.1.%U.loc13
 // CHECK:STDOUT:     @.1.%T.loc13: type = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @.1.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @.1.%U.loc13: type = bind_symbolic_name U 1, %U.loc13_16.1 [symbolic = @.1.%U.1 (constants.%U)]
 // CHECK:STDOUT:     %U.ref: type = name_ref U, @.1.%U.loc13 [symbolic = @.1.%U.1 (constants.%U)]
@@ -286,9 +286,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, @F.%T.loc4 [symbolic = @F.%T.1 (constants.%T.1)]
+// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, @F.%T.loc4
 // CHECK:STDOUT:     %U.loc4_16.1: type = param U
-// CHECK:STDOUT:     %.loc4_16: type = binding_pattern U 1, @F.%U.loc4 [symbolic = @F.%U.1 (constants.%U.1)]
+// CHECK:STDOUT:     %.loc4_16: type = binding_pattern U 1, @F.%U.loc4
 // CHECK:STDOUT:     @F.%T.loc4: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T.1 (constants.%T.1)]
 // CHECK:STDOUT:     @F.%U.loc4: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = @F.%U.1 (constants.%U.1)]
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, @F.%T.loc4 [symbolic = @F.%T.1 (constants.%T.1)]
@@ -297,9 +297,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %U.loc13_6.1: type = param U
-// CHECK:STDOUT:     %.loc13_6: type = binding_pattern U 0, @.1.%U.loc13 [symbolic = @.1.%U.1 (constants.%U.2)]
+// CHECK:STDOUT:     %.loc13_6: type = binding_pattern U 0, @.1.%U.loc13
 // CHECK:STDOUT:     %T.loc13_16.1: type = param T
-// CHECK:STDOUT:     %.loc13_16: type = binding_pattern T 1, @.1.%T.loc13 [symbolic = @.1.%T.1 (constants.%T.2)]
+// CHECK:STDOUT:     %.loc13_16: type = binding_pattern T 1, @.1.%T.loc13
 // CHECK:STDOUT:     @.1.%U.loc13: type = bind_symbolic_name U 0, %U.loc13_6.1 [symbolic = @.1.%U.1 (constants.%U.2)]
 // CHECK:STDOUT:     @.1.%T.loc13: type = bind_symbolic_name T 1, %T.loc13_16.1 [symbolic = @.1.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, @.1.%T.loc13 [symbolic = @.1.%T.1 (constants.%T.2)]
@@ -379,9 +379,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc4_6.1: type = param T
-// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, @F.%T.loc4 [symbolic = @F.%T.1 (constants.%T.1)]
+// CHECK:STDOUT:     %.loc4_6: type = binding_pattern T 0, @F.%T.loc4
 // CHECK:STDOUT:     %U.loc4_16.1: type = param U
-// CHECK:STDOUT:     %.loc4_16: type = binding_pattern U 1, @F.%U.loc4 [symbolic = @F.%U.1 (constants.%U.1)]
+// CHECK:STDOUT:     %.loc4_16: type = binding_pattern U 1, @F.%U.loc4
 // CHECK:STDOUT:     @F.%T.loc4: type = bind_symbolic_name T 0, %T.loc4_6.1 [symbolic = @F.%T.1 (constants.%T.1)]
 // CHECK:STDOUT:     @F.%U.loc4: type = bind_symbolic_name U 1, %U.loc4_16.1 [symbolic = @F.%U.1 (constants.%U.1)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @F.%T.loc4 [symbolic = @F.%T.1 (constants.%T.1)]
@@ -390,9 +390,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %U.loc13_6.1: type = param U
-// CHECK:STDOUT:     %.loc13_6: type = binding_pattern U 0, @.1.%U.loc13 [symbolic = @.1.%U.1 (constants.%U.2)]
+// CHECK:STDOUT:     %.loc13_6: type = binding_pattern U 0, @.1.%U.loc13
 // CHECK:STDOUT:     %T.loc13_16.1: type = param T
-// CHECK:STDOUT:     %.loc13_16: type = binding_pattern T 1, @.1.%T.loc13 [symbolic = @.1.%T.1 (constants.%T.2)]
+// CHECK:STDOUT:     %.loc13_16: type = binding_pattern T 1, @.1.%T.loc13
 // CHECK:STDOUT:     @.1.%U.loc13: type = bind_symbolic_name U 0, %U.loc13_6.1 [symbolic = @.1.%U.1 (constants.%U.2)]
 // CHECK:STDOUT:     @.1.%T.loc13: type = bind_symbolic_name T 1, %T.loc13_16.1 [symbolic = @.1.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %U.ref: type = name_ref U, @.1.%U.loc13 [symbolic = @.1.%U.1 (constants.%U.2)]

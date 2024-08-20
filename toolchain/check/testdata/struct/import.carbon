@@ -137,7 +137,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_30: type = struct_type {.a: i32, .b: i32} [template = constants.%.11]
 // CHECK:STDOUT:     %S.loc8_9.1: %.11 = param S
-// CHECK:STDOUT:     %.loc8_9: %.11 = binding_pattern S 0, %S.loc8_9.3 [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:     %.loc8_9: %.11 = binding_pattern S 0, %S.loc8_9.3
 // CHECK:STDOUT:     %S.loc8_9.3: %.11 = bind_symbolic_name S 0, %S.loc8_9.1 [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {

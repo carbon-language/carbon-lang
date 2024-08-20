@@ -75,7 +75,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %.loc11: type = binding_pattern T 0, %T.loc11_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc11: type = binding_pattern T 0, %T.loc11_13.3
 // CHECK:STDOUT:     %T.loc11_13.3: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -96,7 +96,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc19_6.1: type = param T
-// CHECK:STDOUT:     %.loc19_6: type = binding_pattern T 0, @G.%T.loc19 [symbolic = @G.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc19_6: type = binding_pattern T 0, @G.%T.loc19
 // CHECK:STDOUT:     %Class.ref.loc19: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc19_25: type = name_ref T, @G.%T.loc19 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc19_24: init type = call %Class.ref.loc19(%T.ref.loc19_25) [symbolic = @G.%Class (constants.%Class.2)]
@@ -111,7 +111,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %U.loc23_6.1: type = param U
-// CHECK:STDOUT:     %.loc23_6: type = binding_pattern U 0, @H.%U.loc23 [symbolic = @H.%U.1 (constants.%U)]
+// CHECK:STDOUT:     %.loc23_6: type = binding_pattern U 0, @H.%U.loc23
 // CHECK:STDOUT:     %Class.ref.loc23: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %U.ref.loc23_25: type = name_ref U, @H.%U.loc23 [symbolic = @H.%U.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc23_24: init type = call %Class.ref.loc23(%U.ref.loc23_25) [symbolic = @H.%Class (constants.%Class.4)]

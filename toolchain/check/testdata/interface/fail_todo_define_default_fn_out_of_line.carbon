@@ -230,9 +230,9 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %.loc20_24: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc20_24 [symbolic = constants.%C.2]
 // CHECK:STDOUT:     %self.loc20_18.1: %C.2 = param self
-// CHECK:STDOUT:     @F.%.loc20: %C.2 = binding_pattern self, @F.%self
+// CHECK:STDOUT:     @F.%self: %C.2 = bind_name self, %self.loc20_18.1
 // CHECK:STDOUT:     %U.loc20_30.1: type = param U
-// CHECK:STDOUT:     %.loc20_30: type = binding_pattern U 1, @F.%U.loc20 [symbolic = constants.%U]
+// CHECK:STDOUT:     %.loc20_30: type = binding_pattern U 1, @F.%U.loc20
 // CHECK:STDOUT:     %U.ref.loc20_43: type = name_ref U, @F.%U.loc20 [symbolic = constants.%U]
 // CHECK:STDOUT:     %u.loc20_40.1: %U = param u
 // CHECK:STDOUT:     %.loc20_40: %U = binding_pattern u, @F.%u
@@ -264,9 +264,9 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %.loc14_16: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = @F.%C (constants.%C.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14_16 [symbolic = @F.%C (constants.%C.2)]
 // CHECK:STDOUT:       %self.loc14_10.1: @F.%C (%C.2) = param self
-// CHECK:STDOUT:       %.loc14_10: @F.%C (%C.2) = binding_pattern self, %self.loc14_10.2
+// CHECK:STDOUT:       %self.loc14_10.2: @F.%C (%C.2) = bind_name self, %self.loc14_10.1
 // CHECK:STDOUT:       %U.loc14_22.1: type = param U
-// CHECK:STDOUT:       %.loc14_22: type = binding_pattern U 1, %U.loc14_22.3 [symbolic = @F.%U.1 (constants.%U)]
+// CHECK:STDOUT:       %.loc14_22: type = binding_pattern U 1, %U.loc14_22.3
 // CHECK:STDOUT:       %U.ref.loc14_35: type = name_ref U, %U.loc14_22.3 [symbolic = @F.%U.1 (constants.%U)]
 // CHECK:STDOUT:       %u.loc14_32.1: @F.%U.1 (%U) = param u
 // CHECK:STDOUT:       %.loc14_32: @F.%U.1 (%U) = binding_pattern u, %u.loc14_32.3
@@ -289,7 +289,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc20: %C.2](%U.loc20: type, %u: %U) -> %U {
+// CHECK:STDOUT:   fn[%self: %C.2](%U.loc20: type, %u: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.1 (%U) = name_ref u, %u
 // CHECK:STDOUT:     return %u.ref

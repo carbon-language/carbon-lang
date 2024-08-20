@@ -49,7 +49,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32.loc14_10, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:     %N.loc14_6.1: i32 = param N
-// CHECK:STDOUT:     %.loc14_6: i32 = binding_pattern N 0, @F.%N.loc14 [symbolic = @F.%N.1 (constants.%N)]
+// CHECK:STDOUT:     %.loc14_6: i32 = binding_pattern N 0, @F.%N.loc14
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, @F.%N.loc14 [symbolic = @F.%N.1 (constants.%N)]
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]

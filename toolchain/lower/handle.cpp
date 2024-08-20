@@ -68,14 +68,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::ExportDecl inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
-    return;
-  }
-
-  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::BindingPattern /*inst*/) -> void {
+  // Patterns are not lowered.
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -161,6 +156,16 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ExportDecl inst) -> void {
+  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
+  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+    return;
+  }
+
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::FacetTypeAccess /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
@@ -211,11 +216,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       CARBON_FATAL() << "Lowering return of incomplete type "
                      << context.sem_ir().types().GetAsInst(result_type_id);
   }
-}
-
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::BindingPattern /*inst*/) -> void {
-  // Patterns are not lowered.
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

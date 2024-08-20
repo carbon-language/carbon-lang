@@ -198,7 +198,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %int.make_type_32, %.loc14_17.1 [template = i32]
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
-// CHECK:STDOUT:     %.loc14_13: i32 = binding_pattern N 0, @Symbolic.%N.loc14 [symbolic = @Symbolic.%N.1 (constants.%N)]
+// CHECK:STDOUT:     %.loc14_13: i32 = binding_pattern N 0, @Symbolic.%N.loc14
 // CHECK:STDOUT:     %UInt.ref.loc14_25: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N.loc14 [symbolic = @Symbolic.%N.1 (constants.%N)]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = @Symbolic.%.1 (constants.%.6)]

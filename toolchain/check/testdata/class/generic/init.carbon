@@ -72,12 +72,12 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc2_13.1: type = param T
-// CHECK:STDOUT:     %.loc2: type = binding_pattern T 0, %T.loc2_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc2: type = binding_pattern T 0, %T.loc2_13.3
 // CHECK:STDOUT:     %T.loc2_13.3: type = bind_symbolic_name T 0, %T.loc2_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [template = constants.%InitFromStructGeneric] {
 // CHECK:STDOUT:     %T.loc6_26.1: type = param T
-// CHECK:STDOUT:     %.loc6_26: type = binding_pattern T 0, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc6_26: type = binding_pattern T 0, @InitFromStructGeneric.%T.loc6
 // CHECK:STDOUT:     %T.ref.loc6_39: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.loc6_36.1: @InitFromStructGeneric.%T.1 (%T) = param x
 // CHECK:STDOUT:     %.loc6_36: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x, @InitFromStructGeneric.%x
@@ -201,7 +201,7 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.loc4_13.1: type = param T
-// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_13.3
 // CHECK:STDOUT:     %T.loc4_13.3: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [template = constants.%InitFromStructSpecific] {

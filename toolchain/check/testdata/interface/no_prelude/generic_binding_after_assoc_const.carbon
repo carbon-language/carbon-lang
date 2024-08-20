@@ -46,7 +46,7 @@ interface I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.loc12_8.1: type = param T
-// CHECK:STDOUT:     %.loc12_8: type = binding_pattern T 1, %T.loc12_8.3 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc12_8: type = binding_pattern T 1, %T.loc12_8.3
 // CHECK:STDOUT:     %T.loc12_8.3: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_17: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
@@ -54,7 +54,7 @@ interface I {
 // CHECK:STDOUT:   %.loc13: %.5 = assoc_entity element1, %U [template = constants.%.6]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.loc16_8.1: type = param T
-// CHECK:STDOUT:     %.loc16_8: type = binding_pattern T 1, %T.loc16_8.3 [symbolic = @G.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc16_8: type = binding_pattern T 1, %T.loc16_8.3
 // CHECK:STDOUT:     %T.loc16_8.3: type = bind_symbolic_name T 1, %T.loc16_8.1 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_17: %.7 = assoc_entity element2, %G.decl [template = constants.%.8]

@@ -687,33 +687,32 @@ class ImportRefResolver {
       // Figure out the param structure. This echoes
       // Function::GetParamFromParamRefId.
       // TODO: Consider a different parameter handling to simplify import logic.
-      auto inst = import_ir_.insts().Get(ref_id);
-      auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
+      auto inst_id = ref_id;
 
-      auto pattern_id = ref_id;
-      auto bind_id = ref_id;
-      auto param_id = ref_id;
-
+      auto addr_id = SemIR::InstId::Invalid;
+      auto addr_inst = import_ir_.insts().TryGetAs<SemIR::AddrPattern>(inst_id);
       if (addr_inst) {
-        pattern_id = addr_inst->inner_id;
-        bind_id = pattern_id;
-        param_id = pattern_id;
-        inst = import_ir_.insts().Get(bind_id);
+        addr_id = inst_id;
+        inst_id = addr_inst->inner_id;
       }
 
-      auto binding_pattern = inst.TryAs<SemIR::BindingPattern>();
+      auto pattern_id = SemIR::InstId::Invalid;
+      auto binding_pattern =
+          import_ir_.insts().TryGetAs<SemIR::BindingPattern>(inst_id);
       if (binding_pattern) {
-        bind_id = binding_pattern->bind_inst_id;
-        param_id = bind_id;
-        inst = import_ir_.insts().Get(bind_id);
+        pattern_id = inst_id;
+        inst_id = binding_pattern->bind_inst_id;
       }
 
-      auto bind_inst = inst.TryAs<SemIR::AnyBindName>();
+      auto bind_id = SemIR::InstId::Invalid;
+      auto bind_inst = import_ir_.insts().TryGetAs<SemIR::AnyBindName>(inst_id);
       if (bind_inst) {
-        param_id = bind_inst->value_id;
-        inst = import_ir_.insts().Get(param_id);
+        bind_id = inst_id;
+        inst_id = bind_inst->value_id;
       }
-      auto param_inst = inst.As<SemIR::Param>();
+
+      auto param_id = inst_id;
+      auto param_inst = import_ir_.insts().GetAs<SemIR::Param>(inst_id);
 
       // Rebuild the param instruction.
       auto name_id = GetLocalNameId(param_inst.name_id);
@@ -767,7 +766,7 @@ class ImportRefResolver {
       }
       if (addr_inst) {
         new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(
-            AddImportIRInst(ref_id),
+            AddImportIRInst(addr_id),
             {.type_id = type_id, .inner_id = new_param_id});
       }
       new_param_refs.push_back(new_param_id);

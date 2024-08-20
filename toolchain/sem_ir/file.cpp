@@ -421,6 +421,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case BaseDecl::Kind:
+      case BindingPattern::Kind:
       case BindName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
@@ -453,7 +454,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Param::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
-      case BindingPattern::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
@@ -508,6 +508,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AdaptDecl::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
+      case BindingPattern::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -518,7 +519,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
-      case BindingPattern::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:

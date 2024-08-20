@@ -145,7 +145,7 @@ extern library "foo" fn F();
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc14_15.1: %C = param self
-// CHECK:STDOUT:     %.loc14: %C = binding_pattern self, %self.loc14_15.2
+// CHECK:STDOUT:     %self.loc14_15.2: %C = bind_name self, %self.loc14_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -156,7 +156,7 @@ extern library "foo" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[@C.%.loc14: %C]();
+// CHECK:STDOUT: fn @G[@C.%self.loc14_15.2: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_extern_library.carbon
 // CHECK:STDOUT:

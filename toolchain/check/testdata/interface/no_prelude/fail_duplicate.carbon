@@ -154,7 +154,7 @@ interface Class { }
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.%Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = @F.%Self (constants.%Self.2)]
 // CHECK:STDOUT:     %self.loc14_8.1: @F.%Self (%Self.2) = param self
-// CHECK:STDOUT:     %.loc14_8: @F.%Self (%Self.2) = binding_pattern self, %self.loc14_8.2
+// CHECK:STDOUT:     %self.loc14_8.2: @F.%Self (%Self.2) = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_21: %.4 = assoc_entity element0, %F.decl [template = constants.%.5]
 // CHECK:STDOUT:
@@ -167,7 +167,7 @@ interface Class { }
 // CHECK:STDOUT: generic fn @F(@.1.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@.1.%.loc14_8: @F.%Self (%Self.2)]();
+// CHECK:STDOUT:   fn[@.1.%self.loc14_8.2: @F.%Self (%Self.2)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self.2) {

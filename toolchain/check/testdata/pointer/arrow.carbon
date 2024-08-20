@@ -71,7 +71,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc12_13.1: %C = param self
-// CHECK:STDOUT:     %.loc12: %C = binding_pattern self, %self.loc12_13.2
+// CHECK:STDOUT:     %self.loc12_13.2: %C = bind_name self, %self.loc12_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_15: type = ptr_type %C [template = constants.%.2]
@@ -83,7 +83,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .field = %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Member[@C.%.loc12: %C]();
+// CHECK:STDOUT: fn @Member[@C.%self.loc12_13.2: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr: %.2) {
 // CHECK:STDOUT: !entry:

@@ -132,21 +132,21 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+58, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+60, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+83, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+106, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: %.10 = import_ref Core//prelude/operators/comparison, inst+129, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.6: %.12 = import_ref Core//prelude/operators/comparison, inst+152, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.7: %Less.type.2 = import_ref Core//prelude/operators/comparison, inst+78, loaded [template = constants.%Less.2]
-// CHECK:STDOUT:   %import_ref.8: %LessOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+101, loaded [template = constants.%LessOrEquivalent.2]
-// CHECK:STDOUT:   %import_ref.9: %Greater.type.2 = import_ref Core//prelude/operators/comparison, inst+124, loaded [template = constants.%Greater.2]
-// CHECK:STDOUT:   %import_ref.10: %GreaterOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+147, loaded [template = constants.%GreaterOrEquivalent.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, inst+56, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/comparison, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/comparison, inst+80, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/comparison, inst+102, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: %.10 = import_ref Core//prelude/operators/comparison, inst+124, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.6: %.12 = import_ref Core//prelude/operators/comparison, inst+146, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.7: %Less.type.2 = import_ref Core//prelude/operators/comparison, inst+75, loaded [template = constants.%Less.2]
+// CHECK:STDOUT:   %import_ref.8: %LessOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+97, loaded [template = constants.%LessOrEquivalent.2]
+// CHECK:STDOUT:   %import_ref.9: %Greater.type.2 = import_ref Core//prelude/operators/comparison, inst+119, loaded [template = constants.%Greater.2]
+// CHECK:STDOUT:   %import_ref.10: %GreaterOrEquivalent.type.2 = import_ref Core//prelude/operators/comparison, inst+141, loaded [template = constants.%GreaterOrEquivalent.2]
 // CHECK:STDOUT:   %import_ref.11: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+78, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/comparison, inst+101, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+124, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+147, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+75, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/comparison, inst+97, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+141, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -237,7 +237,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %Less.decl: %Less.type.1 = fn_decl @Less.1 [template = constants.%Less.1] {
 // CHECK:STDOUT:     %C.ref.loc7_17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc7_11.1: %C = param self
-// CHECK:STDOUT:     %.loc7_11: %C = binding_pattern self, %self.loc7_11.2
+// CHECK:STDOUT:     %self.loc7_11.2: %C = bind_name self, %self.loc7_11.1
 // CHECK:STDOUT:     %C.ref.loc7_27: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc7_20.1: %C = param other
 // CHECK:STDOUT:     %.loc7_20: %C = binding_pattern other, %other.loc7_20.3
@@ -250,7 +250,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.1 = fn_decl @LessOrEquivalent.1 [template = constants.%LessOrEquivalent.1] {
 // CHECK:STDOUT:     %C.ref.loc8_29: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc8_23.1: %C = param self
-// CHECK:STDOUT:     %.loc8_23: %C = binding_pattern self, %self.loc8_23.2
+// CHECK:STDOUT:     %self.loc8_23.2: %C = bind_name self, %self.loc8_23.1
 // CHECK:STDOUT:     %C.ref.loc8_39: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc8_32.1: %C = param other
 // CHECK:STDOUT:     %.loc8_32: %C = binding_pattern other, %other.loc8_32.3
@@ -263,7 +263,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %Greater.decl: %Greater.type.1 = fn_decl @Greater.1 [template = constants.%Greater.1] {
 // CHECK:STDOUT:     %C.ref.loc9_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc9_14.1: %C = param self
-// CHECK:STDOUT:     %.loc9_14: %C = binding_pattern self, %self.loc9_14.2
+// CHECK:STDOUT:     %self.loc9_14.2: %C = bind_name self, %self.loc9_14.1
 // CHECK:STDOUT:     %C.ref.loc9_30: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc9_23.1: %C = param other
 // CHECK:STDOUT:     %.loc9_23: %C = binding_pattern other, %other.loc9_23.3
@@ -276,7 +276,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.1 = fn_decl @GreaterOrEquivalent.1 [template = constants.%GreaterOrEquivalent.1] {
 // CHECK:STDOUT:     %C.ref.loc10_32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc10_26.1: %C = param self
-// CHECK:STDOUT:     %.loc10_26: %C = binding_pattern self, %self.loc10_26.2
+// CHECK:STDOUT:     %self.loc10_26.2: %C = bind_name self, %self.loc10_26.1
 // CHECK:STDOUT:     %C.ref.loc10_42: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc10_35.1: %C = param other
 // CHECK:STDOUT:     %.loc10_35: %C = binding_pattern other, %other.loc10_35.3
@@ -303,36 +303,36 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less.1[@impl.%.loc7_11: %C](@impl.%other.loc7_20.3: %C) -> bool;
+// CHECK:STDOUT: fn @Less.1[@impl.%self.loc7_11.2: %C](@impl.%other.loc7_20.3: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent.1[@impl.%.loc8_23: %C](@impl.%other.loc8_32.3: %C) -> bool;
+// CHECK:STDOUT: fn @LessOrEquivalent.1[@impl.%self.loc8_23.2: %C](@impl.%other.loc8_32.3: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater.1[@impl.%.loc9_14: %C](@impl.%other.loc9_23.3: %C) -> bool;
+// CHECK:STDOUT: fn @Greater.1[@impl.%self.loc9_14.2: %C](@impl.%other.loc9_23.3: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent.1[@impl.%.loc10_26: %C](@impl.%other.loc10_35.3: %C) -> bool;
+// CHECK:STDOUT: fn @GreaterOrEquivalent.1[@impl.%self.loc10_26.2: %C](@impl.%other.loc10_35.3: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Less.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Less.2.%Self (%Self)](%other: @Less.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @Less.2.%Self (%Self)](%other: @Less.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @LessOrEquivalent.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @LessOrEquivalent.2.%Self (%Self)](%other: @LessOrEquivalent.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @LessOrEquivalent.2.%Self (%Self)](%other: @LessOrEquivalent.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Greater.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Greater.2.%Self (%Self)](%other: @Greater.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @Greater.2.%Self (%Self)](%other: @Greater.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @GreaterOrEquivalent.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @GreaterOrEquivalent.2.%Self (%Self)](%other: @GreaterOrEquivalent.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @GreaterOrEquivalent.2.%Self (%Self)](%other: @GreaterOrEquivalent.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a: %C, %b: %C) -> bool {
@@ -465,20 +465,20 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+58, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+60, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+83, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+106, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref Core//prelude/operators/comparison, inst+129, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref Core//prelude/operators/comparison, inst+152, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+78, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+101, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/comparison, inst+124, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+147, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+78, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/comparison, inst+101, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+124, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+147, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/comparison, inst+56, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/comparison, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//prelude/operators/comparison, inst+80, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %.7 = import_ref Core//prelude/operators/comparison, inst+102, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.6: %.9 = import_ref Core//prelude/operators/comparison, inst+124, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref Core//prelude/operators/comparison, inst+146, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+75, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/comparison, inst+97, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/comparison, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/comparison, inst+141, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/comparison, inst+75, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/comparison, inst+97, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/comparison, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+141, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -577,7 +577,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @Less(constants.%Self: %.4) {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Less.%Self (%Self)](%other: @Less.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @Less.%Self (%Self)](%other: @Less.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a: %D, %b: %D) -> bool {
@@ -590,7 +590,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @LessOrEquivalent(constants.%Self: %.4) {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @LessOrEquivalent.%Self (%Self)](%other: @LessOrEquivalent.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @LessOrEquivalent.%Self (%Self)](%other: @LessOrEquivalent.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a: %D, %b: %D) -> bool {
@@ -603,7 +603,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @Greater(constants.%Self: %.4) {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Greater.%Self (%Self)](%other: @Greater.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @Greater.%Self (%Self)](%other: @Greater.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a: %D, %b: %D) -> bool {
@@ -616,7 +616,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @GreaterOrEquivalent(constants.%Self: %.4) {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @GreaterOrEquivalent.%Self (%Self)](%other: @GreaterOrEquivalent.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self: @GreaterOrEquivalent.%Self (%Self)](%other: @GreaterOrEquivalent.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Less(constants.%Self) {
