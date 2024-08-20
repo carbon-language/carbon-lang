@@ -1,0 +1,25 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+title: Carbon Language documentation
+description: An experimental successor to C++
+
+# https://just-the-docs.github.io/just-the-docs/
+theme: just-the-docs
+
+favicon_ico: '/favicon.png'
+
+aux_links:
+  Discord: https://discord.gg/ZjVdShJDAs
+  GitHub: https://github.com/carbon-language/carbon-lang
+
+mermaid:
+  # Version of mermaid library
+  # Pick an available version from https://cdn.jsdelivr.net/npm/mermaid/
+  version: '10.9.1'
+
+# We add frontmatter to files, but still want README.md -> index.md.
+readme_index:
+  remove_originals: true
+  with_frontmatter: true
