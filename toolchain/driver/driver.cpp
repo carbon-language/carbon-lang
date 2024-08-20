@@ -337,6 +337,14 @@ Excludes files with the given prefix from dumps.
 )""",
         },
         [&](auto& arg_b) { arg_b.Set(&exclude_dump_file_prefix); });
+    b.AddFlag(
+        {
+            .name = "debug-info",
+            .help = R"""(
+Emit DWARF debug information.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&include_debug_info); });
   }
 
   Phase phase;
@@ -358,6 +366,7 @@ Excludes files with the given prefix from dumps.
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
   bool prelude_import = false;
+  bool include_debug_info = false;
 
   llvm::StringRef exclude_dump_file_prefix;
 };
@@ -523,6 +532,12 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
                       << options.phase << "'.\n";
         return false;
       }
+      if (options.include_debug_info) {
+        error_stream_
+            << "ERROR: Requested debug info but compile phase is limited to '"
+            << options.phase << "'.\n";
+        return false;
+      }
       [[fallthrough]];
     case Phase::Lower:
     case Phase::CodeGen:
@@ -676,8 +691,9 @@ class Driver::CompilationUnit {
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
       SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
-      module_ = Lower::LowerToLLVM(*llvm_context_, input_filename_, *sem_ir_,
-                                   &inst_namer, vlog_stream_);
+      module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
+                                   input_filename_, *sem_ir_, &inst_namer,
+                                   vlog_stream_);
     });
     if (vlog_stream_) {
       CARBON_VLOG() << "*** llvm::Module ***\n";

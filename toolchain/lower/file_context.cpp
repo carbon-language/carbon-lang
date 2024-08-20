@@ -21,11 +21,17 @@
 namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
-                         llvm::StringRef module_name, const SemIR::File& sem_ir,
+                         bool include_debug_info, llvm::StringRef module_name,
+                         const SemIR::File& sem_ir,
                          const SemIR::InstNamer* inst_namer,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
+      di_builder_(*llvm_module_),
+      di_compile_unit_(
+          include_debug_info
+              ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
+              : nullptr),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -78,6 +84,25 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   return std::move(llvm_module_);
+}
+
+auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
+                                     llvm::Module& llvm_module,
+                                     llvm::DIBuilder& di_builder)
+    -> llvm::DICompileUnit* {
+  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
+  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
+                            llvm::DEBUG_METADATA_VERSION);
+  // FIXME: Include directory path in the compile_unit_file.
+  llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
+  // FIXME: Introduce a new language code for Carbon. C works well for now since
+  // it's something debuggers will already know/have support for at least.
+  // Probably have to bump to C++ at some point for virtual functions,
+  // templates, etc.
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
+                                      "carbon",
+                                      /*isOptimized=*/false, /*Flags=*/"",
+                                      /*RV=*/0);
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {

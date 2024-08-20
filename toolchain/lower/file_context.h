@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/sem_ir/file.h"
@@ -16,7 +17,7 @@ namespace Carbon::Lower {
 // Context and shared functionality for lowering handlers.
 class FileContext {
  public:
-  explicit FileContext(llvm::LLVMContext& llvm_context,
+  explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
                        llvm::StringRef module_name, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
@@ -24,6 +25,11 @@ class FileContext {
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
+
+  // Create the DICompileUnit metadata for this compilation.
+  auto BuildDICompileUnit(llvm::StringRef module_name,
+                          llvm::Module& llvm_module,
+                          llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -84,6 +90,12 @@ class FileContext {
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
+
+  // State for building the LLVM IR debug info metadata.
+  llvm::DIBuilder di_builder_;
+
+  // The DICompileUnit, if any - null implies debug info is not being emitted.
+  llvm::DICompileUnit* di_compile_unit_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
