@@ -9,5 +9,5 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/fail_flags.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_flags.carbon
-//
 // CHECK:STDERR: ERROR: Requested debug info but compile phase is limited to 'check'.
+//
