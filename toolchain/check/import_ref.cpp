@@ -844,6 +844,19 @@ class ImportRefResolver {
   auto GetIncompleteLocalEntityBase(
       SemIR::InstId decl_id, const SemIR::EntityWithParamsBase& import_base)
       -> SemIR::EntityWithParamsBase {
+    // Translate the extern_library_id if present.
+    auto extern_library_id = SemIR::LibraryNameId::Invalid;
+    if (import_base.extern_library_id.is_valid()) {
+      if (import_base.extern_library_id.index >= 0) {
+        auto val = import_ir_.string_literal_values().Get(
+            import_base.extern_library_id.AsStringLiteralValueId());
+        extern_library_id = SemIR::LibraryNameId::ForStringLiteralValueId(
+            context_.string_literal_values().Add(val));
+      } else {
+        extern_library_id = import_base.extern_library_id;
+      }
+    }
+
     return {
         .name_id = GetLocalNameId(import_base.name_id),
         .parent_scope_id = SemIR::NameScopeId::Invalid,
@@ -857,9 +870,13 @@ class ImportRefResolver {
                              ? SemIR::InstBlockId::Empty
                              : SemIR::InstBlockId::Invalid,
         .is_extern = import_base.is_extern,
-        .extern_library_id = StringLiteralValueId::Invalid,
-        .non_owning_decl_id = SemIR::InstId::Invalid,
-        .first_owning_decl_id = decl_id,
+        .extern_library_id = extern_library_id,
+        .non_owning_decl_id = import_base.non_owning_decl_id.is_valid()
+                                  ? decl_id
+                                  : SemIR::InstId::Invalid,
+        .first_owning_decl_id = import_base.first_owning_decl_id.is_valid()
+                                    ? decl_id
+                                    : SemIR::InstId::Invalid,
     };
   }
 
@@ -1373,7 +1390,7 @@ class ImportRefResolver {
         .decl_block_id = SemIR::InstBlockId::Empty};
     auto function_decl_id =
         context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
-            AddImportIRInst(import_function.latest_decl_id()), function_decl));
+            AddImportIRInst(import_function.first_decl_id()), function_decl));
 
     // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
@@ -1471,7 +1488,7 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::FunctionType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
     auto fn_val_id = GetLocalConstantInstId(
-        import_ir_.functions().Get(inst.function_id).first_owning_decl_id);
+        import_ir_.functions().Get(inst.function_id).first_decl_id());
     auto specific_data = GetLocalSpecificData(inst.specific_id);
     if (HasNewWork()) {
       return Retry();

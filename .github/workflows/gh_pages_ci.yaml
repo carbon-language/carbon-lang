@@ -1,0 +1,41 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: GitHub Pages CI
+
+on:
+  pull_request:
+
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Prebuild actions
+        run: ./website/prebuild.py
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@a6e6f86333f0a2523ece813039b8b4be04560854 # v1.190.0
+        with:
+          # Runs 'bundle install' and caches installed gems automatically.
+          bundler-cache: true
+          # Increment this number if you need to re-download cached gems.
+          cache-version: 0
+      - name: Build with Jekyll
+        run: bundle exec jekyll build

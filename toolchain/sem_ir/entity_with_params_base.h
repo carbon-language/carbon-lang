@@ -49,6 +49,15 @@ struct EntityWithParamsBase {
     definition_id = definition.definition_id;
   }
 
+  // Returns the instruction for the first declaration.
+  auto first_decl_id() const -> SemIR::InstId {
+    if (non_owning_decl_id.is_valid()) {
+      return non_owning_decl_id;
+    }
+    CARBON_CHECK(first_owning_decl_id.is_valid());
+    return first_owning_decl_id;
+  }
+
   // Returns the instruction for the latest declaration.
   auto latest_decl_id() const -> SemIR::InstId {
     if (definition_id.is_valid()) {
@@ -86,7 +95,7 @@ struct EntityWithParamsBase {
   // True if declarations are `extern`.
   bool is_extern;
   // For an `extern library` declaration, the library name.
-  StringLiteralValueId extern_library_id;
+  SemIR::LibraryNameId extern_library_id;
   // The non-owning declaration of the entity, if present. This will be a
   // <entity>Decl.
   InstId non_owning_decl_id;

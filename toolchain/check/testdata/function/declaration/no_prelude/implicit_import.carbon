@@ -30,7 +30,7 @@ extern fn A();
 
 impl library "extern_api";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+14]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+14]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: In import.
@@ -56,7 +56,7 @@ fn A();
 
 impl library "extern_impl";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: In import.

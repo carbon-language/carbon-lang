@@ -52,8 +52,8 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
 // Otherwise, returns false. Prints a diagnostic when appropriate.
 static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                              SemIR::Class& new_class, bool new_is_import,
-                             bool new_is_definition, bool new_is_extern,
-                             SemIR::ClassId prev_class_id, bool prev_is_extern,
+                             bool new_is_definition,
+                             SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
   SemIRLoc prev_loc = prev_class.latest_decl_id();
@@ -64,14 +64,11 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Class, prev_class.name_id,
-                       {.loc = new_loc,
-                        .is_definition = new_is_definition,
-                        .is_extern = new_is_extern},
-                       {.loc = prev_loc,
-                        .is_definition = prev_class.is_defined(),
-                        .is_extern = prev_is_extern},
-                       prev_import_ir_id);
+  CheckIsAllowedRedecl(
+      context, Lex::TokenKind::Class, prev_class.name_id,
+      RedeclInfo(new_class, new_loc, new_is_definition),
+      RedeclInfo(prev_class, prev_loc, prev_class.is_defined()),
+      prev_import_ir_id);
 
   if (new_is_definition && prev_class.is_defined()) {
     // Don't attempt to merge multiple definitions.
@@ -101,7 +98,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   }
 
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
-      (prev_is_extern && !new_is_extern)) {
+      (prev_class.is_extern && !new_class.is_extern)) {
     prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
     ReplacePrevInstForMerge(
         context, prev_class.parent_scope_id, prev_class.name_id,
@@ -117,8 +114,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::InstId class_decl_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
-                           bool is_extern, SemIR::AccessKind access_kind)
-    -> void {
+                           SemIR::AccessKind access_kind) -> void {
   auto prev_id = context.decl_name_stack().LookupOrAddName(
       name_context, class_decl_id, access_kind);
   if (!prev_id.is_valid()) {
@@ -168,10 +164,10 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     return;
   }
 
-  // TODO: Fix prev_is_extern logic.
+  // TODO: Fix `extern` logic. It doesn't work correctly, but doesn't seem worth
+  // ripping out because existing code may incrementally help.
   if (MergeClassRedecl(context, node_id, class_info,
-                       /*new_is_import=*/false, is_definition, is_extern,
-                       prev_class_id, /*prev_is_extern=*/false,
+                       /*new_is_import=*/false, is_definition, prev_class_id,
                        prev_import_ir_id)) {
     // When merging, use the existing entity rather than adding a new one.
     class_decl.class_id = prev_class_id;
@@ -201,6 +197,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                                is_definition);
 
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
+  if (introducer.extern_library.is_valid()) {
+    context.TODO(node_id, "extern library");
+  }
   auto inheritance_kind =
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)
           ? SemIR::Class::Abstract
@@ -219,7 +218,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
-      name_context.MakeEntityWithParamsBase(name, class_decl_id, is_extern),
+      name_context.MakeEntityWithParamsBase(name, class_decl_id, is_extern,
+                                            SemIR::LibraryNameId::Invalid),
       {// `.self_type_id` depends on the ClassType, so is set below.
        .self_type_id = SemIR::TypeId::Invalid,
        .inheritance_kind = inheritance_kind}};
@@ -228,7 +228,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   RequireGenericParams(context, class_info.param_refs_id);
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
-                 class_info, is_definition, is_extern,
+                 class_info, is_definition,
                  introducer.modifier_set.GetAccessKind());
 
   // Create a new class if this isn't a valid redeclaration.

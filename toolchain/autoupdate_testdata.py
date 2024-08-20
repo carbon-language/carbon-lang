@@ -15,12 +15,13 @@ from pathlib import Path
 
 
 def main() -> None:
+    bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
     # Use the most recently used build mode, or `fastbuild` if missing
     # `bazel-bin`.
     build_mode = "fastbuild"
     workspace = subprocess.check_output(
         [
-            "bazel",
+            bazel,
             "info",
             "workspace",
             "--ui_event_filters=stdout",
@@ -37,7 +38,7 @@ def main() -> None:
             exit(f"Build mode not found in `bazel-bin` symlink: {link}")
 
     argv = [
-        "bazel",
+        bazel,
         "run",
         "-c",
         build_mode,

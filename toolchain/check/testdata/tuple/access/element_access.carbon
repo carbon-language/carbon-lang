@@ -4,23 +4,15 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_tuple_large_index.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuple/access/element_access.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_tuple_large_index.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/element_access.carbon
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+4]]:14: ERROR: Tuple element index `1` is past the end of type `(i32,)`.
-// CHECK:STDERR: var c: i32 = b.1;
-// CHECK:STDERR:              ^~~
-// CHECK:STDERR:
-var c: i32 = b.1;
-// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2147483647` is past the end of type `(i32,)`.
-// CHECK:STDERR: var d: i32 = b.(0x7FFF_FFFF);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~
-var d: i32 = b.(0x7FFF_FFFF);
+var c: i32 = b.0;
 
-// CHECK:STDOUT: --- fail_tuple_large_index.carbon
+// CHECK:STDOUT: --- element_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -30,8 +22,7 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 2147483647 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,7 +45,6 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
-// CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
@@ -71,16 +61,11 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %.loc12_13.4: type = converted %.loc12_13.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %b.var: ref %.3 = var b
 // CHECK:STDOUT:   %b: ref %.3 = bind_name b, %b.var
-// CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc17_8.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
-// CHECK:STDOUT:   %.loc17_8.2: type = converted %int.make_type_32.loc17, %.loc17_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_8.2: type = converted %int.make_type_32.loc13, %.loc13_8.1 [template = i32]
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc21_8.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
-// CHECK:STDOUT:   %.loc21_8.2: type = converted %int.make_type_32.loc21, %.loc21_8.1 [template = i32]
-// CHECK:STDOUT:   %d.var: ref i32 = var d
-// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -98,14 +83,11 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %.loc12_17.3: init %.3 = tuple_init (%.loc12_17.2) to file.%b.var
 // CHECK:STDOUT:   %.loc12_18: init %.3 = converted %a.ref, %.loc12_17.3
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_18
-// CHECK:STDOUT:   %b.ref.loc17: ref %.3 = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc17_16: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc17_15: ref <error> = tuple_index %b.ref.loc17, <error> [template = <error>]
-// CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %b.ref.loc21: ref %.3 = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc21_17: i32 = int_literal 2147483647 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc21_15: ref <error> = tuple_index %b.ref.loc21, <error> [template = <error>]
-// CHECK:STDOUT:   assign file.%d.var, <error>
+// CHECK:STDOUT:   %b.ref: ref %.3 = name_ref b, file.%b
+// CHECK:STDOUT:   %.loc13_16: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_15.1: ref i32 = tuple_index %b.ref, %.loc13_16
+// CHECK:STDOUT:   %.loc13_15.2: i32 = bind_value %.loc13_15.1
+// CHECK:STDOUT:   assign file.%c.var, %.loc13_15.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
