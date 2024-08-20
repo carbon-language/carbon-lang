@@ -54,4 +54,6 @@ is configured in three places:
 -   Google Cloud DNS
     -   This is visible with `dig docs.carbon-lang.dev`
 
-Note all of these require admin permissions to modify.
+Note all of these require admin permissions to modify. For sharing test pages, a
+GitHub user and repository can be used, pushing to `<username>.github.io` (or
+getting a custom DNS setup).
