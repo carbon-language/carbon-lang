@@ -424,9 +424,8 @@ struct Impls {
 };
 
 struct Require {
-  static constexpr auto Kind =
-      NodeKind::Require.Define({.category = NodeCategory::Decl,
-                                .bracketed_by = RequireIntroducer::Kind});
+  static constexpr auto Kind = NodeKind::Require.Define(
+      {.category = NodeCategory::Decl, .child_count = 2});
   RequireIntroducerId introducer;
   ImplsId impls;
   Lex::SemiTokenIndex token;
