@@ -4,20 +4,20 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_empty_tuple_access.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuple/access/fail_empty_access.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_empty_tuple_access.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_empty_access.carbon
 
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:3: ERROR: Tuple element index `0` is past the end of type `()`.
-  // CHECK:STDERR:   F()[0];
-  // CHECK:STDERR:   ^~~~~~
-  F()[0];
+  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+3]]:3: ERROR: Tuple element index `0` is past the end of type `()`.
+  // CHECK:STDERR:   F().0;
+  // CHECK:STDERR:   ^~~~~
+  F().0;
 }
 
-// CHECK:STDOUT: --- fail_empty_tuple_access.carbon
+// CHECK:STDOUT: --- fail_empty_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -63,7 +63,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc17_7: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc17_4.1: ref %.1 = temporary_storage
 // CHECK:STDOUT:   %.loc17_4.2: ref %.1 = temporary %.loc17_4.1, %F.call
-// CHECK:STDOUT:   %.loc17_8: ref <error> = tuple_index %.loc17_4.2, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_6: ref <error> = tuple_index %.loc17_4.2, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -6,12 +6,13 @@
 
 #include "absl/flags/parse.h"
 #include "common/init_llvm.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
+#include "testing/base/global_exe_path.h"
 
 auto main(int orig_argc, char** orig_argv) -> int {
   // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
   Carbon::InitLLVM init_llvm(orig_argc, orig_argv);
+
+  Carbon::Testing::SetExePath(orig_argv[0]);
 
   // Inject a flag to override the defaults for benchmarks. This can still be
   // disabled by user arguments.

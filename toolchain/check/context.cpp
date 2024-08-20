@@ -198,7 +198,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   } else {
     CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
                       "Class was forward declared here.");
-    builder.Note(class_info.decl_id, ClassForwardDeclaredHere);
+    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
   }
 }
 
@@ -214,7 +214,7 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
   } else {
     CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
                       "Interface was forward declared here.");
-    builder.Note(interface_info.decl_id, InterfaceForwardDeclaredHere);
+    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
   }
 }
 

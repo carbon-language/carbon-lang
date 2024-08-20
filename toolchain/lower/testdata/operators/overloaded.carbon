@@ -33,22 +33,22 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Op(ptr sret({ i1 }) %return, ptr %self) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1
 // CHECK:STDOUT:   %.loc17_28 = xor i1 %.loc17_36.2, true
-// CHECK:STDOUT:   %.loc17_48.2.is_positive = getelementptr inbounds { i1 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc17_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   store i1 %.loc17_28, ptr %.loc17_48.2.is_positive, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Op.1(ptr sret({ i1 }) %return, ptr %self, ptr %other) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1
 // CHECK:STDOUT:   br i1 %.loc22_33.2, label %and.rhs.loc22, label %and.result.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc22:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc22_55.1.is_positive = getelementptr inbounds { i1 }, ptr %other, i32 0, i32 0
+// CHECK:STDOUT:   %.loc22_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0
 // CHECK:STDOUT:   %.loc22_55.2 = load i1, ptr %.loc22_55.1.is_positive, align 1
 // CHECK:STDOUT:   br label %and.result.loc22
 // CHECK:STDOUT:
@@ -58,13 +58,13 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   br i1 %.loc22_69.1, label %or.rhs, label %or.result
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc22
-// CHECK:STDOUT:   %.loc23_38.1.is_positive = getelementptr inbounds { i1 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc23_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc23_38.2 = load i1, ptr %.loc23_38.1.is_positive, align 1
 // CHECK:STDOUT:   %.loc23_30 = xor i1 %.loc23_38.2, true
 // CHECK:STDOUT:   br i1 %.loc23_30, label %and.rhs.loc23, label %and.result.loc23
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc23:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc23_64.1.is_positive = getelementptr inbounds { i1 }, ptr %other, i32 0, i32 0
+// CHECK:STDOUT:   %.loc23_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0
 // CHECK:STDOUT:   %.loc23_64.2 = load i1, ptr %.loc23_64.1.is_positive, align 1
 // CHECK:STDOUT:   %.loc23_55 = xor i1 %.loc23_64.2, true
 // CHECK:STDOUT:   br label %and.result.loc23
@@ -75,7 +75,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc23, %and.result.loc22
 // CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc22 ], [ %1, %and.result.loc23 ]
-// CHECK:STDOUT:   %.loc23_77.2.is_positive = getelementptr inbounds { i1 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %.loc23_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   store i1 %2, ptr %.loc23_77.2.is_positive, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -59,6 +59,9 @@ class FileContext {
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
+  auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
+    return global_variables_;
+  }
 
  private:
   // Builds the declaration for the given function, which should then be cached
@@ -72,6 +75,11 @@ class FileContext {
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
+
+  // Builds the global for the given instruction, which should then be cached by
+  // the caller.
+  auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+      -> llvm::GlobalVariable*;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
@@ -101,6 +109,9 @@ class FileContext {
   // Maps constants to their lowered values.
   // We resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Constant*, 0> constants_;
+
+  // Maps global variables to their lowered variant.
+  Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
 };
 
 }  // namespace Carbon::Lower

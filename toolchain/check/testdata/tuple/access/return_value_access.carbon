@@ -4,17 +4,17 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/tuple_return_value_access.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuple/access/return_value_access.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/tuple_return_value_access.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/return_value_access.carbon
 
 fn F() -> (i32,) { return (0,); }
 
 fn Run() -> i32 {
-  return F()[0];
+  return F().0;
 }
 
-// CHECK:STDOUT: --- tuple_return_value_access.carbon
+// CHECK:STDOUT: --- return_value_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -85,8 +85,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc14_14: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_11.1: ref %.3 = temporary_storage
 // CHECK:STDOUT:   %.loc14_11.2: ref %.3 = temporary %.loc14_11.1, %F.call
-// CHECK:STDOUT:   %.loc14_15.1: ref i32 = tuple_index %.loc14_11.2, %.loc14_14
-// CHECK:STDOUT:   %.loc14_15.2: i32 = bind_value %.loc14_15.1
-// CHECK:STDOUT:   return %.loc14_15.2
+// CHECK:STDOUT:   %.loc14_13.1: ref i32 = tuple_index %.loc14_11.2, %.loc14_14
+// CHECK:STDOUT:   %.loc14_13.2: i32 = bind_value %.loc14_13.1
+// CHECK:STDOUT:   return %.loc14_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

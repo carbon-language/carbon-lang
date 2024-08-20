@@ -20,7 +20,7 @@
 namespace Carbon::SemIR {
 
 File::File(CheckIRId check_ir_id, IdentifierId package_id,
-           StringLiteralValueId library_id, SharedValueStores& value_stores,
+           LibraryNameId library_id, SharedValueStores& value_stores,
            std::string filename)
     : check_ir_id_(check_ir_id),
       package_id_(package_id),

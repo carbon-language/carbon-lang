@@ -61,19 +61,13 @@ protected virtual base class Virtual {}
 // CHECK:STDERR:
 abstract protected class WrongOrder;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: ERROR: `base` not allowed on declaration with `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: ERROR: `base` not allowed on declaration with `abstract`.
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here.
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
 abstract base class AbstractAndBase {}
-
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `extern` not allowed on `class` declaration that provides a definition.
-// CHECK:STDERR: extern class ExternDefined {}
-// CHECK:STDERR: ^~~~~~
-extern class ExternDefined {}
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
@@ -85,7 +79,6 @@ extern class ExternDefined {}
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
-// CHECK:STDOUT:   %ExternDefined: type = class_type @ExternDefined [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -109,7 +102,6 @@ extern class ExternDefined {}
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
 // CHECK:STDOUT:     .AbstractAndBase = %AbstractAndBase.decl
-// CHECK:STDOUT:     .ExternDefined = %ExternDefined.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {}
@@ -118,7 +110,6 @@ extern class ExternDefined {}
 // CHECK:STDOUT:   %Virtual.decl: type = class_decl @Virtual [template = constants.%Virtual] {}
 // CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {}
 // CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {}
-// CHECK:STDOUT:   %ExternDefined.decl: type = class_decl @ExternDefined [template = constants.%ExternDefined] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
@@ -140,10 +131,5 @@ extern class ExternDefined {}
 // CHECK:STDOUT: class @AbstractAndBase {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @ExternDefined {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%ExternDefined
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

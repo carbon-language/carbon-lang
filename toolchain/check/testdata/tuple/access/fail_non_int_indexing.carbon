@@ -4,17 +4,17 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/index/fail_tuple_out_of_bound_access.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/tuple/access/fail_non_int_indexing.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_tuple_out_of_bound_access.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_non_int_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_tuple_out_of_bound_access.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2` is past the end of type `(i32, i32)`.
-// CHECK:STDERR: var b: i32 = a[2];
-// CHECK:STDERR:              ^~~~
-var b: i32 = a[2];
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `f64` to `i32`.
+// CHECK:STDERR: var b: i32 = a.(2.6);
+// CHECK:STDERR:                 ^~~
+var b: i32 = a.(2.6);
 
-// CHECK:STDOUT: --- fail_tuple_out_of_bound_access.carbon
+// CHECK:STDOUT: --- fail_non_int_indexing.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -26,7 +26,7 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %.5: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 6 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5, %.6) [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: f64 = float_literal 2.6000000000000001 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,8 +82,8 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %.loc11_28: init %.3 = converted %.loc11_27.1, %.loc11_27.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc15_16: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_17: ref <error> = tuple_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_17: f64 = float_literal 2.6000000000000001 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_15: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

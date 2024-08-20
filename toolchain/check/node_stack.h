@@ -130,10 +130,12 @@ class NodeStack {
     return PeekIs(RequiredParseCategory);
   }
 
-  // Returns whether there is a name on top of the stack.
-  auto PeekIsName() const -> bool {
+  // Returns whether there is a node with the corresponding ID on top of the
+  // stack.
+  template <typename IdT>
+  auto PeekIs() const -> bool {
     return !stack_.empty() &&
-           NodeKindToIdKind(PeekNodeKind()) == Id::KindFor<SemIR::NameId>();
+           NodeKindToIdKind(PeekNodeKind()) == Id::KindFor<IdT>();
   }
 
   // Returns whether the *next* node on the stack is a given kind. This doesn't
@@ -270,6 +272,16 @@ class NodeStack {
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseCategory>())> {
     if (PeekIs<RequiredParseCategory>()) {
       return Pop<RequiredParseCategory>();
+    }
+    return std::nullopt;
+  }
+
+  // Pops the top of the stack if it has the given category, and returns the ID.
+  // Otherwise returns std::nullopt.
+  template <typename IdT>
+  auto PopIf() -> std::optional<IdT> {
+    if (PeekIs<IdT>()) {
+      return Pop<IdT>();
     }
     return std::nullopt;
   }
@@ -436,6 +448,9 @@ class NodeStack {
           return Id::KindFor<SemIR::ImplId>();
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
+        case Parse::NodeKind::DefaultLibrary:
+        case Parse::NodeKind::LibraryName:
+          return Id::KindFor<SemIR::LibraryNameId>();
         case Parse::NodeKind::ArrayExprSemi:
         case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:

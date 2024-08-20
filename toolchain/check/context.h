@@ -67,20 +67,38 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
-  // Convenience for AddInst on specific instruction types.
-  template <typename InstT, typename LocT>
-  auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
-    return AddInst(SemIR::LocIdAndInst(loc_id, inst));
+  // Convenience for AddInst with typed nodes.
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst(node_id, inst));
+  }
+
+  // Convenience for AddInst when reusing a location, which any instruction can
+  // do.
+  template <typename InstT>
+  auto AddInstReusingLoc(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst::ReusingLoc<InstT>(loc_id, inst));
   }
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
   auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
-  // Convenience for AddInstInNoBlock on specific instruction types.
-  template <typename InstT, typename LocT>
-  auto AddInstInNoBlock(LocT loc_id, InstT inst) -> SemIR::InstId {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(loc_id, inst));
+  // Convenience for AddInstInNoBlock with typed nodes.
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddInstInNoBlock(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> SemIR::InstId {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(node_id, inst));
+  }
+
+  // Convenience for AddInstInNoBlock on imported instructions.
+  template <typename InstT>
+  auto AddInstInNoBlock(SemIR::ImportIRInstId import_ir_inst_id, InstT inst)
+      -> SemIR::InstId {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(import_ir_inst_id, inst));
   }
 
   // Adds an instruction to the current block, returning the produced ID. The
@@ -99,9 +117,11 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result. Only valid if the LocId is for a NodeId.
-  template <typename InstT, typename LocT>
-  auto AddInstAndPush(LocT loc_id, InstT inst) -> void {
-    SemIR::LocIdAndInst arg(loc_id, inst);
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> void {
+    SemIR::LocIdAndInst arg(node_id, inst);
     auto inst_id = AddInst(arg);
     node_stack_.Push(arg.loc_id.node_id(), inst_id);
   }

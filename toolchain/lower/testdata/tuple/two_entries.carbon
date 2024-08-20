@@ -22,17 +22,17 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc12_29.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc12_29.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc12_29.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_29.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple.loc12_30, i64 8, i1 false)
 // CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc13_23.1.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc13_23.2 = load i32, ptr %.loc13_23.1.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_23.3.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_23.3.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc13_23.2, ptr %.loc13_23.3.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_23.5.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_23.5.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc13_23.6 = load i32, ptr %.loc13_23.5.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_23.7.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_23.7.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc13_23.6, ptr %.loc13_23.7.tuple.elem, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

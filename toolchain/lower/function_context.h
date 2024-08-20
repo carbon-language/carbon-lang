@@ -52,6 +52,10 @@ class FunctionContext {
     if (auto result = locals_.Lookup(inst_id)) {
       return result.value();
     }
+
+    if (auto result = file_context_->global_variables().Lookup(inst_id)) {
+      return result.value();
+    }
     return file_context_->GetGlobal(inst_id);
   }
 

@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
@@ -50,7 +51,15 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
 
-  // TODO: Lower global variable declarations.
+  // Lower global variable declarations.
+  for (auto inst_id :
+       sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
+    // Only `VarStorage` indicates a global variable declaration in the
+    // top instruction block.
+    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+      global_variables_.Insert(inst_id, BuildGlobalVariableDecl(*var));
+    }
+  }
 
   // Lower constants.
   constants_.resize(sem_ir_->insts().size());
@@ -60,8 +69,13 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
     BuildFunctionDefinition(SemIR::FunctionId(i));
   }
-
-  // TODO: Lower global variable initializers.
+  // Append `__global_init` to `llvm::global_ctors` to initialize global
+  // variables.
+  if (sem_ir().global_ctor_id().is_valid()) {
+    llvm::appendToGlobalCtors(llvm_module(),
+                              GetFunction(sem_ir().global_ctor_id()),
+                              /*Priority=*/0);
+  }
 
   return std::move(llvm_module_);
 }
@@ -461,6 +475,19 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
   }
 #include "toolchain/sem_ir/inst_kind.def"
   }
+}
+
+auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+    -> llvm::GlobalVariable* {
+  // TODO: Mangle name.
+  auto mangled_name =
+      *sem_ir().names().GetAsStringIfIdentifier(var_storage.name_id);
+  auto* type =
+      var_storage.type_id.is_valid() ? GetType(var_storage.type_id) : nullptr;
+  return new llvm::GlobalVariable(llvm_module(), type,
+                                  /*isConstant=*/false,
+                                  llvm::GlobalVariable::InternalLinkage,
+                                  /*Initializer=*/nullptr, mangled_name);
 }
 
 }  // namespace Carbon::Lower

@@ -20,6 +20,7 @@ auto HandleParseNode(Context& context, Parse::ImportIntroducerId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::ImportDeclId /*node_id*/)
     -> bool {
+  context.node_stack().PopIf<SemIR::LibraryNameId>();
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Import>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Export);
@@ -34,6 +35,7 @@ auto HandleParseNode(Context& context, Parse::LibraryIntroducerId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::LibraryDeclId /*node_id*/)
     -> bool {
+  context.node_stack().PopIf<SemIR::LibraryNameId>();
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Library>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl);
@@ -48,14 +50,16 @@ auto HandleParseNode(Context& context, Parse::PackageIntroducerId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::PackageDeclId /*node_id*/)
     -> bool {
+  context.node_stack().PopIf<SemIR::LibraryNameId>();
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Package>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Impl);
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/,
-                     Parse::LibrarySpecifierId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::LibrarySpecifierId /*node_id*/)
+    -> bool {
+  CARBON_CHECK(context.node_stack().PeekIs<SemIR::LibraryNameId>());
   return true;
 }
 
@@ -64,13 +68,19 @@ auto HandleParseNode(Context& /*context*/, Parse::PackageNameId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/, Parse::LibraryNameId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::LibraryNameId node_id) -> bool {
+  // This is discarded in this file's uses, but is used by modifiers for `extern
+  // library`.
+  auto literal_id = context.tokens().GetStringLiteralValue(
+      context.parse_tree().node_token(node_id));
+  context.node_stack().Push(
+      node_id, SemIR::LibraryNameId::ForStringLiteralValueId(literal_id));
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/, Parse::DefaultLibraryId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::DefaultLibraryId node_id)
     -> bool {
+  context.node_stack().Push(node_id, SemIR::LibraryNameId::Default);
   return true;
 }
 

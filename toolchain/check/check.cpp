@@ -284,7 +284,7 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
         auto import_ir_inst_id = context.import_ir_insts().Add(
             {.ir_id = SemIR::ImportIRId::ApiForImpl,
              .inst_id = api_imports->import_decl_id});
-        import_decl_id = context.AddInst<SemIR::ImportDecl>(
+        import_decl_id = context.AddInstReusingLoc<SemIR::ImportDecl>(
             import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
                                     api_imports_entry.first)});
         package_id = api_imports_entry.first;
@@ -844,9 +844,9 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
     auto loc = converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
     loc.FormatLocation(output);
-    output << ": Check::Handle" << context.parse_tree().node_kind(node_id)
-           << "\n";
-    loc.FormatSnippet(output);
+    output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
+    // Crash output has a tab indent; try to indent slightly past that.
+    loc.FormatSnippet(output, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
@@ -883,7 +883,8 @@ static auto CheckParseTree(
     library_id = packaging->names.library_id;
   }
   unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, package_id, library_id,
+      unit_info.check_ir_id, package_id,
+      SemIR::LibraryNameId::ForStringLiteralValueId(library_id),
       *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 

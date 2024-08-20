@@ -47,8 +47,8 @@ inline auto LimitModifiersOnDecl(Context& context,
 }
 
 // Restricts the `extern` modifier to only be used on namespace-scoped
-// declarations, diagnosing and removing it on:
-// - `extern` on a definition.
+// declarations. Diagnoses and cleans up:
+// - `extern library` on a definition.
 // - `extern` on a scoped entity.
 //
 // `parent_scope_inst` may be nullopt for a declaration in a block scope.

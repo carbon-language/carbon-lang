@@ -30,7 +30,7 @@ extern fn A();
 
 impl library "extern_api";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: In import.
@@ -52,9 +52,15 @@ fn A();
 
 impl library "extern_impl";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+4]]:1: ERROR: `extern` not allowed on `fn` declaration that provides a definition.
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: extern fn A() {}
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "extern_impl";
+// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: extern_impl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 extern fn A() {}
 
@@ -248,7 +254,7 @@ fn B() {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: extern fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

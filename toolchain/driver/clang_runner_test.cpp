@@ -18,7 +18,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
-#include "testing/base/gtest_main.h"
+#include "testing/base/global_exe_path.h"
 #include "testing/base/test_raw_ostream.h"
 
 namespace Carbon {
@@ -56,7 +56,7 @@ static auto RunWithCapturedOutput(std::string& out, std::string& err,
 TEST(ClangRunnerTest, Version) {
   TestRawOstream test_os;
   const auto install_paths =
-      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   std::string target = llvm::sys::getDefaultTargetTriple();
   ClangRunner runner(&install_paths, target, &test_os);
 
@@ -125,7 +125,7 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
   std::filesystem::path bar_file = WriteTestFile("bar.o", "");
 
   const auto install_paths =
-      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   std::string verbose_out;
   llvm::raw_string_ostream verbose_os(verbose_out);
   std::string target = llvm::sys::getDefaultTargetTriple();

@@ -53,5 +53,6 @@ cc_library(
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TransformUtils",
     ],
 )

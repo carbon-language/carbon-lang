@@ -13,12 +13,21 @@ namespace Carbon::Check {
 
 // Information on new and previous declarations for CheckIsAllowedRedecl.
 struct RedeclInfo {
+  explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIRLoc loc,
+                      bool is_definition)
+      : loc(loc),
+        is_definition(is_definition),
+        is_extern(params.is_extern),
+        extern_library_id(params.extern_library_id) {}
+
   // The associated diagnostic location.
   SemIRLoc loc;
   // True if a definition.
   bool is_definition;
   // True if an `extern` declaration.
   bool is_extern;
+  // The library name in `extern library`, or invalid if not present.
+  SemIR::LibraryNameId extern_library_id;
 };
 
 // Checks if a redeclaration is allowed prior to merging. This may emit a
@@ -45,7 +54,7 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // different kinds of entity such as classes and functions.
 struct DeclParams {
   explicit DeclParams(const SemIR::EntityWithParamsBase& base)
-      : loc(base.decl_id),
+      : loc(base.latest_decl_id()),
         first_param_node_id(base.first_param_node_id),
         last_param_node_id(base.last_param_node_id),
         implicit_param_refs_id(base.implicit_param_refs_id),
