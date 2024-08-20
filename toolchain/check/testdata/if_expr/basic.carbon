@@ -69,13 +69,13 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %.loc11_26.2: type = converted %int.make_type_32.loc11_26, %.loc11_26.1 [template = i32]
 // CHECK:STDOUT:     %m.loc11_23.1: i32 = param m
 // CHECK:STDOUT:     %.loc11_23: i32 = binding_pattern m, @F.%m
-// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc11_6.1
-// CHECK:STDOUT:     @F.%n: i32 = bind_name n, %n.loc11_15.1
-// CHECK:STDOUT:     @F.%m: i32 = bind_name m, %m.loc11_23.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_32.loc11_34 [template = i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_32.loc11_34, %.loc11_34.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc11_6.1
+// CHECK:STDOUT:     @F.%n: i32 = bind_name n, %n.loc11_15.1
+// CHECK:STDOUT:     @F.%m: i32 = bind_name m, %m.loc11_23.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

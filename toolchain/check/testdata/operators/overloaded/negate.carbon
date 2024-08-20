@@ -80,9 +80,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_11.1: %C = param a
 // CHECK:STDOUT:     %.loc23: %C = binding_pattern a, @TestOp.%a
-// CHECK:STDOUT:     @TestOp.%a: %C = bind_name a, %a.loc23_11.1
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     @TestOp.%a: %C = bind_name a, %a.loc23_11.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

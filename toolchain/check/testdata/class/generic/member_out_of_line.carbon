@@ -152,9 +152,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10_10.3 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc10_22.1: %T = param n
 // CHECK:STDOUT:     %.loc10_22: %T = binding_pattern n, @F.%n
-// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc10_22.1
 // CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10_10.3 [symbolic = constants.%T]
 // CHECK:STDOUT:     @F.%return: ref %T = var <return slot>
+// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc10_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %T.loc14_10.1: type = param T
@@ -185,9 +185,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.3 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %n.loc5_8.1: @F.%T (%T) = param n
 // CHECK:STDOUT:       %.loc5: @F.%T (%T) = binding_pattern n, %n.loc5_8.3
-// CHECK:STDOUT:       %n.loc5_8.3: @F.%T (%T) = bind_name n, %n.loc5_8.1
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.3 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc5: ref @F.%T (%T) = var <return slot>
+// CHECK:STDOUT:       %n.loc5_8.3: @F.%T (%T) = bind_name n, %n.loc5_8.1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
 // CHECK:STDOUT:       %.loc6: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]

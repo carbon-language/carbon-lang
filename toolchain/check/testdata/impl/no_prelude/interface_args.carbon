@@ -729,9 +729,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a.loc4_10.1: %A = param a
 // CHECK:STDOUT:     %.loc4: %A = binding_pattern a, @MakeB.%a
-// CHECK:STDOUT:     @MakeB.%a: %A = bind_name a, %a.loc4_10.1
 // CHECK:STDOUT:     %B.ref: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
 // CHECK:STDOUT:     @MakeB.%return: ref %B = var <return slot>
+// CHECK:STDOUT:     @MakeB.%a: %A = bind_name a, %a.loc4_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -879,9 +879,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a.loc6_10.1: %A = param a
 // CHECK:STDOUT:     %.loc6: %A = binding_pattern a, @MakeC.%a
-// CHECK:STDOUT:     @MakeC.%a: %A = bind_name a, %a.loc6_10.1
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @MakeC.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     @MakeC.%a: %A = bind_name a, %a.loc6_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

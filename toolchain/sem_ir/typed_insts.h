@@ -309,7 +309,6 @@ struct BindingPattern {
       {.ir_name = "binding_pattern"});
 
   TypeId type_id;
-  EntityNameId entity_name_id;
   InstId bind_inst_id;
 };
 

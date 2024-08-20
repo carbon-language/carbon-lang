@@ -78,9 +78,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %T.ref.loc12_11: type = name_ref T, file.%T.loc11_13.3 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %n.loc12_8.1: @F.%T (%T) = param n
 // CHECK:STDOUT:       %.loc12: @F.%T (%T) = binding_pattern n, %n.loc12_8.3
-// CHECK:STDOUT:       %n.loc12_8.3: @F.%T (%T) = bind_name n, %n.loc12_8.1
 // CHECK:STDOUT:       %T.ref.loc12_17: type = name_ref T, file.%T.loc11_13.3 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc12: ref @F.%T (%T) = var <return slot>
+// CHECK:STDOUT:       %n.loc12_8.3: @F.%T (%T) = bind_name n, %n.loc12_8.1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
 // CHECK:STDOUT:       %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]

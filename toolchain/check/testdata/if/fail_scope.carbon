@@ -60,11 +60,11 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %bool.make_type, %.loc11_16.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_13.1: bool = param b
 // CHECK:STDOUT:     %.loc11_13: bool = binding_pattern b, @VarScope.%b
-// CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc11_13.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32, %.loc11_25.1 [template = i32]
 // CHECK:STDOUT:     @VarScope.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc11_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

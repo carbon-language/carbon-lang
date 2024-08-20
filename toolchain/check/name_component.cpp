@@ -15,7 +15,27 @@ auto PopNameComponent(Context& context) -> NameComponent {
   // Explicit params.
   auto [params_loc_id, params_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+  SemIR::InstBlockId inner_params_id = SemIR::InstBlockId::Invalid;
   if (params_id) {
+    // Traverse the generated pattern insts (which describe the patterns) and
+    // add the corresponding pattern-match insts (which match the patterns
+    // against the arguments) to the current block, while also accumulating the
+    // inner parameters (the parameter representation used by the callee) in a
+    // separate block.
+    //
+    // TODO: Generalize this to support things like `var` and tuple patterns,
+    // and to support pattern matching in other contexts.
+    llvm::SmallVector<SemIR::InstId> inner_param_insts;
+    auto refs_block = context.inst_blocks().Get(*params_id);
+    inner_param_insts.reserve(refs_block.size());
+    for (SemIR::InstId inst_id : refs_block) {
+      auto binding_pattern =
+          context.insts().GetAs<SemIR::BindingPattern>(inst_id);
+      context.inst_block_stack().AddInstId(binding_pattern.bind_inst_id);
+      inner_param_insts.push_back(binding_pattern.bind_inst_id);
+    }
+    inner_params_id = context.inst_blocks().Add(inner_param_insts);
+
     first_param_node_id =
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
@@ -47,7 +67,7 @@ auto PopNameComponent(Context& context) -> NameComponent {
       .implicit_params_id =
           implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = params_loc_id,
-      .params_id = params_id.value_or(SemIR::InstBlockId::Invalid),
+      .params_id = inner_params_id,
   };
 }
 

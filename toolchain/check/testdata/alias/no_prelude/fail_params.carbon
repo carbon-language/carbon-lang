@@ -30,9 +30,9 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.loc18_9.1: type = param T
 // CHECK:STDOUT:   %.loc18_9: type = binding_pattern T 0, %T.loc18_9.3
-// CHECK:STDOUT:   %T.loc18_9.3: type = bind_symbolic_name T 0, %T.loc18_9.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc18_9.3 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc18_22: type = ptr_type %T [symbolic = constants.%.1]
+// CHECK:STDOUT:   %T.loc18_9.3: type = bind_symbolic_name T 0, %T.loc18_9.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

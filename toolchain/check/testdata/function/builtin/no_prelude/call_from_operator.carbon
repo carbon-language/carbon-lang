@@ -68,11 +68,11 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %other.loc7_21.1: @Op.%Self (%Self) = param other
 // CHECK:STDOUT:     %.loc7_21: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.3
-// CHECK:STDOUT:     %other.loc7_21.3: @Op.%Self (%Self) = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @Op.%Self (%Self) = var <return slot>
+// CHECK:STDOUT:     %other.loc7_21.3: @Op.%Self (%Self) = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -178,9 +178,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %other.loc7_21.1: i32 = param other
 // CHECK:STDOUT:     %.loc7: i32 = binding_pattern other, %other.loc7_21.3
-// CHECK:STDOUT:     %other.loc7_21.3: i32 = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %other.loc7_21.3: i32 = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:

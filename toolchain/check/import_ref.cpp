@@ -755,14 +755,9 @@ class ImportRefResolver {
         }
       }
       if (binding_pattern) {
-        SemIR::EntityNameId new_name_id =
-            context_.insts()
-                .GetAs<SemIR::AnyBindName>(new_param_id)
-                .entity_name_id;
         new_param_id = context_.AddInstInNoBlock<SemIR::BindingPattern>(
-            AddImportIRInst(pattern_id), {.type_id = type_id,
-                                          .entity_name_id = new_name_id,
-                                          .bind_inst_id = new_param_id});
+            AddImportIRInst(pattern_id),
+            {.type_id = type_id, .bind_inst_id = new_param_id});
       }
       if (addr_inst) {
         new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(

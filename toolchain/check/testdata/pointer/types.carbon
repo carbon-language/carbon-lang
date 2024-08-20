@@ -59,12 +59,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %.loc11_14.3: type = ptr_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     %p.loc11_8.1: %.2 = param p
 // CHECK:STDOUT:     %.loc11_8: %.2 = binding_pattern p, @Ptr.%p
-// CHECK:STDOUT:     @Ptr.%p: %.2 = bind_name p, %p.loc11_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_23.1: type = value_of_initializer %int.make_type_32.loc11_20 [template = i32]
 // CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_32.loc11_20, %.loc11_23.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_23.3: type = ptr_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     @Ptr.%return: ref %.2 = var <return slot>
+// CHECK:STDOUT:     @Ptr.%p: %.2 = bind_name p, %p.loc11_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr.decl: %ConstPtr.type = fn_decl @ConstPtr [template = constants.%ConstPtr] {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
@@ -74,13 +74,13 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %.loc15_25: type = ptr_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc15_13.1: %.4 = param p
 // CHECK:STDOUT:     %.loc15_13: %.4 = binding_pattern p, @ConstPtr.%p
-// CHECK:STDOUT:     @ConstPtr.%p: %.4 = bind_name p, %p.loc15_13.1
 // CHECK:STDOUT:     %int.make_type_32.loc15_38: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_32.loc15_38 [template = i32]
 // CHECK:STDOUT:     %.loc15_32.2: type = converted %int.make_type_32.loc15_38, %.loc15_32.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_32.3: type = const_type i32 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_42: type = ptr_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     @ConstPtr.%return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     @ConstPtr.%p: %.4 = bind_name p, %p.loc15_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

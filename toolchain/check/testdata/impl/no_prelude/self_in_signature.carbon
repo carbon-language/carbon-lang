@@ -124,11 +124,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %Self.ref.loc12_23, %.loc12_23.1 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %x.loc12_20.1: @F.1.%Self (%Self.1) = param x
 // CHECK:STDOUT:     %.loc12_20: @F.1.%Self (%Self.1) = binding_pattern x, %x.loc12_20.3
-// CHECK:STDOUT:     %x.loc12_20.3: @F.1.%Self (%Self.1) = bind_name x, %x.loc12_20.1
 // CHECK:STDOUT:     %Self.ref.loc12_32: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.1: type = facet_type_access %Self.ref.loc12_32 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %Self.ref.loc12_32, %.loc12_32.1 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %return.var: ref @F.1.%Self (%Self.1) = var <return slot>
+// CHECK:STDOUT:     %x.loc12_20.3: @F.1.%Self (%Self.1) = bind_name x, %x.loc12_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_36: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -173,9 +173,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.loc20_17.1: %C = param x
 // CHECK:STDOUT:     %.loc20: %C = binding_pattern x, %x.loc20_17.3
-// CHECK:STDOUT:     %x.loc20_17.3: %C = bind_name x, %x.loc20_17.1
 // CHECK:STDOUT:     %C.ref.loc20_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
+// CHECK:STDOUT:     %x.loc20_17.3: %C = bind_name x, %x.loc20_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -192,9 +192,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc24_23: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %x.loc24_20.1: %D = param x
 // CHECK:STDOUT:     %.loc24: %D = binding_pattern x, %x.loc24_20.3
-// CHECK:STDOUT:     %x.loc24_20.3: %D = bind_name x, %x.loc24_20.1
 // CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %return.var: ref %D = var <return slot>
+// CHECK:STDOUT:     %x.loc24_20.3: %D = bind_name x, %x.loc24_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:

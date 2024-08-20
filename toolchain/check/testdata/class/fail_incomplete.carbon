@@ -214,31 +214,31 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %.loc51_14: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc51_6.1: %.4 = param p
 // CHECK:STDOUT:     %.loc51_6: %.4 = binding_pattern p, @G.%p
-// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc51_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc51: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc51_20.1: type = value_of_initializer %int.make_type_32.loc51 [template = i32]
 // CHECK:STDOUT:     %.loc51_20.2: type = converted %int.make_type_32.loc51, %.loc51_20.1 [template = i32]
 // CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc51_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MemberAccess.decl: %MemberAccess.type = fn_decl @MemberAccess [template = constants.%MemberAccess] {
 // CHECK:STDOUT:     %Class.ref.loc62: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc62_25: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc62_17.1: %.4 = param p
 // CHECK:STDOUT:     %.loc62_17: %.4 = binding_pattern p, @MemberAccess.%p
-// CHECK:STDOUT:     @MemberAccess.%p: %.4 = bind_name p, %p.loc62_17.1
 // CHECK:STDOUT:     %int.make_type_32.loc62: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc62_31.1: type = value_of_initializer %int.make_type_32.loc62 [template = i32]
 // CHECK:STDOUT:     %.loc62_31.2: type = converted %int.make_type_32.loc62, %.loc62_31.1 [template = i32]
 // CHECK:STDOUT:     @MemberAccess.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     @MemberAccess.%p: %.4 = bind_name p, %p.loc62_17.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [template = constants.%Copy] {
 // CHECK:STDOUT:     %Class.ref.loc80_12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc80_17: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc80_9.1: %.4 = param p
 // CHECK:STDOUT:     %.loc80_9: %.4 = binding_pattern p, @Copy.%p
-// CHECK:STDOUT:     @Copy.%p: %.4 = bind_name p, %p.loc80_9.1
 // CHECK:STDOUT:     %Class.ref.loc80_23: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Copy.%return: ref %Class = var <return slot>
+// CHECK:STDOUT:     @Copy.%p: %.4 = bind_name p, %p.loc80_9.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {
 // CHECK:STDOUT:     %Class.ref.loc84: type = name_ref Class, %Class.decl [template = constants.%Class]

@@ -129,10 +129,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %D.ref.loc23: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc23_15.1: %D = param b
 // CHECK:STDOUT:     %.loc23_15: %D = binding_pattern b, @Test.%b
-// CHECK:STDOUT:     @Test.%a: %C = bind_name a, %a.loc23_9.1
-// CHECK:STDOUT:     @Test.%b: %D = bind_name b, %b.loc23_15.1
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @Test.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     @Test.%a: %C = bind_name a, %a.loc23_9.1
+// CHECK:STDOUT:     @Test.%b: %D = bind_name b, %b.loc23_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %D.ref.loc34: type = name_ref D, %D.decl [template = constants.%D]
@@ -164,9 +164,9 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %C.ref.loc17_25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc17_18.1: %C = param other
 // CHECK:STDOUT:     %.loc17: %C = binding_pattern other, %other.loc17_18.3
-// CHECK:STDOUT:     %other.loc17_18.3: %C = bind_name other, %other.loc17_18.1
 // CHECK:STDOUT:     %C.ref.loc17_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
+// CHECK:STDOUT:     %other.loc17_18.3: %C = bind_name other, %other.loc17_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
 // CHECK:STDOUT:

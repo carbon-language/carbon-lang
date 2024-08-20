@@ -82,12 +82,12 @@ interface I {
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
 // CHECK:STDOUT:     %b.loc14_16.1: i32 = param b
 // CHECK:STDOUT:     %.loc14_16: i32 = binding_pattern b, %b.loc14_16.3
-// CHECK:STDOUT:     %a.loc14_8.3: i32 = bind_name a, %a.loc14_8.1
-// CHECK:STDOUT:     %b.loc14_16.3: i32 = bind_name b, %b.loc14_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_27.1: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %int.make_type_32.loc14_27, %.loc14_27.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %a.loc14_8.3: i32 = bind_name a, %a.loc14_8.1
+// CHECK:STDOUT:     %b.loc14_16.3: i32 = bind_name b, %b.loc14_16.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_31: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:   %int.make_type_32.loc18_19: init type = call constants.%Int32() [template = i32]

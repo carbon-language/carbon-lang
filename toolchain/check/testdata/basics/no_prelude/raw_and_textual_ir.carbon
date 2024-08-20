@@ -51,11 +51,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+3':          {kind: Converted, arg0: inst+2, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: Param, arg0: name1, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+5':          {kind: BindName, arg0: entity_name0, arg1: inst+4, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+6':          {kind: BindingPattern, arg0: entity_name0, arg1: inst+5, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+6':          {kind: BindingPattern, arg0: inst+5, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+7':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+9':          {kind: TupleType, arg0: type_block1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+10':         {kind: TupleLiteral, arg0: block6, type: type(inst+9)}
+// CHECK:STDOUT:     'inst+10':         {kind: TupleLiteral, arg0: block5, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+11':         {kind: Converted, arg0: inst+7, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+8, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: Converted, arg0: inst+10, arg1: inst+9, type: typeTypeType}
@@ -108,23 +108,23 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+6
 // CHECK:STDOUT:     block5:
-// CHECK:STDOUT:       0:               inst+5
-// CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT:       1:               inst+8
+// CHECK:STDOUT:     block6:
+// CHECK:STDOUT:       0:               inst+5
 // CHECK:STDOUT:     block7:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:       1:               inst+3
 // CHECK:STDOUT:       2:               inst+4
 // CHECK:STDOUT:       3:               inst+6
-// CHECK:STDOUT:       4:               inst+5
-// CHECK:STDOUT:       5:               inst+7
-// CHECK:STDOUT:       6:               inst+8
-// CHECK:STDOUT:       7:               inst+10
-// CHECK:STDOUT:       8:               inst+11
-// CHECK:STDOUT:       9:               inst+12
-// CHECK:STDOUT:       10:              inst+13
-// CHECK:STDOUT:       11:              inst+14
+// CHECK:STDOUT:       4:               inst+7
+// CHECK:STDOUT:       5:               inst+8
+// CHECK:STDOUT:       6:               inst+10
+// CHECK:STDOUT:       7:               inst+11
+// CHECK:STDOUT:       8:               inst+12
+// CHECK:STDOUT:       9:               inst+13
+// CHECK:STDOUT:       10:              inst+14
+// CHECK:STDOUT:       11:              inst+5
 // CHECK:STDOUT:     block8:
 // CHECK:STDOUT:       0:               inst+19
 // CHECK:STDOUT:       1:               inst+20
@@ -174,7 +174,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc15_8.1: %.1 = param n
 // CHECK:STDOUT:     %.loc15_8: %.1 = binding_pattern n, @Foo.%n
-// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.1
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)
@@ -182,6 +181,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     @Foo.%return: ref %.2 = var <return slot>
+// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

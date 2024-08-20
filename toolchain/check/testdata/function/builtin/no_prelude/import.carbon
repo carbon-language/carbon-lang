@@ -50,12 +50,12 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     %.loc5_23.2: type = converted %int.make_type_32.loc5_23, %.loc5_23.1 [template = i32]
 // CHECK:STDOUT:     %b.loc5_20.1: i32 = param b
 // CHECK:STDOUT:     %.loc5_20: i32 = binding_pattern b, @TestAdd.%b
-// CHECK:STDOUT:     @TestAdd.%a: i32 = bind_name a, %a.loc5_12.1
-// CHECK:STDOUT:     @TestAdd.%b: i32 = bind_name b, %b.loc5_20.1
 // CHECK:STDOUT:     %int.make_type_32.loc5_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_31.1: type = value_of_initializer %int.make_type_32.loc5_31 [template = i32]
 // CHECK:STDOUT:     %.loc5_31.2: type = converted %int.make_type_32.loc5_31, %.loc5_31.1 [template = i32]
 // CHECK:STDOUT:     @TestAdd.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     @TestAdd.%a: i32 = bind_name a, %a.loc5_12.1
+// CHECK:STDOUT:     @TestAdd.%b: i32 = bind_name b, %b.loc5_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

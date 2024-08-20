@@ -651,6 +651,12 @@ class FormatterImpl {
     }
   }
 
+  auto FormatInstRHS(BindingPattern inst) -> void {
+    FormatArgs(
+        sem_ir_.insts().GetAs<AnyBindName>(inst.bind_inst_id).entity_name_id,
+        inst.bind_inst_id);
+  }
+
   auto FormatInstRHS(BindSymbolicName inst) -> void {
     // A BindSymbolicName with no value is a purely symbolic binding, such as
     // the `Self` in an interface. Don't print out `invalid` for the value.

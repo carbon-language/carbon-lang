@@ -97,12 +97,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %.loc2_19.3: type = converted %float.make_type.loc2_19, %.loc2_19.2 [template = f64]
 // CHECK:STDOUT:     %b.loc2_16.1: f64 = param b
 // CHECK:STDOUT:     %.loc2_16: f64 = binding_pattern b, @Neq.%b
-// CHECK:STDOUT:     @Neq.%a: f64 = bind_name a, %a.loc2_8.1
-// CHECK:STDOUT:     @Neq.%b: f64 = bind_name b, %b.loc2_16.1
 // CHECK:STDOUT:     %bool.make_type.loc2: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %bool.make_type.loc2 [template = bool]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %bool.make_type.loc2, %.loc2_27.1 [template = bool]
 // CHECK:STDOUT:     @Neq.%return: ref bool = var <return slot>
+// CHECK:STDOUT:     @Neq.%a: f64 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     @Neq.%b: f64 = bind_name b, %b.loc2_16.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
@@ -129,12 +129,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %.loc12_27.3: type = converted %float.make_type.loc12_27, %.loc12_27.2 [template = f64]
 // CHECK:STDOUT:     %b.loc12_24.1: f64 = param b
 // CHECK:STDOUT:     %.loc12_24: f64 = binding_pattern b, @RuntimeCall.%b
-// CHECK:STDOUT:     @RuntimeCall.%a: f64 = bind_name a, %a.loc12_16.1
-// CHECK:STDOUT:     @RuntimeCall.%b: f64 = bind_name b, %b.loc12_24.1
 // CHECK:STDOUT:     %bool.make_type.loc12: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc12_35.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
 // CHECK:STDOUT:     %.loc12_35.2: type = converted %bool.make_type.loc12, %.loc12_35.1 [template = bool]
 // CHECK:STDOUT:     @RuntimeCall.%return: ref bool = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%a: f64 = bind_name a, %a.loc12_16.1
+// CHECK:STDOUT:     @RuntimeCall.%b: f64 = bind_name b, %b.loc12_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,13 +252,13 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %.loc7_27.3: type = converted %float.make_type.loc7_27, %.loc7_27.2 [template = f64]
 // CHECK:STDOUT:     %b.loc7_24.1: f64 = param b
 // CHECK:STDOUT:     %.loc7_24: f64 = binding_pattern b, @WrongResult.%b
-// CHECK:STDOUT:     @WrongResult.%a: f64 = bind_name a, %a.loc7_16.1
-// CHECK:STDOUT:     @WrongResult.%b: f64 = bind_name b, %b.loc7_24.1
 // CHECK:STDOUT:     %.loc7_35.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_35: init type = call constants.%Float(%.loc7_35.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_35.2: type = value_of_initializer %float.make_type.loc7_35 [template = f64]
 // CHECK:STDOUT:     %.loc7_35.3: type = converted %float.make_type.loc7_35, %.loc7_35.2 [template = f64]
 // CHECK:STDOUT:     @WrongResult.%return: ref f64 = var <return slot>
+// CHECK:STDOUT:     @WrongResult.%a: f64 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     @WrongResult.%b: f64 = bind_name b, %b.loc7_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
