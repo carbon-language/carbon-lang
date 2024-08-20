@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Build process](#build-process)
 -   [Development tips](#development-tips)
+-   [Domain configuration](#domain-configuration)
 
 <!-- tocstop -->
 
@@ -39,3 +40,18 @@ To run a server, run `bundle exec jekyll serve`. See
 [Jekyll docs](https://jekyllrb.com/docs/usage/) for more commands.
 
 To update the `Gemfile.lock` after `Gemfile` changes, run `bundle update`.
+
+## Domain configuration
+
+The
+[custom domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site)
+is configured in three places:
+
+-   GitHub organization
+    [verified domains](https://github.com/organizations/carbon-language/settings/pages)
+-   GitHub repository
+    [custom domain](https://github.com/carbon-language/carbon-lang/settings/pages)
+-   Google Cloud DNS
+    -   This is visible with `dig docs.carbon-lang.dev`
+
+Note all of these require admin permissions to modify.
