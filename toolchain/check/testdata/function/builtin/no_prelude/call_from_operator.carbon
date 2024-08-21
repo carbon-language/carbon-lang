@@ -66,13 +66,13 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = @Op.%Self (constants.%Self)]
-// CHECK:STDOUT:     %other.loc7_21.1: @Op.%Self (%Self) = param other
-// CHECK:STDOUT:     %.loc7_21: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.3
+// CHECK:STDOUT:     %.loc7_21: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.2
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @Op.%Self (%Self) = var <return slot>
-// CHECK:STDOUT:     %other.loc7_21.3: @Op.%Self (%Self) = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %other.loc7_21.2: @Op.%Self (%Self) = bind_name other, %other.loc7_21.3
+// CHECK:STDOUT:     %other.loc7_21.3: @Op.%Self (%Self) = param other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -87,7 +87,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: generic fn @Op(@Add.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@Add.%self.loc7_9.2: @Op.%Self (%Self)](@Add.%other.loc7_21.3: @Op.%Self (%Self)) -> @Op.%Self (%Self);
+// CHECK:STDOUT:   fn[@Add.%self.loc7_9.2: @Op.%Self (%Self)](@Add.%other.loc7_21.2: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
@@ -176,11 +176,11 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self
 // CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_name self, %self.loc7_9.1
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
-// CHECK:STDOUT:     %other.loc7_21.1: i32 = param other
-// CHECK:STDOUT:     %.loc7: i32 = binding_pattern other, %other.loc7_21.3
+// CHECK:STDOUT:     %.loc7: i32 = binding_pattern other, %other.loc7_21.2
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:     %other.loc7_21.3: i32 = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %other.loc7_21.2: i32 = bind_name other, %other.loc7_21.3
+// CHECK:STDOUT:     %other.loc7_21.3: i32 = param other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:
@@ -191,7 +191,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_21.3: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_21.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]

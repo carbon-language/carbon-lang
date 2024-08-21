@@ -84,9 +84,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc25_19: type = ptr_type %Derived [template = constants.%.9]
-// CHECK:STDOUT:     %p.loc25_9.1: %.9 = param p
 // CHECK:STDOUT:     %.loc25_9: %.9 = binding_pattern p, @Call.%p
-// CHECK:STDOUT:     @Call.%p: %.9 = bind_name p, %p.loc25_9.1
+// CHECK:STDOUT:     @Call.%p: %.9 = bind_name p, %p.loc25_9.3
+// CHECK:STDOUT:     %p.loc25_9.3: %.9 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -302,8 +302,19 @@ struct BindValue {
   InstId value_id;
 };
 
-// Represents a binding pattern value with name `entity_name_id`.
-// `bind_inst_id` is the instruction which actually binds the value.
+// Represents a binding pattern.
+//
+// Conceptually, a BindingPattern consists of a TypeId and an EntityNameId, and
+// it is indirectly associated with a BindName or BindSymbolicName inst that
+// represents the action of matching this pattern. However, the *BindName inst
+// needs to be allocated at the same time as the BindingPattern inst so that it
+// can be added to name lookup immediately, but it should not be added to a
+// block until later, when the other pattern-matching insts are being added.
+// bind_inst_id stores the ID of that *BindName inst, to propagate it from where
+// it's allocated to where it's added to a block.
+//
+// BindingPattern omits the EntityNameId member because it's rarely needed,
+// and can be obtained via bind_inst_id.
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
       {.ir_name = "binding_pattern"});

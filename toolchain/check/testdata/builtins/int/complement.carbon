@@ -68,31 +68,31 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc2_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]
 // CHECK:STDOUT:     %.loc2_18.2: type = converted %int.make_type_32.loc2_18, %.loc2_18.1 [template = i32]
-// CHECK:STDOUT:     %a.loc2_15.1: i32 = param a
 // CHECK:STDOUT:     %.loc2_15: i32 = binding_pattern a, @Complement.%a
 // CHECK:STDOUT:     %int.make_type_32.loc2_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_26.1: type = value_of_initializer %int.make_type_32.loc2_26 [template = i32]
 // CHECK:STDOUT:     %.loc2_26.2: type = converted %int.make_type_32.loc2_26, %.loc2_26.1 [template = i32]
 // CHECK:STDOUT:     @Complement.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %a.loc2_15.1
+// CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %a.loc2_15.3
+// CHECK:STDOUT:     %a.loc2_15.3: i32 = param a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %int.make_type_32.loc3_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_11.1: type = value_of_initializer %int.make_type_32.loc3_11 [template = i32]
 // CHECK:STDOUT:     %.loc3_11.2: type = converted %int.make_type_32.loc3_11, %.loc3_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc3_8.1: i32 = param a
 // CHECK:STDOUT:     %.loc3_8: i32 = binding_pattern a, @And.%a
 // CHECK:STDOUT:     %int.make_type_32.loc3_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %int.make_type_32.loc3_19 [template = i32]
 // CHECK:STDOUT:     %.loc3_19.2: type = converted %int.make_type_32.loc3_19, %.loc3_19.1 [template = i32]
-// CHECK:STDOUT:     %b.loc3_16.1: i32 = param b
 // CHECK:STDOUT:     %.loc3_16: i32 = binding_pattern b, @And.%b
 // CHECK:STDOUT:     %int.make_type_32.loc3_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_27.1: type = value_of_initializer %int.make_type_32.loc3_27 [template = i32]
 // CHECK:STDOUT:     %.loc3_27.2: type = converted %int.make_type_32.loc3_27, %.loc3_27.1 [template = i32]
 // CHECK:STDOUT:     @And.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @And.%a: i32 = bind_name a, %a.loc3_8.1
-// CHECK:STDOUT:     @And.%b: i32 = bind_name b, %b.loc3_16.1
+// CHECK:STDOUT:     @And.%a: i32 = bind_name a, %a.loc3_8.3
+// CHECK:STDOUT:     %a.loc3_8.3: i32 = param a
+// CHECK:STDOUT:     @And.%b: i32 = bind_name b, %b.loc3_16.3
+// CHECK:STDOUT:     %b.loc3_16.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %And.ref: %And.type = name_ref And, %And.decl [template = constants.%And]
@@ -119,13 +119,13 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc8_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_19.1: type = value_of_initializer %int.make_type_32.loc8_19 [template = i32]
 // CHECK:STDOUT:     %.loc8_19.2: type = converted %int.make_type_32.loc8_19, %.loc8_19.1 [template = i32]
-// CHECK:STDOUT:     %a.loc8_16.1: i32 = param a
 // CHECK:STDOUT:     %.loc8_16: i32 = binding_pattern a, @RuntimeCall.%a
 // CHECK:STDOUT:     %int.make_type_32.loc8_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32.loc8_27 [template = i32]
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
 // CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc8_16.1
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc8_16.3
+// CHECK:STDOUT:     %a.loc8_16.3: i32 = param a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

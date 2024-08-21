@@ -93,9 +93,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc25_12.1: %Class = param self
 // CHECK:STDOUT:     %.loc25: %Class = binding_pattern self, @F.1.%self
-// CHECK:STDOUT:     @F.1.%self: %Class = bind_name self, %self.loc25_12.1
+// CHECK:STDOUT:     @F.1.%self: %Class = bind_name self, %self.loc25_12.3
+// CHECK:STDOUT:     %self.loc25_12.3: %Class = param self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
@@ -104,18 +104,18 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
-// CHECK:STDOUT:     %ws.loc45_18.1: %WrongSelf = param ws
 // CHECK:STDOUT:     %.loc45: %WrongSelf = binding_pattern ws, @CallWrongSelf.%ws
-// CHECK:STDOUT:     @CallWrongSelf.%ws: %WrongSelf = bind_name ws, %ws.loc45_18.1
+// CHECK:STDOUT:     @CallWrongSelf.%ws: %WrongSelf = bind_name ws, %ws.loc45_18.3
+// CHECK:STDOUT:     %ws.loc45_18.3: %WrongSelf = param ws
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc16_8.1: %Class = param self
-// CHECK:STDOUT:     %.loc16: %Class = binding_pattern self, %self.loc16_8.3
-// CHECK:STDOUT:     %self.loc16_8.3: %Class = bind_name self, %self.loc16_8.1
+// CHECK:STDOUT:     %.loc16: %Class = binding_pattern self, %self.loc16_8.2
+// CHECK:STDOUT:     %self.loc16_8.2: %Class = bind_name self, %self.loc16_8.3
+// CHECK:STDOUT:     %self.loc16_8.3: %Class = param self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]

@@ -101,45 +101,45 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Derived.decl.loc18: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
-// CHECK:STDOUT:     %a.loc25_9.1: %Derived = param a
 // CHECK:STDOUT:     %.loc25_9: %Derived = binding_pattern a, @Call.%a
 // CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_24.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
 // CHECK:STDOUT:     %.loc25_24.2: type = converted %int.make_type_32.loc25, %.loc25_24.1 [template = i32]
 // CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @Call.%a: %Derived = bind_name a, %a.loc25_9.1
+// CHECK:STDOUT:     @Call.%a: %Derived = bind_name a, %a.loc25_9.3
+// CHECK:STDOUT:     %a.loc25_9.3: %Derived = param a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallIndirect.decl: %CallIndirect.type = fn_decl @CallIndirect [template = constants.%CallIndirect] {
 // CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc29_27: type = ptr_type %Derived [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc29_17.1: %.8 = param p
 // CHECK:STDOUT:     %.loc29_17: %.8 = binding_pattern p, @CallIndirect.%p
 // CHECK:STDOUT:     %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_33.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:     %.loc29_33.2: type = converted %int.make_type_32.loc29, %.loc29_33.1 [template = i32]
 // CHECK:STDOUT:     @CallIndirect.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @CallIndirect.%p: %.8 = bind_name p, %p.loc29_17.1
+// CHECK:STDOUT:     @CallIndirect.%p: %.8 = bind_name p, %p.loc29_17.3
+// CHECK:STDOUT:     %p.loc29_17.3: %.8 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassDerivedToBase.decl: %PassDerivedToBase.type = fn_decl @PassDerivedToBase [template = constants.%PassDerivedToBase] {
 // CHECK:STDOUT:     %Derived.ref.loc33: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
-// CHECK:STDOUT:     %a.loc33_22.1: %Derived = param a
 // CHECK:STDOUT:     %.loc33_22: %Derived = binding_pattern a, @PassDerivedToBase.%a
 // CHECK:STDOUT:     %int.make_type_32.loc33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_37.1: type = value_of_initializer %int.make_type_32.loc33 [template = i32]
 // CHECK:STDOUT:     %.loc33_37.2: type = converted %int.make_type_32.loc33, %.loc33_37.1 [template = i32]
 // CHECK:STDOUT:     @PassDerivedToBase.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @PassDerivedToBase.%a: %Derived = bind_name a, %a.loc33_22.1
+// CHECK:STDOUT:     @PassDerivedToBase.%a: %Derived = bind_name a, %a.loc33_22.3
+// CHECK:STDOUT:     %a.loc33_22.3: %Derived = param a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassDerivedToBaseIndirect.decl: %PassDerivedToBaseIndirect.type = fn_decl @PassDerivedToBaseIndirect [template = constants.%PassDerivedToBaseIndirect] {
 // CHECK:STDOUT:     %Derived.ref.loc37: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc37_40: type = ptr_type %Derived [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc37_30.1: %.8 = param p
 // CHECK:STDOUT:     %.loc37_30: %.8 = binding_pattern p, @PassDerivedToBaseIndirect.%p
 // CHECK:STDOUT:     %int.make_type_32.loc37: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc37_46.1: type = value_of_initializer %int.make_type_32.loc37 [template = i32]
 // CHECK:STDOUT:     %.loc37_46.2: type = converted %int.make_type_32.loc37, %.loc37_46.1 [template = i32]
 // CHECK:STDOUT:     @PassDerivedToBaseIndirect.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: %.8 = bind_name p, %p.loc37_30.1
+// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: %.8 = bind_name p, %p.loc37_30.3
+// CHECK:STDOUT:     %p.loc37_30.3: %.8 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

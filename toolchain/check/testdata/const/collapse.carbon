@@ -56,7 +56,6 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %.loc15_9.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_18: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_19: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc15_6.1: %.4 = param p
 // CHECK:STDOUT:     %.loc15_6: %.4 = binding_pattern p, @F.%p
 // CHECK:STDOUT:     %int.make_type_32.loc15_38: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_32.loc15_38 [template = i32]
@@ -66,7 +65,8 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %.loc15_42: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_43: type = ptr_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     @F.%return: ref %.4 = var <return slot>
-// CHECK:STDOUT:     @F.%p: %.4 = bind_name p, %p.loc15_6.1
+// CHECK:STDOUT:     @F.%p: %.4 = bind_name p, %p.loc15_6.3
+// CHECK:STDOUT:     %p.loc15_6.3: %.4 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

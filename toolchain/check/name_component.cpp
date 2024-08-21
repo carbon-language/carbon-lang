@@ -31,8 +31,19 @@ auto PopNameComponent(Context& context) -> NameComponent {
     for (SemIR::InstId inst_id : refs_block) {
       auto binding_pattern =
           context.insts().GetAs<SemIR::BindingPattern>(inst_id);
+      // Add the bind_name inst. It was precomputed and cached when the
+      // binding_pattern was created (so that it could be added to name lookup
+      // at that point), so we just need to add it to the current block.
       context.inst_block_stack().AddInstId(binding_pattern.bind_inst_id);
       inner_param_insts.push_back(binding_pattern.bind_inst_id);
+      // Add the param inst.
+      // TODO: the param inst should be allocated here, rather than precomputed
+      // and cached like the bind_name, but that requires a way to mutate
+      // the bind_name's value_id in-place.
+      context.inst_block_stack().AddInstId(
+          context.insts()
+              .GetAs<SemIR::AnyBindName>(binding_pattern.bind_inst_id)
+              .value_id);
     }
     inner_params_id = context.inst_blocks().Add(inner_param_insts);
 

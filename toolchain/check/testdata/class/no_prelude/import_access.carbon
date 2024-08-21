@@ -404,9 +404,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
 // CHECK:STDOUT:     %.loc4_16: type = ptr_type %Forward [template = constants.%.1]
-// CHECK:STDOUT:     %c.loc4_6.1: %.1 = param c
 // CHECK:STDOUT:     %.loc4_6: %.1 = binding_pattern c, @F.%c
-// CHECK:STDOUT:     @F.%c: %.1 = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     @F.%c: %.1 = bind_name c, %c.loc4_6.3
+// CHECK:STDOUT:     %c.loc4_6.3: %.1 = param c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {}
 // CHECK:STDOUT: }
@@ -437,9 +437,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10_16: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.loc10_6.1: <error> = param c
 // CHECK:STDOUT:     %.loc10_6: <error> = binding_pattern c, @F.%c
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc10_6.1
+// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc10_6.3
+// CHECK:STDOUT:     %c.loc10_6.3: <error> = param c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -472,9 +472,9 @@ private class Redecl {}
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9_21: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.loc9_6.1: <error> = param c
 // CHECK:STDOUT:     %.loc9_6: <error> = binding_pattern c, @F.%c
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc9_6.1
+// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc9_6.3
+// CHECK:STDOUT:     %c.loc9_6.3: <error> = param c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -47,13 +47,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
-// CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_19.3
-// CHECK:STDOUT:     %T.loc4_19.3: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_19.2
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.3 [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_19.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.3: type) {
+// CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -76,7 +76,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(file.%T.loc4_19.3: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
+// CHECK:STDOUT: generic fn @F(file.%T.loc4_19.2: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

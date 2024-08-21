@@ -173,7 +173,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_id = context.AddInst<SemIR::Param>(
+      auto param_id = context.AddInstInNoBlock<SemIR::Param>(
           name_node, {.type_id = cast_type_id, .name_id = name_id});
       SemIR::LocIdAndInst bind_name = make_bind_name(cast_type_id, param_id);
       // We need the bind_name inst now so that we can add it to name lookup

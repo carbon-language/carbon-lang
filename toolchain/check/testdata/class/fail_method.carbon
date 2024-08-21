@@ -87,9 +87,9 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %A: %WithSelf.type = bind_alias A, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc18_6.1: %Class = param c
 // CHECK:STDOUT:     %.loc18: %Class = binding_pattern c, @F.%c
-// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %c.loc18_6.1
+// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %c.loc18_6.3
+// CHECK:STDOUT:     %c.loc18_6.3: %Class = param c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

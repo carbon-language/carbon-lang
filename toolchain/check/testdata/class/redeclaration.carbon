@@ -58,9 +58,9 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc17_27.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc17_27.2: type = converted %bool.make_type, %.loc17_27.1 [template = bool]
-// CHECK:STDOUT:     %b.loc17_24.1: bool = param b
 // CHECK:STDOUT:     %.loc17_24: bool = binding_pattern b, @F.%b
-// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc17_24.1
+// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc17_24.3
+// CHECK:STDOUT:     %b.loc17_24.3: bool = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,9 +72,9 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_23.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_23.2: type = converted %bool.make_type, %.loc14_23.1 [template = bool]
-// CHECK:STDOUT:     %b.loc14_20.1: bool = param b
-// CHECK:STDOUT:     %.loc14_20: bool = binding_pattern b, %b.loc14_20.3
-// CHECK:STDOUT:     %b.loc14_20.3: bool = bind_name b, %b.loc14_20.1
+// CHECK:STDOUT:     %.loc14_20: bool = binding_pattern b, %b.loc14_20.2
+// CHECK:STDOUT:     %b.loc14_20.2: bool = bind_name b, %b.loc14_20.3
+// CHECK:STDOUT:     %b.loc14_20.3: bool = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -115,16 +115,16 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     block7:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:       1:               inst+3
-// CHECK:STDOUT:       2:               inst+4
-// CHECK:STDOUT:       3:               inst+6
-// CHECK:STDOUT:       4:               inst+7
-// CHECK:STDOUT:       5:               inst+8
-// CHECK:STDOUT:       6:               inst+10
-// CHECK:STDOUT:       7:               inst+11
-// CHECK:STDOUT:       8:               inst+12
-// CHECK:STDOUT:       9:               inst+13
-// CHECK:STDOUT:       10:              inst+14
-// CHECK:STDOUT:       11:              inst+5
+// CHECK:STDOUT:       2:               inst+6
+// CHECK:STDOUT:       3:               inst+7
+// CHECK:STDOUT:       4:               inst+8
+// CHECK:STDOUT:       5:               inst+10
+// CHECK:STDOUT:       6:               inst+11
+// CHECK:STDOUT:       7:               inst+12
+// CHECK:STDOUT:       8:               inst+13
+// CHECK:STDOUT:       9:               inst+14
+// CHECK:STDOUT:       10:              inst+5
+// CHECK:STDOUT:       11:              inst+4
 // CHECK:STDOUT:     block8:
 // CHECK:STDOUT:       0:               inst+19
 // CHECK:STDOUT:       1:               inst+20
@@ -172,7 +172,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %n.loc15_8.1: %.1 = param n
 // CHECK:STDOUT:     %.loc15_8: %.1 = binding_pattern n, @Foo.%n
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
@@ -181,7 +180,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     @Foo.%return: ref %.2 = var <return slot>
-// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.1
+// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.3
+// CHECK:STDOUT:     %n.loc15_8.3: %.1 = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

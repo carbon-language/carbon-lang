@@ -30,9 +30,9 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %e.loc13_6.1: %.1 = param e
 // CHECK:STDOUT:     %.loc13: %.1 = binding_pattern e, @F.%e
-// CHECK:STDOUT:     @F.%e: %.1 = bind_name e, %e.loc13_6.1
+// CHECK:STDOUT:     @F.%e: %.1 = bind_name e, %e.loc13_6.3
+// CHECK:STDOUT:     %e.loc13_6.3: %.1 = param e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -82,14 +82,14 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Class.ref.loc16_9: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc16_6.1: %Class = param c
 // CHECK:STDOUT:     %.loc16_6: %Class = binding_pattern c, @F.2.%c
 // CHECK:STDOUT:     %Class.ref.loc16_19: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_24: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %p.loc16_16.1: %.1 = param p
 // CHECK:STDOUT:     %.loc16_16: %.1 = binding_pattern p, @F.2.%p
-// CHECK:STDOUT:     @F.2.%c: %Class = bind_name c, %c.loc16_6.1
-// CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %p.loc16_16.1
+// CHECK:STDOUT:     @F.2.%c: %Class = bind_name c, %c.loc16_6.3
+// CHECK:STDOUT:     %c.loc16_6.3: %Class = param c
+// CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %p.loc16_16.3
+// CHECK:STDOUT:     %p.loc16_16.3: %.1 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

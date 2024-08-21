@@ -110,23 +110,23 @@ fn Main() {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_32.loc12, %.loc12_12.1 [template = i32]
-// CHECK:STDOUT:     %a.loc12_9.1: i32 = param a
 // CHECK:STDOUT:     %.loc12_9: i32 = binding_pattern a, @Run1.%a
-// CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %a.loc12_9.1
+// CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %a.loc12_9.3
+// CHECK:STDOUT:     %a.loc12_9.3: i32 = param a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [template = constants.%Run2] {
 // CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_32.loc13_12 [template = i32]
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %int.make_type_32.loc13_12, %.loc13_12.1 [template = i32]
-// CHECK:STDOUT:     %a.loc13_9.1: i32 = param a
 // CHECK:STDOUT:     %.loc13_9: i32 = binding_pattern a, @Run2.%a
 // CHECK:STDOUT:     %int.make_type_32.loc13_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_32.loc13_20 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_32.loc13_20, %.loc13_20.1 [template = i32]
-// CHECK:STDOUT:     %b.loc13_17.1: i32 = param b
 // CHECK:STDOUT:     %.loc13_17: i32 = binding_pattern b, @Run2.%b
-// CHECK:STDOUT:     @Run2.%a: i32 = bind_name a, %a.loc13_9.1
-// CHECK:STDOUT:     @Run2.%b: i32 = bind_name b, %b.loc13_17.1
+// CHECK:STDOUT:     @Run2.%a: i32 = bind_name a, %a.loc13_9.3
+// CHECK:STDOUT:     %a.loc13_9.3: i32 = param a
+// CHECK:STDOUT:     @Run2.%b: i32 = bind_name b, %b.loc13_17.3
+// CHECK:STDOUT:     %b.loc13_17.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }

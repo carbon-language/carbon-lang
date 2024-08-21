@@ -169,9 +169,9 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]
-// CHECK:STDOUT:     %c.loc4_6.1: %C = param c
 // CHECK:STDOUT:     %.loc4: %C = binding_pattern c, @G.%c
-// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.3
+// CHECK:STDOUT:     %c.loc4_6.3: %C = param c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

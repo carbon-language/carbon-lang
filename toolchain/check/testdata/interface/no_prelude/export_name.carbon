@@ -109,9 +109,9 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %i.loc6_13.1: %.1 = param i
 // CHECK:STDOUT:     %.loc6: %.1 = binding_pattern i, @UseEmpty.%i
-// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_name i, %i.loc6_13.1
+// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_name i, %i.loc6_13.3
+// CHECK:STDOUT:     %i.loc6_13.3: %.1 = param i
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

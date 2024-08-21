@@ -51,21 +51,21 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %CallStatic.decl: %CallStatic.type = fn_decl @CallStatic [template = constants.%CallStatic] {
 // CHECK:STDOUT:     %Interface.ref.loc13: type = name_ref Interface, %Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.loc13_15.1: %.1 = param T
 // CHECK:STDOUT:     %.loc13: %.1 = binding_pattern T 0, @CallStatic.%T.loc13
-// CHECK:STDOUT:     @CallStatic.%T.loc13: %.1 = bind_symbolic_name T 0, %T.loc13_15.1 [symbolic = @CallStatic.%T.1 (constants.%T)]
+// CHECK:STDOUT:     @CallStatic.%T.loc13: %.1 = bind_symbolic_name T 0, %T.loc13_15.3 [symbolic = @CallStatic.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc13_15.3: %.1 = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet.decl: %CallFacet.type = fn_decl @CallFacet [template = constants.%CallFacet] {
 // CHECK:STDOUT:     %Interface.ref.loc21: type = name_ref Interface, %Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.loc21_14.1: %.1 = param T
 // CHECK:STDOUT:     %.loc21_14: %.1 = binding_pattern T 0, @CallFacet.%T.loc21
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @CallFacet.%T.loc21 [symbolic = @CallFacet.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = @CallFacet.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = @CallFacet.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %x.loc21_29.1: @CallFacet.%T.1 (%T) = param x
 // CHECK:STDOUT:     %.loc21_29: @CallFacet.%T.1 (%T) = binding_pattern x, @CallFacet.%x
-// CHECK:STDOUT:     @CallFacet.%T.loc21: %.1 = bind_symbolic_name T 0, %T.loc21_14.1 [symbolic = @CallFacet.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @CallFacet.%x: @CallFacet.%T.1 (%T) = bind_name x, %x.loc21_29.1
+// CHECK:STDOUT:     @CallFacet.%T.loc21: %.1 = bind_symbolic_name T 0, %T.loc21_14.3 [symbolic = @CallFacet.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc21_14.3: %.1 = param T
+// CHECK:STDOUT:     @CallFacet.%x: @CallFacet.%T.1 (%T) = bind_name x, %x.loc21_29.3
+// CHECK:STDOUT:     %x.loc21_29.3: @CallFacet.%T.1 (%T) = param x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

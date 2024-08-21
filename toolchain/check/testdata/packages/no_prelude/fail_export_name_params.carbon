@@ -47,24 +47,24 @@ export C2(T:! type);
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [template = constants.%C1.1] {
-// CHECK:STDOUT:     %T.loc4_10.1: type = param T
-// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_10.3
-// CHECK:STDOUT:     %T.loc4_10.3: type = bind_symbolic_name T 0, %T.loc4_10.1 [symbolic = @C1.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_10.2
+// CHECK:STDOUT:     %T.loc4_10.2: type = bind_symbolic_name T 0, %T.loc4_10.3 [symbolic = @C1.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_10.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [template = constants.%C2.1] {
-// CHECK:STDOUT:     %T.loc5_10.1: type = param T
-// CHECK:STDOUT:     %.loc5: type = binding_pattern T 0, %T.loc5_10.3
-// CHECK:STDOUT:     %T.loc5_10.3: type = bind_symbolic_name T 0, %T.loc5_10.1 [symbolic = @C2.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc5: type = binding_pattern T 0, %T.loc5_10.2
+// CHECK:STDOUT:     %T.loc5_10.2: type = bind_symbolic_name T 0, %T.loc5_10.3 [symbolic = @C2.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc5_10.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C1(file.%T.loc4_10.3: type) {
+// CHECK:STDOUT: generic class @C1(file.%T.loc4_10.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C2(file.%T.loc5_10.3: type) {
+// CHECK:STDOUT: generic class @C2(file.%T.loc5_10.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
@@ -103,9 +103,9 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%import_ref.1 [template = constants.%C1.1]
-// CHECK:STDOUT:   %T.loc11_11.1: type = param T
-// CHECK:STDOUT:   %.loc11: type = binding_pattern T 0, %T.loc11_11.3
-// CHECK:STDOUT:   %T.loc11_11.3: type = bind_symbolic_name T 0, %T.loc11_11.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc11: type = binding_pattern T 0, %T.loc11_11.2
+// CHECK:STDOUT:   %T.loc11_11.2: type = bind_symbolic_name T 0, %T.loc11_11.3 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.loc11_11.3: type = param T
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.2 [template = constants.%C2.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

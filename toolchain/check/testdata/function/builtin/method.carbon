@@ -95,13 +95,13 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %other.loc12_20.1: @F.1.%Self (%Self) = param other
-// CHECK:STDOUT:     %.loc12_20: @F.1.%Self (%Self) = binding_pattern other, %other.loc12_20.3
+// CHECK:STDOUT:     %.loc12_20: @F.1.%Self (%Self) = binding_pattern other, %other.loc12_20.2
 // CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @F.1.%Self (%Self) = var <return slot>
-// CHECK:STDOUT:     %other.loc12_20.3: @F.1.%Self (%Self) = bind_name other, %other.loc12_20.1
+// CHECK:STDOUT:     %other.loc12_20.2: @F.1.%Self (%Self) = bind_name other, %other.loc12_20.3
+// CHECK:STDOUT:     %other.loc12_20.3: @F.1.%Self (%Self) = param other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_40: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -121,13 +121,13 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %int.make_type_32.loc16_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_26.1: type = value_of_initializer %int.make_type_32.loc16_26 [template = i32]
 // CHECK:STDOUT:     %.loc16_26.2: type = converted %int.make_type_32.loc16_26, %.loc16_26.1 [template = i32]
-// CHECK:STDOUT:     %other.loc16_19.1: i32 = param other
-// CHECK:STDOUT:     %.loc16_19: i32 = binding_pattern other, %other.loc16_19.3
+// CHECK:STDOUT:     %.loc16_19: i32 = binding_pattern other, %other.loc16_19.2
 // CHECK:STDOUT:     %int.make_type_32.loc16_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_34.1: type = value_of_initializer %int.make_type_32.loc16_34 [template = i32]
 // CHECK:STDOUT:     %.loc16_34.2: type = converted %int.make_type_32.loc16_34, %.loc16_34.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:     %other.loc16_19.3: i32 = bind_name other, %other.loc16_19.1
+// CHECK:STDOUT:     %other.loc16_19.2: i32 = bind_name other, %other.loc16_19.3
+// CHECK:STDOUT:     %other.loc16_19.3: i32 = param other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
@@ -139,12 +139,12 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@I.%self.loc12_8.2: @F.1.%Self (%Self)](@I.%other.loc12_20.3: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
+// CHECK:STDOUT:   fn[@I.%self.loc12_8.2: @F.1.%Self (%Self)](@I.%other.loc12_20.2: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.3: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

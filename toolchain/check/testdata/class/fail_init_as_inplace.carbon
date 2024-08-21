@@ -72,9 +72,9 @@ fn F() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_14: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc16_6.1: %.4 = param p
 // CHECK:STDOUT:     %.loc16_6: %.4 = binding_pattern p, @G.%p
-// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc16_6.1
+// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc16_6.3
+// CHECK:STDOUT:     %p.loc16_6.3: %.4 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }

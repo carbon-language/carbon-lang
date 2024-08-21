@@ -137,15 +137,15 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:       1:               inst+2
 // CHECK:STDOUT:       2:               inst+4
-// CHECK:STDOUT:       3:               inst+5
-// CHECK:STDOUT:       4:               inst+7
-// CHECK:STDOUT:       5:               inst+8
-// CHECK:STDOUT:       6:               inst+10
-// CHECK:STDOUT:       7:               inst+12
-// CHECK:STDOUT:       8:               inst+13
-// CHECK:STDOUT:       9:               inst+15
-// CHECK:STDOUT:       10:              inst+16
-// CHECK:STDOUT:       11:              inst+6
+// CHECK:STDOUT:       3:               inst+7
+// CHECK:STDOUT:       4:               inst+8
+// CHECK:STDOUT:       5:               inst+10
+// CHECK:STDOUT:       6:               inst+12
+// CHECK:STDOUT:       7:               inst+13
+// CHECK:STDOUT:       8:               inst+15
+// CHECK:STDOUT:       9:               inst+16
+// CHECK:STDOUT:       10:              inst+6
+// CHECK:STDOUT:       11:              inst+5
 // CHECK:STDOUT:     block9:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:     block10:

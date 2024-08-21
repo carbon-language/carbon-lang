@@ -27,15 +27,15 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.loc11_6.1: type = param T
 // CHECK:STDOUT:     %.loc11_6: type = binding_pattern T 0, @F.%T.loc11
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %n.loc11_16.1: @F.%T.1 (%T) = param n
 // CHECK:STDOUT:     %.loc11_16: @F.%T.1 (%T) = binding_pattern n, @F.%n
 // CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @F.%return: ref @F.%T.1 (%T) = var <return slot>
-// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @F.%n: @F.%T.1 (%T) = bind_name n, %n.loc11_16.1
+// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.3 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_6.3: type = param T
+// CHECK:STDOUT:     @F.%n: @F.%T.1 (%T) = bind_name n, %n.loc11_16.3
+// CHECK:STDOUT:     %n.loc11_16.3: @F.%T.1 (%T) = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

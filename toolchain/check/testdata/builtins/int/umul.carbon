@@ -72,19 +72,19 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %int.make_type_32.loc2_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_11.1: type = value_of_initializer %int.make_type_32.loc2_11 [template = i32]
 // CHECK:STDOUT:     %.loc2_11.2: type = converted %int.make_type_32.loc2_11, %.loc2_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc2_8.1: i32 = param a
 // CHECK:STDOUT:     %.loc2_8: i32 = binding_pattern a, @Mul.%a
 // CHECK:STDOUT:     %int.make_type_32.loc2_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_19.1: type = value_of_initializer %int.make_type_32.loc2_19 [template = i32]
 // CHECK:STDOUT:     %.loc2_19.2: type = converted %int.make_type_32.loc2_19, %.loc2_19.1 [template = i32]
-// CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
 // CHECK:STDOUT:     %.loc2_16: i32 = binding_pattern b, @Mul.%b
 // CHECK:STDOUT:     %int.make_type_32.loc2_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %int.make_type_32.loc2_27 [template = i32]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %int.make_type_32.loc2_27, %.loc2_27.1 [template = i32]
 // CHECK:STDOUT:     @Mul.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @Mul.%a: i32 = bind_name a, %a.loc2_8.1
-// CHECK:STDOUT:     @Mul.%b: i32 = bind_name b, %b.loc2_16.1
+// CHECK:STDOUT:     @Mul.%a: i32 = bind_name a, %a.loc2_8.3
+// CHECK:STDOUT:     %a.loc2_8.3: i32 = param a
+// CHECK:STDOUT:     @Mul.%b: i32 = bind_name b, %b.loc2_16.3
+// CHECK:STDOUT:     %b.loc2_16.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, %Mul.decl [template = constants.%Mul]
@@ -107,19 +107,19 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
-// CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
 // CHECK:STDOUT:     %.loc7_16: i32 = binding_pattern a, @RuntimeCall.%a
 // CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
 // CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
-// CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     %.loc7_24: i32 = binding_pattern b, @RuntimeCall.%b
 // CHECK:STDOUT:     %int.make_type_32.loc7_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
 // CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.3
+// CHECK:STDOUT:     %a.loc7_16.3: i32 = param a
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.3
+// CHECK:STDOUT:     %b.loc7_24.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,19 +187,19 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %int.make_type_32.loc4_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4_11, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
 // CHECK:STDOUT:     %.loc4_8: i32 = binding_pattern a, @Mul.%a
 // CHECK:STDOUT:     %int.make_type_32.loc4_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %int.make_type_32.loc4_19 [template = i32]
 // CHECK:STDOUT:     %.loc4_19.2: type = converted %int.make_type_32.loc4_19, %.loc4_19.1 [template = i32]
-// CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
 // CHECK:STDOUT:     %.loc4_16: i32 = binding_pattern b, @Mul.%b
 // CHECK:STDOUT:     %int.make_type_32.loc4_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4_27 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4_27, %.loc4_27.1 [template = i32]
 // CHECK:STDOUT:     @Mul.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @Mul.%a: i32 = bind_name a, %a.loc4_8.1
-// CHECK:STDOUT:     @Mul.%b: i32 = bind_name b, %b.loc4_16.1
+// CHECK:STDOUT:     @Mul.%a: i32 = bind_name a, %a.loc4_8.3
+// CHECK:STDOUT:     %a.loc4_8.3: i32 = param a
+// CHECK:STDOUT:     @Mul.%b: i32 = bind_name b, %b.loc4_16.3
+// CHECK:STDOUT:     %b.loc4_16.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]

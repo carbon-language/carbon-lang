@@ -32,12 +32,12 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.loc11_6.1: type = param T
 // CHECK:STDOUT:     %.loc11_6: type = binding_pattern T 0, @F.%T.loc11
-// CHECK:STDOUT:     %U.loc11_16.1: type = param U
 // CHECK:STDOUT:     %.loc11_16: type = binding_pattern U 1, @F.%U.loc11
-// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @F.%U.loc11: type = bind_symbolic_name U 1, %U.loc11_16.1 [symbolic = @F.%U.1 (constants.%U)]
+// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.3 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_6.3: type = param T
+// CHECK:STDOUT:     @F.%U.loc11: type = bind_symbolic_name U 1, %U.loc11_16.3 [symbolic = @F.%U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_16.3: type = param U
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

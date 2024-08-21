@@ -95,24 +95,24 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc29_13: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %a.loc29_9.1: %.1 = param a
 // CHECK:STDOUT:     %.loc29_9: %.1 = binding_pattern a, @Call.%a
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc29_20: type = ptr_type %B [template = constants.%.6]
-// CHECK:STDOUT:     %b.loc29_16.1: %.6 = param b
 // CHECK:STDOUT:     %.loc29_16: %.6 = binding_pattern b, @Call.%b
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc29_27: type = ptr_type %C [template = constants.%.11]
-// CHECK:STDOUT:     %c.loc29_23.1: %.11 = param c
 // CHECK:STDOUT:     %.loc29_23: %.11 = binding_pattern c, @Call.%c
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %.loc29_34: type = ptr_type %D [template = constants.%.14]
-// CHECK:STDOUT:     %d.loc29_30.1: %.14 = param d
 // CHECK:STDOUT:     %.loc29_30: %.14 = binding_pattern d, @Call.%d
-// CHECK:STDOUT:     @Call.%a: %.1 = bind_name a, %a.loc29_9.1
-// CHECK:STDOUT:     @Call.%b: %.6 = bind_name b, %b.loc29_16.1
-// CHECK:STDOUT:     @Call.%c: %.11 = bind_name c, %c.loc29_23.1
-// CHECK:STDOUT:     @Call.%d: %.14 = bind_name d, %d.loc29_30.1
+// CHECK:STDOUT:     @Call.%a: %.1 = bind_name a, %a.loc29_9.3
+// CHECK:STDOUT:     %a.loc29_9.3: %.1 = param a
+// CHECK:STDOUT:     @Call.%b: %.6 = bind_name b, %b.loc29_16.3
+// CHECK:STDOUT:     %b.loc29_16.3: %.6 = param b
+// CHECK:STDOUT:     @Call.%c: %.11 = bind_name c, %c.loc29_23.3
+// CHECK:STDOUT:     %c.loc29_23.3: %.11 = param c
+// CHECK:STDOUT:     @Call.%d: %.14 = bind_name d, %d.loc29_30.3
+// CHECK:STDOUT:     %d.loc29_30.3: %.14 = param d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
