@@ -71,8 +71,8 @@ apply the rules:
 -   When two named declarations declare the same entity, the second is said to
     be a _redeclaration_.
 -   Two owned declarations _differ_ if they don't syntactically match.
-    -   The non-owned `extern library` declarations only require semantic
-        matching.
+    -   Otherwise, if one is a non-owned `extern library` declaration,
+        declarations differ if they don't match semantically.
 -   The program is invalid if it contains two declarations of the same entity
     that differ.
 
