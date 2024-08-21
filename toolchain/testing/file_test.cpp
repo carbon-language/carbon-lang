@@ -29,6 +29,10 @@ class ToolchainFileTest : public FileTestBase {
         component_(GetComponent(test_name)),
         installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
+  auto GetReplacements() -> llvm::StringMap<std::string> override {
+    return {{"core_package_dir", installation_.core_package()}};
+  }
+
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
