@@ -66,37 +66,35 @@ In order to determine whether two redeclarations refer to the same entity, we
 apply the rules:
 
 -   Two named declarations _declare the same entity_ if they have the same scope
-    and the same name.
--   When two named declarations declare the same entity, the second is said to be a
-    _redeclaration_, including the case where the first declaration is imported.
--   Two declarations _differ_ if the sequence of tokens in the declaration
-    following the introducer keyword and the optional scope, up to the semicolon
-    or open brace, is different, except for `unused` modifiers on parameters.
--   The program is invalid if it contains two owning declarations of the same
-    entity that differ.
-    -   The non-owned `extern library` declarations will only use semantic
-        matching for redeclarations, not syntactic matching.
+    and the same name. This includes imported declarations.
+-   When two named declarations declare the same entity, the second is said to
+    be a _redeclaration_.
+-   Two owned declarations _differ_ if they don't syntactically match.
+    -   The non-owned `extern library` declarations only require semantic
+        matching.
+-   The program is invalid if it contains two declarations of the same entity
+    that differ.
 
 ```carbon
 class A {
+  // This function will be redeclared in order to provide a definition.
   fn F(n: i32);
-  fn G(n: i32);
 }
+
+// ✅ Valid: The declaration matches syntactically.
+fn A.F(n: i32) {}
 
 // ❌ Invalid: The parameter name differs.
 fn A.F(m: i32) {}
 
 // ❌ Invalid: The parameter type differs syntactically.
-fn A.G(n: (i32)) {}
-
-// ✅ Valid: only difference is the scope is explicit.
-fn A.F(n: i32) {} 
+fn A.F(n: (i32)) {}
 ```
 
 ### Details
 
 TODO: Figure out what details to pull from
-[#3762](https://github.com/carbon-language/carbon-lang/pull/3763) and
+[#3762](https://github.com/carbon-language/carbon-lang/pull/3762) and
 [#3763](https://github.com/carbon-language/carbon-lang/pull/3763).
 
 ## `extern` and `extern library`
@@ -106,10 +104,11 @@ There are two forms of the `extern` modifier:
 -   On an owning declaration, `extern` limits access to the definition.
     -   The entity must be directly imported in order to use of the definition.
     -   An `extern library` declaration is optional.
--   On a non-owning declaration, `extern library` provides a tool for breaking
-    dependency cycles.
+-   On a non-owning declaration, `extern library` allows references to an entity
+    without depending on the owning library.
     -   The library name indicates where the entity is defined.
-    -
+    -   This may be used to break dependency cycles between libraries, which
+        could be used to improve build parallelization.
 
 For example, a use of both might look like:
 
@@ -154,9 +153,10 @@ extern fn MyClassFactory(val: i32) -> MyClass* {
 
 ### Effect on indirect imports
 
-Indirect imports won't see the definition of an `extern` entity. We expect this to
-primarily affect return types of functions. If an incomplete type is encountered
-this way, it can be resolved by directly importing the definition. For example:
+Indirect imports won't see the definition of an `extern` entity. We expect this
+to primarily affect return types of functions. If an incomplete type is
+encountered this way, it can be resolved by directly importing the definition.
+For example:
 
 ```
 library "type";
