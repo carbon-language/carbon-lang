@@ -108,8 +108,8 @@ There are two forms of the `extern` modifier:
 -   On a non-owning declaration, `extern library` allows references to an entity
     without depending on the owning library.
     -   The library name indicates where the entity is defined.
-    -   This may be used to break dependency cycles between libraries, which
-        could be used to improve build parallelization.
+    -   This can be used to improve build performance, such as by splitting out
+        a declaration in order to reduce a library's dependencies.
 
 For example, a use of both might look like:
 
