@@ -289,7 +289,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
-  llvm_function->setSubprogram(BuildSubprogram(function, llvm_function));
+  llvm_function->setSubprogram(BuildDISubprogram(function, llvm_function));
 
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
@@ -362,7 +362,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
-auto FileContext::BuildSubprogram(
+auto FileContext::BuildDISubprogram(
     const Carbon::SemIR::Function& /*semir_function*/,
     const llvm::Function* llvm_function) -> llvm::DISubprogram* {
   if (!di_compile_unit_) {

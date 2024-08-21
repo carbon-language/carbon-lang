@@ -79,8 +79,8 @@ class FileContext {
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
   // Build the DISubprogram metadata for the given function.
-  auto BuildSubprogram(const Carbon::SemIR::Function& function,
-                       const llvm::Function* llvm_function)
+  auto BuildDISubprogram(const Carbon::SemIR::Function& function,
+                         const llvm::Function* llvm_function)
       -> llvm::DISubprogram*;
 
   // Builds the type for the given instruction, which should then be cached by
