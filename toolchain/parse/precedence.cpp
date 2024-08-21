@@ -54,22 +54,21 @@ struct OperatorPriorityTable {
     MarkHigherThan({Highest}, {TermPrefix, LogicalPrefix});
     MarkHigherThan({TermPrefix},
                    {NumericPrefix, BitwisePrefix, IncrementDecrement});
-    MarkHigherThan({NumericPrefix, BitwisePrefix},
+    MarkHigherThan({NumericPrefix, BitwisePrefix, TypePostfix},
                    {As, Multiplicative, Modulo, BitwiseAnd, BitwiseOr,
                     BitwiseXor, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan(
-        {As, Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
+        {Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
         {Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan({LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({As, LogicalAnd, LogicalOr}, {If});
     MarkHigherThan({If}, {Assignment});
     MarkHigherThan({Assignment, IncrementDecrement}, {Lowest});
 
     // Types are mostly a separate precedence graph.
     MarkHigherThan({Highest}, {TypePrefix});
     MarkHigherThan({TypePrefix}, {TypePostfix});
-    MarkHigherThan({TypePostfix}, {As});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
