@@ -55,7 +55,7 @@ fn DoSomething();
 ```
 impl library "MyLibrary";
 
-fn DoSomething {
+fn DoSomething() {
   ...
 }
 ```
@@ -67,10 +67,8 @@ apply the rules:
 
 -   Two named declarations _declare the same entity_ if they have the same scope
     and the same name.
--   One declaration _redeclares_ another if they declare the same entity and the
-    second declaration appears after the first, including the case where the
-    first declaration is imported. In this case, the second declaration is said
-    to be a _redeclaration_ of the first.
+-   When two named declarations declare the same entity, the second is said to be a
+    _redeclaration_, including the case where the first declaration is imported.
 -   Two declarations _differ_ if the sequence of tokens in the declaration
     following the introducer keyword and the optional scope, up to the semicolon
     or open brace, is different, except for `unused` modifiers on parameters.
@@ -90,6 +88,9 @@ fn A.F(m: i32) {}
 
 // ❌ Invalid: The parameter type differs syntactically.
 fn A.G(n: (i32)) {}
+
+// ✅ Valid: only difference is the scope is explicit.
+fn A.F(n: i32) {} 
 ```
 
 ### Details
@@ -153,8 +154,8 @@ extern fn MyClassFactory(val: i32) -> MyClass* {
 
 ### Effect on indirect imports
 
-Indirect imports won't see the definition of an entity. We expect this to
-primarily effect return types of functions. If an incomplete type is encountered
+Indirect imports won't see the definition of an `extern` entity. We expect this to
+primarily affect return types of functions. If an incomplete type is encountered
 this way, it can be resolved by directly importing the definition. For example:
 
 ```
