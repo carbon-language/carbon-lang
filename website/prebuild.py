@@ -144,7 +144,7 @@ def label_root_file(
 
 def main() -> None:
     # Ensure this runs from the repo root.
-    os.chdir(Path(__file__).parent.parent)
+    os.chdir(Path(__file__).parents[1])
 
     # bazel-execroot interferes with jekyll because it's a broken symlink.
     Path("bazel-execroot").unlink()

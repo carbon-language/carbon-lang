@@ -31,7 +31,7 @@ def main() -> None:
     # Locate the prefix root from the install marker.
     if not args.install_marker.exists():
         sys.exit("ERROR: No install marker: " + args.install_marker)
-    prefix_root_path = args.install_marker.parent.parent.parent
+    prefix_root_path = args.install_marker.parents[2]
 
     # First check that every file and directory in the tar file exists in our
     # prefix root, and build a set of those paths.

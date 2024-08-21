@@ -51,7 +51,7 @@ def main() -> None:
     # Support specifying tests to update, such as:
     # ./autoupdate_testdata.py lex/**/*
     if len(sys.argv) > 1:
-        repo_root = Path(__file__).resolve().parent.parent
+        repo_root = Path(__file__).parents[1]
         file_tests = []
         # Filter down to just test files.
         for f in sys.argv[1:]:
