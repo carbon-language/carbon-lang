@@ -362,17 +362,22 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
-auto FileContext::BuildDISubprogram(
-    const Carbon::SemIR::Function& /*semir_function*/,
-    const llvm::Function* llvm_function) -> llvm::DISubprogram* {
+auto FileContext::BuildDISubprogram(const Carbon::SemIR::Function& /*function*/,
+                                    const llvm::Function* llvm_function)
+    -> llvm::DISubprogram* {
   if (!di_compile_unit_) {
     return nullptr;
   }
+  // FIXME: Add more details here, including mangled name, real subroutine type
+  // (once type information is built), etc.
   return di_builder_.createFunction(
-      di_compile_unit_, llvm_function->getName(), "", nullptr, 0,
+      di_compile_unit_, llvm_function->getName(), /*LinkageName=*/"",
+      /*File=*/nullptr,
+      /*LineNo=*/0,
       di_builder_.createSubroutineType(
           di_builder_.getOrCreateTypeArray(std::nullopt)),
-      0, llvm::DINode::FlagZero, llvm::DISubprogram::SPFlagDefinition);
+      /*ScopeLine=*/0, llvm::DINode::FlagZero,
+      llvm::DISubprogram::SPFlagDefinition);
 }
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
