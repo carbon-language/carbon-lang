@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Matching redeclarations of an entity](#matching-redeclarations-of-an-entity)
     -   [Details](#details)
 -   [`extern` and `extern library`](#extern-and-extern-library)
+    -   [Valid scopes for `extern`](#valid-scopes-for-extern)
     -   [Effect on indirect imports](#effect-on-indirect-imports)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -150,6 +151,11 @@ extern fn MyClassFactory(val: i32) -> MyClass* {
   return c;
 }
 ```
+
+### Valid scopes for `extern`
+
+The `extern` modifier is only valid on namespace-scoped entities, including in
+the file scope. In other words, `class C { extern fn F(); }` is invalid.
 
 ### Effect on indirect imports
 
