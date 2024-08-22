@@ -150,7 +150,7 @@ class ValueStore
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
-    IdT id = IdT(values_.size());
+    IdT id(values_.size());
     CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
     return id;
@@ -158,7 +158,7 @@ class ValueStore
 
   // Adds a default constructed value and returns an ID to reference it.
   auto AddDefaultValue() -> IdT {
-    auto id = IdT(values_.size());
+    IdT id(values_.size());
     values_.resize(id.index + 1);
     return id;
   }
@@ -182,7 +182,7 @@ class ValueStore
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto i : llvm::seq(values_.size())) {
-        auto id = IdT(i);
+        IdT id(i);
         map.Add(PrintToString(id), Yaml::OutputScalar(Get(id)));
       }
     });
