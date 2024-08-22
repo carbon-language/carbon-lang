@@ -8,6 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/recover_star_minus.carbon
 
+// TODO: There are two possible fixes that would make this expression legal:
+// `n * -n` and `n* - n`. The parser doesn't realize that the first fix is
+// available because it has already accepted that first part of the expression,
+// so it is recovering by using the second option, but the diagnostic should
+// ideally offer (or consider) both fixes as alternatives.
 // CHECK:STDERR: recover_star_minus.carbon:[[@LINE+3]]:16: ERROR: Whitespace missing after binary operator.
 // CHECK:STDERR: var n: i8 = n* -n;
 // CHECK:STDERR:                ^
