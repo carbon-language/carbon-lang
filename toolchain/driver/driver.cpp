@@ -344,7 +344,10 @@ Excludes files with the given prefix from dumps.
 Emit DWARF debug information.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&include_debug_info); });
+        [&](auto& arg_b) {
+          arg_b.Default(true);
+          arg_b.Set(&include_debug_info);
+        });
   }
 
   Phase phase;
@@ -366,7 +369,7 @@ Emit DWARF debug information.
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
   bool prelude_import = false;
-  bool include_debug_info = false;
+  bool include_debug_info = true;
 
   llvm::StringRef exclude_dump_file_prefix;
 };
@@ -530,12 +533,6 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
         error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
                          "phase is limited to '"
                       << options.phase << "'.\n";
-        return false;
-      }
-      if (options.include_debug_info) {
-        error_stream_
-            << "ERROR: Requested debug info but compile phase is limited to '"
-            << options.phase << "'.\n";
         return false;
       }
       [[fallthrough]];
