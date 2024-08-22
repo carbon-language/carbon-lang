@@ -31,7 +31,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; ModuleID = 'overloaded.carbon'
 // CHECK:STDOUT: source_filename = "overloaded.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Op(ptr sret({ i1 }) %return, ptr %self) {
+// CHECK:STDOUT: define void @Op(ptr sret({ i1 }) %return, ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1
@@ -41,7 +41,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Op.1(ptr sret({ i1 }) %return, ptr %self, ptr %other) {
+// CHECK:STDOUT: define void @Op.1(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1
@@ -80,7 +80,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Calculate(ptr sret({ i1 }) %return, ptr %a, ptr %b) {
+// CHECK:STDOUT: define void @Calculate(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc28_10.2.temp = alloca { i1 }, align 8
 // CHECK:STDOUT:   call void @Op(ptr %.loc28_10.2.temp, ptr %a)
@@ -98,3 +98,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "overloaded.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Op.1", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Calculate", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

@@ -24,7 +24,7 @@ fn Run() {
 // CHECK:STDOUT: @array.3.loc14_41 = internal constant [5 x {}] zeroinitializer
 // CHECK:STDOUT: @tuple.2.loc15_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @main() {
+// CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [1 x i32], align 4
 // CHECK:STDOUT:   %.loc12_24.3.array.index = getelementptr inbounds [1 x i32], ptr %a.var, i32 0, i32 0
@@ -76,3 +76,6 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "base.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

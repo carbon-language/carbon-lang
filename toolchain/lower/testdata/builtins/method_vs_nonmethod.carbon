@@ -17,13 +17,13 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: ; ModuleID = 'method_vs_nonmethod.carbon'
 // CHECK:STDOUT: source_filename = "method_vs_nonmethod.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestAddNonmethod(i32 %a, i32 %b) {
+// CHECK:STDOUT: define i32 @TestAddNonmethod(i32 %a, i32 %b) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %a, %b
 // CHECK:STDOUT:   ret i32 %int.sadd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestAddMethod(i32 %a, i32 %b) {
+// CHECK:STDOUT: define i32 @TestAddMethod(i32 %a, i32 %b) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %a, %b
 // CHECK:STDOUT:   ret i32 %int.sadd
@@ -36,3 +36,7 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "method_vs_nonmethod.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestAddNonmethod", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "TestAddMethod", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

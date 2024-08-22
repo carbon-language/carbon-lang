@@ -22,7 +22,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @G(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %s.var = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %.loc14_46.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 0
@@ -45,3 +45,6 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "address_of_field.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

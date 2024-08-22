@@ -18,17 +18,17 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F() {
+// CHECK:STDOUT: define i32 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @G() {
+// CHECK:STDOUT: define i32 @G() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Select(i1 %b) {
+// CHECK:STDOUT: define i32 @Select(i1 %b) !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %if.expr.else
 // CHECK:STDOUT:
@@ -52,3 +52,8 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Select", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

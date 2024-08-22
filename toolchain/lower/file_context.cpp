@@ -289,6 +289,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
+  llvm_function->setSubprogram(BuildDISubprogram(function, llvm_function));
+
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
@@ -358,6 +360,24 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
+}
+
+auto FileContext::BuildDISubprogram(const SemIR::Function& /*function*/,
+                                    const llvm::Function* llvm_function)
+    -> llvm::DISubprogram* {
+  if (!di_compile_unit_) {
+    return nullptr;
+  }
+  // FIXME: Add more details here, including mangled name, real subroutine type
+  // (once type information is built), etc.
+  return di_builder_.createFunction(
+      di_compile_unit_, llvm_function->getName(), /*LinkageName=*/"",
+      /*File=*/nullptr,
+      /*LineNo=*/0,
+      di_builder_.createSubroutineType(
+          di_builder_.getOrCreateTypeArray(std::nullopt)),
+      /*ScopeLine=*/0, llvm::DINode::FlagZero,
+      llvm::DISubprogram::SPFlagDefinition);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)

@@ -20,7 +20,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @struct.loc12_49 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
+// CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8
 // CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0
@@ -48,3 +48,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "member_access.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

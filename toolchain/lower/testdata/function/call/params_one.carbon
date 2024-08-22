@@ -17,12 +17,12 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'params_one.carbon'
 // CHECK:STDOUT: source_filename = "params_one.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Foo(i32 %a) {
+// CHECK:STDOUT: define void @Foo(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: define void @Main() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @Foo(i32 1)
 // CHECK:STDOUT:   ret void
@@ -35,3 +35,7 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "params_one.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Foo", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

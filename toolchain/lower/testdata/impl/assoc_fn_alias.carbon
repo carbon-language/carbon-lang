@@ -30,14 +30,14 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'assoc_fn_alias.carbon'
 // CHECK:STDOUT: source_filename = "assoc_fn_alias.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F(ptr %self) {
+// CHECK:STDOUT: define i32 @F(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc22_16.2 = load i32, ptr %.loc22_16.1.n, align 4
 // CHECK:STDOUT:   ret i32 %.loc22_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Call(ptr %a) {
+// CHECK:STDOUT: define i32 @Call(ptr %a) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @F(ptr %a)
 // CHECK:STDOUT:   ret i32 %F.call
@@ -50,3 +50,7 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "assoc_fn_alias.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

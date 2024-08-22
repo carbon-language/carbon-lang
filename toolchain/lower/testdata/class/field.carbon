@@ -27,7 +27,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'field.carbon'
 // CHECK:STDOUT: source_filename = "field.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F(ptr %c) {
+// CHECK:STDOUT: define i32 @F(ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_13.1.b = getelementptr inbounds nuw { i32, ptr }, ptr %c, i32 0, i32 1
 // CHECK:STDOUT:   %.loc17_13.2 = load ptr, ptr %.loc17_13.1.b, align 8
@@ -36,7 +36,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   ret i32 %.loc17_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
+// CHECK:STDOUT: define i32 @main() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8
 // CHECK:STDOUT:   %.loc22_4.a = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 0
@@ -54,3 +54,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "field.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "main", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

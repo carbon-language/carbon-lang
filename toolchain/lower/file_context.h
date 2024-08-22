@@ -78,6 +78,11 @@ class FileContext {
   // declaration with no definition, does nothing.
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
+  // Build the DISubprogram metadata for the given function.
+  auto BuildDISubprogram(const SemIR::Function& function,
+                         const llvm::Function* llvm_function)
+      -> llvm::DISubprogram*;
+
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;

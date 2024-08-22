@@ -24,17 +24,17 @@ fn Bar() {
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Baz() {
+// CHECK:STDOUT: define void @Baz() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Baz.1() {
+// CHECK:STDOUT: define void @Baz.1() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Bar() {
+// CHECK:STDOUT: define void @Bar() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @Baz.1()
 // CHECK:STDOUT:   ret void
@@ -47,3 +47,8 @@ fn Bar() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "function.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Baz", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Baz.1", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Bar", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)

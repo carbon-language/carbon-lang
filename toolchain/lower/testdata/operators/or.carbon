@@ -18,17 +18,17 @@ fn Or() -> bool {
 // CHECK:STDOUT: ; ModuleID = 'or.carbon'
 // CHECK:STDOUT: source_filename = "or.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @F() {
+// CHECK:STDOUT: define i1 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @G() {
+// CHECK:STDOUT: define i1 @G() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Or() {
+// CHECK:STDOUT: define i1 @Or() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i1 @F()
 // CHECK:STDOUT:   %.loc15_14.3 = xor i1 %F.call, true
@@ -50,3 +50,8 @@ fn Or() -> bool {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "or.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Or", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
