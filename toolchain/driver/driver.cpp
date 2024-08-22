@@ -945,8 +945,7 @@ auto Driver::Compile(const CompileOptions& options,
     }
   }
   CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
-  Check::CheckParseTrees(llvm::MutableArrayRef(check_units),
-                         options.prelude_import, vlog_stream_);
+  Check::CheckParseTrees(check_units, options.prelude_import, vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {
