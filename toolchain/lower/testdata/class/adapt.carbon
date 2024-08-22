@@ -97,12 +97,12 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "adapt_class.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Make.1", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "GetB", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Use", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Make.1", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "GetB", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Use", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:
@@ -118,6 +118,6 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "adapt_int.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoStuff", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoStuff", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}

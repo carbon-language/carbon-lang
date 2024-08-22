@@ -98,8 +98,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "overloaded.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Op.1", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Calculate", scope: null, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Op.1", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Calculate", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)

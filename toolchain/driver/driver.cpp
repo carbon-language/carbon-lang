@@ -680,7 +680,7 @@ class Driver::CompilationUnit {
   }
 
   // Lower SemIR to LLVM IR.
-  auto RunLower() -> void {
+  auto RunLower(const Check::SemIRDiagnosticConverter& converter) -> void {
     CARBON_CHECK(sem_ir_);
 
     LogCall("Lower::LowerToLLVM", [&] {
@@ -689,8 +689,8 @@ class Driver::CompilationUnit {
       // producing textual LLVM IR.
       SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
       module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
-                                   input_filename_, *sem_ir_, &inst_namer,
-                                   vlog_stream_);
+                                   converter, input_filename_, *sem_ir_,
+                                   &inst_namer, vlog_stream_);
     });
     if (vlog_stream_) {
       CARBON_VLOG() << "*** llvm::Module ***\n";
@@ -968,8 +968,10 @@ auto Driver::Compile(const CompileOptions& options,
   }
 
   // Lower.
-  for (auto& unit : units) {
-    unit->RunLower();
+  for (const auto& unit : units) {
+    Check::SemIRDiagnosticConverter converter(node_converters,
+                                              &**unit->GetCheckUnit().sem_ir);
+    unit->RunLower(converter);
   }
   if (options.phase == CompileOptions::Phase::Lower) {
     return make_result();
