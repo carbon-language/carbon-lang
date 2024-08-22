@@ -24,7 +24,8 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
     // OK, `.base`.
-  } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+  } else if (node_kind != NodeKind::StructFieldDesignator &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
                                              NodeKind::IntLiteral)) {
     // OK, '.42'.
   } else if (paren_state != State::Invalid &&
