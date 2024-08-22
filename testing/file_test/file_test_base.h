@@ -87,6 +87,8 @@ class FileTestBase : public testing::Test {
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
 
+  // Returns a map of string replacements to implement `%{key}` -> `value` in
+  // arguments.
   virtual auto GetArgReplacements() -> llvm::StringMap<std::string> {
     return {};
   }
