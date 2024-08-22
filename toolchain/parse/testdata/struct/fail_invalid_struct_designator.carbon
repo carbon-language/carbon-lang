@@ -22,9 +22,11 @@ var x: i32 = {.7 = 8};
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: '7', has_error: yes},
+// CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '8'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

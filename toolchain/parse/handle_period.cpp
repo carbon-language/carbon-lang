@@ -18,25 +18,14 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   auto dot = context.ConsumeChecked(is_arrow ? Lex::TokenKind::MinusGreater
                                              : Lex::TokenKind::Period);
 
-  // Integer literals are invalid struct field designator
-  if (node_kind == NodeKind::StructFieldDesignator &&
-      context.PositionIs(Lex::TokenKind::IntLiteral)) {
-    CARBON_DIAGNOSTIC(ExpectedIdentifierForStructFieldDesignator, Error,
-                      "Expected identifier after `.`.");
-    context.emitter().Emit(*context.position(),
-                           ExpectedIdentifierForStructFieldDesignator);
-    state.has_error = true;
-    context.ReturnErrorOnState();
-    return;
-  }
-
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
                                       NodeKind::IdentifierName)) {
     // OK, `.` identifier.
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
     // OK, `.base`.
-  } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+  } else if (node_kind != NodeKind::StructFieldDesignator &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
                                              NodeKind::IntLiteral)) {
     // OK, '.42'.
   } else if (paren_state != State::Invalid &&
