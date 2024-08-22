@@ -189,7 +189,9 @@ def main() -> None:
 
     # Reset the order for the implementation children.
     nav_order[0] = 0
-    label_subdir("toolchain", next(nav_order), parent_title="Implementation")
+    label_subdir(
+        "toolchain/docs", next(nav_order), parent_title="Implementation"
+    )
     label_subdir("explorer", next(nav_order), parent_title="Implementation")
     label_subdir("testing", next(nav_order), parent_title="Implementation")
 
