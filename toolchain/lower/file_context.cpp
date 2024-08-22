@@ -362,7 +362,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
-auto FileContext::BuildDISubprogram(const Carbon::SemIR::Function& /*function*/,
+auto FileContext::BuildDISubprogram(const SemIR::Function& /*function*/,
                                     const llvm::Function* llvm_function)
     -> llvm::DISubprogram* {
   if (!di_compile_unit_) {
