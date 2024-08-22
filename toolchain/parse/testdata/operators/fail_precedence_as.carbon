@@ -16,16 +16,40 @@ fn F(n: i32) {
   // CHECK:STDERR:
   not true as bool;
 
-  // No ordering between most binary operators and `as`.
+  // No ordering between mathematical binary operators and `as`.
   // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   1 + 1 as i32;
   // CHECK:STDERR:         ^~
   // CHECK:STDERR:
   1 + 1 as i32;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   5 % 2 as i32;
   // CHECK:STDERR:         ^~
+  // CHECK:STDERR:
   5 % 2 as i32;
+
+  // No ordering between logical binary operators and `as`.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   3 as i32 and true;
+  // CHECK:STDERR:            ^~~
+  // CHECK:STDERR:
+  3 as i32 and true;
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:14: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   false or 4 as i32;
+  // CHECK:STDERR:              ^~
+  // CHECK:STDERR:
+  false or 4 as i32;
+
+  // No ordering between relational binary operators and `as`.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   6 as i32 == 7;
+  // CHECK:STDERR:            ^~
+  // CHECK:STDERR:
+  6 as i32 == 7;
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   8 <= 9 as i32;
+  // CHECK:STDERR:          ^~
+  8 <= 9 as i32;
 }
 
 // CHECK:STDOUT: - filename: fail_precedence_as.carbon
@@ -56,6 +80,32 @@ fn F(n: i32) {
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 26},
+// CHECK:STDOUT:               {kind: 'IntLiteral', text: '3'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'InfixOperatorAs', text: 'as', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ShortCircuitOperandAnd', text: 'and', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'BoolLiteralTrue', text: 'true'},
+// CHECK:STDOUT:         {kind: 'ShortCircuitOperatorAnd', text: 'and', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 7},
+// CHECK:STDOUT:               {kind: 'BoolLiteralFalse', text: 'false'},
+// CHECK:STDOUT:             {kind: 'ShortCircuitOperandOr', text: 'or', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '4'},
+// CHECK:STDOUT:           {kind: 'ShortCircuitOperatorOr', text: 'or', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 7},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '6'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'InfixOperatorAs', text: 'as', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'IntLiteral', text: '7'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorEqualEqual', text: '==', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '8'},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '9'},
+// CHECK:STDOUT:           {kind: 'InfixOperatorLessEqual', text: '<=', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 52},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

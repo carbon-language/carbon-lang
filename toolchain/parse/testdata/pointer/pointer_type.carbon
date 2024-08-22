@@ -9,7 +9,9 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/pointer_type.carbon
 
 fn F(p: i32*) -> i32* {
-  return p;
+  f32* + 0;
+  1 * bool* * 2;
+  return 3 * i32* * *p;
 }
 
 var T: type = if true then i32* else f64*;
@@ -29,10 +31,28 @@ var T: type = if true then i32* else f64*;
 // CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 12},
+// CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f32'},
+// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorPlus', text: '+', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
+// CHECK:STDOUT:               {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'InfixOperatorStar', text: '*', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '3'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'InfixOperatorStar', text: '*', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'p'},
+// CHECK:STDOUT:           {kind: 'PrefixOperatorStar', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 34},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'T'},
 // CHECK:STDOUT:         {kind: 'TypeTypeLiteral', text: 'type'},

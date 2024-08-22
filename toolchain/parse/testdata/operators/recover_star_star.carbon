@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_precedence_star_star.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/recover_star_star.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_precedence_star_star.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/recover_star_star.carbon
 
-// CHECK:STDERR: fail_precedence_star_star.carbon:[[@LINE+3]]:16: ERROR: Parentheses are required to disambiguate operator precedence.
+// CHECK:STDERR: recover_star_star.carbon:[[@LINE+3]]:16: ERROR: Whitespace missing after binary operator.
 // CHECK:STDERR: var n: i8 = n* *p;
 // CHECK:STDERR:                ^
 var n: i8 = n* *p;
 
-// CHECK:STDOUT: - filename: fail_precedence_star_star.carbon
+// CHECK:STDOUT: - filename: recover_star_star.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
@@ -24,7 +24,7 @@ var n: i8 = n* *p;
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
 // CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:       {kind: 'InfixOperatorStar', text: '*', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'InfixOperatorStar', text: '*', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
