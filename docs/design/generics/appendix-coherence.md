@@ -237,6 +237,6 @@ either:
     (though perhaps with a monomorphization cost instead of a runtime cost).
 
 In addition, this
-[can create unsoundness when combined with dynamic downcasts and a more complex, less predictable implementation model](https://forums.swift.org/t/retroactive-conformances-dynamic-downcast-type-unsoundness/73890).
+can create unsoundness when combined with dynamic downcasts and a more complex, less predictable implementation model as [discussed in Swift](https://forums.swift.org/t/retroactive-conformances-dynamic-downcast-type-unsoundness/73890).
 This approach would be particularly complex in Carbon due to supporting
 [impl specialization](terminology.md#specialization).
