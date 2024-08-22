@@ -123,6 +123,11 @@ Supported comment markers are:
 
         Replaced with `${TEST_TMPDIR}/temp_file`.
 
+    -   `%{identifier}`
+
+        Replaces some implementation-specific identifier with a value. (Mappings
+        provided by way of an optional `MyFileTest::GetArgReplacements`)
+
     ARGS can be specified at most once. If not provided, the FileTestBase child
     is responsible for providing default arguments.
 
