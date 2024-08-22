@@ -379,6 +379,7 @@ auto FileContext::BuildDISubprogram(const Carbon::SemIR::Function& /*function*/,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
+
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
   return llvm::ArrayType::get(
