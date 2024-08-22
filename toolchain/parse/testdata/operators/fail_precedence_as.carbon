@@ -40,7 +40,7 @@ fn F(n: i32) {
   // CHECK:STDERR:
   false or 4 as i32;
 
-  // No ordering between comparison binary operators and `as`.
+  // No ordering between relational binary operators and `as`.
   // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   6 as i32 == 7;
   // CHECK:STDERR:            ^~
