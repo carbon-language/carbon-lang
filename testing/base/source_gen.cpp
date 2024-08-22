@@ -243,7 +243,7 @@ auto SourceGen::GenerateRandomIdentifier(
   llvm::ArrayRef<char> start_chars = IdentifierStartChars();
   llvm::ArrayRef<char> chars = IdentifierChars();
 
-  auto ident = llvm::StringRef(dest_storage.data(), dest_storage.size());
+  llvm::StringRef ident(dest_storage.data(), dest_storage.size());
   do {
     dest_storage[0] =
         start_chars[absl::Uniform<int>(rng_, 0, start_chars.size())];

@@ -2059,9 +2059,9 @@ auto ImportImpls(Context& context) -> void {
       continue;
     }
 
-    auto import_ir_id = SemIR::ImportIRId(import_index);
+    SemIR::ImportIRId import_ir_id(import_index);
     for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
-      auto impl_id = SemIR::ImplId(impl_index);
+      SemIR::ImplId impl_id(impl_index);
       ImportImpl(context, import_ir_id, *import_ir.sem_ir, impl_id);
     }
   }

@@ -39,7 +39,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
 
   // Build each function scope.
   for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
-    auto fn_id = FunctionId(i);
+    FunctionId fn_id(i);
     auto fn_scope = GetScopeFor(fn_id);
     // TODO: Provide a location for the function for use as a
     // disambiguator.
@@ -68,7 +68,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
 
   // Build each class scope.
   for (auto [i, class_info] : llvm::enumerate(sem_ir.classes().array_ref())) {
-    auto class_id = ClassId(i);
+    ClassId class_id(i);
     auto class_scope = GetScopeFor(class_id);
     // TODO: Provide a location for the class for use as a disambiguator.
     auto class_loc = Parse::NodeId::Invalid;
@@ -83,7 +83,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   // Build each interface scope.
   for (auto [i, interface_info] :
        llvm::enumerate(sem_ir.interfaces().array_ref())) {
-    auto interface_id = InterfaceId(i);
+    InterfaceId interface_id(i);
     auto interface_scope = GetScopeFor(interface_id);
     // TODO: Provide a location for the interface for use as a disambiguator.
     auto interface_loc = Parse::NodeId::Invalid;
@@ -98,7 +98,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
 
   // Build each impl scope.
   for (auto [i, impl_info] : llvm::enumerate(sem_ir.impls().array_ref())) {
-    auto impl_id = ImplId(i);
+    ImplId impl_id(i);
     auto impl_scope = GetScopeFor(impl_id);
     // TODO: Provide a location for the impl for use as a disambiguator.
     auto impl_loc = Parse::NodeId::Invalid;
