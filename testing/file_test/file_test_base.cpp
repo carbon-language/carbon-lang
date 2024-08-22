@@ -332,7 +332,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 auto FileTestBase::DoArgReplacements(
     llvm::SmallVector<std::string>& test_args,
     const llvm::SmallVector<TestFile>& test_files) -> ErrorOr<Success> {
-  auto replacements = GetReplacements();
+  auto replacements = GetArgReplacements();
   for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
     auto percent = it->find("%");
     if (percent == std::string::npos) {

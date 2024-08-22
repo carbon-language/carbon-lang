@@ -87,7 +87,9 @@ class FileTestBase : public testing::Test {
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
 
-  virtual auto GetReplacements() -> llvm::StringMap<std::string> { return {}; }
+  virtual auto GetArgReplacements() -> llvm::StringMap<std::string> {
+    return {};
+  }
 
   // Returns a regex to match the default file when a line may not be present.
   // May return nullptr if unused. If GetLineNumberReplacements returns an entry
