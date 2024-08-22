@@ -941,8 +941,15 @@ auto Driver::Compile(const CompileOptions& options,
       check_units.push_back(unit->GetCheckUnit());
     }
   }
+  llvm::SmallVector<Parse::NodeLocConverter> node_converters;
+  node_converters.reserve(check_units.size());
+  for (auto& unit : check_units) {
+    node_converters.emplace_back(unit.tokens, unit.tokens->source().filename(),
+                                 unit.get_parse_tree_and_subtrees);
+  }
   CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
-  Check::CheckParseTrees(check_units, options.prelude_import, vlog_stream_);
+  Check::CheckParseTrees(check_units, node_converters, options.prelude_import,
+                         vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {

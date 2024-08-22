@@ -61,11 +61,10 @@ struct UnitInfo {
     llvm::SmallVector<Import> imports;
   };
 
-  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit)
+  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit,
+                    Parse::NodeLocConverter& converter)
       : check_ir_id(check_ir_id),
         unit(&unit),
-        converter(unit.tokens, unit.tokens->source().filename(),
-                  unit.get_parse_tree_and_subtrees),
         err_tracker(*unit.consumer),
         emitter(converter, err_tracker) {}
 
@@ -73,7 +72,6 @@ struct UnitInfo {
   Unit* unit;
 
   // Emitter information.
-  Parse::NodeLocConverter converter;
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLoc> emitter;
 
@@ -834,14 +832,14 @@ static auto DiagnoseMissingDefinitions(Context& context,
 // NOLINTNEXTLINE(readability-function-size)
 static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
                            ErrorTrackingDiagnosticConsumer& err_tracker,
-                           Parse::NodeLocConverter* converter) -> bool {
+                           Parse::NodeLocConverter& converter) -> bool {
   NodeIdTraversal traversal(context, vlog_stream);
 
   Parse::NodeId node_id = Parse::NodeId::Invalid;
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto loc = converter->ConvertLoc(
+    auto loc = converter.ConvertLoc(
         node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
     loc.FormatLocation(output);
     output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
@@ -873,7 +871,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 
 // Produces and checks the IR for the provided Parse::Tree.
 static auto CheckParseTree(
-    llvm::MutableArrayRef<Parse::NodeLocConverter*> node_converters,
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
   auto package_id = IdentifierId::Invalid;
@@ -907,7 +905,7 @@ static auto CheckParseTree(
   ImportImpls(context);
 
   if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
-                      &unit_info.converter)) {
+                      node_converters[unit_info.check_ir_id.index])) {
     context.sem_ir().set_has_errors(true);
     return;
   }
@@ -1190,19 +1188,15 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::raw_ostream* vlog_stream) -> void {
-  // Prepare diagnostic emitters in case we run into issues during package
-  // checking.
-  //
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
+    bool prelude_import, llvm::raw_ostream* vlog_stream) -> void {
   // UnitInfo is big due to its SmallVectors, so we default to 0 on the stack.
   llvm::SmallVector<UnitInfo, 0> unit_infos;
   unit_infos.reserve(units.size());
-  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
-  node_converters.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
-    unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
-    node_converters.push_back(&unit_infos.back().converter);
+    unit_infos.emplace_back(SemIR::CheckIRId(i), unit, node_converters[i]);
   }
 
   Map<ImportKey, UnitInfo*> api_map =
