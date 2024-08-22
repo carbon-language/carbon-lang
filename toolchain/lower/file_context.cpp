@@ -39,7 +39,6 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
       vlog_stream_(vlog_stream) {
   CARBON_CHECK(!sem_ir.has_errors())
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";
-  (void)converter_;
 }
 
 // TODO: Move this to lower.cpp.
