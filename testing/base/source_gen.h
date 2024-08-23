@@ -230,9 +230,9 @@ class SourceGen {
   // `GetShuffledIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
-  // useful when the identifiers will be used in multiple different ways and
-  // only then shuffled, or if there is already a post-processing step to
-  // shuffle things which is very expensive in debug builds.
+  // useful when deterministic access to the identifiers is needed to avoid
+  // introducing noise, or if there is already a post-processing step to shuffle
+  // things, since shuffling is very expensive in debug builds.
   auto GetIdentifiers(int number, int min_length = 1, int max_length = 64,
                       bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
@@ -241,9 +241,10 @@ class SourceGen {
   // as `GetShuffledUniqueIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
-  // useful when the identifiers will be used in multiple different ways and
-  // only then shuffled, or if there is already a post-processing step to
-  // shuffle things which is very expensive in debug builds.
+```suggestion
+  // useful when deterministic access to the identifiers is needed to avoid
+  // introducing noise, or if there is already a post-processing step to shuffle
+  // things, since shuffling is very expensive in debug builds.
   auto GetUniqueIdentifiers(int number, int min_length = 1, int max_length = 64,
                             bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;

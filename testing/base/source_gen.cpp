@@ -28,8 +28,7 @@ constexpr static int MinMemberNameLength = 4;
 
 // The shuffled state used to generate some number of classes.
 //
-// This state encodes all the shuffled entropy used for generating a number of
-// class definitions. While generating definitions, the state here will be
+// This state encodes everything used to generate class definitions. The state will be
 // consumed until empty.
 //
 // Detailed comments for out-of-line methods are on their definitions.
@@ -209,7 +208,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   // Now append the remainder number of class names. This is where the class
   // names being un-shuffled is essential. We're going to have one extra
   // reference to some fraction of the class names and we want that to be a
-  // stable fraction.
+  // stable subset.
   type_names_.append(class_names_.begin(),
                      class_names_.begin() + (num_declared_types % num_classes));
   CARBON_CHECK(static_cast<int>(type_names_.size()) == num_declared_types);
@@ -218,8 +217,8 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   // type. This isn't exact however, so we'll both clamp the number of copies to
   // not overshoot and may end up with a remainder.
   for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
-    // For very small numbers of types we may exhaust the fixed types. We don't
-    // try to scale the weights down for simplicity, we just cut off early.
+    // For very small `num_types`, we may exhaust the fixed types. For
+    // simplicity, we don't try to scale the weights down, we just cut off early.
     if (static_cast<int>(type_names_.size()) == num_types) {
       break;
     }
@@ -235,9 +234,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   // through the fixed types without any weighting. With reasonably large
   // numbers of types this won't distort the distribution in an interesting way
   // and is simpler than trying to scale the distribution down.
-  for ([[maybe_unused]] auto _ :
-       llvm::seq(1 + (num_types - type_names_.size()) /
-                         type_use_params.fixed_type_weights.size())) {
+  while (static_cast<int>(type_names_.size()) < num_types) {
     for (const auto& fixed_type_weight :
          llvm::ArrayRef(type_use_params.fixed_type_weights)
              .take_front(num_types - type_names_.size())) {
@@ -852,9 +849,8 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     os << " public:\n";
   }
 
-  // Collect field types before any others as those can't be the class we're
-  // currently declaring. We do this before inserting that type into the valid
-  // set.
+  // Field types can't be the class we're currently declaring. We enforce this
+  // by collecting them before inserting that type into the valid set.
   llvm::SmallVector<llvm::StringRef> field_type_names;
   field_type_names.reserve(params.private_field_decls);
   for ([[maybe_unused]] int _ : llvm::seq(params.private_field_decls)) {
@@ -862,7 +858,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   }
 
   // Mark this class as now a valid type now that field type names have been
-  // collected. We can self-reference from other types within the definition.
+  // collected. We can reference this class from functions and methods within the definition.
   state.AddValidTypeName(name);
 
   UniqueIdentifierPopper unique_member_names(*this, state.member_names());
