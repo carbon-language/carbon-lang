@@ -127,17 +127,17 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
   // Returns whether this represents a constant. Requires is_valid.
   auto is_constant() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return *this != ConstantId::NotConstant;
   }
   // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return index >= 0;
   }
 
@@ -174,14 +174,14 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
   constexpr auto template_inst_id() const -> InstId {
-    CARBON_CHECK(is_template());
+    CARBON_DCHECK(is_template());
     return InstId(index);
   }
 
   // Returns the symbolic constant index that describes this symbolic constant
   // value. Requires `is_symbolic()`.
   constexpr auto symbolic_index() const -> int32_t {
-    CARBON_CHECK(is_symbolic());
+    CARBON_DCHECK(is_symbolic());
     return FirstSymbolicIndex - index;
   }
 
