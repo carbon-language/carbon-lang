@@ -28,8 +28,8 @@ constexpr static int MinMemberNameLength = 4;
 
 // The shuffled state used to generate some number of classes.
 //
-// This state encodes everything used to generate class definitions. The state will be
-// consumed until empty.
+// This state encodes everything used to generate class definitions. The state
+// will be consumed until empty.
 //
 // Detailed comments for out-of-line methods are on their definitions.
 class SourceGen::ClassGenState {
@@ -219,7 +219,8 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   // not overshoot and may end up with a remainder.
   for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
     // For very small `num_types`, we may exhaust the fixed types. For
-    // simplicity, we don't try to scale the weights down, we just cut off early.
+    // simplicity, we don't try to scale the weights down, we just cut off
+    // early.
     if (static_cast<int>(type_names_.size()) == num_types) {
       break;
     }
@@ -859,7 +860,8 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   }
 
   // Mark this class as now a valid type now that field type names have been
-  // collected. We can reference this class from functions and methods within the definition.
+  // collected. We can reference this class from functions and methods within
+  // the definition.
   state.AddValidTypeName(name);
 
   UniqueIdentifierPopper unique_member_names(*this, state.member_names());
