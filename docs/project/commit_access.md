@@ -30,8 +30,10 @@ review noted a minor typo, or because there is a conflict that the PR author
 needs to resolve before merging.
 
 Developers with commit access are expected to make reasonable choices about when
-to review and approve PRs for others, and what changes to make to their own PRs
-without asking for another round of review.
+to approve or merge PRs for others -- generally, the change either needs to be trivially understood without context on the code in question (like a cleanup, typo fix, etc), or the developer should have reasonable context on the code in question. If in doubt, feel free to review but leave approving or merging for someone else.
+
+Similarly, developers with commit access are expected to make reasonable choices about what changes to make to their own PRs
+without asking for another round of review prior to merge, even after approval. And again, if in doubt, ask for review.
 
 ## Getting access
 
