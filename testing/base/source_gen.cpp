@@ -163,22 +163,20 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
 // declared, but mixing in `i32` and other builtin types.
 //
 // We combine a list of fixed types in the `type_use_params` with the list of
-// (un-shuffled) class names that will be defined to form the spelling of all
+// class names that will be defined to form the spelling of all
 // the referenced types. The `type_use_params` provides weights for each fixed
 // type as well as an overall weight for referencing class names that are being
 // declared. We build a set of type references so that its histogram will
 // roughly match these weights.
 //
-// For the fixed types, we assume each type has a spelling that will be valid
-// provided by params for both Carbon and C++.
+// For each of the fixed types, `type_use_params` provides a spelling for both Carbon and C++.
 //
-// For referencing declared class names, we use the un-shuffled sequence, and
-// evenly distribute our references across it to the extent possible.
+// We distribute our references to declared class names evenly to the extent possible.
 //
-// Once all of the references are formed, we randomly shuffle the entire
-// sequence to provide an unpredictable order of reference, and also shuffle the
-// declared class names now that we're not sampling from that list to build the
-// references.
+// Before all the references are formed, the class names are kept their original unshuffled order.
+// This ensures that any uneven sampling of names is done deterministically. At the end, we
+// randomly shuffle the sequences of both the declared class names and type references
+// to provide an unpredictable order in the generated output.
 auto SourceGen::ClassGenState::BuildClassAndTypeNames(
     SourceGen& gen, int num_classes, int num_types,
     const TypeUseParams& type_use_params) -> void {
