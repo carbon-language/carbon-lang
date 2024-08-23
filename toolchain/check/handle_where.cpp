@@ -8,36 +8,36 @@
 
 namespace Carbon::Check {
 
-auto HandleWhereIntroducer(Context& context, Parse::WhereIntroducerId node_id)
+auto HandleParseNode(Context& context, Parse::WhereIntroducerId node_id)
     -> bool {
   return context.TODO(node_id, "HandleWhereIntroducer");
 }
 
-auto HandleDotSelf(Context& context, Parse::DotSelfId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::DotSelfId node_id) -> bool {
   return context.TODO(node_id, "HandleDotSelf");
 }
 
-auto HandleRequirementAssign(Context& context,
-                             Parse::RequirementAssignId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::RequirementAssignId node_id)
+    -> bool {
   return context.TODO(node_id, "HandleRequirementAssign");
 }
 
-auto HandleRequirementEquals(Context& context,
-                             Parse::RequirementEqualsId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::RequirementEqualsId node_id)
+    -> bool {
   return context.TODO(node_id, "HandleRequirementEquals");
 }
 
-auto HandleRequirementImpls(Context& context, Parse::RequirementImplsId node_id)
+auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     -> bool {
   return context.TODO(node_id, "HandleRequirementImpls");
 }
 
-auto HandleRequirementAnd(Context& context, Parse::RequirementAndId node_id)
+auto HandleParseNode(Context& context, Parse::RequirementAndId node_id)
     -> bool {
   return context.TODO(node_id, "HandleRequirementAnd");
 }
 
-auto HandleWhereExpr(Context& context, Parse::WhereExprId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   return context.TODO(node_id, "HandleWhereExpr");
 }
 
