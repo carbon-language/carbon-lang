@@ -175,7 +175,8 @@ written in the following style:
 -   Start diagnostics with a capital letter or quoted code, and end them with a
     period.
 
--   Quoted code should be enclosed in backticks, for example: `"{0} is bad."`
+-   Quoted code should be enclosed in backticks, for example:
+    ``"`{0}` is bad."``
 
 -   Phrase diagnostics as bullet points rather than full sentences. Leave out
     articles unless they're necessary for clarity.

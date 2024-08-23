@@ -99,23 +99,28 @@ fn foo() -> f64 {
 
 The node order is (with indentation to indicate nesting):
 
+<!-- Prevent prettier from changing indents. -->
+<!-- prettier-ignore-start -->
+
 ```yaml
 [
-    { kind: 'FileStart', text: '' },
-    { kind: 'FunctionIntroducer', text: 'fn' },
-    { kind: 'Name', text: 'foo' },
-    { kind: 'ParamListStart', text: '(' },
-    { kind: 'ParamList', text: ')', subtree_size: 2 },
-    { kind: 'Literal', text: 'f64' },
-    { kind: 'ReturnType', text: '->', subtree_size: 2 },
-    { kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7 },
-    { kind: 'ReturnStatementStart', text: 'return' },
-    { kind: 'Literal', text: '42' },
-    { kind: 'ReturnStatement', text: ';', subtree_size: 3 },
-    { kind: 'FunctionDefinition', text: '}', subtree_size: 11 },
-    { kind: 'FileEnd', text: '' },
+  {kind: 'FileStart', text: ''},
+      {kind: 'FunctionIntroducer', text: 'fn'},
+      {kind: 'Name', text: 'foo'},
+        {kind: 'ParamListStart', text: '('},
+      {kind: 'ParamList', text: ')', subtree_size: 2},
+        {kind: 'Literal', text: 'f64'},
+      {kind: 'ReturnType', text: '->', subtree_size: 2},
+    {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
+      {kind: 'ReturnStatementStart', text: 'return'},
+      {kind: 'Literal', text: '42'},
+    {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+  {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
+  {kind: 'FileEnd', text: ''},
 ]
 ```
+
+<!-- prettier-ignore-end -->
 
 In this example, `FileStart`, `FunctionDefinition`, and `FileEnd` are "root"
 nodes for the tree. Function components are children of `FunctionDefinition`.
