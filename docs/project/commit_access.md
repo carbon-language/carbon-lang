@@ -57,7 +57,7 @@ Access is granted when the invitation is accepted.
 
 We'll periodically remove commit access from contributors who have been idle for
 over 6 months. We'll use a combination of sources to determine what "idle"
-means, including whether a developer has been either sending or reviewing PRs.
+means, including whether a developer has been either sending or reviewing PRs. Developers should always ask for it to be restored if they plan to start contributing again or come back from a break. Any relevant past contributions will still apply and allow it to be restored trivially.
 
 For example, for `jonmeow`, GitHub searches (defaulting to PRs for convenience,
 but other types are included):
