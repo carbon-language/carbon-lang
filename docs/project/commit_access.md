@@ -43,10 +43,8 @@ style and structure of the codebase. Access will typically be granted when
 developers have contributed several PRs and are expecting to continue making
 more.
 
-Typically someone who has been doing reviews for a contributor will nominate,
-and contributors are encouraged to ask a reviewer to nominate if needed.
-Nominations will be reviewed by at least one lead, and a lead's approval will
-lead to access.
+After a few non-trivial PRs are merged, contributors should ask a reviewer to nominate for commit access if they plan to keep contributing. Reviewers can also directly suggest and nominate someone.
+Nominations need to be approved by at least one lead.
 
 When approved, an invitation will be sent to join the
 [Commit access team](https://github.com/orgs/carbon-language/teams/commit-access)
