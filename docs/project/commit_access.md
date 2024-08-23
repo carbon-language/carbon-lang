@@ -29,8 +29,10 @@ The main thing commit access allows is for developers to merge PRs into the main
 still need review, and often a reviewer with commit access handles the merge. It
 also gives the ability to [approve and merge changes](code_review.md).
 
-Note that developers with commit access are not required to do reviews or help with approving and merging PRs. It can still be useful to allow authors to fix trivial PR comments after approval and then merge their own PR, for example because the
-review noted a minor typo, or to resolve merge conflicts.
+Note that developers with commit access are not required to do reviews or help
+with approving and merging PRs. It can still be useful to allow authors to fix
+trivial PR comments after approval and then merge their own PR, for example
+because the review noted a minor typo, or to resolve merge conflicts.
 
 Developers with commit access are expected to make reasonable choices about when
 to approve or merge PRs for others -- generally, the change either needs to be
