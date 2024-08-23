@@ -215,18 +215,9 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   CARBON_CHECK(static_cast<int>(type_names_.size()) == num_declared_types);
 
   // Use each fixed type weight to append the expected number of copies of that
-  // type. This isn't exact however, so we'll both clamp the number of copies to
-  // not overshoot and may end up with a remainder.
+  // type. This isn't exact however, and is designed to stop short.
   for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
-    // For very small `num_types`, we may exhaust the fixed types. For
-    // simplicity, we don't try to scale the weights down, we just cut off
-    // early.
-    if (static_cast<int>(type_names_.size()) == num_types) {
-      break;
-    }
-    int num_fixed_type =
-        std::min<int>(num_types - type_names_.size(),
-                      num_types * fixed_type_weight.weight / type_weight_sum);
+    int num_fixed_type = num_types * fixed_type_weight.weight / type_weight_sum;
     type_names_.append(num_fixed_type, gen.IsCpp()
                                            ? fixed_type_weight.cpp_spelling
                                            : fixed_type_weight.carbon_spelling);
