@@ -21,8 +21,9 @@
 namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
-                         bool include_debug_info, llvm::StringRef module_name,
-                         const SemIR::File& sem_ir,
+                         bool include_debug_info,
+                         const Check::SemIRDiagnosticConverter& converter,
+                         llvm::StringRef module_name, const SemIR::File& sem_ir,
                          const SemIR::InstNamer* inst_namer,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
@@ -32,6 +33,7 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
           include_debug_info
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
+      converter_(converter),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -362,18 +364,21 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
-auto FileContext::BuildDISubprogram(const SemIR::Function& /*function*/,
+auto FileContext::BuildDISubprogram(const SemIR::Function& function,
                                     const llvm::Function* llvm_function)
     -> llvm::DISubprogram* {
   if (!di_compile_unit_) {
     return nullptr;
   }
+  auto loc = converter_.ConvertLoc(
+      function.definition_id,
+      [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
   // FIXME: Add more details here, including mangled name, real subroutine type
   // (once type information is built), etc.
   return di_builder_.createFunction(
       di_compile_unit_, llvm_function->getName(), /*LinkageName=*/"",
-      /*File=*/nullptr,
-      /*LineNo=*/0,
+      /*File=*/di_builder_.createFile(loc.filename, ""),
+      /*LineNo=*/loc.line_number,
       di_builder_.createSubroutineType(
           di_builder_.getOrCreateTypeArray(std::nullopt)),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,

@@ -9,6 +9,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -18,6 +19,7 @@ namespace Carbon::Lower {
 class FileContext {
  public:
   explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
+                       const Check::SemIRDiagnosticConverter& converter,
                        llvm::StringRef module_name, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
@@ -101,6 +103,8 @@ class FileContext {
 
   // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
+
+  const Check::SemIRDiagnosticConverter& converter_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
