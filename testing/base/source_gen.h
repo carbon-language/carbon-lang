@@ -105,14 +105,10 @@ class SourceGen {
   // distribution of different type options, and try to fit that as closely as
   // possible.
   //
-  // We also control the percentage of functions with a return type (as opposed
-  // to void), and the percentage of declared type references that should be
-  // pointers as opposed to values.
-  //
-  // The default weights in the histogram and percentages were arbitrarily
-  // selected based on intuition about importance for benchmarking and not based
-  // on any measurement. We arrange for them to sum to 100 so that the weights
-  // can be view as %s of the type uses.
+  // The default weights in the histogram were arbitrarily selected based on
+  // intuition about importance for benchmarking and not based on any
+  // measurement. We arrange for them to sum to 100 so that the weights can be
+  // view as %s of the type uses.
   //
   // The specific builtin type options used in the weights were also selected
   // arbitrarily.

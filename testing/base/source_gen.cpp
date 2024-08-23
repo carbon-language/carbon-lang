@@ -160,24 +160,25 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
 }
 
 // We want to synthesize shuffled type names from the class names that will be
-// declared, but mixing in `i32` and other builtin types. A somewhat hack-y
-// approach, but currently the strategy is to map every type shorter than the
-// `MinClassNameLength` to one of our builtin types and the longer names to
-// class names in the state.
+// declared, but mixing in `i32` and other builtin types.
 //
-// We use non-unique random identifiers to get a sequence of lengths, and map
-// each identifier to one of our desired types as above. This allows repetition
-// as the identifiers repeat. We can also create a larger pool of builtin type
-// spellings eventually and use the different short identifier spellings to
-// select from this pool.
+// We combine a list of fixed types in the `type_use_params` with the list of
+// (un-shuffled) class names that will be defined to form the spelling of all
+// the referenced types. The `type_use_params` provides weights for each fixed
+// type as well as an overall weight for referencing class names that are being
+// declared. We build a set of type references so that its histogram will
+// roughly match these weights.
 //
-// When searching for a given length, we allow wrapping around the class names.
-// This may map several random identifiers to the same declared class name.
+// For the fixed types, we assume each type has a spelling that will be valid
+// provided by params for both Carbon and C++.
 //
-// TODO: Variation in how many times a name is repeated may introduce some
-// unnecessary noise, we should consider a fixed distribution of duplication
-// rather than just accepting whatever occurs randomly. Currently this only
-// stabilizes the total text size resulting from referencing prior type names.
+// For referencing declared class names, we use the un-shuffled sequence, and
+// evenly distribute our references across it to the extent possible.
+//
+// Once all of the references are formed, we randomly shuffle the entire
+// sequence to provide an unpredictable order of reference, and also shuffle the
+// declared class names now that we're not sampling from that list to build the
+// references.
 auto SourceGen::ClassGenState::BuildClassAndTypeNames(
     SourceGen& gen, int num_classes, int num_types,
     const TypeUseParams& type_use_params) -> void {
