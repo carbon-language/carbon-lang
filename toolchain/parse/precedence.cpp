@@ -62,9 +62,9 @@ struct OperatorPriorityTable {
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan(
         {Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
-        {Relational});
+        {Relational, Where});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan({As, LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({As, LogicalAnd, LogicalOr, Where}, {If});
     MarkHigherThan({If}, {Assignment});
     MarkHigherThan({Assignment, IncrementDecrement}, {Lowest});
 
