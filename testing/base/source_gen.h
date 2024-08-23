@@ -237,7 +237,6 @@ class SourceGen {
   // as `GetShuffledUniqueIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
-```suggestion
   // useful when deterministic access to the identifiers is needed to avoid
   // introducing noise, or if there is already a post-processing step to shuffle
   // things, since shuffling is very expensive in debug builds.
