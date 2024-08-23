@@ -22,16 +22,16 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G(ptr %p) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_10.2 = load i32, ptr %p, align 4
-// CHECK:STDOUT:   ret i32 %.loc12_10.2
+// CHECK:STDOUT:   %.loc12_10.2 = load i32, ptr %p, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc12_10.2, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F() !dbg !7 {
+// CHECK:STDOUT: define i32 @F() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4
-// CHECK:STDOUT:   %G.call = call i32 @G(ptr %n.var)
-// CHECK:STDOUT:   ret i32 %G.call
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !11
+// CHECK:STDOUT:   %G.call = call i32 @G(ptr %n.var), !dbg !12
+// CHECK:STDOUT:   ret i32 %G.call, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -44,4 +44,10 @@ fn F() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 7, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 3, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 17, column: 10, scope: !9)
+// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 3, scope: !9)

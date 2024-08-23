@@ -21,15 +21,15 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Echo(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %a
+// CHECK:STDOUT:   ret i32 %a, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !7 {
+// CHECK:STDOUT: define void @Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca i32, align 4
-// CHECK:STDOUT:   %Echo.call = call i32 @Echo(i32 1)
-// CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !9
+// CHECK:STDOUT:   %Echo.call = call i32 @Echo(i32 1), !dbg !10
+// CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4, !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -42,4 +42,9 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Echo", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 7, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 16, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 3, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 1, scope: !8)

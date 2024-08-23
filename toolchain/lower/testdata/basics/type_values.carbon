@@ -30,17 +30,17 @@ fn F64() -> type {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %type @I32() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer
+// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @I48() !dbg !7 {
+// CHECK:STDOUT: define %type @I48() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer
+// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @F64() !dbg !8 {
+// CHECK:STDOUT: define %type @F64() !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer
+// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -53,5 +53,8 @@ fn F64() -> type {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "I32", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "I48", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F64", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "I48", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F64", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)

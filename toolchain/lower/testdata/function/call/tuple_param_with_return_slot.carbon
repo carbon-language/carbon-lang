@@ -23,25 +23,25 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_12.tuple.index = extractvalue { i32 } %b, 0
-// CHECK:STDOUT:   %.loc12_17.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0
-// CHECK:STDOUT:   %.loc12_17.tuple.index.load = load i32, ptr %.loc12_17.tuple.index, align 4
-// CHECK:STDOUT:   %.loc12_22.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1
-// CHECK:STDOUT:   %.loc12_22.tuple.index.load = load i32, ptr %.loc12_22.tuple.index, align 4
-// CHECK:STDOUT:   %.loc12_24.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %.loc12_12.tuple.index, ptr %.loc12_24.2.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc12_24.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %.loc12_17.tuple.index.load, ptr %.loc12_24.4.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc12_24.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2
-// CHECK:STDOUT:   store i32 %.loc12_22.tuple.index.load, ptr %.loc12_24.6.tuple.elem, align 4
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %.loc12_12.tuple.index = extractvalue { i32 } %b, 0, !dbg !7
+// CHECK:STDOUT:   %.loc12_17.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc12_17.tuple.index.load = load i32, ptr %.loc12_17.tuple.index, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc12_22.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc12_22.tuple.index.load = load i32, ptr %.loc12_22.tuple.index, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc12_24.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_12.tuple.index, ptr %.loc12_24.2.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc12_24.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_17.tuple.index.load, ptr %.loc12_24.4.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc12_24.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_22.tuple.index.load, ptr %.loc12_24.6.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !7 {
+// CHECK:STDOUT: define void @Main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_4.1.temp = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   call void @F(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.3.loc16_4.4)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %.loc16_4.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
+// CHECK:STDOUT:   call void @F(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.3.loc16_4.4), !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -57,4 +57,11 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 11, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 16, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 21, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 10, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 16, column: 3, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 1, scope: !12)

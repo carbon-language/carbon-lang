@@ -26,12 +26,12 @@ fn G(T: J) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G() !dbg !7 {
+// CHECK:STDOUT: define void @G() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -44,4 +44,6 @@ fn G(T: J) {}
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 19, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 1, scope: !8)

@@ -20,29 +20,29 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 1
+// CHECK:STDOUT:   ret i32 1, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @G() !dbg !7 {
+// CHECK:STDOUT: define i32 @G() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 2
+// CHECK:STDOUT:   ret i32 2, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Select(i1 %b) !dbg !8 {
+// CHECK:STDOUT: define i32 @Select(i1 %b) !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %if.expr.else
+// CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %if.expr.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then:                                     ; preds = %entry
-// CHECK:STDOUT:   %F.call = call i32 @F()
-// CHECK:STDOUT:   br label %if.expr.result
+// CHECK:STDOUT:   %F.call = call i32 @F(), !dbg !12
+// CHECK:STDOUT:   br label %if.expr.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.else:                                     ; preds = %entry
-// CHECK:STDOUT:   %G.call = call i32 @G()
-// CHECK:STDOUT:   br label %if.expr.result
+// CHECK:STDOUT:   %G.call = call i32 @G(), !dbg !13
+// CHECK:STDOUT:   br label %if.expr.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.result:                                   ; preds = %if.expr.else, %if.expr.then
 // CHECK:STDOUT:   %0 = phi i32 [ %F.call, %if.expr.then ], [ %G.call, %if.expr.else ]
-// CHECK:STDOUT:   ret i32 %0
+// CHECK:STDOUT:   ret i32 %0, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -55,5 +55,11 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Select", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 17, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 17, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Select", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 10, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 20, scope: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 29, scope: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 3, scope: !10)

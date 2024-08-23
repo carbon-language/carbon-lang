@@ -27,10 +27,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8
-// CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8
-// CHECK:STDOUT:   call void @F(ptr %d.var, ptr %c.var)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !7
+// CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @F(ptr %d.var, ptr %c.var), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -43,3 +43,7 @@ fn Run() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 14, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 1, scope: !4)

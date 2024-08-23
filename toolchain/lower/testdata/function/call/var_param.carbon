@@ -20,16 +20,16 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @DoNothing(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !7 {
+// CHECK:STDOUT: define void @Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4
-// CHECK:STDOUT:   %.loc15 = load i32, ptr %a.var, align 4
-// CHECK:STDOUT:   call void @DoNothing(i32 %.loc15)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !9
+// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc15 = load i32, ptr %a.var, align 4, !dbg !11
+// CHECK:STDOUT:   call void @DoNothing(i32 %.loc15), !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -42,4 +42,10 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoNothing", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 7, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 13, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 3, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 1, scope: !8)

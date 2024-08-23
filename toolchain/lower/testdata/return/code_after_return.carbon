@@ -20,12 +20,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !7 {
+// CHECK:STDOUT: define void @Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -38,4 +38,6 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !8)

@@ -46,6 +46,9 @@ class FileContext {
     return types_[type_id.index];
   }
 
+  // Returns the DiagnosticLoc associated with the specified inst_id.
+  auto GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc;
+
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {
     return llvm::ConstantStruct::get(GetTypeType());
@@ -104,6 +107,7 @@ class FileContext {
   // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
 
+  // The source location converter.
   const Check::SemIRDiagnosticConverter& converter_;
 
   // The input SemIR.

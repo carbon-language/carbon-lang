@@ -58,31 +58,31 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.loc9_28, i64 8, i1 false)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.loc9_28, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Make.1(ptr sret({ i32, i32 }) %return) !dbg !7 {
+// CHECK:STDOUT: define void @Make.1(ptr sret({ i32, i32 }) %return) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @Make(ptr %return)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @Make(ptr %return), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @GetB(ptr %self) !dbg !8 {
+// CHECK:STDOUT: define i32 @GetB(ptr %self) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1
-// CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4
-// CHECK:STDOUT:   ret i32 %.loc22_14.2
+// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !13
+// CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !13
+// CHECK:STDOUT:   ret i32 %.loc22_14.2, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Use() !dbg !9 {
+// CHECK:STDOUT: define i32 @Use() !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   call void @Make.1(ptr %pa.var)
-// CHECK:STDOUT:   %GetB.call = call i32 @GetB(ptr %pa.var)
-// CHECK:STDOUT:   ret i32 %GetB.call
+// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
+// CHECK:STDOUT:   call void @Make.1(ptr %pa.var), !dbg !17
+// CHECK:STDOUT:   %GetB.call = call i32 @GetB(ptr %pa.var), !dbg !18
+// CHECK:STDOUT:   ret i32 %GetB.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -100,15 +100,25 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Make.1", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "GetB", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Use", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 12, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 9, column: 5, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Make.1", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 12, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 5, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetB", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 12, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 5, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 7, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 27, column: 25, scope: !15)
+// CHECK:STDOUT: !18 = !DILocation(line: 28, column: 10, scope: !15)
+// CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @DoStuff(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %a
+// CHECK:STDOUT:   ret i32 %a, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -121,3 +131,4 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoStuff", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)

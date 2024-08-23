@@ -33,59 +33,59 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Op(ptr sret({ i1 }) %return, ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1
-// CHECK:STDOUT:   %.loc17_28 = xor i1 %.loc17_36.2, true
-// CHECK:STDOUT:   %.loc17_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i1 %.loc17_28, ptr %.loc17_48.2.is_positive, align 1
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1, !dbg !7
+// CHECK:STDOUT:   %.loc17_28 = xor i1 %.loc17_36.2, true, !dbg !8
+// CHECK:STDOUT:   %.loc17_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   store i1 %.loc17_28, ptr %.loc17_48.2.is_positive, align 1, !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Op.1(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !7 {
+// CHECK:STDOUT: define void @Op.1(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1
-// CHECK:STDOUT:   br i1 %.loc22_33.2, label %and.rhs.loc22, label %and.result.loc22
+// CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1, !dbg !12
+// CHECK:STDOUT:   br i1 %.loc22_33.2, label %and.rhs.loc22, label %and.result.loc22, !dbg !12
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc22:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc22_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0
-// CHECK:STDOUT:   %.loc22_55.2 = load i1, ptr %.loc22_55.1.is_positive, align 1
-// CHECK:STDOUT:   br label %and.result.loc22
+// CHECK:STDOUT:   %.loc22_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   %.loc22_55.2 = load i1, ptr %.loc22_55.1.is_positive, align 1, !dbg !13
+// CHECK:STDOUT:   br label %and.result.loc22, !dbg !12
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result.loc22:                                 ; preds = %and.rhs.loc22, %entry
 // CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc22_55.2, %and.rhs.loc22 ]
-// CHECK:STDOUT:   %.loc22_69.1 = xor i1 %0, true
-// CHECK:STDOUT:   br i1 %.loc22_69.1, label %or.rhs, label %or.result
+// CHECK:STDOUT:   %.loc22_69.1 = xor i1 %0, true, !dbg !14
+// CHECK:STDOUT:   br i1 %.loc22_69.1, label %or.rhs, label %or.result, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc22
-// CHECK:STDOUT:   %.loc23_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc23_38.2 = load i1, ptr %.loc23_38.1.is_positive, align 1
-// CHECK:STDOUT:   %.loc23_30 = xor i1 %.loc23_38.2, true
-// CHECK:STDOUT:   br i1 %.loc23_30, label %and.rhs.loc23, label %and.result.loc23
+// CHECK:STDOUT:   %.loc23_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !15
+// CHECK:STDOUT:   %.loc23_38.2 = load i1, ptr %.loc23_38.1.is_positive, align 1, !dbg !15
+// CHECK:STDOUT:   %.loc23_30 = xor i1 %.loc23_38.2, true, !dbg !16
+// CHECK:STDOUT:   br i1 %.loc23_30, label %and.rhs.loc23, label %and.result.loc23, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc23:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc23_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0
-// CHECK:STDOUT:   %.loc23_64.2 = load i1, ptr %.loc23_64.1.is_positive, align 1
-// CHECK:STDOUT:   %.loc23_55 = xor i1 %.loc23_64.2, true
-// CHECK:STDOUT:   br label %and.result.loc23
+// CHECK:STDOUT:   %.loc23_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc23_64.2 = load i1, ptr %.loc23_64.1.is_positive, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc23_55 = xor i1 %.loc23_64.2, true, !dbg !18
+// CHECK:STDOUT:   br label %and.result.loc23, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result.loc23:                                 ; preds = %and.rhs.loc23, %or.rhs
 // CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc23_55, %and.rhs.loc23 ]
-// CHECK:STDOUT:   br label %or.result
+// CHECK:STDOUT:   br label %or.result, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc23, %and.result.loc22
 // CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc22 ], [ %1, %and.result.loc23 ]
-// CHECK:STDOUT:   %.loc23_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i1 %2, ptr %.loc23_77.2.is_positive, align 1
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %.loc23_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !19
+// CHECK:STDOUT:   store i1 %2, ptr %.loc23_77.2.is_positive, align 1, !dbg !19
+// CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Calculate(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !8 {
+// CHECK:STDOUT: define void @Calculate(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_10.2.temp = alloca { i1 }, align 8
-// CHECK:STDOUT:   call void @Op(ptr %.loc28_10.2.temp, ptr %a)
-// CHECK:STDOUT:   call void @Op.1(ptr %return, ptr %.loc28_10.2.temp, ptr %b)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %.loc28_10.2.temp = alloca { i1 }, align 8, !dbg !22
+// CHECK:STDOUT:   call void @Op(ptr %.loc28_10.2.temp, ptr %a), !dbg !22
+// CHECK:STDOUT:   call void @Op.1(ptr %return, ptr %.loc28_10.2.temp, ptr %b), !dbg !22
+// CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -101,5 +101,20 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Op.1", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Calculate", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 32, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 28, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 12, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 5, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op.1", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 29, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 50, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 28, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 23, column: 34, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 23, column: 30, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 23, column: 59, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 23, column: 55, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 12, scope: !11)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 5, scope: !11)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Calculate", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 28, column: 10, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 28, column: 3, scope: !21)

@@ -23,20 +23,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %arr, i32 %i) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i
-// CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4
-// CHECK:STDOUT:   ret i32 %.loc12_15.3
+// CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !7
+// CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc12_15.3, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @G() !dbg !7 {
+// CHECK:STDOUT: define i32 @G() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4
-// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0
-// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 1
-// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 2
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.2.temp, ptr align 4 @array.loc16_11.1, i64 12, i1 false)
-// CHECK:STDOUT:   %F.call = call i32 @F(ptr %.loc16_20.2.temp, i32 1)
-// CHECK:STDOUT:   ret i32 %F.call
+// CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 2, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.2.temp, ptr align 4 @array.loc16_11.1, i64 12, i1 false), !dbg !11
+// CHECK:STDOUT:   %F.call = call i32 @F(ptr %.loc16_20.2.temp, i32 1), !dbg !11
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -54,4 +54,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 12, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 10, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 3, scope: !9)

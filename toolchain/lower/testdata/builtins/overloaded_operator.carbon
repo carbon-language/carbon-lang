@@ -23,12 +23,12 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @AddThreeIntegers(i32 %a, i32 %b, i32 %c) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd.loc18_12 = add i32 %a, %b
-// CHECK:STDOUT:   %.loc18_12.2.temp = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %int.sadd.loc18_12, ptr %.loc18_12.2.temp, align 4
-// CHECK:STDOUT:   %.loc18_12.4 = load i32, ptr %.loc18_12.2.temp, align 4
-// CHECK:STDOUT:   %int.sadd.loc18_16 = add i32 %.loc18_12.4, %c
-// CHECK:STDOUT:   ret i32 %int.sadd.loc18_16
+// CHECK:STDOUT:   %int.sadd.loc18_12 = add i32 %a, %b, !dbg !7
+// CHECK:STDOUT:   %.loc18_12.2.temp = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   store i32 %int.sadd.loc18_12, ptr %.loc18_12.2.temp, align 4, !dbg !7
+// CHECK:STDOUT:   %.loc18_12.4 = load i32, ptr %.loc18_12.2.temp, align 4, !dbg !7
+// CHECK:STDOUT:   %int.sadd.loc18_16 = add i32 %.loc18_12.4, %c, !dbg !7
+// CHECK:STDOUT:   ret i32 %int.sadd.loc18_16, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -41,3 +41,5 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "AddThreeIntegers", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 3, scope: !4)

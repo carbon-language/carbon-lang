@@ -20,26 +20,26 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 true
+// CHECK:STDOUT:   ret i1 true, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @G() !dbg !7 {
+// CHECK:STDOUT: define i1 @G() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 true
+// CHECK:STDOUT:   ret i1 true, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @And() !dbg !8 {
+// CHECK:STDOUT: define i1 @And() !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i1 @F()
-// CHECK:STDOUT:   br i1 %F.call, label %and.rhs, label %and.result
+// CHECK:STDOUT:   %F.call = call i1 @F(), !dbg !11
+// CHECK:STDOUT:   br i1 %F.call, label %and.rhs, label %and.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs:                                          ; preds = %entry
-// CHECK:STDOUT:   %G.call = call i1 @G()
-// CHECK:STDOUT:   br label %and.result
+// CHECK:STDOUT:   %G.call = call i1 @G(), !dbg !12
+// CHECK:STDOUT:   br label %and.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
 // CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %G.call, %and.rhs ]
-// CHECK:STDOUT:   ret i1 %0
+// CHECK:STDOUT:   ret i1 %0, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -52,5 +52,10 @@ fn And() -> bool {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "And", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 18, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 18, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "And", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 10, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 18, scope: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !10)

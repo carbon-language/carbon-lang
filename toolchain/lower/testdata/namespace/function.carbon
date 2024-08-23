@@ -26,18 +26,18 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Baz() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Baz.1() !dbg !7 {
+// CHECK:STDOUT: define void @Baz.1() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Bar() !dbg !8 {
+// CHECK:STDOUT: define void @Bar() !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @Baz.1()
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @Baz.1(), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -50,5 +50,9 @@ fn Bar() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Baz", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Baz.1", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Bar", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Baz.1", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 1, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Bar", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 1, scope: !10)

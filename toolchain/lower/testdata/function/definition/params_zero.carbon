@@ -15,7 +15,7 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -28,3 +28,4 @@ fn Foo() {}
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Foo", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)

@@ -19,6 +19,7 @@ namespace Carbon::Lower {
 class FunctionContext {
  public:
   explicit FunctionContext(FileContext& file_context, llvm::Function* function,
+                           llvm::DISubprogram* di_subprogram,
                            llvm::raw_ostream* vlog_stream);
 
   // Returns a basic block corresponding to the start of the given semantics
@@ -148,6 +149,8 @@ class FunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<llvm::ConstantFolder, Inserter> builder_;
+
+  llvm::DISubprogram* di_subprogram_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

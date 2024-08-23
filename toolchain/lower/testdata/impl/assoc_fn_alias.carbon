@@ -32,15 +32,15 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %.loc22_16.2 = load i32, ptr %.loc22_16.1.n, align 4
-// CHECK:STDOUT:   ret i32 %.loc22_16.2
+// CHECK:STDOUT:   %.loc22_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc22_16.2 = load i32, ptr %.loc22_16.1.n, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc22_16.2, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Call(ptr %a) !dbg !7 {
+// CHECK:STDOUT: define i32 @Call(ptr %a) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @F(ptr %a)
-// CHECK:STDOUT:   ret i32 %F.call
+// CHECK:STDOUT:   %F.call = call i32 @F(ptr %a), !dbg !10
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -53,4 +53,8 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 22, column: 12, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 22, column: 5, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 27, column: 10, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 27, column: 3, scope: !9)
