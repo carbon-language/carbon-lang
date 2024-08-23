@@ -44,8 +44,7 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
                                    SemIR::NameId name_id, SemIRLoc new_loc,
                                    SemIRLoc prev_loc) {
   CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
-                    "Redeclarations of `{0} {1}` in the same library must "
-                    "match use of `extern`.",
+                    "Redeclarations of `{0} {1}` must match use of `extern`.",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
       .Build(new_loc, RedeclExternMismatch, decl_kind, name_id)
@@ -53,16 +52,33 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
       .Emit();
 }
 
-// Diagnoses when multiple non-`extern` declarations are found.
-static auto DiagnoseNonExtern(Context& context, Lex::TokenKind decl_kind,
-                              SemIR::NameId name_id, SemIRLoc new_loc,
-                              SemIRLoc prev_loc) {
-  CARBON_DIAGNOSTIC(RedeclNonExtern, Error,
-                    "Only one library can declare `{0} {1}` without `extern`.",
+// Diagnoses `extern library` declared in a library importing the owned entity.
+static auto DiagnoseExternLibraryInImporter(Context& context,
+                                            Lex::TokenKind decl_kind,
+                                            SemIR::NameId name_id,
+                                            SemIRLoc new_loc,
+                                            SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(ExternLibraryInImporter, Error,
+                    "Cannot declare imported `{0} {1}` as `extern library`.",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
-      .Build(new_loc, RedeclNonExtern, decl_kind, name_id)
+      .Build(new_loc, ExternLibraryInImporter, decl_kind, name_id)
       .Note(prev_loc, RedeclPrevDecl)
+      .Emit();
+}
+
+// Diagnoses `extern library` pointing to the wrong library.
+static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
+                                           SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(
+      ExternLibraryIncorrect, Error,
+      "Declaration in {0} doesn't match `extern library` declaration.",
+      SemIR::LibraryNameId);
+  CARBON_DIAGNOSTIC(ExternLibraryExpected, Note,
+                    "Previously declared with `extern library` here.");
+  context.emitter()
+      .Build(new_loc, ExternLibraryIncorrect, context.sem_ir().library_id())
+      .Note(prev_loc, ExternLibraryExpected)
       .Emit();
 }
 
@@ -83,9 +99,7 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
       DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
       return;
     }
-    // `extern` definitions are prevented at creation; this is only
-    // checking for a non-`extern` definition after an `extern` declaration.
-    if (prev_decl.is_extern) {
+    if (prev_decl.is_extern != new_decl.is_extern) {
       DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
                              prev_decl.loc);
       return;
@@ -114,19 +128,33 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 
   // Check for disallowed redeclarations cross-library.
-  if (!new_decl.is_extern && !prev_decl.is_extern) {
-    DiagnoseNonExtern(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
+  if (prev_decl.is_extern != new_decl.is_extern) {
+    DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
+                           prev_decl.loc);
     return;
+  }
+  if (!prev_decl.extern_library_id.is_valid()) {
+    if (new_decl.extern_library_id.is_valid()) {
+      DiagnoseExternLibraryInImporter(context, decl_kind, name_id, new_decl.loc,
+                                      prev_decl.loc);
+    } else {
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
+                        prev_decl.loc);
+    }
+    return;
+  }
+  if (prev_decl.extern_library_id != SemIR::LibraryNameId::Error &&
+      prev_decl.extern_library_id != context.sem_ir().library_id()) {
+    DiagnoseExternLibraryIncorrect(context, new_decl.loc, prev_decl.loc);
   }
 }
 
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
-  auto& names = context.name_scopes().Get(scope_id).names;
-  auto it = names.find(name_id);
-  if (it != names.end()) {
-    it->second.inst_id = new_inst_id;
+  auto& scope = context.name_scopes().Get(scope_id);
+  if (auto lookup = scope.name_map.Lookup(name_id)) {
+    scope.names[lookup.value()].inst_id = new_inst_id;
   }
 }
 
@@ -154,7 +182,7 @@ static auto CheckRedeclParam(Context& context,
                              int32_t param_index,
                              SemIR::InstId new_param_ref_id,
                              SemIR::InstId prev_param_ref_id,
-                             Substitutions substitutions) -> bool {
+                             SemIR::SpecificId prev_specific_id) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -175,8 +203,10 @@ static auto CheckRedeclParam(Context& context,
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
-      new_param_ref.type_id() !=
-          SubstType(context, prev_param_ref.type_id(), substitutions)) {
+      !context.types().AreEqualAcrossDeclarations(
+          new_param_ref.type_id(),
+          SemIR::GetTypeInSpecific(context.sem_ir(), prev_specific_id,
+                                   prev_param_ref.type_id()))) {
     diagnose();
     return false;
   }
@@ -215,7 +245,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_refs_id,
                               llvm::StringLiteral param_diag_label,
-                              Substitutions substitutions) -> bool {
+                              SemIR::SpecificId prev_specific_id) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -261,16 +291,86 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
     if (!CheckRedeclParam(context, param_diag_label, index, new_param_ref_id,
-                          prev_param_ref_id, substitutions)) {
+                          prev_param_ref_id, prev_specific_id)) {
       return false;
     }
   }
   return true;
 }
 
+// Returns true if the two nodes represent the same syntax.
+// TODO: Detect raw identifiers (will require token changes).
+static auto IsNodeSyntaxEqual(Context& context, Parse::NodeId new_node_id,
+                              Parse::NodeId prev_node_id) -> bool {
+  if (context.parse_tree().node_kind(new_node_id) !=
+      context.parse_tree().node_kind(prev_node_id)) {
+    return false;
+  }
+
+  // TODO: Should there be a trivial way to check if we need to check spellings?
+  // Identifiers and literals need their text checked for cross-file matching,
+  // but not intra-file. Keywords and operators shouldn't need the token text
+  // examined at all.
+  auto new_spelling = context.tokens().GetTokenText(
+      context.parse_tree().node_token(new_node_id));
+  auto prev_spelling = context.tokens().GetTokenText(
+      context.parse_tree().node_token(prev_node_id));
+  return new_spelling == prev_spelling;
+}
+
+// Returns false if redeclaration parameter syntax doesn't match.
+static auto CheckRedeclParamSyntax(Context& context,
+                                   Parse::NodeId new_first_param_node_id,
+                                   Parse::NodeId new_last_param_node_id,
+                                   Parse::NodeId prev_first_param_node_id,
+                                   Parse::NodeId prev_last_param_node_id)
+    -> bool {
+  // Parse nodes may not always be available to compare.
+  // TODO: Support cross-file syntax checks. Right now imports provide invalid
+  // nodes, and we'll need to follow the declaration to its original file to
+  // get the parse tree.
+  if (!new_first_param_node_id.is_valid() ||
+      !prev_first_param_node_id.is_valid()) {
+    return true;
+  }
+  CARBON_CHECK(new_last_param_node_id.is_valid())
+      << "new_last_param_node_id.is_valid should match "
+         "new_first_param_node_id.is_valid";
+  CARBON_CHECK(prev_last_param_node_id.is_valid())
+      << "prev_last_param_node_id.is_valid should match "
+         "prev_first_param_node_id.is_valid";
+
+  auto new_range = Parse::Tree::PostorderIterator::MakeRange(
+      new_first_param_node_id, new_last_param_node_id);
+  auto prev_range = Parse::Tree::PostorderIterator::MakeRange(
+      prev_first_param_node_id, prev_last_param_node_id);
+
+  // zip is using the shortest range. If they differ in length, there should be
+  // some difference inside the range because the range includes parameter
+  // brackets. As a consequence, we don't explicitly handle different range
+  // sizes here.
+  for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
+    if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
+                        "Redeclaration syntax differs here.");
+      CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
+                        "Comparing with previous declaration here.");
+      context.emitter()
+          .Build(new_node_id, RedeclParamSyntaxDiffers)
+          .Note(prev_node_id, RedeclParamSyntaxPrevious)
+          .Emit();
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
-                            Substitutions substitutions) -> bool {
+                            SemIR::SpecificId prev_specific_id,
+                            bool check_syntax) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -278,10 +378,19 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(context, new_entity.loc,
                          new_entity.implicit_param_refs_id, prev_entity.loc,
                          prev_entity.implicit_param_refs_id, "implicit ",
-                         substitutions) ||
-      !CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
+                         prev_specific_id)) {
+    return false;
+  }
+  if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
                          prev_entity.loc, prev_entity.param_refs_id, "",
-                         substitutions)) {
+                         prev_specific_id)) {
+    return false;
+  }
+  if (check_syntax &&
+      !CheckRedeclParamSyntax(context, new_entity.first_param_node_id,
+                              new_entity.last_param_node_id,
+                              prev_entity.first_param_node_id,
+                              prev_entity.last_param_node_id)) {
     return false;
   }
   return true;

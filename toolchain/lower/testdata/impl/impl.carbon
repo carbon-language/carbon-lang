@@ -29,15 +29,27 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'impl.carbon'
 // CHECK:STDOUT: source_filename = "impl.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F(ptr %self) {
+// CHECK:STDOUT: define i32 @F(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_16.1.n = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc21_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0
 // CHECK:STDOUT:   %.loc21_16.2 = load i32, ptr %.loc21_16.1.n, align 4
 // CHECK:STDOUT:   ret i32 %.loc21_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Call(ptr %a) {
+// CHECK:STDOUT: define i32 @Call(ptr %a) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @F(ptr %a)
 // CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "impl.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)

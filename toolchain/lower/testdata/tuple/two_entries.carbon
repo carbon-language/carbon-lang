@@ -19,20 +19,20 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @tuple.loc12_30 = internal constant { i32, i32 } { i32 12, i32 7 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
+// CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc12_29.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc12_29.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc12_29.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc12_29.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple.loc12_30, i64 8, i1 false)
 // CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc13_23.1.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc13_23.2 = load i32, ptr %.loc13_23.1.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_23.3.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_23.3.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %.loc13_23.2, ptr %.loc13_23.3.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_23.5.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_23.5.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc13_23.6 = load i32, ptr %.loc13_23.5.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_23.7.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc13_23.7.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %.loc13_23.6, ptr %.loc13_23.7.tuple.elem, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
@@ -41,3 +41,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "two_entries.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

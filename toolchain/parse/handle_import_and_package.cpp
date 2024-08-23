@@ -16,7 +16,7 @@ namespace Carbon::Parse {
 static auto OnParseError(Context& context, Context::StateStackEntry state,
                          NodeKind declaration) -> void {
   return context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
-                         state.subtree_start, /*has_error=*/true);
+                         /*has_error=*/true);
 }
 
 // Determines whether the specified modifier appears within the introducer of
@@ -25,41 +25,12 @@ static auto OnParseError(Context& context, Context::StateStackEntry state,
 // do this.
 static auto HasModifier(Context& context, Context::StateStackEntry state,
                         Lex::TokenKind modifier) -> bool {
-  for (auto it = Lex::TokenIterator(state.token); it != context.position();
-       ++it) {
+  for (Lex::TokenIterator it(state.token); it != context.position(); ++it) {
     if (context.tokens().GetKind(*it) == modifier) {
       return true;
     }
   }
   return false;
-}
-
-// Handles parsing of the library name. Returns the name's ID on success, which
-// may be invalid for `default`.
-static auto HandleLibraryName(Context& context, bool accept_default)
-    -> std::optional<StringLiteralValueId> {
-  if (auto library_name_token =
-          context.ConsumeIf(Lex::TokenKind::StringLiteral)) {
-    context.AddLeafNode(NodeKind::LibraryName, *library_name_token);
-    return context.tokens().GetStringLiteralValue(*library_name_token);
-  }
-
-  if (accept_default) {
-    if (auto default_token = context.ConsumeIf(Lex::TokenKind::Default)) {
-      context.AddLeafNode(NodeKind::DefaultLibrary, *default_token);
-      return StringLiteralValueId::Invalid;
-    }
-  }
-
-  CARBON_DIAGNOSTIC(
-      ExpectedLibraryNameOrDefault, Error,
-      "Expected `default` or a string literal to specify the library name.");
-  CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
-                    "Expected a string literal to specify the library name.");
-  context.emitter().Emit(*context.position(), accept_default
-                                                  ? ExpectedLibraryNameOrDefault
-                                                  : ExpectedLibraryName);
-  return std::nullopt;
 }
 
 // Handles everything after the declaration's introducer.
@@ -102,7 +73,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   // Parse the optional library keyword.
   bool accept_default = !names.package_id.is_valid();
   if (declaration == NodeKind::LibraryDecl) {
-    auto library_id = HandleLibraryName(context, accept_default);
+    auto library_id = context.ParseLibraryName(accept_default);
     if (!library_id) {
       on_parse_error();
       return;
@@ -111,17 +82,12 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
   } else {
     auto next_kind = context.PositionKind();
     if (next_kind == Lex::TokenKind::Library) {
-      auto library_token = context.ConsumeChecked(Lex::TokenKind::Library);
-      auto library_subtree_start = context.tree().size();
-      auto library_id = HandleLibraryName(context, accept_default);
-      if (!library_id) {
+      if (auto library_id = context.ParseLibrarySpecifier(accept_default)) {
+        names.library_id = *library_id;
+      } else {
         on_parse_error();
         return;
       }
-      names.library_id = *library_id;
-      context.AddNode(NodeKind::LibrarySpecifier, library_token,
-                      library_subtree_start,
-                      /*has_error=*/false);
     } else if (next_kind == Lex::TokenKind::StringLiteral ||
                (accept_default && next_kind == Lex::TokenKind::Default)) {
       // If we come across a string literal and we didn't parse `library
@@ -142,7 +108,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
       context.set_packaging_decl(names, is_impl);
     }
 
-    context.AddNode(declaration, *semi, state.subtree_start, state.has_error);
+    context.AddNode(declaration, *semi, state.has_error);
   } else {
     context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
     on_parse_error();

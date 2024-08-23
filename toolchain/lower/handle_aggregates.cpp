@@ -13,8 +13,8 @@
 
 namespace Carbon::Lower {
 
-auto HandleClassDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::ClassDecl /*inst*/) -> void {
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::ClassDecl /*inst*/) -> void {
   // No action to perform.
 }
 
@@ -38,7 +38,7 @@ static auto GetAggregateElement(FunctionContext& context,
 
     case SemIR::ExprCategory::Value: {
       auto value_rep =
-          SemIR::GetValueRepr(context.sem_ir(), aggr_inst.type_id());
+          SemIR::ValueRepr::ForType(context.sem_ir(), aggr_inst.type_id());
       CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate)
           << "aggregate type should have aggregate value representation";
       switch (value_rep.kind) {
@@ -67,7 +67,8 @@ static auto GetAggregateElement(FunctionContext& context,
 
           // `elem_ptr` points to a value representation. Load it.
           auto result_value_type_id =
-              SemIR::GetValueRepr(context.sem_ir(), result_type_id).type_id;
+              SemIR::ValueRepr::ForType(context.sem_ir(), result_type_id)
+                  .type_id;
           return context.builder().CreateLoad(
               context.GetType(result_value_type_id), elem_ptr, name + ".load");
         }
@@ -100,8 +101,8 @@ static auto GetStructFieldName(FunctionContext& context,
   return context.sem_ir().names().GetIRBaseName(field.name_id);
 }
 
-auto HandleClassElementAccess(FunctionContext& context, SemIR::InstId inst_id,
-                              SemIR::ClassElementAccess inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ClassElementAccess inst) -> void {
   // Find the class that we're performing access into.
   auto class_type_id = context.sem_ir().insts().Get(inst.base_id).type_id();
   auto class_id =
@@ -123,7 +124,7 @@ static auto EmitAggregateInitializer(FunctionContext& context,
                                      llvm::Twine name) -> llvm::Value* {
   auto* llvm_type = context.GetType(type_id);
 
-  switch (SemIR::GetInitRepr(context.sem_ir(), type_id).kind) {
+  switch (SemIR::InitRepr::ForType(context.sem_ir(), type_id).kind) {
     case SemIR::InitRepr::None:
     case SemIR::InitRepr::InPlace:
       // TODO: Add a helper to poison a value slot.
@@ -139,18 +140,22 @@ static auto EmitAggregateInitializer(FunctionContext& context,
           llvm::PoisonValue::get(llvm_type), context.GetValue(refs[0]), {0},
           name);
     }
+
+    case SemIR::InitRepr::Incomplete:
+      CARBON_FATAL() << "Lowering aggregate initialization of incomplete type "
+                     << context.sem_ir().types().GetAsInst(type_id);
   }
 }
 
-auto HandleClassInit(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::ClassInit inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ClassInit inst) -> void {
   context.SetLocal(
       inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
                                         "class.init"));
 }
 
-auto HandleStructAccess(FunctionContext& context, SemIR::InstId inst_id,
-                        SemIR::StructAccess inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::StructAccess inst) -> void {
   auto struct_type_id = context.sem_ir().insts().Get(inst.struct_id).type_id();
   context.SetLocal(
       inst_id, GetAggregateElement(
@@ -158,9 +163,8 @@ auto HandleStructAccess(FunctionContext& context, SemIR::InstId inst_id,
                    GetStructFieldName(context, struct_type_id, inst.index)));
 }
 
-auto HandleStructLiteral(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::StructLiteral /*inst*/) -> void {
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::StructLiteral /*inst*/) -> void {
   // A StructLiteral should always be converted to a StructInit or StructValue
   // if its value is needed.
 }
@@ -170,7 +174,7 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 static auto EmitAggregateValueRepr(FunctionContext& context,
                                    SemIR::TypeId type_id,
                                    SemIR::InstBlockId refs_id) -> llvm::Value* {
-  auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
+  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL() << "Incomplete aggregate type in lowering";
@@ -212,15 +216,15 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
   }
 }
 
-auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
-                      SemIR::StructInit inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::StructInit inst) -> void {
   context.SetLocal(
       inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
                                         "struct.init"));
 }
 
-auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::StructValue inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::StructValue inst) -> void {
   if (auto fn_type = context.sem_ir().types().TryGetAs<SemIR::FunctionType>(
           inst.type_id)) {
     context.SetLocal(inst_id, context.GetFunction(fn_type->function_id));
@@ -231,21 +235,20 @@ auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
       inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
-auto HandleStructTypeField(FunctionContext& /*context*/,
-                           SemIR::InstId /*inst_id*/,
-                           SemIR::StructTypeField /*inst*/) -> void {
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::StructTypeField /*inst*/) -> void {
   // No action to take.
 }
 
-auto HandleTupleAccess(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::TupleAccess inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::TupleAccess inst) -> void {
   context.SetLocal(inst_id,
                    GetAggregateElement(context, inst.tuple_id, inst.index,
                                        inst.type_id, "tuple.elem"));
 }
 
-auto HandleTupleIndex(FunctionContext& context, SemIR::InstId inst_id,
-                      SemIR::TupleIndex inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::TupleIndex inst) -> void {
   auto index_inst =
       context.sem_ir().insts().GetAs<SemIR::IntLiteral>(inst.index_id);
   auto index = context.sem_ir().ints().Get(index_inst.int_id).getZExtValue();
@@ -254,21 +257,21 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::InstId inst_id,
                                                 inst.type_id, "tuple.index"));
 }
 
-auto HandleTupleLiteral(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                        SemIR::TupleLiteral /*inst*/) -> void {
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::TupleLiteral /*inst*/) -> void {
   // A TupleLiteral should always be converted to a TupleInit or TupleValue if
   // its value is needed.
 }
 
-auto HandleTupleInit(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::TupleInit inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::TupleInit inst) -> void {
   context.SetLocal(
       inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
                                         "tuple.init"));
 }
 
-auto HandleTupleValue(FunctionContext& context, SemIR::InstId inst_id,
-                      SemIR::TupleValue inst) -> void {
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::TupleValue inst) -> void {
   context.SetLocal(
       inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }

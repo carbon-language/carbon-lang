@@ -28,11 +28,11 @@ interface Modifiers {
 // CHECK:STDOUT:   %Final.type: type = fn_type @Final [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Final: %Final.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Modifiers, %Final.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %Final.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Modifiers.%Final.decl [template]
 // CHECK:STDOUT:   %Default.type: type = fn_type @Default [template]
 // CHECK:STDOUT:   %Default: %Default.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @Modifiers, %Default.type [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.1, %Default.type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element1, @Modifiers.%Default.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,13 +57,25 @@ interface Modifiers {
 // CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Final() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: generic fn @Final(@Modifiers.%Self: %.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Default() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: generic fn @Default(@Modifiers.%Self: %.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Final(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Default(constants.%Self) {}
 // CHECK:STDOUT:

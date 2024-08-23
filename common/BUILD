@@ -8,20 +8,29 @@ load("//bazel/version:rules.bzl", "expand_version_build_info")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "bazel_working_dir",
-    hdrs = ["bazel_working_dir.h"],
+    name = "array_stack",
+    hdrs = ["array_stack.h"],
     deps = [
+        ":check",
         "@llvm-project//llvm:Support",
     ],
 )
 
-cc_library(
-    name = "benchmark_main",
-    srcs = ["benchmark_main.cpp"],
+cc_test(
+    name = "array_stack_test",
+    size = "small",
+    srcs = ["array_stack_test.cpp"],
     deps = [
-        ":init_llvm",
-        "@abseil-cpp//absl/flags:parse",
-        "@google_benchmark//:benchmark",
+        ":array_stack",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "bazel_working_dir",
+    hdrs = ["bazel_working_dir.h"],
+    deps = [
         "@llvm-project//llvm:Support",
     ],
 )
@@ -173,9 +182,9 @@ cc_binary(
     testonly = 1,
     srcs = ["hashing_benchmark.cpp"],
     deps = [
-        ":benchmark_main",
         ":check",
         ":hashing",
+        "//testing/base:benchmark_main",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",
@@ -188,6 +197,18 @@ cc_library(
     hdrs = ["hashtable_key_context.h"],
     deps = [
         ":hashing",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "hashtable_key_context_test",
+    srcs = ["hashtable_key_context_test.cpp"],
+    deps = [
+        ":hashtable_key_context",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

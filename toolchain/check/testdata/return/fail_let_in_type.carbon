@@ -54,9 +54,19 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @HalfDozen() -> %y {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24: i32 = int_literal 6 [template = constants.%.2]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: generic fn @HalfDozen(<unexpected>.inst+21.loc19_5: type) {
+// CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic = %y (constants.%y)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc24: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:     return <error>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HalfDozen(constants.%y) {
+// CHECK:STDOUT:   %y => constants.%y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

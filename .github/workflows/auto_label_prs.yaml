@@ -1,0 +1,131 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: 'Auto label PRs'
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
+
+permissions:
+  pull-requests: write # For gh to edit labels.
+
+jobs:
+  assign_reviewer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            documentation:
+              - '*.md'
+              - 'docs/**'
+              - 'examples/**'
+              - 'third_party/examples/**'
+
+            explorer:
+              - 'explorer/**'
+              - 'installers/**'
+
+            infrastructure:
+              - '*.bzl'
+              - '*.cfg'
+              - '*.toml'
+              - '.*'
+              - '.*/**'
+              - 'BUILD'
+              - 'MODULE.*'
+              - 'WORKSPACE'
+              - 'bazel/**'
+              - 'github_tools/**'
+              - 'proposal/scripts/**'
+              - 'scripts/**'
+
+            # Here we only want the `proposal` label when a *new* file is added
+            # directly in this directory. We use `added` and a single level glob
+            # to achieve that.
+            proposal:
+              - added: 'proposals/*'
+
+            # We include common, shared code into the toolchain label for
+            # convenience. Essentially, this is everything we intend to ship as
+            # part of the reference implementation of the language.
+            toolchain:
+              - 'common/**'
+              - 'core/**'
+              - 'language_server/**'
+              - 'testing/**'
+              - 'toolchain/**'
+
+            utilities:
+              - 'utils/**'
+
+      - id: documentation
+        if: steps.filter.outputs.documentation == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "documentation"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: explorer
+        if: steps.filter.outputs.explorer == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "explorer"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: infrastructure
+        if: steps.filter.outputs.infrastructure == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "infrastructure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: proposal
+        if: steps.filter.outputs.proposal == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "proposal"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: toolchain
+        if: steps.filter.outputs.toolchain == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "toolchain"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      - id: utilities
+        if: steps.filter.outputs.utilities == 'true'
+        run: |
+          gh pr edit "${PR}" --add-label "utilities"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+
+      # Note that this is not a path-based label, but an *author* based label,
+      # and it applies orthogonally to the others.
+      - id: automated
+        if:
+          contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
+          github.event.pull_request.user.login)
+        run: |
+          gh pr edit "${PR}" --add-label "automated"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}

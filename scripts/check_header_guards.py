@@ -8,10 +8,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+from collections.abc import Iterable
 from pathlib import Path
 import re
 import sys
-from typing import Iterable, List, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 
 class Guard(NamedTuple):
@@ -22,7 +23,7 @@ class Guard(NamedTuple):
 
 
 def find_guard(
-    lines: List[str], pattern: str, from_end: bool
+    lines: list[str], pattern: str, from_end: bool
 ) -> Optional[Guard]:
     """Searches the lines for something matching the pattern."""
     lines_range: Iterable[str] = lines
@@ -38,7 +39,7 @@ def find_guard(
 
 
 def maybe_replace(
-    lines: List[str], old_guard: Guard, guard_prefix: str, guard: str
+    lines: list[str], old_guard: Guard, guard_prefix: str, guard: str
 ) -> None:
     """Replaces a header guard in the file if needed."""
     if guard != old_guard.guard:

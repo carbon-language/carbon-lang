@@ -138,8 +138,6 @@ class NumericLiteral::Parser {
   auto CheckDigitSequence(llvm::StringRef text, Radix radix,
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult;
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, Radix radix,
-                                    int num_digit_separators) -> void;
   auto CheckLeadingZero() -> bool;
   auto CheckIntPart() -> bool;
   auto CheckFractionalPart() -> bool;
@@ -324,61 +322,11 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
     return {.ok = false};
   }
 
-  // Check that digit separators occur in exactly the expected positions.
-  if (num_digit_separators) {
-    CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
-  }
-
   if (!CanLexInt(emitter_, text)) {
     return {.ok = false};
   }
 
   return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
-}
-
-// Given a number with digit separators, check that the digit separators are
-// correctly positioned.
-auto NumericLiteral::Parser::CheckDigitSeparatorPlacement(
-    llvm::StringRef text, Radix radix, int num_digit_separators) -> void {
-  CARBON_DCHECK(std::count(text.begin(), text.end(), '_') ==
-                num_digit_separators)
-      << "given wrong number of digit separators: " << num_digit_separators;
-
-  if (radix == Radix::Binary) {
-    // There are no restrictions on digit separator placement for binary
-    // literals.
-    return;
-  }
-
-  auto diagnose_irregular_digit_separators = [&]() {
-    CARBON_DIAGNOSTIC(
-        IrregularDigitSeparators, Error,
-        "Digit separators in {0} number should appear every {1} characters "
-        "from the right.",
-        NumericLiteral::Radix, int);
-    emitter_.Emit(text.begin(), IrregularDigitSeparators, radix,
-                  radix == Radix::Decimal ? 3 : 4);
-  };
-
-  // For decimal and hexadecimal digit sequences, digit separators must form
-  // groups of 3 or 4 digits (4 or 5 characters), respectively.
-  int stride = (radix == Radix::Decimal ? 4 : 5);
-  int remaining_digit_separators = num_digit_separators;
-  const auto* pos = text.end();
-  while (pos - text.begin() >= stride) {
-    pos -= stride;
-    if (*pos != '_') {
-      diagnose_irregular_digit_separators();
-      return;
-    }
-
-    --remaining_digit_separators;
-  }
-
-  // Check there weren't any other digit separators.
-  if (remaining_digit_separators) {
-    diagnose_irregular_digit_separators();
-  }
 }
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.

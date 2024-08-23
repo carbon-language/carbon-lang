@@ -44,68 +44,89 @@ fn TestGreaterEq(a: f64, b: f64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: ; ModuleID = 'float.carbon'
 // CHECK:STDOUT: source_filename = "float.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @TestNegate(double %a) {
+// CHECK:STDOUT: define double @TestNegate(double %a) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.negate = fneg double %a
 // CHECK:STDOUT:   ret double %float.negate
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @TestAdd(double %a, double %b) {
+// CHECK:STDOUT: define double @TestAdd(double %a, double %b) !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.add = fadd double %a, %b
 // CHECK:STDOUT:   ret double %float.add
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @TestSub(double %a, double %b) {
+// CHECK:STDOUT: define double @TestSub(double %a, double %b) !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.sub = fsub double %a, %b
 // CHECK:STDOUT:   ret double %float.sub
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @TestMul(double %a, double %b) {
+// CHECK:STDOUT: define double @TestMul(double %a, double %b) !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.mul = fmul double %a, %b
 // CHECK:STDOUT:   ret double %float.mul
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @TestDiv(double %a, double %b) {
+// CHECK:STDOUT: define double @TestDiv(double %a, double %b) !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.div = fdiv double %a, %b
 // CHECK:STDOUT:   ret double %float.div
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestEq(double %a, double %b) {
+// CHECK:STDOUT: define i1 @TestEq(double %a, double %b) !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.eq = fcmp oeq double %a, %b
 // CHECK:STDOUT:   ret i1 %float.eq
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestNeq(double %a, double %b) {
+// CHECK:STDOUT: define i1 @TestNeq(double %a, double %b) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.neq = fcmp one double %a, %b
 // CHECK:STDOUT:   ret i1 %float.neq
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestLess(double %a, double %b) {
+// CHECK:STDOUT: define i1 @TestLess(double %a, double %b) !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.less = fcmp olt double %a, %b
 // CHECK:STDOUT:   ret i1 %float.less
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestLessEq(double %a, double %b) {
+// CHECK:STDOUT: define i1 @TestLessEq(double %a, double %b) !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.less_eq = fcmp ole double %a, %b
 // CHECK:STDOUT:   ret i1 %float.less_eq
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestGreater(double %a, double %b) {
+// CHECK:STDOUT: define i1 @TestGreater(double %a, double %b) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.greater = fcmp ogt double %a, %b
 // CHECK:STDOUT:   ret i1 %float.greater
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestGreaterEq(double %a, double %b) {
+// CHECK:STDOUT: define i1 @TestGreaterEq(double %a, double %b) !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %float.greater_eq = fcmp oge double %a, %b
 // CHECK:STDOUT:   ret i1 %float.greater_eq
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "float.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestNegate", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "TestAdd", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TestSub", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestMul", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "TestDiv", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "TestEq", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestNeq", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestLess", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "TestLessEq", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestGreater", scope: null, file: !3, line: 39, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "TestGreaterEq", scope: null, file: !3, line: 42, type: !5, spFlags: DISPFlagDefinition, unit: !2)

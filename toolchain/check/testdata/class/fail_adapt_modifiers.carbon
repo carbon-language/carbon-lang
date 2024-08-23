@@ -69,9 +69,21 @@ class C5 {
 // CHECK:STDOUT:   %C5: type = class_type @C5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:     .C2 = %C2.decl
@@ -79,7 +91,7 @@ class C5 {
 // CHECK:STDOUT:     .C4 = %C4.decl
 // CHECK:STDOUT:     .C5 = %C5.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {}
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {}

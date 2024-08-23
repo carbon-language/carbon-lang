@@ -22,16 +22,11 @@
 namespace Carbon::SemIR {
 
 // Formatter for printing textual Semantics IR.
-class Formatter {
+class FormatterImpl {
  public:
-  enum class AddSpace : bool { Before, After };
-
-  explicit Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
-                     const Parse::Tree& parse_tree, const File& sem_ir,
-                     llvm::raw_ostream& out)
-      : sem_ir_(sem_ir),
-        out_(out),
-        inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
+  explicit FormatterImpl(const File& sem_ir, InstNamer* inst_namer,
+                         llvm::raw_ostream& out, int indent)
+      : sem_ir_(sem_ir), inst_namer_(inst_namer), out_(out), indent_(indent) {}
 
   // Prints the SemIR.
   //
@@ -41,9 +36,11 @@ class Formatter {
   auto Format() -> void {
     out_ << "--- " << sem_ir_.filename() << "\n\n";
 
-    FormatConstants();
+    FormatScope(InstNamer::ScopeId::Constants, sem_ir_.constants().array_ref());
+    FormatScope(InstNamer::ScopeId::ImportRefs,
+                sem_ir_.inst_blocks().Get(InstBlockId::ImportRefs));
 
-    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
+    out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::File) << " ";
     OpenBrace();
 
     // TODO: Handle the case where there are multiple top-level instruction
@@ -73,9 +70,44 @@ class Formatter {
       FormatFunction(FunctionId(i));
     }
 
+    for (int i : llvm::seq(sem_ir_.specifics().size())) {
+      FormatSpecific(SpecificId(i));
+    }
+
     // End-of-file newline.
     out_ << "\n";
   }
+
+  // Prints a code block.
+  auto FormatPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
+      -> void {
+    out_ << ' ';
+    OpenBrace();
+    constexpr int NumPrintedOnSkip = 9;
+    // Avoid only skipping one item.
+    if (block.size() > NumPrintedOnSkip + 1) {
+      Indent();
+      out_ << "... skipping " << (block.size() - NumPrintedOnSkip)
+           << " insts ...\n";
+      block = block.take_back(NumPrintedOnSkip);
+    }
+    FormatCodeBlock(block);
+    CloseBrace();
+  }
+
+  // Prints a single instruction.
+  auto FormatInst(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
+      Indent();
+      out_ << "invalid\n";
+      return;
+    }
+
+    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
+  }
+
+ private:
+  enum class AddSpace : bool { Before, After };
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -120,26 +152,27 @@ class Formatter {
     Indent(-2);
   }
 
-  auto FormatConstants() -> void {
-    if (!sem_ir_.constants().size()) {
+  // Formats a top-level scope, particularly Constants and ImportRefs.
+  auto FormatScope(InstNamer::ScopeId scope_id, llvm::ArrayRef<InstId> block)
+      -> void {
+    if (block.empty()) {
       return;
     }
 
-    llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
-    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::Constants) << " ";
+    llvm::SaveAndRestore scope(scope_, scope_id);
+    out_ << inst_namer_->GetScopeName(scope_id) << " ";
     OpenBrace();
-    FormatCodeBlock(sem_ir_.constants().array_ref());
+    FormatCodeBlock(block);
     CloseBrace();
     out_ << "\n\n";
   }
 
+  // Formats a full class.
   auto FormatClass(ClassId id) -> void {
     const Class& class_info = sem_ir_.classes().Get(id);
+    FormatEntityStart("class", class_info.generic_id, id);
 
-    out_ << "\nclass ";
-    FormatClassName(id);
-
-    llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (class_info.scope_id.is_valid()) {
       out_ << ' ';
@@ -151,15 +184,16 @@ class Formatter {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(class_info.generic_id);
   }
 
+  // Formats a full interface.
   auto FormatInterface(InterfaceId id) -> void {
     const Interface& interface_info = sem_ir_.interfaces().Get(id);
+    FormatEntityStart("interface", interface_info.generic_id, id);
 
-    out_ << "\ninterface ";
-    FormatInterfaceName(id);
-
-    llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
     if (interface_info.scope_id.is_valid()) {
       out_ << ' ';
@@ -182,22 +216,24 @@ class Formatter {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(interface_info.generic_id);
   }
 
+  // Formats a full impl.
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_.impls().Get(id);
+    FormatEntityStart("impl", SemIR::GenericId::Invalid, id);
 
-    out_ << "\nimpl ";
-    FormatImplName(id);
     out_ << ": ";
     // TODO: Include the deduced parameter list if present.
     FormatType(impl_info.self_id);
     out_ << " as ";
     FormatType(impl_info.constraint_id);
 
-    llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    if (impl_info.scope_id.is_valid()) {
+    if (impl_info.is_defined()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
@@ -206,7 +242,9 @@ class Formatter {
       // always list the witness in this section.
       IndentLabel();
       out_ << "!members:\n";
-      FormatNameScope(impl_info.scope_id);
+      if (impl_info.scope_id.is_valid()) {
+        FormatNameScope(impl_info.scope_id);
+      }
 
       Indent();
       out_ << "witness = ";
@@ -220,44 +258,30 @@ class Formatter {
     }
   }
 
+  // Formats a full function.
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
+    FormatEntityStart(fn.is_extern ? "extern fn" : "fn", fn.generic_id, id);
 
-    out_ << "\n";
+    llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    if (fn.is_extern) {
-      out_ << "extern ";
-    }
-
-    out_ << "fn ";
-    FormatFunctionName(id);
-
-    llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
-
-    if (fn.implicit_param_refs_id.is_valid()) {
-      out_ << "[";
-      FormatParamList(fn.implicit_param_refs_id);
-      out_ << "]";
-    }
-
-    if (fn.param_refs_id.is_valid()) {
-      out_ << "(";
-      FormatParamList(fn.param_refs_id);
-      out_ << ")";
-    }
+    FormatParamList(fn.implicit_param_refs_id, /*is_implicit=*/true);
+    FormatParamList(fn.param_refs_id, /*is_implicit=*/false);
 
     if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
-      if (!fn.body_block_ids.empty() && fn.has_return_slot()) {
-        FormatInstName(fn.return_storage_id);
+      auto return_info = ReturnTypeInfo::ForFunction(sem_ir_, fn);
+      if (!fn.body_block_ids.empty() && return_info.is_valid() &&
+          return_info.has_return_slot()) {
+        FormatName(fn.return_storage_id);
         out_ << ": ";
       }
       FormatType(sem_ir_.insts().Get(fn.return_storage_id).type_id());
     }
 
-    if (fn.builtin_kind != BuiltinFunctionKind::None) {
+    if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
       out_ << " = \"";
-      out_.write_escaped(fn.builtin_kind.name(),
+      out_.write_escaped(fn.builtin_function_kind.name(),
                          /*UseHexEscapes=*/true);
       out_ << "\"";
     }
@@ -279,9 +303,143 @@ class Formatter {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(fn.generic_id);
   }
 
-  auto FormatParamList(InstBlockId param_refs_id) -> void {
+  // Helper for FormatSpecific to print regions.
+  auto FormatSpecificRegion(const Generic& generic, const Specific& specific,
+                            GenericInstIndex::Region region,
+                            llvm::StringRef region_name) -> void {
+    if (!specific.GetValueBlock(region).is_valid()) {
+      return;
+    }
+
+    if (!region_name.empty()) {
+      IndentLabel();
+      out_ << "!" << region_name << ":\n";
+    }
+    for (auto [generic_inst_id, specific_inst_id] : llvm::zip_longest(
+             sem_ir_.inst_blocks().GetOrEmpty(generic.GetEvalBlock(region)),
+             sem_ir_.inst_blocks().GetOrEmpty(
+                 specific.GetValueBlock(region)))) {
+      if (generic_inst_id && specific_inst_id &&
+          sem_ir_.insts().Is<StructTypeField>(*generic_inst_id) &&
+          sem_ir_.insts().Is<StructTypeField>(*specific_inst_id)) {
+        // Skip printing struct type fields to match the way we print the
+        // generic.
+        continue;
+      }
+
+      Indent();
+      if (generic_inst_id) {
+        FormatName(*generic_inst_id);
+      } else {
+        out_ << "<missing>";
+      }
+      out_ << " => ";
+      if (specific_inst_id) {
+        FormatName(*specific_inst_id);
+      } else {
+        out_ << "<missing>";
+      }
+      out_ << "\n";
+    }
+  }
+
+  // Formats a full specific.
+  auto FormatSpecific(SpecificId id) -> void {
+    const auto& specific = sem_ir_.specifics().Get(id);
+
+    out_ << "\n";
+
+    out_ << "specific ";
+    FormatName(id);
+
+    // TODO: Remove once we stop forming generic specifics with no generic
+    // during import.
+    if (!specific.generic_id.is_valid()) {
+      out_ << ";\n";
+      return;
+    }
+    out_ << " ";
+
+    const auto& generic = sem_ir_.generics().Get(specific.generic_id);
+    llvm::SaveAndRestore generic_scope(
+        scope_, inst_namer_->GetScopeFor(specific.generic_id));
+
+    OpenBrace();
+    FormatSpecificRegion(generic, specific,
+                         GenericInstIndex::Region::Declaration, "");
+    FormatSpecificRegion(generic, specific,
+                         GenericInstIndex::Region::Definition, "definition");
+    CloseBrace();
+
+    out_ << "\n";
+  }
+
+  // Handles generic-specific setup for FormatEntityStart.
+  auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)
+      -> void {
+    const auto& generic = sem_ir_.generics().Get(generic_id);
+    out_ << "\n";
+    Indent();
+    out_ << "generic " << entity_kind << " ";
+    FormatName(generic_id);
+
+    llvm::SaveAndRestore generic_scope(scope_,
+                                       inst_namer_->GetScopeFor(generic_id));
+
+    FormatParamList(generic.bindings_id, /*is_implicit=*/false);
+
+    out_ << " ";
+    OpenBrace();
+    FormatCodeBlock(generic.decl_block_id);
+    if (generic.definition_block_id.is_valid()) {
+      IndentLabel();
+      out_ << "!definition:\n";
+      FormatCodeBlock(generic.definition_block_id);
+    }
+  }
+
+  // Provides common formatting for entities, paired with FormatEntityEnd.
+  template <typename IdT>
+  auto FormatEntityStart(llvm::StringRef entity_kind, GenericId generic_id,
+                         IdT entity_id) -> void {
+    if (generic_id.is_valid()) {
+      FormatGenericStart(entity_kind, generic_id);
+    }
+
+    out_ << "\n";
+    Indent();
+    out_ << entity_kind;
+
+    // If there's a generic, it will have attached the name. Otherwise, add the
+    // name here.
+    if (!generic_id.is_valid()) {
+      out_ << " ";
+      FormatName(entity_id);
+    }
+  }
+
+  // Provides common formatting for entities, paired with FormatEntityStart.
+  auto FormatEntityEnd(GenericId generic_id) -> void {
+    if (generic_id.is_valid()) {
+      CloseBrace();
+      out_ << '\n';
+    }
+  }
+
+  // Formats parameters, eliding them completely if they're empty. Wraps in
+  // parentheses or square brackets based on whether these are implicit
+  // parameters.
+  auto FormatParamList(InstBlockId param_refs_id, bool is_implicit) -> void {
+    if (!param_refs_id.is_valid()) {
+      return;
+    }
+
+    out_ << (is_implicit ? "[" : "(");
+
     llvm::ListSeparator sep;
     for (InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
       out_ << sep;
@@ -293,24 +451,30 @@ class Formatter {
         out_ << "addr ";
         param_id = addr->inner_id;
       }
-      FormatInstName(param_id);
+      FormatName(param_id);
       out_ << ": ";
       FormatType(sem_ir_.insts().Get(param_id).type_id());
     }
+
+    out_ << (is_implicit ? "]" : ")");
   }
 
+  // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void {
     if (block_id.is_valid()) {
       FormatCodeBlock(sem_ir_.inst_blocks().Get(block_id));
     }
   }
 
+  // Prints instructions for a code block.
   auto FormatCodeBlock(llvm::ArrayRef<InstId> block) -> void {
     for (const InstId inst_id : block) {
-      FormatInstruction(inst_id);
+      FormatInst(inst_id);
     }
   }
 
+  // Prints a code block with braces, intended to be used trailing after other
+  // content on the same line. If non-empty, instructions are on separate lines.
   auto FormatTrailingBlock(InstBlockId block_id) -> void {
     out_ << ' ';
     OpenBrace();
@@ -318,11 +482,12 @@ class Formatter {
     CloseBrace();
   }
 
+  // Prints the contents of a name scope, with an optional label.
   auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void {
     const auto& scope = sem_ir_.name_scopes().Get(id);
 
     if (scope.names.empty() && scope.extended_scopes.empty() &&
-        !scope.has_error) {
+        scope.import_ir_scopes.empty() && !scope.has_error) {
       // Name scope is empty.
       return;
     }
@@ -332,21 +497,11 @@ class Formatter {
       out_ << label;
     }
 
-    // Name scopes aren't kept in any particular order. Sort the entries before
-    // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<NameScope::Entry, NameId>> entries;
-    for (auto [name_id, entry] : scope.names) {
-      entries.push_back({entry, name_id});
-    }
-    llvm::sort(entries, [](auto a, auto b) {
-      return a.first.inst_id.index < b.first.inst_id.index;
-    });
-
-    for (auto [entry, name_id] : entries) {
+    for (auto [name_id, inst_id, access_kind] : scope.names) {
       Indent();
       out_ << ".";
       FormatName(name_id);
-      switch (entry.access_kind) {
+      switch (access_kind) {
         case SemIR::AccessKind::Public:
           break;
         case SemIR::AccessKind::Protected:
@@ -357,7 +512,7 @@ class Formatter {
           break;
       }
       out_ << " = ";
-      FormatInstName(entry.inst_id);
+      FormatName(inst_id);
       out_ << "\n";
     }
 
@@ -367,52 +522,50 @@ class Formatter {
       out_ << "extend " << extended_scope_id << "\n";
     }
 
+    for (auto [import_ir_id, unused] : scope.import_ir_scopes) {
+      Indent();
+      out_ << "import ";
+      FormatArg(import_ir_id);
+      out_ << "\n";
+    }
+
     if (scope.has_error) {
       Indent();
       out_ << "has_error\n";
     }
   }
 
-  auto FormatInstruction(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
-      Indent();
-      out_ << "invalid\n";
-      return;
-    }
-
-    FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
-  }
-
-  auto FormatInstruction(InstId inst_id, Inst inst) -> void {
+  auto FormatInst(InstId inst_id, Inst inst) -> void {
     CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(InstT)      \
-  case CARBON_KIND(InstT typed_inst): {     \
-    FormatInstruction(inst_id, typed_inst); \
-    break;                                  \
+#define CARBON_SEM_IR_INST_KIND(InstT)  \
+  case CARBON_KIND(InstT typed_inst): { \
+    FormatInst(inst_id, typed_inst);    \
+    break;                              \
   }
 #include "toolchain/sem_ir/inst_kind.def"
     }
   }
 
   template <typename InstT>
-  auto FormatInstruction(InstId inst_id, InstT inst) -> void {
+  auto FormatInst(InstId inst_id, InstT inst) -> void {
     Indent();
-    FormatInstructionLHS(inst_id, inst);
+    FormatInstLHS(inst_id, inst);
     out_ << InstT::Kind.ir_name();
     pending_constant_value_ = sem_ir_.constant_values().Get(inst_id);
     pending_constant_value_is_self_ =
-        sem_ir_.constant_values().GetInstId(pending_constant_value_) == inst_id;
-    FormatInstructionRHS(inst);
+        sem_ir_.constant_values().GetInstIdIfValid(pending_constant_value_) ==
+        inst_id;
+    FormatInstRHS(inst);
     FormatPendingConstantValue(AddSpace::Before);
     out_ << "\n";
   }
 
   // Don't print a constant for ImportRefUnloaded.
-  auto FormatInstruction(InstId inst_id, ImportRefUnloaded inst) -> void {
+  auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
     Indent();
-    FormatInstructionLHS(inst_id, inst);
+    FormatInstLHS(inst_id, inst);
     out_ << ImportRefUnloaded::Kind.ir_name();
-    FormatInstructionRHS(inst);
+    FormatInstRHS(inst);
     out_ << "\n";
   }
 
@@ -433,8 +586,7 @@ class Formatter {
       out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
       if (!pending_constant_value_is_self_) {
         out_ << " = ";
-        FormatInstName(
-            sem_ir_.constant_values().GetInstId(pending_constant_value_));
+        FormatConstant(pending_constant_value_);
       }
     } else {
       out_ << pending_constant_value_;
@@ -446,10 +598,10 @@ class Formatter {
     pending_constant_value_ = ConstantId::NotConstant;
   }
 
-  auto FormatInstructionLHS(InstId inst_id, Inst inst) -> void {
+  auto FormatInstLHS(InstId inst_id, Inst inst) -> void {
     switch (inst.kind().value_kind()) {
       case InstValueKind::Typed:
-        FormatInstName(inst_id);
+        FormatName(inst_id);
         out_ << ": ";
         switch (GetExprCategory(sem_ir_, inst_id)) {
           case ExprCategory::NotExpr:
@@ -473,16 +625,21 @@ class Formatter {
     }
   }
 
+  // Format ImportDecl with its name.
+  auto FormatInstLHS(InstId inst_id, ImportDecl /*inst*/) -> void {
+    FormatName(inst_id);
+    out_ << " = ";
+  }
+
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstructionLHS(InstId inst_id, ImportRefUnloaded /*inst*/)
-      -> void {
-    FormatInstName(inst_id);
+  auto FormatInstLHS(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
+    FormatName(inst_id);
     out_ << " = ";
   }
 
   template <typename InstT>
-  auto FormatInstructionRHS(InstT inst) -> void {
+  auto FormatInstRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
     using Info = Internal::InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
@@ -494,22 +651,22 @@ class Formatter {
     }
   }
 
-  auto FormatInstructionRHS(BindSymbolicName inst) -> void {
+  auto FormatInstRHS(BindSymbolicName inst) -> void {
     // A BindSymbolicName with no value is a purely symbolic binding, such as
     // the `Self` in an interface. Don't print out `invalid` for the value.
     if (inst.value_id.is_valid()) {
-      FormatArgs(inst.bind_name_id, inst.value_id);
+      FormatArgs(inst.entity_name_id, inst.value_id);
     } else {
-      FormatArgs(inst.bind_name_id);
+      FormatArgs(inst.entity_name_id);
     }
   }
 
-  auto FormatInstructionRHS(BlockArg inst) -> void {
+  auto FormatInstRHS(BlockArg inst) -> void {
     out_ << " ";
     FormatLabel(inst.block_id);
   }
 
-  auto FormatInstructionRHS(Namespace inst) -> void {
+  auto FormatInstRHS(Namespace inst) -> void {
     if (inst.import_id.is_valid()) {
       FormatArgs(inst.import_id, inst.name_scope_id);
     } else {
@@ -517,31 +674,31 @@ class Formatter {
     }
   }
 
-  auto FormatInstruction(InstId /*inst_id*/, BranchIf inst) -> void {
+  auto FormatInst(InstId /*inst_id*/, BranchIf inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
     out_ << "if ";
-    FormatInstName(inst.cond_id);
+    FormatName(inst.cond_id);
     out_ << " " << Branch::Kind.ir_name() << " ";
     FormatLabel(inst.target_id);
     out_ << " else ";
     in_terminator_sequence_ = true;
   }
 
-  auto FormatInstruction(InstId /*inst_id*/, BranchWithArg inst) -> void {
+  auto FormatInst(InstId /*inst_id*/, BranchWithArg inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
     out_ << BranchWithArg::Kind.ir_name() << " ";
     FormatLabel(inst.target_id);
     out_ << "(";
-    FormatInstName(inst.arg_id);
+    FormatName(inst.arg_id);
     out_ << ")\n";
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstruction(InstId /*inst_id*/, Branch inst) -> void {
+  auto FormatInst(InstId /*inst_id*/, Branch inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
@@ -551,7 +708,7 @@ class Formatter {
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstructionRHS(Call inst) -> void {
+  auto FormatInstRHS(Call inst) -> void {
     out_ << " ";
     FormatArg(inst.callee_id);
 
@@ -562,7 +719,8 @@ class Formatter {
 
     llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(inst.args_id);
 
-    bool has_return_slot = GetInitRepr(sem_ir_, inst.type_id).has_return_slot();
+    auto return_info = ReturnTypeInfo::ForType(sem_ir_, inst.type_id);
+    bool has_return_slot = return_info.has_return_slot();
     InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();
@@ -582,102 +740,109 @@ class Formatter {
     }
   }
 
-  auto FormatInstructionRHS(ArrayInit inst) -> void {
+  auto FormatInstRHS(ArrayInit inst) -> void {
     FormatArgs(inst.inits_id);
     FormatReturnSlot(inst.dest_id);
   }
 
-  auto FormatInstructionRHS(InitializeFrom inst) -> void {
+  auto FormatInstRHS(InitializeFrom inst) -> void {
     FormatArgs(inst.src_id);
     FormatReturnSlot(inst.dest_id);
   }
 
-  auto FormatInstructionRHS(ReturnExpr ret) -> void {
+  auto FormatInstRHS(ReturnExpr ret) -> void {
     FormatArgs(ret.expr_id);
     if (ret.dest_id.is_valid()) {
       FormatReturnSlot(ret.dest_id);
     }
   }
 
-  auto FormatInstructionRHS(StructInit init) -> void {
+  auto FormatInstRHS(StructInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlot(init.dest_id);
   }
 
-  auto FormatInstructionRHS(TupleInit init) -> void {
+  auto FormatInstRHS(TupleInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlot(init.dest_id);
   }
 
-  auto FormatInstructionRHS(FunctionDecl inst) -> void {
+  auto FormatInstRHS(FunctionDecl inst) -> void {
     FormatArgs(inst.function_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstructionRHS(ClassDecl inst) -> void {
+  auto FormatInstRHS(FunctionType inst) -> void {
+    if (inst.specific_id.is_valid()) {
+      FormatArgs(inst.function_id, inst.specific_id);
+    } else {
+      FormatArgs(inst.function_id);
+    }
+  }
+
+  auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstructionRHS(ClassType inst) -> void {
-    if (inst.args_id.is_valid()) {
-      FormatArgs(inst.class_id, inst.args_id);
+  auto FormatInstRHS(ClassType inst) -> void {
+    if (inst.specific_id.is_valid()) {
+      FormatArgs(inst.class_id, inst.specific_id);
     } else {
       FormatArgs(inst.class_id);
     }
   }
 
-  auto FormatInstructionRHS(ImplDecl inst) -> void {
+  auto FormatInstRHS(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstructionRHS(InterfaceDecl inst) -> void {
+  auto FormatInstRHS(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstructionRHS(InterfaceType inst) -> void {
-    if (inst.args_id.is_valid()) {
-      FormatArgs(inst.interface_id, inst.args_id);
+  auto FormatInstRHS(InterfaceType inst) -> void {
+    if (inst.specific_id.is_valid()) {
+      FormatArgs(inst.interface_id, inst.specific_id);
     } else {
       FormatArgs(inst.interface_id);
     }
   }
 
-  auto FormatInstructionRHS(IntLiteral inst) -> void {
+  auto FormatInstRHS(IntLiteral inst) -> void {
     out_ << " ";
     sem_ir_.ints()
         .Get(inst.int_id)
         .print(out_, sem_ir_.types().IsSignedInt(inst.type_id));
   }
 
-  auto FormatInstructionRHS(FloatLiteral inst) -> void {
+  auto FormatInstRHS(FloatLiteral inst) -> void {
     llvm::SmallVector<char, 16> buffer;
     sem_ir_.floats().Get(inst.float_id).toString(buffer);
     out_ << " " << buffer;
   }
 
-  auto FormatInstructionRHS(ImportRefUnloaded inst) -> void {
+  auto FormatInstRHS(ImportRefUnloaded inst) -> void {
     FormatArgs(inst.import_ir_inst_id);
     out_ << ", unloaded";
   }
 
-  auto FormatInstructionRHS(ImportRefLoaded inst) -> void {
+  auto FormatInstRHS(ImportRefLoaded inst) -> void {
     FormatArgs(inst.import_ir_inst_id);
     out_ << ", loaded";
   }
 
-  auto FormatInstructionRHS(SpliceBlock inst) -> void {
+  auto FormatInstRHS(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
     FormatTrailingBlock(inst.block_id);
   }
 
   // StructTypeFields are formatted as part of their StructType.
-  auto FormatInstruction(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {
-  }
+  auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
 
-  auto FormatInstructionRHS(StructType inst) -> void {
+  auto FormatInstRHS(StructType inst) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
     for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
@@ -699,37 +864,57 @@ class Formatter {
     ((out_ << sep, FormatArg(args)), ...);
   }
 
+  // FormatArg variants handling printing instruction arguments. Several things
+  // provide equivalent behavior with `FormatName`, so we provide that as the
+  // default.
+  template <typename IdT>
+  auto FormatArg(IdT id) -> void {
+    FormatName(id);
+  }
+
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
-  auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
+  auto FormatArg(BuiltinInstKind kind) -> void { out_ << kind.label(); }
 
-  auto FormatArg(BindNameId id) -> void {
-    const auto& info = sem_ir_.bind_names().Get(id);
+  auto FormatArg(EntityNameId id) -> void {
+    const auto& info = sem_ir_.entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index.is_valid()) {
       out_ << " " << info.bind_index.index;
     }
   }
 
-  auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
-
-  auto FormatArg(ClassId id) -> void { FormatClassName(id); }
-
-  auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
-
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
 
   auto FormatArg(FloatKind k) -> void { k.Print(out_); }
 
-  auto FormatArg(ImplId id) -> void { FormatImplName(id); }
-
-  auto FormatArg(ImportIRId id) -> void { out_ << id; }
+  auto FormatArg(ImportIRId id) -> void {
+    if (!id.is_valid()) {
+      out_ << id;
+      return;
+    }
+    const auto& import_ir = *sem_ir_.import_irs().Get(id).sem_ir;
+    if (import_ir.package_id().is_valid()) {
+      out_ << import_ir.identifiers().Get(import_ir.package_id());
+    } else {
+      out_ << "Main";
+    }
+    out_ << "//";
+    CARBON_CHECK(import_ir.library_id().is_valid());
+    if (import_ir.library_id() == LibraryNameId::Default) {
+      out_ << "default";
+    } else {
+      out_ << import_ir.string_literal_values().Get(
+          import_ir.library_id().AsStringLiteralValueId());
+    }
+  }
 
   auto FormatArg(ImportIRInstId id) -> void {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
     auto import_ir_inst = sem_ir_.import_ir_insts().Get(id);
-    out_ << import_ir_inst.ir_id << ", " << import_ir_inst.inst_id;
+    FormatArg(import_ir_inst.ir_id);
+    out_ << ", " << import_ir_inst.inst_id;
   }
 
   auto FormatArg(IntId id) -> void {
@@ -757,8 +942,6 @@ class Formatter {
     FormatNameScope(id);
     CloseBrace();
   }
-
-  auto FormatArg(InstId id) -> void { FormatInstName(id); }
 
   auto FormatArg(InstBlockId id) -> void {
     if (!id.is_valid()) {
@@ -789,8 +972,6 @@ class Formatter {
     out_ << '"';
   }
 
-  auto FormatArg(NameId id) -> void { FormatName(id); }
-
   auto FormatArg(TypeId id) -> void { FormatType(id); }
 
   auto FormatArg(TypeBlockId id) -> void {
@@ -808,31 +989,58 @@ class Formatter {
     FormatArg(dest_id);
   }
 
+  // `FormatName` is used when we need the name from an id. Most id types use
+  // equivalent name formatting from InstNamer, although there are a few special
+  // formats below.
+  template <typename IdT>
+  auto FormatName(IdT id) -> void {
+    out_ << inst_namer_->GetNameFor(id);
+  }
+
   auto FormatName(NameId id) -> void {
     out_ << sem_ir_.names().GetFormatted(id);
   }
 
-  auto FormatInstName(InstId id) -> void {
-    out_ << inst_namer_.GetNameFor(scope_, id);
+  auto FormatName(InstId id) -> void {
+    out_ << inst_namer_->GetNameFor(scope_, id);
+  }
+
+  auto FormatName(SpecificId id) -> void {
+    const auto& specific = sem_ir_.specifics().Get(id);
+    FormatName(specific.generic_id);
+    FormatArg(specific.args_id);
   }
 
   auto FormatLabel(InstBlockId id) -> void {
-    out_ << inst_namer_.GetLabelFor(scope_, id);
+    out_ << inst_namer_->GetLabelFor(scope_, id);
   }
 
-  auto FormatFunctionName(FunctionId id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
-  }
+  auto FormatConstant(ConstantId id) -> void {
+    if (!id.is_valid()) {
+      out_ << "<not constant>";
+      return;
+    }
 
-  auto FormatClassName(ClassId id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
-  }
+    // For a symbolic constant in a generic, list the constant value in the
+    // generic first, and the canonical constant second.
+    if (id.is_symbolic()) {
+      const auto& symbolic_constant =
+          sem_ir_.constant_values().GetSymbolicConstant(id);
+      if (symbolic_constant.generic_id.is_valid()) {
+        const auto& generic =
+            sem_ir_.generics().Get(symbolic_constant.generic_id);
+        FormatName(sem_ir_.inst_blocks().Get(generic.GetEvalBlock(
+            symbolic_constant.index
+                .region()))[symbolic_constant.index.index()]);
+        out_ << " (";
+        FormatName(sem_ir_.constant_values().GetInstId(id));
+        out_ << ")";
+        return;
+      }
+    }
 
-  auto FormatInterfaceName(InterfaceId id) -> void {
-    out_ << inst_namer_.GetNameFor(id);
+    FormatName(sem_ir_.constant_values().GetInstId(id));
   }
-
-  auto FormatImplName(ImplId id) -> void { out_ << inst_namer_.GetNameFor(id); }
 
   auto FormatType(TypeId id) -> void {
     if (!id.is_valid()) {
@@ -841,14 +1049,15 @@ class Formatter {
       // Types are formatted in the `constants` scope because they only refer to
       // constants.
       llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-      FormatInstName(sem_ir_.types().GetInstId(id));
+      FormatConstant(sem_ir_.types().GetConstantId(id));
     }
   }
 
- private:
   const File& sem_ir_;
+  InstNamer* const inst_namer_;
+
+  // The output stream. Set while formatting instructions.
   llvm::raw_ostream& out_;
-  InstNamer inst_namer_;
 
   // The current scope that we are formatting within. References to names in
   // this scope will not have a `@scope.` prefix added.
@@ -860,7 +1069,7 @@ class Formatter {
   bool in_terminator_sequence_ = false;
 
   // The indent depth to use for new instructions.
-  int indent_ = 0;
+  int indent_;
 
   // Whether we are currently formatting immediately after an open brace. If so,
   // a newline will be inserted before the next line indent.
@@ -877,10 +1086,28 @@ class Formatter {
   bool pending_constant_value_is_self_ = false;
 };
 
-auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,
-                const Parse::Tree& parse_tree, const File& sem_ir,
-                llvm::raw_ostream& out) -> void {
-  Formatter(tokenized_buffer, parse_tree, sem_ir, out).Format();
+Formatter::Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
+                     const Parse::Tree& parse_tree, const File& sem_ir)
+    : sem_ir_(sem_ir), inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
+
+Formatter::~Formatter() = default;
+
+auto Formatter::Print(llvm::raw_ostream& out) -> void {
+  FormatterImpl formatter(sem_ir_, &inst_namer_, out, /*indent=*/0);
+  formatter.Format();
+}
+
+auto Formatter::PrintPartialTrailingCodeBlock(
+    llvm::ArrayRef<SemIR::InstId> block, int indent, llvm::raw_ostream& out)
+    -> void {
+  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
+  formatter.FormatPartialTrailingCodeBlock(block);
+}
+
+auto Formatter::PrintInst(SemIR::InstId inst_id, int indent,
+                          llvm::raw_ostream& out) -> void {
+  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
+  formatter.FormatInst(inst_id);
 }
 
 }  // namespace Carbon::SemIR

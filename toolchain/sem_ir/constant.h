@@ -5,11 +5,31 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CONSTANT_H_
 
-#include "llvm/ADT/FoldingSet.h"
+#include "common/map.h"
+#include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::SemIR {
+
+// Information about a symbolic constant value. These are indexed by
+// `ConstantId`s for which `is_symbolic` is true.
+struct SymbolicConstant : Printable<SymbolicConstant> {
+  // The constant instruction that defines the value of this symbolic constant.
+  InstId inst_id;
+  // The enclosing generic. If this is invalid, then this is an abstract
+  // symbolic constant, such as a constant instruction in the constants block,
+  // rather than one associated with a particular generic.
+  GenericId generic_id;
+  // The index of this symbolic constant within the generic's list of symbolic
+  // constants, or invalid if `generic_id` is invalid.
+  GenericInstIndex index;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{inst: " << inst_id << ", generic: " << generic_id
+        << ", index: " << index << "}";
+  }
+};
 
 // Provides a ValueStore wrapper for tracking the constant values of
 // instructions.
@@ -21,7 +41,7 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated.
   auto Get(InstId inst_id) const -> ConstantId {
-    CARBON_CHECK(inst_id.index >= 0);
+    CARBON_DCHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
                ? default_
                : values_[inst_id.index];
@@ -30,7 +50,7 @@ class ConstantValueStore {
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    CARBON_CHECK(inst_id.index >= 0);
+    CARBON_DCHECK(inst_id.index >= 0);
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
       values_.resize(inst_id.index + 1, default_);
     }
@@ -40,7 +60,13 @@ class ConstantValueStore {
   // Gets the instruction ID that defines the value of the given constant.
   // Returns Invalid if the constant ID is non-constant. Requires is_valid.
   auto GetInstId(ConstantId const_id) const -> InstId {
-    return const_id.inst_id();
+    if (const_id.is_template()) {
+      return const_id.template_inst_id();
+    }
+    if (const_id.is_symbolic()) {
+      return GetSymbolicConstant(const_id).inst_id;
+    }
+    return InstId::Invalid;
   }
 
   // Gets the instruction ID that defines the value of the given constant.
@@ -55,10 +81,45 @@ class ConstantValueStore {
     return GetInstId(Get(inst_id));
   }
 
+  // Returns whether two constant IDs represent the same constant value. This
+  // includes the case where they might be in different generics and thus might
+  // have different ConstantIds, but are still symbolically equal.
+  auto AreEqualAcrossDeclarations(ConstantId a, ConstantId b) const -> bool {
+    return GetInstId(a) == GetInstId(b);
+  }
+
+  auto AddSymbolicConstant(SymbolicConstant constant) -> ConstantId {
+    symbolic_constants_.push_back(constant);
+    return ConstantId::ForSymbolicConstantIndex(symbolic_constants_.size() - 1);
+  }
+
+  auto GetSymbolicConstant(ConstantId const_id) -> SymbolicConstant& {
+    return symbolic_constants_[const_id.symbolic_index()];
+  }
+
+  auto GetSymbolicConstant(ConstantId const_id) const
+      -> const SymbolicConstant& {
+    return symbolic_constants_[const_id.symbolic_index()];
+  }
+
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Add(MemUsage::ConcatLabel(label, "values_"), values_);
+    mem_usage.Add(MemUsage::ConcatLabel(label, "symbolic_constants_"),
+                  symbolic_constants_);
+  }
+
   // Returns the constant values mapping as an ArrayRef whose keys are
   // instruction indexes. Some of the elements in this mapping may be Invalid or
   // NotConstant.
   auto array_ref() const -> llvm::ArrayRef<ConstantId> { return values_; }
+
+  // Returns the symbolic constants mapping as an ArrayRef whose keys are
+  // symbolic indexes of constants.
+  auto symbolic_constants() const -> llvm::ArrayRef<SymbolicConstant> {
+    return symbolic_constants_;
+  }
 
  private:
   const ConstantId default_;
@@ -70,6 +131,13 @@ class ConstantValueStore {
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
   llvm::SmallVector<ConstantId, 0> values_;
+
+  // A mapping from a symbolic constant ID index to information about the
+  // symbolic constant. For a template constant, the only information that we
+  // track is the instruction ID, which is stored directly within the
+  // `ConstantId`. For a symbolic constant, we also track information about
+  // where the constant was used, which is stored here.
+  llvm::SmallVector<SymbolicConstant, 0> symbolic_constants_;
 };
 
 // Provides storage for instructions representing deduplicated global constants.
@@ -85,6 +153,13 @@ class ConstantStore {
   // constant is new.
   auto GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId;
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Add(MemUsage::ConcatLabel(label, "map_"), map_);
+    mem_usage.Add(MemUsage::ConcatLabel(label, "constants_"), constants_);
+  }
+
   // Returns a copy of the constant IDs as a vector, in an arbitrary but
   // stable order. This should not be used anywhere performance-sensitive.
   auto array_ref() const -> llvm::ArrayRef<InstId> { return constants_; }
@@ -93,7 +168,7 @@ class ConstantStore {
 
  private:
   File& sem_ir_;
-  llvm::DenseMap<Inst, ConstantId> map_;
+  Map<Inst, ConstantId> map_;
   llvm::SmallVector<InstId, 0> constants_;
 };
 

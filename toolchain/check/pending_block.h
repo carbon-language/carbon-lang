@@ -41,8 +41,9 @@ class PendingBlock {
   };
 
   template <typename InstT>
-  auto AddInst(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
-    auto inst_id = context_.AddInstInNoBlock(loc_id, inst);
+  auto AddInstReusingLoc(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
+    auto inst_id = context_.AddInstInNoBlock(
+        SemIR::LocIdAndInst::ReusingLoc(loc_id, inst));
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -66,12 +67,10 @@ class PendingBlock {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
       context_.ReplaceLocIdAndInstBeforeConstantUse(
-          target_id,
-          SemIR::LocIdAndInst(
-              value.loc_id,
-              SemIR::SpliceBlock{.type_id = value.inst.type_id(),
-                                 .block_id = SemIR::InstBlockId::Empty,
-                                 .result_id = value_id}));
+          target_id, SemIR::LocIdAndInst::ReusingLoc<SemIR::SpliceBlock>(
+                         value.loc_id, {.type_id = value.inst.type_id(),
+                                        .block_id = SemIR::InstBlockId::Empty,
+                                        .result_id = value_id}));
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
@@ -80,11 +79,10 @@ class PendingBlock {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
       context_.ReplaceLocIdAndInstBeforeConstantUse(
           target_id,
-          SemIR::LocIdAndInst(
-              value.loc_id,
-              SemIR::SpliceBlock{.type_id = value.inst.type_id(),
-                                 .block_id = context_.inst_blocks().Add(insts_),
-                                 .result_id = value_id}));
+          SemIR::LocIdAndInst::ReusingLoc<SemIR::SpliceBlock>(
+              value.loc_id, {.type_id = value.inst.type_id(),
+                             .block_id = context_.inst_blocks().Add(insts_),
+                             .result_id = value_id}));
     }
 
     // Prepare to stash more pending instructions.

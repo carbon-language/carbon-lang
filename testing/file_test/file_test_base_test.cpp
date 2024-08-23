@@ -136,6 +136,9 @@ class FileTestBaseTest : public FileTestBase {
       return ErrorBuilder() << "Unexpected file: " << filename;
     }
   }
+  auto GetArgReplacements() -> llvm::StringMap<std::string> override {
+    return {{"replacement", "replaced"}};
+  }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     return {"default_args", "%s"};

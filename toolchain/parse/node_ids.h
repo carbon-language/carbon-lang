@@ -20,7 +20,7 @@ struct InvalidNodeId {};
 // contain any of the information about the node, and serve as a handle that
 // can be used with the underlying tree to query for detailed information.
 struct NodeId : public IdBase {
-  // An explicitly invalid instance.
+  // An explicitly invalid node ID.
   static constexpr InvalidNodeId Invalid;
 
   using IdBase::IdBase;
@@ -71,8 +71,9 @@ struct NodeIdInCategory : public NodeId {
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
 using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
-using AnyMemberNameOrMemberExprId =
-    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr>;
+using AnyMemberAccessId =
+    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr |
+                     NodeCategory::IntConst>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;

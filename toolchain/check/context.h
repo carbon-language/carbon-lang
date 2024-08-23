@@ -5,24 +5,45 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
-#include "llvm/ADT/DenseMap.h"
+#include "common/map.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
+
+// Information about a scope in which we can perform name lookup.
+struct LookupScope {
+  // The name scope in which names are searched.
+  SemIR::NameScopeId name_scope_id;
+  // The specific for the name scope, or `Invalid` if the name scope is not
+  // defined by a generic or we should perform lookup into the generic itself.
+  SemIR::SpecificId specific_id;
+};
+
+// A result produced by name lookup.
+struct LookupResult {
+  // The specific in which the lookup result was found. `Invalid` if the result
+  // was not found in a specific.
+  SemIR::SpecificId specific_id;
+  // The declaration that was found by name lookup.
+  SemIR::InstId inst_id;
+};
 
 // Context and shared functionality for semantics handlers.
 class Context {
@@ -33,6 +54,8 @@ class Context {
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
+                   llvm::function_ref<const Parse::TreeAndSubtrees&()>
+                       get_parse_tree_and_subtrees,
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
@@ -44,20 +67,38 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
-  // Convenience for AddInst on specific instruction types.
-  template <typename InstT, typename LocT>
-  auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
-    return AddInst(SemIR::LocIdAndInst(loc_id, inst));
+  // Convenience for AddInst with typed nodes.
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst(node_id, inst));
+  }
+
+  // Convenience for AddInst when reusing a location, which any instruction can
+  // do.
+  template <typename InstT>
+  auto AddInstReusingLoc(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst::ReusingLoc<InstT>(loc_id, inst));
   }
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
   auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
-  // Convenience for AddInstInNoBlock on specific instruction types.
-  template <typename InstT, typename LocT>
-  auto AddInstInNoBlock(LocT loc_id, InstT inst) -> SemIR::InstId {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(loc_id, inst));
+  // Convenience for AddInstInNoBlock with typed nodes.
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddInstInNoBlock(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> SemIR::InstId {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(node_id, inst));
+  }
+
+  // Convenience for AddInstInNoBlock on imported instructions.
+  template <typename InstT>
+  auto AddInstInNoBlock(SemIR::ImportIRInstId import_ir_inst_id, InstT inst)
+      -> SemIR::InstId {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(import_ir_inst_id, inst));
   }
 
   // Adds an instruction to the current block, returning the produced ID. The
@@ -76,9 +117,11 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result. Only valid if the LocId is for a NodeId.
-  template <typename InstT, typename LocT>
-  auto AddInstAndPush(LocT loc_id, InstT inst) -> void {
-    SemIR::LocIdAndInst arg(loc_id, inst);
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> void {
+    SemIR::LocIdAndInst arg(node_id, inst);
     auto inst_id = AddInst(arg);
     node_stack_.Push(arg.loc_id.node_id(), inst_id);
   }
@@ -120,7 +163,7 @@ class Context {
 
   // Performs an unqualified name lookup, returning the referenced instruction.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
-      -> SemIR::InstId;
+      -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
@@ -132,8 +175,8 @@ class Context {
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
   auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                           SemIR::NameScopeId scope_id, bool required = true)
-      -> SemIR::InstId;
+                           LookupScope scope, bool required = true)
+      -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
   // BuiltinError if not found.
@@ -237,6 +280,17 @@ class Context {
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
 
+  // Attempts to complete and define the type `type_id`. Returns `true` if the
+  // type is defined, or `false` if no definition is available. A defined type
+  // has known members.
+  //
+  // This is the same as `TryToCompleteType` except for interfaces, which are
+  // complete before they are fully defined.
+  auto TryToDefineType(
+      SemIR::TypeId type_id,
+      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
+          std::nullopt) -> bool;
+
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType.
@@ -250,14 +304,15 @@ class Context {
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
   // Gets the type for the name of an associated entity.
-  auto GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+  auto GetAssociatedEntityType(SemIR::TypeId interface_type_id,
                                SemIR::TypeId entity_type_id) -> SemIR::TypeId;
 
   // Gets a builtin type. The returned type will be complete.
-  auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
+  auto GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
-  auto GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId;
+  auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
+      -> SemIR::TypeId;
 
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
@@ -290,13 +345,7 @@ class Context {
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
-  // Finalizes the list of exports on the IR.
-  auto FinalizeExports() -> void {
-    inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
-  }
-
-  // Finalizes the initialization function (__global_init).
-  auto FinalizeGlobalInit() -> void;
+  auto Finalize() -> void;
 
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
@@ -311,8 +360,17 @@ class Context {
     return check_ir_map_[sem_ir.check_ir_id().index];
   }
 
+  // True if the current file is an impl file.
+  auto IsImplFile() -> bool {
+    return sem_ir_->import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir !=
+           nullptr;
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+
+  // Prints the the formatted sem_ir to stderr.
+  LLVM_DUMP_METHOD auto DumpFormattedFile() const -> void;
 
   // Get the Lex::TokenKind of a node for diagnostics.
   auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
@@ -324,6 +382,10 @@ class Context {
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
 
   auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
+
+  auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
+    return get_parse_tree_and_subtrees_();
+  }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
 
@@ -356,6 +418,10 @@ class Context {
     return scope_stack().break_continue_stack();
   }
 
+  auto generic_region_stack() -> GenericRegionStack& {
+    return generic_region_stack_;
+  }
+
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -363,16 +429,18 @@ class Context {
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
-  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
     return sem_ir().identifiers();
   }
   auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto floats() -> FloatValueStore& { return sem_ir().floats(); }
-  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
-  auto bind_names() -> SemIR::BindNameStore& { return sem_ir().bind_names(); }
+  auto entity_names() -> SemIR::EntityNameStore& {
+    return sem_ir().entity_names();
+  }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }
@@ -381,6 +449,8 @@ class Context {
     return sem_ir().interfaces();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
+  auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
+  auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
   }
@@ -406,6 +476,16 @@ class Context {
   }
   auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
 
+  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
+    return definitions_required_;
+  }
+
+  auto global_init() -> GlobalInit& { return global_init_; }
+
+  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
+    return import_ref_ids_;
+  }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -420,6 +500,10 @@ class Context {
     SemIR::TypeId type_id_;
   };
 
+  // Finish producing an instruction. Set its constant value, and register it in
+  // any applicable instruction lists.
+  auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
+
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
 
@@ -428,6 +512,10 @@ class Context {
 
   // The file's parse tree.
   const Parse::Tree* parse_tree_;
+
+  // Returns a lazily constructed TreeAndSubtrees.
+  llvm::function_ref<const Parse::TreeAndSubtrees&()>
+      get_parse_tree_and_subtrees_;
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
@@ -460,6 +548,9 @@ class Context {
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;
 
+  // The stack of generic regions we are currently within.
+  GenericRegionStack generic_region_stack_;
+
   // Cache of reverse mapping from type constants to types.
   //
   // TODO: Instead of mapping to a dense `TypeId` space, we could make `TypeId`
@@ -468,7 +559,7 @@ class Context {
   // not clear whether that would result in more or fewer lookups.
   //
   // TODO: Should this be part of the `TypeStore`?
-  llvm::DenseMap<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
+  Map<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
@@ -481,6 +572,22 @@ class Context {
   //
   // Inline 0 elements because it's expected to require heap allocation.
   llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
+
+  // Declaration instructions of entities that should have definitions by the
+  // end of the current source file.
+  llvm::SmallVector<SemIR::InstId> definitions_required_;
+
+  // State for global initialization.
+  GlobalInit global_init_;
+
+  // A list of import refs which can't be inserted into their current context.
+  // They're typically added during name lookup or import ref resolution, where
+  // the current block on inst_block_stack_ is unrelated.
+  //
+  // These are instead added here because they're referenced by other
+  // instructions and needs to be visible in textual IR.
+  // FinalizeImportRefBlock() will produce an inst block for them.
+  llvm::SmallVector<SemIR::InstId> import_ref_ids_;
 };
 
 }  // namespace Carbon::Check

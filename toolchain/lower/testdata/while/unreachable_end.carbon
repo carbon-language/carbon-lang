@@ -34,7 +34,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @H()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @While() {
+// CHECK:STDOUT: define void @While() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @F()
 // CHECK:STDOUT:   br label %while.cond
@@ -51,3 +51,14 @@ fn While() {
 // CHECK:STDOUT:   call void @H()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "unreachable_end.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

@@ -224,7 +224,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  void ForEach(CallbackT callback)
+  void ForEach(CallbackT callback) const
     requires(std::invocable<CallbackT, KeyT&, ValueT&>)
   {
     return ViewT(*this).ForEach(callback);
@@ -385,6 +385,8 @@ class Map : public RawHashtable::TableImpl<
   Map() = default;
   Map(const Map& arg) = default;
   Map(Map&& arg) noexcept = default;
+  auto operator=(const Map& arg) -> Map& = default;
+  auto operator=(Map&& arg) noexcept -> Map& = default;
 
   // Reset the entire state of the hashtable to as it was when constructed,
   // throwing away any intervening allocations.

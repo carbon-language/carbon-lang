@@ -33,7 +33,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Interface, %F.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %CallStatic.type: type = fn_type @CallStatic [template]
@@ -52,17 +52,17 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %CallStatic.decl: %CallStatic.type = fn_decl @CallStatic [template = constants.%CallStatic] {
 // CHECK:STDOUT:     %Interface.ref.loc13: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc13_15.1: %.1 = param T
-// CHECK:STDOUT:     @CallStatic.%T: %.1 = bind_symbolic_name T 0, %T.loc13_15.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @CallStatic.%T.loc13: %.1 = bind_symbolic_name T 0, %T.loc13_15.1 [symbolic = @CallStatic.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet.decl: %CallFacet.type = fn_decl @CallFacet [template = constants.%CallFacet] {
 // CHECK:STDOUT:     %Interface.ref.loc21: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc21_14.1: %.1 = param T
-// CHECK:STDOUT:     @CallFacet.%T: %.1 = bind_symbolic_name T 0, %T.loc21_14.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @CallFacet.%T [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %x.loc21_29.1: %T = param x
-// CHECK:STDOUT:     @CallFacet.%x: %T = bind_name x, %x.loc21_29.1
+// CHECK:STDOUT:     @CallFacet.%T.loc21: %.1 = bind_symbolic_name T 0, %T.loc21_14.1 [symbolic = @CallFacet.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @CallFacet.%T.loc21 [symbolic = @CallFacet.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = @CallFacet.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = @CallFacet.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %x.loc21_29.1: @CallFacet.%T.1 (%T) = param x
+// CHECK:STDOUT:     @CallFacet.%x: @CallFacet.%T.1 (%T) = bind_name x, %x.loc21_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,18 +77,43 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallStatic(%T: %.1) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: %.1 = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFacet(%T: %.1, %x: %T) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
-// CHECK:STDOUT:   return
+// CHECK:STDOUT: generic fn @CallStatic(%T.loc13: %.1) {
+// CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc13: %.1) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @CallFacet(%T.loc21: %.1) {
+// CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc21: %.1, %x: @CallFacet.%T.1 (%T)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %x.ref: @CallFacet.%T.1 (%T) = name_ref x, %x
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @CallStatic(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @CallFacet(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

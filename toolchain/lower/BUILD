@@ -17,6 +17,7 @@ cc_library(
     hdrs = ["lower.h"],
     deps = [
         ":context",
+        "//toolchain/check:sem_ir_diagnostic_converter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
@@ -42,14 +43,18 @@ cc_library(
     ],
     deps = [
         "//common:check",
+        "//common:map",
         "//common:vlog",
         "//toolchain/base:kind_switch",
+        "//toolchain/check:sem_ir_diagnostic_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TransformUtils",
     ],
 )

@@ -13,21 +13,26 @@ namespace Carbon::SemIR {
 
 // A reference to an imported IR.
 struct ImportIR : public Printable<ImportIR> {
-  auto Print(llvm::raw_ostream& out) const -> void { out << node_id; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{decl_id: " << decl_id
+        << ", is_export: " << (is_export ? "true" : "false") << "}";
+  }
 
-  // The node ID for the import.
-  Parse::ImportDeclId node_id;
-  // The imported IR.
-  const File* sem_ir;
+  // The `import` declaration.
+  InstId decl_id;
   // True if this is part of an `export import`.
   bool is_export;
+  // The imported IR.
+  const File* sem_ir;
 };
+
+static_assert(sizeof(ImportIR) == 8 + sizeof(uintptr_t), "Unexpected size");
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
 // LocId.
 struct ImportIRInst : public Printable<ImportIRInst> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << ir_id << ":" << inst_id;
+    out << "{ir_id: " << ir_id << ", inst_id: " << inst_id << "}";
   }
 
   auto operator==(const ImportIRInst& rhs) const -> bool {

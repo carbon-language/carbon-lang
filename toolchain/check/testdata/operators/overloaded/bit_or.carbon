@@ -51,46 +51,62 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.7: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %.9: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type @BitOr, %Op.type.2 [template]
-// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %.2, %Op.type.2 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.9 [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type @BitOrAssign, %Op.type.4 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type %.6, %Op.type.4 [template]
+// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .BitOr = %import_ref.1
+// CHECK:STDOUT:     .BitOrAssign = %import_ref.5
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+72, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+74, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/bitwise, inst+95, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+90, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+97, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+99, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/bitwise, inst+120, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+114, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+90, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+114, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp.decl
 // CHECK:STDOUT:     .TestAssign = %TestAssign.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir5, inst+68, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir5, inst+70, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref ir5, inst+90, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref ir5, inst+86, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref.loc17: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %BitOr.ref: type = name_ref BitOr, %import_ref.1 [template = constants.%.2]
+// CHECK:STDOUT:     %Core.ref.loc17: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %BitOr.ref: type = name_ref BitOr, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir5, inst+92, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir5, inst+94, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref ir5, inst+113, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref ir5, inst+109, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %BitOrAssign.ref: type = name_ref BitOrAssign, %import_ref.5 [template = constants.%.6]
+// CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %BitOrAssign.ref: type = name_ref BitOrAssign, imports.%import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, %C.decl [template = constants.%C]
@@ -102,8 +118,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir5, inst+68, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir5, inst+86, unloaded
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc30: type = ptr_type %C [template = constants.%.7]
@@ -113,22 +127,20 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %b.loc30_22.1: %C = param b
 // CHECK:STDOUT:     @TestAssign.%b: %C = bind_name b, %b.loc30_22.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir5, inst+92, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir5, inst+109, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitOr {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .Op = file.%import_ref.3
-// CHECK:STDOUT:   witness = (file.%import_ref.4)
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Op = imports.%import_ref.3
+// CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitOrAssign {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.6
-// CHECK:STDOUT:   .Op = file.%import_ref.7
-// CHECK:STDOUT:   witness = (file.%import_ref.8)
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   .Op = imports.%import_ref.7
+// CHECK:STDOUT:   witness = (imports.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {
@@ -180,14 +192,23 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   return %.loc19_14 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self: %Self.1](%other: %Self.1) -> %Self.1;
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Op.2.%Self (%Self.1)](%other: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc23_14.3: %.7](@impl.2.%other.loc23_24.2: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self: %.8](%other: %Self.2);
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.6) {
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr %self: @Op.4.%.2 (%.8)](%other: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a: %C, %b: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
@@ -210,5 +231,23 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.loc31_3.2: %.7 = addr_of %.loc31_3.1
 // CHECK:STDOUT:   %Op.call: init %.3 = call %.loc31_6(%.loc31_3.2, %b.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%Self.1) {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.4(constants.%Self.2) {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %.2 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.4(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

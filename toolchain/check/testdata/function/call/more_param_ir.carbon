@@ -13,7 +13,7 @@ fn Foo(a: i32, b: i32) {}
 fn Main() {
   var x: (i32,) = (1,);
   // Generates multiple IR instructions for the first parameter.
-  Foo(x[0], 6);
+  Foo(x.0, 6);
 }
 
 // CHECK:STDOUT: --- more_param_ir.carbon
@@ -34,15 +34,27 @@ fn Main() {
 // CHECK:STDOUT:   %.6: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
@@ -56,7 +68,6 @@ fn Main() {
 // CHECK:STDOUT:     @Foo.%b: i32 = bind_name b, %b.loc11_16.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -83,10 +94,10 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %.3 = name_ref x, %x
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc16_10.1: ref i32 = tuple_index %x.ref, %.loc16_9
-// CHECK:STDOUT:   %.loc16_13: i32 = int_literal 6 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc16_10.2: i32 = bind_value %.loc16_10.1
-// CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_10.2, %.loc16_13)
+// CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_index %x.ref, %.loc16_9
+// CHECK:STDOUT:   %.loc16_12: i32 = int_literal 6 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16_8.2: i32 = bind_value %.loc16_8.1
+// CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_8.2, %.loc16_12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

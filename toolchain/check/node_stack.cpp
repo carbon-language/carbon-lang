@@ -8,21 +8,28 @@
 
 namespace Carbon::Check {
 
-auto NodeStack::PrintForStackDump(llvm::raw_ostream& output) const -> void {
+auto NodeStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,
+                                  llvm::raw_ostream& output) const -> void {
   auto print_id = [&]<Id::Kind Kind>(Id id) {
     if constexpr (Kind == Id::Kind::None) {
-      output << " -> no value";
+      output << "no value\n";
     } else if constexpr (Kind == Id::Kind::Invalid) {
       CARBON_FATAL() << "Should not be in node stack";
+    } else if constexpr (Kind == Id::KindFor<SemIR::InstId>()) {
+      output << "\n";
+      formatter.PrintInst(id.As<Id::KindFor<SemIR::InstId>()>(), indent + 4,
+                          output);
     } else {
-      output << " -> " << id.As<Kind>();
+      output << id.As<Kind>() << "\n";
     }
   };
 
+  output.indent(indent);
   output << "NodeStack:\n";
   for (auto [i, entry] : llvm::enumerate(stack_)) {
     auto node_kind = parse_tree_->node_kind(entry.node_id);
-    output << "\t" << i << ".\t" << node_kind;
+    output.indent(indent + 2);
+    output << i << ". " << node_kind << ": ";
     switch (node_kind) {
 #define CARBON_PARSE_NODE_KIND(Kind)                                        \
   case Parse::NodeKind::Kind:                                               \
@@ -30,7 +37,6 @@ auto NodeStack::PrintForStackDump(llvm::raw_ostream& output) const -> void {
     break;
 #include "toolchain/parse/node_kind.def"
     }
-    output << "\n";
   }
 }
 

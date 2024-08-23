@@ -12,11 +12,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 from alive_progress import alive_bar  # type:ignore
+import math
 from multiprocessing import Pool
 import re
 import termplotlib as tpl  # type:ignore
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from dataclasses import dataclass, field, asdict
 from collections import Counter
 
@@ -70,6 +71,9 @@ class Stats:
     identifiers: int = 0
     identifier_widths: Counter[int] = field(default_factory=lambda: Counter())
     ids_per_line: Counter[int] = field(default_factory=lambda: Counter())
+    unique_ids_per_ten_lines: Counter[int] = field(
+        default_factory=lambda: Counter()
+    )
 
     def accumulate(self, other: Stats) -> None:
         self.lines += other.lines
@@ -93,11 +97,13 @@ class Stats:
         self.identifiers += other.identifiers
         self.identifier_widths.update(other.identifier_widths)
         self.ids_per_line.update(other.ids_per_line)
+        self.unique_ids_per_ten_lines.update(other.unique_ids_per_ten_lines)
 
 
 def scan_file(file: Path) -> Stats:
     """Scans the provided file and accumulates stats."""
     stats = Stats()
+    unique_ids = set()
     for line in file.open():
         # Strip off the line endings.
         line = line.rstrip("\r\n")
@@ -152,6 +158,7 @@ def scan_file(file: Path) -> Stats:
                 )
                 line_identifiers += 1
                 stats.identifier_widths[len(m.group("id"))] += 1
+                unique_ids.add(m.group("id"))
         stats.string_literals += line_string_literals
         stats.string_literals_per_line[line_string_literals] += 1
         stats.int_literals += line_int_literals
@@ -164,10 +171,14 @@ def scan_file(file: Path) -> Stats:
         stats.keywords_per_line[line_keywords] += 1
         stats.identifiers += line_identifiers
         stats.ids_per_line[line_identifiers] += 1
+    if stats.lines > 0:
+        stats.unique_ids_per_ten_lines[
+            math.ceil((len(unique_ids) * 10) / stats.lines)
+        ] += 1
     return stats
 
 
-def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     """Parsers command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -232,7 +243,7 @@ Fraction IDs: {stats.identifiers / tokens}
     )
 
     def print_histogram(
-        title: str, data: Dict[int, int], column_format: str
+        title: str, data: dict[int, int], column_format: str
     ) -> None:
         print()
         key_min = min(data.keys())
@@ -241,14 +252,24 @@ Fraction IDs: {stats.identifiers / tokens}
         keys = [column_format % k for k in range(key_min, key_max)]
         total = sum(values)
         median = key_min
+        p90 = key_min
+        p95 = key_min
+        p99 = key_min
         count = total
         for k in range(key_min, key_max):
             count -= data.get(k, 0)
-            if count <= total / 2:
+            if median == key_min and count <= total / 2:
                 median = k
-                break
+            if p90 == key_min and count <= total / 10:
+                p90 = k
+            if p95 == key_min and count <= total / 20:
+                p95 = k
+            if p99 == key_min and count <= total / 100:
+                p99 = k
 
-        print(title + f" (median: {median})")
+        print(
+            title + f" (median: {median}, p90: {p90}, p95: {p95}, p99: {p99})"
+        )
         fig = tpl.figure()
         fig.barh(values, keys)
         fig.show()
@@ -281,6 +302,11 @@ Fraction IDs: {stats.identifiers / tokens}
 
     print_histogram("## ID widths ##", stats.identifier_widths, "%d characters")
     print_histogram("## IDs per line ##", stats.ids_per_line, "%d ids")
+    print_histogram(
+        "## Unique IDs per 10 lines ##",
+        stats.unique_ids_per_ten_lines,
+        "%d ids",
+    )
 
 
 if __name__ == "__main__":

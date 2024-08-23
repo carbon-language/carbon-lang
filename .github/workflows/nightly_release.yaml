@@ -1,0 +1,108 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# This workflow creates a GitHub "release" of a nightly build of the project.
+#
+# Note: This is just an initial rough attempt, there is a lot of future work
+# needed here. A brief summary of TODOs:
+#
+# - Configure a nice release notes template and switch to generating the title
+#   and notes instead of hard coding them.
+#
+# - Do some amount of testing prior to building and uploading the release.
+#   - Tempting to try to examine existing testing workflow, but maybe better to
+#     allow re-using any complex parts and do our own testing. That would, for
+#     example, allow us to narrow or expand the set of tests uses for
+#     pre-release testing to potentially be different from continuous testing.
+#   - Some questions around what to do in the event of a failure... error? Where
+#     does the error go? Create a draft, unpublished release instead?
+#
+# - Build artifacts for all the different OSes we have GitHub runners for rather
+#   than just x86 Linux.
+
+name: Nightly Release
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  # Enable manual runs for testing or manually (re-)creating a nightly release.
+  workflow_dispatch:
+
+permissions:
+  contents: write # For creating and uploading to releases.
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.dl.sourceforge.net:443
+            api.github.com:443
+            bcr.bazel.build:443
+            downloads.sourceforge.net:443
+            github.com:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            releases.bazel.build:443
+            sourceforge.net:443
+            storage.googleapis.com:443
+            uploads.github.com:443
+
+      - name: Checkout branch
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Set up remote cache access
+        env:
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        run: |
+          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
+              >> $GITHUB_ENV
+
+      - uses: ./.github/actions/build-setup-common
+        with:
+          matrix_runner: ubuntu-22.04
+          remote_cache_upload: ${{ env.remote_cache_upload }}
+
+      - name: Get nightly date
+        run: |
+          echo "nightly_date=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
+
+      - name: Build release
+        run: |
+          ./scripts/run_bazel.py \
+            --attempts=5 --jobs-on-last-attempt=4 \
+            test -c opt --remote_download_toplevel \
+            --pre_release=nightly --nightly_date=${{ env.nightly_date }} \
+            //toolchain/install:prefix_root/bin/carbon \
+            //toolchain/install:carbon_toolchain_tar_gz_rule \
+            //toolchain/install:carbon_toolchain_tar_gz_test
+
+      - name: Extract the release version
+        run: |
+          # Make sure we can run the toolchain to get the version.
+          ./bazel-bin/toolchain/install/prefix_root/bin/carbon version
+
+          # Now stash it in a variable and export it.
+          VERSION=$( \
+            ./bazel-bin/toolchain/install/prefix_root/bin/carbon version \
+            | cut -d' ' -f5 | cut -d'+' -f1)
+          echo "release_version=$VERSION" >> $GITHUB_ENV
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create \
+            --title "Nightly build ${{ env.nightly_date }}" \
+            --generate-notes \
+            --prerelease \
+            v${{ env.release_version }} \
+            "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.gz"

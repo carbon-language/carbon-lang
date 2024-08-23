@@ -7,7 +7,10 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -22,11 +25,15 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
     -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
 
+  // TODO: Pass in information about the specific in which the generic class
+  // name was found.
+  // TODO: Perform argument deduction.
+  auto specific_id = SemIR::SpecificId::Invalid;
+
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, class_info.decl_id,
-      class_info.implicit_param_refs_id, class_info.param_refs_id);
+      /*return_storage_id=*/SemIR::InstId::Invalid, class_info, specific_id);
   return context.AddInst<SemIR::Call>(node_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
@@ -44,11 +51,16 @@ static auto PerformCallToGenericInterface(Context& context,
     -> SemIR::InstId {
   auto& interface_info = context.interfaces().Get(interface_id);
 
+  // TODO: Pass in information about the specific in which the generic interface
+  // name was found.
+  // TODO: Perform argument deduction.
+  auto specific_id = SemIR::SpecificId::Invalid;
+
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info.decl_id,
-      interface_info.implicit_param_refs_id, interface_info.param_refs_id);
+      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info,
+      specific_id);
   return context.AddInst<SemIR::Call>(node_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
@@ -87,48 +99,59 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   }
   auto& callable = context.functions().Get(callee_function.function_id);
 
-  // For functions with an implicit return type, the return type is the empty
-  // tuple type.
-  SemIR::TypeId type_id = callable.declared_return_type(context.sem_ir());
-  if (!type_id.is_valid()) {
-    type_id = context.GetTupleType({});
+  // If the callee is a generic function, determine the generic argument values
+  // for the call.
+  auto specific_id = SemIR::SpecificId::Invalid;
+  if (callable.generic_id.is_valid()) {
+    specific_id = DeduceGenericCallArguments(
+        context, node_id, callable.generic_id, callee_function.specific_id,
+        callable.implicit_param_refs_id, callable.param_refs_id,
+        callee_function.self_id, arg_ids);
+    if (!specific_id.is_valid()) {
+      return SemIR::InstId::BuiltinError;
+    }
   }
 
   // If there is a return slot, build storage for the result.
   SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
-  {
+  SemIR::ReturnTypeInfo return_info = [&] {
     DiagnosticAnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "Return type declared here.");
           builder.Note(callable.return_storage_id, IncompleteReturnTypeHere);
         });
-    CheckFunctionReturnType(context, callee_id, callable);
-  }
-  switch (callable.return_slot) {
-    case SemIR::Function::ReturnSlot::Present:
+    return CheckFunctionReturnType(context, callee_id, callable, specific_id);
+  }();
+  switch (return_info.init_repr.kind) {
+    case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
       return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
-          node_id, {.type_id = type_id});
+          node_id, {.type_id = return_info.type_id});
       break;
-    case SemIR::Function::ReturnSlot::Absent:
+    case SemIR::InitRepr::None:
+      // For functions with an implicit return type, the return type is the
+      // empty tuple type.
+      if (!return_info.type_id.is_valid()) {
+        return_info.type_id = context.GetTupleType({});
+      }
       break;
-    case SemIR::Function::ReturnSlot::Error:
+    case SemIR::InitRepr::ByCopy:
+      break;
+    case SemIR::InitRepr::Incomplete:
       // Don't form an initializing expression with an incomplete type.
-      type_id = SemIR::TypeId::Error;
+      // CheckFunctionReturnType will have diagnosed this for us if needed.
+      return_info.type_id = SemIR::TypeId::Error;
       break;
-    case SemIR::Function::ReturnSlot::NotComputed:
-      CARBON_FATAL() << "Missing return slot category in call to " << callable;
   }
 
   // Convert the arguments to match the parameters.
   auto converted_args_id =
       ConvertCallArgs(context, node_id, callee_function.self_id, arg_ids,
-                      return_storage_id, callable.decl_id,
-                      callable.implicit_param_refs_id, callable.param_refs_id);
+                      return_storage_id, callable, specific_id);
   auto call_inst_id =
-      context.AddInst<SemIR::Call>(node_id, {.type_id = type_id,
+      context.AddInst<SemIR::Call>(node_id, {.type_id = return_info.type_id,
                                              .callee_id = callee_id,
                                              .args_id = converted_args_id});
 

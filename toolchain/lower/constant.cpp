@@ -5,11 +5,11 @@
 #include "toolchain/lower/constant.h"
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
@@ -82,24 +82,6 @@ class ConstantContext {
   int32_t last_lowered_constant_index_ = -1;
 };
 
-// For each instruction kind that can produce a constant, there is a function
-// below to convert it to an `llvm::Constant*`:
-//
-// auto Emit<InstKind>AsConstant(ConstantContext& context,
-//                               SemIR::<InstKind> inst) -> llvm::Constant*;
-
-// For constants that are always of type `type`, produce the trivial runtime
-// representation of type `type`.
-#define CARBON_SEM_IR_INST_KIND_TYPE_NEVER(...)
-#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
-#define CARBON_SEM_IR_INST_KIND_CONSTANT_SYMBOLIC_ONLY(...)
-#define CARBON_SEM_IR_INST_KIND(Name)                                      \
-  static auto Emit##Name##AsConstant(                                      \
-      ConstantContext& context, SemIR::Name /*inst*/) -> llvm::Constant* { \
-    return context.GetTypeAsValue();                                       \
-  }
-#include "toolchain/sem_ir/inst_kind.def"
-
 // Emits an aggregate constant of LLVM type `Type` whose elements are the
 // contents of `refs_id`.
 template <typename ConstantType, typename Type>
@@ -116,16 +98,37 @@ static auto EmitAggregateConstant(ConstantContext& context,
   return ConstantType::get(llvm_type, elements);
 }
 
-static auto EmitStructValueAsConstant(ConstantContext& context,
-                                      SemIR::StructValue inst)
+// For each instruction InstT, there is a function below to convert it to an
+// `llvm::Constant*`:
+//
+// auto EmitAsConstant(ConstantContext& context, SemIR::InstT inst)
+//     -> llvm::Constant*;
+
+template <typename InstT>
+  requires(InstT::Kind.constant_kind() == SemIR::InstConstantKind::Never ||
+           InstT::Kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly)
+static auto EmitAsConstant(ConstantContext& /*context*/, InstT inst)
+    -> llvm::Constant* {
+  CARBON_FATAL() << "Unexpected constant instruction kind " << inst;
+}
+
+// For constants that are always of type `type`, produce the trivial runtime
+// representation of type `type`.
+template <typename InstT>
+  requires(InstT::Kind.is_type() == SemIR::InstIsType::Always)
+static auto EmitAsConstant(ConstantContext& context, InstT /*inst*/)
+    -> llvm::Constant* {
+  return context.GetTypeAsValue();
+}
+
+static auto EmitAsConstant(ConstantContext& context, SemIR::StructValue inst)
     -> llvm::Constant* {
   return EmitAggregateConstant<llvm::ConstantStruct>(
       context, inst.elements_id,
       cast<llvm::StructType>(context.GetType(inst.type_id)));
 }
 
-static auto EmitTupleValueAsConstant(ConstantContext& context,
-                                     SemIR::TupleValue inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::TupleValue inst)
     -> llvm::Constant* {
   // TODO: Add an ArrayValue instruction and stop using TupleValues to represent
   // array constants.
@@ -140,92 +143,72 @@ static auto EmitTupleValueAsConstant(ConstantContext& context,
       cast<llvm::StructType>(context.GetType(inst.type_id)));
 }
 
-static auto EmitAddrOfAsConstant(ConstantContext& /*context*/,
-                                 SemIR::AddrOf /*inst*/) -> llvm::Constant* {
+static auto EmitAsConstant(ConstantContext& /*context*/, SemIR::AddrOf /*inst*/)
+    -> llvm::Constant* {
   // TODO: Constant lvalue support. For now we have no constant lvalues, so we
   // should never form a constant AddrOf.
   CARBON_FATAL() << "AddrOf constants not supported yet";
 }
 
-static auto EmitAssociatedEntityAsConstant(ConstantContext& context,
-                                           SemIR::AssociatedEntity inst)
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::AssociatedEntity inst) -> llvm::Constant* {
+  return context.GetUnusedConstant(inst.type_id);
+}
+
+static auto EmitAsConstant(ConstantContext& context, SemIR::BaseDecl inst)
     -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitBaseDeclAsConstant(ConstantContext& context,
-                                   SemIR::BaseDecl inst) -> llvm::Constant* {
-  return context.GetUnusedConstant(inst.type_id);
-}
-
-static auto EmitBoolLiteralAsConstant(ConstantContext& context,
-                                      SemIR::BoolLiteral inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::BoolLiteral inst)
     -> llvm::Constant* {
   return llvm::ConstantInt::get(llvm::Type::getInt1Ty(context.llvm_context()),
                                 inst.value.index);
 }
 
-static auto EmitBoundMethodAsConstant(ConstantContext& context,
-                                      SemIR::BoundMethod inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
     -> llvm::Constant* {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
   return context.GetConstant(inst.function_id);
 }
 
-static auto EmitFieldDeclAsConstant(ConstantContext& context,
-                                    SemIR::FieldDecl inst) -> llvm::Constant* {
+static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
+    -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitFloatLiteralAsConstant(ConstantContext& context,
-                                       SemIR::FloatLiteral inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::FloatLiteral inst)
     -> llvm::Constant* {
   const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);
 }
 
-static auto EmitInterfaceWitnessAsConstant(ConstantContext& context,
-                                           SemIR::InterfaceWitness inst)
-    -> llvm::Constant* {
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::InterfaceWitness inst) -> llvm::Constant* {
   // TODO: For dynamic dispatch, we might want to lower witness tables as
   // constants.
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitIntLiteralAsConstant(ConstantContext& context,
-                                     SemIR::IntLiteral inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)
     -> llvm::Constant* {
   return llvm::ConstantInt::get(context.GetType(inst.type_id),
                                 context.sem_ir().ints().Get(inst.int_id));
 }
 
-static auto EmitNamespaceAsConstant(ConstantContext& context,
-                                    SemIR::Namespace inst) -> llvm::Constant* {
+static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
+    -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitRealLiteralAsConstant(ConstantContext& context,
-                                      SemIR::RealLiteral inst)
-    -> llvm::Constant* {
-  const Real& real = context.sem_ir().reals().Get(inst.real_id);
-  // TODO: This will probably have overflow issues, and should be fixed.
-  double val =
-      real.mantissa.getZExtValue() *
-      std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
-  llvm::APFloat llvm_val(val);
-  return llvm::ConstantFP::get(context.GetType(inst.type_id), llvm_val);
-}
-
-static auto EmitStringLiteralAsConstant(ConstantContext& /*context*/,
-                                        SemIR::StringLiteral inst)
-    -> llvm::Constant* {
+static auto EmitAsConstant(ConstantContext& /*context*/,
+                           SemIR::StringLiteral inst) -> llvm::Constant* {
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
-static auto EmitStructTypeFieldAsConstant(ConstantContext& /*context*/,
-                                          SemIR::StructTypeField /*inst*/)
-    -> llvm::Constant* {
+static auto EmitAsConstant(ConstantContext& /*context*/,
+                           SemIR::StructTypeField /*inst*/) -> llvm::Constant* {
   // A StructTypeField isn't a value, so this constant value won't ever be used.
   // It also doesn't even have a type, so we can't use GetUnusedConstant.
   return nullptr;
@@ -252,21 +235,17 @@ auto LowerConstants(FileContext& file_context,
     auto inst = file_context.sem_ir().insts().Get(inst_id);
     llvm::Constant* value = nullptr;
     CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND_CONSTANT_NEVER(...)
-#define CARBON_SEM_IR_INST_KIND_CONSTANT_SYMBOLIC_ONLY(...)
-#define CARBON_SEM_IR_INST_KIND(Name)                    \
-  case CARBON_KIND(SemIR::Name const_inst):              \
-    value = Emit##Name##AsConstant(context, const_inst); \
-    break;
+#define CARBON_SEM_IR_INST_KIND(Name)            \
+  case CARBON_KIND(SemIR::Name const_inst): {    \
+    value = EmitAsConstant(context, const_inst); \
+    break;                                       \
+  }
 #include "toolchain/sem_ir/inst_kind.def"
-
-      default:
-        CARBON_FATAL() << "Unexpected constant instruction kind " << inst;
     }
 
     constants[inst_id.index] = value;
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
-}
+}  // namespace Carbon::Lower
 
 }  // namespace Carbon::Lower

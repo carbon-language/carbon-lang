@@ -21,14 +21,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @array.loc16_11.1 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F(ptr %arr, i32 %i) {
+// CHECK:STDOUT: define i32 @F(ptr %arr, i32 %i) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i
 // CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4
 // CHECK:STDOUT:   ret i32 %.loc12_15.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @G() {
+// CHECK:STDOUT: define i32 @G() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4
 // CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0
@@ -43,3 +43,15 @@ fn G() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "function_param.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)

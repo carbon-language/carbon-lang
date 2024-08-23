@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -147,10 +148,17 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
           context_->AddExport(target_id);
         }
 
-        auto [_, success] = name_scope.names.insert(
-            {name_context.unresolved_name_id,
-             {.inst_id = target_id, .access_kind = access_kind}});
-        CARBON_CHECK(success)
+        auto add_scope = [&] {
+          int index = name_scope.names.size();
+          name_scope.names.push_back(
+              {.name_id = name_context.unresolved_name_id,
+               .inst_id = target_id,
+               .access_kind = access_kind});
+          return index;
+        };
+        auto result = name_scope.name_map.Insert(
+            name_context.unresolved_name_id, add_scope);
+        CARBON_CHECK(result.is_inserted())
             << "Duplicate names should have been resolved previously: "
             << name_context.unresolved_name_id << " in "
             << name_context.parent_scope_id;
@@ -192,12 +200,27 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 static auto PushNameQualifierScope(Context& context,
                                    SemIR::InstId scope_inst_id,
                                    SemIR::NameScopeId scope_id,
+                                   SemIR::SpecificId specific_id,
                                    bool has_error = false) -> void {
   // If the qualifier has no parameters, we don't need to keep around a
   // parameter scope.
   context.scope_stack().PopIfEmpty();
 
-  context.scope_stack().Push(scope_inst_id, scope_id, has_error);
+  // When declaring a member of a generic, resolve the self specific.
+  if (specific_id.is_valid()) {
+    ResolveSpecificDefinition(context, specific_id);
+  }
+
+  context.scope_stack().Push(scope_inst_id, scope_id, specific_id, has_error);
+
+  // An interface also introduces its 'Self' parameter into scope, despite it
+  // not being redeclared as part of the qualifier.
+  if (auto interface_decl =
+          context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
+    auto& interface = context.interfaces().Get(interface_decl->interface_id);
+    context.scope_stack().AddCompileTimeBinding();
+    context.scope_stack().PushCompileTimeBinding(interface.self_param_id);
+  }
 
   // Enter a parameter scope in case the qualified name itself has parameters.
   context.scope_stack().Push();
@@ -209,9 +232,10 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   name_context.has_qualifiers = true;
 
   // Resolve the qualifier as a scope and enter the new scope.
-  auto scope_id = ResolveAsScope(name_context, name);
+  auto [scope_id, specific_id] = ResolveAsScope(name_context, name);
   if (scope_id.is_valid()) {
     PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
+                           specific_id,
                            context_->name_scopes().Get(scope_id).has_error);
     name_context.parent_scope_id = scope_id;
   } else {
@@ -342,52 +366,63 @@ static auto DiagnoseQualifiedDeclInNonScope(Context& context, SemIRLoc use_loc,
 
 auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                                    const NameComponent& name) const
-    -> SemIR::NameScopeId {
+    -> std::pair<SemIR::NameScopeId, SemIR::SpecificId> {
+  constexpr std::pair<SemIR::NameScopeId, SemIR::SpecificId> InvalidResult = {
+      SemIR::NameScopeId::Invalid, SemIR::SpecificId::Invalid};
+
   if (!CheckQualifierIsResolved(*context_, name_context)) {
-    return SemIR::NameScopeId::Invalid;
+    return InvalidResult;
   }
 
-  auto new_params =
-      DeclParams(name.name_loc_id, name.implicit_params_id, name.params_id);
+  auto new_params = DeclParams(name.name_loc_id, name.first_param_node_id,
+                               name.last_param_node_id, name.implicit_params_id,
+                               name.params_id);
 
   // Find the scope corresponding to the resolved instruction.
+  // TODO: When diagnosing qualifiers on names, print a diagnostic that talks
+  // about qualifiers instead of redeclarations. Maybe also rename
+  // CheckRedeclParamsMatch.
   CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       const auto& class_info = context_->classes().Get(class_decl.class_id);
       if (!CheckRedeclParamsMatch(*context_, new_params,
                                   DeclParams(class_info))) {
-        return SemIR::NameScopeId::Invalid;
+        return InvalidResult;
       }
       if (!class_info.is_defined()) {
         DiagnoseQualifiedDeclInIncompleteClassScope(
             *context_, name_context.loc_id, class_decl.class_id);
-        return SemIR::NameScopeId::Invalid;
+        return InvalidResult;
       }
-      return class_info.scope_id;
+      return {class_info.scope_id,
+              context_->generics().GetSelfSpecific(class_info.generic_id)};
     }
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       const auto& interface_info =
           context_->interfaces().Get(interface_decl.interface_id);
       if (!CheckRedeclParamsMatch(*context_, new_params,
                                   DeclParams(interface_info))) {
-        return SemIR::NameScopeId::Invalid;
+        return InvalidResult;
       }
       if (!interface_info.is_defined()) {
         DiagnoseQualifiedDeclInUndefinedInterfaceScope(
             *context_, name_context.loc_id, interface_decl.interface_id,
             name_context.resolved_inst_id);
-        return SemIR::NameScopeId::Invalid;
+        return InvalidResult;
       }
-      return interface_info.scope_id;
+      return {interface_info.scope_id,
+              context_->generics().GetSelfSpecific(interface_info.generic_id)};
     }
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
-      if (!CheckRedeclParamsMatch(*context_, new_params,
-                                  DeclParams(name_context.resolved_inst_id,
-                                             SemIR::InstBlockId::Invalid,
-                                             SemIR::InstBlockId::Invalid))) {
-        return SemIR::NameScopeId::Invalid;
+      // This is specifically for qualified name handling.
+      if (!CheckRedeclParamsMatch(
+              *context_, new_params,
+              DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,
+                         Parse::NodeId::Invalid, SemIR::InstBlockId::Invalid,
+                         SemIR::InstBlockId::Invalid))) {
+        return InvalidResult;
       }
       if (scope.is_closed_import) {
         DiagnoseQualifiedDeclInImportedPackage(*context_, name_context.loc_id,
@@ -396,12 +431,12 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
         // be used as a name qualifier.
         scope.is_closed_import = false;
       }
-      return scope_id;
+      return {scope_id, SemIR::SpecificId::Invalid};
     }
     default: {
       DiagnoseQualifiedDeclInNonScope(*context_, name_context.loc_id,
                                       name_context.resolved_inst_id);
-      return SemIR::NameScopeId::Invalid;
+      return InvalidResult;
     }
   }
 }

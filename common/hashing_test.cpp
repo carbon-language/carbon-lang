@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <concepts>
+#include <type_traits>
 
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
@@ -283,20 +284,90 @@ TEST(HashingTest, BasicStrings) {
   }
 }
 
+TEST(HashingTest, ArrayLike) {
+  int c_array[] = {1, 2, 3, 4};
+  EXPECT_THAT(HashValue(c_array), Eq(HashValue(c_array)));
+  EXPECT_THAT(HashValue(std::array{1, 2, 3, 4}), Eq(HashValue(c_array)));
+  EXPECT_THAT(HashValue(std::vector{1, 2, 3, 4}), Eq(HashValue(c_array)));
+  EXPECT_THAT(HashValue(llvm::SmallVector<int>{1, 2, 3, 4}),
+              Eq(HashValue(c_array)));
+}
+
+TEST(HashingTest, HashAPInt) {
+  // The bit width should be hashed as well as the value.
+  llvm::APInt one_64(/*numBits=*/64, /*val=*/1);
+  llvm::APInt two_64(/*numBits=*/64, /*val=*/2);
+  llvm::APInt one_128(/*numBits=*/128, /*val=*/1);
+  llvm::APInt two_128(/*numBits=*/128, /*val=*/2);
+
+  std::array array = {one_64, two_64, one_128, two_128};
+  for (int i : llvm::seq<int>(array.size())) {
+    EXPECT_THAT(HashValue(array[i]), Eq(HashValue(array[i])));
+
+    for (int j : llvm::seq<int>(i + 1, array.size())) {
+      EXPECT_THAT(HashValue(array[i]), Ne(HashValue(array[j])))
+          << "Hashing #" << i << " and #" << j;
+    }
+  }
+}
+
+TEST(HashingTest, HashAPFloat) {
+  // Hashtable equality for `APFloat` uses a bitwise comparison. This
+  // differentiates between various things that would otherwise not make sense:
+  // - Different floating point semantics
+  // - `-0.0` and `0.0`
+  //
+  // It also allows NaNs to be compared meaningfully.
+  llvm::APFloat zero_float =
+      llvm::APFloat::getZero(llvm::APFloat::IEEEsingle());
+  llvm::APFloat neg_zero_float =
+      llvm::APFloat::getZero(llvm::APFloat::IEEEsingle(), /*Negative=*/true);
+  llvm::APFloat zero_double =
+      llvm::APFloat::getZero(llvm::APFloat::IEEEdouble());
+  llvm::APFloat zero_bfloat = llvm::APFloat::getZero(llvm::APFloat::BFloat());
+  llvm::APFloat one_float = llvm::APFloat::getOne(llvm::APFloat::IEEEsingle());
+  llvm::APFloat inf_float = llvm::APFloat::getInf(llvm::APFloat::IEEEsingle());
+  llvm::APFloat nan_0_float = llvm::APFloat::getNaN(
+      llvm::APFloat::IEEEsingle(), /*Negative=*/false, /*payload=*/0);
+  llvm::APFloat nan_42_float = llvm::APFloat::getNaN(
+      llvm::APFloat::IEEEsingle(), /*Negative=*/false, /*payload=*/42);
+
+  std::array array = {zero_float, neg_zero_float, zero_double, zero_bfloat,
+                      one_float,  inf_float,      nan_42_float};
+  for (int i : llvm::seq<int>(array.size())) {
+    EXPECT_THAT(HashValue(array[i]), Eq(HashValue(array[i])));
+
+    for (int j : llvm::seq<int>(i + 1, array.size())) {
+      EXPECT_THAT(HashValue(array[i]), Ne(HashValue(array[j])))
+          << "Hashing #" << i << " and #" << j;
+    }
+  }
+
+  // Note that currently we use LLVM's hashing of `APFloat` which does *not*
+  // hash the payload of NaNs.
+  EXPECT_THAT(HashValue(nan_0_float), Eq(HashValue(nan_42_float)));
+}
+
+// A type that has hashing customization. However, it also works to be small and
+// appear to have a unique object representation. This helps ensure that when a
+// user provides custom hashing it is reliably used.
 struct HashableType {
-  int x;
-  int y;
+  int8_t x;
+  int8_t y;
 
-  int ignored = 0;
+  int16_t ignored = 0;
 
-  // See common/hashing.h.
-  friend auto CarbonHashValue(const HashableType& value, uint64_t seed)
-      -> HashCode {
+  // Provide the hashing but try to craft a relatively low-ranking overload to
+  // help ensure that the hashing framework doesn't accidentally override this.
+  template <typename T>
+    requires(std::same_as<T, HashableType>)
+  friend auto CarbonHashValue(const T& value, uint64_t seed) -> HashCode {
     Hasher hasher(seed);
     hasher.Hash(value.x, value.y);
     return static_cast<HashCode>(hasher);
   }
 };
+static_assert(std::has_unique_object_representations_v<HashableType>);
 
 TEST(HashingTest, CustomType) {
   HashableType a = {.x = 1, .y = 2};
@@ -308,6 +379,88 @@ TEST(HashingTest, CustomType) {
   // Differences in an ignored field have no impact.
   HashableType c = {.x = 3, .y = 4, .ignored = 42};
   EXPECT_THAT(HashValue(c), Eq(HashValue(b)));
+}
+
+TEST(HashingTest, ArrayRecursion) {
+  // Make sure we correctly recurse when hashing an array and don't try to use
+  // the object representation.
+  llvm::APInt one_64(/*numBits=*/64, /*val=*/1);
+  llvm::APInt two_64(/*numBits=*/64, /*val=*/2);
+  llvm::APInt one_128(/*numBits=*/128, /*val=*/1);
+  llvm::APInt two_128(/*numBits=*/128, /*val=*/2);
+  std::array apint_array = {one_64, two_64, one_128, two_128};
+  EXPECT_THAT(HashValue(apint_array),
+              Eq(HashValue(std::array{one_64, two_64, one_128, two_128})));
+  EXPECT_THAT(HashValue(apint_array),
+              Ne(HashValue(std::array{one_64, two_64, two_128, one_128})));
+  EXPECT_THAT(HashValue(apint_array),
+              Ne(HashValue(std::array{one_64, two_64, one_64, two_128})));
+  EXPECT_THAT(HashValue(apint_array),
+              Ne(HashValue(std::array{one_64, two_128, one_128, two_128})));
+  EXPECT_THAT(HashValue(apint_array),
+              Ne(HashValue(std::array{one_64, two_64, one_128})));
+  EXPECT_THAT(
+      HashValue(apint_array),
+      Ne(HashValue(std::array{one_64, two_64, one_128, two_128, two_128})));
+
+  // Also test for a custom type that still *looks* like plain data.
+  HashableType a = {.x = 1, .y = 2};
+  HashableType b = {.x = 3, .y = 4};
+  HashableType c = {.x = 3, .y = 4, .ignored = 42};
+  std::array custom_array = {a, b, c, a};
+  EXPECT_THAT(HashValue(custom_array), Eq(HashValue(std::array{a, b, c, a})));
+  EXPECT_THAT(HashValue(custom_array), Eq(HashValue(std::array{a, b, b, a})));
+  EXPECT_THAT(HashValue(custom_array), Ne(HashValue(std::array{a, b, c, b})));
+  EXPECT_THAT(HashValue(custom_array), Ne(HashValue(std::array{a, b, a, c})));
+  EXPECT_THAT(HashValue(custom_array), Ne(HashValue(std::array{a, b, c})));
+  EXPECT_THAT(HashValue(custom_array),
+              Ne(HashValue(std::array{a, b, c, a, a})));
+}
+
+TEST(HashingTest, TupleRecursion) {
+  // Make sure we can hash pairs and tuples which require us to recurse for each
+  // element rather than treating the whole object as raw storage.
+
+  // We can use APInt values to help test this.
+  llvm::APInt one_64(/*numBits=*/64, /*val=*/1);
+  llvm::APInt two_64(/*numBits=*/64, /*val=*/2);
+  llvm::APInt one_128(/*numBits=*/128, /*val=*/1);
+  llvm::APInt two_128(/*numBits=*/128, /*val=*/2);
+  EXPECT_THAT(HashValue(std::pair{one_64, one_128}),
+              Eq(HashValue(std::pair{one_64, one_128})));
+  EXPECT_THAT(HashValue(std::pair{one_64, one_128}),
+              Ne(HashValue(std::pair{one_64, two_64})));
+  EXPECT_THAT(HashValue(std::pair{one_64, one_128}),
+              Ne(HashValue(std::pair{one_64, one_64})));
+  EXPECT_THAT(HashValue(std::pair{one_64, one_128}),
+              Ne(HashValue(std::pair{one_128, one_64})));
+  EXPECT_THAT(HashValue(std::tuple{one_64, one_128, two_64}),
+              Eq(HashValue(std::tuple{one_64, one_128, two_64})));
+  EXPECT_THAT(HashValue(std::tuple{one_64, one_128, two_64}),
+              Ne(HashValue(std::tuple{one_64, two_64, two_64})));
+  EXPECT_THAT(HashValue(std::tuple{one_64, one_128, two_64}),
+              Ne(HashValue(std::tuple{one_64, one_64, two_64})));
+  EXPECT_THAT(HashValue(std::tuple{one_64, one_128, two_64}),
+              Ne(HashValue(std::tuple{one_64, two_64, one_128})));
+  EXPECT_THAT(HashValue(std::tuple{one_64, one_128, two_64}),
+              Ne(HashValue(std::tuple{one_64, one_128})));
+
+  // Also test for a custom type that still *looks* like plain data.
+  HashableType a = {.x = 1, .y = 2};
+  HashableType b = {.x = 3, .y = 4};
+  HashableType c = {.x = 3, .y = 4, .ignored = 42};
+  EXPECT_THAT(HashValue(std::pair{a, b}), Eq(HashValue(std::pair{a, b})));
+  EXPECT_THAT(HashValue(std::pair{a, b}), Ne(HashValue(std::pair{a, a})));
+  EXPECT_THAT(HashValue(std::pair{a, b}), Ne(HashValue(std::pair{b, a})));
+  EXPECT_THAT(HashValue(std::pair{a, b}), Eq(HashValue(std::pair{a, c})));
+  EXPECT_THAT(HashValue(std::tuple{a, b, a}),
+              Eq(HashValue(std::tuple{a, b, a})));
+  EXPECT_THAT(HashValue(std::tuple{a, b, a}),
+              Ne(HashValue(std::tuple{a, b, b})));
+  EXPECT_THAT(HashValue(std::tuple{a, b, a}),
+              Ne(HashValue(std::tuple{a, a, a})));
+  EXPECT_THAT(HashValue(std::tuple{a, b, a}),
+              Eq(HashValue(std::tuple{a, c, a})));
 }
 
 // The only significantly bad seed is zero, so pick a non-zero seed with a tiny
@@ -546,7 +699,7 @@ auto ExpectNoHashCollisions(llvm::ArrayRef<HashedString> hashes) -> void {
 
 TEST(HashingTest, Collisions1ByteSized) {
   auto hashes_storage = AllByteStringsHashedAndSorted<1>();
-  auto hashes = llvm::ArrayRef(hashes_storage);
+  llvm::ArrayRef hashes = hashes_storage;
   ExpectNoHashCollisions(hashes);
 
   auto low_32bit_collisions = FindBitRangeCollisions<0, 32>(hashes);
@@ -571,7 +724,7 @@ TEST(HashingTest, Collisions1ByteSized) {
 
 TEST(HashingTest, Collisions2ByteSized) {
   auto hashes_storage = AllByteStringsHashedAndSorted<2>();
-  auto hashes = llvm::ArrayRef(hashes_storage);
+  llvm::ArrayRef hashes = hashes_storage;
   ExpectNoHashCollisions(hashes);
 
   auto low_32bit_collisions = FindBitRangeCollisions<0, 32>(hashes);
@@ -701,7 +854,7 @@ TYPED_TEST_SUITE(SparseHashTest, SparseHashTestParams);
 
 TYPED_TEST(SparseHashTest, Collisions) {
   auto hashes_storage = this->GetHashedByteStrings();
-  auto hashes = llvm::ArrayRef(hashes_storage);
+  llvm::ArrayRef hashes = hashes_storage;
   ExpectNoHashCollisions(hashes);
 
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);

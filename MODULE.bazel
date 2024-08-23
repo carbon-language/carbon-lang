@@ -4,14 +4,33 @@
 
 """Bazel modules.
 
-If `MODULE.bazel.lock` changes locally, it means the host platform hasn't yet
-been added to the lock file. Running `bazel mod deps` provides a canonical
-update to `MODULE.bazel.lock`; create a PR with those changes in order to
-include the host platform.
+`MODULE.bazel.lock` may change locally when `bazel` is executed. This means one
+of:
 
-Platforms tested with GitHub actions are kept up-to-date. Other platforms may
-fall out of sync on dependency changes, and should be updated with a PR the same
-way a platform is added.
+1.  `MODULE.bazel` is changing.
+    -   Running `bazel mod deps` provides a canonical update to
+        `MODULE.bazel.lock`; include the changes.
+    -   GitHub test actions may also identify platform-specific lockfile
+        updates.
+2.  The `bazel` version doesn't match the version used to generate the
+    `MODULE.bazel.lock`.
+    -   Bazel releases can change the lock file contents.
+    -   We use Bazelisk in order to keep everyone using the same version:
+        https://bazel.build/install/bazelisk
+        -   Developers are encouraged to alias `bazel` to `bazelisk` for
+            ease-of-use; some setups, like Homebrew, will include that with a
+            `bazelisk` install.
+        -   Contribution tools documentation includes `bazelisk` setup:
+            https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/contribution_tools.md
+    -   Make sure `bazelisk --version` (or `bazel --version`) matches the
+        version in `.bazeliskrc`.
+3.  The host platform hasn't yet been added to the lock file.
+    -   Platforms tested with GitHub actions are kept up-to-date. Other
+        platforms may fall out of sync due to `bazel` or dependency changes,
+        and should be updated with a PR the same way a platform is added.
+    -   Running `bazel mod deps` provides a canonical update to
+        `MODULE.bazel.lock`; create a PR with those changes in order to include
+        the host platform.
 """
 
 module(name = "carbon")
@@ -26,18 +45,7 @@ bazel_dep(name = "rules_pkg", version = "0.10.1")
 bazel_dep(name = "abseil-cpp", version = "20240116.2")
 bazel_dep(name = "re2", version = "2024-06-01")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
-
-google_benchmark_version = "1.8.3"
-
-bazel_dep(name = "google_benchmark", version = google_benchmark_version)
-archive_override(
-    module_name = "google_benchmark",
-    integrity = "sha256-a8GApX0j1NlRVRn5KwyD1hsFtbqxiJYfNqx7BrDZ6c4=",
-    patch_strip = 1,
-    patches = ["@//bazel/google_benchmark:0001-Use-libpfm-by-default-on-supported-platforms.patch"],
-    strip_prefix = "benchmark-{0}".format(google_benchmark_version),
-    urls = ["https://github.com/google/benchmark/archive/refs/tags/v{0}.tar.gz".format(google_benchmark_version)],
-)
+bazel_dep(name = "google_benchmark", version = "1.8.4")
 
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.
@@ -52,6 +60,17 @@ archive_override(
     patches = ["@//bazel/libpfm:0001-Introduce-a-simple-native-Bazel-build.patch"],
     strip_prefix = "libpfm-{0}".format(libpfm_version),
     urls = ["https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-{0}.tar.gz".format(libpfm_version)],
+)
+
+# The registry has a snapshot, but upstream is active and not regularly marking
+# releases. We start with the BCR snapshot to avoid a miss and then override it
+# with a more recent commit.
+bazel_dep(name = "tcmalloc", version = "0.0.0-20240411-5ed309d", dev_dependency = True)
+git_override(
+    module_name = "tcmalloc",
+    # HEAD as of 2024-07-14.
+    commit = "923df94c922e0cd2d0512c1662d374f63c2c0c96",
+    remote = "https://github.com/google/tcmalloc.git",
 )
 
 bazel_dep(name = "rules_bison", version = "0.2.2")
@@ -107,7 +126,7 @@ http_archive(
 
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "0.0.10")
-bazel_dep(name = "zlib", version = "1.3.1.bcr.1", repo_name = "llvm_zlib")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.3", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.6", repo_name = "llvm_zstd")
 
 ###############################################################################
@@ -116,8 +135,8 @@ bazel_dep(name = "zstd", version = "1.5.6", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2024-05-17.
-llvm_project_version = "a68d20e986053ec571223a9f3ead3e146a27dc82"
+# HEAD as of 2024-08-09.
+llvm_project_version = "4c5ef6690040383956461828457ac27f7f912edb"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
@@ -128,7 +147,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
-    sha256 = "4c53512522cfd625a75aa7f201e6932f18ebf3fbe8ee89e05883c3d30ca935ac",
+    sha256 = "a30da7822f5307bc0aca8c497ffdd6369e3877186e87501e2ac1f3ec5ed1c0b7",
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
 )

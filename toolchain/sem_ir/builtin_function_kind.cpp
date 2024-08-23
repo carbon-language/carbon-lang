@@ -60,6 +60,18 @@ struct BuiltinType {
   }
 };
 
+// Constraint that the function has no return.
+struct NoReturn {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    auto tuple = sem_ir.types().TryGetAs<SemIR::TupleType>(type_id);
+    if (!tuple) {
+      return false;
+    }
+    return sem_ir.type_blocks().Get(tuple->elements_id).empty();
+  }
+};
+
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<InstId::BuiltinBoolType>;
 
@@ -156,6 +168,10 @@ using FloatT = TypeParam<0, AnyFloat>;
 
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
+
+// Prints an argument.
+constexpr BuiltinInfo PrintInt = {"print.int",
+                                  ValidateSignature<auto(AnyInt)->NoReturn>};
 
 // Returns the `i32` type. Doesn't take a bit size because we need an integer
 // type as a basis for that.

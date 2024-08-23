@@ -144,6 +144,7 @@ cc_test(
         ":install_paths",
         "//common:check",
         "//common:ostream",
+        "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "@bazel_tools//tools/cpp/runfiles",
         "@googletest//:gtest",

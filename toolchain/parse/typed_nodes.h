@@ -921,7 +921,7 @@ struct MemberAccessExpr {
 
   AnyExprId lhs;
   Lex::PeriodTokenIndex token;
-  AnyMemberNameOrMemberExprId rhs;
+  AnyMemberAccessId rhs;
 };
 
 // An indirect member access expression: `a->b` or `a->(b)`.
@@ -931,7 +931,7 @@ struct PointerMemberAccessExpr {
 
   AnyExprId lhs;
   Lex::MinusGreaterTokenIndex token;
-  AnyMemberNameOrMemberExprId rhs;
+  AnyMemberAccessId rhs;
 };
 
 // A prefix operator expression.
@@ -985,6 +985,22 @@ struct PostfixOperator {
   using PostfixOperator##Name =                       \
       PostfixOperator<NodeKind::PostfixOperator##Name, Lex::Name##TokenIndex>;
 #include "toolchain/parse/node_kind.def"
+
+using IntLiteral = LeafNode<NodeKind::IntLiteral, Lex::IntLiteralTokenIndex,
+                            NodeCategory::Expr | NodeCategory::IntConst>;
+
+// `extern` as a standalone modifier.
+using ExternModifier = LeafNode<NodeKind::ExternModifier, Lex::ExternTokenIndex,
+                                NodeCategory::Modifier>;
+
+// `extern library <owning_library>` modifiers.
+struct ExternModifierWithLibrary {
+  static constexpr auto Kind = NodeKind::ExternModifierWithLibrary.Define(
+      {.category = NodeCategory::Modifier, .child_count = 1});
+
+  Lex::ExternTokenIndex token;
+  LibrarySpecifierId library;
+};
 
 // The first operand of a short-circuiting infix operator: `a and` or `a or`.
 // The complete operator expression will be an InfixOperator with this as the

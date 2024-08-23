@@ -36,14 +36,10 @@ private class Forward;
 // Test files
 // ============================================================================
 
-// --- fail_todo_def.impl.carbon
+// --- def.impl.carbon
 
 impl package Test library "def";
 
-// CHECK:STDERR: fail_todo_def.impl.carbon:[[@LINE+4]]:8: ERROR: Name `Def` not found.
-// CHECK:STDERR: var c: Def = {};
-// CHECK:STDERR:        ^~~
-// CHECK:STDERR:
 var c: Def = {};
 
 // --- fail_local_def.carbon
@@ -70,14 +66,10 @@ import Test library "def";
 // CHECK:STDERR:
 var c: Test.Def = {};
 
-// --- fail_todo_forward_with_def.impl.carbon
+// --- forward_with_def.impl.carbon
 
 impl package Test library "forward_with_def";
 
-// CHECK:STDERR: fail_todo_forward_with_def.impl.carbon:[[@LINE+4]]:8: ERROR: Name `ForwardWithDef` not found.
-// CHECK:STDERR: var c: ForwardWithDef = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
-// CHECK:STDERR:
 var c: ForwardWithDef = {};
 
 // --- fail_local_forward_with_def.carbon
@@ -104,14 +96,10 @@ import Test library "forward_with_def";
 // CHECK:STDERR:
 var c: Test.ForwardWithDef = {};
 
-// --- fail_todo_forward.impl.carbon
+// --- forward.impl.carbon
 
 impl package Test library "forward";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:9: ERROR: Name `Forward` not found.
-// CHECK:STDERR: fn F(c: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR:
 fn F(c: Forward*) {}
 
 class Forward {}
@@ -201,25 +189,44 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Forward;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Def: type = class_type @Def [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %struct: %Def = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Def [private] = imports.%import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
-// CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%import_ref.1 [template = constants.%Def]
+// CHECK:STDOUT:   %c.var: ref %Def = var c
+// CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Def {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
-// CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   %.loc4_15.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc4_15.2: init %Def = class_init (), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc4_16: init %Def = converted %.loc4_15.1, %.loc4_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%c.var, %.loc4_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,6 +240,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
@@ -251,13 +259,19 @@ private class Redecl {}
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
+// CHECK:STDOUT:     import Test//def
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
@@ -270,25 +284,44 @@ private class Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_forward_with_def.impl.carbon
+// CHECK:STDOUT: --- forward_with_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %ForwardWithDef: type = class_type @ForwardWithDef [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %struct: %ForwardWithDef = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.1
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
-// CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.1 [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var c
+// CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @ForwardWithDef {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
-// CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   %.loc4_26.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc4_26.2: init %ForwardWithDef = class_init (), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc4_27: init %ForwardWithDef = converted %.loc4_26.1, %.loc4_26.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%c.var, %.loc4_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -302,6 +335,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
@@ -320,13 +354,19 @@ private class Redecl {}
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
+// CHECK:STDOUT:     import Test//forward_with_def
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
@@ -339,26 +379,33 @@ private class Redecl {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_forward.impl.carbon
+// CHECK:STDOUT: --- forward.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Forward: type = class_type @Forward [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %Forward [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: type = import_ref Test//forward, inst+1, loaded [template = constants.%Forward]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Forward [private] = %Forward.decl
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .Forward = %Forward.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc8: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.loc8_6.1: <error> = param c
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc8_6.1
+// CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
+// CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
+// CHECK:STDOUT:     %c.loc4_6.1: %.1 = param c
+// CHECK:STDOUT:     @F.%c: %.1 = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {}
 // CHECK:STDOUT: }
@@ -368,7 +415,7 @@ private class Redecl {}
 // CHECK:STDOUT:   .Self = constants.%Forward
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c: <error>) {
+// CHECK:STDOUT: fn @F(%c: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -385,6 +432,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
@@ -406,14 +454,20 @@ private class Redecl {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
+// CHECK:STDOUT:     import Test//forward
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Test: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, %Test [template = %Test]
+// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.loc9_6.1: <error> = param c

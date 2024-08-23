@@ -79,17 +79,25 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %array: %.5 = tuple_value (%.2, %.3, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .TestAdd = %import_ref.2
+// CHECK:STDOUT:     import Core//test
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//test, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//test, inst+20, loaded [template = constants.%TestAdd]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir1, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref ir1, inst+20, loaded [template = constants.%TestAdd]
-// CHECK:STDOUT:   %TestAdd.ref: %TestAdd.type = name_ref TestAdd, %import_ref.2 [template = constants.%TestAdd]
+// CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:   %TestAdd.ref: %TestAdd.type = name_ref TestAdd, imports.%import_ref.2 [template = constants.%TestAdd]
 // CHECK:STDOUT:   %.loc4_29: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc4_32: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %TestAdd.ref(%.loc4_29, %.loc4_32) [template = constants.%.4]

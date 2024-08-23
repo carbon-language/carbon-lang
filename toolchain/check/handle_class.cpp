@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -28,7 +29,7 @@ static auto TryGetAsClass(Context& context, SemIR::TypeId type_id)
   return &context.classes().Get(class_type->class_id);
 }
 
-auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
+auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
     -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
@@ -38,6 +39,8 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
+  // This class is potentially generic.
+  StartGenericDecl(context);
   return true;
 }
 
@@ -49,12 +52,11 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
 // Otherwise, returns false. Prints a diagnostic when appropriate.
 static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                              SemIR::Class& new_class, bool new_is_import,
-                             bool new_is_definition, bool new_is_extern,
-                             SemIR::ClassId prev_class_id, bool prev_is_extern,
+                             bool new_is_definition,
+                             SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIRLoc prev_loc =
-      prev_class.is_defined() ? prev_class.definition_id : prev_class.decl_id;
+  SemIRLoc prev_loc = prev_class.latest_decl_id();
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
@@ -62,14 +64,11 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Class, prev_class.name_id,
-                       {.loc = new_loc,
-                        .is_definition = new_is_definition,
-                        .is_extern = new_is_extern},
-                       {.loc = prev_loc,
-                        .is_definition = prev_class.is_defined(),
-                        .is_extern = prev_is_extern},
-                       prev_import_ir_id);
+  CheckIsAllowedRedecl(
+      context, Lex::TokenKind::Class, prev_class.name_id,
+      RedeclInfo(new_class, new_loc, new_is_definition),
+      RedeclInfo(prev_class, prev_loc, prev_class.is_defined()),
+      prev_import_ir_id);
 
   if (new_is_definition && prev_class.is_defined()) {
     // Don't attempt to merge multiple definitions.
@@ -90,9 +89,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   }
 
   if (new_is_definition) {
-    prev_class.implicit_param_refs_id = new_class.implicit_param_refs_id;
-    prev_class.param_refs_id = new_class.param_refs_id;
-    prev_class.definition_id = new_class.definition_id;
+    prev_class.MergeDefinition(new_class);
     prev_class.scope_id = new_class.scope_id;
     prev_class.body_block_id = new_class.body_block_id;
     prev_class.adapt_id = new_class.adapt_id;
@@ -101,11 +98,11 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   }
 
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
-      (prev_is_extern && !new_is_extern)) {
-    prev_class.decl_id = new_class.decl_id;
+      (prev_class.is_extern && !new_class.is_extern)) {
+    prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
     ReplacePrevInstForMerge(
         context, prev_class.parent_scope_id, prev_class.name_id,
-        new_is_import ? new_loc.inst_id : new_class.decl_id);
+        new_is_import ? new_loc.inst_id : new_class.first_owning_decl_id);
   }
   return true;
 }
@@ -117,8 +114,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::InstId class_decl_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
-                           bool is_extern, SemIR::AccessKind access_kind)
-    -> void {
+                           SemIR::AccessKind access_kind) -> void {
   auto prev_id = context.decl_name_stack().LookupOrAddName(
       name_context, class_decl_id, access_kind);
   if (!prev_id.is_valid()) {
@@ -168,10 +164,10 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     return;
   }
 
-  // TODO: Fix prev_is_extern logic.
+  // TODO: Fix `extern` logic. It doesn't work correctly, but doesn't seem worth
+  // ripping out because existing code may incrementally help.
   if (MergeClassRedecl(context, node_id, class_info,
-                       /*new_is_import=*/false, is_definition, is_extern,
-                       prev_class_id, /*prev_is_extern=*/false,
+                       /*new_is_import=*/false, is_definition, prev_class_id,
                        prev_import_ir_id)) {
     // When merging, use the existing entity rather than adding a new one.
     class_decl.class_id = prev_class_id;
@@ -201,6 +197,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                                is_definition);
 
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
+  if (introducer.extern_library.is_valid()) {
+    context.TODO(node_id, "extern library");
+  }
   auto inheritance_kind =
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)
           ? SemIR::Class::Abstract
@@ -219,17 +218,17 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
-      .name_id = name_context.name_id_for_new_inst(),
-      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-      .implicit_param_refs_id = name.implicit_params_id,
-      .param_refs_id = name.params_id,
-      // `.self_type_id` depends on the ClassType, so is set below.
-      .self_type_id = SemIR::TypeId::Invalid,
-      .decl_id = class_decl_id,
-      .inheritance_kind = inheritance_kind};
+      name_context.MakeEntityWithParamsBase(name, class_decl_id, is_extern,
+                                            SemIR::LibraryNameId::Invalid),
+      {// `.self_type_id` depends on the ClassType, so is set below.
+       .self_type_id = SemIR::TypeId::Invalid,
+       .inheritance_kind = inheritance_kind}};
+
+  RequireGenericParams(context, class_info.implicit_param_refs_id);
+  RequireGenericParams(context, class_info.param_refs_id);
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
-                 class_info, is_definition, is_extern,
+                 class_info, is_definition,
                  introducer.modifier_set.GetAccessKind());
 
   // Create a new class if this isn't a valid redeclaration.
@@ -238,10 +237,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
+    class_info.generic_id = FinishGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
-    if (class_info.is_generic()) {
+    if (class_info.has_parameters()) {
       class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
     }
+  } else {
+    FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
   }
 
   // Write the class ID into the ClassDecl.
@@ -252,28 +254,30 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: Form this as part of building the definition, not as part of the
     // declaration.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    if (class_info.is_generic()) {
-      // TODO: Pass in the generic arguments once we can represent them.
-      class_info.self_type_id = context.GetTypeIdForTypeConstant(
-          TryEvalInst(context, SemIR::InstId::Invalid,
-                      SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
-                                       .class_id = class_decl.class_id}));
-    } else {
-      class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
-    }
+    auto specific_id =
+        context.generics().GetSelfSpecific(class_info.generic_id);
+    class_info.self_type_id = context.GetTypeIdForTypeConstant(
+        TryEvalInst(context, SemIR::InstId::Invalid,
+                    SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
+                                     .class_id = class_decl.class_id,
+                                     .specific_id = specific_id}));
+  }
+
+  if (!is_definition && context.IsImplFile() && !is_extern) {
+    context.definitions_required().push_back(class_decl_id);
   }
 
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDecl(Context& context, Parse::ClassDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ClassDeclId node_id) -> bool {
   BuildClassDecl(context, node_id, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleClassDefinitionStart(Context& context,
-                                Parse::ClassDefinitionStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
+    -> bool {
   auto [class_id, class_decl_id] =
       BuildClassDecl(context, node_id, /*is_definition=*/true);
   auto& class_info = context.classes().Get(class_id);
@@ -286,7 +290,10 @@ auto HandleClassDefinitionStart(Context& context,
   }
 
   // Enter the class scope.
-  context.scope_stack().Push(class_decl_id, class_info.scope_id);
+  context.scope_stack().Push(
+      class_decl_id, class_info.scope_id,
+      context.generics().GetSelfSpecific(class_info.generic_id));
+  StartGenericDefinition(context);
 
   // Introduce `Self`.
   context.name_scopes().AddRequiredName(
@@ -352,13 +359,13 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
       .Emit();
 }
 
-auto HandleAdaptIntroducer(Context& context,
-                           Parse::AdaptIntroducerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::AdaptIntroducerId /*node_id*/)
+    -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Adapt>();
   return true;
 }
 
-auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   auto [adapted_type_node, adapted_type_expr_id] =
       context.node_stack().PopExprWithNodeId();
 
@@ -419,13 +426,13 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
   return true;
 }
 
-auto HandleBaseIntroducer(Context& context, Parse::BaseIntroducerId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::BaseIntroducerId /*node_id*/)
     -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Base>();
   return true;
 }
 
-auto HandleBaseColon(Context& /*context*/, Parse::BaseColonId /*node_id*/)
+auto HandleParseNode(Context& /*context*/, Parse::BaseColonId /*node_id*/)
     -> bool {
   return true;
 }
@@ -488,7 +495,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
   return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
 }
 
-auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   auto [base_type_node_id, base_type_expr_id] =
       context.node_stack().PopExprWithNodeId();
 
@@ -554,8 +561,8 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   return true;
 }
 
-auto HandleClassDefinition(Context& context,
-                           Parse::ClassDefinitionId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::ClassDefinitionId /*node_id*/)
+    -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
@@ -603,6 +610,8 @@ auto HandleClassDefinition(Context& context,
   } else {
     class_info.object_repr_id = context.GetStructType(fields_id);
   }
+
+  FinishGenericDefinition(context, class_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

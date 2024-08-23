@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import re
 import subprocess
-from typing import Callable, Dict, List, NamedTuple, Set, Tuple
+from typing import Callable, NamedTuple
 from xml.etree import ElementTree
 
 import scripts_utils
@@ -35,12 +35,12 @@ class RuleChoice(NamedTuple):
     # Whether to use "" or <> for the include.
     use_system_include: bool
     # Possible rules that may be used.
-    rules: Set[str]
+    rules: set[str]
 
 
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
-EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
+EXTERNAL_REPOS: dict[str, ExternalRepo] = {
     # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
     # clang-tools-extra/clangd:URI.h -> clang-tools-extra/clangd/URI.h
     "@llvm-project": ExternalRepo(
@@ -92,15 +92,15 @@ IGNORE_SOURCE_FILE_REGEX = re.compile(
 class Rule(NamedTuple):
     # For cc_* rules:
     # The hdrs + textual_hdrs attributes, as relative paths to the file.
-    hdrs: Set[str]
+    hdrs: set[str]
     # The srcs attribute, as relative paths to the file.
-    srcs: Set[str]
+    srcs: set[str]
     # The deps attribute, as full bazel labels.
-    deps: Set[str]
+    deps: set[str]
 
     # For genrules:
     # The outs attribute, as relative paths to the file.
-    outs: Set[str]
+    outs: set[str]
 
 
 def remap_file(label: str) -> str:
@@ -114,13 +114,13 @@ def remap_file(label: str) -> str:
     return EXTERNAL_REPOS[repo].remap(path)
 
 
-def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
+def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> set[str]:
     """Returns the contents of a bazel list.
 
     The return will normally be the full label, unless `is_file` is set, in
     which case the label will be translated to the underlying file.
     """
-    results: Set[str] = set()
+    results: set[str] = set()
     for label in list_child:
         assert label.tag in ("label", "output"), label.tag
         value = label.attrib["value"]
@@ -130,7 +130,7 @@ def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
     return results
 
 
-def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
+def get_rules(bazel: str, targets: str, keep_going: bool) -> dict[str, Rule]:
     """Queries the specified targets, returning the found rules.
 
     keep_going will be set to true for external repositories, where sometimes we
@@ -153,14 +153,14 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
     if p.returncode not in {0, 3}:
         print(p.stderr)
         exit(f"bazel query returned {p.returncode}")
-    rules: Dict[str, Rule] = {}
+    rules: dict[str, Rule] = {}
     for rule_xml in ElementTree.fromstring(p.stdout):
         assert rule_xml.tag == "rule", rule_xml.tag
         rule_name = rule_xml.attrib["name"]
-        hdrs: Set[str] = set()
-        srcs: Set[str] = set()
-        deps: Set[str] = set()
-        outs: Set[str] = set()
+        hdrs: set[str] = set()
+        srcs: set[str] = set()
+        deps: set[str] = set()
+        outs: set[str] = set()
         rule_class = rule_xml.attrib["class"]
         for list_child in rule_xml.findall("list"):
             list_name = list_child.attrib["name"]
@@ -183,7 +183,7 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
 
 
 def map_headers(
-    header_to_rule_map: Dict[str, RuleChoice], rules: Dict[str, Rule]
+    header_to_rule_map: dict[str, RuleChoice], rules: dict[str, Rule]
 ) -> None:
     """Accumulates headers provided by rules into the map.
 
@@ -212,16 +212,16 @@ def map_headers(
 
 
 def get_missing_deps(
-    header_to_rule_map: Dict[str, RuleChoice],
-    generated_files: Set[str],
+    header_to_rule_map: dict[str, RuleChoice],
+    generated_files: set[str],
     rule: Rule,
-) -> Tuple[Set[str], bool]:
+) -> tuple[set[str], bool]:
     """Returns missing dependencies for the rule.
 
     On return, the set is dependency labels that should be added; the bool
     indicates whether some where omitted due to ambiguity.
     """
-    missing_deps: Set[str] = set()
+    missing_deps: set[str] = set()
     ambiguous = False
     rule_files = rule.hdrs.union(rule.srcs)
     for source_file in rule_files:
@@ -297,17 +297,17 @@ def main() -> None:
     external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
-    header_to_rule_map: Dict[str, RuleChoice] = {}
+    header_to_rule_map: dict[str, RuleChoice] = {}
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
 
     print("Building generated file list...")
-    generated_files: Set[str] = set()
+    generated_files: set[str] = set()
     for rule in carbon_rules.values():
         generated_files = generated_files.union(rule.outs)
 
     print("Parsing headers from source files...")
-    all_missing_deps: List[Tuple[str, Set[str]]] = []
+    all_missing_deps: list[tuple[str, set[str]]] = []
     any_ambiguous = False
     for rule_name, rule in carbon_rules.items():
         missing_deps, ambiguous = get_missing_deps(

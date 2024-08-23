@@ -43,6 +43,7 @@ cc_test(
         "//common:all_llvm_targets",
         "//common:check",
         "//common:ostream",
+        "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
@@ -50,6 +51,26 @@ cc_test(
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],
+)
+
+cc_binary(
+    name = "compile_benchmark",
+    testonly = 1,
+    srcs = ["compile_benchmark.cpp"],
+    deps = [
+        ":driver",
+        "//testing/base:benchmark_main",
+        "//testing/base:global_exe_path",
+        "//testing/base:source_gen_lib",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "compile_benchmark_test",
+    srcs = ["compile_benchmark_test.sh"],
+    data = [":compile_benchmark"],
 )
 
 cc_library(
@@ -74,6 +95,7 @@ cc_library(
         "//toolchain/lex",
         "//toolchain/lower",
         "//toolchain/parse",
+        "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst_namer",
@@ -91,6 +113,7 @@ cc_test(
     deps = [
         ":driver",
         "//common:all_llvm_targets",
+        "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -118,6 +141,8 @@ cc_fuzz_test(
     ],
 )
 
+# This target doesn't include prelude libraries. To get a target that has the
+# prelude available, use //toolchain.
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],

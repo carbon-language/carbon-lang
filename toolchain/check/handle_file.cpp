@@ -7,7 +7,7 @@
 
 namespace Carbon::Check {
 
-auto HandleFileStart(Context& /*context*/, Parse::FileStartId /*node_id*/)
+auto HandleParseNode(Context& /*context*/, Parse::FileStartId /*node_id*/)
     -> bool {
   // No action to perform.
   // TODO: We may want to push `FileStart` as a sentinel so that `Peek`s can't
@@ -15,7 +15,8 @@ auto HandleFileStart(Context& /*context*/, Parse::FileStartId /*node_id*/)
   return true;
 }
 
-auto HandleFileEnd(Context& /*context*/, Parse::FileEndId /*node_id*/) -> bool {
+auto HandleParseNode(Context& /*context*/, Parse::FileEndId /*node_id*/)
+    -> bool {
   // No action to perform.
   return true;
 }

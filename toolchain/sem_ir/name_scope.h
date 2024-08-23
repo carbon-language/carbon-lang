@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
+#include "common/map.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -19,6 +20,7 @@ enum class AccessKind : int8_t {
 
 struct NameScope : Printable<NameScope> {
   struct Entry {
+    NameId name_id;
     InstId inst_id;
     AccessKind access_kind;
   };
@@ -35,24 +37,38 @@ struct NameScope : Printable<NameScope> {
     out << "]";
 
     out << ", names: {";
-    // Sort name keys to get stable output.
-    llvm::SmallVector<NameId> keys;
-    for (auto [key, _] : names) {
-      keys.push_back(key);
-    }
-    llvm::sort(keys,
-               [](NameId lhs, NameId rhs) { return lhs.index < rhs.index; });
-    llvm::ListSeparator key_sep;
-    for (auto key : keys) {
-      out << key_sep << key << ": " << names.find(key)->second.inst_id;
+    llvm::ListSeparator sep;
+    for (auto entry : names) {
+      out << sep << entry.name_id << ": " << entry.inst_id;
     }
     out << "}";
 
     out << "}";
   }
 
-  // Names in the scope.
-  llvm::DenseMap<NameId, Entry> names = llvm::DenseMap<NameId, Entry>();
+  // Adds a name to the scope that must not already exist.
+  auto AddRequired(Entry name_entry) -> void {
+    auto add_name = [&] {
+      int index = names.size();
+      names.push_back(name_entry);
+      return index;
+    };
+    auto result = name_map.Insert(name_entry.name_id, add_name);
+    CARBON_CHECK(result.is_inserted())
+        << "Failed to add required name: " << name_entry.name_id;
+  }
+
+  // Names in the scope. We store both an insertion-ordered vector for iterating
+  // and a map from `NameId` to the index of that vector for name lookup.
+  //
+  // Optimization notes: this is somewhat memory inefficient. If this ends up
+  // either hot or a significant source of memory allocation, we should consider
+  // switching to a SOA model where the `AccessKind` is stored in a separate
+  // vector so that these can pack densely. If this ends up both cold and memory
+  // intensive, we can also switch the lookup to a set of indices into the
+  // vector rather than a map from `NameId` to index.
+  llvm::SmallVector<Entry> names;
+  Map<NameId, int> name_map;
 
   // Scopes extended by this scope.
   //
@@ -114,10 +130,9 @@ class NameScopeStore {
   // These must never conflict.
   auto AddRequiredName(NameScopeId scope_id, NameId name_id, InstId inst_id)
       -> void {
-    NameScope::Entry entry = {.inst_id = inst_id,
-                              .access_kind = AccessKind::Public};
-    auto success = Get(scope_id).names.insert({name_id, entry}).second;
-    CARBON_CHECK(success) << "Failed to add required name: " << name_id;
+    Get(scope_id).AddRequired({.name_id = name_id,
+                               .inst_id = inst_id,
+                               .access_kind = AccessKind::Public});
   }
 
   // Returns the requested name scope.
@@ -144,6 +159,12 @@ class NameScopeStore {
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
+  }
+
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Collect(label, values_);
   }
 
  private:

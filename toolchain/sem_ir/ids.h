@@ -11,16 +11,18 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::SemIR {
 
 // Forward declare indexed types, for integration with ValueStore.
 class File;
 class Inst;
-struct BindNameInfo;
+struct EntityName;
 struct Class;
 struct Function;
+struct Generic;
+struct Specific;
 struct ImportIR;
 struct ImportIRInst;
 struct Interface;
@@ -35,16 +37,17 @@ struct InstId : public IdBase, public Printable<InstId> {
   // An explicitly invalid ID.
   static const InstId Invalid;
 
-// Builtin instruction IDs.
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const InstId Builtin##Name;
-#include "toolchain/sem_ir/builtin_kind.def"
+// BuiltinInst IDs.
+#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name) \
+  static const InstId Builtin##Name;
+#include "toolchain/sem_ir/builtin_inst_kind.def"
 
   // The namespace for a `package` expression.
   static const InstId PackageNamespace;
 
   // Returns the instruction ID for a builtin. This relies on File guarantees
   // for builtin placement.
-  static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
+  static constexpr auto ForBuiltin(BuiltinInstKind kind) -> InstId {
     return InstId(kind.AsInt());
   }
 
@@ -53,13 +56,13 @@ struct InstId : public IdBase, public Printable<InstId> {
   // Returns true if the instruction is a builtin. Requires is_valid.
   auto is_builtin() const -> bool {
     CARBON_CHECK(is_valid());
-    return index < BuiltinKind::ValidCount;
+    return index < BuiltinInstKind::ValidCount;
   }
 
-  // Returns the BuiltinKind. Requires is_builtin.
-  auto builtin_kind() const -> BuiltinKind {
+  // Returns the BuiltinInstKind. Requires is_builtin.
+  auto builtin_inst_kind() const -> BuiltinInstKind {
     CARBON_CHECK(is_builtin());
-    return BuiltinKind::FromInt(index);
+    return BuiltinInstKind::FromInt(index);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -67,24 +70,24 @@ struct InstId : public IdBase, public Printable<InstId> {
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_builtin()) {
-      out << builtin_kind();
+      out << builtin_inst_kind();
     } else {
       // Use the `+` as a small reminder that this is a delta, rather than an
       // absolute index.
-      out << "+" << index - BuiltinKind::ValidCount;
+      out << "+" << index - BuiltinInstKind::ValidCount;
     }
   }
 };
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
-  constexpr InstId InstId::Builtin##Name =    \
-      InstId::ForBuiltin(BuiltinKind::Name);
-#include "toolchain/sem_ir/builtin_kind.def"
+#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name) \
+  constexpr InstId InstId::Builtin##Name =         \
+      InstId::ForBuiltin(BuiltinInstKind::Name);
+#include "toolchain/sem_ir/builtin_inst_kind.def"
 
 // The package namespace will be the instruction after builtins.
-constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
+constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 
 // The ID of a constant value of an expression. An expression is either:
 //
@@ -93,6 +96,11 @@ constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
 // - a symbolic constant, whose value includes a symbolic parameter, such as
 //   `Vector(T*)`, or
 // - a runtime expression, such as `Print("hello")`.
+//
+// Template constants are a thin wrapper around the instruction ID of the
+// constant instruction that defines the constant. Symbolic constants are an
+// index into a separate table of `SymbolicConstant`s maintained by the constant
+// value store.
 struct ConstantId : public IdBase, public Printable<ConstantId> {
   // An ID for an expression that is not constant.
   static const ConstantId NotConstant;
@@ -106,41 +114,50 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // either be in the `constants` block in the file or should be known to be
   // unique.
   static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
-    return ConstantId(const_id.index + IndexOffset);
+    return ConstantId(const_id.index);
   }
 
-  // Returns the constant ID corresponding to a symbolic constant, which should
-  // either be in the `constants` block in the file or should be known to be
-  // unique.
-  static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
-    return ConstantId(-const_id.index - IndexOffset);
+  // Returns the constant ID corresponding to a symbolic constant index.
+  static constexpr auto ForSymbolicConstantIndex(int32_t symbolic_index)
+      -> ConstantId {
+    return ConstantId(FirstSymbolicIndex - symbolic_index);
   }
 
   using IdBase::IdBase;
 
   // Returns whether this represents a constant. Requires is_valid.
   auto is_constant() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return *this != ConstantId::NotConstant;
   }
   // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
-    CARBON_CHECK(is_valid());
-    return index <= -IndexOffset;
+    CARBON_DCHECK(is_valid());
+    return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
-    CARBON_CHECK(is_valid());
-    return index >= IndexOffset;
+    CARBON_DCHECK(is_valid());
+    return index >= 0;
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
+  // Prints this ID to the given output stream. `disambiguate` indicates whether
+  // template constants should be wrapped with "templateConstant(...)" so that
+  // they aren't printed the same as an InstId. This can be set to false if
+  // there is no risk of ambiguity.
+  auto Print(llvm::raw_ostream& out, bool disambiguate = true) const -> void {
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_template()) {
-      out << "template " << inst_id();
+      if (disambiguate) {
+        out << "templateConstant(";
+      }
+      out << template_inst_id();
+      if (disambiguate) {
+        out << ")";
+      }
     } else if (is_symbolic()) {
-      out << "symbolic " << inst_id();
+      out << "symbolicConstant" << symbolic_index();
     } else {
       out << "runtime";
     }
@@ -153,18 +170,23 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
 
-  // Returns the instruction that describes this constant value, or
-  // InstId::Invalid for a runtime value. This is not part of the public
-  // interface of `ConstantId`. Use `ConstantValueStore::GetInstId` to get the
+  // Returns the instruction that describes this template constant value.
+  // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
-  constexpr auto inst_id() const -> InstId {
-    CARBON_CHECK(is_valid());
-    return InstId(Abs(index) - IndexOffset);
+  constexpr auto template_inst_id() const -> InstId {
+    CARBON_DCHECK(is_template());
+    return InstId(index);
+  }
+
+  // Returns the symbolic constant index that describes this symbolic constant
+  // value. Requires `is_symbolic()`.
+  constexpr auto symbolic_index() const -> int32_t {
+    CARBON_DCHECK(is_symbolic());
+    return FirstSymbolicIndex - index;
   }
 
   static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
-  // The offset of InstId indices to ConstantId indices.
-  static constexpr int32_t IndexOffset = -NotConstantIndex + 1;
+  static constexpr int32_t FirstSymbolicIndex = InvalidIndex - 2;
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
@@ -172,21 +194,21 @@ constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
-// The ID of a bind name.
-struct BindNameId : public IdBase, public Printable<BindNameId> {
-  using ValueType = BindNameInfo;
+// The ID of a EntityName.
+struct EntityNameId : public IdBase, public Printable<EntityNameId> {
+  using ValueType = EntityName;
 
   // An explicitly invalid ID.
-  static const BindNameId Invalid;
+  static const EntityNameId Invalid;
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "bindName";
+    out << "entity_name";
     IdBase::Print(out);
   }
 };
 
-constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
+constexpr EntityNameId EntityNameId::Invalid = EntityNameId(InvalidIndex);
 
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
@@ -199,15 +221,13 @@ struct CompileTimeBindIndex : public IndexBase,
   using IndexBase::IndexBase;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "compTimeBind";
+    out << "comp_time_bind";
     IndexBase::Print(out);
   }
 };
 
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
-// Note that InvalidIndex - 1 and InvalidIndex - 2 are used by
-// DenseMapInfo<BindNameInfo>.
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -282,6 +302,97 @@ struct ImplId : public IdBase, public Printable<ImplId> {
 };
 
 constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
+
+// The ID of a generic.
+struct GenericId : public IdBase, public Printable<GenericId> {
+  using ValueType = Generic;
+
+  // An explicitly invalid ID.
+  static const GenericId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "generic";
+    IdBase::Print(out);
+  }
+};
+
+constexpr GenericId GenericId::Invalid = GenericId(InvalidIndex);
+
+// The ID of a specific, which is the result of specifying the generic arguments
+// for a generic.
+struct SpecificId : public IdBase, public Printable<SpecificId> {
+  using ValueType = Specific;
+
+  // An explicitly invalid ID. This is typically used to represent a non-generic
+  // entity.
+  static const SpecificId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "specific";
+    IdBase::Print(out);
+  }
+};
+
+constexpr SpecificId SpecificId::Invalid = SpecificId(InvalidIndex);
+
+// The index of an instruction that depends on generic parameters within a
+// region of a generic. A corresponding specific version of the instruction can
+// be found in each specific corresponding to that generic. This is a pair of a
+// region and an index, stored in 32 bits.
+struct GenericInstIndex : public IndexBase, public Printable<GenericInstIndex> {
+  // Where the value is first used within the generic.
+  enum Region : uint8_t {
+    // In the declaration.
+    Declaration,
+    // In the definition.
+    Definition,
+  };
+
+  // An explicitly invalid index.
+  static const GenericInstIndex Invalid;
+
+  explicit constexpr GenericInstIndex(Region region, int32_t index)
+      : IndexBase(region == Declaration ? index
+                                        : FirstDefinitionIndex - index) {
+    CARBON_CHECK(index >= 0);
+  }
+
+  // Returns the index of the instruction within the region.
+  auto index() const -> int32_t {
+    CARBON_CHECK(is_valid());
+    return IndexBase::index >= 0 ? IndexBase::index
+                                 : FirstDefinitionIndex - IndexBase::index;
+  }
+
+  // Returns the region within which this instruction was first used.
+  auto region() const -> Region {
+    CARBON_CHECK(is_valid());
+    return IndexBase::index >= 0 ? Declaration : Definition;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "genericInst";
+    if (is_valid()) {
+      out << (region() == Declaration ? "InDecl" : "InDef") << index();
+    } else {
+      out << "<invalid>";
+    }
+  }
+
+ private:
+  static constexpr auto MakeInvalid() -> GenericInstIndex {
+    GenericInstIndex result(Declaration, 0);
+    result.IndexBase::index = InvalidIndex;
+    return result;
+  }
+
+  static constexpr int32_t FirstDefinitionIndex = InvalidIndex - 1;
+};
+
+constexpr GenericInstIndex GenericInstIndex::Invalid =
+    GenericInstIndex::MakeInvalid();
 
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
@@ -464,13 +575,17 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   using ElementType = InstId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
-  // An empty block, reused to avoid allocating empty vectors. Always the
-  // 0-index block.
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
   static const InstBlockId Empty;
 
-  // Exported instructions. Always the 1-index block. Empty until the File is
-  // fully checked; intermediate state is in the Check::Context.
+  // Exported instructions. Empty until the File is fully checked; intermediate
+  // state is in the Check::Context.
   static const InstBlockId Exports;
+
+  // ImportRef instructions. Empty until the File is fully checked; intermediate
+  // state is in the Check::Context.
+  static const InstBlockId ImportRefs;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
@@ -491,6 +606,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
       out << "empty";
     } else if (*this == Exports) {
       out << "exports";
+    } else if (*this == ImportRefs) {
+      out << "import_refs";
     } else if (*this == GlobalInit) {
       out << "global_init";
     } else {
@@ -502,13 +619,13 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
+constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
+constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
-constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(2);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
-  using ValueType = TypeInfo;
   // StringifyType() is used for diagnostics.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
@@ -522,6 +639,17 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   static const TypeId Invalid;
 
   using IdBase::IdBase;
+
+  // Returns the ID of the type corresponding to the constant `const_id`, which
+  // must be of type `type`. As an exception, the type `Error` is of type
+  // `Error`.
+  static constexpr auto ForTypeConstant(ConstantId const_id) -> TypeId {
+    return TypeId(const_id.index);
+  }
+
+  // Returns the constant ID that defines the type.
+  auto AsConstantId() const -> ConstantId { return ConstantId(index); }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
     if (*this == TypeType) {
@@ -529,13 +657,16 @@ struct TypeId : public IdBase, public Printable<TypeId> {
     } else if (*this == Error) {
       out << "Error";
     } else {
-      IdBase::Print(out);
+      out << "(";
+      AsConstantId().Print(out, /*disambiguate=*/false);
+      out << ")";
     }
   }
 };
 
-constexpr TypeId TypeId::TypeType = TypeId(InvalidIndex - 2);
-constexpr TypeId TypeId::Error = TypeId(InvalidIndex - 1);
+constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
+    ConstantId::ForTemplateConstant(InstId::BuiltinTypeType));
+constexpr TypeId TypeId::Error = TypeId::ForTypeConstant(ConstantId::Error);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.
@@ -548,7 +679,7 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "typeBlock";
+    out << "type_block";
     IdBase::Print(out);
   }
 };
@@ -564,14 +695,69 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
   }
 };
 
+// The ID of a library name. This is either a string literal or `default`.
+struct LibraryNameId : public IdBase, public Printable<NameId> {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // An explicitly invalid ID.
+  static const LibraryNameId Invalid;
+  // The name of `default`.
+  static const LibraryNameId Default;
+  // Track cases where the library name was set, but has been diagnosed and
+  // shouldn't be used anymore.
+  static const LibraryNameId Error;
+
+  // Returns the LibraryNameId for a library name as a string literal.
+  static auto ForStringLiteralValueId(StringLiteralValueId id)
+      -> LibraryNameId {
+    CARBON_CHECK(id.index >= InvalidIndex)
+        << "Unexpected library name ID " << id;
+    if (id == StringLiteralValueId::Invalid) {
+      // Prior to SemIR, we use invalid to indicate `default`.
+      return LibraryNameId::Default;
+    } else {
+      return LibraryNameId(id.index);
+    }
+  }
+
+  using IdBase::IdBase;
+
+  // Converts a LibraryNameId back to a string literal.
+  auto AsStringLiteralValueId() const -> StringLiteralValueId {
+    CARBON_CHECK(index >= InvalidIndex) << *this << " must be handled directly";
+    return StringLiteralValueId(index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "libraryName";
+    if (*this == Default) {
+      out << "Default";
+    } else if (*this == Error) {
+      out << "<error>";
+    } else {
+      IdBase::Print(out);
+    }
+  }
+};
+
+constexpr LibraryNameId LibraryNameId::Invalid = LibraryNameId(InvalidIndex);
+constexpr LibraryNameId LibraryNameId::Default =
+    LibraryNameId(InvalidIndex - 1);
+constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(InvalidIndex - 2);
+
 // The ID of an ImportIRInst.
-struct ImportIRInstId : public IdBase, public Printable<InstId> {
+struct ImportIRInstId : public IdBase, public Printable<ImportIRInstId> {
   using ValueType = ImportIRInst;
 
   // An explicitly invalid ID.
   static const ImportIRInstId Invalid;
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "import_ir_inst";
+    IdBase::Print(out);
+  }
 };
 
 constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
@@ -632,25 +818,5 @@ struct LocId : public IdBase, public Printable<LocId> {
 constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 
 }  // namespace Carbon::SemIR
-
-// Support use of Id types as DenseMap/DenseSet keys.
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::ConstantId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::ConstantId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::InstBlockId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NameId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NameId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::TypeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::TypeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

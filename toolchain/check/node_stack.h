@@ -11,6 +11,7 @@
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -129,10 +130,12 @@ class NodeStack {
     return PeekIs(RequiredParseCategory);
   }
 
-  // Returns whether there is a name on top of the stack.
-  auto PeekIsName() const -> bool {
+  // Returns whether there is a node with the corresponding ID on top of the
+  // stack.
+  template <typename IdT>
+  auto PeekIs() const -> bool {
     return !stack_.empty() &&
-           NodeKindToIdKind(PeekNodeKind()) == Id::KindFor<SemIR::NameId>();
+           NodeKindToIdKind(PeekNodeKind()) == Id::KindFor<IdT>();
   }
 
   // Returns whether the *next* node on the stack is a given kind. This doesn't
@@ -273,6 +276,16 @@ class NodeStack {
     return std::nullopt;
   }
 
+  // Pops the top of the stack if it has the given category, and returns the ID.
+  // Otherwise returns std::nullopt.
+  template <typename IdT>
+  auto PopIf() -> std::optional<IdT> {
+    if (PeekIs<IdT>()) {
+      return Pop<IdT>();
+    }
+    return std::nullopt;
+  }
+
   // Pops the top of the stack and returns the node_id and the ID if it is
   // of the specified kind.
   template <const Parse::NodeKind& RequiredParseKind>
@@ -325,7 +338,8 @@ class NodeStack {
   }
 
   // Prints the stack for a stack dump.
-  auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+  auto PrintForStackDump(SemIR::Formatter& formatter, int indent,
+                         llvm::raw_ostream& output) const -> void;
 
   auto empty() const -> bool { return stack_.empty(); }
   auto size() const -> size_t { return stack_.size(); }
@@ -434,6 +448,9 @@ class NodeStack {
           return Id::KindFor<SemIR::ImplId>();
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
+        case Parse::NodeKind::DefaultLibrary:
+        case Parse::NodeKind::LibraryName:
+          return Id::KindFor<SemIR::LibraryNameId>();
         case Parse::NodeKind::ArrayExprSemi:
         case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:

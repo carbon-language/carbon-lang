@@ -12,10 +12,11 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/sem_ir/bind_name.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -32,7 +33,8 @@ namespace Carbon::SemIR {
 class File : public Printable<File> {
  public:
   // Starts a new file for Check::CheckParseTree.
-  explicit File(CheckIRId check_ir_id, SharedValueStores& value_stores,
+  explicit File(CheckIRId check_ir_id, IdentifierId package_id,
+                LibraryNameId library_id, SharedValueStores& value_stores,
                 std::string filename);
 
   File(const File&) = delete;
@@ -52,24 +54,15 @@ class File : public Printable<File> {
   }
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void;
+
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return ints()
         .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
         .getZExtValue();
-  }
-
-  // Marks a type as complete, and sets its value representation.
-  auto CompleteType(TypeId object_type_id, ValueRepr value_repr) -> void {
-    if (object_type_id.index < 0) {
-      // We already know our builtin types are complete.
-      return;
-    }
-    CARBON_CHECK(types().Get(object_type_id).value_repr.kind ==
-                 ValueRepr::Unknown)
-        << "Type " << object_type_id << " completed more than once";
-    types().Get(object_type_id).value_repr = value_repr;
-    complete_types_.push_back(object_type_id);
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
@@ -88,12 +81,14 @@ class File : public Printable<File> {
   auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
+  auto package_id() const -> IdentifierId { return package_id_; }
+  auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
-  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+  auto identifiers() const -> const CanonicalValueStore<IdentifierId>& {
     return value_stores_->identifiers();
   }
   auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
@@ -108,16 +103,16 @@ class File : public Printable<File> {
   auto floats() const -> const FloatValueStore& {
     return value_stores_->floats();
   }
-  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }
   auto string_literal_values() const
-      -> const StringStoreWrapper<StringLiteralValueId>& {
+      -> const CanonicalValueStore<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }
 
-  auto bind_names() -> BindNameStore& { return bind_names_; }
-  auto bind_names() const -> const BindNameStore& { return bind_names_; }
+  auto entity_names() -> EntityNameStore& { return entity_names_; }
+  auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -128,6 +123,10 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
+  auto generics() -> GenericStore& { return generics_; }
+  auto generics() const -> const GenericStore& { return generics_; }
+  auto specifics() -> SpecificStore& { return specifics_; }
+  auto specifics() const -> const SpecificStore& { return specifics_; }
   auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
   auto import_irs() const -> const ValueStore<ImportIRId>& {
     return import_irs_;
@@ -160,16 +159,13 @@ class File : public Printable<File> {
   auto constants() -> ConstantStore& { return constants_; }
   auto constants() const -> const ConstantStore& { return constants_; }
 
-  // A list of types that were completed in this file, in the order in which
-  // they were completed. Earlier types in this list cannot contain instances of
-  // later types.
-  auto complete_types() const -> llvm::ArrayRef<TypeId> {
-    return complete_types_;
-  }
-
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
+  }
+  auto global_ctor_id() const -> FunctionId { return global_ctor_id_; }
+  auto set_global_ctor_id(FunctionId function_id) -> void {
+    global_ctor_id_ = function_id;
   }
 
   // Returns true if there were errors creating the semantics IR.
@@ -179,9 +175,17 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
+  // True if parts of the IR may be invalid.
   bool has_errors_ = false;
 
+  // The file's ID.
   CheckIRId check_ir_id_;
+
+  // The file's package.
+  IdentifierId package_id_ = IdentifierId::Invalid;
+
+  // The file's library.
+  LibraryNameId library_id_ = LibraryNameId::Invalid;
 
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
@@ -193,8 +197,8 @@ class File : public Printable<File> {
   // TODO: If SemIR starts linking back to tokens, reuse its filename.
   std::string filename_;
 
-  // Storage for bind names.
-  BindNameStore bind_names_;
+  // Storage for EntityNames.
+  EntityNameStore entity_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;
@@ -208,6 +212,12 @@ class File : public Printable<File> {
   // Storage for impls.
   ImplStore impls_;
 
+  // Storage for generics.
+  GenericStore generics_;
+
+  // Storage for specifics.
+  SpecificStore specifics_;
+
   // Related IRs. There are some fixed entries at the start; see ImportIRId.
   ValueStore<ImportIRId> import_irs_;
 
@@ -219,8 +229,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All instructions. The first entries will always be Builtin insts, at
-  // indices matching BuiltinKind ordering.
+  // All instructions. The first entries will always be BuiltinInsts, at
+  // indices matching BuiltinInstKind ordering.
   InstStore insts_;
 
   // Storage for name scopes.
@@ -236,15 +246,15 @@ class File : public Printable<File> {
   // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
 
+  // The global constructor function id.
+  FunctionId global_ctor_id_ = FunctionId::Invalid;
+
   // Storage for instructions that represent computed global constants, such as
   // types.
   ConstantStore constants_;
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(&insts_, &constant_values_);
-
-  // Types that were completed in this file.
-  llvm::SmallVector<TypeId> complete_types_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md
@@ -278,37 +288,6 @@ enum class ExprCategory : int8_t {
 
 // Returns the expression category for an instruction.
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
-
-// Returns information about the value representation to use for a type.
-inline auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
-  return file.types().GetValueRepr(type_id);
-}
-
-// The initializing representation to use when returning by value.
-struct InitRepr {
-  enum Kind : int8_t {
-    // The type has no initializing representation. This is used for empty
-    // types, where no initialization is necessary.
-    None,
-    // An initializing expression produces an object representation by value,
-    // which is copied into the initialized object.
-    ByCopy,
-    // An initializing expression takes a location as input, which is
-    // initialized as a side effect of evaluating the expression.
-    InPlace,
-    // TODO: Consider adding a kind where the expression takes an advisory
-    // location and returns a value plus an indicator of whether the location
-    // was actually initialized.
-  };
-  // The kind of initializing representation used by this type.
-  Kind kind;
-
-  // Returns whether a return slot is used when returning this type.
-  auto has_return_slot() const -> bool { return kind == InPlace; }
-};
-
-// Returns information about the initializing representation to use for a type.
-auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
 
 }  // namespace Carbon::SemIR
 

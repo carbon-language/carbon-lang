@@ -131,28 +131,36 @@ private import PrivateImport;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_modifiers.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %ImplImport: <namespace> = namespace file.%ImplImport.import, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace file.%ExtendImport.import, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace file.%VirtualImport.import, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %BaseImport: <namespace> = namespace file.%BaseImport.import, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace file.%PrivateImport.import, [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ImplImport = %ImplImport
-// CHECK:STDOUT:     .ExtendImport = %ExtendImport
-// CHECK:STDOUT:     .VirtualImport = %VirtualImport
-// CHECK:STDOUT:     .BaseImport = %BaseImport
-// CHECK:STDOUT:     .PrivateImport = %PrivateImport
+// CHECK:STDOUT:     .ImplImport = imports.%ImplImport
+// CHECK:STDOUT:     .ExtendImport = imports.%ExtendImport
+// CHECK:STDOUT:     .VirtualImport = imports.%VirtualImport
+// CHECK:STDOUT:     .BaseImport = imports.%BaseImport
+// CHECK:STDOUT:     .PrivateImport = imports.%PrivateImport
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplImport: <namespace> = namespace [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ExtendImport: <namespace> = namespace [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %VirtualImport: <namespace> = namespace [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %BaseImport: <namespace> = namespace [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %PrivateImport: <namespace> = namespace [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ImplImport.import = import ImplImport
+// CHECK:STDOUT:   %ExtendImport.import = import ExtendImport
+// CHECK:STDOUT:   %VirtualImport.import = import VirtualImport
+// CHECK:STDOUT:   %BaseImport.import = import BaseImport
+// CHECK:STDOUT:   %PrivateImport.import = import PrivateImport
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

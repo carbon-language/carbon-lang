@@ -111,6 +111,8 @@ def _impl(ctx):
     # https://github.com/llvm/llvm-project/issues/70384
     if not clang_version or clang_version == 18:
         missing_field_init_flags = ["-Wno-missing-field-initializers"]
+    elif clang_version > 18:
+        missing_field_init_flags = ["-Wno-missing-designated-field-initializers"]
     else:
         missing_field_init_flags = []
 
@@ -144,6 +146,7 @@ def _impl(ctx):
                             "-Wextra-semi",
                             "-Wmissing-prototypes",
                             "-Wzero-as-null-pointer-constant",
+                            "-Wdelete-non-virtual-dtor",
                             # Don't warn on external code as we can't
                             # necessarily patch it easily. Note that these have
                             # to be initial directories in the `#include` line.
@@ -1076,10 +1079,13 @@ def _impl(ctx):
         target_system_name = identifier,
         target_cpu = ctx.attr.target_cpu,
 
+        # This is used to expose a "flag" that `config_setting` rules can use to
+        # determine if the compiler is Clang.
+        compiler = "clang",
+
         # These attributes aren't meaningful at all so just use placeholder
         # values.
         target_libc = "local",
-        compiler = "local",
         abi_version = "local",
         abi_libc_version = "local",
 

@@ -8,12 +8,12 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
@@ -22,8 +22,8 @@
 
 namespace Carbon::Check {
 
-auto HandleFunctionIntroducer(Context& context,
-                              Parse::FunctionIntroducerId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
+    -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -32,10 +32,12 @@ auto HandleFunctionIntroducer(Context& context,
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Fn>();
   context.decl_name_stack().PushScopeAndStartName();
+  // The function is potentially generic.
+  StartGenericDecl(context);
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id);
@@ -62,28 +64,6 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
 }
 
-// Returns the return slot usage for a function given the computed usage for two
-// different declarations of the function.
-static auto MergeReturnSlot(SemIR::Function::ReturnSlot a,
-                            SemIR::Function::ReturnSlot b)
-    -> SemIR::Function::ReturnSlot {
-  if (a == SemIR::Function::ReturnSlot::NotComputed) {
-    return b;
-  }
-  if (b == SemIR::Function::ReturnSlot::NotComputed) {
-    return a;
-  }
-  if (a == SemIR::Function::ReturnSlot::Error) {
-    return b;
-  }
-  if (b == SemIR::Function::ReturnSlot::Error) {
-    return a;
-  }
-  CARBON_CHECK(a == b)
-      << "Different return slot usage computed for the same function.";
-  return a;
-}
-
 // Tries to merge new_function into prev_function_id. Since new_function won't
 // have a definition even if one is upcoming, set is_definition to indicate the
 // planned result.
@@ -97,38 +77,30 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                                 SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function, {})) {
+  if (!CheckFunctionTypeMatches(context, new_function, prev_function)) {
     return false;
   }
 
   CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
-                       {.loc = new_loc,
-                        .is_definition = new_is_definition,
-                        .is_extern = new_function.is_extern},
-                       {.loc = prev_function.definition_id.is_valid()
-                                   ? prev_function.definition_id
-                                   : prev_function.decl_id,
-                        .is_definition = prev_function.definition_id.is_valid(),
-                        .is_extern = prev_function.is_extern},
+                       RedeclInfo(new_function, new_loc, new_is_definition),
+                       RedeclInfo(prev_function, prev_function.latest_decl_id(),
+                                  prev_function.definition_id.is_valid()),
                        prev_import_ir_id);
 
   if (new_is_definition) {
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
-    prev_function.definition_id = new_function.definition_id;
-    prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
-    prev_function.param_refs_id = new_function.param_refs_id;
+    prev_function.MergeDefinition(new_function);
     prev_function.return_storage_id = new_function.return_storage_id;
   }
   // The new function might have return slot information if it was imported.
-  prev_function.return_slot =
-      MergeReturnSlot(prev_function.return_slot, new_function.return_slot);
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
-    prev_function.decl_id = new_function.decl_id;
+    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
     ReplacePrevInstForMerge(context, prev_function.parent_scope_id,
-                            prev_function.name_id, new_function.decl_id);
+                            prev_function.name_id,
+                            new_function.first_owning_decl_id);
   }
   return true;
 }
@@ -177,7 +149,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.is_valid()) {
-    context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
+    context.DiagnoseDuplicateName(function_info.latest_decl_id(), prev_id);
     return;
   }
 
@@ -199,14 +171,10 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   auto return_storage_id = SemIR::InstId::Invalid;
-  auto return_slot = SemIR::Function::ReturnSlot::NotComputed;
   if (auto [return_node, maybe_return_storage_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
       maybe_return_storage_id) {
     return_storage_id = *maybe_return_storage_id;
-  } else {
-    // If there's no return type, there's no return slot.
-    return_slot = SemIR::Function::ReturnSlot::Absent;
   }
 
   auto name = PopNameComponent(context);
@@ -240,18 +208,17 @@ static auto BuildFunctionDecl(Context& context,
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
-  auto function_info = SemIR::Function{
-      .name_id = name_context.name_id_for_new_inst(),
-      .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
-      .decl_id = context.AddPlaceholderInst(
-          SemIR::LocIdAndInst(node_id, function_decl)),
-      .implicit_param_refs_id = name.implicit_params_id,
-      .param_refs_id = name.params_id,
-      .return_storage_id = return_storage_id,
-      .is_extern = is_extern,
-      .return_slot = return_slot};
+  auto decl_id =
+      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, function_decl));
+
+  // Build the function entity. This will be merged into an existing function if
+  // there is one, or otherwise added to the function store.
+  auto function_info =
+      SemIR::Function{{name_context.MakeEntityWithParamsBase(
+                          name, decl_id, is_extern, introducer.extern_library)},
+                      {.return_storage_id = return_storage_id}};
   if (is_definition) {
-    function_info.definition_id = function_info.decl_id;
+    function_info.definition_id = decl_id;
   }
 
   TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
@@ -259,26 +226,29 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
+    function_info.generic_id = FinishGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
+    FinishGenericRedecl(context, decl_id, function_info.generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
-  function_decl.type_id = context.GetFunctionType(function_decl.function_id);
+  function_decl.type_id = context.GetFunctionType(
+      function_decl.function_id, context.scope_stack().PeekSpecificId());
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
+  context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
 
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
   if (!name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
-    auto lookup_result_id = function_info.decl_id;
+    auto lookup_result_id = decl_id;
     if (parent_scope_inst && !name_context.has_qualifiers) {
       if (auto interface_scope =
               parent_scope_inst->TryAs<SemIR::InterfaceDecl>()) {
         lookup_result_id = BuildAssociatedEntity(
-            context, interface_scope->interface_id, function_info.decl_id);
+            context, interface_scope->interface_id, decl_id);
       }
     }
 
@@ -287,14 +257,14 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
-    auto return_type_id = function_info.declared_return_type(context.sem_ir());
+    auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
     // TODO: Update this once valid signatures for the entry point are decided.
     if (function_info.implicit_param_refs_id.is_valid() ||
         !function_info.param_refs_id.is_valid() ||
         !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
         (return_type_id.is_valid() &&
          return_type_id !=
-             context.GetBuiltinType(SemIR::BuiltinKind::IntType) &&
+             context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
          return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
@@ -303,11 +273,14 @@ static auto BuildFunctionDecl(Context& context,
     }
   }
 
-  return {function_decl.function_id, function_info.decl_id};
+  if (!is_definition && context.IsImplFile() && !is_extern) {
+    context.definitions_required().push_back(decl_id);
+  }
+
+  return {function_decl.function_id, decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId node_id)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   BuildFunctionDecl(context, node_id, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
@@ -325,10 +298,12 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
   context.scope_stack().Push(decl_id);
+  StartGenericDefinition(context);
   context.AddCurrentCodeBlockToFunction();
 
   // Check the return type is complete.
-  CheckFunctionReturnType(context, function.return_storage_id, function);
+  CheckFunctionReturnType(context, function.return_storage_id, function,
+                          SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<const SemIR::InstId>(
@@ -376,8 +351,7 @@ auto HandleFunctionDefinitionResume(Context& context,
       context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
 }
 
-auto HandleFunctionDefinitionStart(Context& context,
-                                   Parse::FunctionDefinitionStartId node_id)
+auto HandleParseNode(Context& context, Parse::FunctionDefinitionStartId node_id)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -387,8 +361,8 @@ auto HandleFunctionDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context,
-                              Parse::FunctionDefinitionId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
+    -> bool {
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
@@ -409,11 +383,16 @@ auto HandleFunctionDefinition(Context& context,
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
+
+  // If this is a generic function, collect information about the definition.
+  auto& function = context.functions().Get(function_id);
+  FinishGenericDefinition(context, function.generic_id);
+
   return true;
 }
 
-auto HandleBuiltinFunctionDefinitionStart(
-    Context& context, Parse::BuiltinFunctionDefinitionStartId node_id) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::BuiltinFunctionDefinitionStartId node_id) -> bool {
   // Process the declaration portion of the function.
   auto [function_id, _] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/true);
@@ -421,7 +400,7 @@ auto HandleBuiltinFunctionDefinitionStart(
   return true;
 }
 
-auto HandleBuiltinName(Context& context, Parse::BuiltinNameId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::BuiltinNameId node_id) -> bool {
   context.node_stack().Push(node_id);
   return true;
 }
@@ -445,7 +424,7 @@ static auto LookupBuiltinFunctionKind(Context& context,
 }
 
 // Returns whether `function` is a valid declaration of the builtin
-// `builtin_kind`.
+// `builtin_inst_kind`.
 static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
@@ -464,7 +443,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   }
 
   // Get the return type. This is `()` if none was specified.
-  auto return_type_id = function.declared_return_type(context.sem_ir());
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   if (!return_type_id.is_valid()) {
     return_type_id = context.GetTupleType({});
   }
@@ -473,8 +452,8 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                   return_type_id);
 }
 
-auto HandleBuiltinFunctionDefinition(
-    Context& context, Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
   auto name_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::BuiltinName>();
   auto [fn_node_id, function_id] =
@@ -485,7 +464,7 @@ auto HandleBuiltinFunctionDefinition(
   if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
     auto& function = context.functions().Get(function_id);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
-      function.builtin_kind = builtin_kind;
+      function.builtin_function_kind = builtin_kind;
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
                         "Invalid signature for builtin function \"{0}\".",

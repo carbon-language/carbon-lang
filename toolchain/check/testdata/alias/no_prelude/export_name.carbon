@@ -97,20 +97,24 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//base, inst+5, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .C = imports.%import_ref.1
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %D: type = export D, %import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %D: type = export D, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_orig.carbon
@@ -120,20 +124,24 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//base, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = %import_ref.2
 // CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = imports.%import_ref.2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export.carbon
@@ -146,21 +154,25 @@ var d: D* = &c;
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//export, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = %import_ref.1
+// CHECK:STDOUT:     .D = imports.%import_ref.1
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %d.var: ref %C = var d
 // CHECK:STDOUT:   %d: ref %C = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -178,12 +190,16 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref = import_ref Main//export, inst+8, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = %import_ref
+// CHECK:STDOUT:     .D = imports.%import_ref
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
@@ -207,20 +223,24 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.4: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//export_orig, inst+8, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export_orig, inst+7, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = %import_ref.1
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:     .D = imports.%import_ref.1
+// CHECK:STDOUT:     .C = imports.%import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+6, unloaded
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:   %d.var: ref %.4 = var d
 // CHECK:STDOUT:   %d: ref %.4 = bind_name d, %d.var
@@ -228,7 +248,7 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

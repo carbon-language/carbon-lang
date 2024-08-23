@@ -14,8 +14,6 @@ build --stamp
 build --flag_alias=release=//bazel/version:release
 build --flag_alias=pre_release=//bazel/version:pre_release
 build --flag_alias=rc_number=//bazel/version:rc_number
-build --flag_alias=beta_number=//bazel/version:beta_number
-build --flag_alias=alpha_number=//bazel/version:alpha_number
 build --flag_alias=nightly_date=//bazel/version:nightly_date
 
 # Support running clang-tidy with:
@@ -28,6 +26,12 @@ build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
 # This warning seems to incorrectly fire in this build configuration, despite
 # not firing in our normal builds.
 build:clang-tidy --copt=-Wno-unknown-pragmas
+
+# Provide an alias for controlling the `carbon_*` Bazel rules' configuration. We
+# enable use of the target config here to make our build and tests more
+# efficient, see the documentation in //bazel/carbon_rules/BUILD for details.
+build --flag_alias=use_target_config_carbon_rules=//bazel/carbon_rules:use_target_config_carbon_rules
+build --use_target_config_carbon_rules
 
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
@@ -99,6 +103,13 @@ build --test_env=ASAN_SYMBOLIZER_PATH
 # Linux and macOS this seems strictly better than the Bazel default of just
 # `en_US`.
 build --action_env=LANG=en_US.UTF-8
+
+# Enable libpfm for google_benchmark on Linux only.
+build --enable_platform_specific_config
+build:linux --define=pfm=1
+
+# Enable TCMalloc on Linux as well.
+build:linux --custom_malloc=@tcmalloc//tcmalloc
 
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.

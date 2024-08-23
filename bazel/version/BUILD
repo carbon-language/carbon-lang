@@ -3,10 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag", "string_flag")
+load("@rules_python//python:defs.bzl", "py_binary")
 
 package(default_visibility = ["//toolchain/install:__pkg__"])
 
-exports_files(["gen_tmpl.py"])
+py_binary(
+    name = "gen_tmpl",
+    srcs = ["gen_tmpl.py"],
+    python_version = "PY3",
+)
 
 # Several flags are provided for customizing the exact version used for the
 # build of Carbon. Each of these is documented here, but rather than using the
@@ -29,10 +34,6 @@ bool_flag(
 # A `--pre_release=KIND` flag where `KIND` must be one of:
 # - `rc` -- a release candidate version.
 #    Example: `--pre_release=rc --rc_number=2`
-# - `beta` -- a beta version.
-#    Example: `--pre_release=beta --beta_number=2`
-# - `alpha` -- an alpha version.
-#    Example: `--pre_release=alpha --alpha_number=2`
 # - `nightly -- a nightly version.
 #    Example: `--pre_release=nightly --nightly_date=2024.06.17`
 # - `dev` -- the default, a development build.
@@ -46,8 +47,6 @@ string_flag(
     build_setting_default = "dev",
     values = [
         "rc",
-        "beta",
-        "alpha",
         "nightly",
         "dev",
     ],
@@ -57,20 +56,6 @@ string_flag(
 # `--pre_release=rc`.
 int_flag(
     name = "rc_number",
-    build_setting_default = -1,
-)
-
-# `--beta_number=N` sets the beta pre-release number to `N`. Requires
-# `--pre_release=beta`.
-int_flag(
-    name = "beta_number",
-    build_setting_default = -1,
-)
-
-# `--alpha_number=N` sets the alpha pre-release number to `N`. Requires
-# `--pre_release=alpha`.
-int_flag(
-    name = "alpha_number",
     build_setting_default = -1,
 )
 

@@ -14,7 +14,7 @@
 
 namespace Carbon::Check {
 
-auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId node_id)
+auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
     -> bool {
   // Create an instruction block to hold the instructions created for the type
   // and interface.
@@ -33,14 +33,16 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId node_id)
   return true;
 }
 
-auto HandleImplForall(Context& context, Parse::ImplForallId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
   auto params_id =
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
   context.node_stack().Push(node_id, params_id);
   return true;
 }
 
-auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id);
   context.node_stack().Push(node_id, self_type_id);
@@ -81,8 +83,8 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
   return SemIR::TypeId::Invalid;
 }
 
-auto HandleDefaultSelfImplAs(Context& context,
-                             Parse::DefaultSelfImplAsId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
+    -> bool {
   auto self_type_id = GetDefaultSelfType(context);
   if (!self_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
@@ -139,7 +141,8 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // The explicit self type is the same as the default self type, so suggest
     // removing it and recover as if it were not present.
     if (auto self_as =
-            context.parse_tree().ExtractAs<Parse::TypeImplAs>(self_type_node)) {
+            context.parse_tree_and_subtrees().ExtractAs<Parse::TypeImplAs>(
+                self_type_node)) {
       CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
                         "Remove the explicit `Self` type here.");
       diag.Note(self_as->type_expr, ExtendImplSelfAsDefault);
@@ -174,7 +177,8 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
-static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
+static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
+                          bool is_definition)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
@@ -221,18 +225,23 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
                params_node, constraint_type_id);
   }
 
+  if (!is_definition && context.IsImplFile()) {
+    context.definitions_required().push_back(impl_decl_id);
+  }
+
   return {impl_decl.impl_id, impl_decl_id};
 }
 
-auto HandleImplDecl(Context& context, Parse::ImplDeclId node_id) -> bool {
-  BuildImplDecl(context, node_id);
+auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
+  BuildImplDecl(context, node_id, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleImplDefinitionStart(Context& context,
-                               Parse::ImplDefinitionStartId node_id) -> bool {
-  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
+auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
+    -> bool {
+  auto [impl_id, impl_decl_id] =
+      BuildImplDecl(context, node_id, /*is_definition=*/true);
   auto& impl_info = context.impls().Get(impl_id);
 
   if (impl_info.is_defined()) {
@@ -271,7 +280,7 @@ auto HandleImplDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleImplDefinition(Context& context, Parse::ImplDefinitionId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
     -> bool {
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();

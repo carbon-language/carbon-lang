@@ -29,10 +29,9 @@ https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 
 <!--
 Don't let the text wrap too narrowly to the left of the above image.
-The `div` reduces the vertical height.
-GitHub will autolink `img`, but won't produce a link when `href="#"`.
+The `div` reduces the vertical height. The `picture` prevents autolinking.
 -->
-<div><a href="#"><img src="docs/images/bumper.png"></a></div>
+<div><picture><img src="docs/images/bumper.png" alt=""></picture></div>
 
 **Fast and works with C++**
 
@@ -124,9 +123,10 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon Language is currently an experimental project. There is no working
-compiler or toolchain. You can see the demo interpreter for Carbon on
-[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+Carbon Language is currently an experimental project. You can see the demo
+interpreter for Carbon on
+[compiler-explorer.com](http://carbon.compiler-explorer.com/). We are also hard
+at work on a toolchain implementation with compiler and linker.
 
 We want to better understand whether we can build a language that meets our
 successor language criteria, and whether the resulting language can gather a
@@ -267,20 +267,57 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-To try out Carbon, you can use the Carbon explorer to interpret Carbon code and
-print its output. You can try it out immediately at
-[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+To try out Carbon immediately in your browser, you can use the demo interpreter
+for Carbon on:
+[carbon.compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-Because Carbon is an early, experimental project we don't yet have releases you
-can download and try out locally, you'll instead need to build any tools
-yourself from source. We expect to have packaged releases you can try out when
-we reach our
+We are developing a traditional toolchain for Carbon that can compile and link
+programs. However, Carbon is still an early, experimental project, and so we
+only have very experimental nightly releases of the Carbon toolchain available
+to download, and only on limited platforms. If you are using a recent Ubuntu
+Linux or similar (Debian, WSL, etc.), you can try these out by going to our
+[releases](https://github.com/carbon-language/carbon-lang/releases) page and
+download the latest nightly toolchain tar file:
+`carbon_toolchain-0.0.0-0.nightly.YYYY.MM.DD.tar.gz`. Then you can try it out:
+
+```shell
+# A variable with the specific nightly version:
+VERSION="0.0.0-0.nightly.YYYY.MM.DD"
+
+# Unpack the toolchain:
+tar -xvf carbon_toolchain-${VERSION}.tar.gz
+
+# Create a simple Carbon source file:
+echo "fn Run() { Core.Print(42); }" > forty_two.carbon
+
+# Compile to an object file:
+./carbon_toolchain-${VERSION}/bin/carbon compile \
+  --output=forty_two.o forty_two.carbon
+
+# Install minimal system libraries used for linking. Note that installing `gcc`
+# or `g++` for compiling C/C++ code with GCC will also be sufficient, these are
+# just the specific system libraries Carbon linking still uses.
+sudo apt install libgcc-11-dev
+
+# Link to an executable:
+./carbon_toolchain-${VERSION}/bin/carbon link \
+  --output=forty_two forty_two.o
+
+# Run it:
+./forty_two
+```
+
+As a reminder, the toolchain is still very early and many things don't yet work.
+Please hold off on filing lots of bugs: we know many parts of this don't work
+yet or may not work on all systems. We expect to have releases that are much
+more robust and reliable that you can try out when we reach our
 [0.1 milestone](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation).
 
-If you do want to try out Carbon locally, you'll need to install our
-[build dependencies](/docs/project/contribution_tools.md#setup-commands) (Bazel,
-Clang, LLD, libc++) and check out the Carbon repository, for example on Debian
-or Ubuntu:
+If you want to build Carbon's toolchain yourself or are thinking about
+contributing fixes or improvements to Carbon, you'll need to install our
+[build dependencies](/docs/project/contribution_tools.md#setup-commands) (Clang,
+LLD, libc++) and check out the Carbon repository. For example, on Debian or
+Ubuntu:
 
 ```shell
 # Update apt.
@@ -288,7 +325,6 @@ sudo apt update
 
 # Install tools.
 sudo apt install \
-  bazel \
   clang \
   libc++-dev \
   libc++abi-dev \
@@ -299,19 +335,12 @@ $ git clone https://github.com/carbon-language/carbon-lang
 $ cd carbon-lang
 ```
 
-Then you can build and run the explorer:
-
-```shell
-# Build and run the explorer.
-$ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
-```
-
-And you can try out our toolchain which has a very early-stage compiler for
+Then you can try out our toolchain which has a very early-stage compiler for
 Carbon:
 
 ```shell
 # Build and run the toolchain's help to get documentation on the command line.
-$ bazel run //toolchain/driver:carbon -- help
+$ ./scripts/run_bazelisk.py run //toolchain -- help
 ```
 
 For complete instructions, including installing dependencies on various
@@ -328,32 +357,7 @@ Learn more about the Carbon project:
 
 ## Conference talks
 
-Past Carbon focused talks from the community:
-
-### 2022
-
--   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
-    CppNorth
--   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
-    Core C++
-
-### 2023
-
--   [Carbon’s Successor Strategy: From C++ interop to memory safety](https://www.youtube.com/watch?v=1ZTJ9omXOQ0),
-    C++Now
--   Definition-Checked Generics
-    ([Part 1](https://www.youtube.com/watch?v=FKC8WACSMP0),
-    [Part 2](https://www.youtube.com/watch?v=VxQ3PwxiSzk)), C++Now
--   [Modernizing Compiler Design for Carbon’s Toolchain](https://www.youtube.com/watch?v=ZI198eFghJk),
-    C++Now
-
-### 2024
-
--   [Carbon: An experiment in different tradeoffs](https://llvm.swoogo.com/2024eurollvm/session/2086974/carbon-an-experiment-in-different-tradeoffs),
-    panel session at EuroLLVM 2024
-    -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
--   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
-    C++Now
+Carbon focused talks from the community:
 
 ### Upcoming
 
@@ -361,6 +365,32 @@ Past Carbon focused talks from the community:
     CppNorth, July 21-24
 -   [The Carbon Language: Road to 0.1](https://ndctechtown.com/agenda/the-carbon-language-road-to-01-0sqv/0526yb03a59),
     NDC {TechTown}, Sept. 11
+
+### 2024
+
+-   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
+    C++Now
+-   [Carbon: An experiment in different tradeoffs](https://youtu.be/Za_KWj5RMR8)
+    panel session, EuroLLVM
+    -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
+-   [Carbon's high-level semantic IR](https://youtu.be/vIWT4RhUcyw) lightning
+    talk, EuroLLVM
+
+### 2023
+
+-   [Carbon’s Successor Strategy: From C++ interop to memory safety](https://youtu.be/1ZTJ9omXOQ0),
+    C++Now
+-   Definition-Checked Generics ([Part 1](https://youtu.be/FKC8WACSMP0),
+    [Part 2](https://youtu.be/VxQ3PwxiSzk)), C++Now
+-   [Modernizing Compiler Design for Carbon’s Toolchain](https://youtu.be/ZI198eFghJk),
+    C++Now
+
+### 2022
+
+-   [Carbon Language: Syntax and trade-offs](https://youtu.be/9Y2ivB8VaIs), Core
+    C++
+-   [Carbon Language: An experimental successor to C++](https://youtu.be/omrY53kbVoA),
+    CppNorth
 
 ## Join us
 

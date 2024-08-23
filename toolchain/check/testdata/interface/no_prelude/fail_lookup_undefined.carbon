@@ -62,7 +62,7 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @BeingDefined, %H.type [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %H.type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @BeingDefined.%H.decl [template]
 // CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
 // CHECK:STDOUT:   %.7: %.type.2 = struct_value () [template]
@@ -107,7 +107,17 @@ interface BeingDefined {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() -> <error>;
+// CHECK:STDOUT: generic fn @H(@BeingDefined.%Self: %.4) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.2();
+// CHECK:STDOUT:   fn() -> <error>;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @.2(@BeingDefined.%Self: %.4) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @H(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.2(constants.%Self) {}
 // CHECK:STDOUT:

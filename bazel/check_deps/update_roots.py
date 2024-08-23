@@ -18,7 +18,7 @@ from pathlib import Path
 
 # Change the working directory to the repository root so that the remaining
 # operations reliably operate relative to that root.
-os.chdir(Path(__file__).parent.parent.parent)
+os.chdir(Path(__file__).parents[2])
 
 print("Compute non-test C++ root targets...")
 non_test_cc_roots_query = subprocess.check_output(

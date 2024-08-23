@@ -14,7 +14,7 @@
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/sem_ir/block_value_store.h"
-#include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -139,8 +139,6 @@ class Inst : public Printable<Inst> {
     } else {
       kind_ = TypedInst::Kind.AsInt();
     }
-    CARBON_CHECK(kind_ >= 0)
-        << "Negative kind values are reserved for DenseMapInfo.";
     if constexpr (Internal::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
@@ -237,6 +235,9 @@ class Inst : public Printable<Inst> {
   // such argument.
   auto arg1() const -> int32_t { return arg1_; }
 
+  // Sets the type of this instruction.
+  auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
+
   // Sets the arguments of this instruction.
   auto SetArgs(int32_t arg0, int32_t arg1) {
     arg0_ = arg0;
@@ -245,14 +246,17 @@ class Inst : public Printable<Inst> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
+  friend auto operator==(Inst lhs, Inst rhs) -> bool {
+    return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;
+  }
+
  private:
   friend class InstTestHelper;
-  friend struct llvm::DenseMapInfo<Carbon::SemIR::Inst>;
 
   // Table mapping instruction kinds to their argument kinds.
   static const std::pair<IdKind, IdKind> ArgKindTable[];
 
-  // Raw constructor, used for testing and by DenseMapInfo.
+  // Raw constructor, used for testing.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : Inst(kind.AsInt(), type_id, arg0, arg1) {}
   explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
@@ -260,7 +264,7 @@ class Inst : public Printable<Inst> {
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
-  static constexpr auto ToRaw(BuiltinKind kind) -> int32_t {
+  static constexpr auto ToRaw(BuiltinInstKind kind) -> int32_t {
     return kind.AsInt();
   }
 
@@ -270,8 +274,8 @@ class Inst : public Printable<Inst> {
     return T(raw);
   }
   template <>
-  constexpr auto FromRaw<BuiltinKind>(int32_t raw) -> BuiltinKind {
-    return BuiltinKind::FromInt(raw);
+  constexpr auto FromRaw<BuiltinInstKind>(int32_t raw) -> BuiltinInstKind {
+    return BuiltinInstKind::FromInt(raw);
   }
 
   int32_t kind_;
@@ -301,9 +305,19 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {
+  // Constructs a LocIdAndInst with no associated location. Note, we should
+  // generally do our best to associate a location for diagnostics.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
+  }
+
+  // Constructs a LocIdAndInst that reuses the location associated with some
+  // other inst, typically because `inst` doesn't have an explicit
+  // representation in the parse tree.
+  template <typename InstT>
+  static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
+    return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
   }
 
   // Construction for the common case with a typed node.
@@ -312,18 +326,11 @@ struct LocIdAndInst {
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
 
-  // If TypedNodeId is Parse::NodeId, allow construction with a LocId.
-  // TODO: This is somewhat historical due to fetching the NodeId from insts()
-  // for things like Temporary; should we require Untyped in these cases?
-  template <typename InstT>
-    requires(std::same_as<typename decltype(InstT::Kind)::TypedNodeId,
-                          Parse::NodeId>)
-  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
-
   // Imports can pass an ImportIRInstId instead of another location.
   template <typename InstT>
   LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
       : loc_id(import_ir_inst_id), inst(inst) {}
+
   LocId loc_id;
   Inst inst;
 
@@ -414,6 +421,13 @@ class InstStore {
     values_.Reserve(size);
   }
 
+  // Collects memory usage of members.
+  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
+      -> void {
+    mem_usage.Add(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
+  }
+
   auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
 
@@ -432,21 +446,23 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
-    auto empty_id = AddDefaultValue();
+    auto empty_id = AddCanonical({});
     CARBON_CHECK(empty_id == InstBlockId::Empty);
     auto exports_id = AddDefaultValue();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
+    auto import_refs_id = AddDefaultValue();
+    CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
     auto global_init_id = AddDefaultValue();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
-    BlockValueStore<InstBlockId>::Set(block_id, content);
+    BlockValueStore<InstBlockId>::SetContent(block_id, content);
   }
 
   // Returns the contents of the specified block, or an empty array if the block
-  // is empty.
+  // is invalid.
   auto GetOrEmpty(InstBlockId block_id) const -> llvm::ArrayRef<InstId> {
     return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
   }
@@ -455,27 +471,10 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 // See common/hashing.h.
 inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   Hasher hasher(seed);
-  hasher.Hash(value);
+  hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
 
 }  // namespace Carbon::SemIR
-
-template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::Inst> {
-  using Inst = Carbon::SemIR::Inst;
-  static auto getEmptyKey() -> Inst {
-    return Inst(-1, Carbon::SemIR::TypeId::Invalid, 0, 0);
-  }
-  static auto getTombstoneKey() -> Inst {
-    return Inst(-2, Carbon::SemIR::TypeId::Invalid, 0, 0);
-  }
-  static auto getHashValue(const Inst& val) -> unsigned {
-    return static_cast<uint64_t>(Carbon::HashValue(val));
-  }
-  static auto isEqual(const Inst& lhs, const Inst& rhs) -> bool {
-    return std::memcmp(&lhs, &rhs, sizeof(Inst)) == 0;
-  }
-};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

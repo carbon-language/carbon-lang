@@ -16,6 +16,7 @@
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon::Parse {
@@ -60,7 +61,8 @@ TEST_F(TreeTest, AsAndTryAs) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
   Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   ASSERT_FALSE(tree.has_errors());
-  auto it = tree.roots().begin();
+  TreeAndSubtrees tree_and_subtrees(tokens, tree);
+  auto it = tree_and_subtrees.roots().begin();
   // A FileEnd node, so won't match.
   NodeId n = *it;
 
@@ -134,8 +136,9 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
   Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
+  TreeAndSubtrees tree_and_subtrees(tokens, tree);
   TestRawOstream print_stream;
-  tree.Print(print_stream, /*preorder=*/true);
+  tree_and_subtrees.PrintPreorder(print_stream);
 
   auto param_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("node_index", "3"), Pair("kind", "TuplePatternStart"),

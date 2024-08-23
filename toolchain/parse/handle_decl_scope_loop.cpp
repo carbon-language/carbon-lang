@@ -18,8 +18,7 @@ static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
   context.ReplacePlaceholderNode(subtree_start, NodeKind::InvalidParseStart,
                                  cursor, /*has_error=*/true);
   context.AddNode(NodeKind::InvalidParseSubtree,
-                  context.SkipPastLikelyEnd(cursor), subtree_start,
-                  /*has_error=*/true);
+                  context.SkipPastLikelyEnd(cursor), /*has_error=*/true);
 }
 
 // Prints a diagnostic and calls FinishAndSkipInvalidDecl.
@@ -177,6 +176,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Alias:
         case Lex::TokenKind::Class:
         case Lex::TokenKind::Constraint:
+        case Lex::TokenKind::Extern:
         case Lex::TokenKind::Fn:
         case Lex::TokenKind::Import:
         case Lex::TokenKind::Interface:
@@ -220,6 +220,22 @@ static auto TryHandleAsModifier(Context& context) -> bool {
     context.AddLeafNode(NodeKind::Name##Modifier, context.Consume()); \
     return true;
 #include "toolchain/parse/node_kind.def"
+
+    case Lex::TokenKind::Extern: {
+      auto extern_token = context.Consume();
+      if (context.PositionIs(Lex::TokenKind::Library)) {
+        // `extern library <owning_library>` syntax.
+        context.ParseLibrarySpecifier(/*accept_default=*/true);
+        // TODO: Consider error recovery when a non-declaration token is next,
+        // like a typo of the library name.
+        context.AddNode(NodeKind::ExternModifierWithLibrary, extern_token,
+                        /*has_error=*/false);
+      } else {
+        // `extern` syntax without a library.
+        context.AddLeafNode(NodeKind::ExternModifier, extern_token);
+      }
+      return true;
+    }
 
     default:
       return false;

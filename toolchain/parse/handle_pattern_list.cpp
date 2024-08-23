@@ -88,7 +88,7 @@ static auto HandlePatternListFinish(Context& context, NodeKind node_kind,
   auto state = context.PopState();
 
   context.AddNode(node_kind, context.ConsumeChecked(token_kind),
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 }
 
 auto HandlePatternListFinishAsImplicit(Context& context) -> void {

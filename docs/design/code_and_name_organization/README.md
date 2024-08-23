@@ -31,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Exporting namespaces](#exporting-namespaces)
     -   [Imports](#imports)
         -   [Imports from the current package](#imports-from-the-current-package)
+        -   [Exporting imported names](#exporting-imported-names)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
         -   [Declaring namespace members](#declaring-namespace-members)
@@ -615,6 +616,42 @@ import library "Shapes";
 fn GetArea(c: Circle) { ... }
 ```
 
+#### Exporting imported names
+
+The `export` keyword supports exporting names that come from imported libraries.
+This can be used to create an API file that provides contents from multiple
+other API files.
+
+`export` can be used either as a modifier to the `import` keyword to export the
+entire imported library, or in an `export <name>` declaration to export a
+specific entity.
+
+For example:
+
+```
+// Exports every name from the "Foo" library.
+export import library "Foo";
+
+// Exports just the "Bar" entity, which must come from an import.
+export Bar;
+
+// Exports the "Wiz" entity in the "NS" namespace.
+export NS.Wiz;
+```
+
+When `export` is used as a modifier to `import`, it is still considered to be an
+`import` directive for the
+[source file introduction](#source-file-introduction).
+
+Namespaces cannot be exported using a `export <name>` declaration. It is
+possible a form of support will be added as
+[future work](/proposals/p3938.md#namespaces).
+
+Names in other packages also cannot be exported. This covers both possible
+syntaxes: `export import <package>` and `export <package>.<name>`. However, a
+name in another package can be aliased inside the current package, and that
+alias can be re-exported.
+
 ### Namespaces
 
 Namespaces offer named paths for entities. Namespaces must be declared at file
@@ -1017,6 +1054,10 @@ files. This should be part of a larger testing plan.
     -   [Broader imports, either all names or arbitrary code](/proposals/p0107.md#broader-imports-either-all-names-or-arbitrary-code)
     -   [Direct name imports](/proposals/p0107.md#direct-name-imports)
     -   [Always include the package name in imports](/proposals/p2550.md#keep-the-package-name-in-imports)
+    -   Exports
+        -   [Other `export` syntax structures](/proposals/p3938.md#other-export-syntax-structures)
+        -   [Other `export name` placements](/proposals/p3938.md#other-export-name-placements)
+        -   [Re-exporting cross-package](/proposals/p3938.md#re-exporting-cross-package)
 -   Namespaces
     -   [File-level namespaces](/proposals/p0107.md#file-level-namespaces)
     -   [Scoped namespaces](/proposals/p0107.md#scoped-namespaces)
@@ -1037,3 +1078,5 @@ files. This should be part of a larger testing plan.
     [#3453: Clarify name bindings in namespaces.](https://github.com/carbon-language/carbon-lang/pull/3407)
 -   Proposal
     [#3927: More consistent package syntax](https://github.com/carbon-language/carbon-lang/pull/3927)
+-   Proposal
+    [#3938: Exporting imported names](https://github.com/carbon-language/carbon-lang/pull/3938)

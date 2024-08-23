@@ -45,15 +45,27 @@ var d: i32 = d_ref;
 
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .b_ref = %b_ref
 // CHECK:STDOUT:     .c_ref = %c_ref
 // CHECK:STDOUT:     .d_ref = %d_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var a_ref
 // CHECK:STDOUT:   %a_ref: ref <error> = bind_name a_ref, %a_ref.var
@@ -79,42 +91,54 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref Implicit//default, inst+5, loaded
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, inst+10, loaded
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+14, loaded
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+18, loaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.5
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_ref = %import_ref.1
-// CHECK:STDOUT:     .b_ref = %import_ref.2
-// CHECK:STDOUT:     .c_ref = %import_ref.3
-// CHECK:STDOUT:     .d_ref = %import_ref.4
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .a_ref = imports.%import_ref.1
+// CHECK:STDOUT:     .b_ref = imports.%import_ref.2
+// CHECK:STDOUT:     .c_ref = imports.%import_ref.3
+// CHECK:STDOUT:     .d_ref = imports.%import_ref.4
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir0, inst+4, loaded
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir0, inst+9, loaded
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir0, inst+13, loaded
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir0, inst+17, loaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_8.2: type = converted %int.make_type_32.loc6, %.loc6_8.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_8.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_8.2: type = converted %int.make_type_32.loc8, %.loc8_8.1 [template = i32]
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
 // CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32.loc9, %.loc9_8.1 [template = i32]
@@ -126,13 +150,13 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, file.%import_ref.1
+// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, imports.%import_ref.1
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %b_ref.ref: ref <error> = name_ref b_ref, file.%import_ref.2
+// CHECK:STDOUT:   %b_ref.ref: ref <error> = name_ref b_ref, imports.%import_ref.2
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %c_ref.ref: ref <error> = name_ref c_ref, file.%import_ref.3
+// CHECK:STDOUT:   %c_ref.ref: ref <error> = name_ref c_ref, imports.%import_ref.3
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %d_ref.ref: ref <error> = name_ref d_ref, file.%import_ref.4
+// CHECK:STDOUT:   %d_ref.ref: ref <error> = name_ref d_ref, imports.%import_ref.4
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

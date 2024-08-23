@@ -340,6 +340,13 @@ auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
   return TokenIndex(static_cast<int>(token_infos_.size()) - 1);
 }
 
+auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
+                                      llvm::StringRef label) const -> void {
+  mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Add(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
+  mem_usage.Add(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
+}
+
 auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
   output << token_.index;
 }

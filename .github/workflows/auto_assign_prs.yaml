@@ -1,0 +1,72 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: 'Auto assign PRs'
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
+
+permissions:
+  pull-requests: write # For gh to edit assignees.
+
+jobs:
+  assign_reviewer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            leads:
+              - '*.md'
+              - 'LICENSE'
+              - 'docs/project/principles/*'
+              - 'docs/project/evolution.md'
+              - 'docs/project/goals.md'
+              - 'docs/project/roadmap.md'
+              - 'proposals/*.md'
+            explorer:
+              - 'explorer/**'
+            toolchain:
+              - 'toolchain/**'
+
+      - id: assign-leads
+        if: steps.filter.outputs.leads == 'true'
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
+        with:
+          reviewers: KateGregory, chandlerc, zygoloid
+          max-num-of-reviewers: 1
+
+      - id: assign-explorer
+        if: steps.filter.outputs.explorer == 'true'
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
+        with:
+          reviewers: geoffromer, jonmeow, zygoloid
+          max-num-of-reviewers: 1
+
+      - id: assign-toolchain
+        if: steps.filter.outputs.toolchain == 'true'
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
+        with:
+          reviewers: chandlerc, geoffromer, jonmeow, josh11b, zygoloid
+          max-num-of-reviewers: 1
+
+      - id: assign-fallback
+        if: |
+          steps.filter.outputs.leads != 'true' &&
+          steps.filter.outputs.explorer != 'true' &&
+          steps.filter.outputs.toolchain != 'true'
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
+        with:
+          reviewers: chandlerc, jonmeow, josh11b, zygoloid
+          max-num-of-reviewers: 1

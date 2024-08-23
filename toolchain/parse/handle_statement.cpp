@@ -85,7 +85,7 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     // Recover to the next semicolon if possible.
     semi = context.SkipPastLikelyEnd(state.token);
   }
-  context.AddNode(node_kind, *semi, state.subtree_start, state.has_error);
+  context.AddNode(node_kind, *semi, state.has_error);
 }
 
 auto HandleStatementBreakFinish(Context& context) -> void {
@@ -141,8 +141,7 @@ auto HandleStatementForHeaderFinish(Context& context) -> void {
 auto HandleStatementForFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ForStatement, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::ForStatement, state.token, state.has_error);
 }
 
 auto HandleStatementIf(Context& context) -> void {
@@ -170,15 +169,13 @@ auto HandleStatementIfThenBlockFinish(Context& context) -> void {
                           ? State::StatementIf
                           : State::CodeBlock);
   } else {
-    context.AddNode(NodeKind::IfStatement, state.token, state.subtree_start,
-                    state.has_error);
+    context.AddNode(NodeKind::IfStatement, state.token, state.has_error);
   }
 }
 
 auto HandleStatementIfElseBlockFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::IfStatement, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::IfStatement, state.token, state.has_error);
 }
 
 auto HandleStatementReturn(Context& context) -> void {
@@ -234,8 +231,7 @@ auto HandleStatementWhileConditionFinish(Context& context) -> void {
 auto HandleStatementWhileBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::WhileStatement, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::WhileStatement, state.token, state.has_error);
 }
 
 }  // namespace Carbon::Parse

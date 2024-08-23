@@ -16,8 +16,8 @@ fn F() {
   var r: i32* = &s.b;
 
   var t: (i32, i32) = (1, 2);
-  var t0: i32* = &t[0];
-  var t1: i32* = &t[1];
+  var t0: i32* = &t.0;
+  var t1: i32* = &t.1;
 }
 
 // CHECK:STDOUT: --- address_of_lvalue.carbon
@@ -41,23 +41,27 @@ fn F() {
 // CHECK:STDOUT:   %.10: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -142,8 +146,8 @@ fn F() {
 // CHECK:STDOUT:   %t0: ref %.6 = bind_name t0, %t0.var
 // CHECK:STDOUT:   %t.ref.loc19: ref %.8 = name_ref t, %t
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 0 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc19_22: ref i32 = tuple_index %t.ref.loc19, %.loc19_21
-// CHECK:STDOUT:   %.loc19_18: %.6 = addr_of %.loc19_22
+// CHECK:STDOUT:   %.loc19_20: ref i32 = tuple_index %t.ref.loc19, %.loc19_21
+// CHECK:STDOUT:   %.loc19_18: %.6 = addr_of %.loc19_20
 // CHECK:STDOUT:   assign %t0.var, %.loc19_18
 // CHECK:STDOUT:   %int.make_type_32.loc20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc20_14.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
@@ -153,8 +157,8 @@ fn F() {
 // CHECK:STDOUT:   %t1: ref %.6 = bind_name t1, %t1.var
 // CHECK:STDOUT:   %t.ref.loc20: ref %.8 = name_ref t, %t
 // CHECK:STDOUT:   %.loc20_21: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc20_22: ref i32 = tuple_index %t.ref.loc20, %.loc20_21
-// CHECK:STDOUT:   %.loc20_18: %.6 = addr_of %.loc20_22
+// CHECK:STDOUT:   %.loc20_20: ref i32 = tuple_index %t.ref.loc20, %.loc20_21
+// CHECK:STDOUT:   %.loc20_18: %.6 = addr_of %.loc20_20
 // CHECK:STDOUT:   assign %t1.var, %.loc20_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

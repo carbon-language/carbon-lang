@@ -8,8 +8,10 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "common/map.h"
 #include "common/variant_helpers.h"
 #include "common/vlog.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -51,17 +53,18 @@ struct UnitInfo {
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
     Parse::ImportDeclId node_id;
+    // The associated `import` instruction. Only valid once a file is checked.
+    SemIR::InstId import_decl_id = SemIR::InstId::Invalid;
     // Whether there's an import that failed to load.
     bool has_load_error = false;
     // The list of valid imports.
     llvm::SmallVector<Import> imports;
   };
 
-  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit)
+  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit,
+                    Parse::NodeLocConverter& converter)
       : check_ir_id(check_ir_id),
         unit(&unit),
-        converter(unit.tokens, unit.tokens->source().filename(),
-                  unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(converter, err_tracker) {}
 
@@ -69,7 +72,6 @@ struct UnitInfo {
   Unit* unit;
 
   // Emitter information.
-  Parse::NodeLocConverter converter;
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLoc> emitter;
 
@@ -80,7 +82,7 @@ struct UnitInfo {
   llvm::SmallVector<PackageImports> package_imports;
 
   // A map of the package names to the outgoing imports above.
-  llvm::DenseMap<IdentifierId, int32_t> package_imports_map;
+  Map<IdentifierId, int32_t> package_imports_map;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.
@@ -96,9 +98,34 @@ struct UnitInfo {
 };
 }  // namespace
 
-// Collects transitive imports, handling deduplication.
-static auto CollectTransitiveImports(const UnitInfo::PackageImports& imports,
-                                     int total_ir_count)
+// Collects direct imports, for CollectTransitiveImports.
+static auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
+                                 llvm::MutableArrayRef<int> ir_to_result_index,
+                                 SemIR::InstId import_decl_id,
+                                 const UnitInfo::PackageImports& imports,
+                                 bool is_local) -> void {
+  for (const auto& import : imports.imports) {
+    const auto& direct_ir = **import.unit_info->unit->sem_ir;
+    auto& index = ir_to_result_index[direct_ir.check_ir_id().index];
+    if (index != -1) {
+      // This should only happen when doing API imports for an implementation
+      // file. Don't change the entry; is_export doesn't matter.
+      continue;
+    }
+    index = results.size();
+    results.push_back({.decl_id = import_decl_id,
+                       // Only tag exports in API files, ignoring the value in
+                       // implementation files.
+                       .is_export = is_local && import.names.is_export,
+                       .sem_ir = &direct_ir});
+  }
+}
+
+// Collects transitive imports, handling deduplication. These will be unified
+// between local_imports and api_imports.
+static auto CollectTransitiveImports(
+    SemIR::InstId import_decl_id, const UnitInfo::PackageImports* local_imports,
+    const UnitInfo::PackageImports* api_imports, int total_ir_count)
     -> llvm::SmallVector<SemIR::ImportIR> {
   llvm::SmallVector<SemIR::ImportIR> results;
 
@@ -109,12 +136,15 @@ static auto CollectTransitiveImports(const UnitInfo::PackageImports& imports,
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
-  for (const auto& import : imports.imports) {
-    const auto& direct_ir = **import.unit_info->unit->sem_ir;
-    ir_to_result_index[direct_ir.check_ir_id().index] = results.size();
-    results.push_back({.node_id = import.names.node_id,
-                       .sem_ir = &direct_ir,
-                       .is_export = import.names.is_export});
+  if (local_imports) {
+    CollectDirectImports(results, ir_to_result_index, import_decl_id,
+                         *local_imports,
+                         /*is_local=*/true);
+  }
+  if (api_imports) {
+    CollectDirectImports(results, ir_to_result_index, import_decl_id,
+                         *api_imports,
+                         /*is_local=*/false);
   }
 
   // Loop through direct imports for any indirect exports. The underlying vector
@@ -136,9 +166,9 @@ static auto CollectTransitiveImports(const UnitInfo::PackageImports& imports,
         // TODO: In the case of a recursive `export import`, this only points at
         // the outermost import. May want something that better reflects the
         // recursion.
-        results.push_back({.node_id = results[direct_index].node_id,
-                           .sem_ir = indirect_ir.sem_ir,
-                           .is_export = is_export});
+        results.push_back({.decl_id = results[direct_index].decl_id,
+                           .is_export = is_export,
+                           .sem_ir = indirect_ir.sem_ir});
       } else if (is_export) {
         results[indirect_index].is_export = true;
       }
@@ -154,15 +184,15 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
                                  SemIR::InstId package_inst_id,
                                  SemIR::TypeId namespace_type_id) -> void {
   // Add imports from the current package.
-  auto self_import_map_it =
-      unit_info.package_imports_map.find(IdentifierId::Invalid);
-  if (self_import_map_it == unit_info.package_imports_map.end()) {
+  auto import_map_lookup =
+      unit_info.package_imports_map.Lookup(IdentifierId::Invalid);
+  if (!import_map_lookup) {
     // Push the scope; there are no names to add.
     context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
     return;
   }
   UnitInfo::PackageImports& self_import =
-      unit_info.package_imports[self_import_map_it->second];
+      unit_info.package_imports[import_map_lookup.value()];
 
   if (self_import.has_load_error) {
     context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
@@ -170,11 +200,103 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
 
   ImportLibrariesFromCurrentPackage(
       context, namespace_type_id,
-      CollectTransitiveImports(self_import, total_ir_count));
+      CollectTransitiveImports(self_import.import_decl_id, &self_import,
+                               /*api_imports=*/nullptr, total_ir_count));
 
   context.scope_stack().Push(
-      package_inst_id, SemIR::NameScopeId::Package,
+      package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::Invalid,
       context.name_scopes().Get(SemIR::NameScopeId::Package).has_error);
+}
+
+// Imports all other packages (excluding the current package).
+static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
+                                int total_ir_count,
+                                SemIR::TypeId namespace_type_id) -> void {
+  // api_imports_list is initially the size of the current file's imports,
+  // including for API files, for simplicity in iteration. It's only really used
+  // when processing an implementation file, in order to combine the API file
+  // imports.
+  //
+  // For packages imported by the API file, the IdentifierId is the package name
+  // and the index is into the API's import list. Otherwise, the initial
+  // {Invalid, -1} state remains.
+  llvm::SmallVector<std::pair<IdentifierId, int32_t>> api_imports_list;
+  api_imports_list.resize(unit_info.package_imports.size(),
+                          {IdentifierId::Invalid, -1});
+
+  // When there's an API file, add the mapping to api_imports_list.
+  if (unit_info.api_for_impl) {
+    const auto& api_identifiers =
+        unit_info.api_for_impl->unit->value_stores->identifiers();
+    auto& impl_identifiers = unit_info.unit->value_stores->identifiers();
+
+    for (auto [api_imports_index, api_imports] :
+         llvm::enumerate(unit_info.api_for_impl->package_imports)) {
+      // Skip the current package.
+      if (!api_imports.package_id.is_valid()) {
+        continue;
+      }
+      // Translate the package ID from the API file to the implementation file.
+      auto impl_package_id =
+          impl_identifiers.Add(api_identifiers.Get(api_imports.package_id));
+      if (auto lookup = unit_info.package_imports_map.Lookup(impl_package_id)) {
+        // On a hit, replace the entry to unify the API and implementation
+        // imports.
+        api_imports_list[lookup.value()] = {impl_package_id, api_imports_index};
+      } else {
+        // On a miss, add the package as API-only.
+        api_imports_list.push_back({impl_package_id, api_imports_index});
+      }
+    }
+  }
+
+  for (auto [i, api_imports_entry] : llvm::enumerate(api_imports_list)) {
+    // These variables are updated after figuring out which imports are present.
+    auto import_decl_id = SemIR::InstId::Invalid;
+    IdentifierId package_id = IdentifierId::Invalid;
+    bool has_load_error = false;
+
+    // Identify the local package imports if present.
+    UnitInfo::PackageImports* local_imports = nullptr;
+    if (i < unit_info.package_imports.size()) {
+      local_imports = &unit_info.package_imports[i];
+      if (!local_imports->package_id.is_valid()) {
+        // Skip the current package.
+        continue;
+      }
+      import_decl_id = local_imports->import_decl_id;
+
+      package_id = local_imports->package_id;
+      has_load_error |= local_imports->has_load_error;
+    }
+
+    // Identify the API package imports if present.
+    UnitInfo::PackageImports* api_imports = nullptr;
+    if (api_imports_entry.second != -1) {
+      api_imports =
+          &unit_info.api_for_impl->package_imports[api_imports_entry.second];
+
+      if (local_imports) {
+        CARBON_CHECK(package_id == api_imports_entry.first);
+      } else {
+        auto import_ir_inst_id = context.import_ir_insts().Add(
+            {.ir_id = SemIR::ImportIRId::ApiForImpl,
+             .inst_id = api_imports->import_decl_id});
+        import_decl_id = context.AddInstReusingLoc<SemIR::ImportDecl>(
+            import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
+                                    api_imports_entry.first)});
+        package_id = api_imports_entry.first;
+      }
+      has_load_error |= api_imports->has_load_error;
+    }
+
+    // Do the actual import.
+    ImportLibrariesFromOtherPackage(
+        context, namespace_type_id, import_decl_id, package_id,
+        CollectTransitiveImports(import_decl_id, local_imports, api_imports,
+                                 total_ir_count),
+        has_load_error);
+  }
 }
 
 // Add imports to the root block.
@@ -198,7 +320,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
 
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
+      context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
@@ -216,31 +338,37 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   // If there is an implicit `api` import, set it first so that it uses the
   // ImportIRId::ApiForImpl when processed for imports.
   if (unit_info.api_for_impl) {
-    SetApiImportIR(
-        context,
-        {.node_id = context.parse_tree().packaging_decl()->names.node_id,
-         .sem_ir = &**unit_info.api_for_impl->unit->sem_ir});
+    const auto& names = context.parse_tree().packaging_decl()->names;
+    auto import_decl_id = context.AddInst<SemIR::ImportDecl>(
+        names.node_id,
+        {.package_id = SemIR::NameId::ForIdentifier(names.package_id)});
+    SetApiImportIR(context,
+                   {.decl_id = import_decl_id,
+                    .is_export = false,
+                    .sem_ir = &**unit_info.api_for_impl->unit->sem_ir});
   } else {
     SetApiImportIR(context,
-                   {.node_id = Parse::InvalidNodeId(), .sem_ir = nullptr});
+                   {.decl_id = SemIR::InstId::Invalid, .sem_ir = nullptr});
   }
 
+  // Add import instructions for everything directly imported. Implicit imports
+  // are handled separately.
+  for (auto& package_imports : unit_info.package_imports) {
+    CARBON_CHECK(!package_imports.import_decl_id.is_valid());
+    package_imports.import_decl_id = context.AddInst<SemIR::ImportDecl>(
+        package_imports.node_id, {.package_id = SemIR::NameId::ForIdentifier(
+                                      package_imports.package_id)});
+  }
+
+  // Process the imports.
+  if (unit_info.api_for_impl) {
+    ImportApiFile(context, namespace_type_id,
+                  **unit_info.api_for_impl->unit->sem_ir);
+  }
   ImportCurrentPackage(context, unit_info, total_ir_count, package_inst_id,
                        namespace_type_id);
   CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);
-
-  for (auto& package_imports : unit_info.package_imports) {
-    if (!package_imports.package_id.is_valid()) {
-      // Current package is handled above.
-      continue;
-    }
-
-    ImportLibrariesFromOtherPackage(
-        context, namespace_type_id, package_imports.node_id,
-        package_imports.package_id,
-        CollectTransitiveImports(package_imports, total_ir_count),
-        package_imports.has_load_error);
-  }
+  ImportOtherPackages(context, unit_info, total_ir_count, namespace_type_id);
 }
 
 namespace {
@@ -517,9 +645,10 @@ class NodeIdTraversal {
       : context_(context),
         next_deferred_definition_(&context.parse_tree()),
         worklist_(vlog_stream) {
+    auto range = context.parse_tree().postorder();
     chunks_.push_back(
-        {.it = context.parse_tree().postorder().begin(),
-         .end = context.parse_tree().postorder().end(),
+        {.it = range.begin(),
+         .end = range.end(),
          .next_definition = Parse::DeferredDefinitionIndex::Invalid});
   }
 
@@ -587,12 +716,11 @@ class NodeIdTraversal {
         context_.parse_tree().deferred_definitions().Get(definition_index);
     HandleFunctionDefinitionResume(context_, definition_info.start_id,
                                    std::move(suspended_fn));
-    chunks_.push_back(
-        {.it = context_.parse_tree().postorder(definition_info.start_id).end(),
-         .end = context_.parse_tree()
-                    .postorder(definition_info.definition_id)
-                    .end(),
-         .next_definition = next_deferred_definition_.index()});
+    auto range = Parse::Tree::PostorderIterator::MakeRange(
+        definition_info.start_id, definition_info.definition_id);
+    chunks_.push_back({.it = range.begin() + 1,
+                       .end = range.end(),
+                       .next_definition = next_deferred_definition_.index()});
     ++definition_index.index;
     next_deferred_definition_.SkipTo(definition_index);
   }
@@ -646,7 +774,7 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
 
       // Continue type-checking the parse tree after the end of the definition.
       chunks_.back().it =
-          context_.parse_tree().postorder(definition_info.definition_id).end();
+          Parse::Tree::PostorderIterator(definition_info.definition_id) + 1;
       next_deferred_definition_.SkipTo(definition_info.next_definition_index);
       continue;
     }
@@ -656,24 +784,67 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
   }
 }
 
+// Emits a diagnostic for each declaration in context.definitions_required()
+// that doesn't have a definition.
+static auto DiagnoseMissingDefinitions(Context& context,
+                                       Context::DiagnosticEmitter& emitter)
+    -> void {
+  CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
+                    "No definition found for declaration in impl file");
+  for (SemIR::InstId decl_inst_id : context.definitions_required()) {
+    SemIR::Inst decl_inst = context.insts().Get(decl_inst_id);
+    CARBON_KIND_SWITCH(context.insts().Get(decl_inst_id)) {
+      case CARBON_KIND(SemIR::ClassDecl class_decl): {
+        if (!context.classes().Get(class_decl.class_id).is_defined()) {
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+        if (context.functions().Get(function_decl.function_id).definition_id ==
+            SemIR::InstId::Invalid) {
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        if (!context.impls().Get(impl_decl.impl_id).is_defined()) {
+          emitter.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
+      }
+      case SemIR::InterfaceDecl::Kind: {
+        // TODO: handle `interface` as well, once we can test it without
+        // triggering https://github.com/carbon-language/carbon-lang/issues/4071
+        CARBON_FATAL()
+            << "TODO: Support interfaces in DiagnoseMissingDefinitions";
+      }
+      default: {
+        CARBON_FATAL() << "Unexpected inst in definitions_required: "
+                       << decl_inst;
+      }
+    }
+  }
+}
+
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
                            ErrorTrackingDiagnosticConsumer& err_tracker,
-                           Parse::NodeLocConverter* converter) -> bool {
+                           Parse::NodeLocConverter& converter) -> bool {
   NodeIdTraversal traversal(context, vlog_stream);
 
   Parse::NodeId node_id = Parse::NodeId::Invalid;
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto loc = converter->ConvertLoc(
+    auto loc = converter.ConvertLoc(
         node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
     loc.FormatLocation(output);
-    output << ": Check::Handle" << context.parse_tree().node_kind(node_id)
-           << "\n";
-    loc.FormatSnippet(output);
+    output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
+    // Crash output has a tab indent; try to indent slightly past that.
+    loc.FormatSnippet(output, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
@@ -683,7 +854,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
-    if (!Check::Handle##Name(context, Parse::Name##Id(node_id))) {           \
+    if (!HandleParseNode(context, Parse::Name##Id(node_id))) {               \
       CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \
       return false;                                                          \
@@ -700,18 +871,27 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 
 // Produces and checks the IR for the provided Parse::Tree.
 static auto CheckParseTree(
-    llvm::MutableArrayRef<Parse::NodeLocConverter*> node_converters,
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
+  auto package_id = IdentifierId::Invalid;
+  auto library_id = StringLiteralValueId::Invalid;
+  if (const auto& packaging = unit_info.unit->parse_tree->packaging_decl()) {
+    package_id = packaging->names.package_id;
+    library_id = packaging->names.library_id;
+  }
   unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, *unit_info.unit->value_stores,
+      unit_info.check_ir_id, package_id,
+      SemIR::LibraryNameId::ForStringLiteralValueId(library_id),
+      *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
   SemIRDiagnosticConverter converter(node_converters, &sem_ir);
   Context::DiagnosticEmitter emitter(converter, unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
-                  sem_ir, vlog_stream);
+                  unit_info.unit->get_parse_tree_and_subtrees, sem_ir,
+                  vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
@@ -725,16 +905,14 @@ static auto CheckParseTree(
   ImportImpls(context);
 
   if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
-                      &unit_info.converter)) {
+                      node_converters[unit_info.check_ir_id.index])) {
     context.sem_ir().set_has_errors(true);
     return;
   }
 
-  // Pop information for the file-level scope.
-  sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
-  context.scope_stack().Pop();
-  context.FinalizeExports();
-  context.FinalizeGlobalInit();
+  context.Finalize();
+
+  DiagnoseMissingDefinitions(context, emitter);
 
   context.VerifyOnFinish();
 
@@ -784,10 +962,10 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 //
 // The ID comparisons between the import and unit are okay because they both
 // come from the same file.
-static auto TrackImport(
-    llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
-    llvm::DenseMap<ImportKey, Parse::NodeId>* explicit_import_map,
-    UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
+static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
+                        Map<ImportKey, Parse::NodeId>* explicit_import_map,
+                        UnitInfo& unit_info, Parse::Tree::PackagingNames import)
+    -> void {
   const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
 
   IdentifierId file_package_id =
@@ -803,14 +981,14 @@ static auto TrackImport(
   // that might be valid with syntax fixes.
   if (explicit_import_map) {
     // Diagnose redundant imports.
-    if (auto [insert_it, success] =
-            explicit_import_map->insert({import_key, import.node_id});
-        !success) {
+    if (auto insert_result =
+            explicit_import_map->Insert(import_key, import.node_id);
+        !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "Library imported more than once.");
       CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
-          .Note(insert_it->second, FirstImported)
+          .Note(insert_result.value(), FirstImported)
           .Emit();
       return;
     }
@@ -885,26 +1063,28 @@ static auto TrackImport(
   }
 
   // Get the package imports, or create them if this is the first.
-  auto [package_imports_map_it, is_inserted] =
-      unit_info.package_imports_map.insert(
-          {import.package_id, unit_info.package_imports.size()});
-  if (is_inserted) {
+  auto create_imports = [&]() -> int32_t {
+    int32_t index = unit_info.package_imports.size();
     unit_info.package_imports.push_back(
         UnitInfo::PackageImports(import.package_id, import.node_id));
-  }
+    return index;
+  };
+  auto insert_result =
+      unit_info.package_imports_map.Insert(import.package_id, create_imports);
   UnitInfo::PackageImports& package_imports =
-      unit_info.package_imports[package_imports_map_it->second];
+      unit_info.package_imports[insert_result.value()];
 
-  if (auto api = api_map.find(import_key); api != api_map.end()) {
+  if (auto api_lookup = api_map.Lookup(import_key)) {
     // Add references between the file and imported api.
-    package_imports.imports.push_back({import, api->second});
+    UnitInfo* api = api_lookup.value();
+    package_imports.imports.push_back({import, api});
     ++unit_info.imports_remaining;
-    api->second->incoming_imports.push_back(&unit_info);
+    api->incoming_imports.push_back(&unit_info);
 
     // If this is the implicit import, note we have it.
     if (!explicit_import_map) {
       CARBON_CHECK(!unit_info.api_for_impl);
-      unit_info.api_for_impl = api->second;
+      unit_info.api_for_impl = api;
     }
   } else {
     // The imported api is missing.
@@ -924,9 +1104,8 @@ static auto TrackImport(
 // related to the packaging because the strings are loaded as part of getting
 // the ImportKey (which we then do for `impl` files too).
 static auto BuildApiMapAndDiagnosePackaging(
-    llvm::MutableArrayRef<UnitInfo> unit_infos)
-    -> llvm::DenseMap<ImportKey, UnitInfo*> {
-  llvm::DenseMap<ImportKey, UnitInfo*> api_map;
+    llvm::MutableArrayRef<UnitInfo> unit_infos) -> Map<ImportKey, UnitInfo*> {
+  Map<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
     const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
@@ -957,10 +1136,10 @@ static auto BuildApiMapAndDiagnosePackaging(
     // where the user forgets (or has syntax errors with) a package line
     // multiple times.
     if (!is_impl) {
-      auto [entry, success] = api_map.insert({import_key, &unit_info});
-      if (!success) {
+      auto insert_result = api_map.Insert(import_key, &unit_info);
+      if (!insert_result.is_inserted()) {
         llvm::StringRef prev_filename =
-            entry->second->unit->tokens->source().filename();
+            insert_result.value()->unit->tokens->source().filename();
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "Library's API previously provided by `{0}`.",
@@ -1009,22 +1188,18 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::raw_ostream* vlog_stream) -> void {
-  // Prepare diagnostic emitters in case we run into issues during package
-  // checking.
-  //
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
+    bool prelude_import, llvm::raw_ostream* vlog_stream) -> void {
   // UnitInfo is big due to its SmallVectors, so we default to 0 on the stack.
   llvm::SmallVector<UnitInfo, 0> unit_infos;
   unit_infos.reserve(units.size());
-  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
-  node_converters.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
-    unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
-    node_converters.push_back(&unit_infos.back().converter);
+    unit_infos.emplace_back(SemIR::CheckIRId(i), unit, node_converters[i]);
   }
 
-  llvm::DenseMap<ImportKey, UnitInfo*> api_map =
+  Map<ImportKey, UnitInfo*> api_map =
       BuildApiMapAndDiagnosePackaging(unit_infos);
 
   // Mark down imports for all files.
@@ -1039,11 +1214,10 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       TrackImport(api_map, nullptr, unit_info, implicit_names);
     }
 
-    llvm::DenseMap<ImportKey, Parse::NodeId> explicit_import_map;
+    Map<ImportKey, Parse::NodeId> explicit_import_map;
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    // TODO: Add --no-prelude-import for `/no_prelude/` subdirs.
     IdentifierId core_ident_id =
         unit_info.unit->value_stores->identifiers().Add("Core");
     if (prelude_import &&

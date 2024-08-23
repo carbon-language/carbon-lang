@@ -10,8 +10,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+from collections.abc import Generator
 import os
-from typing import Dict, Generator, Optional, Tuple
+from typing import Optional
 
 # https://pypi.org/project/gql/
 import gql  # type: ignore
@@ -54,16 +55,16 @@ class Client:
         )
         self._client = gql.Client(transport=transport)
 
-    def execute(self, query: str) -> Dict:
+    def execute(self, query: str) -> dict:
         """Runs a query."""
         return self._client.execute(gql.gql(query))  # type: ignore
 
     def execute_and_paginate(
         self,
         query: str,
-        path: Tuple[str, ...],
-        first_page: Optional[Dict] = None,
-    ) -> Generator[Dict, None, None]:
+        path: tuple[str, ...],
+        first_page: Optional[dict] = None,
+    ) -> Generator[dict, None, None]:
         """Runs a query with pagination.
 
         Arguments:

@@ -12,6 +12,7 @@
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 
 namespace Carbon::Parse {
 
@@ -20,7 +21,7 @@ namespace Carbon::Parse {
 class TypedNodesTestPeer {
  public:
   template <typename T>
-  static auto VerifyExtractAs(const Tree* tree, NodeId node_id,
+  static auto VerifyExtractAs(const TreeAndSubtrees* tree, NodeId node_id,
                               ErrorBuilder* trace) -> std::optional<T> {
     return tree->VerifyExtractAs<T>(node_id, trace);
   }
@@ -57,14 +58,16 @@ class TypedNodeTest : public ::testing::Test {
     return token_storage_.front();
   }
 
-  auto GetTree(llvm::StringRef t) -> Tree& {
+  auto GetTree(llvm::StringRef t) -> TreeAndSubtrees& {
     tree_storage_.push_front(Parse(GetTokenizedBuffer(t), consumer_,
                                    /*vlog_stream=*/nullptr));
-    return tree_storage_.front();
+    tree_and_subtrees_storage_.push_front(
+        TreeAndSubtrees(token_storage_.front(), tree_storage_.front()));
+    return tree_and_subtrees_storage_.front();
   }
 
   auto GetTokenizedBufferAndTree(llvm::StringRef t)
-      -> std::pair<Lex::TokenizedBuffer*, Tree*> {
+      -> std::pair<Lex::TokenizedBuffer*, TreeAndSubtrees*> {
     auto* tree = &GetTree(t);
     return {&token_storage_.front(), tree};
   }
@@ -74,6 +77,7 @@ class TypedNodeTest : public ::testing::Test {
   std::forward_list<SourceBuffer> source_storage_;
   std::forward_list<Lex::TokenizedBuffer> token_storage_;
   std::forward_list<Tree> tree_storage_;
+  std::forward_list<TreeAndSubtrees> tree_and_subtrees_storage_;
   DiagnosticConsumer& consumer_ = ConsoleDiagnosticConsumer();
 };
 
@@ -81,15 +85,15 @@ TEST_F(TypedNodeTest, Empty) {
   auto* tree = &GetTree("");
   auto file = tree->ExtractFile();
 
-  EXPECT_TRUE(tree->IsValid(file.start));
+  EXPECT_TRUE(tree->tree().IsValid(file.start));
   EXPECT_TRUE(tree->ExtractAs<FileStart>(file.start).has_value());
   EXPECT_TRUE(tree->Extract(file.start).has_value());
 
-  EXPECT_TRUE(tree->IsValid(file.end));
+  EXPECT_TRUE(tree->tree().IsValid(file.end));
   EXPECT_TRUE(tree->ExtractAs<FileEnd>(file.end).has_value());
   EXPECT_TRUE(tree->Extract(file.end).has_value());
 
-  EXPECT_FALSE(tree->IsValid<FileEnd>(file.start));
+  EXPECT_FALSE(tree->tree().IsValid<FileEnd>(file.start));
   EXPECT_FALSE(tree->ExtractAs<FileEnd>(file.start).has_value());
 }
 
@@ -342,7 +346,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   ASSERT_TRUE(f_intro.has_value());
 
   // Change the kind of the introducer and check we get a good trace log.
-  TypedNodesTestPeer::SetNodeKind(tree, f_sig->introducer,
+  TypedNodesTestPeer::SetNodeKind(&tree_storage_.front(), f_sig->introducer,
                                   NodeKind::ClassIntroducer);
 
   // The introducer should not extract as a FunctionIntroducer any more because

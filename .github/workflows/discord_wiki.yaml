@@ -2,23 +2,23 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Wiki Changed Discord Notification
+name: Discord Wiki Change Notifications
 
 on: gollum
 
-permissions: none
+# Minimum permissions.
+permissions:
+  contents: read
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
           egress-policy: audit
 
-      - uses:
-          'oznu/gh-wiki-edit-discord-notification@1f5b688c27310fba606368b20469c81f5ffd9a2f
-          # v1.0.0'
+      - uses: oznu/gh-wiki-edit-discord-notification@1f5b688c27310fba606368b20469c81f5ffd9a2f # v1.0.0
         with:
           discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_WIKI_EDIT }}

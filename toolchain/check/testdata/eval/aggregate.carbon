@@ -12,7 +12,7 @@ var tuple_copy: (i32, i32) = (1, 2) as (i32, i32);
 
 var struct_copy: {.a: i32, .b: i32, .c: i32} = {.c = 3, .b = 2, .a = 1} as {.b: i32, .a: i32, .c: i32};
 
-var tuple_index: [i32; 1] = (0,) as [i32; (5, 7, 1, 9)[2]];
+var tuple_index: [i32; 1] = (0,) as [i32; (5, 7, 1, 9).2];
 
 var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 
@@ -52,18 +52,30 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %struct.3: %.22 = struct_value (%.9, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .tuple_copy = %tuple_copy
 // CHECK:STDOUT:     .struct_copy = %struct_copy
 // CHECK:STDOUT:     .tuple_index = %tuple_index
 // CHECK:STDOUT:     .struct_access = %struct_access
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32.loc11_18: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc11_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc11_26.1: %.2 = tuple_literal (%int.make_type_32.loc11_18, %int.make_type_32.loc11_23)
 // CHECK:STDOUT:   %.loc11_26.2: type = value_of_initializer %int.make_type_32.loc11_18 [template = i32]
@@ -73,27 +85,18 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc11_26.6: type = converted %.loc11_26.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %tuple_copy.var: ref %.3 = var tuple_copy
 // CHECK:STDOUT:   %tuple_copy: ref %.3 = bind_name tuple_copy, %tuple_copy.var
-// CHECK:STDOUT:   %import_ref.3: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc13_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_23.1: type = value_of_initializer %int.make_type_32.loc13_23 [template = i32]
 // CHECK:STDOUT:   %.loc13_23.2: type = converted %int.make_type_32.loc13_23, %.loc13_23.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.6: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc13_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_32.1: type = value_of_initializer %int.make_type_32.loc13_32 [template = i32]
 // CHECK:STDOUT:   %.loc13_32.2: type = converted %int.make_type_32.loc13_32, %.loc13_32.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc13_41: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_41.1: type = value_of_initializer %int.make_type_32.loc13_41 [template = i32]
 // CHECK:STDOUT:   %.loc13_41.2: type = converted %int.make_type_32.loc13_41, %.loc13_41.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_44: type = struct_type {.a: i32, .b: i32, .c: i32} [template = constants.%.7]
 // CHECK:STDOUT:   %struct_copy.var: ref %.7 = var struct_copy
 // CHECK:STDOUT:   %struct_copy: ref %.7 = bind_name struct_copy, %struct_copy.var
-// CHECK:STDOUT:   %import_ref.8: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.9: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.10: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_24: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_19.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
@@ -101,8 +104,6 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc15_25: type = array_type %.loc15_24, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %tuple_index.var: ref %.13 = var tuple_index
 // CHECK:STDOUT:   %tuple_index: ref %.13 = bind_name tuple_index, %tuple_index.var
-// CHECK:STDOUT:   %import_ref.12: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.13: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc17_26: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_21.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
@@ -110,7 +111,6 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc17_27: type = array_type %.loc17_26, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %struct_access.var: ref %.13 = var struct_access
 // CHECK:STDOUT:   %struct_access: ref %.13 = bind_name struct_access, %struct_access.var
-// CHECK:STDOUT:   %import_ref.14: %Int32.type = import_ref ir3, inst+3, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -174,10 +174,10 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc15_56: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %tuple: %.20 = tuple_value (%.loc15_44, %.loc15_47, %.loc15_50, %.loc15_53) [template = constants.%tuple.2]
 // CHECK:STDOUT:   %.loc15_54.2: %.20 = converted %.loc15_54.1, %tuple [template = constants.%tuple.2]
-// CHECK:STDOUT:   %.loc15_57: i32 = tuple_index %.loc15_54.2, %.loc15_56 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_55: i32 = tuple_index %.loc15_54.2, %.loc15_56 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_38.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_38.2: type = converted %int.make_type_32.loc15, %.loc15_38.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_58: type = array_type %.loc15_57, i32 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc15_57: type = array_type %.loc15_55, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc15_5: ref %.13 = splice_block file.%tuple_index.var {}
 // CHECK:STDOUT:   %.loc15_32.2: i32 = int_literal 0 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc15_32.3: ref i32 = array_index %.loc15_5, %.loc15_32.2

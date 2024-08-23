@@ -8,29 +8,58 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/definition/no_prelude/extern.carbon
 
-// --- fail_extern_def.carbon
+// --- extern_def.carbon
 
 library "extern_def";
 
-// CHECK:STDERR: fail_extern_def.carbon:[[@LINE+4]]:1: ERROR: `extern` not allowed on `fn` declaration that provides a definition.
-// CHECK:STDERR: extern fn F() {}
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
 extern fn F() {}
 
-// --- fail_def_for_extern_decl.carbon
+// --- def_for_extern_decl.carbon
 
 library "def_for_extern_decl";
 
 extern fn F();
-// CHECK:STDERR: fail_def_for_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` in the same library must match use of `extern`.
+extern fn F() {}
+
+// --- split_library.carbon
+
+library "split_library";
+
+extern fn F();
+
+// --- split_library.impl.carbon
+
+impl library "split_library";
+
+extern fn F() {}
+
+// --- fail_def_extern_mismatch.carbon
+
+library "def_extern_mismatch";
+
+extern fn F();
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_for_extern_decl.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F() {}
+
+// --- fail_def_extern_mismatch_reverse.carbon
+
+library "def_extern_mismatch_reverse";
+
+fn F();
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
+// CHECK:STDERR: extern fn F() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fn F();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
+extern fn F() {}
 
 // --- fail_extern_diag_suppressed.carbon
 
@@ -60,7 +89,7 @@ fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 extern fn F();
 
-// CHECK:STDOUT: --- fail_extern_def.carbon
+// CHECK:STDOUT: --- extern_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -75,12 +104,76 @@ extern fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_for_extern_decl.carbon
+// CHECK:STDOUT: --- def_for_extern_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl.loc4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc5: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- split_library.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- split_library.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//split_library, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_def_extern_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -91,6 +184,27 @@ extern fn F();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc12
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_def_extern_mismatch_reverse.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}

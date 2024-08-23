@@ -24,6 +24,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
     // OK, `.base`.
+  } else if (node_kind != NodeKind::StructFieldDesignator &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+                                             NodeKind::IntLiteral)) {
+    // OK, '.42'.
   } else if (paren_state != State::Invalid &&
              context.PositionIs(Lex::TokenKind::OpenParen)) {
     state.state = paren_state;
@@ -50,7 +54,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     }
   }
 
-  context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
+  context.AddNode(node_kind, dot, state.has_error);
 }
 
 auto HandlePeriodAsExpr(Context& context) -> void {
@@ -72,14 +76,13 @@ auto HandleArrowExpr(Context& context) -> void {
 
 auto HandleCompoundMemberAccess(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::MemberAccessExpr, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::MemberAccessExpr, state.token, state.has_error);
 }
 
 auto HandleCompoundPointerMemberAccess(Context& context) -> void {
   auto state = context.PopState();
   context.AddNode(NodeKind::PointerMemberAccessExpr, state.token,
-                  state.subtree_start, state.has_error);
+                  state.has_error);
 }
 
 }  // namespace Carbon::Parse

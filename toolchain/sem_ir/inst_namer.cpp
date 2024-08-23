@@ -22,29 +22,34 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     : tokenized_buffer_(tokenized_buffer),
       parse_tree_(parse_tree),
       sem_ir_(sem_ir) {
-  insts.resize(sem_ir.insts().size());
-  labels.resize(sem_ir.inst_blocks().size());
-  scopes.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
+  insts_.resize(sem_ir.insts().size());
+  labels_.resize(sem_ir.inst_blocks().size());
+  scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
+  generic_scopes_.resize(sem_ir.generics().size(), ScopeId::None);
 
   // Build the constants scope.
   CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().array_ref());
+
+  // Build the ImportRef scope.
+  CollectNamesInBlock(ScopeId::ImportRefs,
+                      sem_ir.inst_blocks().Get(SemIR::InstBlockId::ImportRefs));
 
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
 
   // Build each function scope.
   for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
-    auto fn_id = FunctionId(i);
+    FunctionId fn_id(i);
     auto fn_scope = GetScopeFor(fn_id);
     // TODO: Provide a location for the function for use as a
     // disambiguator.
     auto fn_loc = Parse::NodeId::Invalid;
-    GetScopeInfo(fn_scope).name = globals.AllocateName(
+    GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
     CollectNamesInBlock(fn_scope, fn.param_refs_id);
     if (fn.return_storage_id.is_valid()) {
-      insts[fn.return_storage_id.index] = {
+      insts_[fn.return_storage_id.index] = {
           fn_scope,
           GetScopeInfo(fn_scope).insts.AllocateName(
               *this, sem_ir.insts().GetLocId(fn.return_storage_id), "return")};
@@ -58,47 +63,51 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     for (auto block_id : fn.body_block_ids) {
       AddBlockLabel(fn_scope, block_id);
     }
+    CollectNamesInGeneric(fn_scope, fn.generic_id);
   }
 
   // Build each class scope.
   for (auto [i, class_info] : llvm::enumerate(sem_ir.classes().array_ref())) {
-    auto class_id = ClassId(i);
+    ClassId class_id(i);
     auto class_scope = GetScopeFor(class_id);
     // TODO: Provide a location for the class for use as a disambiguator.
     auto class_loc = Parse::NodeId::Invalid;
-    GetScopeInfo(class_scope).name = globals.AllocateName(
+    GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
         sem_ir.names().GetIRBaseName(class_info.name_id).str());
     AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
     CollectNamesInBlock(class_scope, class_info.body_block_id);
+    CollectNamesInGeneric(class_scope, class_info.generic_id);
   }
 
   // Build each interface scope.
   for (auto [i, interface_info] :
        llvm::enumerate(sem_ir.interfaces().array_ref())) {
-    auto interface_id = InterfaceId(i);
+    InterfaceId interface_id(i);
     auto interface_scope = GetScopeFor(interface_id);
     // TODO: Provide a location for the interface for use as a disambiguator.
     auto interface_loc = Parse::NodeId::Invalid;
-    GetScopeInfo(interface_scope).name = globals.AllocateName(
+    GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
         sem_ir.names().GetIRBaseName(interface_info.name_id).str());
     AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
                   interface_loc);
     CollectNamesInBlock(interface_scope, interface_info.body_block_id);
+    CollectNamesInGeneric(interface_scope, interface_info.generic_id);
   }
 
   // Build each impl scope.
   for (auto [i, impl_info] : llvm::enumerate(sem_ir.impls().array_ref())) {
-    auto impl_id = ImplId(i);
+    ImplId impl_id(i);
     auto impl_scope = GetScopeFor(impl_id);
     // TODO: Provide a location for the impl for use as a disambiguator.
     auto impl_loc = Parse::NodeId::Invalid;
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =
-        globals.AllocateName(*this, impl_loc, "impl");
+        globals_.AllocateName(*this, impl_loc, "impl");
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
+    // TODO: Collect names from the generic once we support generic impls.
   }
 }
 
@@ -110,7 +119,7 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
     // These are treated as SemIR keywords.
     case ScopeId::File:
       return "file";
-    case ScopeId::ImportRef:
+    case ScopeId::ImportRefs:
       return "imports";
     case ScopeId::Constants:
       return "constants";
@@ -125,7 +134,7 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   if (!inst_id.is_valid()) {
     return "";
   }
-  const auto& inst_name = insts[inst_id.index].second;
+  const auto& inst_name = insts_[inst_id.index].second;
   return inst_name ? inst_name.str() : "";
 }
 
@@ -137,18 +146,26 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
 
   // Check for a builtin.
   if (inst_id.is_builtin()) {
-    return inst_id.builtin_kind().label().str();
+    return inst_id.builtin_inst_kind().label().str();
   }
 
   if (inst_id == InstId::PackageNamespace) {
     return "package";
   }
 
-  const auto& [inst_scope, inst_name] = insts[inst_id.index];
+  const auto& [inst_scope, inst_name] = insts_[inst_id.index];
   if (!inst_name) {
     // This should not happen in valid IR.
     std::string str;
-    llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
+    llvm::raw_string_ostream str_stream(str);
+    str_stream << "<unexpected>." << inst_id;
+    auto loc_id = sem_ir_.insts().GetLocId(inst_id);
+    // TODO: Consider handling inst_id cases.
+    if (loc_id.is_node_id()) {
+      auto token = parse_tree_.node_token(loc_id.node_id());
+      str_stream << ".loc" << tokenized_buffer_.GetLineNumber(token) << "_"
+                 << tokenized_buffer_.GetColumnNumber(token);
+    }
     return str;
   }
   if (inst_scope == scope_id) {
@@ -162,7 +179,7 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
   if (!block_id.is_valid()) {
     return "";
   }
-  const auto& label_name = labels[block_id.index].second;
+  const auto& label_name = labels_[block_id.index].second;
   return label_name ? label_name.str() : "";
 }
 
@@ -173,7 +190,7 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return "!invalid";
   }
 
-  const auto& [label_scope, label_name] = labels[block_id.index];
+  const auto& [label_scope, label_name] = labels_[block_id.index];
   if (!label_name) {
     // This should not happen in valid IR.
     std::string str;
@@ -259,7 +276,7 @@ auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
 
 auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                               std::string name, SemIR::LocId loc_id) -> void {
-  if (!block_id.is_valid() || labels[block_id.index].second) {
+  if (!block_id.is_valid() || labels_[block_id.index].second) {
     return;
   }
 
@@ -270,7 +287,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
     }
   }
 
-  labels[block_id.index] = {
+  labels_[block_id.index] = {
       scope_id, GetScopeInfo(scope_id).labels.AllocateName(*this, loc_id,
                                                            std::move(name))};
 }
@@ -364,7 +381,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
 
     auto untyped_inst = sem_ir_.insts().Get(inst_id);
     auto add_inst_name = [&](std::string name) {
-      insts[inst_id.index] = {
+      insts_[inst_id.index] = {
           scope_id, scope.insts.AllocateName(
                         *this, sem_ir_.insts().GetLocId(inst_id), name)};
     };
@@ -395,7 +412,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case BindSymbolicName::Kind:
       case ExportDecl::Kind: {
         auto inst = untyped_inst.As<AnyBindNameOrExportDecl>();
-        add_inst_name_id(sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
+        add_inst_name_id(
+            sem_ir_.entity_names().Get(inst.entity_name_id).name_id);
         continue;
       }
       case CARBON_KIND(Call inst): {
@@ -407,10 +425,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function =
             sem_ir_.functions().Get(callee_function.function_id);
         // Name the call's result based on the callee.
-        if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+        if (function.builtin_function_kind !=
+            SemIR::BuiltinFunctionKind::None) {
           // For a builtin, use the builtin name. Otherwise, we'd typically pick
           // the name `Op` below, which is probably not very useful.
-          add_inst_name(function.builtin_kind.name().str());
+          add_inst_name(function.builtin_function_kind.name().str());
           continue;
         }
 
@@ -450,6 +469,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         break;
       }
+      case CARBON_KIND(ImportDecl inst): {
+        if (inst.package_id.is_valid()) {
+          add_inst_name_id(inst.package_id, ".import");
+        } else {
+          add_inst_name("default.import");
+        }
+        break;
+      }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
         add_inst_name("import_ref");
@@ -459,8 +486,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         auto const_id = sem_ir_.constant_values().Get(inst_id);
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_.constant_values().GetInstId(const_id);
-          if (!insts[const_inst_id.index].second) {
-            CollectNamesInBlock(ScopeId::ImportRef, const_inst_id);
+          if (!insts_[const_inst_id.index].second) {
+            CollectNamesInBlock(ScopeId::ImportRefs, const_inst_id);
           }
         }
         continue;
@@ -529,6 +556,17 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       add_inst_name("");
     }
   }
+}
+
+auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
+    -> void {
+  if (!generic_id.is_valid()) {
+    return;
+  }
+  generic_scopes_[generic_id.index] = scope_id;
+  const auto& generic = sem_ir_.generics().Get(generic_id);
+  CollectNamesInBlock(scope_id, generic.decl_block_id);
+  CollectNamesInBlock(scope_id, generic.definition_block_id);
 }
 
 }  // namespace Carbon::SemIR

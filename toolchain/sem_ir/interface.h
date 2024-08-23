@@ -5,14 +5,35 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INTERFACE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INTERFACE_H_
 
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
-// An interface.
-struct Interface : public Printable<Interface> {
+// Interface-specific fields.
+struct InterfaceFields {
+  // The following members are set at the `{` of the interface definition.
+
+  // The interface scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+  // The first block of the interface body.
+  // TODO: Handle control flow in the interface body, such as if-expressions.
+  InstBlockId body_block_id = InstBlockId::Invalid;
+  // The implicit `Self` parameter. This is a BindSymbolicName instruction.
+  InstId self_param_id = InstId::Invalid;
+
+  // The following members are set at the `}` of the interface definition.
+  InstBlockId associated_entities_id = InstBlockId::Invalid;
+};
+
+// An interface. See EntityWithParamsBase regarding the inheritance here.
+struct Interface : public EntityWithParamsBase,
+                   public InterfaceFields,
+                   public Printable<Interface> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
+    out << "{";
+    PrintBaseFields(out);
+    out << "}";
   }
 
   // Determines whether this interface has been fully defined. This is false
@@ -24,40 +45,6 @@ struct Interface : public Printable<Interface> {
   auto is_being_defined() const -> bool {
     return definition_id.is_valid() && !is_defined();
   }
-
-  // Determines whether this is a generic interface.
-  auto is_generic() const -> bool {
-    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
-  }
-
-  // The following members always have values, and do not change throughout the
-  // lifetime of the interface.
-
-  // The interface name.
-  NameId name_id;
-  // The parent scope.
-  NameScopeId parent_scope_id;
-  // A block containing a single reference instruction per implicit parameter.
-  InstBlockId implicit_param_refs_id;
-  // A block containing a single reference instruction per parameter.
-  InstBlockId param_refs_id;
-  // The first declaration of the interface. This is a InterfaceDecl.
-  InstId decl_id;
-
-  // The following members are set at the `{` of the interface definition.
-
-  // The definition of the interface. This is a InterfaceDecl.
-  InstId definition_id = InstId::Invalid;
-  // The interface scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
-  // The first block of the interface body.
-  // TODO: Handle control flow in the interface body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
-  // The implicit `Self` parameter. This is a BindSymbolicName instruction.
-  InstId self_param_id = InstId::Invalid;
-
-  // The following members are set at the `}` of the interface definition.
-  InstBlockId associated_entities_id = InstBlockId::Invalid;
 };
 
 }  // namespace Carbon::SemIR

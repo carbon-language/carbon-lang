@@ -17,12 +17,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'one_entry.carbon'
 // CHECK:STDOUT: source_filename = "one_entry.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
+// CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8
 // CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4
 // CHECK:STDOUT:   %y.var = alloca { i32 }, align 8
-// CHECK:STDOUT:   %.loc13_20.1.tuple.elem = getelementptr inbounds { i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc13_20.1.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc13_20.2 = load i32, ptr %.loc13_20.1.tuple.elem, align 4
 // CHECK:STDOUT:   %.loc13_20.3.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.2, 0
 // CHECK:STDOUT:   store { i32 } %.loc13_20.3.tuple.init, ptr %y.var, align 4
@@ -31,3 +31,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder i32 1, { 0, 2, 1 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "one_entry.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}

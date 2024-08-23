@@ -115,15 +115,15 @@ class TypeEnum {
 
 // An enum of all the ID types used as instruction operands.
 using IdKind = TypeEnum<
-    // From sem_ir/builtin_kind.h.
-    BuiltinKind,
+    // From sem_ir/builtin_inst_kind.h.
+    BuiltinInstKind,
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/id.h.
-    InstId, ConstantId, BindNameId, CompileTimeBindIndex, FunctionId, ClassId,
-    InterfaceId, ImplId, ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind,
-    NameId, NameScopeId, InstBlockId, TypeId, TypeBlockId, ElementIndex,
-    FloatKind>;
+    InstId, ConstantId, EntityNameId, CompileTimeBindIndex, FunctionId, ClassId,
+    InterfaceId, ImplId, GenericId, SpecificId, ImportIRId, ImportIRInstId,
+    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId, TypeId,
+    TypeBlockId, ElementIndex, LibraryNameId, FloatKind>;
 
 }  // namespace Carbon::SemIR
 

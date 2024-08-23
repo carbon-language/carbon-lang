@@ -33,7 +33,8 @@ class NodeCategory : public Printable<NodeCategory> {
     Modifier = 1 << 5,
     Pattern = 1 << 6,
     Statement = 1 << 7,
-    Requirement = 1 << 8,
+    IntConst = 1 << 8,
+    Requirement = 1 << 9,
     None = 0,
 
     LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Requirement)

@@ -27,7 +27,7 @@ interface Interface {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @Interface, %F.type [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.5: %.type = struct_value () [template]
@@ -52,7 +52,17 @@ interface Interface {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @.1(@Interface.%Self: %.1) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%Self) {}
 // CHECK:STDOUT:

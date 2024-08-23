@@ -9,6 +9,7 @@
 #include "common/error.h"
 #include "common/struct_reflection.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
@@ -20,12 +21,12 @@ namespace {
 class NodeExtractor {
  public:
   struct CheckpointState {
-    Tree::SiblingIterator it;
+    TreeAndSubtrees::SiblingIterator it;
   };
 
-  NodeExtractor(const Tree* tree, Lex::TokenizedBuffer* tokens,
+  NodeExtractor(const TreeAndSubtrees* tree, const Lex::TokenizedBuffer* tokens,
                 ErrorBuilder* trace, NodeId node_id,
-                llvm::iterator_range<Tree::SiblingIterator> children)
+                llvm::iterator_range<TreeAndSubtrees::SiblingIterator> children)
       : tree_(tree),
         tokens_(tokens),
         trace_(trace),
@@ -34,9 +35,11 @@ class NodeExtractor {
         end_(children.end()) {}
 
   auto at_end() const -> bool { return it_ == end_; }
-  auto kind() const -> NodeKind { return tree_->node_kind(*it_); }
+  auto kind() const -> NodeKind { return tree_->tree().node_kind(*it_); }
   auto has_token() const -> bool { return node_id_.is_valid(); }
-  auto token() const -> Lex::TokenIndex { return tree_->node_token(node_id_); }
+  auto token() const -> Lex::TokenIndex {
+    return tree_->tree().node_token(node_id_);
+  }
   auto token_kind() const -> Lex::TokenKind {
     return tokens_->GetKind(token());
   }
@@ -73,12 +76,12 @@ class NodeExtractor {
                             std::tuple<U...>* /*type*/) -> std::optional<T>;
 
  private:
-  const Tree* tree_;
-  Lex::TokenizedBuffer* tokens_;
+  const TreeAndSubtrees* tree_;
+  const Lex::TokenizedBuffer* tokens_;
   ErrorBuilder* trace_;
   NodeId node_id_;
-  Tree::SiblingIterator it_;
-  Tree::SiblingIterator end_;
+  TreeAndSubtrees::SiblingIterator it_;
+  TreeAndSubtrees::SiblingIterator end_;
 };
 }  // namespace
 
@@ -97,8 +100,8 @@ namespace {
 // };
 // ```
 //
-// Note that `Tree::SiblingIterator`s iterate in reverse order through the
-// children of a node.
+// Note that `TreeAndSubtrees::SiblingIterator`s iterate in reverse order
+// through the children of a node.
 //
 // This class is only in this file.
 template <typename T>
@@ -320,7 +323,7 @@ auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
   if (token_kind() != expected_kind) {
     if (trace_) {
       *trace_ << "Token " << expected_kind << " expected for "
-              << tree_->node_kind(node_id_) << ", found " << token_kind()
+              << tree_->tree().node_kind(node_id_) << ", found " << token_kind()
               << "\n";
     }
     return false;
@@ -405,14 +408,15 @@ struct Extractable {
 }  // namespace
 
 template <typename T>
-auto Tree::TryExtractNodeFromChildren(
-    NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children,
+auto TreeAndSubtrees::TryExtractNodeFromChildren(
+    NodeId node_id,
+    llvm::iterator_range<TreeAndSubtrees::SiblingIterator> children,
     ErrorBuilder* trace) const -> std::optional<T> {
   NodeExtractor extractor(this, tokens_, trace, node_id, children);
   auto result = Extractable<T>::ExtractImpl(extractor);
   if (!extractor.at_end()) {
     if (trace) {
-      *trace << "Error: " << node_kind(extractor.ExtractNode())
+      *trace << "Error: " << tree_->node_kind(extractor.ExtractNode())
              << " node left unconsumed.";
     }
     return std::nullopt;
@@ -421,16 +425,17 @@ auto Tree::TryExtractNodeFromChildren(
 }
 
 // Manually instantiate Tree::TryExtractNodeFromChildren
-#define CARBON_PARSE_NODE_KIND(KindName)                                    \
-  template auto Tree::TryExtractNodeFromChildren<KindName>(                 \
-      NodeId node_id, llvm::iterator_range<Tree::SiblingIterator> children, \
+#define CARBON_PARSE_NODE_KIND(KindName)                               \
+  template auto TreeAndSubtrees::TryExtractNodeFromChildren<KindName>( \
+      NodeId node_id,                                                  \
+      llvm::iterator_range<TreeAndSubtrees::SiblingIterator> children, \
       ErrorBuilder * trace) const -> std::optional<KindName>;
 
 // Also instantiate for `File`, even though it isn't a parse node.
 CARBON_PARSE_NODE_KIND(File)
 #include "toolchain/parse/node_kind.def"
 
-auto Tree::ExtractFile() const -> File {
+auto TreeAndSubtrees::ExtractFile() const -> File {
   return ExtractNodeFromChildren<File>(NodeId::Invalid, roots());
 }
 

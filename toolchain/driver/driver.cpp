@@ -27,6 +27,7 @@
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/inst_namer.h"
 #include "toolchain/source/source_buffer.h"
@@ -310,6 +311,14 @@ Dump the generated assembly to stdout after codegen.
         [&](auto& arg_b) { arg_b.Set(&dump_asm); });
     b.AddFlag(
         {
+            .name = "dump-mem-usage",
+            .help = R"""(
+Dumps the amount of memory used.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&dump_mem_usage); });
+    b.AddFlag(
+        {
             .name = "prelude-import",
             .help = R"""(
 Whether to use the implicit prelude import. Enabled by default.
@@ -328,6 +337,17 @@ Excludes files with the given prefix from dumps.
 )""",
         },
         [&](auto& arg_b) { arg_b.Set(&exclude_dump_file_prefix); });
+    b.AddFlag(
+        {
+            .name = "debug-info",
+            .help = R"""(
+Emit DWARF debug information.
+)""",
+        },
+        [&](auto& arg_b) {
+          arg_b.Default(true);
+          arg_b.Set(&include_debug_info);
+        });
   }
 
   Phase phase;
@@ -344,10 +364,12 @@ Excludes files with the given prefix from dumps.
   bool dump_sem_ir = false;
   bool dump_llvm_ir = false;
   bool dump_asm = false;
+  bool dump_mem_usage = false;
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
   bool prelude_import = false;
+  bool include_debug_info = true;
 
   llvm::StringRef exclude_dump_file_prefix;
 };
@@ -540,6 +562,9 @@ class Driver::CompilationUnit {
       sorting_consumer_ = SortingDiagnosticConsumer(*consumer);
       consumer_ = &*sorting_consumer_;
     }
+    if (options_.dump_mem_usage && IncludeInDumps()) {
+      mem_usage_ = MemUsage();
+    }
   }
 
   // Loads source and lexes it. Returns true on success.
@@ -552,6 +577,10 @@ class Driver::CompilationUnit {
                                              *consumer_);
       }
     });
+    if (mem_usage_) {
+      mem_usage_->Add("source_", source_->text().size(),
+                      source_->text().size());
+    }
     if (!source_) {
       success_ = false;
       return;
@@ -564,6 +593,9 @@ class Driver::CompilationUnit {
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
       driver_->output_stream_ << tokens_;
+    }
+    if (mem_usage_) {
+      mem_usage_->Collect("tokens_", *tokens_);
     }
     CARBON_VLOG() << "*** Lex::TokenizedBuffer ***\n" << tokens_;
     if (tokens_->has_errors()) {
@@ -580,7 +612,15 @@ class Driver::CompilationUnit {
     });
     if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
-      parse_tree_->Print(driver_->output_stream_, options_.preorder_parse_tree);
+      const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
+      if (options_.preorder_parse_tree) {
+        tree_and_subtrees.PrintPreorder(driver_->output_stream_);
+      } else {
+        tree_and_subtrees.Print(driver_->output_stream_);
+      }
+    }
+    if (mem_usage_) {
+      mem_usage_->Collect("parse_tree_", *parse_tree_);
     }
     CARBON_VLOG() << "*** Parse::Tree ***\n" << parse_tree_;
     if (parse_tree_->has_errors()) {
@@ -591,11 +631,15 @@ class Driver::CompilationUnit {
   // Returns information needed to check this unit.
   auto GetCheckUnit() -> Check::Unit {
     CARBON_CHECK(parse_tree_);
-    return {.value_stores = &value_stores_,
-            .tokens = &*tokens_,
-            .parse_tree = &*parse_tree_,
-            .consumer = consumer_,
-            .sem_ir = &sem_ir_};
+    return {
+        .value_stores = &value_stores_,
+        .tokens = &*tokens_,
+        .parse_tree = &*parse_tree_,
+        .consumer = consumer_,
+        .get_parse_tree_and_subtrees = [&]() -> const Parse::TreeAndSubtrees& {
+          return GetParseTreeAndSubtrees();
+        },
+        .sem_ir = &sem_ir_};
   }
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
@@ -607,21 +651,28 @@ class Driver::CompilationUnit {
     // to wait for code generation.
     consumer_->Flush();
 
-    CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
+    if (mem_usage_) {
+      mem_usage_->Collect("sem_ir_", *sem_ir_);
+    }
+
     if (options_.dump_raw_sem_ir && IncludeInDumps()) {
+      CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
       sem_ir_->Print(driver_->output_stream_, options_.builtin_sem_ir);
       if (options_.dump_sem_ir) {
         driver_->output_stream_ << "\n";
       }
     }
 
-    if (vlog_stream_) {
-      CARBON_VLOG() << "*** SemIR::File ***\n";
-      SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_, *vlog_stream_);
-    }
-    if (options_.dump_sem_ir && IncludeInDumps()) {
-      SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
-                        driver_->output_stream_);
+    bool print = options_.dump_sem_ir && IncludeInDumps();
+    if (vlog_stream_ || print) {
+      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+      if (vlog_stream_) {
+        CARBON_VLOG() << "*** SemIR::File ***\n";
+        formatter.Print(*vlog_stream_);
+      }
+      if (print) {
+        formatter.Print(driver_->output_stream_);
+      }
     }
     if (sem_ir_->has_errors()) {
       success_ = false;
@@ -629,7 +680,7 @@ class Driver::CompilationUnit {
   }
 
   // Lower SemIR to LLVM IR.
-  auto RunLower() -> void {
+  auto RunLower(const Check::SemIRDiagnosticConverter& converter) -> void {
     CARBON_CHECK(sem_ir_);
 
     LogCall("Lower::LowerToLLVM", [&] {
@@ -637,7 +688,8 @@ class Driver::CompilationUnit {
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
       SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
-      module_ = Lower::LowerToLLVM(*llvm_context_, input_filename_, *sem_ir_,
+      module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
+                                   converter, input_filename_, *sem_ir_,
                                    &inst_namer, vlog_stream_);
     });
     if (vlog_stream_) {
@@ -659,10 +711,15 @@ class Driver::CompilationUnit {
 
   // Runs post-compile logic. This is always called, and called after all other
   // actions on the CompilationUnit.
-  auto PostCompile() const -> void {
+  auto PostCompile() -> void {
     if (options_.dump_shared_values && IncludeInDumps()) {
       Yaml::Print(driver_->output_stream_,
                   value_stores_.OutputYaml(input_filename_));
+    }
+    if (mem_usage_) {
+      mem_usage_->Collect("value_stores_", value_stores_);
+      Yaml::Print(driver_->output_stream_,
+                  mem_usage_->OutputYaml(input_filename_));
     }
 
     // The diagnostics consumer must be flushed before compilation artifacts are
@@ -744,6 +801,19 @@ class Driver::CompilationUnit {
     return true;
   }
 
+  // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
+  // significant overhead. Avoid constructing it when unused.
+  auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees& {
+    if (!parse_tree_and_subtrees_) {
+      parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
+      if (mem_usage_) {
+        mem_usage_->Collect("parse_tree_and_subtrees_",
+                            *parse_tree_and_subtrees_);
+      }
+    }
+    return *parse_tree_and_subtrees_;
+  }
+
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
       -> void {
@@ -773,10 +843,14 @@ class Driver::CompilationUnit {
 
   bool success_ = true;
 
+  // Tracks memory usage of the compile.
+  std::optional<MemUsage> mem_usage_;
+
   // These are initialized as steps are run.
   std::optional<SourceBuffer> source_;
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
+  std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
@@ -867,9 +941,15 @@ auto Driver::Compile(const CompileOptions& options,
       check_units.push_back(unit->GetCheckUnit());
     }
   }
+  llvm::SmallVector<Parse::NodeLocConverter> node_converters;
+  node_converters.reserve(check_units.size());
+  for (auto& unit : check_units) {
+    node_converters.emplace_back(unit.tokens, unit.tokens->source().filename(),
+                                 unit.get_parse_tree_and_subtrees);
+  }
   CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
-  Check::CheckParseTrees(llvm::MutableArrayRef(check_units),
-                         options.prelude_import, vlog_stream_);
+  Check::CheckParseTrees(check_units, node_converters, options.prelude_import,
+                         vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {
@@ -888,8 +968,10 @@ auto Driver::Compile(const CompileOptions& options,
   }
 
   // Lower.
-  for (auto& unit : units) {
-    unit->RunLower();
+  for (const auto& unit : units) {
+    Check::SemIRDiagnosticConverter converter(node_converters,
+                                              &**unit->GetCheckUnit().sem_ir);
+    unit->RunLower(converter);
   }
   if (options.phase == CompileOptions::Phase::Lower) {
     return make_result();

@@ -13,12 +13,21 @@ namespace Carbon::Check {
 
 // Information on new and previous declarations for CheckIsAllowedRedecl.
 struct RedeclInfo {
+  explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIRLoc loc,
+                      bool is_definition)
+      : loc(loc),
+        is_definition(is_definition),
+        is_extern(params.is_extern),
+        extern_library_id(params.extern_library_id) {}
+
   // The associated diagnostic location.
   SemIRLoc loc;
   // True if a definition.
   bool is_definition;
   // True if an `extern` declaration.
   bool is_extern;
+  // The library name in `extern library`, or invalid if not present.
+  SemIR::LibraryNameId extern_library_id;
 };
 
 // Checks if a redeclaration is allowed prior to merging. This may emit a
@@ -44,20 +53,32 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // Information about the parameters of a declaration, which is common across
 // different kinds of entity such as classes and functions.
 struct DeclParams {
-  template <typename Entity>
-  explicit DeclParams(const Entity& entity)
-      : loc(entity.decl_id),
-        implicit_param_refs_id(entity.implicit_param_refs_id),
-        param_refs_id(entity.param_refs_id) {}
+  explicit DeclParams(const SemIR::EntityWithParamsBase& base)
+      : loc(base.latest_decl_id()),
+        first_param_node_id(base.first_param_node_id),
+        last_param_node_id(base.last_param_node_id),
+        implicit_param_refs_id(base.implicit_param_refs_id),
+        param_refs_id(base.param_refs_id) {}
 
-  DeclParams(SemIRLoc loc, SemIR::InstBlockId implicit_params_id,
+  DeclParams(SemIRLoc loc, Parse::NodeId first_param_node_id,
+             Parse::NodeId last_param_node_id,
+             SemIR::InstBlockId implicit_params_id,
              SemIR::InstBlockId params_id)
       : loc(loc),
+        first_param_node_id(first_param_node_id),
+        last_param_node_id(last_param_node_id),
         implicit_param_refs_id(implicit_params_id),
         param_refs_id(params_id) {}
 
   // The location of the declaration of the entity.
   SemIRLoc loc;
+
+  // Parse tree bounds for the parameters, including both implicit and explicit
+  // parameters. These will be compared to match between declaration and
+  // definition.
+  Parse::NodeId first_param_node_id;
+  Parse::NodeId last_param_node_id;
+
   // The implicit parameters of the entity. Can be Invalid if there is no
   // implicit parameter list.
   SemIR::InstBlockId implicit_param_refs_id;
@@ -69,10 +90,11 @@ struct DeclParams {
 // Checks that the parameters in a redeclaration of an entity match the
 // parameters in the prior declaration. If not, produces a diagnostic and
 // returns false.
-auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
-                            const DeclParams& prev_entity,
-                            Substitutions substitutions = Substitutions())
-    -> bool;
+auto CheckRedeclParamsMatch(
+    Context& context, const DeclParams& new_entity,
+    const DeclParams& prev_entity,
+    SemIR::SpecificId prev_specific_id = SemIR::SpecificId::Invalid,
+    bool check_syntax = true) -> bool;
 
 }  // namespace Carbon::Check
 

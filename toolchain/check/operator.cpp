@@ -6,6 +6,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -37,17 +38,23 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
     return SemIR::InstId::Invalid;
   }
 
+  // TODO: For a parameterized interface, find the corresponding specific.
+  LookupScope scope = {.name_scope_id = interface_scope_id,
+                       .specific_id = SemIR::SpecificId::Invalid};
+
   // Lookup `Interface.Op`.
   auto op_ident_id = context.identifiers().Add(op.op_name);
-  auto op_id = context.LookupQualifiedName(
-      node_id, SemIR::NameId::ForIdentifier(op_ident_id), interface_scope_id,
+  auto op_result = context.LookupQualifiedName(
+      node_id, SemIR::NameId::ForIdentifier(op_ident_id), scope,
       /*required=*/false);
-  if (!op_id.is_valid()) {
+  if (!op_result.inst_id.is_valid()) {
     return SemIR::InstId::Invalid;
   }
 
   // Look through import_refs and aliases.
-  op_id = context.constant_values().GetConstantInstId(op_id);
+  auto op_const_id = GetConstantValueInSpecific(
+      context.sem_ir(), op_result.specific_id, op_result.inst_id);
+  auto op_id = context.constant_values().GetInstId(op_const_id);
 
   // We expect it to be an associated function.
   if (context.insts().Is<SemIR::AssociatedEntity>(op_id)) {

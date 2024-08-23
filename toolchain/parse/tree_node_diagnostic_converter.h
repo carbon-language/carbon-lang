@@ -5,9 +5,12 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TREE_NODE_DIAGNOSTIC_CONVERTER_H_
 #define CARBON_TOOLCHAIN_PARSE_TREE_NODE_DIAGNOSTIC_CONVERTER_H_
 
+#include <utility>
+
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 
 namespace Carbon::Parse {
 
@@ -32,11 +35,12 @@ class NodeLoc {
 
 class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
  public:
-  explicit NodeLocConverter(const Lex::TokenizedBuffer* tokens,
-                            llvm::StringRef filename, const Tree* parse_tree)
+  explicit NodeLocConverter(
+      const Lex::TokenizedBuffer* tokens, llvm::StringRef filename,
+      llvm::function_ref<const Parse::TreeAndSubtrees&()> get_tree_and_subtrees)
       : token_converter_(tokens),
         filename_(filename),
-        parse_tree_(parse_tree) {}
+        get_tree_and_subtrees_(get_tree_and_subtrees) {}
 
   // Map the given token into a diagnostic location.
   auto ConvertLoc(NodeLoc node_loc, ContextFnT context_fn) const
@@ -47,17 +51,19 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
       return {.filename = filename_};
     }
 
+    const auto& tree = get_tree_and_subtrees_();
+
     if (node_loc.token_only()) {
       return token_converter_.ConvertLoc(
-          parse_tree_->node_token(node_loc.node_id()), context_fn);
+          tree.tree().node_token(node_loc.node_id()), context_fn);
     }
 
     // Construct a location that encompasses all tokens that descend from this
     // node (including the root).
-    Lex::TokenIndex start_token = parse_tree_->node_token(node_loc.node_id());
+    Lex::TokenIndex start_token = tree.tree().node_token(node_loc.node_id());
     Lex::TokenIndex end_token = start_token;
-    for (NodeId desc : parse_tree_->postorder(node_loc.node_id())) {
-      Lex::TokenIndex desc_token = parse_tree_->node_token(desc);
+    for (NodeId desc : tree.postorder(node_loc.node_id())) {
+      Lex::TokenIndex desc_token = tree.tree().node_token(desc);
       if (!desc_token.is_valid()) {
         continue;
       }
@@ -89,7 +95,9 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
  private:
   Lex::TokenDiagnosticConverter token_converter_;
   llvm::StringRef filename_;
-  const Tree* parse_tree_;
+
+  // Returns a lazily constructed TreeAndSubtrees.
+  llvm::function_ref<const Parse::TreeAndSubtrees&()> get_tree_and_subtrees_;
 };
 
 }  // namespace Carbon::Parse

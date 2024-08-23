@@ -20,6 +20,7 @@
 #include "common/init_llvm.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -331,6 +332,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 auto FileTestBase::DoArgReplacements(
     llvm::SmallVector<std::string>& test_args,
     const llvm::SmallVector<TestFile>& test_files) -> ErrorOr<Success> {
+  auto replacements = GetArgReplacements();
   for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
     auto percent = it->find("%");
     if (percent == std::string::npos) {
@@ -359,6 +361,21 @@ auto FileTestBase::DoArgReplacements(
         char* tmpdir = getenv("TEST_TMPDIR");
         CARBON_CHECK(tmpdir != nullptr);
         it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
+        break;
+      }
+      case '{': {
+        auto end_brace = it->find('}', percent);
+        if (end_brace == std::string::npos) {
+          return ErrorBuilder() << "%{ without closing }: " << *it;
+        }
+        llvm::StringRef substr(&*(it->begin() + percent + 2),
+                               end_brace - percent - 2);
+        auto replacement = replacements.find(substr);
+        if (replacement == replacements.end()) {
+          return ErrorBuilder()
+                 << "unknown substitution: %{" << substr << "}: " << *it;
+        }
+        it->replace(percent, end_brace - percent + 1, replacement->second);
         break;
       }
       default:
@@ -846,6 +863,61 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
   return all_tests;
 }
 
+// Runs autoupdate for the given tests. This is multi-threaded to try to get a
+// little extra speed.
+static auto RunAutoupdate(llvm::StringRef exe_path,
+                          llvm::ArrayRef<std::string> tests,
+                          FileTestFactory& test_factory) -> int {
+  llvm::CrashRecoveryContext::Enable();
+  llvm::DefaultThreadPool pool(
+      {.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+
+  // Guard access to both `llvm::errs` and `crashed`.
+  std::mutex mutex;
+  bool crashed = false;
+
+  for (const auto& test_name : tests) {
+    pool.async([&test_factory, &mutex, &exe_path, &crashed, test_name] {
+      // If any thread crashed, don't try running more.
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (crashed) {
+          return;
+        }
+      }
+
+      // Use a crash recovery context to try to get a stack trace when
+      // multiple threads may crash in parallel, which otherwise leads to the
+      // program aborting without printing a stack trace.
+      llvm::CrashRecoveryContext crc;
+      crc.DumpStackAndCleanupOnFailure = true;
+      bool thread_crashed = !crc.RunSafely([&] {
+        std::unique_ptr<FileTestBase> test(
+            test_factory.factory_fn(exe_path, test_name));
+        auto result = test->Autoupdate();
+
+        std::unique_lock<std::mutex> lock(mutex);
+        if (result.ok()) {
+          llvm::errs() << (*result ? "!" : ".");
+        } else {
+          llvm::errs() << "\n" << result.error().message() << "\n";
+        }
+      });
+      if (thread_crashed) {
+        std::unique_lock<std::mutex> lock(mutex);
+        crashed = true;
+      }
+    });
+  }
+
+  pool.wait();
+  if (crashed) {
+    return EXIT_FAILURE;
+  }
+  llvm::errs() << "\nDone!\n";
+  return EXIT_SUCCESS;
+}
+
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> int {
   Carbon::InitLLVM init_llvm(argc, argv);
@@ -887,28 +959,7 @@ static auto Main(int argc, char** argv) -> int {
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
-    llvm::DefaultThreadPool pool(
-        {.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
-    std::mutex errs_mutex;
-
-    for (const auto& test_name : tests) {
-      pool.async([&test_factory, &errs_mutex, &exe_path, test_name] {
-        std::unique_ptr<FileTestBase> test(
-            test_factory.factory_fn(exe_path, test_name));
-        auto result = test->Autoupdate();
-
-        // Guard access to llvm::errs, which is not thread-safe.
-        std::unique_lock<std::mutex> lock(errs_mutex);
-        if (result.ok()) {
-          llvm::errs() << (*result ? "!" : ".");
-        } else {
-          llvm::errs() << "\n" << result.error().message() << "\n";
-        }
-      });
-    }
-    pool.wait();
-    llvm::errs() << "\nDone!\n";
-    return EXIT_SUCCESS;
+    return RunAutoupdate(exe_path, tests, test_factory);
   } else if (absl::GetFlag(FLAGS_dump_output)) {
     for (const auto& test_name : tests) {
       std::unique_ptr<FileTestBase> test(

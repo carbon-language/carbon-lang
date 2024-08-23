@@ -8,21 +8,21 @@
 
 namespace Carbon::Check {
 
-auto HandleReturnStatementStart(Context& context,
-                                Parse::ReturnStatementStartId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ReturnStatementStartId node_id)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(node_id);
   return true;
 }
 
-auto HandleReturnVarModifier(Context& context,
-                             Parse::ReturnVarModifierId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ReturnVarModifierId node_id)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(node_id);
   return true;
 }
 
-auto HandleReturnStatement(Context& context, Parse::ReturnStatementId node_id)
+auto HandleParseNode(Context& context, Parse::ReturnStatementId node_id)
     -> bool {
   switch (context.node_stack().PeekNodeKind()) {
     case Parse::NodeKind::ReturnStatementStart:

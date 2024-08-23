@@ -8,11 +8,14 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/map.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -51,7 +54,8 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
         return init.dest_id;
       }
       case CARBON_KIND(SemIR::Call call): {
-        if (!SemIR::GetInitRepr(sem_ir, call.type_id).has_return_slot()) {
+        if (!SemIR::ReturnTypeInfo::ForType(sem_ir, call.type_id)
+                 .has_return_slot()) {
           return SemIR::InstId::Invalid;
         }
         if (!call.args_id.is_valid()) {
@@ -100,10 +104,10 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
         << "initialized multiple times? Have "
         << sem_ir.insts().Get(return_slot_id);
     auto init = sem_ir.insts().Get(init_id);
-    return context.AddInst<SemIR::Temporary>(sem_ir.insts().GetLocId(init_id),
-                                             {.type_id = init.type_id(),
-                                              .storage_id = return_slot_id,
-                                              .init_id = init_id});
+    return context.AddInstReusingLoc<SemIR::Temporary>(
+        sem_ir.insts().GetLocId(init_id), {.type_id = init.type_id(),
+                                           .storage_id = return_slot_id,
+                                           .init_id = init_id});
   }
 
   if (discarded) {
@@ -118,11 +122,12 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // instructions.
   auto init = sem_ir.insts().Get(init_id);
   auto loc_id = sem_ir.insts().GetLocId(init_id);
-  auto temporary_id = context.AddInst<SemIR::TemporaryStorage>(
+  auto temporary_id = context.AddInstReusingLoc<SemIR::TemporaryStorage>(
       loc_id, {.type_id = init.type_id()});
-  return context.AddInst<SemIR::Temporary>(loc_id, {.type_id = init.type_id(),
-                                                    .storage_id = temporary_id,
-                                                    .init_id = init_id});
+  return context.AddInstReusingLoc<SemIR::Temporary>(
+      loc_id, {.type_id = init.type_id(),
+               .storage_id = temporary_id,
+               .init_id = init_id});
 }
 
 // Materialize a temporary to hold the result of the given expression if it is
@@ -146,13 +151,14 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
-    auto index_id = block.template AddInst<SemIR::IntLiteral>(
-        loc_id, {.type_id = context.GetBuiltinType(SemIR::BuiltinKind::IntType),
-                 .int_id = context.ints().Add(llvm::APInt(32, i))});
-    return block.template AddInst<AccessInstT>(
+    auto index_id = block.template AddInstReusingLoc<SemIR::IntLiteral>(
+        loc_id,
+        {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
+         .int_id = context.ints().Add(llvm::APInt(32, i))});
+    return block.template AddInstReusingLoc<AccessInstT>(
         loc_id, {elem_type_id, aggregate_id, index_id});
   } else {
-    return block.template AddInst<AccessInstT>(
+    return block.template AddInstReusingLoc<AccessInstT>(
         loc_id, {elem_type_id, aggregate_id, SemIR::ElementIndex(i)});
   }
 }
@@ -251,7 +257,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // destination for the array initialization if we weren't given one.
   SemIR::InstId return_slot_id = target.init_id;
   if (!target.init_id.is_valid()) {
-    return_slot_id = target_block->AddInst<SemIR::TemporaryStorage>(
+    return_slot_id = target_block->AddInstReusingLoc<SemIR::TemporaryStorage>(
         value_loc_id, {.type_id = target.type_id});
   }
 
@@ -278,7 +284,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // Flush the temporary here if we didn't insert it earlier, so we can add a
   // reference to the return slot.
   target_block->InsertHere();
-  return context.AddInst<SemIR::ArrayInit>(
+  return context.AddInstReusingLoc<SemIR::ArrayInit>(
       value_loc_id, {.type_id = target.type_id,
                      .inits_id = sem_ir.inst_blocks().Add(inits),
                      .dest_id = return_slot_id});
@@ -328,7 +334,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
       !is_init ? ConversionTarget::Value
-      : SemIR::GetInitRepr(sem_ir, target.type_id).kind ==
+      : SemIR::InitRepr::ForType(sem_ir, target.type_id).kind ==
               SemIR::InitRepr::InPlace
           ? ConversionTarget::FullInitializer
           : ConversionTarget::Initializer;
@@ -358,12 +364,12 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
 
   if (is_init) {
     target.init_block->InsertHere();
-    return context.AddInst<SemIR::TupleInit>(value_loc_id,
-                                             {.type_id = target.type_id,
-                                              .elements_id = new_block.id(),
-                                              .dest_id = target.init_id});
+    return context.AddInstReusingLoc<SemIR::TupleInit>(
+        value_loc_id, {.type_id = target.type_id,
+                       .elements_id = new_block.id(),
+                       .dest_id = target.init_id});
   } else {
-    return context.AddInst<SemIR::TupleValue>(
+    return context.AddInstReusingLoc<SemIR::TupleValue>(
         value_loc_id,
         {.type_id = target.type_id, .elements_id = new_block.id()});
   }
@@ -412,12 +418,13 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 
   // Prepare to look up fields in the source by index.
-  llvm::SmallDenseMap<SemIR::NameId, int32_t> src_field_indexes;
+  Map<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
-      auto [it, added] = src_field_indexes.insert(
-          {context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i});
-      CARBON_CHECK(added) << "Duplicate field in source structure";
+      auto result = src_field_indexes.Insert(
+          context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i);
+      CARBON_CHECK(result.is_inserted())
+          << "Duplicate field in source structure";
     }
   }
 
@@ -428,7 +435,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
       !is_init ? ConversionTarget::Value
-      : SemIR::GetInitRepr(sem_ir, target.type_id).kind ==
+      : SemIR::InitRepr::ForType(sem_ir, target.type_id).kind ==
               SemIR::InitRepr::InPlace
           ? ConversionTarget::FullInitializer
           : ConversionTarget::Initializer;
@@ -449,8 +456,9 @@ static auto ConvertStructToStructOrClass(Context& context,
     // Find the matching source field.
     auto src_field_index = i;
     if (src_type.fields_id != dest_type.fields_id) {
-      auto src_field_it = src_field_indexes.find(dest_field.name_id);
-      if (src_field_it == src_field_indexes.end()) {
+      if (auto lookup = src_field_indexes.Lookup(dest_field.name_id)) {
+        src_field_index = lookup.value();
+      } else {
         if (literal_elems_id.is_valid()) {
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
@@ -469,7 +477,6 @@ static auto ConvertStructToStructOrClass(Context& context,
         }
         return SemIR::InstId::BuiltinError;
       }
-      src_field_index = src_field_it->second;
     }
     auto src_field = sem_ir.insts().GetAs<SemIR::StructTypeField>(
         src_elem_fields[src_field_index]);
@@ -491,18 +498,18 @@ static auto ConvertStructToStructOrClass(Context& context,
     target.init_block->InsertHere();
     CARBON_CHECK(is_init)
         << "Converting directly to a class value is not supported";
-    return context.AddInst<SemIR::ClassInit>(value_loc_id,
-                                             {.type_id = target.type_id,
-                                              .elements_id = new_block.id(),
-                                              .dest_id = target.init_id});
+    return context.AddInstReusingLoc<SemIR::ClassInit>(
+        value_loc_id, {.type_id = target.type_id,
+                       .elements_id = new_block.id(),
+                       .dest_id = target.init_id});
   } else if (is_init) {
     target.init_block->InsertHere();
-    return context.AddInst<SemIR::StructInit>(value_loc_id,
-                                              {.type_id = target.type_id,
-                                               .elements_id = new_block.id(),
-                                               .dest_id = target.init_id});
+    return context.AddInstReusingLoc<SemIR::StructInit>(
+        value_loc_id, {.type_id = target.type_id,
+                       .elements_id = new_block.id(),
+                       .dest_id = target.init_id});
   } else {
-    return context.AddInst<SemIR::StructValue>(
+    return context.AddInstReusingLoc<SemIR::StructValue>(
         value_loc_id,
         {.type_id = target.type_id, .elements_id = new_block.id()});
   }
@@ -549,7 +556,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   if (need_temporary) {
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
-    target.init_id = target_block.AddInst<SemIR::TemporaryStorage>(
+    target.init_id = target_block.AddInstReusingLoc<SemIR::TemporaryStorage>(
         context.insts().GetLocId(value_id), {.type_id = target.type_id});
   }
 
@@ -558,7 +565,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
 
   if (need_temporary) {
     target_block.InsertHere();
-    result_id = context.AddInst<SemIR::Temporary>(
+    result_id = context.AddInstReusingLoc<SemIR::Temporary>(
         context.insts().GetLocId(value_id), {.type_id = target.type_id,
                                              .storage_id = target.init_id,
                                              .init_id = result_id});
@@ -616,7 +623,7 @@ static auto ConvertDerivedToBase(Context& context, SemIR::LocId loc_id,
   // Add a series of `.base` accesses.
   for (auto base_id : path) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
-    value_id = context.AddInst<SemIR::ClassElementAccess>(
+    value_id = context.AddInstReusingLoc<SemIR::ClassElementAccess>(
         loc_id, {.type_id = base_decl.base_type_id,
                  .base_id = value_id,
                  .index = base_decl.index});
@@ -631,14 +638,14 @@ static auto ConvertDerivedPointerToBasePointer(
     const InheritancePath& path) -> SemIR::InstId {
   // Form `*p`.
   ptr_id = ConvertToValueExpr(context, ptr_id);
-  auto ref_id = context.AddInst<SemIR::Deref>(
+  auto ref_id = context.AddInstReusingLoc<SemIR::Deref>(
       loc_id, {.type_id = src_ptr_type.pointee_id, .pointer_id = ptr_id});
 
   // Convert as a reference expression.
   ref_id = ConvertDerivedToBase(context, loc_id, ref_id, path);
 
   // Take the address.
-  return context.AddInst<SemIR::AddrOf>(
+  return context.AddInstReusingLoc<SemIR::AddrOf>(
       loc_id, {.type_id = dest_ptr_type_id, .lvalue_id = ref_id});
 }
 
@@ -729,15 +736,15 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     if (value_cat == SemIR::ExprCategory::Initializing &&
         IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
                                                target.kind) &&
-        SemIR::GetInitRepr(sem_ir, value_type_id).kind ==
+        SemIR::InitRepr::ForType(sem_ir, value_type_id).kind ==
             SemIR::InitRepr::ByCopy) {
-      auto value_rep = SemIR::GetValueRepr(sem_ir, value_type_id);
+      auto value_rep = SemIR::ValueRepr::ForType(sem_ir, value_type_id);
       if (value_rep.kind == SemIR::ValueRepr::Copy &&
           value_rep.type_id == value_type_id) {
         // The initializer produces an object representation by copy, and the
         // value representation is a copy of the object representation, so we
         // already have a value of the right form.
-        return context.AddInst<SemIR::ValueOfInitializer>(
+        return context.AddInstReusingLoc<SemIR::ValueOfInitializer>(
             loc_id, {.type_id = value_type_id, .init_id = value_id});
       }
     }
@@ -758,7 +765,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
             ConversionTarget{.kind = ConversionTarget::Value,
                              .type_id = value_type_id});
       }
-      return context.AddInst<SemIR::AsCompatible>(
+      return context.AddInstReusingLoc<SemIR::AsCompatible>(
           loc_id, {.type_id = target.type_id, .source_id = value_id});
     }
   }
@@ -864,7 +871,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // TODO: Support converting tuple and struct values to facet types,
     // combining the above conversions and this one in a single conversion.
     if (sem_ir.types().Is<SemIR::InterfaceType>(value_type_id)) {
-      return context.AddInst<SemIR::FacetTypeAccess>(
+      return context.AddInstReusingLoc<SemIR::FacetTypeAccess>(
           loc_id, {.type_id = target.type_id, .facet_id = value_id});
     }
   }
@@ -885,7 +892,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
 
   // TODO: Directly track on the value representation whether it's a copy of
   // the object representation.
-  auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
+  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), type_id);
   if (value_rep.kind == SemIR::ValueRepr::Copy &&
       value_rep.aggregate_kind == SemIR::ValueRepr::NotAggregate &&
       value_rep.type_id == type_id) {
@@ -975,10 +982,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // Track that we performed a type conversion, if we did so.
   if (orig_expr_id != expr_id) {
-    expr_id =
-        context.AddInst<SemIR::Converted>(loc_id, {.type_id = target.type_id,
-                                                   .original_id = orig_expr_id,
-                                                   .result_id = expr_id});
+    expr_id = context.AddInstReusingLoc<SemIR::Converted>(
+        loc_id, {.type_id = target.type_id,
+                 .original_id = orig_expr_id,
+                 .result_id = expr_id});
   }
 
   // For `as`, don't perform any value category conversions. In particular, an
@@ -1028,7 +1035,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
-      expr_id = context.AddInst<SemIR::BindValue>(
+      expr_id = context.AddInstReusingLoc<SemIR::BindValue>(
           context.insts().GetLocId(expr_id),
           {.type_id = expr.type_id(), .value_id = expr_id});
       // We now have a value expression.
@@ -1044,10 +1051,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // Perform a final destination store, if necessary.
   if (target.kind == ConversionTarget::FullInitializer) {
-    if (auto init_rep = SemIR::GetInitRepr(sem_ir, target.type_id);
+    if (auto init_rep = SemIR::InitRepr::ForType(sem_ir, target.type_id);
         init_rep.kind == SemIR::InitRepr::ByCopy) {
       target.init_block->InsertHere();
-      expr_id = context.AddInst<SemIR::InitializeFrom>(
+      expr_id = context.AddInstReusingLoc<SemIR::InitializeFrom>(
           loc_id, {.type_id = target.type_id,
                    .src_id = expr_id,
                    .dest_id = target.init_id});
@@ -1099,7 +1106,7 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, loc_id, value_id,
-      context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
+      context.GetBuiltinType(SemIR::BuiltinInstKind::BoolType));
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
@@ -1114,6 +1121,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId callee_id,
+                        SemIR::SpecificId callee_specific_id,
                         std::optional<SemIR::AddrPattern> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
                         SemIR::InstId self_id) -> SemIR::InstId {
@@ -1155,24 +1163,27 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
         return SemIR::InstId::BuiltinError;
     }
     auto loc_id = context.insts().GetLocId(self_or_addr_id);
-    self_or_addr_id = context.AddInst<SemIR::AddrOf>(
+    self_or_addr_id = context.AddInstReusingLoc<SemIR::AddrOf>(
         loc_id, {.type_id = context.GetPointerType(self.type_id()),
                  .lvalue_id = self_or_addr_id});
   }
 
-  return ConvertToValueOfType(context, call_loc_id, self_or_addr_id,
-                              self_param.type_id);
+  return ConvertToValueOfType(
+      context, call_loc_id, self_or_addr_id,
+      SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
+                               self_param.type_id));
 }
 
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id, SemIR::InstId callee_id,
-                     SemIR::InstBlockId implicit_param_refs_id,
-                     SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
+                     SemIR::InstId return_storage_id,
+                     const SemIR::EntityWithParamsBase& callee,
+                     SemIR::SpecificId callee_specific_id)
+    -> SemIR::InstBlockId {
   auto implicit_param_refs =
-      context.inst_blocks().GetOrEmpty(implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().GetOrEmpty(param_refs_id);
+      context.inst_blocks().GetOrEmpty(callee.implicit_param_refs_id);
+  auto param_refs = context.inst_blocks().GetOrEmpty(callee.param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -1183,7 +1194,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     context.emitter()
         .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(callee_id, InCallToFunction)
+        .Note(callee.latest_decl_id(), InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
   }
@@ -1200,9 +1211,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     auto [param_id, param] = SemIR::Function::GetParamFromParamRefId(
         context.sem_ir(), implicit_param_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
-      auto converted_self_id =
-          ConvertSelf(context, call_loc_id, callee_id, addr_pattern, param_id,
-                      param, self_id);
+      auto converted_self_id = ConvertSelf(
+          context, call_loc_id, callee.latest_decl_id(), callee_specific_id,
+          addr_pattern, param_id, param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
@@ -1220,14 +1231,17 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(callee_id, InCallToFunctionParam, diag_param_index + 1);
+        builder.Note(callee.latest_decl_id(), InCallToFunctionParam,
+                     diag_param_index + 1);
       });
 
   // Check type conversions per-element.
   for (auto [i, arg_id, param_id] : llvm::enumerate(arg_refs, param_refs)) {
     diag_param_index = i;
 
-    auto param_type_id = context.insts().Get(param_id).type_id();
+    auto param_type_id =
+        SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
+                                 context.insts().Get(param_id).type_id());
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
     auto converted_arg_id =

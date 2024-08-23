@@ -6,6 +6,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!--
+{% raw %}
+Hides `{{` from jekyll's liquid parsing. Note endraw at the bottom.
+-->
+
 ## Images
 
 Images are managed in
@@ -138,3 +143,7 @@ auto main() -> int {
   return 0;
 }
 ```
+
+<!--
+{% endraw %}
+-->

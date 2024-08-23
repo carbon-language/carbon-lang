@@ -22,7 +22,7 @@ static auto HandleDiscardedExpr(Context& context, SemIR::InstId expr_id)
   // TODO: This will eventually need to do some "do not discard" analysis.
 }
 
-auto HandleExprStatement(Context& context, Parse::ExprStatementId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::ExprStatementId /*node_id*/)
     -> bool {
   HandleDiscardedExpr(context, context.node_stack().PopExpr());
   return true;
