@@ -185,18 +185,20 @@ written in the following style:
     language rule that was violated, although either can be omitted if it's
     clear from the other. For example:
 
-    -   "Redeclaration of X." describes the situation and implies that
+    -   `"Redeclaration of X."` describes the situation and implies that
         redeclarations are not permitted.
 
-    -   "`self` can only be declared in an implicit parameter list." describes
-        the language rule and implies that you declared `self` somewhere else.
+    -   ``"`self` can only be declared in an implicit parameter list."``
+        describes the language rule and implies that you declared `self`
+        somewhere else.
 
     -   It's OK for a diagnostic to guess at the developer's intent and provide
         a hint after explaining the situation and the rule, but not as a
-        substitute for that. For example, "Add an `as String` cast to format
-        this integer as a string." is not sufficient as an error message, but
-        "Cannot add i32 to String. Add an `as String` cast to format this
-        integer as a string." could be acceptable.
+        substitute for that. For example,
+        ``"Add an `as String` cast to format this integer as a string."`` is not
+        sufficient as an error message, but
+        ``"Cannot add i32 to String. Add an `as String` cast to format this integer as a string."``
+        could be acceptable.
 
 -   TODO: Should diagnostics be atemporal and non-sequential ("multiple
     declarations of X", "additional declaration here"), present tense but
