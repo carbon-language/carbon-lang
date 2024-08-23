@@ -139,9 +139,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc23_15: %C = binding_pattern a, @TestBinary.%a
+// CHECK:STDOUT:     %.loc23_16: %C = binding_pattern a, @TestBinary.%a
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc23_21: %C = binding_pattern b, @TestBinary.%b
+// CHECK:STDOUT:     %.loc23_22: %C = binding_pattern b, @TestBinary.%b
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:     @TestBinary.%a: %C = bind_name a, %a.loc23_15.3

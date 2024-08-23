@@ -49,7 +49,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc15_13.2: type = converted %bool.make_type, %.loc15_13.1 [template = bool]
-// CHECK:STDOUT:   %.loc15_5: bool = binding_pattern a_test, @__global_init.%a_test
+// CHECK:STDOUT:   %.loc15_11: bool = binding_pattern a_test, @__global_init.%a_test
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

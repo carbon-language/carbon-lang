@@ -417,7 +417,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_6: i32 = binding_pattern b, @B.%b
+// CHECK:STDOUT:     %.loc5_7: i32 = binding_pattern b, @B.%b
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
@@ -431,7 +431,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_6: %.3 = binding_pattern c, @C.%c
+// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern c, @C.%c
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
@@ -509,7 +509,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_16.1: type = value_of_initializer %int.make_type_32.loc5_16 [template = i32]
 // CHECK:STDOUT:     %.loc5_16.2: type = converted %int.make_type_32.loc5_16, %.loc5_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_13: i32 = binding_pattern b, @B.%b
+// CHECK:STDOUT:     %.loc5_14: i32 = binding_pattern b, @B.%b
 // CHECK:STDOUT:     %int.make_type_32.loc5_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_24.1: type = value_of_initializer %int.make_type_32.loc5_24 [template = i32]
 // CHECK:STDOUT:     %.loc5_24.2: type = converted %int.make_type_32.loc5_24, %.loc5_24.1 [template = i32]
@@ -523,7 +523,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_21.2: type = value_of_initializer %int.make_type_32.loc6_17 [template = i32]
 // CHECK:STDOUT:     %.loc6_21.3: type = converted %int.make_type_32.loc6_17, %.loc6_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_21.4: type = converted %.loc6_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_13: %.3 = binding_pattern c, @C.%c
+// CHECK:STDOUT:     %.loc6_14: %.3 = binding_pattern c, @C.%c
 // CHECK:STDOUT:     %int.make_type_32.loc6_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_32.1: type = value_of_initializer %int.make_type_32.loc6_32 [template = i32]
 // CHECK:STDOUT:     %.loc6_32.2: type = converted %int.make_type_32.loc6_32, %.loc6_32.1 [template = i32]
@@ -742,7 +742,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc7_13: i32 = binding_pattern b, %b.loc7_13.2
+// CHECK:STDOUT:     %.loc7_14: i32 = binding_pattern b, %b.loc7_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
@@ -756,7 +756,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc8_13: %.3 = binding_pattern c, %c.loc8_13.2
+// CHECK:STDOUT:     %.loc8_14: %.3 = binding_pattern c, %c.loc8_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
@@ -897,7 +897,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc7_13: i32 = binding_pattern b, %b.loc7_13.2
+// CHECK:STDOUT:     %.loc7_14: i32 = binding_pattern b, %b.loc7_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
@@ -911,7 +911,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc8_13: %.3 = binding_pattern c, %c.loc8_13.2
+// CHECK:STDOUT:     %.loc8_14: %.3 = binding_pattern c, %c.loc8_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]

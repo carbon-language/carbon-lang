@@ -70,11 +70,11 @@ interface Interface {
 // CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
 // CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_32.loc21_19, %.loc21_19.1 [template = i32]
-// CHECK:STDOUT:     %.loc21_16: i32 = binding_pattern a, %a.loc21_16.2
+// CHECK:STDOUT:     %.loc21_17: i32 = binding_pattern a, %a.loc21_16.2
 // CHECK:STDOUT:     %int.make_type_32.loc21_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_32.loc21_27 [template = i32]
 // CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_32.loc21_27, %.loc21_27.1 [template = i32]
-// CHECK:STDOUT:     %.loc21_24: i32 = binding_pattern b, %b.loc21_24.2
+// CHECK:STDOUT:     %.loc21_25: i32 = binding_pattern b, %b.loc21_24.2
 // CHECK:STDOUT:     %int.make_type_32.loc21_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]
 // CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_32.loc21_35, %.loc21_35.1 [template = i32]

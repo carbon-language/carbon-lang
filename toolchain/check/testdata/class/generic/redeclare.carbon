@@ -239,7 +239,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_13.2: type = converted %int.make_type_32, %.loc4_13.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_9: i32 = binding_pattern N 0, %N.loc4_9.2
+// CHECK:STDOUT:     %.loc4_10: i32 = binding_pattern N 0, %N.loc4_9.2
 // CHECK:STDOUT:     %N.loc4_9.2: i32 = bind_symbolic_name N 0, %N.loc4_9.3 [symbolic = @B.%N (constants.%N.1)]
 // CHECK:STDOUT:     %N.loc4_9.3: i32 = param N
 // CHECK:STDOUT:   }
@@ -325,11 +325,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_9.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %.loc12_9: type = binding_pattern T 0, %T.loc12_9.2
+// CHECK:STDOUT:     %.loc12_10: type = binding_pattern T 0, %T.loc12_9.2
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32, %.loc12_23.1 [template = i32]
-// CHECK:STDOUT:     %.loc12_19: i32 = binding_pattern U 1, %U.loc12_19.2
+// CHECK:STDOUT:     %.loc12_20: i32 = binding_pattern U 1, %U.loc12_19.2
 // CHECK:STDOUT:     %T.loc12_9.2: type = bind_symbolic_name T 0, %T.loc12_9.3 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc12_9.3: type = param T
 // CHECK:STDOUT:     %U.loc12_19.2: i32 = bind_symbolic_name U 1, %U.loc12_19.3 [symbolic = @.1.%U (constants.%U)]
@@ -412,7 +412,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32, %.loc12_13.1 [template = i32]
-// CHECK:STDOUT:     %.loc12_9: i32 = binding_pattern T 0, %T.loc12_9.2
+// CHECK:STDOUT:     %.loc12_10: i32 = binding_pattern T 0, %T.loc12_9.2
 // CHECK:STDOUT:     %T.loc12_9.2: i32 = bind_symbolic_name T 0, %T.loc12_9.3 [symbolic = @.1.%T (constants.%T.2)]
 // CHECK:STDOUT:     %T.loc12_9.3: i32 = param T
 // CHECK:STDOUT:   }

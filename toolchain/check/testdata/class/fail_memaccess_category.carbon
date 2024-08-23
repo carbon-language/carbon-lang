@@ -82,9 +82,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.6]
-// CHECK:STDOUT:     %.loc19_6: %.6 = binding_pattern s, @F.2.%s
+// CHECK:STDOUT:     %.loc19_7: %.6 = binding_pattern s, @F.2.%s
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:     %.loc19_18: %B = binding_pattern b, @F.2.%b
+// CHECK:STDOUT:     %.loc19_19: %B = binding_pattern b, @F.2.%b
 // CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %s.loc19_6.3
 // CHECK:STDOUT:     %s.loc19_6.3: %.6 = param s
 // CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %b.loc19_18.3

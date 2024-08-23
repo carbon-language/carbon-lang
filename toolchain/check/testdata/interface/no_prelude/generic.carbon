@@ -136,7 +136,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %.loc24_22: init type = call %Simple.ref.loc24(%C.ref.loc24) [template = constants.%.7]
 // CHECK:STDOUT:     %.loc24_24.1: type = value_of_initializer %.loc24_22 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc24_24.2: type = converted %.loc24_22, %.loc24_24.1 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc24_12: %.7 = binding_pattern T 0, @Receive.%T.loc24
+// CHECK:STDOUT:     %.loc24_13: %.7 = binding_pattern T 0, @Receive.%T.loc24
 // CHECK:STDOUT:     @Receive.%T.loc24: %.7 = bind_symbolic_name T 0, %T.loc24_12.3 [symbolic = @Receive.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %T.loc24_12.3: %.7 = param T
 // CHECK:STDOUT:   }
@@ -146,7 +146,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %.loc25_19: init type = call %Simple.ref.loc25(%C.ref.loc25) [template = constants.%.7]
 // CHECK:STDOUT:     %.loc25_21.1: type = value_of_initializer %.loc25_19 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc25_21.2: type = converted %.loc25_19, %.loc25_21.1 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc25_9: %.7 = binding_pattern T 0, @Pass.%T.loc25
+// CHECK:STDOUT:     %.loc25_10: %.7 = binding_pattern T 0, @Pass.%T.loc25
 // CHECK:STDOUT:     @Pass.%T.loc25: %.7 = bind_symbolic_name T 0, %T.loc25_9.3 [symbolic = @Pass.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %T.loc25_9.3: %.7 = param T
 // CHECK:STDOUT:   }
@@ -374,7 +374,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %.loc9_17: init type = call %Generic.ref.loc9(%A.ref) [template = constants.%.4]
 // CHECK:STDOUT:     %.loc9_19.1: type = value_of_initializer %.loc9_17 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc9_19.2: type = converted %.loc9_17, %.loc9_19.1 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc9_6: %.4 = binding_pattern T 0, @F.%T.loc9
+// CHECK:STDOUT:     %.loc9_7: %.4 = binding_pattern T 0, @F.%T.loc9
 // CHECK:STDOUT:     @F.%T.loc9: %.4 = bind_symbolic_name T 0, %T.loc9_6.3 [symbolic = @F.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %T.loc9_6.3: %.4 = param T
 // CHECK:STDOUT:   }
@@ -384,7 +384,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %.loc10_17: init type = call %Generic.ref.loc10(%B.ref) [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_19.1: type = value_of_initializer %.loc10_17 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_19.2: type = converted %.loc10_17, %.loc10_19.1 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc10_6: %.5 = binding_pattern T 0, @G.%T.loc10
+// CHECK:STDOUT:     %.loc10_7: %.5 = binding_pattern T 0, @G.%T.loc10
 // CHECK:STDOUT:     @G.%T.loc10: %.5 = bind_symbolic_name T 0, %T.loc10_6.3 [symbolic = @G.%T.1 (constants.%T.3)]
 // CHECK:STDOUT:     %T.loc10_6.3: %.5 = param T
 // CHECK:STDOUT:   }

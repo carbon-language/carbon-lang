@@ -110,9 +110,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc26_11: %C = binding_pattern a, @TestOp.%a
+// CHECK:STDOUT:     %.loc26_12: %C = binding_pattern a, @TestOp.%a
 // CHECK:STDOUT:     %C.ref.loc26_20: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc26_17: %C = binding_pattern b, @TestOp.%b
+// CHECK:STDOUT:     %.loc26_18: %C = binding_pattern b, @TestOp.%b
 // CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref %C = var <return slot>
 // CHECK:STDOUT:     @TestOp.%a: %C = bind_name a, %a.loc26_11.3
@@ -123,9 +123,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc30_19: type = ptr_type %C [template = constants.%.7]
-// CHECK:STDOUT:     %.loc30_15: %.7 = binding_pattern a, @TestAssign.%a
+// CHECK:STDOUT:     %.loc30_16: %.7 = binding_pattern a, @TestAssign.%a
 // CHECK:STDOUT:     %C.ref.loc30_25: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc30_22: %C = binding_pattern b, @TestAssign.%b
+// CHECK:STDOUT:     %.loc30_23: %C = binding_pattern b, @TestAssign.%b
 // CHECK:STDOUT:     @TestAssign.%a: %.7 = bind_name a, %a.loc30_15.3
 // CHECK:STDOUT:     %a.loc30_15.3: %.7 = param a
 // CHECK:STDOUT:     @TestAssign.%b: %C = bind_name b, %b.loc30_22.3
@@ -174,7 +174,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %self.loc23_14.3: %.7 = bind_name self, %self.loc23_14.1
 // CHECK:STDOUT:     %.loc23_9: %.7 = addr_pattern %self.loc23_14.3
 // CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc23_24: %C = binding_pattern other, %other.loc23_24.2
+// CHECK:STDOUT:     %.loc23_29: %C = binding_pattern other, %other.loc23_24.2
 // CHECK:STDOUT:     %other.loc23_24.2: %C = bind_name other, %other.loc23_24.3
 // CHECK:STDOUT:     %other.loc23_24.3: %C = param other
 // CHECK:STDOUT:   }

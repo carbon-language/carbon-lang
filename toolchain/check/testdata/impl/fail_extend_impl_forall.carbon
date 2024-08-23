@@ -83,7 +83,7 @@ class C {
 // CHECK:STDOUT:     %Self.1: @GenericInterface.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @GenericInterface.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = @F.1.%T (constants.%T)]
-// CHECK:STDOUT:       %.loc12_8: @F.1.%T (%T) = binding_pattern x, %x.loc12_8.2
+// CHECK:STDOUT:       %.loc12_9: @F.1.%T (%T) = binding_pattern x, %x.loc12_8.2
 // CHECK:STDOUT:       %x.loc12_8.2: @F.1.%T (%T) = bind_name x, %x.loc12_8.3
 // CHECK:STDOUT:       %x.loc12_8.3: @F.1.%T (%T) = param x
 // CHECK:STDOUT:     }

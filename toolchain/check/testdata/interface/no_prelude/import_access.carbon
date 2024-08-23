@@ -413,7 +413,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc8_16: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %.loc8_6: <error> = binding_pattern i, @F.%i
+// CHECK:STDOUT:     %.loc8_7: <error> = binding_pattern i, @F.%i
 // CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc8_6.3
 // CHECK:STDOUT:     %i.loc8_6.3: <error> = param i
 // CHECK:STDOUT:   }
@@ -449,7 +449,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10_16: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %.loc10_6: <error> = binding_pattern i, @F.%i
+// CHECK:STDOUT:     %.loc10_7: <error> = binding_pattern i, @F.%i
 // CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc10_6.3
 // CHECK:STDOUT:     %i.loc10_6.3: <error> = param i
 // CHECK:STDOUT:   }
@@ -483,7 +483,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9_16: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %.loc9_6: <error> = binding_pattern i, @F.%i
+// CHECK:STDOUT:     %.loc9_7: <error> = binding_pattern i, @F.%i
 // CHECK:STDOUT:     @F.%i: <error> = bind_name i, %i.loc9_6.3
 // CHECK:STDOUT:     %i.loc9_6.3: <error> = param i
 // CHECK:STDOUT:   }

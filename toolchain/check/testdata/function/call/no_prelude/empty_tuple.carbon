@@ -35,7 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [template = constants.%Echo] {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_9: %.1 = binding_pattern a, @Echo.%a
+// CHECK:STDOUT:     %.loc11_10: %.1 = binding_pattern a, @Echo.%a
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @Echo.%return: ref %.1 = var <return slot>

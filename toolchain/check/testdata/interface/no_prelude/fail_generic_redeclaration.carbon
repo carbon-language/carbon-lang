@@ -86,7 +86,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %.decl.loc38: %.type.2 = interface_decl @.3 [template = constants.%.6] {
 // CHECK:STDOUT:     %.loc38_32.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc38_27: %.2 = binding_pattern T 0, %T.loc38_27.2
+// CHECK:STDOUT:     %.loc38_28: %.2 = binding_pattern T 0, %T.loc38_27.2
 // CHECK:STDOUT:     %T.loc38_27.2: %.2 = bind_symbolic_name T 0, %T.loc38_27.3 [symbolic = @.3.%T (constants.%T.2)]
 // CHECK:STDOUT:     %T.loc38_27.3: %.2 = param T
 // CHECK:STDOUT:   }

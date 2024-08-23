@@ -73,7 +73,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
 // CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32.loc22, %.loc22_20.1 [template = i32]
-// CHECK:STDOUT:     %.loc22_17: i32 = binding_pattern n, @InstanceCall.%n
+// CHECK:STDOUT:     %.loc22_18: i32 = binding_pattern n, @InstanceCall.%n
 // CHECK:STDOUT:     @InstanceCall.%n: i32 = bind_name n, %n.loc22_17.3
 // CHECK:STDOUT:     %n.loc22_17.3: i32 = param n
 // CHECK:STDOUT:   }

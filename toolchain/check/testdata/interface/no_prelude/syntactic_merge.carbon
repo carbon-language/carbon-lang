@@ -1055,7 +1055,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = interface_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc6_19: type = const_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_15: %.2 = binding_pattern a 0, %a.loc6_15.2
+// CHECK:STDOUT:     %.loc6_16: %.2 = binding_pattern a 0, %a.loc6_15.2
 // CHECK:STDOUT:     %a.loc6_15.2: %.2 = bind_symbolic_name a 0, %a.loc6_15.3 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:     %a.loc6_15.3: %.2 = param a
 // CHECK:STDOUT:   }
@@ -1063,7 +1063,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc17_26: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %.loc17_19: type = const_type %.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc17_15: %.2 = binding_pattern a 0, %a.loc17_15.2
+// CHECK:STDOUT:     %.loc17_16: %.2 = binding_pattern a 0, %a.loc17_15.2
 // CHECK:STDOUT:     %a.loc17_15.2: %.2 = bind_symbolic_name a 0, %a.loc17_15.3 [symbolic = @.1.%a (constants.%a)]
 // CHECK:STDOUT:     %a.loc17_15.3: %.2 = param a
 // CHECK:STDOUT:   }

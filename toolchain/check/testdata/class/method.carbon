@@ -136,7 +136,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %Class.ref.loc24: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc24_9: %Class = binding_pattern c, @Call.%c
+// CHECK:STDOUT:     %.loc24_10: %Class = binding_pattern c, @Call.%c
 // CHECK:STDOUT:     %int.make_type_32.loc24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc24_22.1: type = value_of_initializer %int.make_type_32.loc24 [template = i32]
 // CHECK:STDOUT:     %.loc24_22.2: type = converted %int.make_type_32.loc24, %.loc24_22.1 [template = i32]
@@ -146,7 +146,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallAlias.decl: %CallAlias.type = fn_decl @CallAlias [template = constants.%CallAlias] {
 // CHECK:STDOUT:     %Class.ref.loc30: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc30_14: %Class = binding_pattern c, @CallAlias.%c
+// CHECK:STDOUT:     %.loc30_15: %Class = binding_pattern c, @CallAlias.%c
 // CHECK:STDOUT:     %int.make_type_32.loc30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc30_27.1: type = value_of_initializer %int.make_type_32.loc30 [template = i32]
 // CHECK:STDOUT:     %.loc30_27.2: type = converted %int.make_type_32.loc30, %.loc30_27.1 [template = i32]
@@ -169,7 +169,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %CallFThroughPointer.decl: %CallFThroughPointer.type = fn_decl @CallFThroughPointer [template = constants.%CallFThroughPointer] {
 // CHECK:STDOUT:     %Class.ref.loc43: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc43_32: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %.loc43_24: %.2 = binding_pattern p, @CallFThroughPointer.%p
+// CHECK:STDOUT:     %.loc43_25: %.2 = binding_pattern p, @CallFThroughPointer.%p
 // CHECK:STDOUT:     %int.make_type_32.loc43: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc43_38.1: type = value_of_initializer %int.make_type_32.loc43 [template = i32]
 // CHECK:STDOUT:     %.loc43_38.2: type = converted %int.make_type_32.loc43, %.loc43_38.1 [template = i32]
@@ -180,7 +180,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %CallGThroughPointer.decl: %CallGThroughPointer.type = fn_decl @CallGThroughPointer [template = constants.%CallGThroughPointer] {
 // CHECK:STDOUT:     %Class.ref.loc47: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc47_32: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %.loc47_24: %.2 = binding_pattern p, @CallGThroughPointer.%p
+// CHECK:STDOUT:     %.loc47_25: %.2 = binding_pattern p, @CallGThroughPointer.%p
 // CHECK:STDOUT:     %int.make_type_32.loc47: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc47_38.1: type = value_of_initializer %int.make_type_32.loc47 [template = i32]
 // CHECK:STDOUT:     %.loc47_38.2: type = converted %int.make_type_32.loc47, %.loc47_38.1 [template = i32]

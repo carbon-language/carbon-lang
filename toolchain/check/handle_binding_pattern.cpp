@@ -182,7 +182,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // pattern-match IR, but we are currently generating the pattern IR.
       auto bind_id = context.AddInstInNoBlock(bind_name);
       SemIR::InstId pattern_id = context.AddInst<SemIR::BindingPattern>(
-          name_node, {.type_id = cast_type_id, .bind_inst_id = bind_id});
+          node_id, {.type_id = cast_type_id, .bind_inst_id = bind_id});
       push_bind_name(pattern_id);
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
@@ -207,7 +207,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto bind_id = context.AddPlaceholderInstInNoBlock(bind_name);
       if (!is_generic) {
         context.AddInst<SemIR::BindingPattern>(
-            name_node, {.type_id = cast_type_id, .bind_inst_id = bind_id});
+            node_id, {.type_id = cast_type_id, .bind_inst_id = bind_id});
       }
       push_bind_name(bind_id);
       break;

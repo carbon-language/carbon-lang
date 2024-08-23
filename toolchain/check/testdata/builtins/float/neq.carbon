@@ -89,12 +89,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %float.make_type.loc2_11: init type = call constants.%Float(%.loc2_11.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_11.2: type = value_of_initializer %float.make_type.loc2_11 [template = f64]
 // CHECK:STDOUT:     %.loc2_11.3: type = converted %float.make_type.loc2_11, %.loc2_11.2 [template = f64]
-// CHECK:STDOUT:     %.loc2_8: f64 = binding_pattern a, @Neq.%a
+// CHECK:STDOUT:     %.loc2_9: f64 = binding_pattern a, @Neq.%a
 // CHECK:STDOUT:     %.loc2_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_19: init type = call constants.%Float(%.loc2_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_19.2: type = value_of_initializer %float.make_type.loc2_19 [template = f64]
 // CHECK:STDOUT:     %.loc2_19.3: type = converted %float.make_type.loc2_19, %.loc2_19.2 [template = f64]
-// CHECK:STDOUT:     %.loc2_16: f64 = binding_pattern b, @Neq.%b
+// CHECK:STDOUT:     %.loc2_17: f64 = binding_pattern b, @Neq.%b
 // CHECK:STDOUT:     %bool.make_type.loc2: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %bool.make_type.loc2 [template = bool]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %bool.make_type.loc2, %.loc2_27.1 [template = bool]
@@ -108,9 +108,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
-// CHECK:STDOUT:     %.loc7_6: %True = binding_pattern true_, @F.%true_
+// CHECK:STDOUT:     %.loc7_11: %True = binding_pattern true_, @F.%true_
 // CHECK:STDOUT:     %False.ref: type = name_ref False, %False.decl [template = constants.%False]
-// CHECK:STDOUT:     %.loc7_19: %False = binding_pattern false_, @F.%false_
+// CHECK:STDOUT:     %.loc7_25: %False = binding_pattern false_, @F.%false_
 // CHECK:STDOUT:     @F.%true_: %True = bind_name true_, %true_.loc7_6.3
 // CHECK:STDOUT:     %true_.loc7_6.3: %True = param true_
 // CHECK:STDOUT:     @F.%false_: %False = bind_name false_, %false_.loc7_19.3
@@ -121,12 +121,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %float.make_type.loc12_19: init type = call constants.%Float(%.loc12_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_19.2: type = value_of_initializer %float.make_type.loc12_19 [template = f64]
 // CHECK:STDOUT:     %.loc12_19.3: type = converted %float.make_type.loc12_19, %.loc12_19.2 [template = f64]
-// CHECK:STDOUT:     %.loc12_16: f64 = binding_pattern a, @RuntimeCall.%a
+// CHECK:STDOUT:     %.loc12_17: f64 = binding_pattern a, @RuntimeCall.%a
 // CHECK:STDOUT:     %.loc12_27.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc12_27: init type = call constants.%Float(%.loc12_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_27.2: type = value_of_initializer %float.make_type.loc12_27 [template = f64]
 // CHECK:STDOUT:     %.loc12_27.3: type = converted %float.make_type.loc12_27, %.loc12_27.2 [template = f64]
-// CHECK:STDOUT:     %.loc12_24: f64 = binding_pattern b, @RuntimeCall.%b
+// CHECK:STDOUT:     %.loc12_25: f64 = binding_pattern b, @RuntimeCall.%b
 // CHECK:STDOUT:     %bool.make_type.loc12: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc12_35.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
 // CHECK:STDOUT:     %.loc12_35.2: type = converted %bool.make_type.loc12, %.loc12_35.1 [template = bool]
@@ -244,12 +244,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %float.make_type.loc7_19: init type = call constants.%Float(%.loc7_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_19.2: type = value_of_initializer %float.make_type.loc7_19 [template = f64]
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %float.make_type.loc7_19, %.loc7_19.2 [template = f64]
-// CHECK:STDOUT:     %.loc7_16: f64 = binding_pattern a, @WrongResult.%a
+// CHECK:STDOUT:     %.loc7_17: f64 = binding_pattern a, @WrongResult.%a
 // CHECK:STDOUT:     %.loc7_27.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_27: init type = call constants.%Float(%.loc7_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_27.2: type = value_of_initializer %float.make_type.loc7_27 [template = f64]
 // CHECK:STDOUT:     %.loc7_27.3: type = converted %float.make_type.loc7_27, %.loc7_27.2 [template = f64]
-// CHECK:STDOUT:     %.loc7_24: f64 = binding_pattern b, @WrongResult.%b
+// CHECK:STDOUT:     %.loc7_25: f64 = binding_pattern b, @WrongResult.%b
 // CHECK:STDOUT:     %.loc7_35.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_35: init type = call constants.%Float(%.loc7_35.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_35.2: type = value_of_initializer %float.make_type.loc7_35 [template = f64]

@@ -158,7 +158,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc21: %B = binding_pattern b_val, @__global_init.%b_val
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc22_13: type = ptr_type %B [template = constants.%.7]
-// CHECK:STDOUT:   %.loc22_5: %.7 = binding_pattern b_ptr, @__global_init.%b_ptr
+// CHECK:STDOUT:   %.loc22_10: %.7 = binding_pattern b_ptr, @__global_init.%b_ptr
 // CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_factory.var: ref %B = var b_factory
 // CHECK:STDOUT:   %b_factory: ref %B = bind_name b_factory, %b_factory.var
@@ -284,7 +284,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32, %.loc9_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_5: i32 = binding_pattern n, @__global_init.%n
+// CHECK:STDOUT:   %.loc9_6: i32 = binding_pattern n, @__global_init.%n
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

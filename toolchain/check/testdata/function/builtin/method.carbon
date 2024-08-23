@@ -95,7 +95,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_20: @F.1.%Self (%Self) = binding_pattern other, %other.loc12_20.2
+// CHECK:STDOUT:     %.loc12_25: @F.1.%Self (%Self) = binding_pattern other, %other.loc12_20.2
 // CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
@@ -121,7 +121,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %int.make_type_32.loc16_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_26.1: type = value_of_initializer %int.make_type_32.loc16_26 [template = i32]
 // CHECK:STDOUT:     %.loc16_26.2: type = converted %int.make_type_32.loc16_26, %.loc16_26.1 [template = i32]
-// CHECK:STDOUT:     %.loc16_19: i32 = binding_pattern other, %other.loc16_19.2
+// CHECK:STDOUT:     %.loc16_24: i32 = binding_pattern other, %other.loc16_19.2
 // CHECK:STDOUT:     %int.make_type_32.loc16_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_34.1: type = value_of_initializer %int.make_type_32.loc16_34 [template = i32]
 // CHECK:STDOUT:     %.loc16_34.2: type = converted %int.make_type_32.loc16_34, %.loc16_34.1 [template = i32]

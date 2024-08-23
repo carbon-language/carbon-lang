@@ -61,7 +61,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_14: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_8: %.2 = binding_pattern ptr, @Foo.%ptr
+// CHECK:STDOUT:     %.loc16_11: %.2 = binding_pattern ptr, @Foo.%ptr
 // CHECK:STDOUT:     @Foo.%ptr: %.2 = bind_name ptr, %ptr.loc16_8.3
 // CHECK:STDOUT:     %ptr.loc16_8.3: %.2 = param ptr
 // CHECK:STDOUT:   }

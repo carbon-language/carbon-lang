@@ -88,7 +88,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc13_6: %.3 = binding_pattern b, @G.%b
+// CHECK:STDOUT:     %.loc13_7: %.3 = binding_pattern b, @G.%b
 // CHECK:STDOUT:     @G.%b: %.3 = bind_name b, %b.loc13_6.3
 // CHECK:STDOUT:     %b.loc13_6.3: %.3 = param b
 // CHECK:STDOUT:   }
@@ -98,7 +98,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
 // CHECK:STDOUT:     %.loc21_27: type = array_type %.loc21_26, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc21_17: %.3 = binding_pattern b, @ValueBinding.%b
+// CHECK:STDOUT:     %.loc21_18: %.3 = binding_pattern b, @ValueBinding.%b
 // CHECK:STDOUT:     @ValueBinding.%b: %.3 = bind_name b, %b.loc21_17.3
 // CHECK:STDOUT:     %b.loc21_17.3: %.3 = param b
 // CHECK:STDOUT:   }

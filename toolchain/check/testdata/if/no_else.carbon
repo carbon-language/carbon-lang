@@ -60,7 +60,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %bool.make_type, %.loc14_10.1 [template = bool]
-// CHECK:STDOUT:     %.loc14_7: bool = binding_pattern b, @If.%b
+// CHECK:STDOUT:     %.loc14_8: bool = binding_pattern b, @If.%b
 // CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc14_7.3
 // CHECK:STDOUT:     %b.loc14_7.3: bool = param b
 // CHECK:STDOUT:   }

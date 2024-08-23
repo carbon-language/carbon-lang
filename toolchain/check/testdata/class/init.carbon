@@ -67,10 +67,10 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:     %.loc16_12.2: type = converted %int.make_type_32.loc16, %.loc16_12.1 [template = i32]
-// CHECK:STDOUT:     %.loc16_9: i32 = binding_pattern n, @Make.%n
+// CHECK:STDOUT:     %.loc16_10: i32 = binding_pattern n, @Make.%n
 // CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:     %.loc16_17: %.3 = binding_pattern next, @Make.%next
+// CHECK:STDOUT:     %.loc16_21: %.3 = binding_pattern next, @Make.%next
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Make.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc16_9.3
@@ -82,10 +82,10 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %int.make_type_32.loc20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
 // CHECK:STDOUT:     %.loc20_19.2: type = converted %int.make_type_32.loc20, %.loc20_19.1 [template = i32]
-// CHECK:STDOUT:     %.loc20_16: i32 = binding_pattern n, @MakeReorder.%n
+// CHECK:STDOUT:     %.loc20_17: i32 = binding_pattern n, @MakeReorder.%n
 // CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:     %.loc20_24: %.3 = binding_pattern next, @MakeReorder.%next
+// CHECK:STDOUT:     %.loc20_28: %.3 = binding_pattern next, @MakeReorder.%next
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @MakeReorder.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:     @MakeReorder.%n: i32 = bind_name n, %n.loc20_16.3

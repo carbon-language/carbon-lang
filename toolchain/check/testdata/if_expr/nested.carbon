@@ -54,15 +54,15 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:     %bool.make_type.loc11_9: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type.loc11_9 [template = bool]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %bool.make_type.loc11_9, %.loc11_9.1 [template = bool]
-// CHECK:STDOUT:     %.loc11_6: bool = binding_pattern a, @F.%a
+// CHECK:STDOUT:     %.loc11_7: bool = binding_pattern a, @F.%a
 // CHECK:STDOUT:     %bool.make_type.loc11_18: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %bool.make_type.loc11_18 [template = bool]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %bool.make_type.loc11_18, %.loc11_18.1 [template = bool]
-// CHECK:STDOUT:     %.loc11_15: bool = binding_pattern b, @F.%b
+// CHECK:STDOUT:     %.loc11_16: bool = binding_pattern b, @F.%b
 // CHECK:STDOUT:     %bool.make_type.loc11_27: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %bool.make_type.loc11_27 [template = bool]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %bool.make_type.loc11_27, %.loc11_27.1 [template = bool]
-// CHECK:STDOUT:     %.loc11_24: bool = binding_pattern c, @F.%c
+// CHECK:STDOUT:     %.loc11_25: bool = binding_pattern c, @F.%c
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_36.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_36.2: type = converted %int.make_type_32, %.loc11_36.1 [template = i32]

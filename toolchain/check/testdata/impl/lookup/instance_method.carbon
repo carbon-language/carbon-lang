@@ -73,7 +73,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
-// CHECK:STDOUT:     %.loc23_6: %C = binding_pattern c, @F.3.%c
+// CHECK:STDOUT:     %.loc23_7: %C = binding_pattern c, @F.3.%c
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc23_15.2: type = converted %int.make_type_32, %.loc23_15.1 [template = i32]

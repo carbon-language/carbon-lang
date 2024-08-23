@@ -73,7 +73,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_9.2: type = converted %bool.make_type, %.loc14_9.1 [template = bool]
-// CHECK:STDOUT:     %.loc14_6: bool = binding_pattern b, @F.%b
+// CHECK:STDOUT:     %.loc14_7: bool = binding_pattern b, @F.%b
 // CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_18.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:     %.loc14_18.2: type = converted %int.make_type_32.loc14, %.loc14_18.1 [template = i32]

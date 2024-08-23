@@ -54,7 +54,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.loc11_13.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
-// CHECK:STDOUT:     %.loc16_10: type = binding_pattern T 0, %T.loc16_10.2
+// CHECK:STDOUT:     %.loc16_11: type = binding_pattern T 0, %T.loc16_10.2
 // CHECK:STDOUT:     %T.loc16_10.2: type = bind_symbolic_name T 0, %T.loc16_10.3 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.loc16_10.3: type = param T
 // CHECK:STDOUT:     %.loc16_28: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
@@ -62,7 +62,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %self.loc16_22.1: %Class.2 = param self
 // CHECK:STDOUT:     @F.%self: %Class.2 = bind_name self, %self.loc16_22.1
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_10.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc16_34: %T = binding_pattern n, @F.%n
+// CHECK:STDOUT:     %.loc16_35: %T = binding_pattern n, @F.%n
 // CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc16_34.3
 // CHECK:STDOUT:     %n.loc16_34.3: %T = param n
 // CHECK:STDOUT:   }
@@ -86,7 +86,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %self.loc13_8.1: @F.%Class (%Class.2) = param self
 // CHECK:STDOUT:       %self.loc13_8.2: @F.%Class (%Class.2) = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:       %.loc13_20: @F.%T (%T) = binding_pattern n, %n.loc13_20.2
+// CHECK:STDOUT:       %.loc13_21: @F.%T (%T) = binding_pattern n, %n.loc13_20.2
 // CHECK:STDOUT:       %n.loc13_20.2: @F.%T (%T) = bind_name n, %n.loc13_20.3
 // CHECK:STDOUT:       %n.loc13_20.3: @F.%T (%T) = param n
 // CHECK:STDOUT:     }

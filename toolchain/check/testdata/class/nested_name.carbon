@@ -67,7 +67,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Outer.ref.loc17: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:     %.loc17_6: %Inner = binding_pattern oi, @F.%oi
+// CHECK:STDOUT:     %.loc17_8: %Inner = binding_pattern oi, @F.%oi
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc17_26.2: type = converted %int.make_type_32, %.loc17_26.1 [template = i32]

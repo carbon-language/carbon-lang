@@ -32,8 +32,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc11_6: type = binding_pattern T 0, @F.%T.loc11
-// CHECK:STDOUT:     %.loc11_16: type = binding_pattern U 1, @F.%U.loc11
+// CHECK:STDOUT:     %.loc11_7: type = binding_pattern T 0, @F.%T.loc11
+// CHECK:STDOUT:     %.loc11_17: type = binding_pattern U 1, @F.%U.loc11
 // CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.3 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.loc11_6.3: type = param T
 // CHECK:STDOUT:     @F.%U.loc11: type = bind_symbolic_name U 1, %U.loc11_16.3 [symbolic = @F.%U.1 (constants.%U)]
@@ -55,7 +55,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %p.var: ref @F.%.1 (%.2) = var p
 // CHECK:STDOUT:     %p: ref @F.%.1 (%.2) = bind_name p, %p.var
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc11 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:     %.loc16_7: @F.%U.1 (%U) = binding_pattern n, %n.loc16_7.2
+// CHECK:STDOUT:     %.loc16_8: @F.%U.1 (%U) = binding_pattern n, %n.loc16_7.2
 // CHECK:STDOUT:     %p.ref: ref @F.%.1 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc16_15: @F.%.1 (%.2) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc16_14: ref @F.%T.1 (%T) = deref %.loc16_15

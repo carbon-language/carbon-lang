@@ -98,7 +98,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41_14: type = ptr_type %Outer [template = constants.%.4]
-// CHECK:STDOUT:     %.loc41_6: %.4 = binding_pattern a, @F.2.%a
+// CHECK:STDOUT:     %.loc41_7: %.4 = binding_pattern a, @F.2.%a
 // CHECK:STDOUT:     @F.2.%a: %.4 = bind_name a, %a.loc41_6.3
 // CHECK:STDOUT:     %a.loc41_6.3: %.4 = param a
 // CHECK:STDOUT:   }
@@ -186,7 +186,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc42_21: type = ptr_type %Inner [template = constants.%.2]
-// CHECK:STDOUT:   %.loc42_7: %.2 = binding_pattern b, %b.loc42_7.2
+// CHECK:STDOUT:   %.loc42_8: %.2 = binding_pattern b, %b.loc42_7.2
 // CHECK:STDOUT:   %a.ref.loc42: %.4 = name_ref a, %a
 // CHECK:STDOUT:   %.loc42_26: ref %Outer = deref %a.ref.loc42
 // CHECK:STDOUT:   %pi.ref.loc42: %.8 = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]

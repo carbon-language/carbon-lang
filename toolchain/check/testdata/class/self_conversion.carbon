@@ -101,7 +101,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc30_19: type = ptr_type %Derived [template = constants.%.9]
-// CHECK:STDOUT:     %.loc30_9: %.9 = binding_pattern p, @Call.%p
+// CHECK:STDOUT:     %.loc30_10: %.9 = binding_pattern p, @Call.%p
 // CHECK:STDOUT:     %int.make_type_32.loc30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc30_25.1: type = value_of_initializer %int.make_type_32.loc30 [template = i32]
 // CHECK:STDOUT:     %.loc30_25.2: type = converted %int.make_type_32.loc30, %.loc30_25.1 [template = i32]

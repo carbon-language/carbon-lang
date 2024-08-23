@@ -122,7 +122,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc12_23: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_23.1: type = facet_type_access %Self.ref.loc12_23 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %Self.ref.loc12_23, %.loc12_23.1 [symbolic = @F.1.%Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_20: @F.1.%Self (%Self.1) = binding_pattern x, %x.loc12_20.2
+// CHECK:STDOUT:     %.loc12_21: @F.1.%Self (%Self.1) = binding_pattern x, %x.loc12_20.2
 // CHECK:STDOUT:     %Self.ref.loc12_32: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.1: type = facet_type_access %Self.ref.loc12_32 [symbolic = @F.1.%Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %Self.ref.loc12_32, %.loc12_32.1 [symbolic = @F.1.%Self (constants.%Self.1)]
@@ -153,7 +153,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc28_36: type = struct_type {.x: %Self.2, .y: %.2} [symbolic = @F.4.%.2 (constants.%.11)]
 // CHECK:STDOUT:     %.loc28_37.1: %.12 = tuple_literal (%.loc28_16.3, %.loc28_36)
 // CHECK:STDOUT:     %.loc28_37.2: type = converted %.loc28_37.1, constants.%.13 [symbolic = @F.4.%.3 (constants.%.13)]
-// CHECK:STDOUT:     %.loc28_8: @F.4.%.3 (%.13) = binding_pattern x, %x.loc28_8.2
+// CHECK:STDOUT:     %.loc28_9: @F.4.%.3 (%.13) = binding_pattern x, %x.loc28_8.2
 // CHECK:STDOUT:     %x.loc28_8.2: @F.4.%.3 (%.13) = bind_name x, %x.loc28_8.3
 // CHECK:STDOUT:     %x.loc28_8.3: @F.4.%.3 (%.13) = param x
 // CHECK:STDOUT:   }
@@ -213,7 +213,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc32_30: type = struct_type {.x: %C, .y: %.2} [template = constants.%.17]
 // CHECK:STDOUT:     %.loc32_31.1: %.12 = tuple_literal (%.loc32_13, %.loc32_30)
 // CHECK:STDOUT:     %.loc32_31.2: type = converted %.loc32_31.1, constants.%.18 [template = constants.%.18]
-// CHECK:STDOUT:     %.loc32_8: %.18 = binding_pattern x, %x.loc32_8.2
+// CHECK:STDOUT:     %.loc32_9: %.18 = binding_pattern x, %x.loc32_8.2
 // CHECK:STDOUT:     %x.loc32_8.2: %.18 = bind_name x, %x.loc32_8.3
 // CHECK:STDOUT:     %x.loc32_8.3: %.18 = param x
 // CHECK:STDOUT:   }
@@ -234,7 +234,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc36_36: type = struct_type {.x: %D, .y: %.2} [template = constants.%.21]
 // CHECK:STDOUT:     %.loc36_37.1: %.12 = tuple_literal (%.loc36_16, %.loc36_36)
 // CHECK:STDOUT:     %.loc36_37.2: type = converted %.loc36_37.1, constants.%.22 [template = constants.%.22]
-// CHECK:STDOUT:     %.loc36_8: %.22 = binding_pattern x, %x.loc36_8.2
+// CHECK:STDOUT:     %.loc36_9: %.22 = binding_pattern x, %x.loc36_8.2
 // CHECK:STDOUT:     %x.loc36_8.2: %.22 = bind_name x, %x.loc36_8.3
 // CHECK:STDOUT:     %x.loc36_8.3: %.22 = param x
 // CHECK:STDOUT:   }

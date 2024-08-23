@@ -65,7 +65,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %.loc11_23.1: type = value_of_initializer %int.make_type_32.loc11_23 [template = i32]
 // CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_32.loc11_23, %.loc11_23.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
-// CHECK:STDOUT:     %.loc11_6: %.2 = binding_pattern s, @G.%s
+// CHECK:STDOUT:     %.loc11_7: %.2 = binding_pattern s, @G.%s
 // CHECK:STDOUT:     @G.%s: %.2 = bind_name s, %s.loc11_6.3
 // CHECK:STDOUT:     %s.loc11_6.3: %.2 = param s
 // CHECK:STDOUT:   }
@@ -73,7 +73,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
-// CHECK:STDOUT:     %.loc13_6: bool = binding_pattern cond, @F.%cond
+// CHECK:STDOUT:     %.loc13_10: bool = binding_pattern cond, @F.%cond
 // CHECK:STDOUT:     @F.%cond: bool = bind_name cond, %cond.loc13_6.3
 // CHECK:STDOUT:     %cond.loc13_6.3: bool = param cond
 // CHECK:STDOUT:   }

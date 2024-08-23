@@ -748,7 +748,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc6_11: type = const_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_8: %.2 = binding_pattern a, @Foo.%a
+// CHECK:STDOUT:     %.loc6_9: %.2 = binding_pattern a, @Foo.%a
 // CHECK:STDOUT:     @Foo.%a: %.2 = bind_name a, %a.loc6_8.3
 // CHECK:STDOUT:     %a.loc6_8.3: %.2 = param a
 // CHECK:STDOUT:   }
@@ -756,7 +756,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc17_18: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %.loc17_11: type = const_type %.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc17_8: %.2 = binding_pattern a, @.1.%a
+// CHECK:STDOUT:     %.loc17_9: %.2 = binding_pattern a, @.1.%a
 // CHECK:STDOUT:     @.1.%a: %.2 = bind_name a, %a.loc17_8.3
 // CHECK:STDOUT:     %a.loc17_8.3: %.2 = param a
 // CHECK:STDOUT:   }

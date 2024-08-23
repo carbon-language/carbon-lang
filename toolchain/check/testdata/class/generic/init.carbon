@@ -76,9 +76,9 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:     %T.loc2_13.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [template = constants.%InitFromStructGeneric] {
-// CHECK:STDOUT:     %.loc6_26: type = binding_pattern T 0, @InitFromStructGeneric.%T.loc6
+// CHECK:STDOUT:     %.loc6_27: type = binding_pattern T 0, @InitFromStructGeneric.%T.loc6
 // CHECK:STDOUT:     %T.ref.loc6_39: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_36: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x, @InitFromStructGeneric.%x
+// CHECK:STDOUT:     %.loc6_37: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x, @InitFromStructGeneric.%x
 // CHECK:STDOUT:     %T.ref.loc6_45: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @InitFromStructGeneric.%return: ref @InitFromStructGeneric.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:     @InitFromStructGeneric.%T.loc6: type = bind_symbolic_name T 0, %T.loc6_26.3 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]

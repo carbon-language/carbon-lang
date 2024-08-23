@@ -80,7 +80,7 @@ class C {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32, %.loc23_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc23_5: i32 = binding_pattern x, %x
+// CHECK:STDOUT:   %.loc23_6: i32 = binding_pattern x, %x
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

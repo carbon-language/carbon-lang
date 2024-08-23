@@ -78,7 +78,7 @@ fn Initializing() {
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.4]
-// CHECK:STDOUT:     %.loc21_14: %.4 = binding_pattern p, @Reference.%p
+// CHECK:STDOUT:     %.loc21_15: %.4 = binding_pattern p, @Reference.%p
 // CHECK:STDOUT:     @Reference.%p: %.4 = bind_name p, %p.loc21_14.3
 // CHECK:STDOUT:     %p.loc21_14.3: %.4 = param p
 // CHECK:STDOUT:   }
@@ -108,7 +108,7 @@ fn Initializing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.4]
-// CHECK:STDOUT:   %.loc22_7: %.4 = binding_pattern q, %q.loc22_7.2
+// CHECK:STDOUT:   %.loc22_8: %.4 = binding_pattern q, %q.loc22_7.2
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc22_23: type = name_ref X, file.%X.decl [template = constants.%X]

@@ -192,7 +192,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %int.make_type_32.loc95: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_32.loc95 [template = i32]
 // CHECK:STDOUT:     %.loc95_26.2: type = converted %int.make_type_32.loc95, %.loc95_26.1 [template = i32]
-// CHECK:STDOUT:     %.loc95_19: i32 = binding_pattern param, @AddressOfParam.%param
+// CHECK:STDOUT:     %.loc95_24: i32 = binding_pattern param, @AddressOfParam.%param
 // CHECK:STDOUT:     @AddressOfParam.%param: i32 = bind_name param, %param.loc95_19.3
 // CHECK:STDOUT:     %param.loc95_19.3: i32 = param param
 // CHECK:STDOUT:   }

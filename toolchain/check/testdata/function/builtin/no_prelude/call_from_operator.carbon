@@ -66,7 +66,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = @Op.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc7_21: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.2
+// CHECK:STDOUT:     %.loc7_26: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.2
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]

@@ -212,7 +212,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref.loc51: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc51_14: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc51_6: %.4 = binding_pattern p, @G.%p
+// CHECK:STDOUT:     %.loc51_7: %.4 = binding_pattern p, @G.%p
 // CHECK:STDOUT:     %int.make_type_32.loc51: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc51_20.1: type = value_of_initializer %int.make_type_32.loc51 [template = i32]
 // CHECK:STDOUT:     %.loc51_20.2: type = converted %int.make_type_32.loc51, %.loc51_20.1 [template = i32]
@@ -223,7 +223,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %MemberAccess.decl: %MemberAccess.type = fn_decl @MemberAccess [template = constants.%MemberAccess] {
 // CHECK:STDOUT:     %Class.ref.loc62: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc62_25: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc62_17: %.4 = binding_pattern p, @MemberAccess.%p
+// CHECK:STDOUT:     %.loc62_18: %.4 = binding_pattern p, @MemberAccess.%p
 // CHECK:STDOUT:     %int.make_type_32.loc62: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc62_31.1: type = value_of_initializer %int.make_type_32.loc62 [template = i32]
 // CHECK:STDOUT:     %.loc62_31.2: type = converted %int.make_type_32.loc62, %.loc62_31.1 [template = i32]
@@ -234,7 +234,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [template = constants.%Copy] {
 // CHECK:STDOUT:     %Class.ref.loc80_12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc80_17: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc80_9: %.4 = binding_pattern p, @Copy.%p
+// CHECK:STDOUT:     %.loc80_10: %.4 = binding_pattern p, @Copy.%p
 // CHECK:STDOUT:     %Class.ref.loc80_23: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Copy.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:     @Copy.%p: %.4 = bind_name p, %p.loc80_9.3
@@ -243,7 +243,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {
 // CHECK:STDOUT:     %Class.ref.loc84: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc84_16: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc84_8: %.4 = binding_pattern p, @Let.%p
+// CHECK:STDOUT:     %.loc84_9: %.4 = binding_pattern p, @Let.%p
 // CHECK:STDOUT:     @Let.%p: %.4 = bind_name p, %p.loc84_8.3
 // CHECK:STDOUT:     %p.loc84_8.3: %.4 = param p
 // CHECK:STDOUT:   }
@@ -260,7 +260,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %CallTakeIncomplete.decl: %CallTakeIncomplete.type = fn_decl @CallTakeIncomplete [template = constants.%CallTakeIncomplete] {
 // CHECK:STDOUT:     %Class.ref.loc99: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc99_31: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc99_23: %.4 = binding_pattern p, @CallTakeIncomplete.%p
+// CHECK:STDOUT:     %.loc99_24: %.4 = binding_pattern p, @CallTakeIncomplete.%p
 // CHECK:STDOUT:     @CallTakeIncomplete.%p: %.4 = bind_name p, %p.loc99_23.3
 // CHECK:STDOUT:     %p.loc99_23.3: %.4 = param p
 // CHECK:STDOUT:   }
@@ -313,7 +313,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: fn @Let(%p: %.4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc92_7: <error> = binding_pattern c, %c.loc92_7.2
+// CHECK:STDOUT:   %.loc92_8: <error> = binding_pattern c, %c.loc92_7.2
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc92_18: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %c.loc92_7.2: <error> = bind_name c, <error>

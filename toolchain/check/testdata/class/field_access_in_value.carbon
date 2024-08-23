@@ -97,7 +97,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc19_10: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   assign %.loc19_5, %.loc19_10
 // CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc20_7: %Class = binding_pattern c, %c.loc20_7.2
+// CHECK:STDOUT:   %.loc20_8: %Class = binding_pattern c, %c.loc20_7.2
 // CHECK:STDOUT:   %cv.ref.loc20: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc20_18: %Class = bind_value %cv.ref.loc20
 // CHECK:STDOUT:   %c.loc20_7.2: %Class = bind_name c, %.loc20_18

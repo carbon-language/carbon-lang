@@ -324,7 +324,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %.loc13_6: %SomeClassAdapter = binding_pattern a, @F.%a
+// CHECK:STDOUT:     %.loc13_7: %SomeClassAdapter = binding_pattern a, @F.%a
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32, %.loc13_30.1 [template = i32]

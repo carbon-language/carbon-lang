@@ -60,7 +60,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc5_28: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = @Op.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc5_21: @Op.%Self (%Self) = binding_pattern other, %other.loc5_21.2
+// CHECK:STDOUT:     %.loc5_26: @Op.%Self (%Self) = binding_pattern other, %other.loc5_21.2
 // CHECK:STDOUT:     %Self.ref.loc5_37: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = @Op.%Self (constants.%Self)]
@@ -126,10 +126,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc10_6: %.1 = binding_pattern x, @F.%x
+// CHECK:STDOUT:     %.loc10_7: %.1 = binding_pattern x, @F.%x
 // CHECK:STDOUT:     %.loc10_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_17.2: type = converted %.loc10_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc10_13: %.1 = binding_pattern y, @F.%y
+// CHECK:STDOUT:     %.loc10_14: %.1 = binding_pattern y, @F.%y
 // CHECK:STDOUT:     %.loc10_24.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>

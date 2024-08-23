@@ -65,7 +65,7 @@ class Class {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21_21: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %.loc21_13: %.1 = binding_pattern b, %b.loc21_13.2
+// CHECK:STDOUT:     %.loc21_14: %.1 = binding_pattern b, %b.loc21_13.2
 // CHECK:STDOUT:     %b.loc21_13.2: %.1 = bind_name b, %b.loc21_13.3
 // CHECK:STDOUT:     %b.loc21_13.3: %.1 = param b
 // CHECK:STDOUT:   }

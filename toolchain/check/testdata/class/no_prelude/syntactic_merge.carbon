@@ -904,7 +904,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc6_15: type = const_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_11: %.2 = binding_pattern a 0, %a.loc6_11.2
+// CHECK:STDOUT:     %.loc6_12: %.2 = binding_pattern a 0, %a.loc6_11.2
 // CHECK:STDOUT:     %a.loc6_11.2: %.2 = bind_symbolic_name a 0, %a.loc6_11.3 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:     %a.loc6_11.3: %.2 = param a
 // CHECK:STDOUT:   }
@@ -912,7 +912,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc18_22: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %.loc18_15: type = const_type %.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc18_11: %.2 = binding_pattern a 0, %a.loc18_11.2
+// CHECK:STDOUT:     %.loc18_12: %.2 = binding_pattern a 0, %a.loc18_11.2
 // CHECK:STDOUT:     %a.loc18_11.2: %.2 = bind_symbolic_name a 0, %a.loc18_11.3 [symbolic = @.1.%a (constants.%a)]
 // CHECK:STDOUT:     %a.loc18_11.3: %.2 = param a
 // CHECK:STDOUT:   }

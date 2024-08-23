@@ -79,14 +79,14 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
-// CHECK:STDOUT:     %.loc32_10: i32 = binding_pattern N 0, %N.loc32_10.2
+// CHECK:STDOUT:     %.loc32_11: i32 = binding_pattern N 0, %N.loc32_10.2
 // CHECK:STDOUT:     %N.loc32_10.2: i32 = bind_symbolic_name N 0, %N.loc32_10.3 [symbolic = @.1.%N (constants.%N)]
 // CHECK:STDOUT:     %N.loc32_10.3: i32 = param N
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %self.loc32_21.1: <error> = param self
 // CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %self.loc32_21.1
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc32_33: <error> = binding_pattern n, @.1.%n
+// CHECK:STDOUT:     %.loc32_34: <error> = binding_pattern n, @.1.%n
 // CHECK:STDOUT:     @.1.%n: <error> = bind_name n, %n.loc32_33.3
 // CHECK:STDOUT:     %n.loc32_33.3: <error> = param n
 // CHECK:STDOUT:   }
@@ -110,7 +110,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %self.loc13_8.1: @F.%Class (%Class.2) = param self
 // CHECK:STDOUT:       %self.loc13_8.2: @F.%Class (%Class.2) = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:       %.loc13_20: @F.%T (%T) = binding_pattern n, %n.loc13_20.2
+// CHECK:STDOUT:       %.loc13_21: @F.%T (%T) = binding_pattern n, %n.loc13_20.2
 // CHECK:STDOUT:       %n.loc13_20.2: @F.%T (%T) = bind_name n, %n.loc13_20.3
 // CHECK:STDOUT:       %n.loc13_20.3: @F.%T (%T) = param n
 // CHECK:STDOUT:     }

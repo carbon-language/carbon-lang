@@ -81,7 +81,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc24_13: i32 = binding_pattern n, %n.loc24_13.2
+// CHECK:STDOUT:   %.loc24_14: i32 = binding_pattern n, %n.loc24_13.2
 // CHECK:STDOUT:   %n.loc24_13.2: i32 = bind_name n, %n.loc24_13.3
 // CHECK:STDOUT:   %n.loc24_13.3: i32 = param n
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}

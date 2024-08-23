@@ -88,7 +88,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc25_11: %Derived = binding_pattern d, @Access.%d
+// CHECK:STDOUT:     %.loc25_12: %Derived = binding_pattern d, @Access.%d
 // CHECK:STDOUT:     %int.make_type_32.loc25_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc25_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_35.1: %.14 = tuple_literal (%int.make_type_32.loc25_27, %int.make_type_32.loc25_32)
