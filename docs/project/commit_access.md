@@ -35,11 +35,11 @@ trivial PR comments after approval and then merge their own PR, for example
 because the review noted a minor typo, or to resolve merge conflicts.
 
 Developers with commit access are expected to make reasonable choices about when
-to approve or merge PRs for others -- generally, the change either needs to be
-trivially understood without context on the code in question (like a cleanup,
-typo fix, etc), or the developer should have reasonable context on the code in
-question. If in doubt, feel free to review but leave approving or merging for
-someone else.
+to approve or merge PRs for others. Generally, the change either needs to be
+trivially understood without context on the code in question (such as a cleanup
+or typo fix), or the developer should have some context on the code in question.
+If in doubt, feel free to review but leave approving or merging for someone
+else.
 
 Similarly, developers with commit access are expected to make reasonable choices
 about what changes to make to their own PRs without asking for another round of
