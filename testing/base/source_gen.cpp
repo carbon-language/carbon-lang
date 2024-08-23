@@ -159,8 +159,8 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
   }
 }
 
-// We want to synthesize shuffled type names from the class names that will be
-// declared, but mixing in `i32` and other builtin types.
+// Build both the class names this file will declare and a list of type
+// references to use throughout those classes.
 //
 // We combine a list of fixed types in the `type_use_params` with the list of
 // class names that will be defined to form the spelling of all
