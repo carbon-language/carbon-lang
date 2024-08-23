@@ -18,9 +18,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Commit access is what allows developers to merge PRs into the main
-[carbon-lang repository](https://github.com/carbon-language/carbon-lang/). It
-also gives the ability to [review, approve, and merge changes](code_review.md).
+First and foremost, commit access is **not required** for contributing to Carbon! Anyone can send a pull request with a change to Carbon. Very few parts of our process require commit access, and most development activity is exactly the same for folks with or without. This is an important feature of our GitHub workflow for us, and one we plan to keep.
+
+The main thing commit access allows is for developers to merge PRs into the main
+[carbon-lang repository](https://github.com/carbon-language/carbon-lang/). They still need review, and often a reviewer with commit access handles the merge. It
+also gives the ability to [approve and merge changes](code_review.md).
 
 Developers with commit access are not required to do reviews. It is granted as a
 convenience in order to allow fixing PRs after approval, for example because the
