@@ -41,7 +41,7 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated.
   auto Get(InstId inst_id) const -> ConstantId {
-    CARBON_CHECK(inst_id.index >= 0);
+    CARBON_DCHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
                ? default_
                : values_[inst_id.index];
@@ -50,7 +50,7 @@ class ConstantValueStore {
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    CARBON_CHECK(inst_id.index >= 0);
+    CARBON_DCHECK(inst_id.index >= 0);
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
       values_.resize(inst_id.index + 1, default_);
     }
