@@ -169,14 +169,17 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
 // declared. We build a set of type references so that its histogram will
 // roughly match these weights.
 //
-// For each of the fixed types, `type_use_params` provides a spelling for both Carbon and C++.
+// For each of the fixed types, `type_use_params` provides a spelling for both
+// Carbon and C++.
 //
-// We distribute our references to declared class names evenly to the extent possible.
+// We distribute our references to declared class names evenly to the extent
+// possible.
 //
-// Before all the references are formed, the class names are kept their original unshuffled order.
-// This ensures that any uneven sampling of names is done deterministically. At the end, we
-// randomly shuffle the sequences of both the declared class names and type references
-// to provide an unpredictable order in the generated output.
+// Before all the references are formed, the class names are kept their original
+// unshuffled order. This ensures that any uneven sampling of names is done
+// deterministically. At the end, we randomly shuffle the sequences of both the
+// declared class names and type references to provide an unpredictable order in
+// the generated output.
 auto SourceGen::ClassGenState::BuildClassAndTypeNames(
     SourceGen& gen, int num_classes, int num_types,
     const TypeUseParams& type_use_params) -> void {
