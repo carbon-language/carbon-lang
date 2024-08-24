@@ -163,8 +163,7 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
 // references to use throughout those classes.
 //
 // We combine a list of fixed types in the `type_use_params` with the list of
-// class names that will be defined to form the spelling of all
-// the referenced types. The `type_use_params` provides weights for each fixed
+// class names that will be defined to form the spelling of all the referenced types. The `type_use_params` provides weights for each fixed
 // type as well as an overall weight for referencing class names that are being
 // declared. We build a set of type references so that its histogram will
 // roughly match these weights.
