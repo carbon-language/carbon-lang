@@ -19,8 +19,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Implementation team](#implementation-team)
 -   [Security](#security)
 -   [Access groups](#access-groups)
-    -   [GitHub Commit access](#github-commit-access)
-    -   [GitHub Label and review access](#github-label-and-review-access)
+    -   [GitHub commit access](#github-commit-access)
+    -   [GitHub label and review access](#github-label-and-review-access)
     -   [Google Drive access](#google-drive-access)
 
 <!-- tocstop -->
