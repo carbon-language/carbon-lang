@@ -97,10 +97,12 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   auto inst = sem_ir().insts().Get(inst_id);
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
-  auto loc = file_context_->GetDiagnosticLoc(inst_id);
-  builder_.SetCurrentDebugLocation(
-      llvm::DILocation::get(builder_.getContext(), loc.line_number,
-                            loc.column_number, di_subprogram_));
+  if (di_subprogram_) {
+    auto loc = file_context_->GetDiagnosticLoc(inst_id);
+    builder_.SetCurrentDebugLocation(
+        llvm::DILocation::get(builder_.getContext(), loc.line_number,
+                              loc.column_number, di_subprogram_));
+  }
 
   CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)            \
@@ -112,7 +114,9 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   }
 
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
-  builder_.SetCurrentDebugLocation(llvm::DebugLoc());
+  if (di_subprogram_) {
+    builder_.SetCurrentDebugLocation(llvm::DebugLoc());
+  }
 }
 
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
