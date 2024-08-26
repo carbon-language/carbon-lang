@@ -10,5 +10,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/debug/nodebug.carbon
 
+fn F() {
+}
+
 // CHECK:STDOUT: ; ModuleID = 'nodebug.carbon'
 // CHECK:STDOUT: source_filename = "nodebug.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
