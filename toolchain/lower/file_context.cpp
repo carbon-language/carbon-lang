@@ -372,10 +372,18 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   auto loc = converter_.ConvertLoc(
       function.definition_id,
       [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+  llvm::StringRef name;
+  if (function.name_id.is_valid()) {
+    name = *sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+  }
+  llvm::StringRef linkage_name = llvm_function->getName();
+  if (linkage_name == name) {
+    linkage_name = "";
+  }
   // FIXME: Add more details here, including mangled name, real subroutine type
   // (once type information is built), etc.
   return di_builder_.createFunction(
-      di_compile_unit_, llvm_function->getName(), /*LinkageName=*/"",
+      di_compile_unit_, name, linkage_name,
       /*File=*/di_builder_.createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
       di_builder_.createSubroutineType(

@@ -102,7 +102,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 12, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 9, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Make.1", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Make", linkageName: "Make.1", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 12, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 17, column: 5, scope: !9)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetB", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)

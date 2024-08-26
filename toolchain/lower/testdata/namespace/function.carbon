@@ -51,7 +51,7 @@ fn Bar() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Baz.1", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Baz", linkageName: "Baz.1", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 1, scope: !8)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Bar", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !10)

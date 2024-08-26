@@ -105,7 +105,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 28, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 12, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op.1", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "Op.1", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 29, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 50, scope: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 28, scope: !11)
