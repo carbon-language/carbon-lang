@@ -36,20 +36,20 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @While() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %while.cond
+// CHECK:STDOUT:   call void @F(), !dbg !7
+// CHECK:STDOUT:   br label %while.cond, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %entry
-// CHECK:STDOUT:   %Cond.call = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond.call, label %while.body, label %while.done
+// CHECK:STDOUT:   %Cond.call = call i1 @Cond(), !dbg !9
+// CHECK:STDOUT:   br i1 %Cond.call, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @G()
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @G(), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @H()
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @H(), !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -62,3 +62,10 @@ fn While() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 9, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 10, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 5, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 5, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 23, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !4)

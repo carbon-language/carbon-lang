@@ -19,14 +19,14 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAddNonmethod(i32 %a, i32 %b) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.sadd
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !7
+// CHECK:STDOUT:   ret i32 %int.sadd, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestAddMethod(i32 %a, i32 %b) !dbg !7 {
+// CHECK:STDOUT: define i32 @TestAddMethod(i32 %a, i32 %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.sadd
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !10
+// CHECK:STDOUT:   ret i32 %int.sadd, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -39,4 +39,8 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestAddNonmethod", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "TestAddMethod", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 53, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 46, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestAddMethod", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 50, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 43, scope: !9)

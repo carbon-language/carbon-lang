@@ -17,8 +17,8 @@ var a: i32 = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @__global_init() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 0, ptr @a, align 4
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   store i32 0, ptr @a, align 4, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -34,3 +34,5 @@ var a: i32 = 0;
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "__global_init", scope: null, file: !3, line: 4294967295, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 4294967295, scope: !4)

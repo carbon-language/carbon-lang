@@ -291,9 +291,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
-  llvm_function->setSubprogram(BuildDISubprogram(function, llvm_function));
-
-  FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
+  FunctionContext function_lowering(*this, llvm_function,
+                                    BuildDISubprogram(function, llvm_function),
+                                    vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
   const auto specific_id = SemIR::SpecificId::Invalid;
@@ -538,6 +538,13 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
                                   /*isConstant=*/false,
                                   llvm::GlobalVariable::InternalLinkage,
                                   /*Initializer=*/nullptr, mangled_name);
+}
+
+auto FileContext::GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc {
+  return converter_.ConvertLoc(
+      inst_id,
+      [&](DiagnosticLoc /*context_loc*/,
+          const Internal::DiagnosticBase<>& /*context_diagnostic_base*/) {});
 }
 
 }  // namespace Carbon::Lower

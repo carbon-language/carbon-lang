@@ -24,13 +24,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %s.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc14_46.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc14_46.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.loc14_47, i64 8, i1 false)
-// CHECK:STDOUT:   %.loc15_7.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @G(ptr %.loc15_7.b)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %s.var = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc14_46.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc14_46.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.loc14_47, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   %.loc15_7.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   call void @G(ptr %.loc15_7.b), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -48,3 +48,9 @@ fn F() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 31, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 6, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 13, column: 1, scope: !4)

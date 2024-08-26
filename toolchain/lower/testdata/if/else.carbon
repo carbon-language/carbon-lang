@@ -26,34 +26,34 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G() !dbg !7 {
+// CHECK:STDOUT: define void @G() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @H() !dbg !8 {
+// CHECK:STDOUT: define void @H() !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @If(i1 %b) !dbg !9 {
+// CHECK:STDOUT: define void @If(i1 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else
+// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %if.done
+// CHECK:STDOUT:   call void @F(), !dbg !14
+// CHECK:STDOUT:   br label %if.done, !dbg !15
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @G()
-// CHECK:STDOUT:   br label %if.done
+// CHECK:STDOUT:   call void @G(), !dbg !16
+// CHECK:STDOUT:   br label %if.done, !dbg !15
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.done:                                          ; preds = %if.else, %if.then
-// CHECK:STDOUT:   call void @H()
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @H(), !dbg !17
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -66,6 +66,15 @@ fn If(b: bool) {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "H", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "If", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 1, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "H", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !10)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "If", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 16, column: 6, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 17, column: 5, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 19, column: 5, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 21, column: 3, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 15, column: 1, scope: !12)

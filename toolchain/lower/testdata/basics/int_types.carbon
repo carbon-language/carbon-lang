@@ -18,22 +18,22 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i8 @F_i8(i8 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i8 %a
+// CHECK:STDOUT:   ret i8 %a, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @F_u16(i16 %a) !dbg !7 {
+// CHECK:STDOUT: define i16 @F_u16(i16 %a) !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i16 %a
+// CHECK:STDOUT:   ret i16 %a, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @F_i64(i64 %a) !dbg !8 {
+// CHECK:STDOUT: define i64 @F_i64(i64 %a) !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i64 %a
+// CHECK:STDOUT:   ret i64 %a, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i65536 @F_u65536(i65536 %a) !dbg !9 {
+// CHECK:STDOUT: define i65536 @F_u65536(i65536 %a) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i65536 %a
+// CHECK:STDOUT:   ret i65536 %a, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -46,6 +46,10 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F_i8", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "F_u16", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F_i64", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F_u65536", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 24, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F_u16", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 27, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F_i64", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 27, scope: !10)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F_u65536", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 14, column: 36, scope: !12)

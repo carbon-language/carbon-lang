@@ -19,8 +19,8 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @G(i32 %n) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @F(i32 %n)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @F(i32 %n), !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -33,3 +33,5 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 1, scope: !4)

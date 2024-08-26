@@ -19,9 +19,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca {}, align 8
-// CHECK:STDOUT:   %y.var = alloca {}, align 8
-// CHECK:STDOUT:   ret i32 0
+// CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %y.var = alloca {}, align 8, !dbg !8
+// CHECK:STDOUT:   ret i32 0, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -34,3 +34,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !4)

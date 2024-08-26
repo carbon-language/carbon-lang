@@ -33,19 +33,19 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 0
+// CHECK:STDOUT:   ret i32 0, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TypeAccess() !dbg !7 {
+// CHECK:STDOUT: define i32 @TypeAccess() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @F()
-// CHECK:STDOUT:   ret i32 %F.call
+// CHECK:STDOUT:   %F.call = call i32 @F(), !dbg !9
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @InstanceAccess(ptr %a) !dbg !8 {
+// CHECK:STDOUT: define i32 @InstanceAccess(ptr %a) !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @F()
-// CHECK:STDOUT:   ret i32 %F.call
+// CHECK:STDOUT:   %F.call = call i32 @F(), !dbg !12
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -58,5 +58,10 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "TypeAccess", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "InstanceAccess", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TypeAccess", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 24, column: 10, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 24, column: 3, scope: !8)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "InstanceAccess", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 28, column: 10, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 28, column: 3, scope: !11)

@@ -22,14 +22,14 @@ var a: i32 = test_a();
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @test_a() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 0
+// CHECK:STDOUT:   ret i32 0, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @__global_init() !dbg !7 {
+// CHECK:STDOUT: define void @__global_init() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %test_a.call = call i32 @test_a()
-// CHECK:STDOUT:   store i32 %test_a.call, ptr @a, align 4
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %test_a.call = call i32 @test_a(), !dbg !9
+// CHECK:STDOUT:   store i32 %test_a.call, ptr @a, align 4, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -45,4 +45,8 @@ var a: i32 = test_a();
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "test_a", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "__global_init", scope: null, file: !3, line: 4294967295, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", scope: null, file: !3, line: 4294967295, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 15, column: 14, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 1, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 4294967295, scope: !8)

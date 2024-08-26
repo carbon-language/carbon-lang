@@ -21,12 +21,12 @@ fn T() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 false
+// CHECK:STDOUT:   ret i1 false, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @T() !dbg !7 {
+// CHECK:STDOUT: define i1 @T() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 true
+// CHECK:STDOUT:   ret i1 true, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -39,4 +39,6 @@ fn T() -> bool {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "T", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "T", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)

@@ -19,14 +19,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca { i32 }, align 8
-// CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4
-// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8
-// CHECK:STDOUT:   %.loc13_20.1.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc13_20.2 = load i32, ptr %.loc13_20.1.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc13_20.3.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.2, 0
-// CHECK:STDOUT:   store { i32 } %.loc13_20.3.tuple.init, ptr %y.var, align 4
-// CHECK:STDOUT:   ret i32 0
+// CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4, !dbg !8
+// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc13_20.1.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc13_20.2 = load i32, ptr %.loc13_20.1.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc13_20.3.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.2, 0, !dbg !10
+// CHECK:STDOUT:   store { i32 } %.loc13_20.3.tuple.init, ptr %y.var, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 0, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -42,3 +42,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 7, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 20, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !4)

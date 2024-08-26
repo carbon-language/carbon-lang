@@ -67,110 +67,110 @@ fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestNegate(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.snegate = sub i32 0, %a
-// CHECK:STDOUT:   ret i32 %int.snegate
+// CHECK:STDOUT:   %int.snegate = sub i32 0, %a, !dbg !7
+// CHECK:STDOUT:   ret i32 %int.snegate, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestAdd(i32 %a, i32 %b) !dbg !7 {
+// CHECK:STDOUT: define i32 @TestAdd(i32 %a, i32 %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.sadd
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !10
+// CHECK:STDOUT:   ret i32 %int.sadd, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestSub(i32 %a, i32 %b) !dbg !8 {
+// CHECK:STDOUT: define i32 @TestSub(i32 %a, i32 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.ssub = sub i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.ssub
+// CHECK:STDOUT:   %int.ssub = sub i32 %a, %b, !dbg !13
+// CHECK:STDOUT:   ret i32 %int.ssub, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestMul(i32 %a, i32 %b) !dbg !9 {
+// CHECK:STDOUT: define i32 @TestMul(i32 %a, i32 %b) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smul = mul i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.smul
+// CHECK:STDOUT:   %int.smul = mul i32 %a, %b, !dbg !16
+// CHECK:STDOUT:   ret i32 %int.smul, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestDiv(i32 %a, i32 %b) !dbg !10 {
+// CHECK:STDOUT: define i32 @TestDiv(i32 %a, i32 %b) !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sdiv = sdiv i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.sdiv
+// CHECK:STDOUT:   %int.sdiv = sdiv i32 %a, %b, !dbg !19
+// CHECK:STDOUT:   ret i32 %int.sdiv, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestMod(i32 %a, i32 %b) !dbg !11 {
+// CHECK:STDOUT: define i32 @TestMod(i32 %a, i32 %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smod = srem i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.smod
+// CHECK:STDOUT:   %int.smod = srem i32 %a, %b, !dbg !22
+// CHECK:STDOUT:   ret i32 %int.smod, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestComplement(i32 %a) !dbg !12 {
+// CHECK:STDOUT: define i32 @TestComplement(i32 %a) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.complement = xor i32 -1, %a
-// CHECK:STDOUT:   ret i32 %int.complement
+// CHECK:STDOUT:   %int.complement = xor i32 -1, %a, !dbg !25
+// CHECK:STDOUT:   ret i32 %int.complement, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestAnd(i32 %a, i32 %b) !dbg !13 {
+// CHECK:STDOUT: define i32 @TestAnd(i32 %a, i32 %b) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.and = and i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.and
+// CHECK:STDOUT:   %int.and = and i32 %a, %b, !dbg !28
+// CHECK:STDOUT:   ret i32 %int.and, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestOr(i32 %a, i32 %b) !dbg !14 {
+// CHECK:STDOUT: define i32 @TestOr(i32 %a, i32 %b) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.or = or i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.or
+// CHECK:STDOUT:   %int.or = or i32 %a, %b, !dbg !31
+// CHECK:STDOUT:   ret i32 %int.or, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestXor(i32 %a, i32 %b) !dbg !15 {
+// CHECK:STDOUT: define i32 @TestXor(i32 %a, i32 %b) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.xor = xor i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.xor
+// CHECK:STDOUT:   %int.xor = xor i32 %a, %b, !dbg !34
+// CHECK:STDOUT:   ret i32 %int.xor, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestLeftShift(i32 %a, i32 %b) !dbg !16 {
+// CHECK:STDOUT: define i32 @TestLeftShift(i32 %a, i32 %b) !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.left_shift
+// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %b, !dbg !37
+// CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @TestRightShift(i32 %a, i32 %b) !dbg !17 {
+// CHECK:STDOUT: define i32 @TestRightShift(i32 %a, i32 %b) !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.right_shift
+// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %b, !dbg !40
+// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestEq(i32 %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: define i1 @TestEq(i32 %a, i32 %b) !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b
-// CHECK:STDOUT:   ret i1 %int.eq
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b, !dbg !43
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestNeq(i32 %a, i32 %b) !dbg !19 {
+// CHECK:STDOUT: define i1 @TestNeq(i32 %a, i32 %b) !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b
-// CHECK:STDOUT:   ret i1 %int.neq
+// CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b, !dbg !46
+// CHECK:STDOUT:   ret i1 %int.neq, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestLess(i32 %a, i32 %b) !dbg !20 {
+// CHECK:STDOUT: define i1 @TestLess(i32 %a, i32 %b) !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b
-// CHECK:STDOUT:   ret i1 %int.less
+// CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b, !dbg !49
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestLessEq(i32 %a, i32 %b) !dbg !21 {
+// CHECK:STDOUT: define i1 @TestLessEq(i32 %a, i32 %b) !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b
-// CHECK:STDOUT:   ret i1 %int.less_eq
+// CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b, !dbg !52
+// CHECK:STDOUT:   ret i1 %int.less_eq, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestGreater(i32 %a, i32 %b) !dbg !22 {
+// CHECK:STDOUT: define i1 @TestGreater(i32 %a, i32 %b) !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b
-// CHECK:STDOUT:   ret i1 %int.greater
+// CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b, !dbg !55
+// CHECK:STDOUT:   ret i1 %int.greater, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @TestGreaterEq(i32 %a, i32 %b) !dbg !23 {
+// CHECK:STDOUT: define i1 @TestGreaterEq(i32 %a, i32 %b) !dbg !57 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b
-// CHECK:STDOUT:   ret i1 %int.greater_eq
+// CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b, !dbg !58
+// CHECK:STDOUT:   ret i1 %int.greater_eq, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -183,20 +183,56 @@ fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestNegate", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "TestAdd", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TestSub", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestMul", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "TestDiv", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "TestMod", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestComplement", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestAnd", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "TestOr", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestXor", scope: null, file: !3, line: 39, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "TestLeftShift", scope: null, file: !3, line: 42, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "TestRightShift", scope: null, file: !3, line: 45, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestEq", scope: null, file: !3, line: 48, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "TestNeq", scope: null, file: !3, line: 51, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "TestLess", scope: null, file: !3, line: 54, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestLessEq", scope: null, file: !3, line: 57, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "TestGreater", scope: null, file: !3, line: 60, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "TestGreaterEq", scope: null, file: !3, line: 63, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 39, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 32, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestAdd", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 44, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 37, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestSub", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 18, column: 44, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 37, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestMul", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 21, column: 44, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 21, column: 37, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestDiv", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 44, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 37, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestMod", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 27, column: 44, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 27, column: 37, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestComplement", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 30, column: 43, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 30, column: 36, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestAnd", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 33, column: 44, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 33, column: 37, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestOr", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 36, column: 43, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 36, column: 36, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestXor", scope: null, file: !3, line: 39, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 39, column: 44, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 39, column: 37, scope: !33)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "TestLeftShift", scope: null, file: !3, line: 42, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !37 = !DILocation(line: 42, column: 50, scope: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 42, column: 43, scope: !36)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestRightShift", scope: null, file: !3, line: 45, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !40 = !DILocation(line: 45, column: 51, scope: !39)
+// CHECK:STDOUT: !41 = !DILocation(line: 45, column: 44, scope: !39)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "TestEq", scope: null, file: !3, line: 48, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !43 = !DILocation(line: 48, column: 44, scope: !42)
+// CHECK:STDOUT: !44 = !DILocation(line: 48, column: 37, scope: !42)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "TestNeq", scope: null, file: !3, line: 51, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !46 = !DILocation(line: 51, column: 45, scope: !45)
+// CHECK:STDOUT: !47 = !DILocation(line: 51, column: 38, scope: !45)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "TestLess", scope: null, file: !3, line: 54, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !49 = !DILocation(line: 54, column: 46, scope: !48)
+// CHECK:STDOUT: !50 = !DILocation(line: 54, column: 39, scope: !48)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "TestLessEq", scope: null, file: !3, line: 57, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !52 = !DILocation(line: 57, column: 48, scope: !51)
+// CHECK:STDOUT: !53 = !DILocation(line: 57, column: 41, scope: !51)
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "TestGreater", scope: null, file: !3, line: 60, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !55 = !DILocation(line: 60, column: 49, scope: !54)
+// CHECK:STDOUT: !56 = !DILocation(line: 60, column: 42, scope: !54)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "TestGreaterEq", scope: null, file: !3, line: 63, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !58 = !DILocation(line: 63, column: 51, scope: !57)
+// CHECK:STDOUT: !59 = !DILocation(line: 63, column: 44, scope: !57)

@@ -22,14 +22,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 12, ptr %a.var, align 4
-// CHECK:STDOUT:   store i32 9, ptr %a.var, align 4
-// CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc15_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0
-// CHECK:STDOUT:   %.loc15_12.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.loc15_5, i64 8, i1 false)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   store i32 12, ptr %a.var, align 4, !dbg !8
+// CHECK:STDOUT:   store i32 9, ptr %a.var, align 4, !dbg !9
+// CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc15_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc15_12.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.loc15_5, i64 8, i1 false), !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -47,3 +47,10 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 7, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 7, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 1, scope: !4)

@@ -33,28 +33,28 @@ fn While() {
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc18, %if.then.loc17
-// CHECK:STDOUT:   %A.call = call i1 @A()
-// CHECK:STDOUT:   br i1 %A.call, label %while.body, label %while.done
+// CHECK:STDOUT:   %A.call = call i1 @A(), !dbg !7
+// CHECK:STDOUT:   br i1 %A.call, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %B.call = call i1 @B()
-// CHECK:STDOUT:   br i1 %B.call, label %if.then.loc17, label %if.else.loc17
+// CHECK:STDOUT:   %B.call = call i1 @B(), !dbg !9
+// CHECK:STDOUT:   br i1 %B.call, label %if.then.loc17, label %if.else.loc17, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc17:                                    ; preds = %while.body
-// CHECK:STDOUT:   br label %while.cond
+// CHECK:STDOUT:   br label %while.cond, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc17:                                    ; preds = %while.body
-// CHECK:STDOUT:   %C.call = call i1 @C()
-// CHECK:STDOUT:   br i1 %C.call, label %if.then.loc18, label %if.else.loc18
+// CHECK:STDOUT:   %C.call = call i1 @C(), !dbg !12
+// CHECK:STDOUT:   br i1 %C.call, label %if.then.loc18, label %if.else.loc18, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc18:                                    ; preds = %if.else.loc17
-// CHECK:STDOUT:   br label %while.done
+// CHECK:STDOUT:   br label %while.done, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc18:                                    ; preds = %if.else.loc17
-// CHECK:STDOUT:   br label %while.cond
+// CHECK:STDOUT:   br label %while.cond, !dbg !15
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %if.then.loc18, %while.cond
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder label %while.cond, { 1, 2, 0 }
@@ -70,3 +70,13 @@ fn While() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 9, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 9, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 8, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 16, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 9, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 18, column: 8, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 16, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 1, scope: !4)
