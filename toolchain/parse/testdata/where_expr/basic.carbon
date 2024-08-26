@@ -26,13 +26,13 @@ interface I {
 // CHECK:STDERR: let T:! type where .U == .V;
 // CHECK:STDERR:              ^~~~~
 // CHECK:STDERR:
-let T:! type where .U == .V;
+let T:! type where .U = .V;
 
 fn F() {
   // CHECK:STDERR: basic.carbon:[[@LINE+3]]:16: ERROR: `let` declarations must end with a `;`.
   // CHECK:STDERR:   let U:! type where .W == .X
   // CHECK:STDERR:                ^~~~~
-  let U:! type where .W == .X
+  let U:! type where .W == .X;
 }
 
 // CHECK:STDOUT: - filename: basic.carbon

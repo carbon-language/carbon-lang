@@ -8,9 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/where_and.carbon
 
-// CHECK:STDERR: where_and.carbon:[[@LINE+3]]:16: ERROR: Expected `,` or `)`.
+// CHECK:STDERR: where_and.carbon:[[@LINE+7]]:22: ERROR: Expected expression.
 // CHECK:STDERR: fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
-// CHECK:STDERR:                ^~~~~
+// CHECK:STDERR:                      ^
+// CHECK:STDERR:
+// CHECK:STDERR: where_and.carbon:[[@LINE+3]]:22: ERROR: requirement should use `impls`, `=`, or `==` operator.
+// CHECK:STDERR: fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
+// CHECK:STDERR:                      ^
 fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
 
 // CHECK:STDOUT: - filename: where_and.carbon
@@ -19,10 +23,13 @@ fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'T'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'T'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '.', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'U'},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

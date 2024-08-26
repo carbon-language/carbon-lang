@@ -10,9 +10,17 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:16: ERROR: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+11]]:14: ERROR: Semantics TODO: `HandleWhereIntroducer`.
 // CHECK:STDERR: impl bool as I where .T = bool {}
-// CHECK:STDERR:                ^~~~~
+// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+7]]:22: ERROR: Expected expression.
+// CHECK:STDERR: impl bool as I where .T = bool {}
+// CHECK:STDERR:                      ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:22: ERROR: requirement should use `impls`, `=`, or `==` operator.
+// CHECK:STDERR: impl bool as I where .T = bool {}
+// CHECK:STDERR:                      ^
 impl bool as I where .T = bool {}
 
 // CHECK:STDOUT: --- fail_todo_impl_assoc_const.carbon
@@ -27,34 +35,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type, %.loc16_6.1 [template = bool]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
@@ -66,8 +47,6 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   .T = %.loc11
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: bool as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:

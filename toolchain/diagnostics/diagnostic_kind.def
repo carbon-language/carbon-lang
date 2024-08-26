@@ -123,6 +123,9 @@ CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 
+// Where requirement diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
+
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================

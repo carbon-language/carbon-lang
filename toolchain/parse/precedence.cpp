@@ -197,7 +197,7 @@ auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
 }
 
 auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
-  return PrecedenceGroup(Relational);
+  return PrecedenceGroup(Where);
 }
 
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
@@ -294,6 +294,10 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     // Cast operator.
     case Lex::TokenKind::As:
       return Trailing{.level = As, .is_binary = true};
+
+    // Requirement operator.
+    case Lex::TokenKind::Where:
+      return Trailing{.level = Where, .is_binary = true};
 
     // Prefix-only operators.
     case Lex::TokenKind::Const:

@@ -181,6 +181,76 @@ auto HandleExprInPostfix(Context& context) -> void {
   }
 }
 
+static auto BeginRequirement(Context& context,
+                             const Context::StateStackEntry& state) -> void {
+  // FIXME: handle `.AssociatedConst = _` here?
+  context.PushState(state, State::RequirementOperator);
+  context.PushStateForExpr(PrecedenceGroup::ForRequirements());
+}
+
+auto HandleRequirementOperator(Context& context) -> void {
+  auto state = context.PopState();
+  state.token = context.Consume();
+
+  switch (context.PositionKind()) {
+    case Lex::TokenKind::Impls: {
+      break;
+    }
+    case Lex::TokenKind::Equal: {
+      break;
+    }
+    case Lex::TokenKind::EqualEqual: {
+      break;
+    }
+    default: {
+      CARBON_DIAGNOSTIC(
+          ExpectedRequirementOperator, Error,
+          "requirement should use `impls`, `=`, or `==` operator.");
+      context.emitter().Emit(state.token, ExpectedRequirementOperator);
+      context.ReturnErrorOnState();
+      break;
+    }
+  }
+  context.PushState(state, State::RequirementAnd);
+  context.PushStateForExpr(PrecedenceGroup::ForRequirements());
+}
+
+auto HandleRequirementAnd(Context& context) -> void {
+  auto state = context.PopState();
+
+  switch (auto token_kind = context.tokens().GetKind(state.token)) {
+    case Lex::TokenKind::Impls: {
+      context.AddNode(NodeKind::RequirementImpls, state.token, state.has_error);
+      break;
+    }
+    case Lex::TokenKind::Equal: {
+      context.AddNode(NodeKind::RequirementAssign, state.token,
+                      state.has_error);
+      break;
+    }
+    case Lex::TokenKind::EqualEqual: {
+      context.AddNode(NodeKind::RequirementEquals, state.token,
+                      state.has_error);
+      break;
+    }
+    default:
+      // FIXME: better logic
+      if (state.has_error) {
+        context.ReturnErrorOnState();
+      } else {
+        CARBON_FATAL() << "Unexpected token kind for requirement operator: "
+                       << token_kind;
+      }
+      return;
+  }
+
+  // TODO: is the next token an `and`?
+  // state.has_error = false;
+
+  state = context.PopState();
+  context.AddNode(NodeKind::WhereExpr, state.token, state.has_error);
+}
+
 auto HandleExprInPostfixLoop(Context& context) -> void {
   // This is a cyclic state that repeats, so this state is typically pushed back
   // on.
@@ -284,6 +354,15 @@ auto HandleExprLoop(Context& context) -> void {
                         state.has_error);
         state.state = State::ExprLoopForShortCircuitOperatorAsOr;
         break;
+
+      // `where` also needs a virtual parse tree node, and parses its right
+      // argument in a mode where it can handle requirement operators like
+      // `impls` and `=`.
+      case Lex::TokenKind::Where:
+        context.AddNode(NodeKind::WhereIntroducer, state.token,
+                        state.has_error);
+        BeginRequirement(context, state);
+        return;
 
       default:
         state.state = State::ExprLoopForInfixOperator;
