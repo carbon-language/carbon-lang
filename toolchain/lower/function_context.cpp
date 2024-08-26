@@ -98,6 +98,11 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
   auto loc = file_context_->GetDiagnosticLoc(inst_id);
+  CARBON_CHECK(loc.filename == di_subprogram_->getFile()->getFilename())
+      << "Instructions located in a different file from their enclosing "
+         "function aren't handled yet";
+  CARBON_CHECK(loc.line_number >= 1 && loc.column_number >= 1)
+      << "Instructions without line locations aren't handled yet";
   builder_.SetCurrentDebugLocation(
       llvm::DILocation::get(builder_.getContext(), loc.line_number,
                             loc.column_number, di_subprogram_));
