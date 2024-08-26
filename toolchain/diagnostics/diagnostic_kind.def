@@ -169,6 +169,7 @@ CARBON_DIAGNOSTIC_KIND(RedeclParamSyntaxPrevious)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryInImporter)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIncorrect)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryExpected)
+CARBON_DIAGNOSTIC_KIND(ExternRequiresDeclInApiFile)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)

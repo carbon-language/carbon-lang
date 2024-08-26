@@ -11,6 +11,11 @@
 
 namespace Carbon::Check {
 
+// Diagnoses an `extern` declaration that was not preceded by a declaration in
+// the API file.
+auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
+    -> void;
+
 // Information on new and previous declarations for CheckIsAllowedRedecl.
 struct RedeclInfo {
   explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIRLoc loc,
