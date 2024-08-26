@@ -59,9 +59,9 @@ struct DiagnosticLoc {
   // A reference to the line of the error.
   llvm::StringRef line;
   // 1-based line number.
-  int32_t line_number = -1;
+  int32_t line_number = 0;
   // 1-based column number.
-  int32_t column_number = -1;
+  int32_t column_number = 0;
   // A location can represent a range of text if set to >1 value.
   int32_t length = 1;
 };

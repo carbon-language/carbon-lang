@@ -369,12 +369,10 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   if (!di_compile_unit_) {
     return nullptr;
   }
-  auto loc = converter_.ConvertLoc(
-      function.definition_id,
-      [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
   auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
   CARBON_CHECK(name) << "Unexpected special name for function: "
                      << function.name_id;
+  auto loc = GetDiagnosticLoc(function.definition_id);
   // FIXME: Add more details here, including real subroutine type (once type
   // information is built), etc.
   return di_builder_.createFunction(
