@@ -747,68 +747,6 @@ struct MatchStatement {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
-// Struct type and value literals
-// ------------------------------
-
-// `{`
-using StructLiteralStart =
-    LeafNode<NodeKind::StructLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
-using StructTypeLiteralStart =
-    LeafNode<NodeKind::StructTypeLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
-// `,`
-using StructComma = LeafNode<NodeKind::StructComma, Lex::CommaTokenIndex>;
-
-// `.a`
-struct StructFieldDesignator {
-  static constexpr auto Kind =
-      NodeKind::StructFieldDesignator.Define({.child_count = 1});
-
-  Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierName, BaseName> name;
-};
-
-// `.a = 0`
-struct StructField {
-  static constexpr auto Kind = NodeKind::StructField.Define(
-      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
-
-  StructFieldDesignatorId designator;
-  Lex::EqualTokenIndex token;
-  AnyExprId expr;
-};
-
-// `.a: i32`
-struct StructTypeField {
-  static constexpr auto Kind = NodeKind::StructTypeField.Define(
-      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
-
-  StructFieldDesignatorId designator;
-  Lex::ColonTokenIndex token;
-  AnyExprId type_expr;
-};
-
-// Struct literals, such as `{.a = 0}`.
-struct StructLiteral {
-  static constexpr auto Kind = NodeKind::StructLiteral.Define(
-      {.category = NodeCategory::Expr,
-       .bracketed_by = StructLiteralStart::Kind});
-
-  StructLiteralStartId start;
-  CommaSeparatedList<StructFieldId, StructCommaId> fields;
-  Lex::CloseCurlyBraceTokenIndex token;
-};
-
-// Struct type literals, such as `{.a: i32}`.
-struct StructTypeLiteral {
-  static constexpr auto Kind = NodeKind::StructTypeLiteral.Define(
-      {.category = NodeCategory::Expr,
-       .bracketed_by = StructTypeLiteralStart::Kind});
-
-  StructTypeLiteralStartId start;
-  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
-  Lex::CloseCurlyBraceTokenIndex token;
-};
-
 // Expression nodes
 // ----------------
 
@@ -1179,6 +1117,68 @@ struct ChoiceDefinition {
     std::optional<TuplePatternId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
+// Struct type and value literals
+// ------------------------------
+
+// `{`
+using StructLiteralStart =
+    LeafNode<NodeKind::StructLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
+using StructTypeLiteralStart =
+    LeafNode<NodeKind::StructTypeLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
+// `,`
+using StructComma = LeafNode<NodeKind::StructComma, Lex::CommaTokenIndex>;
+
+// `.a`
+struct StructFieldDesignator {
+  static constexpr auto Kind =
+      NodeKind::StructFieldDesignator.Define({.child_count = 1});
+
+  Lex::PeriodTokenIndex token;
+  NodeIdOneOf<IdentifierName, BaseName> name;
+};
+
+// `.a = 0`
+struct StructField {
+  static constexpr auto Kind = NodeKind::StructField.Define(
+      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
+
+  StructFieldDesignatorId designator;
+  Lex::EqualTokenIndex token;
+  AnyExprId expr;
+};
+
+// `.a: i32`
+struct StructTypeField {
+  static constexpr auto Kind = NodeKind::StructTypeField.Define(
+      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
+
+  StructFieldDesignatorId designator;
+  Lex::ColonTokenIndex token;
+  AnyExprId type_expr;
+};
+
+// Struct literals, such as `{.a = 0}`.
+struct StructLiteral {
+  static constexpr auto Kind = NodeKind::StructLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = StructLiteralStart::Kind});
+
+  StructLiteralStartId start;
+  CommaSeparatedList<StructFieldId, StructCommaId> fields;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
+// Struct type literals, such as `{.a: i32}`.
+struct StructTypeLiteral {
+  static constexpr auto Kind = NodeKind::StructTypeLiteral.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = StructTypeLiteralStart::Kind});
+
+  StructTypeLiteralStartId start;
+  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
