@@ -372,11 +372,10 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   auto loc = converter_.ConvertLoc(
       function.definition_id,
       [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
-  llvm::StringRef name;
-  if (auto maybe_name =
-          sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
-    name = *maybe_name;
-  }
+  auto opt_name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+  CARBON_CHECK(opt_name) << "Unexpected special name for function: "
+                         << function.name_id;
+  llvm::StringRef name = *opt_name;
   llvm::StringRef linkage_name = llvm_function->getName();
   // FIXME: Add more details here, including real subroutine type (once type
   // information is built), etc.
