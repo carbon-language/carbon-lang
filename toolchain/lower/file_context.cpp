@@ -373,8 +373,9 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       function.definition_id,
       [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
   llvm::StringRef name;
-  if (function.name_id.is_valid()) {
-    name = *sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+  if (auto maybe_name =
+          sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
+    name = *maybe_name;
   }
   llvm::StringRef linkage_name = llvm_function->getName();
   // Include a linkage name only if it is different from the basic name.
