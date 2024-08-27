@@ -94,7 +94,7 @@ def chdir_repo_root() -> None:
 
     This is done so that scripts run from a consistent directory.
     """
-    os.chdir(Path(__file__).parent.parent)
+    os.chdir(Path(__file__).parents[1])
 
 
 def _get_hash(file: Path) -> str:

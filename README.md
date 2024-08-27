@@ -29,10 +29,9 @@ https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 
 <!--
 Don't let the text wrap too narrowly to the left of the above image.
-The `div` reduces the vertical height.
-GitHub will autolink `img`, but won't produce a link when `href="#"`.
+The `div` reduces the vertical height. The `picture` prevents autolinking.
 -->
-<div><a href="#"><img src="docs/images/bumper.png"></a></div>
+<div><picture><img src="docs/images/bumper.png" alt=""></picture></div>
 
 **Fast and works with C++**
 

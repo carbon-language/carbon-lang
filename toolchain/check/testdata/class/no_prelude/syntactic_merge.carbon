@@ -15,11 +15,11 @@ library "basic";
 class C {}
 alias D = C;
 
-class Foo(a: C);
-class Foo(a: C) {}
+class Foo(a:! C);
+class Foo(a:! C) {}
 
-class Bar(a: D);
-class Bar(a: D) {}
+class Bar(a:! D);
+class Bar(a:! D) {}
 
 // --- spacing.carbon
 
@@ -27,8 +27,8 @@ library "spacing";
 
 class C {}
 
-class Foo [ ] ( a : C );
-class Foo[](a: C) {}
+class Foo [ ] ( a :! C );
+class Foo[](a:! C) {}
 
 // --- fail_parens.carbon
 
@@ -36,15 +36,15 @@ library "parens";
 
 class C {}
 
-class Foo(a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:14: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: class Foo(a: (C)) {}
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:14: Comparing with previous declaration here.
-// CHECK:STDERR: class Foo(a: C);
-// CHECK:STDERR:              ^
+class Foo(a:! C);
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:15: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: class Foo(a:! (C)) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:15: Comparing with previous declaration here.
+// CHECK:STDERR: class Foo(a:! C);
+// CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo(a: (C)) {}
+class Foo(a:! (C)) {}
 
 // --- todo_fail_raw_identifier.carbon
 
@@ -52,8 +52,8 @@ library "raw_identifier";
 
 class C {}
 
-class Foo(a: C);
-class Foo(a: r#C) {}
+class Foo(a:! C);
+class Foo(a:! r#C) {}
 
 // --- two_file.carbon
 
@@ -62,15 +62,15 @@ library "two_file";
 class C {}
 alias D = C;
 
-class Foo(a: C);
-class Bar(a: D);
+class Foo(a:! C);
+class Bar(a:! D);
 
 // --- two_file.impl.carbon
 
 impl library "two_file";
 
-class Foo(a: C) {}
-class Bar(a: D) {}
+class Foo(a:! C) {}
+class Bar(a:! D) {}
 
 // --- fail_name_mismatch.carbon
 
@@ -79,15 +79,15 @@ library "name_mismatch";
 class C {}
 alias D = C;
 
-class Foo(a: C);
+class Foo(a:! C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:11: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: class Foo(b: D) {}
+// CHECK:STDERR: class Foo(b:! D) {}
 // CHECK:STDERR:           ^
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:11: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class Foo(a: C);
+// CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
-class Foo(b: D) {}
+class Foo(b:! D) {}
 
 // --- fail_alias.carbon
 
@@ -96,15 +96,15 @@ library "alias";
 class C {}
 alias D = C;
 
-class Foo(a: C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:14: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: class Foo(a: D) {}
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:14: Comparing with previous declaration here.
-// CHECK:STDERR: class Foo(a: C);
-// CHECK:STDERR:              ^
+class Foo(a:! C);
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:15: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: class Foo(a:! D) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:15: Comparing with previous declaration here.
+// CHECK:STDERR: class Foo(a:! C);
+// CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo(a: D) {}
+class Foo(a:! D) {}
 
 // --- fail_deduced_alias.carbon
 
@@ -113,15 +113,15 @@ library "deduced_alias";
 class C {}
 alias D = C;
 
-class Foo[a: C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:14: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: class Foo[a: D]() {}
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:14: Comparing with previous declaration here.
-// CHECK:STDERR: class Foo[a: C]();
-// CHECK:STDERR:              ^
+class Foo[a:! C]();
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:15: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: class Foo[a:! D]() {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:15: Comparing with previous declaration here.
+// CHECK:STDERR: class Foo[a:! C]();
+// CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo[a: D]() {}
+class Foo[a:! D]() {}
 
 // --- alias_two_file.carbon
 
@@ -129,7 +129,7 @@ library "alias_two_file";
 
 class C {}
 
-class Foo(a: C);
+class Foo(a:! C);
 
 // --- todo_fail_alias_two_file.impl.carbon
 
@@ -137,7 +137,7 @@ impl library "alias_two_file";
 
 alias D = C;
 
-class Foo(a: D) {}
+class Foo(a:! D) {}
 
 // --- fail_repeat_const.carbon
 
@@ -145,19 +145,19 @@ library "repeat_const";
 
 class C {}
 
-class Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:14: WARNING: `const` applied repeatedly to the same type has no additional effect.
-// CHECK:STDERR: class Foo(a: const (const C)) {}
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~
+class Foo(a:! const C);
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:15: WARNING: `const` applied repeatedly to the same type has no additional effect.
+// CHECK:STDERR: class Foo(a:! const (const C)) {}
+// CHECK:STDERR:               ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:20: ERROR: Redeclaration syntax differs here.
-// CHECK:STDERR: class Foo(a: const (const C)) {}
-// CHECK:STDERR:                    ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:20: Comparing with previous declaration here.
-// CHECK:STDERR: class Foo(a: const C);
-// CHECK:STDERR:                    ^
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:21: ERROR: Redeclaration syntax differs here.
+// CHECK:STDERR: class Foo(a:! const (const C)) {}
+// CHECK:STDERR:                     ^
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:21: Comparing with previous declaration here.
+// CHECK:STDERR: class Foo(a:! const C);
+// CHECK:STDERR:                     ^
 // CHECK:STDERR:
-class Foo(a: const (const C)) {}
+class Foo(a:! const (const C)) {}
 
 // --- fail_self_type.carbon
 
@@ -184,13 +184,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %Bar.type: type = generic_class_type @Bar [template]
 // CHECK:STDOUT:   %Bar.1: %Bar.type = struct_value () [template]
-// CHECK:STDOUT:   %Bar.2: type = class_type @Bar [template]
+// CHECK:STDOUT:   %Bar.2: type = class_type @Bar, @Bar(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -206,22 +207,22 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_symbolic_name a 0, %a.loc7_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc8_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc8_11.2: %C = bind_name a, %a.loc8_11.1
+// CHECK:STDOUT:     %a.loc8_11.2: %C = bind_symbolic_name a 0, %a.loc8_11.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc10_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc10_11.2: %C = bind_name a, %a.loc10_11.1
+// CHECK:STDOUT:     %a.loc10_11.2: %C = bind_symbolic_name a 0, %a.loc10_11.1 [symbolic = @Bar.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc11_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc11_11.2: %C = bind_name a, %a.loc11_11.1
+// CHECK:STDOUT:     %a.loc11_11.2: %C = bind_symbolic_name a 0, %a.loc11_11.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,14 +231,34 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Foo.2
+// CHECK:STDOUT: generic class @Foo(file.%a.loc7_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Bar {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Bar.2
+// CHECK:STDOUT: generic class @Bar(file.%a.loc10_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Bar.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Bar(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
@@ -245,10 +266,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -260,12 +282,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_17.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_17.2: %C = bind_name a, %a.loc6_17.1
+// CHECK:STDOUT:     %a.loc6_17.2: %C = bind_symbolic_name a 0, %a.loc6_17.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_13.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_13.2: %C = bind_name a, %a.loc7_13.1
+// CHECK:STDOUT:     %a.loc7_13.2: %C = bind_symbolic_name a 0, %a.loc7_13.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -274,9 +296,19 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Foo.2
+// CHECK:STDOUT: generic class @Foo(file.%a.loc6_17.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
@@ -284,13 +316,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -302,12 +335,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_symbolic_name a 0, %a.loc6_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc14_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc14_11.2: %C = bind_name a, %a.loc14_11.1
+// CHECK:STDOUT:     %a.loc14_11.2: %C = bind_symbolic_name a 0, %a.loc14_11.1 [symbolic = @.1.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,11 +349,29 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc6_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.4
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @.1(file.%a.loc14_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
@@ -328,10 +379,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -343,12 +395,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_symbolic_name a 0, %a.loc6_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_symbolic_name a 0, %a.loc7_11.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -357,9 +409,19 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Foo.2
+// CHECK:STDOUT: generic class @Foo(file.%a.loc6_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
@@ -367,13 +429,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %Bar.type: type = generic_class_type @Bar [template]
 // CHECK:STDOUT:   %Bar.1: %Bar.type = struct_value () [template]
-// CHECK:STDOUT:   %Bar.2: type = class_type @Bar [template]
+// CHECK:STDOUT:   %Bar.2: type = class_type @Bar, @Bar(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -389,12 +452,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_symbolic_name a 0, %a.loc7_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc8_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc8_11.2: %C = bind_name a, %a.loc8_11.1
+// CHECK:STDOUT:     %a.loc8_11.2: %C = bind_symbolic_name a 0, %a.loc8_11.1 [symbolic = @Bar.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -403,29 +466,46 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc7_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Bar;
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Bar(file.%a.loc8_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Bar(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %Bar.type: type = generic_class_type @Bar [template]
 // CHECK:STDOUT:   %Bar.1: %Bar.type = struct_value () [template]
-// CHECK:STDOUT:   %Bar.2: type = class_type @Bar [template]
+// CHECK:STDOUT:   %Bar.2: type = class_type @Bar, @Bar(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+5, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, inst+9, loaded [template = constants.%Foo.1]
-// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, inst+17, loaded [template = constants.%Bar.1]
+// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, inst+10, loaded [template = constants.%Foo.1]
+// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, inst+19, loaded [template = constants.%Bar.1]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -441,12 +521,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:     %a.loc4_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc4_11.2: %C = bind_name a, %a.loc4_11.1
+// CHECK:STDOUT:     %a.loc4_11.2: %C = bind_symbolic_name a 0, %a.loc4_11.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:     %a.loc5_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc5_11.2: %C = bind_name a, %a.loc5_11.1
+// CHECK:STDOUT:     %a.loc5_11.2: %C = bind_symbolic_name a 0, %a.loc5_11.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -455,14 +535,34 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Foo.2
+// CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Bar {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Bar.2
+// CHECK:STDOUT: generic class @Bar(constants.%a: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Bar.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Bar(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
@@ -470,13 +570,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
+// CHECK:STDOUT:   %b: %C = bind_symbolic_name b 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -491,12 +593,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_symbolic_name a 0, %a.loc7_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %b.loc15_11.1: %C = param b
-// CHECK:STDOUT:     %b.loc15_11.2: %C = bind_name b, %b.loc15_11.1
+// CHECK:STDOUT:     %b.loc15_11.2: %C = bind_symbolic_name b 0, %b.loc15_11.1 [symbolic = @.1.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,11 +607,29 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc7_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.4
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @.1(file.%b.loc15_11.2: %C) {
+// CHECK:STDOUT:   %b: %C = bind_symbolic_name b 0 [symbolic = %b (constants.%b)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%b) {
+// CHECK:STDOUT:   %b => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
@@ -517,13 +637,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -538,12 +659,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_symbolic_name a 0, %a.loc7_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc15_11.2: %C = bind_name a, %a.loc15_11.1
+// CHECK:STDOUT:     %a.loc15_11.2: %C = bind_symbolic_name a 0, %a.loc15_11.1 [symbolic = @.1.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -552,11 +673,29 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc7_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.4
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @.1(file.%a.loc15_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
@@ -564,13 +703,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -585,12 +725,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_name a, %a.loc7_11.1
+// CHECK:STDOUT:     %a.loc7_11.2: %C = bind_symbolic_name a 0, %a.loc7_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc15_11.2: %C = bind_name a, %a.loc15_11.1
+// CHECK:STDOUT:     %a.loc15_11.2: %C = bind_symbolic_name a 0, %a.loc15_11.1 [symbolic = @.1.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -599,11 +739,29 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc7_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.4
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @.1(file.%a.loc15_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
@@ -611,10 +769,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -626,7 +785,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_symbolic_name a 0, %a.loc6_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -635,22 +794,31 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc6_11.2: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, inst+7, loaded [template = constants.%Foo.1]
+// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, inst+8, loaded [template = constants.%Foo.1]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//alias_two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -667,7 +835,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
 // CHECK:STDOUT:     %a.loc6_11.1: %C = param a
-// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:     %a.loc6_11.2: %C = bind_symbolic_name a 0, %a.loc6_11.1 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -676,9 +844,19 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Foo.2
+// CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
@@ -687,13 +865,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = const_type %C [template]
+// CHECK:STDOUT:   %a: %.2 = bind_symbolic_name a 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo [template]
+// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.4: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.5: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -706,14 +885,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %a.loc6_11.1: %.2 = param a
-// CHECK:STDOUT:     %a.loc6_11.2: %.2 = bind_name a, %a.loc6_11.1
+// CHECK:STDOUT:     %a.loc6_11.2: %.2 = bind_symbolic_name a 0, %a.loc6_11.1 [symbolic = @Foo.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc18_21: type = const_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %.loc18_14: type = const_type %.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc18_22: type = const_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %.loc18_15: type = const_type %.2 [template = constants.%.2]
 // CHECK:STDOUT:     %a.loc18_11.1: %.2 = param a
-// CHECK:STDOUT:     %a.loc18_11.2: %.2 = bind_name a, %a.loc18_11.1
+// CHECK:STDOUT:     %a.loc18_11.2: %.2 = bind_symbolic_name a 0, %a.loc18_11.1 [symbolic = @.1.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -722,11 +901,29 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Foo;
+// CHECK:STDOUT: generic class @Foo(file.%a.loc6_11.2: %.2) {
+// CHECK:STDOUT:   %a: %.2 = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.5
+// CHECK:STDOUT:   class;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @.1(file.%a.loc18_11.2: %.2) {
+// CHECK:STDOUT:   %a: %.2 = bind_symbolic_name a 0 [symbolic = %a (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%.5
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%a) {
+// CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_self_type.carbon

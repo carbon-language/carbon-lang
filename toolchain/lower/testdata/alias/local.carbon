@@ -17,10 +17,25 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'local.carbon'
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @F() {
+// CHECK:STDOUT: define i32 @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4
-// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4
-// CHECK:STDOUT:   ret i32 %.loc14
+// CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4, !dbg !9
+// CHECK:STDOUT:   ret i32 %.loc14, !dbg !10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "local.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)

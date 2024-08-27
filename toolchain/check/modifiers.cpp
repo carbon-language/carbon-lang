@@ -120,13 +120,35 @@ auto RestrictExternModifierOnDecl(Context& context,
                                   DeclIntroducerState& introducer,
                                   std::optional<SemIR::Inst> parent_scope_inst,
                                   bool is_definition) -> void {
-  if (is_definition) {
-    ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Extern,
-                          " that provides a definition");
+  if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern)) {
+    return;
   }
+
   if (parent_scope_inst && !parent_scope_inst->Is<SemIR::Namespace>()) {
     ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Extern,
                           " that is a member");
+    // Treat as unset.
+    introducer.extern_library = SemIR::LibraryNameId::Invalid;
+    return;
+  }
+
+  if (introducer.extern_library == context.sem_ir().library_id()) {
+    // This prints an error for `extern library`, but doesn't drop it because we
+    // assume there is some other, correct value that we just don't know here.
+    CARBON_DIAGNOSTIC(ExternLibraryIsCurrentLibrary, Error,
+                      "`extern library` cannot specify the current library.");
+    context.emitter().Emit(introducer.modifier_node_id(ModifierOrder::Extern),
+                           ExternLibraryIsCurrentLibrary);
+    introducer.extern_library = SemIR::LibraryNameId::Error;
+    // Right now this can produce both this and the below diagnostic.
+  }
+
+  if (is_definition && introducer.extern_library.is_valid()) {
+    CARBON_DIAGNOSTIC(ExternLibraryOnDefinition, Error,
+                      "A library cannot be provided for an `extern` modifier "
+                      "on a definition.");
+    context.emitter().Emit(introducer.modifier_node_id(ModifierOrder::Extern),
+                           ExternLibraryOnDefinition);
   }
 }
 

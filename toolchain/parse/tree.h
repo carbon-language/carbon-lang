@@ -115,10 +115,16 @@ class Tree : public Printable<Tree> {
 
   // Tests whether a particular node contains an error and may not match the
   // full expected structure of the grammar.
-  auto node_has_error(NodeId n) const -> bool;
+  auto node_has_error(NodeId n) const -> bool {
+    CARBON_DCHECK(n.is_valid());
+    return node_impls_[n.index].has_error;
+  }
 
   // Returns the kind of the given parse tree node.
-  auto node_kind(NodeId n) const -> NodeKind;
+  auto node_kind(NodeId n) const -> NodeKind {
+    CARBON_DCHECK(n.is_valid());
+    return node_impls_[n.index].kind;
+  }
 
   // Returns the token the given parse tree node models.
   auto node_token(NodeId n) const -> Lex::TokenIndex;

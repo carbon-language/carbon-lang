@@ -82,10 +82,6 @@ base fn InvalidModifier();
 // CHECK:STDERR:
 default final virtual fn ModifiersConflict2() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:1: ERROR: `extern` not allowed on `fn` declaration that provides a definition.
-// CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:8: ERROR: `private` must appear before `extern`.
 // CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
 // CHECK:STDERR:        ^~~~~~~
@@ -154,7 +150,7 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ExternOrderAndConflict() {
+// CHECK:STDOUT: extern fn @ExternOrderAndConflict() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -90,8 +90,9 @@ class DeclNameStack {
 
     // Combines name information to produce a base struct for entity
     // construction.
-    auto MakeEntityWithParamsBase(SemIR::InstId decl_id,
-                                  const NameComponent& name)
+    auto MakeEntityWithParamsBase(const NameComponent& name,
+                                  SemIR::InstId decl_id, bool is_extern,
+                                  SemIR::LibraryNameId extern_library)
         -> SemIR::EntityWithParamsBase {
       return {
           .name_id = name_id_for_new_inst(),
@@ -101,7 +102,12 @@ class DeclNameStack {
           .last_param_node_id = name.last_param_node_id,
           .implicit_param_refs_id = name.implicit_params_id,
           .param_refs_id = name.params_id,
-          .decl_id = decl_id,
+          .is_extern = is_extern,
+          .extern_library_id = extern_library,
+          .non_owning_decl_id =
+              extern_library.is_valid() ? decl_id : SemIR::InstId::Invalid,
+          .first_owning_decl_id =
+              extern_library.is_valid() ? SemIR::InstId::Invalid : decl_id,
       };
     }
 

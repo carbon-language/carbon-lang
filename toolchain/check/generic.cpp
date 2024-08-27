@@ -415,4 +415,29 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
   return true;
 }
 
+auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
+    -> void {
+  if (!block_id.is_valid() || block_id == SemIR::InstBlockId::Empty) {
+    return;
+  }
+
+  for (auto& inst_id : context.inst_blocks().Get(block_id)) {
+    if (!context.constant_values().Get(inst_id).is_constant()) {
+      CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
+                        "Parameters of generic types must be constant.");
+      context.emitter().Emit(inst_id, GenericParamMustBeConstant);
+
+      // Replace the parameter with an invalid instruction so that we don't try
+      // constructing a generic based on it. Note this is updating the param
+      // refs block, not the actual params block, so will not be directly
+      // reflected in SemIR output.
+      inst_id = context.AddInstInNoBlock(
+          SemIR::LocIdAndInst::ReusingLoc<SemIR::Param>(
+              context.insts().GetLocId(inst_id),
+              {.type_id = SemIR::TypeId::Error,
+               .name_id = SemIR::NameId::Base}));
+    }
+  }
+}
+
 }  // namespace Carbon::Check

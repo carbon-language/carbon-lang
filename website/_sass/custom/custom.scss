@@ -1,0 +1,47 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// This is modifying the builtin scss, particularly:
+// https://github.com/just-the-docs/just-the-docs/blob/main/_sass/layout.scss
+
+.site-nav {
+  // The navbar will typically overflow, so keep a scrollbar so that the zippies
+  // don't move on open/close.
+  overflow-y: scroll;
+}
+
+.side-bar {
+  @include mq(lg) {
+    // Allow left alignment instead of centering.
+    width: #{$nav-width};
+  }
+
+  & + .main {
+    @include mq(lg) {
+      // Allow left alignment instead of centering.
+      margin-left: #{$nav-width};
+    }
+  }
+}
+
+.site-footer {
+  color: #57606a;
+}
+
+// Comments in code.
+.highlight .c {
+  color: #57606a;
+}
+
+// Misc syntax in code.
+.highlight .nb,
+.highlight .nt,
+.highlight .nv {
+  color: #a36000;
+}
+
+// Strings in code.
+.highlight .s2 {
+  color: #3f7f3f;
+}

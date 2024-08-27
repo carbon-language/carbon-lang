@@ -332,6 +332,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 auto FileTestBase::DoArgReplacements(
     llvm::SmallVector<std::string>& test_args,
     const llvm::SmallVector<TestFile>& test_files) -> ErrorOr<Success> {
+  auto replacements = GetArgReplacements();
   for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
     auto percent = it->find("%");
     if (percent == std::string::npos) {
@@ -360,6 +361,21 @@ auto FileTestBase::DoArgReplacements(
         char* tmpdir = getenv("TEST_TMPDIR");
         CARBON_CHECK(tmpdir != nullptr);
         it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
+        break;
+      }
+      case '{': {
+        auto end_brace = it->find('}', percent);
+        if (end_brace == std::string::npos) {
+          return ErrorBuilder() << "%{ without closing }: " << *it;
+        }
+        llvm::StringRef substr(&*(it->begin() + percent + 2),
+                               end_brace - percent - 2);
+        auto replacement = replacements.find(substr);
+        if (replacement == replacements.end()) {
+          return ErrorBuilder()
+                 << "unknown substitution: %{" << substr << "}: " << *it;
+        }
+        it->replace(percent, end_brace - percent + 1, replacement->second);
         break;
       }
       default:

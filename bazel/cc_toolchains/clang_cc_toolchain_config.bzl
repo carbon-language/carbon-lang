@@ -111,6 +111,8 @@ def _impl(ctx):
     # https://github.com/llvm/llvm-project/issues/70384
     if not clang_version or clang_version == 18:
         missing_field_init_flags = ["-Wno-missing-field-initializers"]
+    elif clang_version > 18:
+        missing_field_init_flags = ["-Wno-missing-designated-field-initializers"]
     else:
         missing_field_init_flags = []
 

@@ -13,7 +13,19 @@ fn Foo() {}
 // CHECK:STDOUT: ; ModuleID = 'params_zero.carbon'
 // CHECK:STDOUT: source_filename = "params_zero.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Foo() {
+// CHECK:STDOUT: define void @Foo() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "params_zero.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Foo", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)

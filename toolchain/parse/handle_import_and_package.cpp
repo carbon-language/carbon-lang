@@ -25,8 +25,7 @@ static auto OnParseError(Context& context, Context::StateStackEntry state,
 // do this.
 static auto HasModifier(Context& context, Context::StateStackEntry state,
                         Lex::TokenKind modifier) -> bool {
-  for (auto it = Lex::TokenIterator(state.token); it != context.position();
-       ++it) {
+  for (Lex::TokenIterator it(state.token); it != context.position(); ++it) {
     if (context.tokens().GetKind(*it) == modifier) {
       return true;
     }

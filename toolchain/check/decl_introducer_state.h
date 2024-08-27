@@ -35,6 +35,9 @@ struct DeclIntroducerState {
 
   // Invariant: contains just the modifiers represented by `saw_*_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet();
+
+  // If there's an `extern library` in use, the library name.
+  SemIR::LibraryNameId extern_library = SemIR::LibraryNameId::Invalid;
 };
 
 // Stack of `DeclIntroducerState` values, representing all the declaration

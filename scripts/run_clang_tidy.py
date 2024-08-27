@@ -31,7 +31,7 @@ def main() -> None:
         files = ["^(?!.*/(bazel-|third_party)).*$"]
 
     # Set the repo root as the working directory.
-    os.chdir(Path(__file__).resolve().parent.parent)
+    os.chdir(Path(__file__).parents[1])
     # Ensure create_compdb has been run.
     subprocess.check_call(["./scripts/create_compdb.py"])
 

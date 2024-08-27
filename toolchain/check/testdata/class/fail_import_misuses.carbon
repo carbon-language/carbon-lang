@@ -23,7 +23,7 @@ library "b";
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `class Empty` without `extern`.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `class Empty` is redundant.
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: In import.

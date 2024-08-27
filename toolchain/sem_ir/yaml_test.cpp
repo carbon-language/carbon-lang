@@ -8,7 +8,7 @@
 #include "common/ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "testing/base/gtest_main.h"
+#include "testing/base/global_exe_path.h"
 #include "testing/base/test_raw_ostream.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/testing/yaml_test_helpers.h"
@@ -36,7 +36,7 @@ TEST(SemIRTest, YAML) {
       "test.carbon", /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
   const auto install_paths =
-      InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
+      InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   TestRawOstream print_stream;
   Driver d(fs, &install_paths, print_stream, llvm::errs());
   auto run_result =

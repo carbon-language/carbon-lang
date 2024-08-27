@@ -6,8 +6,10 @@
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -16,7 +18,8 @@ namespace Carbon::Lower {
 // Context and shared functionality for lowering handlers.
 class FileContext {
  public:
-  explicit FileContext(llvm::LLVMContext& llvm_context,
+  explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
+                       const Check::SemIRDiagnosticConverter& converter,
                        llvm::StringRef module_name, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
@@ -24,6 +27,11 @@ class FileContext {
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
+
+  // Create the DICompileUnit metadata for this compilation.
+  auto BuildDICompileUnit(llvm::StringRef module_name,
+                          llvm::Module& llvm_module,
+                          llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -37,6 +45,9 @@ class FileContext {
     CARBON_CHECK(types_[type_id.index]) << "Missing type " << type_id;
     return types_[type_id.index];
   }
+
+  // Returns the DiagnosticLoc associated with the specified inst_id.
+  auto GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {
@@ -59,6 +70,9 @@ class FileContext {
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
+  auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
+    return global_variables_;
+  }
 
  private:
   // Builds the declaration for the given function, which should then be cached
@@ -69,13 +83,32 @@ class FileContext {
   // declaration with no definition, does nothing.
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
+  // Build the DISubprogram metadata for the given function.
+  auto BuildDISubprogram(const SemIR::Function& function,
+                         const llvm::Function* llvm_function)
+      -> llvm::DISubprogram*;
+
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
+  // Builds the global for the given instruction, which should then be cached by
+  // the caller.
+  auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+      -> llvm::GlobalVariable*;
+
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
+
+  // State for building the LLVM IR debug info metadata.
+  llvm::DIBuilder di_builder_;
+
+  // The DICompileUnit, if any - null implies debug info is not being emitted.
+  llvm::DICompileUnit* di_compile_unit_;
+
+  // The source location converter.
+  const Check::SemIRDiagnosticConverter& converter_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
@@ -101,6 +134,9 @@ class FileContext {
   // Maps constants to their lowered values.
   // We resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Constant*, 0> constants_;
+
+  // Maps global variables to their lowered variant.
+  Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
 };
 
 }  // namespace Carbon::Lower

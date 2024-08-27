@@ -1207,7 +1207,7 @@ interface Iterable {
   require Self impls Equatable;
 }
 
-def DoAdvanceAndEquals[T:! Iterable](x: T) {
+fn DoAdvanceAndEquals[T:! Iterable](x: T) {
   // `x` has type `T` that implements `Iterable`, and so has `Advance`.
   x.Advance();
   // `Iterable` requires an implementation of `Equatable`,
@@ -1234,7 +1234,7 @@ interface Hashable {
   alias Equals = Equatable.Equals;
 }
 
-def DoHashAndEquals[T:! Hashable](x: T) {
+fn DoHashAndEquals[T:! Hashable](x: T) {
   // Now both `Hash` and `Equals` are available directly:
   x.Hash();
   x.Equals(x);

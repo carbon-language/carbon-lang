@@ -52,7 +52,7 @@ struct DiagnosticLoc {
 
   // Write the source snippet corresponding to this location to the given
   // stream.
-  auto FormatSnippet(llvm::raw_ostream& out) const -> void;
+  auto FormatSnippet(llvm::raw_ostream& out, int indent = 0) const -> void;
 
   // Name of the file or buffer that this diagnostic refers to.
   llvm::StringRef filename;

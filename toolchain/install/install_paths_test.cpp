@@ -12,7 +12,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
-#include "testing/base/gtest_main.h"
+#include "testing/base/global_exe_path.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
@@ -28,8 +28,7 @@ class InstallPathsTest : public ::testing::Test {
  protected:
   InstallPathsTest() {
     std::string error;
-    test_runfiles_.reset(
-        Runfiles::Create(Testing::GetTestExePath().str(), &error));
+    test_runfiles_.reset(Runfiles::Create(Testing::GetExePath().str(), &error));
     CARBON_CHECK(test_runfiles_ != nullptr) << error;
   }
 
@@ -102,7 +101,7 @@ TEST_F(InstallPathsTest, PrefixRootExplicit) {
 }
 
 TEST_F(InstallPathsTest, TestRunfiles) {
-  auto paths = InstallPaths::MakeForBazelRunfiles(Testing::GetTestExePath());
+  auto paths = InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }

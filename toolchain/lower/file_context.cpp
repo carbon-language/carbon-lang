@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
@@ -20,11 +21,19 @@
 namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
+                         bool include_debug_info,
+                         const Check::SemIRDiagnosticConverter& converter,
                          llvm::StringRef module_name, const SemIR::File& sem_ir,
                          const SemIR::InstNamer* inst_namer,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
+      di_builder_(*llvm_module_),
+      di_compile_unit_(
+          include_debug_info
+              ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
+              : nullptr),
+      converter_(converter),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -50,7 +59,15 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
 
-  // TODO: Lower global variable declarations.
+  // Lower global variable declarations.
+  for (auto inst_id :
+       sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
+    // Only `VarStorage` indicates a global variable declaration in the
+    // top instruction block.
+    if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
+      global_variables_.Insert(inst_id, BuildGlobalVariableDecl(*var));
+    }
+  }
 
   // Lower constants.
   constants_.resize(sem_ir_->insts().size());
@@ -60,10 +77,34 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
     BuildFunctionDefinition(SemIR::FunctionId(i));
   }
-
-  // TODO: Lower global variable initializers.
+  // Append `__global_init` to `llvm::global_ctors` to initialize global
+  // variables.
+  if (sem_ir().global_ctor_id().is_valid()) {
+    llvm::appendToGlobalCtors(llvm_module(),
+                              GetFunction(sem_ir().global_ctor_id()),
+                              /*Priority=*/0);
+  }
 
   return std::move(llvm_module_);
+}
+
+auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
+                                     llvm::Module& llvm_module,
+                                     llvm::DIBuilder& di_builder)
+    -> llvm::DICompileUnit* {
+  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
+  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
+                            llvm::DEBUG_METADATA_VERSION);
+  // FIXME: Include directory path in the compile_unit_file.
+  llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
+  // FIXME: Introduce a new language code for Carbon. C works well for now since
+  // it's something debuggers will already know/have support for at least.
+  // Probably have to bump to C++ at some point for virtual functions,
+  // templates, etc.
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
+                                      "carbon",
+                                      /*isOptimized=*/false, /*Flags=*/"",
+                                      /*RV=*/0);
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
@@ -201,13 +242,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else if (auto name =
-                 sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
-    // TODO: Decide on a name mangling scheme.
-    mangled_name = *name;
   } else {
-    CARBON_FATAL() << "Unexpected special name for function: "
-                   << function.name_id;
+    // TODO: Decide on a name mangling scheme.
+    auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+    CARBON_CHECK(name) << "Unexpected special name for function: "
+                       << function.name_id;
+    mangled_name = *name;
   }
 
   llvm::FunctionType* function_type = llvm::FunctionType::get(
@@ -250,7 +290,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
-  FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
+  FunctionContext function_lowering(*this, llvm_function,
+                                    BuildDISubprogram(function, llvm_function),
+                                    vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
   const auto specific_id = SemIR::SpecificId::Invalid;
@@ -319,6 +361,27 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
+}
+
+auto FileContext::BuildDISubprogram(const SemIR::Function& function,
+                                    const llvm::Function* llvm_function)
+    -> llvm::DISubprogram* {
+  if (!di_compile_unit_) {
+    return nullptr;
+  }
+  auto loc = converter_.ConvertLoc(
+      function.definition_id,
+      [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+  // FIXME: Add more details here, including mangled name, real subroutine type
+  // (once type information is built), etc.
+  return di_builder_.createFunction(
+      di_compile_unit_, llvm_function->getName(), /*LinkageName=*/"",
+      /*File=*/di_builder_.createFile(loc.filename, ""),
+      /*LineNo=*/loc.line_number,
+      di_builder_.createSubroutineType(
+          di_builder_.getOrCreateTypeArray(std::nullopt)),
+      /*ScopeLine=*/0, llvm::DINode::FlagZero,
+      llvm::DISubprogram::SPFlagDefinition);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
@@ -461,6 +524,26 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
   }
 #include "toolchain/sem_ir/inst_kind.def"
   }
+}
+
+auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+    -> llvm::GlobalVariable* {
+  // TODO: Mangle name.
+  auto mangled_name =
+      *sem_ir().names().GetAsStringIfIdentifier(var_storage.name_id);
+  auto* type =
+      var_storage.type_id.is_valid() ? GetType(var_storage.type_id) : nullptr;
+  return new llvm::GlobalVariable(llvm_module(), type,
+                                  /*isConstant=*/false,
+                                  llvm::GlobalVariable::InternalLinkage,
+                                  /*Initializer=*/nullptr, mangled_name);
+}
+
+auto FileContext::GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc {
+  return converter_.ConvertLoc(
+      inst_id,
+      [&](DiagnosticLoc /*context_loc*/,
+          const Internal::DiagnosticBase<>& /*context_diagnostic_base*/) {});
 }
 
 }  // namespace Carbon::Lower

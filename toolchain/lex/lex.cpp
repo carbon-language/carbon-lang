@@ -1335,7 +1335,7 @@ class Lexer::ErrorRecoveryBuffer {
 
     // Find the end of the token before the target token, and add the new token
     // there. Note that new_token_column is a 1-based column number.
-    auto insert_after = TokenIndex(insert_before.index - 1);
+    TokenIndex insert_after(insert_before.index - 1);
     auto [new_token_line, new_token_column] = buffer_.GetEndLoc(insert_after);
     new_tokens_.push_back(
         {insert_before,

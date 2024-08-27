@@ -44,8 +44,7 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
                                    SemIR::NameId name_id, SemIRLoc new_loc,
                                    SemIRLoc prev_loc) {
   CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
-                    "Redeclarations of `{0} {1}` in the same library must "
-                    "match use of `extern`.",
+                    "Redeclarations of `{0} {1}` must match use of `extern`.",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
       .Build(new_loc, RedeclExternMismatch, decl_kind, name_id)
@@ -53,16 +52,33 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
       .Emit();
 }
 
-// Diagnoses when multiple non-`extern` declarations are found.
-static auto DiagnoseNonExtern(Context& context, Lex::TokenKind decl_kind,
-                              SemIR::NameId name_id, SemIRLoc new_loc,
-                              SemIRLoc prev_loc) {
-  CARBON_DIAGNOSTIC(RedeclNonExtern, Error,
-                    "Only one library can declare `{0} {1}` without `extern`.",
+// Diagnoses `extern library` declared in a library importing the owned entity.
+static auto DiagnoseExternLibraryInImporter(Context& context,
+                                            Lex::TokenKind decl_kind,
+                                            SemIR::NameId name_id,
+                                            SemIRLoc new_loc,
+                                            SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(ExternLibraryInImporter, Error,
+                    "Cannot declare imported `{0} {1}` as `extern library`.",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
-      .Build(new_loc, RedeclNonExtern, decl_kind, name_id)
+      .Build(new_loc, ExternLibraryInImporter, decl_kind, name_id)
       .Note(prev_loc, RedeclPrevDecl)
+      .Emit();
+}
+
+// Diagnoses `extern library` pointing to the wrong library.
+static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
+                                           SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(
+      ExternLibraryIncorrect, Error,
+      "Declaration in {0} doesn't match `extern library` declaration.",
+      SemIR::LibraryNameId);
+  CARBON_DIAGNOSTIC(ExternLibraryExpected, Note,
+                    "Previously declared with `extern library` here.");
+  context.emitter()
+      .Build(new_loc, ExternLibraryIncorrect, context.sem_ir().library_id())
+      .Note(prev_loc, ExternLibraryExpected)
       .Emit();
 }
 
@@ -83,9 +99,7 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
       DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
       return;
     }
-    // `extern` definitions are prevented at creation; this is only
-    // checking for a non-`extern` definition after an `extern` declaration.
-    if (prev_decl.is_extern) {
+    if (prev_decl.is_extern != new_decl.is_extern) {
       DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
                              prev_decl.loc);
       return;
@@ -114,9 +128,24 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 
   // Check for disallowed redeclarations cross-library.
-  if (!new_decl.is_extern && !prev_decl.is_extern) {
-    DiagnoseNonExtern(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
+  if (prev_decl.is_extern != new_decl.is_extern) {
+    DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
+                           prev_decl.loc);
     return;
+  }
+  if (!prev_decl.extern_library_id.is_valid()) {
+    if (new_decl.extern_library_id.is_valid()) {
+      DiagnoseExternLibraryInImporter(context, decl_kind, name_id, new_decl.loc,
+                                      prev_decl.loc);
+    } else {
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
+                        prev_decl.loc);
+    }
+    return;
+  }
+  if (prev_decl.extern_library_id != SemIR::LibraryNameId::Error &&
+      prev_decl.extern_library_id != context.sem_ir().library_id()) {
+    DiagnoseExternLibraryIncorrect(context, new_decl.loc, prev_decl.loc);
   }
 }
 

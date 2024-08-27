@@ -127,17 +127,17 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
   // Returns whether this represents a constant. Requires is_valid.
   auto is_constant() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return *this != ConstantId::NotConstant;
   }
   // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return index >= 0;
   }
 
@@ -174,14 +174,14 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
   constexpr auto template_inst_id() const -> InstId {
-    CARBON_CHECK(is_template());
+    CARBON_DCHECK(is_template());
     return InstId(index);
   }
 
   // Returns the symbolic constant index that describes this symbolic constant
   // value. Requires `is_symbolic()`.
   constexpr auto symbolic_index() const -> int32_t {
-    CARBON_CHECK(is_symbolic());
+    CARBON_DCHECK(is_symbolic());
     return FirstSymbolicIndex - index;
   }
 
@@ -694,6 +694,56 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
     IndexBase::Print(out);
   }
 };
+
+// The ID of a library name. This is either a string literal or `default`.
+struct LibraryNameId : public IdBase, public Printable<NameId> {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // An explicitly invalid ID.
+  static const LibraryNameId Invalid;
+  // The name of `default`.
+  static const LibraryNameId Default;
+  // Track cases where the library name was set, but has been diagnosed and
+  // shouldn't be used anymore.
+  static const LibraryNameId Error;
+
+  // Returns the LibraryNameId for a library name as a string literal.
+  static auto ForStringLiteralValueId(StringLiteralValueId id)
+      -> LibraryNameId {
+    CARBON_CHECK(id.index >= InvalidIndex)
+        << "Unexpected library name ID " << id;
+    if (id == StringLiteralValueId::Invalid) {
+      // Prior to SemIR, we use invalid to indicate `default`.
+      return LibraryNameId::Default;
+    } else {
+      return LibraryNameId(id.index);
+    }
+  }
+
+  using IdBase::IdBase;
+
+  // Converts a LibraryNameId back to a string literal.
+  auto AsStringLiteralValueId() const -> StringLiteralValueId {
+    CARBON_CHECK(index >= InvalidIndex) << *this << " must be handled directly";
+    return StringLiteralValueId(index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "libraryName";
+    if (*this == Default) {
+      out << "Default";
+    } else if (*this == Error) {
+      out << "<error>";
+    } else {
+      IdBase::Print(out);
+    }
+  }
+};
+
+constexpr LibraryNameId LibraryNameId::Invalid = LibraryNameId(InvalidIndex);
+constexpr LibraryNameId LibraryNameId::Default =
+    LibraryNameId(InvalidIndex - 1);
+constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(InvalidIndex - 2);
 
 // The ID of an ImportIRInst.
 struct ImportIRInstId : public IdBase, public Printable<ImportIRInstId> {

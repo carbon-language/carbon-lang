@@ -6,6 +6,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!--
+{% raw %}
+Hides `{{` from jekyll's liquid parsing. Note endraw at the bottom.
+-->
+
 ## BUILD
 
 A typical BUILD target will look like:
@@ -118,6 +123,11 @@ Supported comment markers are:
 
         Replaced with `${TEST_TMPDIR}/temp_file`.
 
+    -   `%{identifier}`
+
+        Replaces some implementation-specific identifier with a value. (Mappings
+        provided by way of an optional `MyFileTest::GetArgReplacements`)
+
     ARGS can be specified at most once. If not provided, the FileTestBase child
     is responsible for providing default arguments.
 
@@ -156,3 +166,7 @@ Supported comment markers are:
     Tips like this are added by autoupdate, for example providing commands to
     run the test directly. Tips have no impact on validation; the marker informs
     autoupdate that it can update or remove them as needed.
+
+<!--
+{% endraw %}
+-->
