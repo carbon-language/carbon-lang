@@ -7,6 +7,15 @@
 
 namespace Carbon::Parse {
 
+// TODO: Some handling is producing erroneous nodes, but wasn't diagnosing and
+// needed to. A more specific diagnostic could be added, but we should probably
+// have a larger look at this code and how it produces parse errors. This may be
+// good to re-examine when someone is working on implementing match checking.
+static auto DiagnoseMatchParseTODO(Context& context) -> void {
+  CARBON_DIAGNOSTIC(MatchParseTODO, Error, "TODO: Improve match parsing.");
+  context.emitter().Emit(*context.position(), MatchParseTODO);
+}
+
 static auto HandleStatementsBlockStart(Context& context, State finish,
                                        NodeKind equal_greater, NodeKind starter,
                                        NodeKind complete) -> void {
@@ -19,9 +28,9 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
       context.emitter().Emit(*context.position(), ExpectedMatchCaseArrow);
     }
 
-    context.AddLeafNode(equal_greater, *context.position(), true);
-    context.AddNode(starter, *context.position(), true);
-    context.AddNode(complete, *context.position(), true);
+    context.AddLeafNode(equal_greater, *context.position(), /*has_error=*/true);
+    context.AddNode(starter, *context.position(), /*has_error=*/true);
+    context.AddNode(complete, *context.position(), /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -35,8 +44,8 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
       context.emitter().Emit(*context.position(), ExpectedMatchCaseBlock);
     }
 
-    context.AddNode(starter, *context.position(), true);
-    context.AddNode(complete, *context.position(), true);
+    context.AddNode(starter, *context.position(), /*has_error=*/true);
+    context.AddNode(complete, *context.position(), /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -76,8 +85,10 @@ auto HandleMatchConditionFinish(Context& context) -> void {
       context.emitter().Emit(*context.position(), ExpectedMatchCasesBlock);
     }
 
-    context.AddNode(NodeKind::MatchStatementStart, *context.position(), true);
-    context.AddNode(NodeKind::MatchStatement, *context.position(), true);
+    context.AddNode(NodeKind::MatchStatementStart, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::MatchStatement, *context.position(),
+                    /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -142,8 +153,10 @@ auto HandleMatchCaseIntroducer(Context& context) -> void {
 auto HandleMatchCaseAfterPattern(Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
-    context.AddNode(NodeKind::MatchCaseStart, *context.position(), true);
-    context.AddNode(NodeKind::MatchCase, *context.position(), true);
+    context.AddNode(NodeKind::MatchCaseStart, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::MatchCase, *context.position(),
+                    /*has_error=*/true);
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -157,14 +170,22 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
       context.AddLeafNode(NodeKind::MatchCaseGuardStart, *open_paren);
       context.PushState(State::Expr);
     } else {
+      if (!state.has_error) {
+        DiagnoseMatchParseTODO(context);
+      }
+
       context.AddLeafNode(NodeKind::MatchCaseGuardStart, *context.position(),
                           true);
-      context.AddLeafNode(NodeKind::InvalidParse, *context.position(), true);
+      context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                          /*has_error=*/true);
       state = context.PopState();
-      context.AddNode(NodeKind::MatchCaseGuard, *context.position(), true);
+      context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
+                      /*has_error=*/true);
       state = context.PopState();
-      context.AddNode(NodeKind::MatchCaseStart, *context.position(), true);
-      context.AddNode(NodeKind::MatchCase, *context.position(), true);
+      context.AddNode(NodeKind::MatchCaseStart, *context.position(),
+                      /*has_error=*/true);
+      context.AddNode(NodeKind::MatchCase, *context.position(),
+                      /*has_error=*/true);
       context.SkipPastLikelyEnd(*context.position());
       return;
     }
@@ -178,7 +199,12 @@ auto HandleMatchCaseGuardFinish(Context& context) -> void {
   if (close_paren) {
     context.AddNode(NodeKind::MatchCaseGuard, *close_paren, state.has_error);
   } else {
-    context.AddNode(NodeKind::MatchCaseGuard, *context.position(), true);
+    if (!state.has_error) {
+      DiagnoseMatchParseTODO(context);
+    }
+
+    context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
+                    /*has_error=*/true);
     context.ReturnErrorOnState();
     context.SkipPastLikelyEnd(*context.position());
     return;
