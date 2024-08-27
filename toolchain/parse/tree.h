@@ -129,8 +129,6 @@ class Tree : public Printable<Tree> {
   // Returns the token the given parse tree node models.
   auto node_token(NodeId n) const -> Lex::TokenIndex;
 
-  auto node_subtree_size(NodeId n) const -> int32_t;
-
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
   auto IsValid(NodeId node_id) const -> bool {
