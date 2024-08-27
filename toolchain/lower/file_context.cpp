@@ -378,10 +378,6 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
     name = *maybe_name;
   }
   llvm::StringRef linkage_name = llvm_function->getName();
-  // Include a linkage name only if it is different from the basic name.
-  if (linkage_name == name) {
-    linkage_name = "";
-  }
   // FIXME: Add more details here, including real subroutine type (once type
   // information is built), etc.
   return di_builder_.createFunction(

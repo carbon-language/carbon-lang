@@ -98,7 +98,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "overloaded.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "Op", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 17, column: 32, scope: !4)
@@ -115,6 +115,6 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !18 = !DILocation(line: 23, column: 55, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 22, column: 12, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 22, column: 5, scope: !11)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Calculate", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Calculate", linkageName: "Calculate", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !22 = !DILocation(line: 28, column: 10, scope: !21)
 // CHECK:STDOUT: !23 = !DILocation(line: 28, column: 3, scope: !21)
