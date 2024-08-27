@@ -375,12 +375,10 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   auto opt_name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
   CARBON_CHECK(opt_name) << "Unexpected special name for function: "
                          << function.name_id;
-  llvm::StringRef name = *opt_name;
-  llvm::StringRef linkage_name = llvm_function->getName();
   // FIXME: Add more details here, including real subroutine type (once type
   // information is built), etc.
   return di_builder_.createFunction(
-      di_compile_unit_, name, linkage_name,
+      di_compile_unit_, *opt_name, llvm_function->getName(),
       /*File=*/di_builder_.createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
       di_builder_.createSubroutineType(
