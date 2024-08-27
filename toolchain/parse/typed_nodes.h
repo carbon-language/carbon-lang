@@ -1122,7 +1122,7 @@ struct ChoiceDefinition {
 };
 
 // Struct type and value literals
-// ------------------------------
+// ----------------------------------------
 
 // `{`
 using StructLiteralStart =
