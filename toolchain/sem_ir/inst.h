@@ -307,17 +307,16 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 struct LocIdAndInst {
   // Constructs a LocIdAndInst with no associated location. Note, we should
   // generally do our best to associate a location for diagnostics.
+  // TODO: Only allow this when the inst has no node ID?
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
+    return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
   }
 
-  // Constructs a LocIdAndInst that reuses the location associated with some
-  // other inst, typically because `inst` doesn't have an explicit
-  // representation in the parse tree.
-  template <typename InstT>
-  static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
+  // Unsafely form a pair of a location and an instruction. Used in the cases
+  // where we can't statically enforce the type matches.
+  static auto UncheckedLoc(LocId loc_id, Inst inst) -> LocIdAndInst {
+    return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }
 
   // Construction for the common case with a typed node.
@@ -326,10 +325,12 @@ struct LocIdAndInst {
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
 
-  // Imports can pass an ImportIRInstId instead of another location.
+  // Construction for the case where the instruction can have any associated
+  // node.
   template <typename InstT>
-  LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
-      : loc_id(import_ir_inst_id), inst(inst) {}
+    requires(Internal::HasUntypedNodeId<InstT>)
+  LocIdAndInst(SemIR::LocId loc_id, InstT inst)
+      : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
@@ -339,7 +340,7 @@ struct LocIdAndInst {
   friend class InstStore;
 
   // Note `is_untyped` serves to disambiguate from public constructors.
-  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
+  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_unchecked*/)
       : loc_id(loc_id), inst(inst) {}
 };
 

@@ -75,11 +75,19 @@ class Context {
     return AddInst(SemIR::LocIdAndInst(node_id, inst));
   }
 
-  // Convenience for AddInst when reusing a location, which any instruction can
-  // do.
+  // Convenience for AddInst when the instruction can have any kind of
+  // associated node.
   template <typename InstT>
-  auto AddInstReusingLoc(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
-    return AddInst(SemIR::LocIdAndInst::ReusingLoc<InstT>(loc_id, inst));
+    requires(SemIR::Internal::HasUntypedNodeId<InstT>)
+  auto AddInst(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst(loc_id, inst));
+  }
+
+  template <typename InstT>
+  auto MakeImportedLocAndInst(SemIR::LocId imported_loc_id,
+                              InstT inst) -> SemIR::LocIdAndInst {
+    // TODO: Check the location is of the right kind for `InstT`.
+    return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
   }
 
   // Adds an instruction in no block, returning the produced ID. Should be used
@@ -94,11 +102,13 @@ class Context {
     return AddInstInNoBlock(SemIR::LocIdAndInst(node_id, inst));
   }
 
-  // Convenience for AddInstInNoBlock on imported instructions.
+  // Convenience for AddInstInNoBlock for instructions that can have any kind of
+  // associated node.
   template <typename InstT>
-  auto AddInstInNoBlock(SemIR::ImportIRInstId import_ir_inst_id, InstT inst)
+    requires(SemIR::Internal::HasUntypedNodeId<InstT>)
+  auto AddInstInNoBlock(SemIR::LocId loc_id, InstT inst)
       -> SemIR::InstId {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(import_ir_inst_id, inst));
+    return AddInstInNoBlock(SemIR::LocIdAndInst(loc_id, inst));
   }
 
   // Adds an instruction to the current block, returning the produced ID. The
