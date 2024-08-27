@@ -21,7 +21,7 @@ auto DiagnosticLoc::FormatLocation(llvm::raw_ostream& out) const -> void {
 
 auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out, int indent) const
     -> void {
-  if (column_number <= 0) {
+  if (column_number == -1) {
     return;
   }
 
