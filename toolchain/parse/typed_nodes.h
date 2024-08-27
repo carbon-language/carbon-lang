@@ -1016,9 +1016,10 @@ struct IfExprElse {
   AnyExprId else_result;
 };
 
-// The `Self` in `.Self`
-// FIXME: SelfDesignator?
-using DotSelf = LeafNode<NodeKind::DotSelf, Lex::SelfTypeIdentifierTokenIndex>;
+// The `Self` in a context where it is treated as a name rather than an
+// expression, such as `.Self`.
+using SelfTypeName =
+    LeafNode<NodeKind::SelfTypeName, Lex::SelfTypeIdentifierTokenIndex>;
 
 // `.Member` or `.Self` in an expression context, used in `where` and `require`
 // clauses.
@@ -1028,7 +1029,7 @@ struct DesignatorExpr {
       {.category = NodeCategory::Expr, .child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierName, DotSelf> designator;
+  NodeIdOneOf<IdentifierName, SelfTypeName> name;
 };
 
 // Choice nodes
