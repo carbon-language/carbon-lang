@@ -97,7 +97,6 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     prev_function.MergeDefinition(new_function);
     prev_function.return_storage_id = new_function.return_storage_id;
   }
-  // The new function might have return slot information if it was imported.
   if ((prev_import_ir_id.is_valid() && !new_is_import)) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
                             prev_function.name_id,
