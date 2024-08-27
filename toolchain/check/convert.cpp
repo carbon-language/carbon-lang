@@ -963,11 +963,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
   SemIR::Inst expr = sem_ir.insts().Get(expr_id);
   if (expr.type_id() != target.type_id) {
+    SemIR::InstId interface_args[] = {
+        context.types().GetInstId(target.type_id)};
     Operator op = {
         .interface_name = target.kind == ConversionTarget::ExplicitAs
                               ? llvm::StringLiteral("As")
                               : llvm::StringLiteral("ImplicitAs"),
-        .interface_args = {context.types().GetInstId(target.type_id)},
+        .interface_args = interface_args,
         .op_name = "Convert",
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
