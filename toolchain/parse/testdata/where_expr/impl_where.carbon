@@ -12,16 +12,9 @@ interface Interface {
   let T:! type;
 }
 
-// CHECK:STDERR: impl_where.carbon:[[@LINE+4]]:32: ERROR: requirement should use `impls`, `=`, or `==` operator.
-// CHECK:STDERR: impl i32 as Interface where .T = () {
-// CHECK:STDERR:                                ^
-// CHECK:STDERR:
 impl i32 as Interface where .T = () {
 }
 
-// CHECK:STDERR: impl_where.carbon:[[@LINE+3]]:33: ERROR: requirement should use `impls`, `=`, or `==` operator.
-// CHECK:STDERR: impl bool as Interface where .T = i32;
-// CHECK:STDERR:                                 ^
 impl bool as Interface where .T = i32;
 
 // CHECK:STDOUT: - filename: impl_where.carbon
@@ -36,24 +29,29 @@ impl bool as Interface where .T = i32;
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:       {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'T'},
-// CHECK:STDOUT:       {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: '}', has_error: yes, subtree_size: 10},
+// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Interface'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'T'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 13},
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:       {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:       {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'T'},
-// CHECK:STDOUT:       {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Interface'},
+// CHECK:STDOUT:         {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'T'},
+// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'RequirementAssign', text: '=', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'WhereExpr', text: 'where', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

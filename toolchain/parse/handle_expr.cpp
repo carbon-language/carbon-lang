@@ -227,9 +227,10 @@ static auto BeginRequirement(Context& context,
 
 auto HandleRequirementOperator(Context& context) -> void {
   auto state = context.PopState();
+  auto kind = context.PositionKind();
   state.token = context.Consume();
 
-  switch (context.PositionKind()) {
+  switch (kind) {
     case Lex::TokenKind::Impls: {
       break;
     }
@@ -248,9 +249,11 @@ auto HandleRequirementOperator(Context& context) -> void {
       break;
     }
   }
+  context.PushState(state, State::RequirementAnd);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
+// FIXME: split in 2
 auto HandleRequirementAnd(Context& context) -> void {
   auto state = context.PopState();
 
