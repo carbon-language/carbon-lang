@@ -1080,21 +1080,25 @@ struct IfExprElse {
 
 // A `where` expression (TODO: `require` and `observe` declarations)
 
-// `.Self`
+// The `Self` in `.Self`
 // FIXME: SelfDesignator?
-struct DotSelf {
-  static constexpr auto Kind = NodeKind::DotSelf.Define(
+using DotSelf = LeafNode<NodeKind::DotSelf, Lex::SelfTypeIdentifierTokenIndex>;
+
+// `.Member` or `.Self` in an expression context, used in `where` and `require`
+// clauses.
+struct DesignatorExpr {
+  static constexpr auto Kind = NodeKind::DesignatorExpr.Define(
       {.category = NodeCategory::Expr, .child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  SelfTypeNameExprId self;
+  NodeIdOneOf<IdentifierName, DotSelf> designator;
 };
 
 // FIXME: RequirementRewrite?
 struct RequirementAssign {
   static constexpr auto Kind = NodeKind::RequirementAssign.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
-  NodeIdOneOf<StructFieldDesignator, DotSelf> designator;
+  AnyExprId lhs;
   Lex::EqualTokenIndex token;
   AnyExprId rhs;
 };
