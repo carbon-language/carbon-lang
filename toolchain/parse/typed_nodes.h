@@ -1024,6 +1024,7 @@ using DotSelf = LeafNode<NodeKind::DotSelf, Lex::SelfTypeIdentifierTokenIndex>;
 
 // `.Member` or `.Self` in an expression context, used in `where` and `require`
 // clauses.
+// TODO: Do we want to support `.1`, a designator for accessing a tuple member?
 struct DesignatorExpr {
   static constexpr auto Kind = NodeKind::DesignatorExpr.Define(
       {.category = NodeCategory::Expr, .child_count = 1});

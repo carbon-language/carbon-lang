@@ -169,6 +169,42 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Period: {
+      // `.Member` or `.Self`
+      auto period = context.Consume();
+      if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                          NodeKind::IdentifierName)) {
+        // OK, `.` identifier.
+      } else if (context.ConsumeAndAddLeafNodeIf(
+                     Lex::TokenKind::SelfTypeIdentifier, NodeKind::DotSelf)) {
+        // OK, `.Self`.
+      } else {
+        // TODO: Custom diagnostic for `.1`? Or treat it as a designator for a
+        // tuple element?
+        CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterDot, Error,
+                          "Expected identifier or `Self` after `.`.");
+        context.emitter().Emit(*context.position(),
+                               ExpectedIdentifierOrSelfAfterDot);
+        // Only consume if it is a number or word.
+        if (context.PositionKind().is_keyword()) {
+          context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
+                              /*has_error=*/true);
+        } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
+          context.AddLeafNode(NodeKind::InvalidParse, context.Consume(),
+                              /*has_error=*/true);
+        } else {
+          context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                              /*has_error=*/true);
+          // Indicate the error to the parent state so that it can avoid
+          // producing more errors.
+          context.ReturnErrorOnState();
+        }
+        state.has_error = true;
+      }
+      context.AddNode(NodeKind::DesignatorExpr, period, state.has_error);
+      context.PushState(state);
+      break;
+    }
     default: {
       // Add a node to keep the parse tree balanced.
       context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
