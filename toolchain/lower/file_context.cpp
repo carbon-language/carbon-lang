@@ -377,11 +377,12 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
     name = *sem_ir().names().GetAsStringIfIdentifier(function.name_id);
   }
   llvm::StringRef linkage_name = llvm_function->getName();
+  // Include a linkage name only if it is different from the basic name.
   if (linkage_name == name) {
     linkage_name = "";
   }
-  // FIXME: Add more details here, including mangled name, real subroutine type
-  // (once type information is built), etc.
+  // FIXME: Add more details here, including real subroutine type (once type
+  // information is built), etc.
   return di_builder_.createFunction(
       di_compile_unit_, name, linkage_name,
       /*File=*/di_builder_.createFile(loc.filename, ""),
