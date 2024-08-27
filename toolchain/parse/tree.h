@@ -106,6 +106,8 @@ class Tree : public Printable<Tree> {
   // Tests whether there are any errors in the parse tree.
   auto has_errors() const -> bool { return has_errors_; }
 
+  auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
+
   // Returns the number of nodes in this parse tree.
   auto size() const -> int { return node_impls_.size(); }
 
