@@ -8,11 +8,6 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context, Parse::WhereIntroducerId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleWhereIntroducer");
-}
-
 auto HandleParseNode(Context& context, Parse::DotSelfId node_id) -> bool {
   return context.TODO(node_id, "HandleDotSelf");
 }
@@ -20,6 +15,11 @@ auto HandleParseNode(Context& context, Parse::DotSelfId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     -> bool {
   return context.TODO(node_id, "HandleDesignatorExpr");
+}
+
+auto HandleParseNode(Context& context, Parse::WhereIntroducerId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleWhereIntroducer");
 }
 
 auto HandleParseNode(Context& context, Parse::RequirementAssignId node_id)

@@ -10,17 +10,13 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+11]]:14: ERROR: Semantics TODO: `HandleWhereIntroducer`.
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+7]]:14: ERROR: Semantics TODO: `HandleWhereIntroducer`.
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+7]]:22: ERROR: Expected expression.
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:25: ERROR: requirement should use `impls`, `=`, or `==` operator.
 // CHECK:STDERR: impl bool as I where .T = bool {}
-// CHECK:STDERR:                      ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:22: ERROR: requirement should use `impls`, `=`, or `==` operator.
-// CHECK:STDERR: impl bool as I where .T = bool {}
-// CHECK:STDERR:                      ^
+// CHECK:STDERR:                         ^
 impl bool as I where .T = bool {}
 
 // CHECK:STDOUT: --- fail_todo_impl_assoc_const.carbon

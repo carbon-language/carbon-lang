@@ -220,6 +220,7 @@ auto HandleExprInPostfix(Context& context) -> void {
 static auto BeginRequirement(Context& context,
                              const Context::StateStackEntry& state) -> void {
   // FIXME: handle `.AssociatedConst = _` here?
+  context.PushState(state, State::RequirementAnd);
   context.PushState(state, State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
@@ -247,7 +248,6 @@ auto HandleRequirementOperator(Context& context) -> void {
       break;
     }
   }
-  context.PushState(state, State::RequirementAnd);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
