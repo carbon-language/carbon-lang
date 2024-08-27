@@ -42,6 +42,7 @@ cc_library(
         "function_context.h",
     ],
     deps = [
+        "mangler",
         "//common:check",
         "//common:map",
         "//common:vlog",
@@ -56,5 +57,20 @@ cc_library(
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TransformUtils",
+    ],
+)
+
+cc_library(
+    name = "mangler",
+    srcs = ["mangler.cpp"],
+    hdrs = ["mangler.h"],
+    deps = [
+        "//common:check",
+        "//toolchain/sem_ir:entry_point",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Support",
     ],
 )
