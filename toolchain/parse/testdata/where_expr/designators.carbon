@@ -42,6 +42,9 @@ fn Fail() {
   .*;
 }
 
+// --- fail_designator_eof.carbon
+
+var x: i32 = .
 // CHECK:STDOUT: - filename: designator.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
