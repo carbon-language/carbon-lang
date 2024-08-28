@@ -155,11 +155,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: %.1](@impl.%other.loc7_21.2: %.1) -> %.1 {
@@ -181,10 +181,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, imports.%import_ref.3 [template = constants.%.5]
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc11_11: <bound method> = bound_method %x.ref, %.1
+// CHECK:STDOUT:   %.loc11_11.1: %Op.type.2 = interface_witness_access @impl.%.loc6, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc11_11.2: <bound method> = bound_method %x.ref, %.loc11_11.1
 // CHECK:STDOUT:   %y.ref: %.1 = name_ref y, %y
-// CHECK:STDOUT:   %Op.call: init %.1 = call %.loc11_11(%x.ref, %y.ref)
+// CHECK:STDOUT:   %Op.call: init %.1 = call %.loc11_11.2(%x.ref, %y.ref)
 // CHECK:STDOUT:   %.loc11_20.1: ref %.1 = temporary_storage
 // CHECK:STDOUT:   %.loc11_20.2: ref %.1 = temporary %.loc11_20.1, %Op.call
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]

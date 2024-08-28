@@ -45,9 +45,9 @@ impl true as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: <error> as %.1 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

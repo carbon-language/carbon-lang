@@ -95,11 +95,11 @@ fn TestOp() {
 // CHECK:STDOUT:     %self.loc18_14.3: %.3 = bind_name self, %self.loc18_14.1
 // CHECK:STDOUT:     %.loc18_9: %.3 = addr_pattern %self.loc18_14.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -126,10 +126,10 @@ fn TestOp() {
 // CHECK:STDOUT:   %.loc22_16: init %C = converted %.loc22_15.1, %.loc22_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %c.var, %.loc22_16
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc23_3: <bound method> = bound_method %c.ref, %.1
+// CHECK:STDOUT:   %.loc23_3.1: %Op.type.2 = interface_witness_access @impl.%.loc17, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc23_3.2: <bound method> = bound_method %c.ref, %.loc23_3.1
 // CHECK:STDOUT:   %.loc23_5: %.3 = addr_of %c.ref
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc23_3(%.loc23_5)
+// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc23_3.2(%.loc23_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

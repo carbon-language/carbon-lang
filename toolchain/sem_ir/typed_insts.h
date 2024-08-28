@@ -710,11 +710,10 @@ struct InterfaceType {
 
 // A witness that a type implements an interface.
 struct InterfaceWitness {
-  static constexpr auto Kind =
-      InstKind::InterfaceWitness.Define<Parse::InvalidNodeId>(
-          {.ir_name = "interface_witness",
-           .constant_kind = InstConstantKind::Conditional,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
+      {.ir_name = "interface_witness",
+       .constant_kind = InstConstantKind::Conditional,
+       .is_lowered = false});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -723,7 +722,7 @@ struct InterfaceWitness {
 // Accesses an element of an interface witness by index.
 struct InterfaceWitnessAccess {
   static constexpr auto Kind =
-      InstKind::InterfaceWitnessAccess.Define<Parse::InvalidNodeId>(
+      InstKind::InterfaceWitnessAccess.Define<Parse::NodeId>(
           {.ir_name = "interface_witness_access",
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,
