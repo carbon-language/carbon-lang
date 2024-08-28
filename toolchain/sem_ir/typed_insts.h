@@ -289,7 +289,6 @@ struct BindSymbolicName {
 // A value binding. Used when an expression contains a reference and we want a
 // value.
 struct BindValue {
-  // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::BindValue.Define<Parse::NodeId>({.ir_name = "bind_value"});
 
@@ -299,7 +298,6 @@ struct BindValue {
 
 // Reads an argument from `BranchWithArg`.
 struct BlockArg {
-  // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::BlockArg.Define<Parse::NodeId>({.ir_name = "block_arg"});
 
@@ -700,11 +698,10 @@ struct InterfaceType {
 
 // A witness that a type implements an interface.
 struct InterfaceWitness {
-  static constexpr auto Kind =
-      InstKind::InterfaceWitness.Define<Parse::InvalidNodeId>(
-          {.ir_name = "interface_witness",
-           .constant_kind = InstConstantKind::Conditional,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
+      {.ir_name = "interface_witness",
+       .constant_kind = InstConstantKind::Conditional,
+       .is_lowered = false});
 
   TypeId type_id;
   InstBlockId elements_id;

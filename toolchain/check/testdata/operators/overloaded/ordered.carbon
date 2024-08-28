@@ -274,14 +274,14 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %.loc10_48.2: type = converted %bool.make_type.loc10, %.loc10_48.1 [template = bool]
 // CHECK:STDOUT:     %return.var.loc10: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Less = %Less.decl
 // CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent.decl
 // CHECK:STDOUT:   .Greater = %Greater.decl
 // CHECK:STDOUT:   .GreaterOrEquivalent = %GreaterOrEquivalent.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -327,7 +327,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc14_12.1: %Less.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Less.1]
+// CHECK:STDOUT:   %.loc14_12.1: %Less.type.2 = interface_witness_access @impl.%.loc6, element0 [template = constants.%Less.1]
 // CHECK:STDOUT:   %.loc14_12.2: <bound method> = bound_method %a.ref, %.loc14_12.1
 // CHECK:STDOUT:   %Less.call: init bool = call %.loc14_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %Less.call
@@ -339,7 +339,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc18_12.1: %LessOrEquivalent.type.2 = interface_witness_access @impl.%.1, element1 [template = constants.%LessOrEquivalent.1]
+// CHECK:STDOUT:   %.loc18_12.1: %LessOrEquivalent.type.2 = interface_witness_access @impl.%.loc6, element1 [template = constants.%LessOrEquivalent.1]
 // CHECK:STDOUT:   %.loc18_12.2: <bound method> = bound_method %a.ref, %.loc18_12.1
 // CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %.loc18_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %LessOrEquivalent.call
@@ -351,7 +351,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc22_12.1: %Greater.type.2 = interface_witness_access @impl.%.1, element2 [template = constants.%Greater.1]
+// CHECK:STDOUT:   %.loc22_12.1: %Greater.type.2 = interface_witness_access @impl.%.loc6, element2 [template = constants.%Greater.1]
 // CHECK:STDOUT:   %.loc22_12.2: <bound method> = bound_method %a.ref, %.loc22_12.1
 // CHECK:STDOUT:   %Greater.call: init bool = call %.loc22_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %Greater.call
@@ -363,7 +363,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc26_12.1: %GreaterOrEquivalent.type.2 = interface_witness_access @impl.%.1, element3 [template = constants.%GreaterOrEquivalent.1]
+// CHECK:STDOUT:   %.loc26_12.1: %GreaterOrEquivalent.type.2 = interface_witness_access @impl.%.loc6, element3 [template = constants.%GreaterOrEquivalent.1]
 // CHECK:STDOUT:   %.loc26_12.2: <bound method> = bound_method %a.ref, %.loc26_12.1
 // CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %.loc26_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %GreaterOrEquivalent.call

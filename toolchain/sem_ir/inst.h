@@ -326,11 +326,6 @@ struct LocIdAndInst {
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
 
-  // Construction for the case of a typed node that has no associated location.
-  template <typename InstT>
-    requires(!Internal::HasNodeId<InstT>)
-  explicit LocIdAndInst(InstT inst) : loc_id(LocId::Invalid), inst(inst) {}
-
   // Construction for the case where the instruction can have any associated
   // node.
   template <typename InstT>

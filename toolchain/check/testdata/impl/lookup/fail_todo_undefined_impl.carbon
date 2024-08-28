@@ -99,11 +99,11 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -163,11 +163,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %A as %.6 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc12: <witness> = interface_witness (%Op.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -203,7 +203,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %.loc16_23: init type = call %Action.ref(%B.ref) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc16_26: %.7 = specific_constant @Action.%.loc5, @Action(constants.%B) [template = constants.%.8]
 // CHECK:STDOUT:   %Op.ref: %.7 = name_ref Op, %.loc16_26 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc16_15: %Op.type.3 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %.loc16_15: %Op.type.3 = interface_witness_access @impl.%.loc12, element0 [template = constants.%Op.2]
 // CHECK:STDOUT:   %Op.call: init %.1 = call %.loc16_15()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -612,11 +612,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %return.var: ref %B = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Make.decl) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc11: <witness> = interface_witness (%Make.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
