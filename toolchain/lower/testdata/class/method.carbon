@@ -27,11 +27,11 @@ fn F(p: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @Set(ptr, i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F(ptr %p) {
+// CHECK:STDOUT: define void @F(ptr %p) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Get.call = call i32 @Get(ptr %p)
-// CHECK:STDOUT:   call void @Set(ptr %p, i32 %Get.call)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %Get.call = call i32 @Get(ptr %p), !dbg !7
+// CHECK:STDOUT:   call void @Set(ptr %p, i32 %Get.call), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -41,3 +41,9 @@ fn F(p: C*) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "method.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 1, scope: !4)

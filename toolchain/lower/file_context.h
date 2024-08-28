@@ -9,6 +9,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -18,6 +19,7 @@ namespace Carbon::Lower {
 class FileContext {
  public:
   explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
+                       const Check::SemIRDiagnosticConverter& converter,
                        llvm::StringRef module_name, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
@@ -43,6 +45,9 @@ class FileContext {
     CARBON_CHECK(types_[type_id.index]) << "Missing type " << type_id;
     return types_[type_id.index];
   }
+
+  // Returns the DiagnosticLoc associated with the specified inst_id.
+  auto GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {
@@ -78,6 +83,11 @@ class FileContext {
   // declaration with no definition, does nothing.
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
+  // Build the DISubprogram metadata for the given function.
+  auto BuildDISubprogram(const SemIR::Function& function,
+                         const llvm::Function* llvm_function)
+      -> llvm::DISubprogram*;
+
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
@@ -96,6 +106,9 @@ class FileContext {
 
   // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
+
+  // The source location converter.
+  const Check::SemIRDiagnosticConverter& converter_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;

@@ -78,22 +78,14 @@ library "indirect_two_file";
 
 import library "indirect_two_file_extern";
 
-// --- fail_todo_indirect_two_file.impl.carbon
+// --- fail_indirect_two_file.impl.carbon
 
 impl library "indirect_two_file";
 
-// CHECK:STDERR: fail_todo_indirect_two_file.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_indirect_two_file.impl.carbon:[[@LINE+4]]:1: ERROR: `extern` entities must have a declaration in the API file.
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_indirect_two_file.impl.carbon:[[@LINE-5]]:6: In import.
-// CHECK:STDERR: impl library "indirect_two_file";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: indirect_two_file.carbon:4:1: In import.
-// CHECK:STDERR: import library "indirect_two_file_extern";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: indirect_two_file_extern.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: extern library "indirect_two_file" fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn F() {}
 
 // --- in_impl_extern.carbon
@@ -106,12 +98,15 @@ extern library "in_impl" fn F();
 
 library "in_impl";
 
-// --- in_impl.impl.carbon
+// --- fail_in_impl.impl.carbon
 
 impl library "in_impl";
 
 import library "in_impl_extern";
 
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: `extern` entities must have a declaration in the API file.
+// CHECK:STDERR: extern fn F() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
 extern fn F() {}
 
 // CHECK:STDOUT: --- one_file_extern.carbon
@@ -266,7 +261,7 @@ extern fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -301,14 +296,12 @@ extern fn F() {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_indirect_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_indirect_two_file.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -317,16 +310,14 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @.1() {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -354,7 +345,7 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]

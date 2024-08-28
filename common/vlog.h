@@ -13,9 +13,10 @@ namespace Carbon {
 //
 // For example:
 //   CARBON_VLOG() << "Verbose message";
-#define CARBON_VLOG()                 \
-  (vlog_stream_ == nullptr) ? (void)0 \
-                            : CARBON_VLOG_INTERNAL_STREAM(vlog_stream_)
+#define CARBON_VLOG()                             \
+  __builtin_expect(vlog_stream_ == nullptr, true) \
+      ? (void)0                                   \
+      : CARBON_VLOG_INTERNAL_STREAM(vlog_stream_)
 
 }  // namespace Carbon
 

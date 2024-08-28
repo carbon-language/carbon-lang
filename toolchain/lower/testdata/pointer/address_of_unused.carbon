@@ -16,11 +16,11 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'address_of_unused.carbon'
 // CHECK:STDOUT: source_filename = "address_of_unused.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -30,3 +30,9 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "address_of_unused.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 11, column: 1, scope: !4)

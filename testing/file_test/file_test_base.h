@@ -14,6 +14,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/autoupdate.h"
@@ -85,6 +86,12 @@ class FileTestBase : public testing::Test {
 
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
+
+  // Returns a map of string replacements to implement `%{key}` -> `value` in
+  // arguments.
+  virtual auto GetArgReplacements() -> llvm::StringMap<std::string> {
+    return {};
+  }
 
   // Returns a regex to match the default file when a line may not be present.
   // May return nullptr if unused. If GetLineNumberReplacements returns an entry

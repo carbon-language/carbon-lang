@@ -21,16 +21,6 @@ auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
       PostorderIterator(NodeId(node_impls_.size())));
 }
 
-auto Tree::node_has_error(NodeId n) const -> bool {
-  CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index].has_error;
-}
-
-auto Tree::node_kind(NodeId n) const -> NodeKind {
-  CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index].kind;
-}
-
 auto Tree::node_token(NodeId n) const -> Lex::TokenIndex {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].token;

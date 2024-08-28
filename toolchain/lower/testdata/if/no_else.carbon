@@ -21,27 +21,27 @@ fn If(b: bool) {
 // CHECK:STDOUT: ; ModuleID = 'no_else.carbon'
 // CHECK:STDOUT: source_filename = "no_else.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: define void @F() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G() {
+// CHECK:STDOUT: define void @G() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @If(i1 %b) {
+// CHECK:STDOUT: define void @If(i1 %b) !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else
+// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %if.else
+// CHECK:STDOUT:   call void @F(), !dbg !12
+// CHECK:STDOUT:   br label %if.else, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %if.then, %entry
-// CHECK:STDOUT:   call void @G()
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   call void @G(), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -51,3 +51,15 @@ fn If(b: bool) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "no_else.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 1, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "If", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 6, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 5, scope: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !10)
+// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 1, scope: !10)

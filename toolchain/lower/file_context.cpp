@@ -21,8 +21,9 @@
 namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
-                         bool include_debug_info, llvm::StringRef module_name,
-                         const SemIR::File& sem_ir,
+                         bool include_debug_info,
+                         const Check::SemIRDiagnosticConverter& converter,
+                         llvm::StringRef module_name, const SemIR::File& sem_ir,
                          const SemIR::InstNamer* inst_namer,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
@@ -32,6 +33,7 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
           include_debug_info
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
+      converter_(converter),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
@@ -240,13 +242,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else if (auto name =
-                 sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
-    // TODO: Decide on a name mangling scheme.
-    mangled_name = *name;
   } else {
-    CARBON_FATAL() << "Unexpected special name for function: "
-                   << function.name_id;
+    // TODO: Decide on a name mangling scheme.
+    auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+    CARBON_CHECK(name) << "Unexpected special name for function: "
+                       << function.name_id;
+    mangled_name = *name;
   }
 
   llvm::FunctionType* function_type = llvm::FunctionType::get(
@@ -289,7 +290,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return;
   }
 
-  FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
+  FunctionContext function_lowering(*this, llvm_function,
+                                    BuildDISubprogram(function, llvm_function),
+                                    vlog_stream_);
 
   // TODO: Pass in a specific ID for generic functions.
   const auto specific_id = SemIR::SpecificId::Invalid;
@@ -358,6 +361,27 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
+}
+
+auto FileContext::BuildDISubprogram(const SemIR::Function& function,
+                                    const llvm::Function* llvm_function)
+    -> llvm::DISubprogram* {
+  if (!di_compile_unit_) {
+    return nullptr;
+  }
+  auto loc = converter_.ConvertLoc(
+      function.definition_id,
+      [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+  // FIXME: Add more details here, including mangled name, real subroutine type
+  // (once type information is built), etc.
+  return di_builder_.createFunction(
+      di_compile_unit_, llvm_function->getName(), /*LinkageName=*/"",
+      /*File=*/di_builder_.createFile(loc.filename, ""),
+      /*LineNo=*/loc.line_number,
+      di_builder_.createSubroutineType(
+          di_builder_.getOrCreateTypeArray(std::nullopt)),
+      /*ScopeLine=*/0, llvm::DINode::FlagZero,
+      llvm::DISubprogram::SPFlagDefinition);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
@@ -513,6 +537,13 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
                                   /*isConstant=*/false,
                                   llvm::GlobalVariable::InternalLinkage,
                                   /*Initializer=*/nullptr, mangled_name);
+}
+
+auto FileContext::GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc {
+  return converter_.ConvertLoc(
+      inst_id,
+      [&](DiagnosticLoc /*context_loc*/,
+          const Internal::DiagnosticBase<>& /*context_diagnostic_base*/) {});
 }
 
 }  // namespace Carbon::Lower
