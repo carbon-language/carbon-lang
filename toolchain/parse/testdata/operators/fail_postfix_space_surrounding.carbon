@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/recover_postfix_space.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_postfix_space_surrounding.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/recover_postfix_space.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_postfix_space_surrounding.carbon
 
-// CHECK:STDERR: recover_postfix_space.carbon:[[@LINE+3]]:18: ERROR: Whitespace is not allowed before this unary operator.
-// CHECK:STDERR: var v: type = i8 *;
+// CHECK:STDERR: fail_postfix_space_surrounding.carbon:[[@LINE+3]]:18: ERROR: Whitespace is not allowed before this unary operator.
+// CHECK:STDERR: var v: type = i8 * ;
 // CHECK:STDERR:                  ^
-var v: type = i8 *;
+var v: type = i8 * ;
 
-// CHECK:STDOUT: - filename: recover_postfix_space.carbon
+// CHECK:STDOUT: - filename: fail_postfix_space_surrounding.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
