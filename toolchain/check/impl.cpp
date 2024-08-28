@@ -198,9 +198,9 @@ static auto BuildInterfaceWitness(
   }
 
   auto table_id = context.inst_blocks().Add(table);
-  return context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::InterfaceWitness>(
+  return context.AddInst<SemIR::InterfaceWitness>(
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
-       .elements_id = table_id}));
+       .elements_id = table_id});
 }
 
 auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)

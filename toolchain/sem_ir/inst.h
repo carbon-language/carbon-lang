@@ -305,9 +305,10 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {
-  // Constructs a LocIdAndInst with no associated location. Note, we should
-  // generally do our best to associate a location for diagnostics.
-  // TODO: Only allow this when the inst has no node ID?
+  // Constructs a LocIdAndInst with no associated location. This should be used
+  // very sparingly: only when it doesn't make sense to store a location even
+  // when the instruction kind usually has one, such as for instructions in the
+  // constants block.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
@@ -324,6 +325,11 @@ struct LocIdAndInst {
     requires(Internal::HasNodeId<InstT>)
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
+
+  // Construction for the case of a typed node that has no associated location.
+  template <typename InstT>
+    requires(!Internal::HasNodeId<InstT>)
+  explicit LocIdAndInst(InstT inst) : loc_id(LocId::Invalid), inst(inst) {}
 
   // Construction for the case where the instruction can have any associated
   // node.

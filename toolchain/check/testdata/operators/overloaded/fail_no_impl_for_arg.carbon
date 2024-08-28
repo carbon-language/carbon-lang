@@ -220,10 +220,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc31_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc31_12.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc31_12.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc31_12.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc31_12.2: <bound method> = bound_method %a.ref, %.loc31_12.1
+// CHECK:STDOUT:   %.loc31_12.3: ref %C = temporary_storage
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc31_12.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -238,10 +238,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   assign %a.var, %.loc35_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %.loc42_5: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc42_5.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc42_5.2: <bound method> = bound_method %a.ref, %.loc42_5.1
 // CHECK:STDOUT:   %.loc42_3: %.6 = addr_of %a.ref
-// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc42_5(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc42_5.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

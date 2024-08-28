@@ -181,10 +181,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, imports.%import_ref.3 [template = constants.%.5]
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc11_11: <bound method> = bound_method %x.ref, %.1
+// CHECK:STDOUT:   %.loc11_11.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc11_11.2: <bound method> = bound_method %x.ref, %.loc11_11.1
 // CHECK:STDOUT:   %y.ref: %.1 = name_ref y, %y
-// CHECK:STDOUT:   %Op.call: init %.1 = call %.loc11_11(%x.ref, %y.ref)
+// CHECK:STDOUT:   %Op.call: init %.1 = call %.loc11_11.2(%x.ref, %y.ref)
 // CHECK:STDOUT:   %.loc11_20.1: ref %.1 = temporary_storage
 // CHECK:STDOUT:   %.loc11_20.2: ref %.1 = temporary %.loc11_20.1, %Op.call
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]

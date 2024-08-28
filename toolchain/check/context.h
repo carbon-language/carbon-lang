@@ -75,6 +75,13 @@ class Context {
     return AddInst(SemIR::LocIdAndInst(node_id, inst));
   }
 
+  // Convenience for AddInst with typed nodes.
+  template <typename InstT>
+    requires(!SemIR::Internal::HasNodeId<InstT>)
+  auto AddInst(InstT inst) -> SemIR::InstId {
+    return AddInst(SemIR::LocIdAndInst(inst));
+  }
+
   // Convenience for AddInst when the instruction can have any kind of
   // associated node.
   template <typename InstT>

@@ -197,8 +197,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.7 [template = constants.%.2]
 // CHECK:STDOUT:   %F.ref: %.5 = name_ref F, imports.%import_ref.3 [template = constants.%.6]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access imports.%import_ref.5, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %.3 = call %.1()
+// CHECK:STDOUT:   %.loc5: %F.type.1 = interface_witness_access imports.%import_ref.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %.3 = call %.loc5()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
