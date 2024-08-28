@@ -10,6 +10,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
@@ -87,18 +88,17 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                                   prev_function.definition_id.is_valid()),
                        prev_import_ir_id);
 
+  if (!prev_function.first_owning_decl_id.is_valid()) {
+    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
+  }
   if (new_is_definition) {
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
     prev_function.return_storage_id = new_function.return_storage_id;
   }
-  // The new function might have return slot information if it was imported.
-  if ((prev_import_ir_id.is_valid() && !new_is_import) ||
-      (prev_function.is_extern && !new_function.is_extern)) {
-    prev_function.is_extern = new_function.is_extern;
-    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
-    ReplacePrevInstForMerge(context, prev_function.parent_scope_id,
+  if ((prev_import_ir_id.is_valid() && !new_is_import)) {
+    ReplacePrevInstForMerge(context, new_function.parent_scope_id,
                             prev_function.name_id,
                             new_function.first_owning_decl_id);
   }
@@ -122,9 +122,9 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
       prev_function_id = function_decl.function_id;
       break;
     }
-    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+    case SemIR::ImportRefLoaded::Kind: {
       auto import_ir_inst =
-          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+          GetCanonicalImportIRInst(context, &context.sem_ir(), prev_id);
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
@@ -226,6 +226,9 @@ static auto BuildFunctionDecl(Context& context,
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
+    if (function_info.is_extern && context.IsImplFile()) {
+      DiagnoseExternRequiresDeclInApiFile(context, node_id);
+    }
     function_info.generic_id = FinishGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {

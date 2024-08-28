@@ -35,10 +35,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     context.PushState(State::OnlyParenExpr);
     return;
   } else {
-    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPeriodOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringLiteral);
     context.emitter().Emit(
-        *context.position(), ExpectedIdentifierAfterDotOrArrow,
+        *context.position(), ExpectedIdentifierAfterPeriodOrArrow,
         is_arrow ? llvm::StringLiteral("->") : llvm::StringLiteral("."));
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?

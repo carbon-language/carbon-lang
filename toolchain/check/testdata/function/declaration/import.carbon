@@ -724,17 +724,17 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
+// CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%c: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @E();
+// CHECK:STDOUT: fn @E();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
