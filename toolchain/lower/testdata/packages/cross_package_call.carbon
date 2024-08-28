@@ -44,11 +44,11 @@ fn G() { A.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF(), !dbg !7
+// CHECK:STDOUT:   call void @_CF.A(), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF()
+// CHECK:STDOUT: declare void @_CF.A()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
