@@ -330,8 +330,7 @@ struct LocIdAndInst {
   // node.
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::LocId loc_id, InstT inst)
-      : loc_id(loc_id), inst(inst) {}
+  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;

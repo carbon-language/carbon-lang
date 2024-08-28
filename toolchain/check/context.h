@@ -80,8 +80,8 @@ class Context {
   // created.
   template <typename InstT>
     requires SemIR::Internal::HasNodeId<InstT>
-  auto MakeImportedLocAndInst(SemIR::ImportIRInstId imported_loc_id,
-                              InstT inst) -> SemIR::LocIdAndInst {
+  auto MakeImportedLocAndInst(SemIR::ImportIRInstId imported_loc_id, InstT inst)
+      -> SemIR::LocIdAndInst {
     if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
       CheckCompatibleImportedNodeKind(imported_loc_id, InstT::Kind);
     }

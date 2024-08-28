@@ -75,8 +75,8 @@ struct AddrPattern {
 
 // An array indexing operation, such as `array[index]`.
 struct ArrayIndex {
-  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
-      {.ir_name = "array_index"});
+  static constexpr auto Kind =
+      InstKind::ArrayIndex.Define<Parse::NodeId>({.ir_name = "array_index"});
 
   TypeId type_id;
   InstId array_id;
@@ -134,8 +134,8 @@ struct AnyAggregateValue {
 // expression. `inits_id` contains one initializer per array element.
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
-  static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
-      {.ir_name = "array_init"});
+  static constexpr auto Kind =
+      InstKind::ArrayInit.Define<Parse::NodeId>({.ir_name = "array_init"});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -925,8 +925,8 @@ struct StructValue {
 
 // A temporary value.
 struct Temporary {
-  static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
-      {.ir_name = "temporary"});
+  static constexpr auto Kind =
+      InstKind::Temporary.Define<Parse::NodeId>({.ir_name = "temporary"});
 
   TypeId type_id;
   InstId storage_id;

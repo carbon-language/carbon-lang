@@ -363,10 +363,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
 
   if (is_init) {
     target.init_block->InsertHere();
-    return context.AddInst<SemIR::TupleInit>(
-        value_loc_id, {.type_id = target.type_id,
-                       .elements_id = new_block.id(),
-                       .dest_id = target.init_id});
+    return context.AddInst<SemIR::TupleInit>(value_loc_id,
+                                             {.type_id = target.type_id,
+                                              .elements_id = new_block.id(),
+                                              .dest_id = target.init_id});
   } else {
     return context.AddInst<SemIR::TupleValue>(
         value_loc_id,
