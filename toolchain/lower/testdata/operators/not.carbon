@@ -17,8 +17,8 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @Not(i1 %b) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12 = xor i1 %b, true
-// CHECK:STDOUT:   ret i1 %.loc12
+// CHECK:STDOUT:   %.loc12 = xor i1 %b, true, !dbg !7
+// CHECK:STDOUT:   ret i1 %.loc12, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -28,6 +28,8 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "not.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Not", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Not", linkageName: "Not", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)

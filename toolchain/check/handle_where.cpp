@@ -8,8 +8,8 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context, Parse::DotSelfId node_id) -> bool {
-  return context.TODO(node_id, "HandleDotSelf");
+auto HandleParseNode(Context& context, Parse::SelfTypeNameId node_id) -> bool {
+  return context.TODO(node_id, "HandleSelfTypeName");
 }
 
 auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)

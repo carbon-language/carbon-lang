@@ -70,7 +70,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   if (!namespace_inst.name_scope_id.is_valid()) {
     namespace_inst.name_scope_id = context.name_scopes().Add(
         namespace_id, name_context.name_id_for_new_inst(),
-        name_context.parent_scope_id_for_new_inst());
+        name_context.parent_scope_id);
   }
 
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);

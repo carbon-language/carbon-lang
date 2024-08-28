@@ -4,22 +4,19 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/let/local.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/definition/raw_name.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/let/local.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/definition/raw_name.carbon
 
-fn Run() -> i32 {
-  let n: i32 = 1;
-  let m: i32 = n;
-  return m;
-}
+fn r#self() {}
 
-// CHECK:STDOUT: ; ModuleID = 'local.carbon'
-// CHECK:STDOUT: source_filename = "local.carbon"
+
+// CHECK:STDOUT: ; ModuleID = 'raw_name.carbon'
+// CHECK:STDOUT: source_filename = "raw_name.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() !dbg !4 {
+// CHECK:STDOUT: define void @self() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 1, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -28,8 +25,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "local.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !3 = !DIFile(filename: "raw_name.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "self", linkageName: "self", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)

@@ -234,7 +234,7 @@ extern library "extern_of_import" fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_redecl.carbon
 // CHECK:STDOUT:
@@ -377,5 +377,5 @@ extern library "extern_of_import" fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

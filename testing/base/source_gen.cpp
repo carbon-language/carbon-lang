@@ -22,6 +22,228 @@ auto SourceGen::Global() -> SourceGen& {
 
 SourceGen::SourceGen(Language language) : language_(language) {}
 
+// Heuristic numbers used in synthesizing various identifier sequences.
+constexpr static int MinClassNameLength = 5;
+constexpr static int MinMemberNameLength = 4;
+
+// The shuffled state used to generate some number of classes.
+//
+// This state encodes everything used to generate class definitions. The state
+// will be consumed until empty.
+//
+// Detailed comments for out-of-line methods are on their definitions.
+class SourceGen::ClassGenState {
+ public:
+  ClassGenState(SourceGen& gen, int num_classes,
+                const ClassParams& class_params,
+                const TypeUseParams& type_use_params);
+
+  auto public_function_param_counts() -> llvm::SmallVectorImpl<int>& {
+    return public_function_param_counts_;
+  }
+  auto public_method_param_counts() -> llvm::SmallVectorImpl<int>& {
+    return public_method_param_counts_;
+  }
+  auto private_function_param_counts() -> llvm::SmallVectorImpl<int>& {
+    return private_function_param_counts_;
+  }
+  auto private_method_param_counts() -> llvm::SmallVectorImpl<int>& {
+    return private_method_param_counts_;
+  }
+
+  auto class_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return class_names_;
+  }
+  auto member_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return member_names_;
+  }
+  auto param_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return param_names_;
+  }
+
+  auto type_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return type_names_;
+  }
+
+  auto AddValidTypeName(llvm::StringRef type_name) -> void {
+    valid_type_names_.Insert(type_name);
+  }
+
+  auto GetValidTypeName() -> llvm::StringRef;
+
+ private:
+  auto BuildClassAndTypeNames(SourceGen& gen, int num_classes, int num_types,
+                              const TypeUseParams& type_use_params) -> void;
+
+  llvm::SmallVector<int> public_function_param_counts_;
+  llvm::SmallVector<int> public_method_param_counts_;
+  llvm::SmallVector<int> private_function_param_counts_;
+  llvm::SmallVector<int> private_method_param_counts_;
+
+  llvm::SmallVector<llvm::StringRef> class_names_;
+  llvm::SmallVector<llvm::StringRef> member_names_;
+  llvm::SmallVector<llvm::StringRef> param_names_;
+
+  llvm::SmallVector<llvm::StringRef> type_names_;
+  Set<llvm::StringRef> valid_type_names_;
+  int last_type_name_index_ = 0;
+};
+
+// A helper to sum elements of a range.
+template <typename T>
+static auto Sum(const T& range) -> int {
+  return std::accumulate(range.begin(), range.end(), 0);
+}
+
+// Given a number of class definitions and the params with which to generate
+// them, builds the state that will be used while generating that many classes.
+//
+// We build the state first and across all the class definitions that will be
+// generated so that we can distribute random components across all the
+// definitions.
+SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
+                                        const ClassParams& class_params,
+                                        const TypeUseParams& type_use_params) {
+  public_function_param_counts_ =
+      gen.GetShuffledInts(num_classes * class_params.public_function_decls, 0,
+                          class_params.public_function_decl_params.max_params);
+  public_method_param_counts_ =
+      gen.GetShuffledInts(num_classes * class_params.public_method_decls, 0,
+                          class_params.public_method_decl_params.max_params);
+  private_function_param_counts_ =
+      gen.GetShuffledInts(num_classes * class_params.private_function_decls, 0,
+                          class_params.private_function_decl_params.max_params);
+  private_method_param_counts_ =
+      gen.GetShuffledInts(num_classes * class_params.private_method_decls, 0,
+                          class_params.private_method_decl_params.max_params);
+
+  int num_members =
+      num_classes *
+      (class_params.public_function_decls + class_params.public_method_decls +
+       class_params.private_function_decls + class_params.private_method_decls +
+       class_params.private_field_decls);
+  member_names_ = gen.GetShuffledIdentifiers(
+      num_members, /*min_length=*/MinMemberNameLength);
+  int num_params =
+      Sum(public_function_param_counts_) + Sum(public_method_param_counts_) +
+      Sum(private_function_param_counts_) + Sum(private_method_param_counts_);
+  param_names_ = gen.GetShuffledIdentifiers(num_params);
+
+  BuildClassAndTypeNames(gen, num_classes, num_members + num_params,
+                         type_use_params);
+}
+
+auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
+  // Check that we don't completely wrap the type names by tracking where we
+  // started.
+  int initial_last_type_name_index = last_type_name_index_;
+
+  // Now search the type names, starting from the last used index, to find the
+  // first valid name.
+  for (;;) {
+    if (last_type_name_index_ == 0) {
+      last_type_name_index_ = type_names_.size();
+    }
+    --last_type_name_index_;
+    llvm::StringRef& type_name = type_names_[last_type_name_index_];
+    if (valid_type_names_.Contains(type_name)) {
+      // Found a valid type name, swap it with the back and pop that off.
+      std::swap(type_names_.back(), type_name);
+      return type_names_.pop_back_val();
+    }
+
+    CARBON_CHECK(last_type_name_index_ != initial_last_type_name_index)
+        << "Failed to find a valid type name with " << type_names_.size()
+        << " candidates, an initial index of " << initial_last_type_name_index
+        << ", and with " << class_names_.size() << " classes left to emit!";
+  }
+}
+
+// Build both the class names this file will declare and a list of type
+// references to use throughout those classes.
+//
+// We combine a list of fixed types in the `type_use_params` with the list of
+// class names that will be defined to form the spelling of all the referenced
+// types. The `type_use_params` provides weights for each fixed type as well as
+// an overall weight for referencing class names that are being declared. We
+// build a set of type references so that its histogram will roughly match these
+// weights.
+//
+// For each of the fixed types, `type_use_params` provides a spelling for both
+// Carbon and C++.
+//
+// We distribute our references to declared class names evenly to the extent
+// possible.
+//
+// Before all the references are formed, the class names are kept their original
+// unshuffled order. This ensures that any uneven sampling of names is done
+// deterministically. At the end, we randomly shuffle the sequences of both the
+// declared class names and type references to provide an unpredictable order in
+// the generated output.
+auto SourceGen::ClassGenState::BuildClassAndTypeNames(
+    SourceGen& gen, int num_classes, int num_types,
+    const TypeUseParams& type_use_params) -> void {
+  // Initially get the sequence of class names without shuffling so we can
+  // compute our type name pool from them prior to any shuffling.
+  class_names_ =
+      gen.GetUniqueIdentifiers(num_classes, /*min_length=*/MinClassNameLength);
+
+  type_names_.reserve(num_types);
+
+  // Compute the sum of weights and pre-process the fixed types.
+  int type_weight_sum = type_use_params.declared_types_weight;
+  for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
+    type_weight_sum += fixed_type_weight.weight;
+    // Add all the fixed type spellings as immediately valid.
+    valid_type_names_.Insert(gen.IsCpp() ? fixed_type_weight.cpp_spelling
+                                         : fixed_type_weight.carbon_spelling);
+  }
+
+  // Compute the number of declared types used. We expect to have a decent
+  // number of repeated names, so we repeatedly append the entire sequence of
+  // class names until there is some remainder of names needed.
+  int num_declared_types =
+      num_types * type_use_params.declared_types_weight / type_weight_sum;
+  for ([[maybe_unused]] auto _ : llvm::seq(num_declared_types / num_classes)) {
+    type_names_.append(class_names_.begin(), class_names_.end());
+  }
+  // Now append the remainder number of class names. This is where the class
+  // names being un-shuffled is essential. We're going to have one extra
+  // reference to some fraction of the class names and we want that to be a
+  // stable subset.
+  type_names_.append(class_names_.begin(),
+                     class_names_.begin() + (num_declared_types % num_classes));
+  CARBON_CHECK(static_cast<int>(type_names_.size()) == num_declared_types);
+
+  // Use each fixed type weight to append the expected number of copies of that
+  // type. This isn't exact however, and is designed to stop short.
+  for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
+    int num_fixed_type = num_types * fixed_type_weight.weight / type_weight_sum;
+    type_names_.append(num_fixed_type, gen.IsCpp()
+                                           ? fixed_type_weight.cpp_spelling
+                                           : fixed_type_weight.carbon_spelling);
+  }
+
+  // If we need a tail of types to hit the exact number, simply round-robin
+  // through the fixed types without any weighting. With reasonably large
+  // numbers of types this won't distort the distribution in an interesting way
+  // and is simpler than trying to scale the distribution down.
+  while (static_cast<int>(type_names_.size()) < num_types) {
+    for (const auto& fixed_type_weight :
+         llvm::ArrayRef(type_use_params.fixed_type_weights)
+             .take_front(num_types - type_names_.size())) {
+      type_names_.push_back(gen.IsCpp() ? fixed_type_weight.cpp_spelling
+                                        : fixed_type_weight.carbon_spelling);
+    }
+  }
+  CARBON_CHECK(static_cast<int>(type_names_.size()) == num_types);
+  last_type_name_index_ = num_types;
+
+  // Now shuffle both the class names and the type names.
+  std::shuffle(class_names_.begin(), class_names_.end(), gen.rng_);
+  std::shuffle(type_names_.begin(), type_names_.end(), gen.rng_);
+}
+
 // Some heuristic numbers used when formatting generated code. These heuristics
 // are loosely based on what we expect to make Carbon code readable, and might
 // not fit as well in C++, but we use the same heuristics across languages for
@@ -85,7 +307,8 @@ static auto EstimateAvgClassDefLines(SourceGen::ClassParams params) -> double {
   return avg;
 }
 
-auto SourceGen::GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
+auto SourceGen::GenAPIFileDenseDecls(int target_lines,
+                                     const DenseDeclParams& params)
     -> std::string {
   std::string source;
   llvm::raw_string_ostream os(source);
@@ -109,18 +332,30 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
      << "\n";
   os << "//\n// Generating as an API file with dense declarations.\n";
 
-  auto class_gen_state = GetClassGenState(num_classes, params.class_params);
+  // Carbon uses an implicitly imported prelude to get builtin types, but C++
+  // requires header files so include those.
+  if (IsCpp()) {
+    os << "\n";
+    // Header for specific integer types like `std::int64_t`.
+    os << "#include <cstdint>\n";
+    // Header for `std::pair`.
+    os << "#include <utility>\n";
+  }
+
+  auto class_gen_state = ClassGenState(*this, num_classes, params.class_params,
+                                       params.type_use_params);
   for ([[maybe_unused]] int _ : llvm::seq(num_classes)) {
     os << "\n";
     GenerateClassDef(params.class_params, class_gen_state, os);
   }
 
   // Make sure we consumed all the state.
-  CARBON_CHECK(class_gen_state.public_function_param_counts.empty());
-  CARBON_CHECK(class_gen_state.public_method_param_counts.empty());
-  CARBON_CHECK(class_gen_state.private_function_param_counts.empty());
-  CARBON_CHECK(class_gen_state.private_method_param_counts.empty());
-  CARBON_CHECK(class_gen_state.class_names.empty());
+  CARBON_CHECK(class_gen_state.public_function_param_counts().empty());
+  CARBON_CHECK(class_gen_state.public_method_param_counts().empty());
+  CARBON_CHECK(class_gen_state.private_function_param_counts().empty());
+  CARBON_CHECK(class_gen_state.private_method_param_counts().empty());
+  CARBON_CHECK(class_gen_state.class_names().empty());
+  CARBON_CHECK(class_gen_state.type_names().empty());
 
   return source;
 }
@@ -225,8 +460,8 @@ static auto IdentifierChars() -> llvm::ArrayRef<char> {
 }
 
 constexpr static llvm::StringRef NonCarbonCppKeywords[] = {
-    "asm", "do",     "double", "float", "int",      "long",
-    "new", "signed", "try",    "unix",  "unsigned", "xor",
+    "asm", "do",  "double", "float",    "int", "long", "new", "signed",
+    "std", "try", "unix",   "unsigned", "xor", "NAN",  "M_E", "M_PI",
 };
 
 // Returns a random identifier string of the specified length.
@@ -258,6 +493,8 @@ auto SourceGen::GenerateRandomIdentifier(
           Lex::TokenKind::KeywordTokens,
           [ident](auto token) { return ident == token.fixed_spelling(); }) ||
       llvm::is_contained(NonCarbonCppKeywords, ident) ||
+      ident.ends_with("_t") || ident.ends_with("_MIN") ||
+      ident.ends_with("_MAX") || ident.ends_with("_C") ||
       (llvm::is_contained({'i', 'u', 'f'}, ident[0]) &&
        llvm::all_of(ident.substr(1),
                     [](const char c) { return llvm::isDigit(c); })));
@@ -383,12 +620,6 @@ static constexpr std::array<int, 64> IdentifierLengthCounts = [] {
   return ident_length_counts;
 }();
 
-// A helper to sum elements of a range.
-template <typename T>
-static auto Sum(const T& range) -> int {
-  return std::accumulate(range.begin(), range.end(), 0);
-}
-
 // A template function that implements the common logic of `GetIdentifiers` and
 // `GetUniqueIdentifiers`. Most parameters correspond to the parameters of those
 // functions. Additionally, an `AppendFunc` callable is provided to implement
@@ -467,42 +698,6 @@ auto SourceGen::GetShuffledInts(int number, int min, int max)
 
   std::shuffle(ints.begin(), ints.end(), rng_);
   return ints;
-}
-
-// Given a number of class definitions and the params with which to generate
-// them, builds the state that will be used while generating that many classes.
-//
-// We build the state first and across all the class definitions that will be
-// generated so that we can distribute random components across all the
-// definitions.
-auto SourceGen::GetClassGenState(int number, ClassParams params)
-    -> ClassGenState {
-  ClassGenState state;
-  state.public_function_param_counts =
-      GetShuffledInts(number * params.public_function_decls, 0,
-                      params.public_function_decl_params.max_params);
-  state.public_method_param_counts =
-      GetShuffledInts(number * params.public_method_decls, 0,
-                      params.public_method_decl_params.max_params);
-  state.private_function_param_counts =
-      GetShuffledInts(number * params.private_function_decls, 0,
-                      params.private_function_decl_params.max_params);
-  state.private_method_param_counts =
-      GetShuffledInts(number * params.private_method_decls, 0,
-                      params.private_method_decl_params.max_params);
-
-  state.class_names = GetShuffledUniqueIdentifiers(number, /*min_length=*/5);
-  int num_members =
-      number * (params.public_function_decls + params.public_method_decls +
-                params.private_function_decls + params.private_method_decls +
-                params.private_field_decls);
-  state.member_names = GetShuffledIdentifiers(num_members, /*min_length=*/4);
-  int num_params = Sum(state.public_function_param_counts) +
-                   Sum(state.public_method_param_counts) +
-                   Sum(state.private_function_param_counts) +
-                   Sum(state.private_method_param_counts);
-  state.param_names = GetShuffledIdentifiers(num_params);
-  return state;
 }
 
 // A helper to pop series of unique identifiers off a sequence of random
@@ -590,6 +785,7 @@ class SourceGen::UniqueIdentifierPopper {
 auto SourceGen::GenerateFunctionDecl(
     llvm::StringRef name, bool is_private, bool is_method, int param_count,
     llvm::StringRef indent, llvm::SmallVectorImpl<llvm::StringRef>& param_names,
+    llvm::function_ref<auto()->llvm::StringRef> get_type_name,
     llvm::raw_ostream& os) -> void {
   os << indent << "// TODO: make better comment text\n";
   if (!IsCpp()) {
@@ -622,13 +818,15 @@ auto SourceGen::GenerateFunctionDecl(
       }
     }
     if (!IsCpp()) {
-      os << unique_param_names.Pop() << ": i32";
+      os << unique_param_names.Pop() << ": " << get_type_name();
     } else {
-      os << "int " << unique_param_names.Pop();
+      os << get_type_name() << " " << unique_param_names.Pop();
     }
   }
+  os << ")";
 
-  os << ")" << (IsCpp() ? " -> void" : "") << ";\n";
+  os << " -> " << get_type_name();
+  os << ";\n";
 }
 
 // Generate a class definition and write it to the provided stream.
@@ -638,27 +836,44 @@ auto SourceGen::GenerateFunctionDecl(
 auto SourceGen::GenerateClassDef(const ClassParams& params,
                                  ClassGenState& state, llvm::raw_ostream& os)
     -> void {
+  llvm::StringRef name = state.class_names().pop_back_val();
   os << "// TODO: make better comment text\n";
-  os << "class " << state.class_names.pop_back_val() << " {\n";
+  os << "class " << name << " {\n";
   if (IsCpp()) {
     os << " public:\n";
   }
 
-  UniqueIdentifierPopper unique_member_names(*this, state.member_names);
+  // Field types can't be the class we're currently declaring. We enforce this
+  // by collecting them before inserting that type into the valid set.
+  llvm::SmallVector<llvm::StringRef> field_type_names;
+  field_type_names.reserve(params.private_field_decls);
+  for ([[maybe_unused]] int _ : llvm::seq(params.private_field_decls)) {
+    field_type_names.push_back(state.GetValidTypeName());
+  }
+
+  // Mark this class as now a valid type now that field type names have been
+  // collected. We can reference this class from functions and methods within
+  // the definition.
+  state.AddValidTypeName(name);
+
+  UniqueIdentifierPopper unique_member_names(*this, state.member_names());
   llvm::ListSeparator line_sep("\n");
   for ([[maybe_unused]] int _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
-                         /*is_method=*/false,
-                         state.public_function_param_counts.pop_back_val(),
-                         /*indent=*/"  ", state.param_names, os);
+    GenerateFunctionDecl(
+        unique_member_names.Pop(), /*is_private=*/false,
+        /*is_method=*/false,
+        state.public_function_param_counts().pop_back_val(),
+        /*indent=*/"  ", state.param_names(),
+        [&] { return state.GetValidTypeName(); }, os);
   }
   for ([[maybe_unused]] int _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/false,
-                         /*is_method=*/true,
-                         state.public_method_param_counts.pop_back_val(),
-                         /*indent=*/"  ", state.param_names, os);
+    GenerateFunctionDecl(
+        unique_member_names.Pop(), /*is_private=*/false,
+        /*is_method=*/true, state.public_method_param_counts().pop_back_val(),
+        /*indent=*/"  ", state.param_names(),
+        [&] { return state.GetValidTypeName(); }, os);
   }
 
   if (IsCpp()) {
@@ -669,24 +884,28 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
 
   for ([[maybe_unused]] int _ : llvm::seq(params.private_function_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
-                         /*is_method=*/false,
-                         state.private_function_param_counts.pop_back_val(),
-                         /*indent=*/"  ", state.param_names, os);
+    GenerateFunctionDecl(
+        unique_member_names.Pop(), /*is_private=*/true,
+        /*is_method=*/false,
+        state.private_function_param_counts().pop_back_val(),
+        /*indent=*/"  ", state.param_names(),
+        [&] { return state.GetValidTypeName(); }, os);
   }
   for ([[maybe_unused]] int _ : llvm::seq(params.private_method_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(unique_member_names.Pop(), /*is_private=*/true,
-                         /*is_method=*/true,
-                         state.private_method_param_counts.pop_back_val(),
-                         /*indent=*/"  ", state.param_names, os);
+    GenerateFunctionDecl(
+        unique_member_names.Pop(), /*is_private=*/true,
+        /*is_method=*/true, state.private_method_param_counts().pop_back_val(),
+        /*indent=*/"  ", state.param_names(),
+        [&] { return state.GetValidTypeName(); }, os);
   }
   os << line_sep;
-  for ([[maybe_unused]] int _ : llvm::seq(params.private_field_decls)) {
+  for (llvm::StringRef type_name : field_type_names) {
     if (!IsCpp()) {
-      os << "  private var " << unique_member_names.Pop() << ": i32;\n";
+      os << "  private var " << unique_member_names.Pop() << ": " << type_name
+         << ";\n";
     } else {
-      os << "  int " << unique_member_names.Pop() << ";\n";
+      os << "  " << type_name << " " << unique_member_names.Pop() << ";\n";
     }
   }
   os << "}" << (IsCpp() ? ";" : "") << "\n";

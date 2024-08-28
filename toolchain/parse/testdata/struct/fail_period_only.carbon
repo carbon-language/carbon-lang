@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/struct/fail_dot_only.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/struct/fail_period_only.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_dot_only.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_period_only.carbon
 
-// CHECK:STDERR: fail_dot_only.carbon:[[@LINE+3]]:10: ERROR: Expected identifier after `.`.
+// CHECK:STDERR: fail_period_only.carbon:[[@LINE+3]]:10: ERROR: Expected identifier after `.`.
 // CHECK:STDERR: var x: {.} = {};
 // CHECK:STDERR:          ^
 var x: {.} = {};
 
-// CHECK:STDOUT: - filename: fail_dot_only.carbon
+// CHECK:STDOUT: - filename: fail_period_only.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},

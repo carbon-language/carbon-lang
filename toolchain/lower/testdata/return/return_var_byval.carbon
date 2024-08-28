@@ -18,10 +18,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %x.var, align 4
-// CHECK:STDOUT:   %.loc12_16 = load i32, ptr %x.var, align 4
-// CHECK:STDOUT:   ret i32 %.loc12_16
+// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   store i32 0, ptr %x.var, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc12_16 = load i32, ptr %x.var, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc12_16, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -31,6 +31,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "return_var_byval.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 3, scope: !4)

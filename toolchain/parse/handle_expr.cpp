@@ -170,21 +170,21 @@ auto HandleExprInPostfix(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::Period: {
-      // `.Member` or `.Self`
+      // For periods, we look at the next token to form a designator like
+      // `.Member` or `.Self`.
       auto period = context.Consume();
       if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
                                           NodeKind::IdentifierName)) {
         // OK, `.` identifier.
       } else if (context.ConsumeAndAddLeafNodeIf(
-                     Lex::TokenKind::SelfTypeIdentifier, NodeKind::DotSelf)) {
+                     Lex::TokenKind::SelfTypeIdentifier,
+                     NodeKind::SelfTypeName)) {
         // OK, `.Self`.
       } else {
-        // TODO: Custom diagnostic for `.1`? Or treat it as a designator for a
-        // tuple element?
-        CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterDot, Error,
+        CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterPeriod, Error,
                           "Expected identifier or `Self` after `.`.");
         context.emitter().Emit(*context.position(),
-                               ExpectedIdentifierOrSelfAfterDot);
+                               ExpectedIdentifierOrSelfAfterPeriod);
         // Only consume if it is a number or word.
         if (context.PositionKind().is_keyword()) {
           context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
@@ -196,7 +196,9 @@ auto HandleExprInPostfix(Context& context) -> void {
           context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                               /*has_error=*/true);
           // Indicate the error to the parent state so that it can avoid
-          // producing more errors.
+          // producing more errors. We only do this on this path where we don't
+          // consume the token after the period, where we expect further errors
+          // since we likely haven't recovered.
           context.ReturnErrorOnState();
         }
         state.has_error = true;

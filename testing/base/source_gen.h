@@ -78,6 +78,8 @@ class SourceGen {
   //
   // TODO: Add support for generating definitions and parameters to control
   // them.
+  //
+  // TODO: Add heuristic for how many functions have return types.
   struct ClassParams {
     int public_function_decls = 4;
     FunctionDeclParams public_function_decl_params = {.max_params = 8};
@@ -94,6 +96,64 @@ class SourceGen {
     int private_field_decls = 6;
   };
 
+  // Parameters used to select type _uses_, as opposed to definitions.
+  //
+  // These govern what distribution of types are used for function parameters,
+  // returns, and fields.
+  //
+  // Mainly these provide a coarse histogram of weights to shape the
+  // distribution of different type options, and try to fit that as closely as
+  // possible.
+  //
+  // The default weights in the histogram were arbitrarily selected based on
+  // intuition about importance for benchmarking and not based on any
+  // measurement. We arrange for them to sum to 100 so that the weights can be
+  // view as %s of the type uses.
+  //
+  // The specific builtin type options used in the weights were also selected
+  // arbitrarily.
+  //
+  // TODO: Improve the set of builtin types and the weighting if real world code
+  // ends up sharply different.
+  //
+  // TODO: Add a heuristic to make some % of type references via pointers (or
+  // other compound types).
+  struct TypeUseParams {
+    // The weights in the histogram start with a sequence fixed types described
+    // with a Carbon and C++ string, and their associated weight.
+    struct FixedTypeWeight {
+      llvm::StringRef carbon_spelling;
+      llvm::StringRef cpp_spelling;
+      int weight;
+    };
+
+    llvm::SmallVector<FixedTypeWeight> fixed_type_weights = {
+        // Combined weight of 65 for a core set of builtin types.
+        {.carbon_spelling = "bool", .cpp_spelling = "bool", .weight = 25},
+        {.carbon_spelling = "i32", .cpp_spelling = "int", .weight = 20},
+        {.carbon_spelling = "i64",
+         .cpp_spelling = "std::int64_t",
+         .weight = 10},
+        {.carbon_spelling = "i32*", .cpp_spelling = "int*", .weight = 5},
+        {.carbon_spelling = "i64*",
+         .cpp_spelling = "std::int64_t*",
+         .weight = 5},
+
+        // A weight of 5 distributed across tuple structures
+        {.carbon_spelling = "(bool, i64)",
+         .cpp_spelling = "std::pair<bool, std::int64_t>",
+         .weight = 2},
+        {.carbon_spelling = "(i32, i64*)",
+         .cpp_spelling = "std::pair<int, std::int64_t*>",
+         .weight = 3},
+    };
+
+    // The weight for using types declared in the file. These will be randomly
+    // shuffled references, and when there are more type references than
+    // declared, include repeated references.
+    int declared_types_weight = 30;
+  };
+
   // Parameters used to generate a file with dense declarations.
   struct DenseDeclParams {
     // TODO: Add more parameters to control generating top-level constructs
@@ -101,6 +161,9 @@ class SourceGen {
 
     // Parameters used when generating class definitions.
     ClassParams class_params = {};
+
+    // Parameters used to guide the selection of types for use in declarations.
+    TypeUseParams type_use_params = {};
   };
 
   // Access a global instance of this type to generate Carbon code for
@@ -125,7 +188,7 @@ class SourceGen {
   // `target_lines`. Long term, the goal is to get as close as we can to any
   // automatically formatted code while still keeping the stability of
   // benchmarking.
-  auto GenAPIFileDenseDecls(int target_lines, DenseDeclParams params)
+  auto GenAPIFileDenseDecls(int target_lines, const DenseDeclParams& params)
       -> std::string;
 
   // Get some number of randomly shuffled identifiers.
@@ -163,8 +226,9 @@ class SourceGen {
   // `GetShuffledIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
-  // useful when there is already a post-processing step to shuffle things as it
-  // is *dramatically* more efficient, especially in debug builds.
+  // useful when deterministic access to the identifiers is needed to avoid
+  // introducing noise, or if there is already a post-processing step to shuffle
+  // things, since shuffling is very expensive in debug builds.
   auto GetIdentifiers(int number, int min_length = 1, int max_length = 64,
                       bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
@@ -173,7 +237,9 @@ class SourceGen {
   // as `GetShuffledUniqueIdentifiers`.
   //
   // Usually, benchmarks should use the shuffled version. However, this is
-  // useful when there is already a post-processing step to shuffle things.
+  // useful when deterministic access to the identifiers is needed to avoid
+  // introducing noise, or if there is already a post-processing step to shuffle
+  // things, since shuffling is very expensive in debug builds.
   auto GetUniqueIdentifiers(int number, int min_length = 1, int max_length = 64,
                             bool uniform = false)
       -> llvm::SmallVector<llvm::StringRef>;
@@ -188,21 +254,8 @@ class SourceGen {
       -> llvm::ArrayRef<llvm::StringRef>;
 
  private:
-  // The shuffled state used to generate some number of classes.
-  //
-  // This state encodes all the shuffled entropy used for generating a number of
-  // class definitions. While generating definitions, the state here will be
-  // consumed until empty.
-  struct ClassGenState {
-    llvm::SmallVector<int> public_function_param_counts;
-    llvm::SmallVector<int> public_method_param_counts;
-    llvm::SmallVector<int> private_function_param_counts;
-    llvm::SmallVector<int> private_method_param_counts;
-
-    llvm::SmallVector<llvm::StringRef> class_names;
-    llvm::SmallVector<llvm::StringRef> member_names;
-    llvm::SmallVector<llvm::StringRef> param_names;
-  };
+  class ClassGenState;
+  friend ClassGenState;
 
   class UniqueIdentifierPopper;
   friend UniqueIdentifierPopper;
@@ -223,13 +276,12 @@ class SourceGen {
 
   auto GetShuffledInts(int number, int min, int max) -> llvm::SmallVector<int>;
 
-  auto GetClassGenState(int number, ClassParams params) -> ClassGenState;
-
-  auto GenerateFunctionDecl(llvm::StringRef name, bool is_private,
-                            bool is_method, int param_count,
-                            llvm::StringRef indent,
-                            llvm::SmallVectorImpl<llvm::StringRef>& param_names,
-                            llvm::raw_ostream& os) -> void;
+  auto GenerateFunctionDecl(
+      llvm::StringRef name, bool is_private, bool is_method, int param_count,
+      llvm::StringRef indent,
+      llvm::SmallVectorImpl<llvm::StringRef>& param_names,
+      llvm::function_ref<auto()->llvm::StringRef> get_type_name,
+      llvm::raw_ostream& os) -> void;
   auto GenerateClassDef(const ClassParams& params, ClassGenState& state,
                         llvm::raw_ostream& os) -> void;
 
