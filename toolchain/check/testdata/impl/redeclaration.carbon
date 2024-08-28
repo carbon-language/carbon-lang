@@ -77,10 +77,10 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as %.1 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc19: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {

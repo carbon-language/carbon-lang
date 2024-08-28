@@ -91,11 +91,11 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -122,12 +122,12 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %.3 = name_ref G, @C.%G [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc24: init %.2 = call %.1()
+// CHECK:STDOUT:   %.loc24: %F.type.1 = interface_witness_access @impl.%.loc19, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc24: init %.2 = call %.loc24()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %.3 = name_ref G, @C.%G [template = constants.%.4]
-// CHECK:STDOUT:   %.2: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc25: init %.2 = call %.2()
+// CHECK:STDOUT:   %.loc25: %F.type.1 = interface_witness_access @impl.%.loc19, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc25: init %.2 = call %.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

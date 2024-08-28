@@ -101,11 +101,11 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.loc19_8.1: <error> = param self
 // CHECK:STDOUT:     %self.loc19_8.2: <error> = bind_name self, %self.loc19_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %.1) {
@@ -123,8 +123,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %G.ref: %.3 = name_ref G, @Simple.%.loc12_21 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %G.type.1 = interface_witness_access @impl.%.1, element0 [template = <error>]
-// CHECK:STDOUT:   %.loc23: <bound method> = bound_method %n.ref, %.1
+// CHECK:STDOUT:   %.loc23_4.1: %G.type.1 = interface_witness_access @impl.%.loc15, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc23_4.2: <bound method> = bound_method %n.ref, %.loc23_4.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

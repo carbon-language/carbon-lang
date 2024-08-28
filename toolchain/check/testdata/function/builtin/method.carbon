@@ -73,10 +73,10 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %.loc19_16: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %I.ref.loc19: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc12_40 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc19_17: <bound method> = bound_method %.loc19_16, %.1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc19_17.1: %F.type.1 = interface_witness_access @impl.%.loc15, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc19_17.2: <bound method> = bound_method %.loc19_16, %.loc19_17.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc19_24: i32 = int_literal 2 [template = constants.%.8]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc19_17(%.loc19_16, %.loc19_24) [template = constants.%.9]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc19_17.2(%.loc19_16, %.loc19_24) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc19_11.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
 // CHECK:STDOUT:   %.loc19_11.2: type = converted %int.make_type_32.loc19, %.loc19_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc19_26: type = array_type %int.sadd, i32 [template = constants.%.10]
@@ -127,11 +127,11 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %.loc16_34.2: type = converted %int.make_type_32.loc16_34, %.loc16_34.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {

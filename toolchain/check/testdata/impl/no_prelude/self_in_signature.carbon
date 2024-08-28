@@ -174,11 +174,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %C.ref.loc20_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %D as %.1 {
@@ -192,11 +192,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %return.var: ref %D = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc23: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3: %C as %.9 {
@@ -212,11 +212,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.loc32_8.1: %.18 = param x
 // CHECK:STDOUT:     %x.loc32_8.2: %.18 = bind_name x, %x.loc32_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.19]
+// CHECK:STDOUT:   %.loc31: <witness> = interface_witness (%F.decl) [template = constants.%.19]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4: %D as %.9 {
@@ -232,11 +232,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.loc36_8.1: %.22 = param x
 // CHECK:STDOUT:     %x.loc36_8.2: %.22 = bind_name x, %x.loc36_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.23]
+// CHECK:STDOUT:   %.loc35: <witness> = interface_witness (%F.decl) [template = constants.%.23]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -113,11 +113,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %.loc19_27.2: type = converted %int.make_type_32, %.loc19_27.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -144,9 +144,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc14_28 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc24_11: <bound method> = bound_method %c.ref, %.1
-// CHECK:STDOUT:   %F.call: init i32 = call %.loc24_11(%c.ref)
+// CHECK:STDOUT:   %.loc24_11.1: %F.type.1 = interface_witness_access @impl.%.loc18, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc24_11.2: <bound method> = bound_method %c.ref, %.loc24_11.1
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc24_11.2(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc24_15.2: i32 = converted %F.call, %.loc24_15.1
 // CHECK:STDOUT:   return %.loc24_15.2

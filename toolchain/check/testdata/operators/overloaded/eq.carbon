@@ -205,12 +205,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc8_37.2: type = converted %bool.make_type.loc8, %.loc8_37.1 [template = bool]
 // CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Equal = %Equal.decl
 // CHECK:STDOUT:   .NotEqual = %NotEqual.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -240,9 +240,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Equal.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %.loc12_12: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %Equal.call: init bool = call %.loc12_12(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc12_12.1: %Equal.type.2 = interface_witness_access @impl.%.loc6, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %.loc12_12.2: <bound method> = bound_method %a.ref, %.loc12_12.1
+// CHECK:STDOUT:   %Equal.call: init bool = call %.loc12_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
 // CHECK:STDOUT:   %.loc12_16.2: bool = converted %Equal.call, %.loc12_16.1
 // CHECK:STDOUT:   return %.loc12_16.2
@@ -252,9 +252,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.1: %NotEqual.type.2 = interface_witness_access @impl.%.1, element1 [template = constants.%NotEqual.1]
-// CHECK:STDOUT:   %.loc16_12: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %NotEqual.call: init bool = call %.loc16_12(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc16_12.1: %NotEqual.type.2 = interface_witness_access @impl.%.loc6, element1 [template = constants.%NotEqual.1]
+// CHECK:STDOUT:   %.loc16_12.2: <bound method> = bound_method %a.ref, %.loc16_12.1
+// CHECK:STDOUT:   %NotEqual.call: init bool = call %.loc16_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
 // CHECK:STDOUT:   %.loc16_16.2: bool = converted %NotEqual.call, %.loc16_16.1
 // CHECK:STDOUT:   return %.loc16_16.2
@@ -537,12 +537,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc9_37.2: type = converted %bool.make_type.loc9, %.loc9_37.1 [template = bool]
 // CHECK:STDOUT:     %return.var.loc9: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Equal = %Equal.decl
 // CHECK:STDOUT:   .NotEqual = %NotEqual.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -577,9 +577,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Equal.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %.loc20_12: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %Equal.call: init bool = call %.loc20_12(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc20_12.1: %Equal.type.2 = interface_witness_access @impl.%.loc7, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %.loc20_12.2: <bound method> = bound_method %a.ref, %.loc20_12.1
+// CHECK:STDOUT:   %Equal.call: init bool = call %.loc20_12.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %.loc20_16.1: bool = value_of_initializer %Equal.call [template = <error>]
 // CHECK:STDOUT:   %.loc20_16.2: bool = converted %Equal.call, %.loc20_16.1 [template = <error>]
 // CHECK:STDOUT:   return %.loc20_16.2
