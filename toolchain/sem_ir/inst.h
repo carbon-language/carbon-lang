@@ -339,7 +339,7 @@ struct LocIdAndInst {
   // Expose the internal constructor for GetWithLocId.
   friend class InstStore;
 
-  // Note `is_untyped` serves to disambiguate from public constructors.
+  // Note `is_unchecked` serves to disambiguate from public constructors.
   explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_unchecked*/)
       : loc_id(loc_id), inst(inst) {}
 };
@@ -362,7 +362,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst(GetLocId(inst_id), Get(inst_id), /*is_untyped=*/true);
+    return LocIdAndInst::UncheckedLoc(GetLocId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
