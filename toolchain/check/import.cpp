@@ -108,11 +108,19 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
 
   auto import_id = make_import_id();
   CARBON_CHECK(import_id.is_valid());
+  auto import_loc_id = context.insts().GetLocId(import_id);
+
   auto namespace_inst = SemIR::Namespace{
       namespace_type_id, SemIR::NameScopeId::Invalid, import_id};
+  auto namespace_inst_and_loc =
+      import_loc_id.is_import_ir_inst_id()
+          ? context.MakeImportedLocAndInst(import_loc_id.import_ir_inst_id(),
+                                           namespace_inst)
+          // TODO: Check that this actually is an `AnyNamespaceId`.
+          : SemIR::LocIdAndInst(Parse::AnyNamespaceId(import_loc_id.node_id()),
+                                namespace_inst);
   auto namespace_id =
-      context.AddPlaceholderInstInNoBlock(context.MakeImportedLocAndInst(
-          context.insts().GetLocId(import_id), namespace_inst));
+      context.AddPlaceholderInstInNoBlock(namespace_inst_and_loc);
   context.import_ref_ids().push_back(namespace_id);
   namespace_inst.name_scope_id =
       context.name_scopes().Add(namespace_id, name_id, parent_scope_id);

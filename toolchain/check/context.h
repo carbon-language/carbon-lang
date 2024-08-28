@@ -24,6 +24,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -91,9 +92,9 @@ class Context {
   }
 
   template <typename InstT>
-  auto MakeImportedLocAndInst(SemIR::LocId imported_loc_id,
+  auto MakeImportedLocAndInst(SemIR::ImportIRInstId imported_loc_id,
                               InstT inst) -> SemIR::LocIdAndInst {
-    // TODO: Check the location is of the right kind for `InstT`.
+    // TODO: Check that the imported node kind is suitable for this instruction.
     return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
   }
 
