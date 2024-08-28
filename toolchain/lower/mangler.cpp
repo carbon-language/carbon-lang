@@ -18,7 +18,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   auto name = sem_ir_.names().GetAsStringIfIdentifier(function.name_id);
   CARBON_CHECK(name) << "Unexpected special name for function: "
                      << function.name_id;
-  return name->str();
+  return "_C" + name->str();
 }
 
 }  // namespace Carbon::Lower

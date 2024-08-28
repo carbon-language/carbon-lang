@@ -16,7 +16,7 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'nodebug.carbon'
 // CHECK:STDOUT: source_filename = "nodebug.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: define void @_CF() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
