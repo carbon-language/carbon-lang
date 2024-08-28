@@ -169,6 +169,44 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Period: {
+      // For periods, we look at the next token to form a designator like
+      // `.Member` or `.Self`.
+      auto period = context.Consume();
+      if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                          NodeKind::IdentifierName)) {
+        // OK, `.` identifier.
+      } else if (context.ConsumeAndAddLeafNodeIf(
+                     Lex::TokenKind::SelfTypeIdentifier,
+                     NodeKind::SelfTypeName)) {
+        // OK, `.Self`.
+      } else {
+        CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterPeriod, Error,
+                          "Expected identifier or `Self` after `.`.");
+        context.emitter().Emit(*context.position(),
+                               ExpectedIdentifierOrSelfAfterPeriod);
+        // Only consume if it is a number or word.
+        if (context.PositionKind().is_keyword()) {
+          context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
+                              /*has_error=*/true);
+        } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
+          context.AddLeafNode(NodeKind::InvalidParse, context.Consume(),
+                              /*has_error=*/true);
+        } else {
+          context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                              /*has_error=*/true);
+          // Indicate the error to the parent state so that it can avoid
+          // producing more errors. We only do this on this path where we don't
+          // consume the token after the period, where we expect further errors
+          // since we likely haven't recovered.
+          context.ReturnErrorOnState();
+        }
+        state.has_error = true;
+      }
+      context.AddNode(NodeKind::DesignatorExpr, period, state.has_error);
+      context.PushState(state);
+      break;
+    }
     default: {
       // Add a node to keep the parse tree balanced.
       context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
