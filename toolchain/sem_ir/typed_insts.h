@@ -637,9 +637,8 @@ struct AnyImportRef {
 
 // An imported entity that is not yet been loaded.
 struct ImportRefUnloaded {
-  // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
-      InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>(
+      InstKind::ImportRefUnloaded.Define<Parse::NodeId>(
           {.ir_name = "import_ref", .is_lowered = false});
 
   ImportIRInstId import_ir_inst_id;
@@ -648,10 +647,8 @@ struct ImportRefUnloaded {
 
 // A imported entity that is loaded, and may be used.
 struct ImportRefLoaded {
-  // No parse node: any parse node logic must use the referenced IR.
-  static constexpr auto Kind =
-      InstKind::ImportRefLoaded.Define<Parse::InvalidNodeId>(
-          {.ir_name = "import_ref", .is_lowered = false});
+  static constexpr auto Kind = InstKind::ImportRefLoaded.Define<Parse::NodeId>(
+      {.ir_name = "import_ref", .is_lowered = false});
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
