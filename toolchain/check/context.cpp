@@ -118,17 +118,16 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
   }
 }
 
-// Returns whether a parse node associated with an instruction of kind
-// `src_kind` is known to be usable as the location of an instruction of kind
-// `target_kind`. This may have false negatives for cases that don't occur in
-// practice.
-static auto HasKnownCompatibleNodeKind(SemIR::InstKind src_kind,
-                                       SemIR::InstKind target_kind) -> bool {
-  if (src_kind == target_kind) {
+// Returns whether a parse node associated with an imported instruction of kind
+// `imported_kind` is usable as the location of a corresponding local
+// instruction of kind `local_kind`.
+static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
+                                          SemIR::InstKind local_kind) -> bool {
+  if (imported_kind == local_kind) {
     return true;
   }
-  if (src_kind == SemIR::ImportDecl::Kind &&
-      target_kind == SemIR::Namespace::Kind) {
+  if (imported_kind == SemIR::ImportDecl::Kind &&
+      local_kind == SemIR::Namespace::Kind) {
     static_assert(
         std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
                               decltype(SemIR::Namespace::Kind)::TypedNodeId>);
@@ -142,7 +141,7 @@ auto Context::CheckCompatibleImportedNodeKind(
   auto& import_ir_inst = import_ir_insts().Get(imported_loc_id);
   const auto* import_ir = import_irs().Get(import_ir_inst.ir_id).sem_ir;
   auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id).kind();
-  CARBON_CHECK(HasKnownCompatibleNodeKind(imported_kind, kind))
+  CARBON_CHECK(HasCompatibleImportedNodeKind(imported_kind, kind))
       << "Node of kind " << kind
       << " created with location of imported node of kind " << imported_kind;
 }
