@@ -716,7 +716,7 @@ FIXME
 Example: name after introducer
 [parse/handle_decl_name_and_params.cpp](/toolchain/parse/handle_decl_name_and_params.cpp)
 
-Example: `[<implicit parameter list>]` after `impl forall`
+Example: "`[` _implicit parameter list_ `]`" after `impl forall`
 [parse/handle_impl.cpp](/toolchain/parse/handle_impl.cpp)
 
 ### Optional clauses
