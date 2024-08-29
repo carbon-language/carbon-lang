@@ -31,9 +31,9 @@ also gives the ability to [approve and merge changes](code_review.md).
 
 Getting commit access can help smooth over the development process; for
 contributors who don't feel comfortable doing reviews, it can still smooth the
-review process for their own PRs. It allows authors to automatically get action
-results and merge their own PRs, including after resolving conflicts or fixing
-trivial PR comments post-approval.
+review process for their own PRs. It allows authors to automatically get GitHub
+Action results and merge their own PRs, including after resolving conflicts or
+fixing trivial PR comments post-approval.
 
 Developers with commit access are expected to make reasonable choices about when
 to approve or merge PRs for others. Generally, the change either needs to be
