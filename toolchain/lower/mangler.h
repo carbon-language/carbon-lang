@@ -17,6 +17,9 @@ class Mangler {
   auto Mangle(SemIR::FunctionId function_id) -> std::string;
 
  private:
+  auto MangleInverseQualifiedNameScope(bool first_name_component,
+                                       llvm::raw_ostream& os,
+                                       SemIR::NameScopeId class_id) -> void;
   FileContext& file_context_;
 };
 }  // namespace Carbon::Lower
