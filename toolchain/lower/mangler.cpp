@@ -11,6 +11,7 @@ namespace Carbon::Lower {
 
 auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   auto& sem_ir = file_context_.sem_ir();
+  auto types = sem_ir.types();
   auto names = sem_ir.names();
   const auto& function = sem_ir.functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir, function_id)) {
@@ -30,6 +31,30 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
     }
     std::string name_component;
     CARBON_KIND_SWITCH(sem_ir.insts().Get(parent.inst_id)) {
+      case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        const auto& impl = sem_ir.impls().Get(impl_decl.impl_id);
+        if (auto opt_class_self =
+                types.TryGetAs<SemIR::ClassType>(impl.self_id)) {
+          name_component = names.GetFormatted(
+              sem_ir.classes().Get(opt_class_self->class_id).name_id);
+        } else {
+          auto builtin_self = types.GetAs<SemIR::BuiltinInst>(impl.self_id);
+          name_component = builtin_self.builtin_inst_kind.label();
+        }
+        name_component += ':';
+        auto opt_interface_constraint =
+            types.GetAs<SemIR::InterfaceType>(impl.constraint_id);
+        name_component +=
+            names.GetFormatted(sem_ir.interfaces()
+                                   .Get(opt_interface_constraint.interface_id)
+                                   .name_id);
+        /*
+        name_component = types.GetAsInst(impl.self_id);
+        name_component += ':';
+        name_component += types.GetAsInst(impl.constraint_id);
+        */
+        break;
+      }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
         name_component = names.GetFormatted(
             sem_ir.classes().Get(class_decl.class_id).name_id);
@@ -46,6 +71,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
         break;
       }
       default:
+        assert(false);
         break;
     }
     if (name_component.empty()) {
