@@ -336,9 +336,6 @@ struct LocIdAndInst {
   Inst inst;
 
  private:
-  // Expose the internal constructor for GetWithLocId.
-  friend class InstStore;
-
   // Note `is_unchecked` serves to disambiguate from public constructors.
   explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_unchecked*/)
       : loc_id(loc_id), inst(inst) {}
