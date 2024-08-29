@@ -174,69 +174,26 @@ var x: i32 = y + 1;
 Lexing creates distinct tokens for each syntactic element, which will form the
 basis of the parse tree:
 
-```mermaid
-flowchart BT
-    subgraph tokens["Tokens"]
-        token1[var]
-        token2[x]
-        token3[:]
-        token4[i32]
-        token5[=]
-        token6[y]
-        token7[+]
-        token8[1]
-        token9[;]
-    end
+```ascii
++-----+ +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
+| var | | x | | : | | i32 | | = | | y | | + | | 1 | | ; |
++-----+ +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
 ```
 
 First the `var` keyword is used as a "bracketing" node (VariableIntroducer).
 When this is seen in a postorder traversal, it tells us to expect the basics of
 a variable declaration structure.
 
-```mermaid
-flowchart BT
-    subgraph tokens["Remaining tokens"]
-        token1[var]:::moved
-        token2[x]
-        token3[:]
-        token4[i32]
-        token5[=]
-        token6[y]
-        token7[+]
-        token8[1]
-        token9[;]
-    end
+```ascii
+        +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
+        | x | | : | | i32 | | = | | y | | + | | 1 | | ; |
+        +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
+```
 
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]:::moved
-        node2[x]:::pending
-        node3[:]:::pending
-        node4[i32]:::pending
-        node5[=]:::pending
-        node6[y]:::pending
-        node7[+]:::pending
-        node8[1]:::pending
-        node9[;]:::pending
-    end
-
-    %% A token which has been used.
-    classDef used visibility:hidden
-    %% A node which will be used, but hasn't yet been.
-    classDef pending visibility:hidden
-    %% A token or node which is actively being used.
-    classDef moved fill:#0F0,color:#000
-
-    nodes ~~~ tokens
-
-    node1 ~~~~ tokens
-    node3 ~~~ node2 & node4
-    node3 ~~~ tokens
-    node5 ~~~~ tokens
-    node7 ~~~ node6 & node8
-    node7 ~~~ tokens
-    node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ tokens
+```ascii
++-----+
+| var |
++-----+
 ```
 
 Next, we can consider the pattern binding. Here, `x` is the identifier and `i32`
@@ -244,299 +201,130 @@ is the type expression. The `:` provides a parent node that must always contain
 two children, the name and type expression. Because it always has two direct
 children, it doesn't need to be bracketed.
 
-```mermaid
-flowchart BT
-    subgraph tokens["Remaining tokens"]
-        token1[var]:::used
-        token2[x]:::moved
-        token3[:]:::moved
-        token4[i32]:::moved
-        token5[=]
-        token6[y]
-        token7[+]
-        token8[1]
-        token9[;]
-    end
+```ascii
+                            +---+ +---+ +---+ +---+ +---+
+                            | = | | y | | + | | 1 | | ; |
+                            +---+ +---+ +---+ +---+ +---+
+```
 
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]
-        node2[x]:::moved
-        node3[:]:::moved
-        node4[i32]:::moved
-        node5[=]:::pending
-        node6[y]:::pending
-        node7[+]:::pending
-        node8[1]:::pending
-        node9[;]:::pending
-    end
-
-    %% A token which has been used.
-    classDef used visibility:hidden
-    %% A node which will be used, but hasn't yet been.
-    classDef pending visibility:hidden
-    %% A token or node which is actively being used.
-    classDef moved fill:#0F0,color:#000
-
-    nodes ~~~ tokens
-
-    node1 ~~~~ tokens
-    node3 --- node2 & node4
-    node3 ~~~ tokens
-    node5 ~~~~ tokens
-    node7 ~~~ node6 & node8
-    node7 ~~~ tokens
-    node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ tokens
+```ascii
+        +---+ +-----+
+        | x | | i32 |
+        +---+ +-----+
+          |      |
+          +------+------+
+                        |
++-----+               +---+
+| var |               | : |
++-----+               +---+
 ```
 
 We use the `=` as a separator (instead of a node with children like `:`) to help
 indicate the transition from binding to assignment expression, which is
 important for expression parsing during checking.
 
-```mermaid
-flowchart BT
-    subgraph tokens["Remaining tokens"]
-        token1[var]:::used
-        token2[x]:::used
-        token3[:]:::used
-        token4[i32]:::used
-        token5[=]:::moved
-        token6[y]
-        token7[+]
-        token8[1]
-        token9[;]
-    end
+```ascii
+                                  +---+ +---+ +---+ +---+
+                                  | y | | + | | 1 | | ; |
+                                  +---+ +---+ +---+ +---+
+```
 
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]
-        node2[x]
-        node3[:]
-        node4[i32]
-        node5[=]:::moved
-        node6[y]:::pending
-        node7[+]:::pending
-        node8[1]:::pending
-        node9[;]:::pending
-    end
-
-    %% A token which has been used.
-    classDef used visibility:hidden
-    %% A node which will be used, but hasn't yet been.
-    classDef pending visibility:hidden
-    %% A token or node which is actively being used.
-    classDef moved fill:#0F0,color:#000
-
-    nodes ~~~ tokens
-
-    node1 ~~~~ tokens
-    node3 --- node2 & node4
-    node3 ~~~ tokens
-    node5 ~~~~ tokens
-    node7 ~~~ node6 & node8
-    node7 ~~~ tokens
-    node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ tokens
+```ascii
+        +---+ +-----+
+        | x | | i32 |
+        +---+ +-----+
+          |      |
+          +------+------+
+                        |
++-----+               +---+ +---+
+| var |               | : | | = |
++-----+               +---+ +---+
 ```
 
 The expression is a subtree with `+` as the parent, and the two operands as
 child nodes.
 
-```mermaid
-flowchart BT
-    subgraph tokens["Remaining tokens"]
-        token1[var]:::used
-        token2[x]:::used
-        token3[:]:::used
-        token4[i32]:::used
-        token5[=]:::used
-        token6[y]:::moved
-        token7[+]:::moved
-        token8[1]:::moved
-        token9[;]
-    end
+```ascii
+                                                    +---+
+                                                    | ; |
+                                                    +---+
+```
 
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]
-        node2[x]
-        node3[:]
-        node4[i32]
-        node5[=]
-        node6[y]:::moved
-        node7[+]:::moved
-        node8[1]:::moved
-        node9[;]:::pending
-    end
-
-    %% A token which has been used.
-    classDef used visibility:hidden
-    %% A node which will be used, but hasn't yet been.
-    classDef pending visibility:hidden
-    %% A token or node which is actively being used.
-    classDef moved fill:#0F0,color:#000
-
-    nodes ~~~ tokens
-
-    node1 ~~~~ tokens
-    node3 --- node2 & node4
-    node3 ~~~ tokens
-    node5 ~~~~ tokens
-    node7 --- node6 & node8
-    node7 ~~~ tokens
-    node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ tokens
+```ascii
+        +---+ +-----+             +---+ +---+
+        | x | | i32 |             | y | | 1 |
+        +---+ +-----+             +---+ +---+
+          |      |                  |     |
+          +------+------+           +-----+-----+
+                        |                       |
++-----+               +---+ +---+             +---+
+| var |               | : | | = |             | + |
++-----+               +---+ +---+             +---+
 ```
 
 Finally, the `;` is used as the "root" of the variable declaration. It's
 explicitly tracked as the `;` for a variable declaration so that it's
 unambiguously bracketed by `var`.
 
-```mermaid
-flowchart BT
-    subgraph tokens["Remaining tokens"]
-        token1[var]:::used
-        token2[x]:::used
-        token3[:]:::used
-        token4[i32]:::used
-        token5[=]:::used
-        token6[y]:::used
-        token7[+]:::used
-        token8[1]:::used
-        token9[;]:::moved
-    end
-
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]
-        node2[x]
-        node3[:]
-        node4[i32]
-        node5[=]
-        node6[y]
-        node7[+]
-        node8[1]
-        node9[;]:::moved
-    end
-
-    %% A token which has been used.
-    classDef used visibility:hidden
-    %% A node which will be used, but hasn't yet been.
-    classDef pending visibility:hidden
-    %% A token or node which is actively being used.
-    classDef moved fill:#0F0,color:#000
-
-    nodes ~~~ tokens
-
-    node1 ~~~~ tokens
-    node3 --- node2 & node4
-    node3 ~~~ tokens
-    node5 ~~~~ tokens
-    node7 --- node6 & node8
-    node7 ~~~ tokens
-    node9 --- node1 & node3 & node5 & node7
-    node9 ~~~ tokens
+```ascii
+        +---+ +-----+             +---+ +---+
+        | x | | i32 |             | y | | 1 |
+        +---+ +-----+             +---+ +---+
+          |      |                  |     |
+          +------+------+           +-----+-----+
+                        |                       |
++-----+               +---+ +---+             +---+
+| var |               | : | | = |             | + |
++-----+               +---+ +---+             +---+
+   |                    |     |                 |
+   +--------------------+-----+-----------------+-----+
+                                                      |
+                                                    +---+
+                                                    | ; |
+                                                    +---+
 ```
 
-Thus we have the parse tree:
-
-```mermaid
-flowchart BT
-    root:::hidden
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]
-        node2[x]
-        node3[:]
-        node4[i32]
-        node5[=]
-        node6[y]
-        node7[+]
-        node8[1]
-        node9[;]
-    end
-
-    classDef pending visibility:hidden
-    classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
-
-    node1 ~~~~ root
-    node3 --- node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
-    node7 --- node6 & node8
-    node7 ~~~ root
-    node9 --- node1 & node3 & node5 & node7
-    node9 ~~~ root
-```
+This is the completed parse tree.
 
 In storage, this tree will be flat and in postorder. Because the order hasn't
 changed much from the original code, we can do the reordering for postorder with
 a minimal number of nodes being delayed for later output: it will be linear with
 respect to the depth of the parse tree.
 
-```mermaid
-flowchart BT
-    subgraph tokens["Tokens"]
-        token1[var]
-        token2[x]
-        token3[:]:::moved
-        token4[i32]:::moved
-        token5[=]
-        token6[y]
-        token7[+]:::moved
-        token8[1]:::moved
-        token9[;]
-    end
+**Tokens**:
 
-    subgraph nodes["Parsed nodes"]
-        direction BT
-        node1[var]
-        node2[x]
-        node3[:]:::moved
-        node4[i32]:::moved
-        node5[=]
-        node6[y]
-        node7[+]:::moved
-        node8[1]:::moved
-        node9[;]
-    end
-
-    %% A token which has been used.
-    classDef used visibility:hidden
-    %% A node which will be used, but hasn't yet been.
-    classDef pending visibility:hidden
-    %% A token or node which is actively being used.
-    classDef moved fill:#0F0,color:#000
-
-    nodes ~~~ tokens
-
-    node1 ~~~~ tokens
-    node3 --- node2 & node4
-    node3 ~~~ tokens
-    node5 ~~~~ tokens
-    node7 --- node6 & node8
-    node7 ~~~ tokens
-    node9 --- node1 & node3 & node5 & node7
-    node9 ~~~ tokens
+```ascii
++-----+ +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
+| var | | x | | : | | i32 | | = | | y | | + | | 1 | | ; |
++-----+ +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
 ```
 
-```mermaid
-flowchart BT
-    subgraph storage["Storage"]
-        storage1[var]
-        storage2[x]
-        storage4[i32]:::moved
-        storage3[:]:::moved
-        storage5[=]
-        storage6[y]
-        storage8[1]:::moved
-        storage7[+]:::moved
-        storage9[;]
-    end
+**Parse tree**:
 
-    classDef moved fill:#0F0,color:#000
+```ascii
+        +---+ +-----+             +---+ +---+
+        | x | | i32 |             | y | | 1 |
+        +---+ +-----+             +---+ +---+
+          |      |                  |     |
+          +------+------+           +-----+-----+
+                        |                       |
++-----+               +---+ +---+             +---+
+| var |               | : | | = |             | + |
++-----+               +---+ +---+             +---+
+   |                    |     |                 |
+   +--------------------+-----+-----------------+-----+
+                                                      |
+                                                    +---+
+                                                    | ; |
+                                                    +---+
+```
+
+**Flattened for storage**:
+
+```ascii
++-----+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+ +---+
+| var | | x | | i32 | | : | | = | | y | | 1 | | + | | ; |
++-----+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+ +---+
 ```
 
 The structural concepts of bracketing nodes (`var` and `;`) and parent nodes
