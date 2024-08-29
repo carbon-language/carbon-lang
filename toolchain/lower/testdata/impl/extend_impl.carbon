@@ -55,13 +55,13 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "extend_impl.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "F", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TypeAccess", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TypeAccess", linkageName: "TypeAccess", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 24, column: 10, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 24, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "InstanceAccess", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "InstanceAccess", linkageName: "InstanceAccess", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DILocation(line: 28, column: 10, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 28, column: 3, scope: !11)

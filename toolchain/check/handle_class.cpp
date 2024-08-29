@@ -101,7 +101,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
       (prev_class.is_extern && !new_class.is_extern)) {
     prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
     ReplacePrevInstForMerge(
-        context, prev_class.parent_scope_id, prev_class.name_id,
+        context, new_class.parent_scope_id, prev_class.name_id,
         new_is_import ? new_loc.inst_id : new_class.first_owning_decl_id);
   }
   return true;

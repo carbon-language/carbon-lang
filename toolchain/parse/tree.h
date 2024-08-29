@@ -103,8 +103,9 @@ class Tree : public Printable<Tree> {
     node_impls_.reserve(tokens_->expected_parse_tree_size());
   }
 
-  // Tests whether there are any errors in the parse tree.
   auto has_errors() const -> bool { return has_errors_; }
+
+  auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
 
   // Returns the number of nodes in this parse tree.
   auto size() const -> int { return node_impls_.size(); }
@@ -128,8 +129,6 @@ class Tree : public Printable<Tree> {
 
   // Returns the token the given parse tree node models.
   auto node_token(NodeId n) const -> Lex::TokenIndex;
-
-  auto node_subtree_size(NodeId n) const -> int32_t;
 
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
@@ -242,14 +241,15 @@ class Tree : public Printable<Tree> {
 
   Lex::TokenizedBuffer* tokens_;
 
-  // Indicates if any errors were encountered while parsing.
+  // True if any lowering-blocking issues were encountered while parsing. Trees
+  // are expected to still be structurally valid for checking.
   //
   // This doesn't indicate how much of the tree is structurally accurate with
-  // respect to the grammar. That can be identified by looking at the `HasError`
-  // flag for a given node (see above for details). This simply indicates that
-  // some errors were encountered somewhere. A key implication is that when this
-  // is true we do *not* have the expected 1:1 mapping between tokens and parsed
-  // nodes as some tokens may have been skipped.
+  // respect to the grammar. That can be identified by looking at
+  // `node_has_error` (see above for details). This simply indicates that some
+  // errors were encountered somewhere. A key implication is that when this is
+  // true we do *not* enforce the expected 1:1 mapping between tokens and parsed
+  // nodes, because some tokens may have been skipped.
   bool has_errors_ = false;
 
   std::optional<PackagingDecl> packaging_decl_;

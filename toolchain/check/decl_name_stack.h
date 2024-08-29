@@ -96,7 +96,7 @@ class DeclNameStack {
         -> SemIR::EntityWithParamsBase {
       return {
           .name_id = name_id_for_new_inst(),
-          .parent_scope_id = parent_scope_id_for_new_inst(),
+          .parent_scope_id = parent_scope_id,
           .generic_id = SemIR::GenericId::Invalid,
           .first_param_node_id = name.first_param_node_id,
           .last_param_node_id = name.last_param_node_id,
@@ -119,13 +119,6 @@ class DeclNameStack {
     auto name_id_for_new_inst() -> SemIR::NameId {
       return state == State::Unresolved ? unresolved_name_id
                                         : SemIR::NameId::Invalid;
-    }
-
-    // Returns the parent_scope_id for a new instruction. This is invalid
-    // when the name resolved.
-    auto parent_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return state == State::Unresolved ? parent_scope_id
-                                        : SemIR::NameScopeId::Invalid;
     }
 
     // The current scope when this name began. This is the scope that we will

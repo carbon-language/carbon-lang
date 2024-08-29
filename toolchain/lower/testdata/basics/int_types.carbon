@@ -43,13 +43,13 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "int_types.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F_i8", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F_i8", linkageName: "F_i8", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 11, column: 24, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F_u16", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F_u16", linkageName: "F_u16", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 12, column: 27, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F_i64", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F_i64", linkageName: "F_i64", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 13, column: 27, scope: !10)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F_u65536", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F_u65536", linkageName: "F_u65536", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 14, column: 36, scope: !12)

@@ -143,13 +143,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.decl.loc12
+// CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_extern.carbon
 // CHECK:STDOUT:

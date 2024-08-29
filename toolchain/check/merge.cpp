@@ -16,7 +16,7 @@ CARBON_DIAGNOSTIC(RedeclPrevDecl, Note, "Previously declared here.");
 // Diagnoses a redeclaration which is redundant.
 static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
                               SemIR::NameId name_id, SemIRLoc new_loc,
-                              SemIRLoc prev_loc) {
+                              SemIRLoc prev_loc) -> void {
   CARBON_DIAGNOSTIC(RedeclRedundant, Error,
                     "Redeclaration of `{0} {1}` is redundant.", Lex::TokenKind,
                     SemIR::NameId);
@@ -29,7 +29,7 @@ static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
 // Diagnoses a redefinition.
 static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
                           SemIR::NameId name_id, SemIRLoc new_loc,
-                          SemIRLoc prev_loc) {
+                          SemIRLoc prev_loc) -> void {
   CARBON_DIAGNOSTIC(RedeclRedef, Error, "Redefinition of `{0} {1}`.",
                     Lex::TokenKind, SemIR::NameId);
   CARBON_DIAGNOSTIC(RedeclPrevDef, Note, "Previously defined here.");
@@ -42,7 +42,7 @@ static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
 // Diagnoses an `extern` versus non-`extern` mismatch.
 static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
                                    SemIR::NameId name_id, SemIRLoc new_loc,
-                                   SemIRLoc prev_loc) {
+                                   SemIRLoc prev_loc) -> void {
   CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
                     "Redeclarations of `{0} {1}` must match use of `extern`.",
                     Lex::TokenKind, SemIR::NameId);
@@ -56,8 +56,8 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
 static auto DiagnoseExternLibraryInImporter(Context& context,
                                             Lex::TokenKind decl_kind,
                                             SemIR::NameId name_id,
-                                            SemIRLoc new_loc,
-                                            SemIRLoc prev_loc) {
+                                            SemIRLoc new_loc, SemIRLoc prev_loc)
+    -> void {
   CARBON_DIAGNOSTIC(ExternLibraryInImporter, Error,
                     "Cannot declare imported `{0} {1}` as `extern library`.",
                     Lex::TokenKind, SemIR::NameId);
@@ -69,7 +69,7 @@ static auto DiagnoseExternLibraryInImporter(Context& context,
 
 // Diagnoses `extern library` pointing to the wrong library.
 static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
-                                           SemIRLoc prev_loc) {
+                                           SemIRLoc prev_loc) -> void {
   CARBON_DIAGNOSTIC(
       ExternLibraryIncorrect, Error,
       "Declaration in {0} doesn't match `extern library` declaration.",
@@ -80,6 +80,14 @@ static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
       .Build(new_loc, ExternLibraryIncorrect, context.sem_ir().library_id())
       .Note(prev_loc, ExternLibraryExpected)
       .Emit();
+}
+
+auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
+    -> void {
+  CARBON_DIAGNOSTIC(
+      ExternRequiresDeclInApiFile, Error,
+      "`extern` entities must have a declaration in the API file.");
+  context.emitter().Build(loc, ExternRequiresDeclInApiFile).Emit();
 }
 
 // Checks to see if a structurally valid redeclaration is allowed in context.
@@ -128,6 +136,12 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 
   // Check for disallowed redeclarations cross-library.
+  if (new_decl.is_extern && context.IsImplFile()) {
+    // We continue after issuing the "missing API declaration" diagnostic,
+    // because it may still be helpful to note other issues with the
+    // declarations.
+    DiagnoseExternRequiresDeclInApiFile(context, new_decl.loc);
+  }
   if (prev_decl.is_extern != new_decl.is_extern) {
     DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
                            prev_decl.loc);
@@ -146,6 +160,7 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   if (prev_decl.extern_library_id != SemIR::LibraryNameId::Error &&
       prev_decl.extern_library_id != context.sem_ir().library_id()) {
     DiagnoseExternLibraryIncorrect(context, new_decl.loc, prev_decl.loc);
+    return;
   }
 }
 

@@ -74,6 +74,13 @@ extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F();
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
+// CHECK:STDERR: fn F() {}
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: Previously declared here.
+// CHECK:STDERR: extern fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F() {}
 
 // --- fail_extern_decl_after_def.carbon
@@ -81,13 +88,27 @@ fn F() {}
 library "extern_decl_after_def";
 
 fn F() {}
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 extern fn F();
+
+// --- in_impl.carbon
+
+library "in_impl";
+
+// --- fail_in_impl.impl.carbon
+
+impl library "in_impl";
+
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: `extern` entities must have a declaration in the API file.
+// CHECK:STDERR: extern fn F() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+extern fn F() {}
 
 // CHECK:STDOUT: --- extern_def.carbon
 // CHECK:STDOUT:
@@ -183,13 +204,13 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.decl.loc12
+// CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -225,14 +246,14 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.decl.loc12
+// CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc13: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc20: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -250,10 +271,38 @@ extern fn F();
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc11: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- in_impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_in_impl.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
