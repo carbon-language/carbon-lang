@@ -18,7 +18,7 @@ struct Operator {
 };
 
 // Checks and builds SemIR for a unary operator expression. For example,
-// `$operand` or `operand$`. If specified, `missing_impl_diagnoser` is used to
+// `*operand` or `operand*`. If specified, `missing_impl_diagnoser` is used to
 // build a custom error diagnostic for the case where impl lookup for the
 // operator fails.
 auto BuildUnaryOperator(
@@ -28,7 +28,7 @@ auto BuildUnaryOperator(
     -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
-// `lhs_id $ rhs_id`. If specified, `missing_impl_diagnoser` is used to build a
+// `lhs_id * rhs_id`. If specified, `missing_impl_diagnoser` is used to build a
 // custom error diagnostic for the case where impl lookup for the operator
 // fails.
 auto BuildBinaryOperator(
