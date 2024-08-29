@@ -1016,6 +1016,22 @@ struct IfExprElse {
   AnyExprId else_result;
 };
 
+// The `Self` in a context where it is treated as a name rather than an
+// expression, such as `.Self`.
+using SelfTypeName =
+    LeafNode<NodeKind::SelfTypeName, Lex::SelfTypeIdentifierTokenIndex>;
+
+// `.Member` or `.Self` in an expression context, used in `where` and `require`
+// clauses.
+// TODO: Do we want to support `.1`, a designator for accessing a tuple member?
+struct DesignatorExpr {
+  static constexpr auto Kind = NodeKind::DesignatorExpr.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::PeriodTokenIndex token;
+  NodeIdOneOf<IdentifierName, SelfTypeName> name;
+};
+
 // Choice nodes
 // ------------
 

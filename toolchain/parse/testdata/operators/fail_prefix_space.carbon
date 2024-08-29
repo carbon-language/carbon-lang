@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/recover_prefix_uneven_space_with_assign.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_prefix_space.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/recover_prefix_uneven_space_with_assign.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_prefix_space.carbon
 
-// CHECK:STDERR: recover_prefix_uneven_space_with_assign.carbon:[[@LINE+3]]:12: ERROR: Whitespace is not allowed after this unary operator.
-// CHECK:STDERR: var n: i8 =- n;
-// CHECK:STDERR:            ^
-var n: i8 =- n;
+// CHECK:STDERR: fail_prefix_space.carbon:[[@LINE+3]]:13: ERROR: Whitespace is not allowed after this unary operator.
+// CHECK:STDERR: var n: i8 = - n;
+// CHECK:STDERR:             ^
+var n: i8 = - n;
 
-// CHECK:STDOUT: - filename: recover_prefix_uneven_space_with_assign.carbon
+// CHECK:STDOUT: - filename: fail_prefix_space.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},

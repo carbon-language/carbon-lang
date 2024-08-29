@@ -60,7 +60,7 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   SemIR::ImportRefUnloaded inst = {.import_ir_inst_id = import_ir_inst_id,
                                    .entity_name_id = entity_name_id};
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
-      SemIR::LocIdAndInst(import_ir_inst_id, inst));
+      context.MakeImportedLocAndInst(import_ir_inst_id, inst));
 
   // ImportRefs have a dedicated block because this may be called during
   // processing where the instruction shouldn't be inserted in the current inst
@@ -741,9 +741,10 @@ class ImportRefResolver {
         }
       }
       if (addr_inst) {
-        new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(
-            AddImportIRInst(ref_id),
-            {.type_id = type_id, .inner_id = new_param_id});
+        new_param_id = context_.AddInstInNoBlock(
+            context_.MakeImportedLocAndInst<SemIR::AddrPattern>(
+                AddImportIRInst(ref_id),
+                {.type_id = type_id, .inner_id = new_param_id}));
       }
       new_param_refs.push_back(new_param_id);
     }
@@ -1157,11 +1158,13 @@ class ImportRefResolver {
 
     // Import the instruction in order to update contained base_type_id and
     // track the import location.
-    auto inst_id = context_.AddInstInNoBlock<SemIR::BaseDecl>(
-        AddImportIRInst(import_inst_id),
-        {.type_id = context_.GetTypeIdForTypeConstant(type_const_id),
-         .base_type_id = context_.GetTypeIdForTypeConstant(base_type_const_id),
-         .index = inst.index});
+    auto inst_id = context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::BaseDecl>(
+            AddImportIRInst(import_inst_id),
+            {.type_id = context_.GetTypeIdForTypeConstant(type_const_id),
+             .base_type_id =
+                 context_.GetTypeIdForTypeConstant(base_type_const_id),
+             .index = inst.index}));
     return ResolveAsConstant(context_.constant_values().Get(inst_id));
   }
 
@@ -1198,7 +1201,7 @@ class ImportRefResolver {
                                    .class_id = SemIR::ClassId::Invalid,
                                    .decl_block_id = SemIR::InstBlockId::Empty};
     auto class_decl_id =
-        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+        context_.AddPlaceholderInstInNoBlock(context_.MakeImportedLocAndInst(
             AddImportIRInst(import_class.latest_decl_id()), class_decl));
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
@@ -1371,11 +1374,12 @@ class ImportRefResolver {
     if (HasNewWork()) {
       return Retry();
     }
-    auto inst_id = context_.AddInstInNoBlock<SemIR::FieldDecl>(
-        AddImportIRInst(import_inst_id),
-        {.type_id = context_.GetTypeIdForTypeConstant(const_id),
-         .name_id = GetLocalNameId(inst.name_id),
-         .index = inst.index});
+    auto inst_id = context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::FieldDecl>(
+            AddImportIRInst(import_inst_id),
+            {.type_id = context_.GetTypeIdForTypeConstant(const_id),
+             .name_id = GetLocalNameId(inst.name_id),
+             .index = inst.index}));
     return {.const_id = context_.constant_values().Get(inst_id)};
   }
 
@@ -1389,7 +1393,7 @@ class ImportRefResolver {
         .function_id = SemIR::FunctionId::Invalid,
         .decl_block_id = SemIR::InstBlockId::Empty};
     auto function_decl_id =
-        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+        context_.AddPlaceholderInstInNoBlock(context_.MakeImportedLocAndInst(
             AddImportIRInst(import_function.first_decl_id()), function_decl));
 
     // Start with an incomplete function.
@@ -1558,7 +1562,7 @@ class ImportRefResolver {
         .interface_id = SemIR::InterfaceId::Invalid,
         .decl_block_id = SemIR::InstBlockId::Empty};
     auto interface_decl_id =
-        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
+        context_.AddPlaceholderInstInNoBlock(context_.MakeImportedLocAndInst(
             AddImportIRInst(import_interface.first_owning_decl_id),
             interface_decl));
 

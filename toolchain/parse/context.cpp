@@ -69,17 +69,11 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
 auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
     -> void {
   tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-  if (has_error) {
-    tree_->has_errors_ = true;
-  }
 }
 
 auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
     -> void {
   tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-  if (has_error) {
-    tree_->has_errors_ = true;
-  }
 }
 
 auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
@@ -92,9 +86,6 @@ auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
   node_impl->kind = kind;
   node_impl->has_error = has_error;
   node_impl->token = token;
-  if (has_error) {
-    tree_->has_errors_ = true;
-  }
 }
 
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
