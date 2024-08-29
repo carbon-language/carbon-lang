@@ -57,7 +57,7 @@ declarations in the header, so only extra helper functions should be added
 there. Every state handler pops the state from the stack before any other
 processing.
 
-## Typed parse node metadata implementation
+### Typed parse node metadata implementation
 
 As of [#3534](https://github.com/carbon-language/carbon-lang/pull/3534):
 
@@ -249,7 +249,7 @@ formatter.
 If the resulting SemIR needs a new built-in, add it to
 [builtin_inst_kind.def](/toolchain/sem_ir/builtin_inst_kind.def).
 
-## SemIR typed instruction metadata implementation
+### SemIR typed instruction metadata implementation
 
 How does this work? As of
 [#3310](https://github.com/carbon-language/carbon-lang/pull/3310):
@@ -365,7 +365,7 @@ Each SemIR instruction requires adding a `Handle<kind>` function in a
 
 ## Tests and debugging
 
-## Running tests
+### Running tests
 
 Tests are run in bulk as `bazel test //toolchain/...`. Many tests are using the
 file_test infrastructure; see
@@ -387,25 +387,25 @@ example, with `toolchain/parse/testdata/basics/empty.carbon`:
 -   `bazel-bin/toolchain/driver/carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
     -   Similar to the previous command, but without using `bazel`.
 
-## Updating tests
+### Updating tests
 
 The `toolchain/autoupdate_testdata.py` script can be used to update output. It
 invokes the `file_test` autoupdate support. See
 [testing/file_test/README.md](/testing/file_test/README.md) for file syntax.
 
-### Reviewing test deltas
+#### Reviewing test deltas
 
 Using `autoupdate_testdata.py` can be useful to produce deltas during the
 development process because it allows `git status` and `git diff` to be used to
 examine what changed.
 
-## Verbose output
+### Verbose output
 
 The `-v` flag can be passed to trace state, and should be specified before the
 subcommand name: `carbon -v compile ...`. `CARBON_VLOG` is used to print output
 in this mode. There is currently no control over the degree of verbosity.
 
-## Stack traces
+### Stack traces
 
 While the iterative processing pattern means function stack traces will have
 minimal context for how the current function is reached, we use LLVM's

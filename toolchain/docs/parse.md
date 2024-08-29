@@ -531,7 +531,7 @@ might skip those without emitting diagnostics.
 The specific approach to producing the desired tree depends on the kind of
 grammar rule being implemented, as well as the desired output tree structure.
 
-## Introducer
+### Introducer
 
 **Example:** `if (c) { ... }`
 
@@ -606,7 +606,7 @@ most introducer tokens indicate that the current state should be repeated, to
 handle the next statement, but some other token, like a close curly brace (`}`)
 means that the state should be exited.
 
-## Optional modifiers before an introducer
+### Optional modifiers before an introducer
 
 **Example:** `virtual fn Foo();`
 
@@ -709,7 +709,7 @@ declaration or statement.
     -   This `state.subtree_start` will mark everything since the bracketing
         introducer node as the children of this node.
 
-## Something required in context
+### Something required in context
 
 FIXME
 
@@ -719,9 +719,9 @@ Example: name after introducer
 Example: `[<implicit parameter list>]` after `impl forall`
 [parse/handle_impl.cpp](/toolchain/parse/handle_impl.cpp)
 
-## Optional clauses
+### Optional clauses
 
-### Case 1: introducer to optional clause is used as parent node
+#### Case 1: introducer to optional clause is used as parent node
 
 **Example:** The optional `-> <return type expression>` in a function signature
 uses this pattern, so `fn foo() -> u32;` is transformed to:
@@ -781,7 +781,7 @@ Also see how the optional initializer is handled on `var`, treating the `=` as
 its introducer in `HandleVarAfterPattern` and `HandleVarInitializer` in
 [parse/handle_var.cpp](/toolchain/parse/handle_var.cpp).
 
-### Case 2: parent node is required token after optional clause, with different parent node kinds for different options
+#### Case 2: parent node is required token after optional clause, with different parent node kinds for different options
 
 **Example:** The optional type expression before `as` in `impl as` is
 represented by producing two different output parse nodes for `as`. It outputs a
@@ -861,7 +861,7 @@ If there is no `as` token, we don't output either a `TypeImplAs` or a
 `DefaultSelfImplAs` node, as required by the parent node, so in those cases we
 mark the parent as having an error.
 
-### Case 3: optional sibling
+#### Case 3: optional sibling
 
 > TODO: This was changed by
 > [#3678](https://github.com/carbon-language/carbon-lang/pull/3678) and needs to
@@ -909,7 +909,7 @@ and then `HandleImplBeforeAs` follows
 [the "something required in context" pattern](#something-required-in-context) to
 deal with the `as` that follows when the type expression is present.
 
-## Operators
+### Operators
 
 FIXME
 
