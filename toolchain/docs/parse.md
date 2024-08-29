@@ -221,12 +221,28 @@ flowchart BT
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]:::moved
+        node2[x]:::pending
+        node3[:]:::pending
+        node4[i32]:::pending
+        node5[=]:::pending
+        node6[y]:::pending
+        node7[+]:::pending
+        node8[1]:::pending
+        node9[;]:::pending
     end
 
-    classDef hidden visibility:hidden,display:none
+    classDef pending visibility:hidden
     classDef moved fill:#0F0,color:#000
+    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~ root
+    node1 ~~~~ root
+    node3 ~~~ node2 & node4
+    node3 ~~~ root
+    node5 ~~~~ root
+    node7 ~~~ node6 & node8
+    node7 ~~~ root
+    node9 ~~~ node1 & node3 & node5 & node7
+    node9 ~~~ root
 ```
 
 Next, we can consider the pattern binding. Here, `x` is the identifier and `i32`
@@ -260,14 +276,25 @@ flowchart BT
         node2[x]:::moved
         node3[:]:::moved
         node4[i32]:::moved
+        node5[=]:::pending
+        node6[y]:::pending
+        node7[+]:::pending
+        node8[1]:::pending
+        node9[;]:::pending
     end
 
-    classDef hidden visibility:hidden,display:none
+    classDef pending visibility:hidden
     classDef moved fill:#0F0,color:#000
+    classDef hidden visibility:hidden,display:none
 
     node1 ~~~~ root
     node3 --- node2 & node4
     node3 ~~~ root
+    node5 ~~~~ root
+    node7 ~~~ node6 & node8
+    node7 ~~~ root
+    node9 ~~~ node1 & node3 & node5 & node7
+    node9 ~~~ root
 ```
 
 We use the `=` as a separator (instead of a node with children like `:`) to help
@@ -301,15 +328,24 @@ flowchart BT
         node3[:]
         node4[i32]
         node5[=]:::moved
+        node6[y]:::pending
+        node7[+]:::pending
+        node8[1]:::pending
+        node9[;]:::pending
     end
 
-    classDef hidden visibility:hidden,display:none
+    classDef pending visibility:hidden
     classDef moved fill:#0F0,color:#000
+    classDef hidden visibility:hidden,display:none
 
     node1 ~~~~ root
     node3 --- node2 & node4
     node3 ~~~ root
     node5 ~~~~ root
+    node7 ~~~ node6 & node8
+    node7 ~~~ root
+    node9 ~~~ node1 & node3 & node5 & node7
+    node9 ~~~ root
 ```
 
 The expression is a subtree with `+` as the parent, and the two operands as
@@ -345,10 +381,12 @@ flowchart BT
         node6[y]:::moved
         node7[+]:::moved
         node8[1]:::moved
+        node9[;]:::pending
     end
 
-    classDef hidden visibility:hidden,display:none
+    classDef pending visibility:hidden
     classDef moved fill:#0F0,color:#000
+    classDef hidden visibility:hidden,display:none
 
     node1 ~~~~ root
     node3 --- node2 & node4
@@ -356,6 +394,8 @@ flowchart BT
     node5 ~~~~ root
     node7 --- node6 & node8
     node7 ~~~ root
+    node9 ~~~ node1 & node3 & node5 & node7
+    node9 ~~~ root
 ```
 
 Finally, the `;` is used as the "root" of the variable declaration. It's
@@ -378,8 +418,9 @@ flowchart BT
         node9[;]:::moved
     end
 
-    classDef hidden visibility:hidden,display:none
+    classDef pending visibility:hidden
     classDef moved fill:#0F0,color:#000
+    classDef hidden visibility:hidden,display:none
 
     node1 ~~~~ root
     node3 --- node2 & node4
@@ -409,6 +450,8 @@ flowchart BT
         node9[;]
     end
 
+    classDef pending visibility:hidden
+    classDef moved fill:#0F0,color:#000
     classDef hidden visibility:hidden,display:none
 
     node1 ~~~~ root
@@ -457,6 +500,8 @@ flowchart BT
         node9[;]
     end
 
+    classDef used visibility:hidden
+    classDef moved fill:#0F0,color:#000
     classDef hidden visibility:hidden,display:none
 
     node1 ~~~~ root
