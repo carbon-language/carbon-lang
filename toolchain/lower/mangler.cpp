@@ -29,56 +29,43 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
     if (parent.inst_id == SemIR::InstId::PackageNamespace) {
       break;
     }
-    std::string name_component;
+    result += '.';
     CARBON_KIND_SWITCH(sem_ir.insts().Get(parent.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir.impls().Get(impl_decl.impl_id);
         if (auto opt_class_self =
                 types.TryGetAs<SemIR::ClassType>(impl.self_id)) {
-          name_component = names.GetFormatted(
+          result += names.GetFormatted(
               sem_ir.classes().Get(opt_class_self->class_id).name_id);
         } else {
           auto builtin_self = types.GetAs<SemIR::BuiltinInst>(impl.self_id);
-          name_component = builtin_self.builtin_inst_kind.label();
+          result += builtin_self.builtin_inst_kind.label();
         }
-        name_component += ':';
+        result += ':';
         auto opt_interface_constraint =
             types.GetAs<SemIR::InterfaceType>(impl.constraint_id);
-        name_component +=
+        result +=
             names.GetFormatted(sem_ir.interfaces()
                                    .Get(opt_interface_constraint.interface_id)
                                    .name_id);
-        /*
-        name_component = types.GetAsInst(impl.self_id);
-        name_component += ':';
-        name_component += types.GetAsInst(impl.constraint_id);
-        */
         break;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        name_component = names.GetFormatted(
+        result += names.GetFormatted(
             sem_ir.classes().Get(class_decl.class_id).name_id);
         break;
       }
       case SemIR::Namespace::Kind: {
         auto name = names.GetAsStringIfIdentifier(parent.name_id);
-        if (!name) {
-          break;
-        }
         CARBON_CHECK(name) << "Unexpected special name for function scope: "
                            << function.name_id;
-        name_component = *name;
+        result += *name;
         break;
       }
       default:
-        assert(false);
+        CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
         break;
     }
-    if (name_component.empty()) {
-      break;
-    }
-    result += '.';
-    result += name_component;
     parent_scope_id = parent.parent_scope_id;
   }
   return result;
