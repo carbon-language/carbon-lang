@@ -281,8 +281,11 @@ download the latest nightly toolchain tar file:
 `carbon_toolchain-0.0.0-0.nightly.YYYY.MM.DD.tar.gz`. Then you can try it out:
 
 ```shell
-# A variable with the specific nightly version:
-VERSION="0.0.0-0.nightly.YYYY.MM.DD"
+# A variable with the nightly version from yesterday:
+VERSION="$(date -d yesterday +0.0.0-0.nightly.%Y.%m.%d)"
+
+# Get the release
+wget https://github.com/carbon-language/carbon-lang/releases/download/v${VERSION}/carbon_toolchain-${VERSION}.tar.gz
 
 # Unpack the toolchain:
 tar -xvf carbon_toolchain-${VERSION}.tar.gz
