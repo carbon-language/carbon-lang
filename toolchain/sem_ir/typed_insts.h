@@ -53,8 +53,10 @@ struct AdaptDecl {
   TypeId adapted_type_id;
 };
 
-// The `&` address-of operator, as in `&lvalue`.
+// Takes the address of a reference expression, such as for the `&` address-of
+// operator, `&lvalue`.
 struct AddrOf {
+  // Parse node is usually Parse::PrefixOperatorAmpId.
   static constexpr auto Kind = InstKind::AddrOf.Define<Parse::NodeId>(
       {.ir_name = "addr_of", .constant_kind = InstConstantKind::Conditional});
 
@@ -75,6 +77,7 @@ struct AddrPattern {
 
 // An array indexing operation, such as `array[index]`.
 struct ArrayIndex {
+  // Parse node is usually Parse::IndexExprId.
   static constexpr auto Kind =
       InstKind::ArrayIndex.Define<Parse::NodeId>({.ir_name = "array_index"});
 
