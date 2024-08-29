@@ -140,11 +140,8 @@ static auto HasKnownCompatibleNodeKind(SemIR::InstKind src_kind,
 auto Context::CheckCompatibleImportedNodeKind(
     SemIR::ImportIRInstId imported_loc_id, SemIR::InstKind kind) -> void {
   auto& import_ir_inst = import_ir_insts().Get(imported_loc_id);
-  auto imported_kind = import_irs()
-                           .Get(import_ir_inst.ir_id)
-                           .sem_ir->insts()
-                           .Get(import_ir_inst.inst_id)
-                           .kind();
+  const auto* import_ir = import_irs().Get(import_ir_inst.ir_id).sem_ir;
+  auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id).kind();
   CARBON_CHECK(HasKnownCompatibleNodeKind(imported_kind, kind))
       << "Node of kind " << kind
       << " created with location of imported node of kind " << imported_kind;
