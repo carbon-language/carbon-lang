@@ -196,7 +196,7 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
   auto subst_type_id = SemIR::GetTypeInSpecific(
       context.sem_ir(), interface_type.specific_id, assoc_type.entity_type_id);
 
-  return context.AddInstReusingLoc<SemIR::InterfaceWitnessAccess>(
+  return context.AddInst<SemIR::InterfaceWitnessAccess>(
       node_id, {.type_id = subst_type_id,
                 .witness_id = witness_id,
                 .index = assoc_entity->index});
