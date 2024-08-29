@@ -12,16 +12,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Lex](#lex)
 -   [Parse](#parse)
--   [Typed parse node metadata implementation](#typed-parse-node-metadata-implementation)
+    -   [Typed parse node metadata implementation](#typed-parse-node-metadata-implementation)
 -   [Check](#check)
--   [SemIR typed instruction metadata implementation](#semir-typed-instruction-metadata-implementation)
+    -   [SemIR typed instruction metadata implementation](#semir-typed-instruction-metadata-implementation)
 -   [Lower](#lower)
 -   [Tests and debugging](#tests-and-debugging)
--   [Running tests](#running-tests)
--   [Updating tests](#updating-tests)
-    -   [Reviewing test deltas](#reviewing-test-deltas)
--   [Verbose output](#verbose-output)
--   [Stack traces](#stack-traces)
+    -   [Running tests](#running-tests)
+    -   [Updating tests](#updating-tests)
+        -   [Reviewing test deltas](#reviewing-test-deltas)
+    -   [Verbose output](#verbose-output)
+    -   [Stack traces](#stack-traces)
 
 <!-- tocstop -->
 
@@ -238,8 +238,28 @@ If the resulting SemIR needs a new instruction:
     -   Add a `CARBON_SEM_IR_INST_KIND(NewInstKindName)` line in alphabetical
         order
 -   a new struct definition to
-    [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h), with (italics
-    highlight what changes):
+    [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h), such as:
+
+    ```cpp
+    struct NewInstKindName {
+        static constexpr auto Kind = InstKind::NewInstKindName.Define(
+            // the name used in textual IR
+            "new_inst_kind_name"
+            // Optional: , TerminatorKind::KindOfTerminator
+            );
+
+        // Optional: omit if not associated with a parse node.
+        Parse::Node parse_node;
+
+        // Optional: omit if this sem_ir instruction does not produce a value.
+        TypeId type_id;
+
+        // 0-2 id fields, with types from sem_ir/ids.h or sem_ir/builtin_kind.h
+        // For example, fields would look like:
+        StringId name_id;
+        InstId value_id;
+    };
+    ```
 
 Adding an instruction will also require a handler in the Lower step.
 

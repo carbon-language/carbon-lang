@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
 -   [DiagnosticEmitter](#diagnosticemitter)
 -   [DiagnosticConsumers](#diagnosticconsumers)
 -   [Producing diagnostics](#producing-diagnostics)
@@ -20,6 +21,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
 
 <!-- tocstop -->
+
+## Overview
+
+The diagnostic code is used by the toolchain to produce output.
 
 ## DiagnosticEmitter
 

@@ -10,31 +10,41 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
 -   [Postorder processing](#postorder-processing)
 -   [Key IR concepts](#key-ir-concepts)
--   [Parameters and arguments](#parameters-and-arguments)
+    -   [Parameters and arguments](#parameters-and-arguments)
 -   [SemIR textual format](#semir-textual-format)
--   [Raw form](#raw-form)
--   [Formatted IR](#formatted-ir)
-    -   [Instructions](#instructions)
-    -   [Top-level entities](#top-level-entities)
+    -   [Raw form](#raw-form)
+    -   [Formatted IR](#formatted-ir)
+        -   [Instructions](#instructions)
+        -   [Top-level entities](#top-level-entities)
 -   [Core loop](#core-loop)
--   [Node stack](#node-stack)
--   [Delayed evaluation (not yet implemented)](#delayed-evaluation-not-yet-implemented)
--   [Templates (not yet implemented)](#templates-not-yet-implemented)
--   [Rewrites](#rewrites)
+    -   [Node stack](#node-stack)
+    -   [Delayed evaluation (not yet implemented)](#delayed-evaluation-not-yet-implemented)
+    -   [Templates (not yet implemented)](#templates-not-yet-implemented)
+    -   [Rewrites](#rewrites)
 -   [Types](#types)
--   [Type printing (not yet implemented)](#type-printing-not-yet-implemented)
+    -   [Type printing (not yet implemented)](#type-printing-not-yet-implemented)
 -   [Expression categories](#expression-categories)
     -   [ExprCategory::NotExpression](#exprcategorynotexpression)
     -   [ExprCategory::Value](#exprcategoryvalue)
     -   [ExprCategory::DurableReference and ExprCategory::EphemeralReference](#exprcategorydurablereference-and-exprcategoryephemeralreference)
     -   [ExprCategory::Initializing](#exprcategoryinitializing)
     -   [ExprCategory::Mixed](#exprcategorymixed)
--   [Value bindings](#value-bindings)
+    -   [Value bindings](#value-bindings)
 -   [Handling Parse::Tree errors (not yet implemented)](#handling-parsetree-errors-not-yet-implemented)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Using a traditional AST representation](#using-a-traditional-ast-representation)
 
 <!-- tocstop -->
+
+## Overview
+
+Check takes the parse tree and generates a semantic intermediate representation,
+or SemIR. This will look closer to a series of instructions, in preparation for
+transformation to LLVM IR. Semantic analysis and type checking occurs during the
+production of SemIR. It also does any validation that requires context.
 
 ## Postorder processing
 
@@ -135,7 +145,7 @@ representation, although no such parser currently exists.
 
 As an example, given the program:
 
-```cpp
+```carbon
 fn Cond() -> bool;
 fn Run() -> i32 { return if Cond() then 1 else 2; }
 ```
@@ -327,14 +337,12 @@ the parent node.
 
 One example of this pattern is expressions. Each subexpression outputs SemIR
 instructions to compute the value of that subexpression to the current
-instruction block, added to the top of the
-
-`InstBlockStack` stored in the `Context` object. It leaves an instruction id on
-the top of the [node stack](#node-stack) pointing to the instruction that
-produces the value of that subexpression. Those are consumed by parent
-operations, like an [RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation)
-calculator. For example, the expression `1 * 2 + 3` corresponds to this parse
-tree:
+instruction block, added to the top of the `InstBlockStack` stored in the
+`Context` object. It leaves an instruction id on the top of the
+[node stack](#node-stack) pointing to the instruction that produces the value of
+that subexpression. Those are consumed by parent operations, like an
+[RPN](https://en.wikipedia.org/wiki/Reverse_Polish_notation) calculator. For
+example, the expression `1 * 2 + 3` corresponds to this parse tree:
 
 ```yaml
     {kind: 'IntegerLiteral', text: '1'},
@@ -597,12 +605,12 @@ For example, an invalid line of code in a function might generate some
 incomplete IR in the function's `SemIR::InstBlock`, but that IR won't negatively
 interfere with checking later valid lines in the same function.
 
-# Lower
+## Alternatives considered
 
-Lowering takes the SemIR and produces LLVM IR. At present, this is done in a
-single pass, although it's possible we may need to do a second pass so that we
-can first generate type information for function arguments.
+### Using a traditional AST representation
 
-Lowering is done per `SemIR::InstBlock`. This minimizes changes to the
-`IRBuilder` insertion point, something that is both expensive and potentially
-fragile.
+Clang creates an AST as part of compilation. In Carbon, it's something we could
+do as a step between parsing and checking, possibly replacing the SemIR. It's
+likely that doing so would be simpler, amongst other possible trade-offs.
+However, we think the SemIR approach is going to yield higher performance,
+enough so that it's the chosen approach.

@@ -17,14 +17,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Visual example](#visual-example)
 -   [Handling invalid parses](#handling-invalid-parses)
 -   [How is this accomplished?](#how-is-this-accomplished)
--   [Introducer](#introducer)
--   [Optional modifiers before an introducer](#optional-modifiers-before-an-introducer)
--   [Something required in context](#something-required-in-context)
--   [Optional clauses](#optional-clauses)
-    -   [Case 1: introducer to optional clause is used as parent node](#case-1-introducer-to-optional-clause-is-used-as-parent-node)
-    -   [Case 2: parent node is required token after optional clause, with different parent node kinds for different options](#case-2-parent-node-is-required-token-after-optional-clause-with-different-parent-node-kinds-for-different-options)
-    -   [Case 3: optional sibling](#case-3-optional-sibling)
--   [Operators](#operators)
+    -   [Introducer](#introducer)
+    -   [Optional modifiers before an introducer](#optional-modifiers-before-an-introducer)
+    -   [Something required in context](#something-required-in-context)
+    -   [Optional clauses](#optional-clauses)
+        -   [Case 1: introducer to optional clause is used as parent node](#case-1-introducer-to-optional-clause-is-used-as-parent-node)
+        -   [Case 2: parent node is required token after optional clause, with different parent node kinds for different options](#case-2-parent-node-is-required-token-after-optional-clause-with-different-parent-node-kinds-for-different-options)
+        -   [Case 3: optional sibling](#case-3-optional-sibling)
+    -   [Operators](#operators)
 
 <!-- tocstop -->
 
@@ -91,7 +91,7 @@ of a stack entry and is thus more efficient to store in one place.
 
 The parse tree's storage layout is in postorder. For example, given the code:
 
-```cpp
+```carbon
 fn foo() -> f64 {
   return 42;
 }
@@ -873,7 +873,7 @@ introducer and the `ImplAs` node for the required `as` keyword.
 
 `impl bool as Interface;` is transformed to:
 
-```cpp
+```yaml
   {kind: 'ImplIntroducer', text: 'impl'},
   {kind: 'BoolTypeLiteral', text: 'bool'},
   {kind: 'ImplAs', text: 'as'},
@@ -883,7 +883,7 @@ introducer and the `ImplAs` node for the required `as` keyword.
 
 while `impl as Interface;` is transformed to:
 
-```cpp
+```yaml
   {kind: 'ImplIntroducer', text: 'impl'},
   {kind: 'ImplAs', text: 'as'},
   {kind: 'IdentifierNameExpr', text: 'Interface'},
