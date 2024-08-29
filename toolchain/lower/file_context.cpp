@@ -239,7 +239,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
           ? return_type
           : llvm::Type::getVoidTy(llvm_context());
 
-  Mangler m(sem_ir());
+  Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id);
 
   llvm::FunctionType* function_type = llvm::FunctionType::get(

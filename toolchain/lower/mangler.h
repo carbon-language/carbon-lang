@@ -7,16 +7,17 @@
 
 #include <string>
 
-#include "toolchain/sem_ir/file.h"
+#include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Lower {
 class Mangler {
  public:
-  explicit Mangler(const SemIR::File& sem_ir) : sem_ir_(sem_ir) {}
+  explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
   auto Mangle(SemIR::FunctionId function_id) -> std::string;
 
  private:
-  const SemIR::File& sem_ir_;
+  FileContext& file_context_;
 };
 }  // namespace Carbon::Lower
 

@@ -23,14 +23,14 @@ fn F(p: C*) {
 // CHECK:STDOUT: ; ModuleID = 'method.carbon'
 // CHECK:STDOUT: source_filename = "method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_CGet(ptr)
+// CHECK:STDOUT: declare i32 @_CGet.C(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CSet(ptr, i32)
+// CHECK:STDOUT: declare void @_CSet.C(ptr, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF(ptr %p) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Get.call = call i32 @_CGet(ptr %p), !dbg !7
-// CHECK:STDOUT:   call void @_CSet(ptr %p, i32 %Get.call), !dbg !8
+// CHECK:STDOUT:   %Get.call = call i32 @_CGet.C(ptr %p), !dbg !7
+// CHECK:STDOUT:   call void @_CSet.C(ptr %p, i32 %Get.call), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

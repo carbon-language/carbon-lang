@@ -56,7 +56,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @struct.loc9_28 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMake(ptr sret({ i32, i32 }) %return) !dbg !4 {
+// CHECK:STDOUT: define void @_CMake.PairOfInts(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
@@ -64,13 +64,13 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMake.1(ptr sret({ i32, i32 }) %return) !dbg !9 {
+// CHECK:STDOUT: define void @_CMake.PairAdapter(ptr sret({ i32, i32 }) %return) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake(ptr %return), !dbg !10
+// CHECK:STDOUT:   call void @_CMake.PairOfInts(ptr %return), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CGetB(ptr %self) !dbg !12 {
+// CHECK:STDOUT: define i32 @_CGetB.PairAdapter(ptr %self) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !13
 // CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !13
@@ -80,8 +80,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: define i32 @_CUse() !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
-// CHECK:STDOUT:   call void @_CMake.1(ptr %pa.var), !dbg !17
-// CHECK:STDOUT:   %GetB.call = call i32 @_CGetB(ptr %pa.var), !dbg !18
+// CHECK:STDOUT:   call void @_CMake.PairAdapter(ptr %pa.var), !dbg !17
+// CHECK:STDOUT:   %GetB.call = call i32 @_CGetB.PairAdapter(ptr %pa.var), !dbg !18
 // CHECK:STDOUT:   ret i32 %GetB.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -97,15 +97,15 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "adapt_class.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairOfInts", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 12, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 9, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.1", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairAdapter", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 12, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 17, column: 5, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetB", linkageName: "_CGetB", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetB", linkageName: "_CGetB.PairAdapter", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 12, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 5, scope: !12)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
