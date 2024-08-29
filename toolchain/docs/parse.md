@@ -174,11 +174,6 @@ var x: i32 = y + 1;
 Lexing creates distinct tokens for each syntactic element, which will form the
 basis of the parse tree:
 
-<!--
-These charts are using a hidden "root" node in order to adjust alignment.
-We're trying to keep the "lexed" tokens separate from "parse tree" nodes.
--->
-
 ```mermaid
 flowchart BT
     subgraph tokens["Tokens"]
@@ -201,7 +196,7 @@ a variable declaration structure.
 ```mermaid
 flowchart BT
     subgraph tokens["Remaining tokens"]
-        token1[var]:::used
+        token1[var]:::moved
         token2[x]
         token3[:]
         token4[i32]
@@ -253,9 +248,9 @@ children, it doesn't need to be bracketed.
 flowchart BT
     subgraph tokens["Remaining tokens"]
         token1[var]:::used
-        token2[x]:::used
-        token3[:]:::used
-        token4[i32]:::used
+        token2[x]:::moved
+        token3[:]:::moved
+        token4[i32]:::moved
         token5[=]
         token6[y]
         token7[+]
@@ -263,12 +258,6 @@ flowchart BT
         token9[;]
     end
 
-    classDef used visibility:hidden
-```
-
-```mermaid
-flowchart BT
-    root:::hidden
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]
@@ -282,18 +271,23 @@ flowchart BT
         node9[;]:::pending
     end
 
+    %% A token which has been used.
+    classDef used visibility:hidden
+    %% A node which will be used, but hasn't yet been.
     classDef pending visibility:hidden
+    %% A token or node which is actively being used.
     classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~~ root
+    nodes ~~~ tokens
+
+    node1 ~~~~ tokens
     node3 --- node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
+    node3 ~~~ tokens
+    node5 ~~~~ tokens
     node7 ~~~ node6 & node8
-    node7 ~~~ root
+    node7 ~~~ tokens
     node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ root
+    node9 ~~~ tokens
 ```
 
 We use the `=` as a separator (instead of a node with children like `:`) to help
@@ -307,19 +301,13 @@ flowchart BT
         token2[x]:::used
         token3[:]:::used
         token4[i32]:::used
-        token5[=]:::used
+        token5[=]:::moved
         token6[y]
         token7[+]
         token8[1]
         token9[;]
     end
 
-    classDef used visibility:hidden
-```
-
-```mermaid
-flowchart BT
-    root:::hidden
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]
@@ -333,18 +321,23 @@ flowchart BT
         node9[;]:::pending
     end
 
+    %% A token which has been used.
+    classDef used visibility:hidden
+    %% A node which will be used, but hasn't yet been.
     classDef pending visibility:hidden
+    %% A token or node which is actively being used.
     classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~~ root
+    nodes ~~~ tokens
+
+    node1 ~~~~ tokens
     node3 --- node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
+    node3 ~~~ tokens
+    node5 ~~~~ tokens
     node7 ~~~ node6 & node8
-    node7 ~~~ root
+    node7 ~~~ tokens
     node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ root
+    node9 ~~~ tokens
 ```
 
 The expression is a subtree with `+` as the parent, and the two operands as
@@ -358,18 +351,12 @@ flowchart BT
         token3[:]:::used
         token4[i32]:::used
         token5[=]:::used
-        token6[y]:::used
-        token7[+]:::used
-        token8[1]:::used
+        token6[y]:::moved
+        token7[+]:::moved
+        token8[1]:::moved
         token9[;]
     end
 
-    classDef used visibility:hidden
-```
-
-```mermaid
-flowchart BT
-    root:::hidden
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]
@@ -383,18 +370,23 @@ flowchart BT
         node9[;]:::pending
     end
 
+    %% A token which has been used.
+    classDef used visibility:hidden
+    %% A node which will be used, but hasn't yet been.
     classDef pending visibility:hidden
+    %% A token or node which is actively being used.
     classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~~ root
+    nodes ~~~ tokens
+
+    node1 ~~~~ tokens
     node3 --- node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
+    node3 ~~~ tokens
+    node5 ~~~~ tokens
     node7 --- node6 & node8
-    node7 ~~~ root
+    node7 ~~~ tokens
     node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ root
+    node9 ~~~ tokens
 ```
 
 Finally, the `;` is used as the "root" of the variable declaration. It's
@@ -403,7 +395,18 @@ unambiguously bracketed by `var`.
 
 ```mermaid
 flowchart BT
-    root:::hidden
+    subgraph tokens["Remaining tokens"]
+        token1[var]:::used
+        token2[x]:::used
+        token3[:]:::used
+        token4[i32]:::used
+        token5[=]:::used
+        token6[y]:::used
+        token7[+]:::used
+        token8[1]:::used
+        token9[;]:::moved
+    end
+
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]
@@ -417,18 +420,23 @@ flowchart BT
         node9[;]:::moved
     end
 
+    %% A token which has been used.
+    classDef used visibility:hidden
+    %% A node which will be used, but hasn't yet been.
     classDef pending visibility:hidden
+    %% A token or node which is actively being used.
     classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~~ root
+    nodes ~~~ tokens
+
+    node1 ~~~~ tokens
     node3 --- node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
+    node3 ~~~ tokens
+    node5 ~~~~ tokens
     node7 --- node6 & node8
-    node7 ~~~ root
+    node7 ~~~ tokens
     node9 --- node1 & node3 & node5 & node7
-    node9 ~~~ root
+    node9 ~~~ tokens
 ```
 
 Thus we have the parse tree:
@@ -473,44 +481,45 @@ flowchart BT
     subgraph tokens["Tokens"]
         token1[var]
         token2[x]
-        token3[:]
-        token4[i32]
+        token3[:]:::moved
+        token4[i32]:::moved
         token5[=]
         token6[y]
-        token7[+]
-        token8[1]
+        token7[+]:::moved
+        token8[1]:::moved
         token9[;]
     end
-```
 
-```mermaid
-flowchart BT
-    root:::hidden
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]
         node2[x]
-        node3[:]
-        node4[i32]
+        node3[:]:::moved
+        node4[i32]:::moved
         node5[=]
         node6[y]
-        node7[+]
-        node8[1]
+        node7[+]:::moved
+        node8[1]:::moved
         node9[;]
     end
 
+    %% A token which has been used.
     classDef used visibility:hidden
+    %% A node which will be used, but hasn't yet been.
+    classDef pending visibility:hidden
+    %% A token or node which is actively being used.
     classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~~ root
+    nodes ~~~ tokens
+
+    node1 ~~~~ tokens
     node3 --- node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
+    node3 ~~~ tokens
+    node5 ~~~~ tokens
     node7 --- node6 & node8
-    node7 ~~~ root
+    node7 ~~~ tokens
     node9 --- node1 & node3 & node5 & node7
-    node9 ~~~ root
+    node9 ~~~ tokens
 ```
 
 ```mermaid
