@@ -98,7 +98,7 @@ facet type `type`. We will also have built-in functions which would need to form
 the implementation of some library types, such as `i32`. Built-ins are in a
 stable index across `SemIR` instances.
 
-## Parameters and arguments
+### Parameters and arguments
 
 Parameters and arguments will be stored as two `SemIR::InstBlock`s each. The
 first will contain the full IR, while the second will contain references to the
@@ -110,7 +110,7 @@ comparisons and indexed access.
 
 There are two textual ways to view `SemIR`.
 
-## Raw form
+### Raw form
 
 The raw form of SemIR shows the details of the representation, such as numeric
 instruction and block IDs. The representation is intended to very closely match
@@ -119,7 +119,7 @@ debugging low-level issues with the `SemIR` representation.
 
 The driver will print this when passed `--dump-raw-sem-ir`.
 
-## Formatted IR
+### Formatted IR
 
 In addition to the raw form, there is a higher-level formatted IR that aims to
 be human readable. This is used in most `check` tests to validate the output,
@@ -215,7 +215,7 @@ name components are only included if they are necessary to disambiguate the
 name. `<base_name>` is a guessed good name for the instruction, often derived
 from source-level identifiers, and is empty if no guess was made.
 
-### Instructions
+#### Instructions
 
 There is usually one line in a `InstBlock` for each `Inst`. You can find the
 documentation for the different kinds of instructions in
@@ -291,7 +291,7 @@ formatter will combine instructions together to make the IR more readable:
 These exceptions may be found in
 [toolchain/sem_ir/formatter.cpp](/toolchain/sem_ir/formatter.cpp).
 
-### Top-level entities
+#### Top-level entities
 
 **Question:** Are these too in flux to document at this time?
 
@@ -409,7 +409,7 @@ process entries from the node stack until it finds that solo parse node from
 Another pattern that arises is state is set up by an introducer node, updated by
 its siblings, and then consumed by the bracketing parent node. FIXME: example
 
-## Node stack
+### Node stack
 
 The node stack, defined in [check/node_stack.h](/toolchain/check/node_stack.h),
 stores pairs of a `Parse::Node` and an id. The type of the id is determined by
@@ -433,7 +433,7 @@ When each `Parse::Node` is evaluated, the SemIR for it is typically immediately
 generated as `SemIR::Inst`s. To help generate the IR to an appropriate context,
 scopes have separate `SemIR::InstBlock`s.
 
-## Delayed evaluation (not yet implemented)
+### Delayed evaluation (not yet implemented)
 
 Sometimes, nodes will need to have delayed evaluation; for example, an inline
 definition of a class member function needs to be evaluated after the class is
@@ -444,7 +444,7 @@ scope completes. This means that nodes in a definition would be traversed twice,
 once while determining that they're inline and without full checking or IR
 generation, then again with full checking and IR generation.
 
-## Templates (not yet implemented)
+### Templates (not yet implemented)
 
 Templates need to have partial semantic checking when declared, but can't be
 fully implemented before they're instantiated against a specific type.
@@ -454,7 +454,7 @@ the incomplete information in the IR. Instantiation will likely use that IR and
 fill in the missing information, but it could also reevaluate the original
 `Parse::Node`s with the known template state.
 
-## Rewrites
+### Rewrites
 
 Carbon relies on rewrites of code, such as rewriting the destination of an
 initializer to a specific target object once that object is known.
@@ -473,7 +473,7 @@ Type expressions are treated like any other expression, and are modeled as
 `SemIR::Inst`s. The types computed by type expressions are deduplicated,
 resulting in a canonical `SemIR::TypeId` for each distinct type.
 
-## Type printing (not yet implemented)
+### Type printing (not yet implemented)
 
 The `TypeId` preserves only the identity of the type, not its spelling, and so
 printing it will produce a fully-resolved type name, which isn't a great user
@@ -561,7 +561,7 @@ with a mixed expression category are treated as a special case in conversion,
 which recurses into the elements of those instructions before performing
 conversions.
 
-## Value bindings
+### Value bindings
 
 A value binding represents a conversion from a reference expression to the value
 stored in that expression. There are three important cases here:
