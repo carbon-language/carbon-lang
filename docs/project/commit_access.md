@@ -29,10 +29,10 @@ The main thing commit access allows is for developers to merge PRs into the main
 still need review, and often a reviewer with commit access handles the merge. It
 also gives the ability to [approve and merge changes](code_review.md).
 
-Note that developers with commit access are not required to do reviews or help
-with approving and merging PRs. It can still be useful to allow authors to fix
-trivial PR comments after approval and then merge their own PR, for example
-because the review noted a minor typo, or to resolve merge conflicts.
+Getting commit access can help smooth over the development process; for
+contributors who don't feel comfortable doing reviews, it can still smooth the
+review process for their own PRs. It allows authors to merge their own PRs,
+including after resolving conflicts or fixing trivial PR comments post-approval.
 
 Developers with commit access are expected to make reasonable choices about when
 to approve or merge PRs for others. Generally, the change either needs to be
@@ -54,10 +54,10 @@ style and structure of the codebase. Access will typically be granted when
 developers have contributed several PRs and are expecting to continue making
 more.
 
-After a few non-trivial PRs are merged, contributors should ask a reviewer to
-nominate for commit access if they plan to keep contributing. Reviewers can also
-directly suggest and nominate someone. Nominations need to be approved by at
-least one lead.
+After a few non-trivial PRs are merged, contributors can ask a reviewer to
+nominate them for commit access if they plan to keep contributing. Reviewers can
+also directly suggest and nominate someone. Nominations need to be approved by
+at least one lead.
 
 When approved, an invitation will be sent to join the
 [Commit access team](https://github.com/orgs/carbon-language/teams/commit-access)
@@ -71,7 +71,7 @@ Access is granted when the invitation is accepted.
 We'll periodically remove commit access from contributors who have been idle for
 over 6 months. We'll use a combination of sources to determine what "idle"
 means, including whether a developer has been either sending or reviewing PRs.
-Developers should always ask for it to be restored if they plan to start
+Developers can ask for commit access to be restored if they plan to start
 contributing again or come back from a break. Any relevant past contributions
 will still apply and allow it to be restored trivially.
 
