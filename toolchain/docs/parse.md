@@ -212,12 +212,6 @@ flowchart BT
         token9[;]
     end
 
-    classDef used visibility:hidden
-```
-
-```mermaid
-flowchart BT
-    root:::hidden
     subgraph nodes["Parsed nodes"]
         direction BT
         node1[var]:::moved
@@ -231,18 +225,23 @@ flowchart BT
         node9[;]:::pending
     end
 
+    %% A token which has been used.
+    classDef used visibility:hidden
+    %% A node which will be used, but hasn't yet been.
     classDef pending visibility:hidden
+    %% A token or node which is actively being used.
     classDef moved fill:#0F0,color:#000
-    classDef hidden visibility:hidden,display:none
 
-    node1 ~~~~ root
+    nodes ~~~ tokens
+
+    node1 ~~~~ tokens
     node3 ~~~ node2 & node4
-    node3 ~~~ root
-    node5 ~~~~ root
+    node3 ~~~ tokens
+    node5 ~~~~ tokens
     node7 ~~~ node6 & node8
-    node7 ~~~ root
+    node7 ~~~ tokens
     node9 ~~~ node1 & node3 & node5 & node7
-    node9 ~~~ root
+    node9 ~~~ tokens
 ```
 
 Next, we can consider the pattern binding. Here, `x` is the identifier and `i32`
