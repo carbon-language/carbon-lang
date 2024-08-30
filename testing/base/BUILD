@@ -70,6 +70,7 @@ cc_test(
         ":source_gen_lib",
         "//common:set",
         "//toolchain/driver",
+        "//toolchain/install:install_paths_test_helpers",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

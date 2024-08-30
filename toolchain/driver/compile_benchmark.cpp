@@ -9,6 +9,7 @@
 #include "testing/base/global_exe_path.h"
 #include "testing/base/source_gen.h"
 #include "toolchain/driver/driver.h"
+#include "toolchain/install/install_paths_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -22,16 +23,7 @@ class CompileBenchmark {
   CompileBenchmark()
       : installation_(InstallPaths::MakeForBazelRunfiles(GetExePath())),
         driver_(fs_, &installation_, llvm::outs(), llvm::errs()) {
-    // Load the prelude into our VFS.
-    auto prelude = installation_.FindPreludeFiles();
-    CARBON_CHECK(prelude.ok()) << prelude.error();
-    for (const auto& path : *prelude) {
-      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
-          llvm::MemoryBuffer::getFile(path);
-      CARBON_CHECK(file) << file.getError().message();
-      CARBON_CHECK(fs_.addFile(path, /*ModificationTime=*/0, std::move(*file)))
-          << "Duplicate file: " << path;
-    }
+    CopyPreludeFiles(installation_, &fs_);
   }
 
   // Setup a set of source files in the VFS for the driver. Each string input is
