@@ -148,12 +148,9 @@ auto TestCompile(llvm::StringRef source) -> bool {
   Driver driver(fs, &installation, llvm::outs(), llvm::errs());
 
   // Load the prelude into our VFS.
-  //
-  // TODO: Factor this and analogous code in file_test into a Driver helper.
-  auto prelude =
-      Driver::FindPreludeFiles(installation.core_package(), llvm::errs());
-  CARBON_CHECK(!prelude.empty());
-  for (const auto& path : prelude) {
+  auto prelude = installation.FindPreludeFiles();
+  CARBON_CHECK(prelude.ok()) << prelude.error();
+  for (const auto& path : *prelude) {
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
         llvm::MemoryBuffer::getFile(path);
     CARBON_CHECK(file) << file.getError().message();

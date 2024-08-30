@@ -36,11 +36,7 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    auto prelude =
-        Driver::FindPreludeFiles(installation_.core_package(), stderr);
-    if (prelude.empty()) {
-      return Error("Could not find prelude");
-    }
+    CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.FindPreludeFiles());
     for (const auto& file : prelude) {
       CARBON_RETURN_IF_ERROR(AddFile(fs, file));
     }

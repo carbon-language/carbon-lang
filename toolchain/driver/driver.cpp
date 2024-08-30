@@ -34,44 +34,6 @@
 
 namespace Carbon {
 
-auto Driver::FindPreludeFiles(llvm::StringRef core_package_dir,
-                              llvm::raw_ostream& error_stream)
-    -> llvm::SmallVector<std::string> {
-  llvm::SmallVector<std::string> result;
-
-  // Include <data>/core/prelude.carbon, which is the entry point into the
-  // prelude.
-  {
-    llvm::SmallString<256> prelude_file(core_package_dir);
-    llvm::sys::path::append(prelude_file, llvm::sys::path::Style::posix,
-                            "prelude.carbon");
-    result.push_back(prelude_file.str().str());
-  }
-
-  // Glob for <data>/core/prelude/**/*.carbon and add all the files we find.
-  llvm::SmallString<256> prelude_dir(core_package_dir);
-  llvm::sys::path::append(prelude_dir, llvm::sys::path::Style::posix,
-                          "prelude");
-  std::error_code ec;
-  for (llvm::sys::fs::recursive_directory_iterator prelude_files_it(
-           prelude_dir, ec, /*follow_symlinks=*/false);
-       prelude_files_it != llvm::sys::fs::recursive_directory_iterator();
-       prelude_files_it.increment(ec)) {
-    if (ec) {
-      error_stream << "ERROR: Could not find prelude: " << ec.message() << "\n";
-      result.clear();
-      return result;
-    }
-
-    auto prelude_file = prelude_files_it->path();
-    if (llvm::sys::path::extension(prelude_file) == ".carbon") {
-      result.push_back(prelude_file);
-    }
-  }
-
-  return result;
-}
-
 struct Driver::CodegenOptions {
   void Build(CommandLine::CommandBuilder& b) {
     b.AddStringOption(
@@ -865,13 +827,14 @@ auto Driver::Compile(const CompileOptions& options,
   // Find the files comprising the prelude if we are importing it.
   // TODO: Replace this with a search for library api files in a
   // package-specific search path based on the library name.
-  bool want_prelude =
-      options.prelude_import && options.phase >= CompileOptions::Phase::Check;
-  auto prelude = want_prelude ? FindPreludeFiles(installation_->core_package(),
-                                                 error_stream_)
-                              : llvm::SmallVector<std::string>{};
-  if (want_prelude && prelude.empty()) {
-    return {.success = false};
+  llvm::SmallVector<std::string> prelude;
+  if (options.prelude_import && options.phase >= CompileOptions::Phase::Check) {
+    if (auto find = installation_->FindPreludeFiles(); find.ok()) {
+      prelude = std::move(*find);
+    } else {
+      error_stream_ << "ERROR: " << find.error() << "\n";
+      return {.success = false};
+    }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 #define CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 
+#include "common/error.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -81,6 +82,10 @@ class InstallPaths {
   // Provide an explicit install paths prefix. This is useful for testing or for
   // using Carbon in an environment with an unusual path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
+
+  // Finds the source files that define the prelude and returns a list of their
+  // filenames. The list always includes at least one file.
+  auto FindPreludeFiles() const -> ErrorOr<llvm::SmallVector<std::string>>;
 
   // Check for an error detecting the install paths correctly.
   //
