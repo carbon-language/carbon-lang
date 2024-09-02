@@ -260,32 +260,93 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     int indent;
   };
 
-  struct TokenInfo {
-    TokenKind kind;
+  class TokenInfo {
+   public:
+    auto kind() const -> TokenKind { return TokenKind::FromInt(kind_); }
+    auto has_leading_space() const -> bool { return has_leading_space_; }
+
+    auto ident_id() const -> IdentifierId {
+      CARBON_DCHECK(kind() == TokenKind::Identifier);
+      return IdentifierId(token_payload_);
+    }
+    auto set_ident_id(IdentifierId ident_id) -> void {
+      CARBON_DCHECK(kind() == TokenKind::Identifier);
+      CARBON_DCHECK(ident_id.index < (2 << PayloadBits));
+      token_payload_ = ident_id.index;
+    }
+
+    auto string_literal_id() const -> StringLiteralValueId {
+      CARBON_DCHECK(kind() == TokenKind::StringLiteral);
+      return StringLiteralValueId(token_payload_);
+    }
+
+    auto int_id() const -> IntId {
+      CARBON_DCHECK(kind() == TokenKind::IntLiteral ||
+                    kind() == TokenKind::IntTypeLiteral ||
+                    kind() == TokenKind::UnsignedIntTypeLiteral ||
+                    kind() == TokenKind::FloatTypeLiteral);
+      return IntId(token_payload_);
+    }
+
+    auto real_id() const -> RealId {
+      CARBON_DCHECK(kind() == TokenKind::RealLiteral);
+      return RealId(token_payload_);
+    }
+
+    auto closing_token_index() const -> TokenIndex {
+      CARBON_DCHECK(kind().is_opening_symbol());
+      return TokenIndex(token_payload_);
+    }
+    auto set_closing_token_index(TokenIndex closing_index) -> void {
+      CARBON_DCHECK(kind().is_opening_symbol());
+      CARBON_DCHECK(closing_index.index < (2 << PayloadBits));
+      token_payload_ = closing_index.index;
+    }
+
+    auto opening_token_index() const -> TokenIndex {
+      CARBON_DCHECK(kind().is_closing_symbol());
+      return TokenIndex(token_payload_);
+    }
+    auto set_opening_token_index(TokenIndex opening_index) -> void {
+      CARBON_DCHECK(kind().is_closing_symbol());
+      CARBON_DCHECK(opening_index.index < (2 << PayloadBits));
+      token_payload_ = opening_index.index;
+    }
+
+    auto error_length() const -> int {
+      CARBON_DCHECK(kind() == TokenKind::Error);
+      return token_payload_;
+    }
+
+    auto byte_offset() const -> int32_t { return byte_offset_; }
+
+    TokenInfo(TokenKind kind, bool has_leading_space, int32_t byte_offset)
+        : kind_(kind.AsInt()),
+          has_leading_space_(has_leading_space),
+          byte_offset_(byte_offset) {}
+
+    TokenInfo(TokenKind kind, bool has_leading_space, int payload,
+              int32_t byte_offset)
+        : kind_(kind.AsInt()),
+          has_leading_space_(has_leading_space),
+          token_payload_(payload),
+          byte_offset_(byte_offset) {
+      CARBON_DCHECK(payload >= 0 && payload < (2 << PayloadBits));
+    }
+
+   private:
+    static constexpr int PayloadBits = 23;
+
+    unsigned kind_ : sizeof(TokenKind) * 8;
 
     // Whether the token has trailing whitespace.
-    bool has_trailing_space = false;
+    unsigned has_leading_space_ : 1;
 
-    // Whether the token was injected artificially during error recovery.
-    bool is_recovery = false;
+    // Payload, typically representing an index into a kind-dependent array.
+    unsigned token_payload_ : PayloadBits;
 
     // Zero-based byte offset of the token within the file.
-    int32_t byte_offset;
-
-    // We may have up to 32 bits of payload, based on the kind of token.
-    union {
-      static_assert(
-          sizeof(TokenIndex) <= sizeof(int32_t),
-          "Unable to pack token and identifier index into the same space!");
-
-      IdentifierId ident_id = IdentifierId::Invalid;
-      StringLiteralValueId string_literal_id;
-      IntId int_id;
-      RealId real_id;
-      TokenIndex closing_token;
-      TokenIndex opening_token;
-      int32_t error_length;
-    };
+    int32_t byte_offset_;
   };
 
   struct LineInfo {
@@ -333,6 +394,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   int expected_parse_tree_size_ = 0;
 
   bool has_errors_ = false;
+
+  // A vector of flags for recovery tokens. If empty, there are none. When doing
+  // token recovery, this will be extended to be indexable by token indices and
+  // contain true for the tokens that were synthesized for recovery.
+  llvm::BitVector recovery_tokens_;
 };
 
 // A diagnostic emitter that uses positions within a source buffer's text as

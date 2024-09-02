@@ -33,8 +33,9 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // Permit creation from RawEnumType for templates.
   using EnumBase::Make;
 
-  // Permit conversion to integer for use as an array index.
+  // Permit conversion to and from integer for use as an array index.
   using EnumBase::AsInt;
+  using EnumBase::FromInt;
 
   // Test whether this kind of token is a simple symbol sequence (punctuation,
   // not letters) that appears directly in the source text and can be
