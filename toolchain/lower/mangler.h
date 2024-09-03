@@ -15,15 +15,19 @@ namespace Carbon::Lower {
 class Mangler {
  public:
   explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
-  
+
   auto Mangle(SemIR::FunctionId function_id) -> std::string;
 
  private:
+  // Mangle this qualified name with inner scope first, working outwards. This
+  // may reduce the incidence of common prefixes in the name mangling. (ie:
+  // every standard library name won't have a common prefix that has to be
+  // skipped and compared before getting to the interesting part)
   auto MangleInverseQualifiedNameScope(bool first_name_component,
                                        llvm::raw_ostream& os,
                                        SemIR::NameScopeId name_scope_id)
-            -> void;
-            
+      -> void;
+
   FileContext& file_context_;
 };
 
