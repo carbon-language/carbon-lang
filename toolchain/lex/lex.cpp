@@ -101,8 +101,8 @@ class [[clang::internal_linkage]] Lexer {
   auto next_line() -> LineIndex { return LineIndex(line_index_ + 1); }
 
   auto next_line_info() -> TokenizedBuffer::LineInfo* {
-    CARBON_DCHECK(line_index_ + 1 <
-                  static_cast<ssize_t>(buffer_.line_infos_.size()));
+    CARBON_CHECK(line_index_ + 1 <
+                 static_cast<ssize_t>(buffer_.line_infos_.size()));
     return &buffer_.line_infos_[line_index_ + 1];
   }
 
