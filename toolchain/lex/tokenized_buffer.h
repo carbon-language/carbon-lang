@@ -269,11 +269,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Whether the token was injected artificially during error recovery.
     bool is_recovery = false;
 
-    // LineIndex on which the TokenIndex starts.
-    LineIndex token_line;
-
-    // Zero-based byte offset of the token within its line.
-    int32_t column;
+    // Zero-based byte offset of the token within the file.
+    int32_t byte_offset;
 
     // We may have up to 32 bits of payload, based on the kind of token.
     union {
@@ -292,23 +289,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   };
 
   struct LineInfo {
-    // The length will always be assigned later. Indent may be assigned if
-    // non-zero.
-    explicit LineInfo(int64_t start)
-        : start(start),
-          length(static_cast<int32_t>(llvm::StringRef::npos)),
-          indent(0) {}
-
-    explicit LineInfo(int64_t start, int32_t length)
-        : start(start), length(length), indent(0) {}
+    explicit LineInfo(int32_t start) : start(start), indent(0) {}
 
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.
-    int64_t start;
-
-    // The byte length of the line. Does not include the newline character (or a
-    // nul-terminator or EOF).
-    int32_t length;
+    int32_t start;
 
     // The byte offset from the start of the line of the first non-whitespace
     // character.
@@ -322,6 +307,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
 
+  auto FindLineIndex(int32_t byte_offset) const -> LineIndex;
   auto GetLineInfo(LineIndex line) -> LineInfo&;
   auto GetLineInfo(LineIndex line) const -> const LineInfo&;
   auto AddLine(LineInfo info) -> LineIndex;
