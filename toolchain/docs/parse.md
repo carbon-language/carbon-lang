@@ -291,17 +291,13 @@ changed much from the original code, we can do the reordering for postorder with
 a minimal number of nodes being delayed for later output: it will be linear with
 respect to the depth of the parse tree.
 
-**Tokens**:
-
 ```ascii
+Tokens:
 +-----+ +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
 | var | | x | | : | | i32 | | = | | y | | + | | 1 | | ; |
 +-----+ +---+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+
-```
 
-**Parse tree**:
-
-```ascii
+Parse tree:
         +---+ +-----+             +---+ +---+
         | x | | i32 |             | y | | 1 |
         +---+ +-----+             +---+ +---+
@@ -317,11 +313,7 @@ respect to the depth of the parse tree.
                                                     +---+
                                                     | ; |
                                                     +---+
-```
-
-**Flattened for storage**:
-
-```ascii
+Flattened for storage:
 +-----+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+ +---+
 | var | | x | | i32 | | : | | = | | y | | 1 | | + | | ; |
 +-----+ +---+ +-----+ +---+ +---+ +---+ +---+ +---+ +---+
