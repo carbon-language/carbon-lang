@@ -16,13 +16,14 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
   auto& sem_ir = file_context_.sem_ir();
   auto names = sem_ir.names();
   auto types = sem_ir.types();
-  while (name_scope_id.is_valid() && name_scope_id != SemIR::NameScopeId::Package) {
-    const auto& parent = sem_ir.name_scopes().Get(name_scope_id);
+  while (name_scope_id.is_valid() &&
+         name_scope_id != SemIR::NameScopeId::Package) {
+    const auto& name_scope = sem_ir.name_scopes().Get(name_scope_id);
     if (!first_name_component) {
       os << '.';
     }
     first_name_component = false;
-    CARBON_KIND_SWITCH(sem_ir.insts().Get(parent.inst_id)) {
+    CARBON_KIND_SWITCH(sem_ir.insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir.impls().Get(impl_decl.impl_id);
         if (auto opt_class_self =
@@ -48,9 +49,9 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         break;
       }
       case SemIR::Namespace::Kind: {
-        auto name = names.GetAsStringIfIdentifier(parent.name_id);
+        auto name = names.GetAsStringIfIdentifier(name_scope.name_id);
         CARBON_CHECK(name) << "Unexpected special name for namespace: "
-                           << parent.name_id;
+                           << name_scope.name_id;
         os << *name;
         break;
       }
@@ -58,7 +59,7 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
         break;
     }
-    name_scope_id = parent.parent_scope_id;
+    name_scope_id = name_scope.parent_scope_id;
   }
 }
 
