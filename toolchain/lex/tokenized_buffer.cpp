@@ -25,7 +25,7 @@ auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
 }
 
 auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
-  return FindLineIndexImpl(GetTokenInfo(token).byte_offset);
+  return FindLineIndex(GetTokenInfo(token).byte_offset);
 }
 
 auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
@@ -35,7 +35,7 @@ auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   const auto& token_info = GetTokenInfo(token);
   const auto& line_info =
-      GetLineInfo(FindLineIndexImpl(token_info.byte_offset));
+      GetLineInfo(FindLineIndex(token_info.byte_offset));
   return token_info.byte_offset - line_info.start + 1;
 }
 
@@ -252,7 +252,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
   const auto& token_info = GetTokenInfo(token);
-  LineIndex line_index = FindLineIndexImpl(token_info.byte_offset);
+  LineIndex line_index = FindLineIndex(token_info.byte_offset);
   llvm::StringRef token_text = GetTokenText(token);
 
   // Output the main chunk using one format string. We have to do the
@@ -311,7 +311,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   output_stream << " },";
 }
 
-auto TokenizedBuffer::FindLineIndexImpl(int32_t offset) const -> LineIndex {
+auto TokenizedBuffer::FindLineIndex(int32_t offset) const -> LineIndex {
   CARBON_DCHECK(!line_infos_.empty());
   const auto* line_it =
       std::partition_point(line_infos_.begin(), line_infos_.end(),

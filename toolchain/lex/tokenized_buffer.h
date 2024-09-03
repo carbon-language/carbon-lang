@@ -307,7 +307,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
 
-  auto FindLineIndexImpl(int32_t offset) const -> LineIndex;
+  auto FindLineIndex(int32_t offset) const -> LineIndex;
   auto GetLineInfo(LineIndex line) -> LineInfo&;
   auto GetLineInfo(LineIndex line) const -> const LineInfo&;
   auto AddLine(LineInfo info) -> LineIndex;
