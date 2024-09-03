@@ -13,22 +13,21 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
                                               llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
-  auto& sem_ir = file_context_.sem_ir();
   while (name_scope_id.is_valid() &&
          name_scope_id != SemIR::NameScopeId::Package) {
-    const auto& name_scope = sem_ir.name_scopes().Get(name_scope_id);
+    const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
     if (!first_name_component) {
       os << '.';
     }
     first_name_component = false;
-    CARBON_KIND_SWITCH(sem_ir.insts().Get(name_scope.inst_id)) {
+    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
-        const auto& impl = sem_ir.impls().Get(impl_decl.impl_id);
+        const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
         if (auto opt_class_self =
                 types().TryGetAs<SemIR::ClassType>(impl.self_id)) {
           MangleInverseQualifiedNameScope(
               true, os,
-              sem_ir.classes().Get(opt_class_self->class_id).scope_id);
+              sem_ir().classes().Get(opt_class_self->class_id).scope_id);
         } else {
           auto builtin_self = types().GetAs<SemIR::BuiltinInst>(impl.self_id);
           os << builtin_self.builtin_inst_kind.label();
@@ -37,14 +36,15 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         auto opt_interface_constraint =
             types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
         os << names().GetFormatted(
-            sem_ir.interfaces()
+            sem_ir()
+                .interfaces()
                 .Get(opt_interface_constraint.interface_id)
                 .name_id);
         return;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        auto& class_info = sem_ir.classes().Get(class_decl.class_id);
-        os << names().GetFormatted(class_info.name_id);
+        os << names().GetFormatted(
+            sem_ir().classes().Get(class_decl.class_id).name_id);
         break;
       }
       case SemIR::Namespace::Kind: {
@@ -63,9 +63,8 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
 }
 
 auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
-  auto& sem_ir = file_context_.sem_ir();
-  const auto& function = sem_ir.functions().Get(function_id);
-  if (SemIR::IsEntryPoint(sem_ir, function_id)) {
+  const auto& function = sem_ir().functions().Get(function_id);
+  if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     return "main";
   }
