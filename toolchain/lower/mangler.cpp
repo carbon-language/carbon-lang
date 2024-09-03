@@ -16,11 +16,8 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
   auto& sem_ir = file_context_.sem_ir();
   auto names = sem_ir.names();
   auto types = sem_ir.types();
-  while (name_scope_id.is_valid()) {
+  while (name_scope_id.is_valid() && name_scope_id != SemIR::NameScopeId::Package) {
     const auto& parent = sem_ir.name_scopes().Get(name_scope_id);
-    if (parent.inst_id == SemIR::InstId::PackageNamespace) {
-      break;
-    }
     if (!first_name_component) {
       os << '.';
     }
