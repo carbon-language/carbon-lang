@@ -311,12 +311,12 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   output_stream << " },";
 }
 
-auto TokenizedBuffer::FindLineIndex(int32_t offset) const -> LineIndex {
+auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
   CARBON_DCHECK(!line_infos_.empty());
   const auto* line_it =
       std::partition_point(line_infos_.begin(), line_infos_.end(),
-                           [offset](LineInfo line_info) {
-                             return line_info.start <= offset;
+                           [byte_offset](LineInfo line_info) {
+                             return line_info.start <= byte_offset;
                            });
   --line_it;
 
@@ -327,7 +327,7 @@ auto TokenizedBuffer::FindLineIndex(int32_t offset) const -> LineIndex {
       line_it->start == static_cast<int32_t>(source_->text().size())) {
     --line_it;
   }
-  CARBON_DCHECK(line_it->start <= offset);
+  CARBON_DCHECK(line_it->start <= byte_offset);
   return LineIndex(line_it - line_infos_.begin());
 }
 
