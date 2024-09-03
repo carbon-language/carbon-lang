@@ -11,18 +11,22 @@
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Lower {
+
 class Mangler {
  public:
   explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
+  
   auto Mangle(SemIR::FunctionId function_id) -> std::string;
 
  private:
   auto MangleInverseQualifiedNameScope(bool first_name_component,
                                        llvm::raw_ostream& os,
                                        SemIR::NameScopeId name_scope_id)
-      -> void;
+            -> void;
+            
   FileContext& file_context_;
 };
+
 }  // namespace Carbon::Lower
 
 #endif  // CARBON_TOOLCHAIN_LOWER_MANGLER_H_
