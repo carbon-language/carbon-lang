@@ -28,6 +28,12 @@ class Mangler {
                                        SemIR::NameScopeId name_scope_id)
       -> void;
 
+  auto sem_ir() const -> const SemIR::File& { return file_context_.sem_ir(); }
+
+  auto names() const -> SemIR::NameStoreWrapper { return sem_ir().names(); }
+
+  auto types() const -> SemIR::TypeStore { return sem_ir().types(); }
+
   FileContext& file_context_;
 };
 

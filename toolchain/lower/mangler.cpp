@@ -14,8 +14,6 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
   auto& sem_ir = file_context_.sem_ir();
-  auto names = sem_ir.names();
-  auto types = sem_ir.types();
   while (name_scope_id.is_valid() &&
          name_scope_id != SemIR::NameScopeId::Package) {
     const auto& name_scope = sem_ir.name_scopes().Get(name_scope_id);
@@ -27,29 +25,30 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir.impls().Get(impl_decl.impl_id);
         if (auto opt_class_self =
-                types.TryGetAs<SemIR::ClassType>(impl.self_id)) {
+                types().TryGetAs<SemIR::ClassType>(impl.self_id)) {
           MangleInverseQualifiedNameScope(
               true, os,
               sem_ir.classes().Get(opt_class_self->class_id).scope_id);
         } else {
-          auto builtin_self = types.GetAs<SemIR::BuiltinInst>(impl.self_id);
+          auto builtin_self = types().GetAs<SemIR::BuiltinInst>(impl.self_id);
           os << builtin_self.builtin_inst_kind.label();
         }
         os << ':';
         auto opt_interface_constraint =
-            types.GetAs<SemIR::InterfaceType>(impl.constraint_id);
-        os << names.GetFormatted(sem_ir.interfaces()
-                                     .Get(opt_interface_constraint.interface_id)
-                                     .name_id);
+            types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
+        os << names().GetFormatted(
+            sem_ir.interfaces()
+                .Get(opt_interface_constraint.interface_id)
+                .name_id);
         return;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
         auto& class_info = sem_ir.classes().Get(class_decl.class_id);
-        os << names.GetFormatted(class_info.name_id);
+        os << names().GetFormatted(class_info.name_id);
         break;
       }
       case SemIR::Namespace::Kind: {
-        auto name = names.GetAsStringIfIdentifier(name_scope.name_id);
+        auto name = names().GetAsStringIfIdentifier(name_scope.name_id);
         CARBON_CHECK(name) << "Unexpected special name for namespace: "
                            << name_scope.name_id;
         os << *name;
@@ -65,8 +64,6 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
 
 auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   auto& sem_ir = file_context_.sem_ir();
-  auto types = sem_ir.types();
-  auto names = sem_ir.names();
   const auto& function = sem_ir.functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir, function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
@@ -76,7 +73,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   llvm::raw_string_ostream os(result);
   os << "_C";
 
-  auto name = names.GetAsStringIfIdentifier(function.name_id);
+  auto name = names().GetAsStringIfIdentifier(function.name_id);
   CARBON_CHECK(name) << "Unexpected special name for function: "
                      << function.name_id;
   os << name->str();
