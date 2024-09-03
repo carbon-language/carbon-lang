@@ -443,7 +443,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto AddLine(LineInfo info) -> LineIndex;
   auto GetTokenInfo(TokenIndex token) -> TokenInfo&;
   auto GetTokenInfo(TokenIndex token) const -> const TokenInfo&;
-  auto AddToken(TokenInfo info) -> TokenIndex;
   auto GetTokenPrintWidths(TokenIndex token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
@@ -476,6 +475,31 @@ using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 // A diagnostic emitter that uses tokens as its source of location information.
 using TokenDiagnosticEmitter = DiagnosticEmitter<TokenIndex>;
+
+inline auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
+  return GetTokenInfo(token).kind();
+}
+
+inline auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const
+    -> bool {
+  return GetTokenInfo(token).has_leading_space();
+}
+
+inline auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const
+    -> bool {
+  TokenIterator it(token);
+  ++it;
+  return it != tokens().end() && GetTokenInfo(*it).has_leading_space();
+}
+
+inline auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
+  return token_infos_[token.index];
+}
+
+inline auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const
+    -> const TokenInfo& {
+  return token_infos_[token.index];
+}
 
 }  // namespace Carbon::Lex
 
