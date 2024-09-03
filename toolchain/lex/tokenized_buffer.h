@@ -289,7 +289,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   };
 
   struct LineInfo {
-    explicit LineInfo(int64_t start) : start(start), indent(0) {}
+    explicit LineInfo(int32_t start) : start(start), indent(0) {}
 
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.

@@ -315,7 +315,7 @@ auto TokenizedBuffer::FindLineIndexImpl(int32_t offset) const -> LineIndex {
   CARBON_DCHECK(!line_infos_.empty());
   const auto* line_it =
       std::partition_point(line_infos_.begin(), line_infos_.end(),
-                           [offset](const LineInfo& line_info) {
+                           [offset](LineInfo line_info) {
                              return line_info.start <= offset;
                            });
   --line_it;
@@ -387,8 +387,8 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
-  // Grab the line from the buffer, either by slicing from this line to the next
-  // minus the newline, or if on the last line from the start to the end of the
+  // Grab the line from the buffer by slicing from this line to the next
+  // minus the newline. When on the last line, instead use the start to the end of the
   // buffer.
   llvm::StringRef text = buffer_->source_->text();
   llvm::StringRef line = next_line_it != buffer_->line_infos_.end()
