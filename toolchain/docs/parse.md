@@ -174,45 +174,45 @@ var x: i32 = y + 1;
 Lexing creates distinct tokens for each syntactic element, which will form the
 basis of the parse tree:
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
 | var | |  x  | |  :  | | i32 | |  =  | |  y  | |  +  | |  1  | |  ;  |
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
-```
+</pre>
 
 First the `var` keyword is used as a "bracketing" node (VariableIntroducer).
 When this is seen in a postorder traversal, it tells us to expect the basics of
 a variable declaration structure.
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
         +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
         |  x  | |  :  | | i32 | |  =  | |  y  | |  +  | |  1  | |  ;  |
         +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
 
-Parse tree:
+<b>Parse tree:</b>
 
 +-----+
 | var |
 +-----+
-```
+</pre>
 
 Next, we can consider the pattern binding. Here, `x` is the identifier and `i32`
 is the type expression. The `:` provides a parent node that must always contain
 two children, the name and type expression. Because it always has two direct
 children, it doesn't need to be bracketed.
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
                                 +-----+ +-----+ +-----+ +-----+ +-----+
                                 |  =  | |  y  | |  +  | |  1  | |  ;  |
                                 +-----+ +-----+ +-----+ +-----+ +-----+
 
-Parse tree:
+<b>Parse tree:</b>
 
         +-----+ +-----+
         |  x  | | i32 |
@@ -223,20 +223,20 @@ Parse tree:
 +-----+                 +-----+
 | var |                 |  :  |
 +-----+                 +-----+
-```
+</pre>
 
 We use the `=` as a separator (instead of a node with children like `:`) to help
 indicate the transition from binding to assignment expression, which is
 important for expression parsing during checking.
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
                                         +-----+ +-----+ +-----+ +-----+
                                         |  y  | |  +  | |  1  | |  ;  |
                                         +-----+ +-----+ +-----+ +-----+
 
-Parse tree:
+<b>Parse tree:</b>
 
         +-----+ +-----+
         |  x  | | i32 |
@@ -247,19 +247,19 @@ Parse tree:
 +-----+                 +-----+ +-----+
 | var |                 |  :  | |  =  |
 +-----+                 +-----+ +-----+
-```
+</pre>
 
 The expression is a subtree with `+` as the parent, and the two operands as
 child nodes.
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
                                                                 +-----+
                                                                 |  ;  |
                                                                 +-----+
 
-Parse tree:
+<b>Parse tree:</b>
 
         +-----+ +-----+                 +-----+ +-----+
         |  x  | | i32 |                 |  y  | |  1  |
@@ -270,20 +270,20 @@ Parse tree:
 +-----+                 +-----+ +-----+                 +-----+
 | var |                 |  :  | |  =  |                 |  +  |
 +-----+                 +-----+ +-----+                 +-----+
-```
+</pre>
 
 Finally, the `;` is used as the "root" of the variable declaration. It's
 explicitly tracked as the `;` for a variable declaration so that it's
 unambiguously bracketed by `var`.
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
 
 
 
 
-Parse tree:
+<b>Parse tree:</b>
 
         +-----+ +-----+                 +-----+ +-----+
         |  x  | | i32 |                 |  y  | |  1  |
@@ -300,7 +300,7 @@ Parse tree:
                                                                 +-----+
                                                                 |  ;  |
                                                                 +-----+
-```
+</pre>
 
 This is the completed parse tree.
 
@@ -309,14 +309,14 @@ changed much from the original code, we can do the reordering for postorder with
 a minimal number of nodes being delayed for later output: it will be linear with
 respect to the depth of the parse tree.
 
-```ascii
-Tokens:
+<pre>
+<b>Tokens:</b>
 
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
 | var | |  x  | |  :  | | i32 | |  =  | |  y  | |  +  | |  1  | |  ;  |
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
 
-Parse tree:
+<b>Parse tree:</b>
 
         +-----+ +-----+                 +-----+ +-----+
         |  x  | | i32 |                 |  y  | |  1  |
@@ -334,12 +334,12 @@ Parse tree:
                                                                 |  ;  |
                                                                 +-----+
 
-Flattened for storage:
+<b>Flattened for storage:</b>
 
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
 | var | |  x  | | i32 | |  :  | |  =  | |  y  | |  1  | |  +  | |  ;  |
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
-```
+</pre>
 
 The structural concepts of bracketing nodes (`var` and `;`) and parent nodes
 with a known child count (`:` and `+` with 2 children, but also `=` with 0
