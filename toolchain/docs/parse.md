@@ -277,6 +277,12 @@ explicitly tracked as the `;` for a variable declaration so that it's
 unambiguously bracketed by `var`.
 
 ```ascii
+Tokens:
+
+
+
+
+
 Parse tree:
 
         +-----+ +-----+                 +-----+ +-----+
