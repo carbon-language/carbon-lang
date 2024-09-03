@@ -46,8 +46,8 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         return;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        auto& class_node = sem_ir.classes().Get(class_decl.class_id);
-        os << names.GetFormatted(class_node.name_id);
+        auto& class_info = sem_ir.classes().Get(class_decl.class_id);
+        os << names.GetFormatted(class_info.name_id);
         break;
       }
       case SemIR::Namespace::Kind: {
