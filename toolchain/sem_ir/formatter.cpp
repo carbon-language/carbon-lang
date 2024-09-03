@@ -261,7 +261,15 @@ class FormatterImpl {
   // Formats a full function.
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
-    FormatEntityStart(fn.is_extern ? "extern fn" : "fn", fn.generic_id, id);
+    std::string function_start;
+    if (fn.is_virtual) {
+      function_start += "virtual ";
+    }
+    if (fn.is_extern) {
+      function_start += "extern ";
+    }
+    function_start += "fn";
+    FormatEntityStart(function_start, fn.generic_id, id);
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 

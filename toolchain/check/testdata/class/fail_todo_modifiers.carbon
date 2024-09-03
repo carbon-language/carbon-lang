@@ -21,10 +21,6 @@ class Access {
 
 base class Base {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
-  // CHECK:STDERR:   virtual fn H();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   virtual fn H();
 
   // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
@@ -42,10 +38,6 @@ abstract class Abstract {
   // CHECK:STDERR:
   abstract fn J();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
-  // CHECK:STDERR:   virtual fn K();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   virtual fn K();
 
   // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
@@ -158,13 +150,13 @@ abstract class Abstract {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H();
+// CHECK:STDOUT: virtual fn @H();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @I();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @J();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @K();
+// CHECK:STDOUT: virtual fn @K();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @L();
 // CHECK:STDOUT:

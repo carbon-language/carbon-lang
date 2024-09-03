@@ -93,7 +93,9 @@ struct EntityWithParamsBase {
   // A block containing a single reference instruction per parameter.
   InstBlockId param_refs_id;
   // True if declarations are `extern`.
-  bool is_extern;
+  bool is_extern : 1;
+  // Tru eif the declarations are `virtual`.
+  bool is_virtual : 1;
   // For an `extern library` declaration, the library name.
   SemIR::LibraryNameId extern_library_id;
   // The non-owning declaration of the entity, if present. This will be a
