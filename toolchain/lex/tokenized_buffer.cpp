@@ -310,6 +310,11 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   output_stream << " },";
 }
 
+// Find the line index corresponding to a specific byte offset within the source
+// text for this tokenized buffer.
+//
+// This takes advantage of the lines being sorted by their starting byte offsets
+// to do a binary search for the line that contains the provided offset.
 auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
   CARBON_DCHECK(!line_infos_.empty());
   const auto* line_it =
