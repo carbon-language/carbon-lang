@@ -195,9 +195,21 @@ a variable declaration structure.
 
 <b>Parse tree:</b>
 
+
+
+
+
+
+
 +-----+
 | var |
 +-----+
+
+
+
+
+
+
 </pre>
 
 Next, we can consider the pattern binding. Here, `x` is the identifier and `i32`
@@ -223,6 +235,12 @@ children, it doesn't need to be bracketed.
 +-----+                 +-----+
 | var |                 |  :  |
 +-----+                 +-----+
+
+
+
+
+
+
 </pre>
 
 We use the `=` as a separator (instead of a node with children like `:`) to help
@@ -247,6 +265,12 @@ important for expression parsing during checking.
 +-----+                 +-----+ +-----+
 | var |                 |  :  | |  =  |
 +-----+                 +-----+ +-----+
+
+
+
+
+
+
 </pre>
 
 The expression is a subtree with `+` as the parent, and the two operands as
@@ -270,6 +294,12 @@ child nodes.
 +-----+                 +-----+ +-----+                 +-----+
 | var |                 |  :  | |  =  |                 |  +  |
 +-----+                 +-----+ +-----+                 +-----+
+
+
+
+
+
+
 </pre>
 
 Finally, the `;` is used as the "root" of the variable declaration. It's
