@@ -152,6 +152,18 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "install_paths_test_helpers",
+    testonly = 1,
+    srcs = ["install_paths_test_helpers.cpp"],
+    hdrs = ["install_paths_test_helpers.h"],
+    deps = [
+        ":install_paths",
+        "//testing/base:global_exe_path",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 # Build rules to construct packaged versions of the toolchain's install.
 
 pkg_files(
