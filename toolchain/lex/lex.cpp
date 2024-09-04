@@ -127,8 +127,8 @@ class [[clang::internal_linkage]] Lexer {
   // adds it to the tokenized buffer and returns the token index.
   //
   // This overload is for tokens with a payload.
-  auto LexToken(TokenKind kind, int token_payload,
-                int32_t byte_offset) -> TokenIndex;
+  auto LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
+      -> TokenIndex;
 
   auto SkipHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
@@ -786,8 +786,8 @@ auto Lexer::LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex {
   return AddLexedToken(TokenInfo(kind, has_leading_space_, byte_offset));
 }
 
-auto Lexer::LexToken(TokenKind kind, int token_payload,
-                     int32_t byte_offset) -> TokenIndex {
+auto Lexer::LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
+    -> TokenIndex {
   return AddLexedToken(
       TokenInfo(kind, has_leading_space_, token_payload, byte_offset));
 }
@@ -1176,10 +1176,10 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
   TokenKind kind;
   switch (word.front()) {
     case 'i':
-      kind =TokenKind::IntTypeLiteral;
+      kind = TokenKind::IntTypeLiteral;
       break;
     case 'u':
-      kind =TokenKind::UnsignedIntTypeLiteral;
+      kind = TokenKind::UnsignedIntTypeLiteral;
       break;
     case 'f':
       kind = TokenKind::FloatTypeLiteral;

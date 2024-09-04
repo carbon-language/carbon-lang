@@ -359,7 +359,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
    private:
     friend class Lexer;
-    
+
     static constexpr int PayloadBits = 23;
 
     // Constructor for a TokenKind that carries no payload, or where the payload
