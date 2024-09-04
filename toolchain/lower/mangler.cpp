@@ -13,8 +13,14 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
                                               llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
-  while (name_scope_id.is_valid() &&
-         name_scope_id != SemIR::NameScopeId::Package) {
+  if (!name_scope_id.is_valid() ||
+      name_scope_id == SemIR::NameScopeId::Package) {
+    return;
+  }
+  llvm::SmallVector<SemIR::NameScopeId> names_to_render = {name_scope_id};
+  while (!names_to_render.empty()) {
+    auto name_scope_id = names_to_render.back();
+    names_to_render.pop_back();
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
     if (!first_name_component) {
       os << '.';
@@ -23,15 +29,14 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
-        CARBON_KIND_SWITCH(impl.self_id) {
+        CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(impl.self_id)) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             MangleInverseQualifiedNameScope(
-                true, os,
-                sem_ir().classes().Get(class_type->class_id).scope_id);
+                true, os, sem_ir().classes().Get(class_type.class_id).scope_id);
             break;
           }
           case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
-            os << builtin_info.builtin_inst_kind.label();
+            os << builtin_inst.builtin_inst_kind.label();
             break;
           }
           default:
@@ -65,7 +70,11 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
         break;
     }
-    name_scope_id = name_scope.parent_scope_id;
+    auto next_name_scope_id = name_scope.parent_scope_id;
+    if (next_name_scope_id.is_valid() &&
+        next_name_scope_id != SemIR::NameScopeId::Package) {
+      names_to_render.push_back(next_name_scope_id);
+    }
   }
 }
 
