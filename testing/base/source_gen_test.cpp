@@ -148,7 +148,7 @@ auto TestCompile(llvm::StringRef source) -> bool {
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
   Driver driver(fs, &installation, llvm::outs(), llvm::errs());
 
-  CopyPreludeFiles(installation, &fs);
+  CopyPreludeFilesToVfs(installation, &fs);
 
   fs.addFile("test.carbon", /*ModificationTime=*/0,
              llvm::MemoryBuffer::getMemBuffer(source));
