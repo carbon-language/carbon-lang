@@ -13,16 +13,18 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
                                               llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
-  if (!name_scope_id.is_valid() ||
-      name_scope_id == SemIR::NameScopeId::Package) {
-    return;
-  }
   struct NameEntry {
     SemIR::NameScopeId name_id;
     char prefix = 0;
   };
-  llvm::SmallVector<NameEntry> names_to_render = {
-      {name_scope_id, first_name_component ? '\0' : '.'}};
+  llvm::SmallVector<NameEntry> names_to_render;
+  auto AddScope = [&](SemIR::NameScopeId name_scope_id, char prefix = '\0') {
+    if (name_scope_id.is_valid() &&
+        name_scope_id != SemIR::NameScopeId::Package) {
+      names_to_render.push_back({name_scope_id, prefix});
+    }
+  };
+  AddScope(name_scope_id, first_name_component ? '\0' : '.');
   while (!names_to_render.empty()) {
     auto [name_scope_id, prefix] = names_to_render.back();
     names_to_render.pop_back();
@@ -30,11 +32,7 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
     if (prefix) {
       os << prefix;
     }
-    auto next_name_scope_id = name_scope.parent_scope_id;
-    if (next_name_scope_id.is_valid() &&
-        next_name_scope_id != SemIR::NameScopeId::Package) {
-      names_to_render.push_back({next_name_scope_id, '.'});
-    }
+    AddScope(name_scope.parent_scope_id, '.');
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
@@ -46,10 +44,6 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
 
         CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(impl.self_id)) {
           case CARBON_KIND(SemIR::ClassType class_type): {
-            /*
-            MangleInverseQualifiedNameScope(
-                true, os, sem_ir().classes().Get(class_type.class_id).scope_id);
-            */
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;
             names_to_render.push_back({next_name_scope_id});
