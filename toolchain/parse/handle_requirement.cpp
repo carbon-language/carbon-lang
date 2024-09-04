@@ -11,7 +11,6 @@
 namespace Carbon::Parse {
 
 auto BeginRequirement(Context& context) -> void {
-  // context.PushState(State::RequirementAnd);
   context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
