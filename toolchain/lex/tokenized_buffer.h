@@ -260,6 +260,33 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     int indent;
   };
 
+  // Storage for the information about a specific token in the buffer.
+  //
+  // This provides a friendly accessor API to the carefully space-optimized
+  // storage model of the information we associated with each token.
+  //
+  // There are four pieces of information stored here:
+  // - The kind of the token.
+  // - Whether that token has leading whitespace before it.
+  // - A kind-specific payload that can be compressed into a small integer.
+  //   - This class provides dedicated accessors for each different form of
+  //     payload that check the kind and payload correspond correctly.
+  // - A 32-bit byte offset of the token within the source text.
+  //
+  // These are compressed and stored in 8-bytes for each token.
+  //
+  // Note that while the class provides some limited setters for payloads and
+  // mutating methods, setters on this type may be unexpectedly expensive due to
+  // the bit-packed representation and should be avoided. As such, only the
+  // minimal necessary setters are provided.
+  //
+  // TODO: It might be worth considering a struct-of-arrays data layout in order
+  // to move the byte offset to a separate array from the rest as it is only hot
+  // during lexing, and then cold during parsing and semantic analysis. However,
+  // a trivial approach to that adds more overhead than it saves due to tracking
+  // two separate vectors and their growth. Making this profitable would likely
+  // at least require a highly specialized single vector that manages the growth
+  // once and then provides separate storage areas for the two arrays.
   class TokenInfo {
    public:
     auto kind() const -> TokenKind { return TokenKind::FromInt(kind_); }
@@ -320,11 +347,33 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
     auto byte_offset() const -> int32_t { return byte_offset_; }
 
+    // Transforms the token into an error token of the given length but at its
+    // original position and with the same whitespace adjacency.
+    auto ResetAsError(int error_length) -> void {
+      // Construct a fresh token to establish any needed invariants and replace
+      // this token with it.
+      TokenInfo error(TokenKind::Error, has_leading_space(), error_length,
+                      byte_offset());
+      *this = error;
+    }
+
+   private:
+    friend class Lexer;
+    
+    static constexpr int PayloadBits = 23;
+
+    // Constructor for a TokenKind that carries no payload, or where the payload
+    // will be set later.
+    //
+    // Only used by the lexer which enforces only the correct kinds are used.
     TokenInfo(TokenKind kind, bool has_leading_space, int32_t byte_offset)
         : kind_(kind.AsInt()),
           has_leading_space_(has_leading_space),
           byte_offset_(byte_offset) {}
 
+    // Constructor for a TokenKind that carries a payload.
+    //
+    // Only used by the lexer which enforces the correct kind and payload types.
     TokenInfo(TokenKind kind, bool has_leading_space, int payload,
               int32_t byte_offset)
         : kind_(kind.AsInt()),
@@ -335,12 +384,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           << "Payload won't fit into unsigned bit pack: " << payload;
     }
 
-   private:
-    static constexpr int PayloadBits = 23;
-
     unsigned kind_ : sizeof(TokenKind) * 8;
 
-    // Whether the token has trailing whitespace.
+    // Whether the token has leading whitespace.
     unsigned has_leading_space_ : 1;
 
     // Payload, typically representing an index into a kind-dependent array.
@@ -349,6 +395,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Zero-based byte offset of the token within the file.
     int32_t byte_offset_;
   };
+  static_assert(sizeof(TokenInfo) == 8,
+                "Expected `TokenInfo` to pack to an 8-byte structure.");
 
   struct LineInfo {
     explicit LineInfo(int32_t start) : start(start), indent(0) {}

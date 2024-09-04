@@ -109,48 +109,26 @@ class [[clang::internal_linkage]] Lexer {
     return &buffer_.line_infos_[line_index_ + 1];
   }
 
+  // Note when the lexer has encountered whitespace, and the next lexed token
+  // should reflect that it was preceded by some amount of whitespace.
   auto NoteWhitespace() -> void;
 
+  // Add a lexed token to the tokenized buffer, and reset any token-specific
+  // state tracked in the lexer for the next token.
   auto AddLexedToken(TokenInfo info) -> TokenIndex;
 
-  // A collection of overloads that provide type-checked APIs for lexing
-  // specific kinds of tokens and providing the appropriate payload data for
-  // each of them.
+  // An overload for lexing a token.Builds the correctly encoded token info,
+  // adds it to the tokenized buffer and returns the token index.
   //
-  // The base overload allows a runtime token kind for any kind that doesn't
-  // require a payload at all. Token kinds that require a payload are an error
-  // to use with this overload.
+  // This overload is for tokens without a payload.
   auto LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex;
 
-  // An overload specifically for the lexing of an identifier token.
-  template <TokenKind::RawEnumType Kind>
-    requires(Kind == TokenKind::Identifier)
-  auto LexToken(IdentifierId id, int32_t byte_offset) -> TokenIndex;
-
-  // An overload specifically for the lexing of a string literal token.
-  template <TokenKind::RawEnumType Kind>
-    requires(Kind == TokenKind::StringLiteral)
-  auto LexToken(StringLiteralValueId id, int32_t byte_offset) -> TokenIndex;
-
-  // An overload specifically for the lexing of an integer literal or one of our
-  // type literal tokens. All of these carry a payload of an lexed integer,
-  // either the literal value or the type size for type literals.
-  template <TokenKind::RawEnumType Kind>
-    requires(Kind == TokenKind::IntLiteral ||
-             Kind == TokenKind::IntTypeLiteral ||
-             Kind == TokenKind::UnsignedIntTypeLiteral ||
-             Kind == TokenKind::FloatTypeLiteral)
-  auto LexToken(IntId id, int32_t byte_offset) -> TokenIndex;
-
-  // An overload specifically for the lexing of a real literal token.
-  template <TokenKind::RawEnumType Kind>
-    requires(Kind == TokenKind::RealLiteral)
-  auto LexToken(RealId id, int32_t byte_offset) -> TokenIndex;
-
-  // An overload specifically for the lexing of an error token.
-  template <TokenKind::RawEnumType Kind>
-    requires(Kind == TokenKind::Error)
-  auto LexToken(int32_t error_length, int32_t byte_offset) -> TokenIndex;
+  // An overload for lexing a token.Builds the correctly encoded token info,
+  // adds it to the tokenized buffer and returns the token index.
+  //
+  // This overload is for tokens with a payload.
+  auto LexToken(TokenKind kind, int token_payload,
+                int32_t byte_offset) -> TokenIndex;
 
   auto SkipHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
@@ -186,10 +164,6 @@ class [[clang::internal_linkage]] Lexer {
   auto LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
 
-  template <TokenKind::RawEnumType Kind>
-  auto LexTypeLiteralToken(llvm::StringRef suffix, int32_t byte_offset)
-      -> LexResult;
-
   // Given a word that has already been lexed, determine whether it is a type
   // literal and if so form the corresponding token.
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
@@ -219,6 +193,8 @@ class [[clang::internal_linkage]] Lexer {
 
   ssize_t line_index_;
 
+  // Tracks whether the lexer has encountered whitespace that will be leading
+  // whitespace for the next lexed token. Reset after each token lexed.
   bool has_leading_space_ = false;
 
   llvm::SmallVector<TokenIndex> open_groups_;
@@ -801,48 +777,19 @@ auto Lexer::AddLexedToken(TokenInfo info) -> TokenIndex {
 }
 
 auto Lexer::LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex {
-  CARBON_DCHECK(
-      kind != TokenKind::Identifier && kind != TokenKind::StringLiteral &&
-      kind != TokenKind::IntLiteral && kind != TokenKind::RealLiteral);
+  // Check that we don't accidentally call this for one of the token kinds that
+  // *always* has a payload up front.
+  CARBON_DCHECK(!kind.IsOneOf(
+      {TokenKind::Identifier, TokenKind::StringLiteral, TokenKind::IntLiteral,
+       TokenKind::IntTypeLiteral, TokenKind::UnsignedIntTypeLiteral,
+       TokenKind::FloatTypeLiteral, TokenKind::RealLiteral, TokenKind::Error}));
   return AddLexedToken(TokenInfo(kind, has_leading_space_, byte_offset));
 }
 
-template <TokenKind::RawEnumType Kind>
-  requires(Kind == TokenKind::Identifier)
-auto Lexer::LexToken(IdentifierId id, int32_t byte_offset) -> TokenIndex {
-  return AddLexedToken(TokenInfo(TokenKind::Identifier, has_leading_space_,
-                                 id.index, byte_offset));
-}
-
-template <TokenKind::RawEnumType Kind>
-  requires(Kind == TokenKind::StringLiteral)
-auto Lexer::LexToken(StringLiteralValueId id, int32_t byte_offset)
-    -> TokenIndex {
-  return AddLexedToken(TokenInfo(TokenKind::StringLiteral, has_leading_space_,
-                                 id.index, byte_offset));
-}
-
-template <TokenKind::RawEnumType Kind>
-  requires(Kind == TokenKind::IntLiteral || Kind == TokenKind::IntTypeLiteral ||
-           Kind == TokenKind::UnsignedIntTypeLiteral ||
-           Kind == TokenKind::FloatTypeLiteral)
-auto Lexer::LexToken(IntId id, int32_t byte_offset) -> TokenIndex {
-  return AddLexedToken(TokenInfo(TokenKind::Make(Kind), has_leading_space_,
-                                 id.index, byte_offset));
-}
-
-template <TokenKind::RawEnumType Kind>
-  requires(Kind == TokenKind::RealLiteral)
-auto Lexer::LexToken(RealId id, int32_t byte_offset) -> TokenIndex {
-  return AddLexedToken(TokenInfo(TokenKind::RealLiteral, has_leading_space_,
-                                 id.index, byte_offset));
-}
-
-template <TokenKind::RawEnumType Kind>
-  requires(Kind == TokenKind::Error)
-auto Lexer::LexToken(int32_t error_length, int32_t byte_offset) -> TokenIndex {
-  return AddLexedToken(TokenInfo(TokenKind::Error, has_leading_space_,
-                                 error_length, byte_offset));
+auto Lexer::LexToken(TokenKind kind, int token_payload,
+                     int32_t byte_offset) -> TokenIndex {
+  return AddLexedToken(
+      TokenInfo(kind, has_leading_space_, token_payload, byte_offset));
 }
 
 auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
@@ -1067,20 +1014,24 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   return VariantMatch(
       literal->ComputeValue(emitter_),
       [&](NumericLiteral::IntValue&& value) {
-        return LexToken<TokenKind::IntLiteral>(
-            buffer_.value_stores_->ints().Add(std::move(value.value)),
+        return LexToken(
+            TokenKind::IntLiteral,
+            buffer_.value_stores_->ints().Add(std::move(value.value)).index,
             byte_offset);
       },
       [&](NumericLiteral::RealValue&& value) {
-        return LexToken<TokenKind::RealLiteral>(
-            buffer_.value_stores_->reals().Add(Real{
-                .mantissa = value.mantissa,
-                .exponent = value.exponent,
-                .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)}),
+        return LexToken(
+            TokenKind::RealLiteral,
+            buffer_.value_stores_->reals()
+                .Add(Real{.mantissa = value.mantissa,
+                          .exponent = value.exponent,
+                          .is_decimal =
+                              (value.radix == NumericLiteral::Radix::Decimal)})
+                .index,
             byte_offset);
       },
       [&](NumericLiteral::UnrecoverableError) {
-        return LexToken<TokenKind::Error>(token_size, byte_offset);
+        return LexToken(TokenKind::Error, token_size, byte_offset);
       });
 }
 
@@ -1112,12 +1063,12 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   if (literal->is_terminated()) {
     auto string_id = buffer_.value_stores_->string_literal_values().Add(
         literal->ComputeValue(buffer_.allocator_, emitter_));
-    return LexToken<TokenKind::StringLiteral>(string_id, byte_offset);
+    return LexToken(TokenKind::StringLiteral, string_id.index, byte_offset);
   } else {
     CARBON_DIAGNOSTIC(UnterminatedString, Error,
                       "String is missing a terminator.");
     emitter_.Emit(literal->text().begin(), UnterminatedString);
-    return LexToken<TokenKind::Error>(literal_size, byte_offset);
+    return LexToken(TokenKind::Error, literal_size, byte_offset);
   }
 }
 
@@ -1148,10 +1099,9 @@ auto Lexer::LexOpeningSymbolToken(llvm::StringRef source_text, TokenKind kind,
   int32_t byte_offset = position;
   ++position;
 
-  // Lex the opening symbol with a zero closing index. We'll update this
-  // later if we successfully match it to a closing symbol.
-  TokenIndex token =
-      AddLexedToken(TokenInfo(kind, has_leading_space_, 0, byte_offset));
+  // Lex the opening symbol with a zero closing index. We'll add a payload later
+  // when we match a closing symbol or in recovery.
+  TokenIndex token = LexToken(kind, byte_offset);
   open_groups_.push_back(token);
   return token;
 }
@@ -1168,21 +1118,17 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   int32_t byte_offset = position;
   ++position;
 
-  auto lex_token = [&](TokenIndex opening_token) {
-    return AddLexedToken(
-        TokenInfo(kind, has_leading_space_, opening_token.index, byte_offset));
-  };
-
   // If there's not a matching opening symbol, just track that we had an error.
   // We will diagnose and recover when we reach the end of the file. See
   // `DiagnoseAndFixMismatchedBrackets` for details.
   if (LLVM_UNLIKELY(open_groups_.empty())) {
     has_mismatched_brackets_ = true;
-    return lex_token(TokenIndex(0));
+    // Lex without a matching index payload -- we'll add one during recovery.
+    return LexToken(kind, byte_offset);
   }
 
   TokenIndex opening_token = open_groups_.pop_back_val();
-  TokenIndex token = lex_token(opening_token);
+  TokenIndex token = LexToken(kind, opening_token.index, byte_offset);
 
   auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
   if (LLVM_UNLIKELY(opening_token_info.kind() != kind.opening_symbol())) {
@@ -1216,21 +1162,6 @@ auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
   return token;
 }
 
-template <TokenKind::RawEnumType Kind>
-auto Lexer::LexTypeLiteralToken(llvm::StringRef suffix, int32_t byte_offset)
-    -> LexResult {
-  if (!CanLexInt(emitter_, suffix)) {
-    return LexToken<TokenKind::Error>(suffix.size() + 1, byte_offset);
-  }
-  llvm::APInt suffix_value;
-  if (suffix.getAsInteger(10, suffix_value)) {
-    return LexResult::NoMatch();
-  }
-
-  return LexToken<Kind>(
-      buffer_.value_stores_->ints().Add(std::move(suffix_value)), byte_offset);
-}
-
 auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     -> LexResult {
   if (word.size() < 2) {
@@ -1242,20 +1173,33 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     return LexResult::NoMatch();
   }
 
-  llvm::StringRef suffix = word.substr(1);
+  TokenKind kind;
   switch (word.front()) {
     case 'i':
-      return LexTypeLiteralToken<TokenKind::IntTypeLiteral>(suffix,
-                                                            byte_offset);
+      kind =TokenKind::IntTypeLiteral;
+      break;
     case 'u':
-      return LexTypeLiteralToken<TokenKind::UnsignedIntTypeLiteral>(
-          suffix, byte_offset);
+      kind =TokenKind::UnsignedIntTypeLiteral;
+      break;
     case 'f':
-      return LexTypeLiteralToken<TokenKind::FloatTypeLiteral>(suffix,
-                                                              byte_offset);
+      kind = TokenKind::FloatTypeLiteral;
+      break;
     default:
       return LexResult::NoMatch();
   };
+
+  llvm::StringRef suffix = word.substr(1);
+  if (!CanLexInt(emitter_, suffix)) {
+    return LexToken(TokenKind::Error, word.size(), byte_offset);
+  }
+  llvm::APInt suffix_value;
+  if (suffix.getAsInteger(10, suffix_value)) {
+    return LexResult::NoMatch();
+  }
+
+  return LexToken(
+      kind, buffer_.value_stores_->ints().Add(std::move(suffix_value)).index,
+      byte_offset);
 }
 
 auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
@@ -1292,8 +1236,10 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   }
 
   // Otherwise we have a generic identifier.
-  return LexToken<TokenKind::Identifier>(
-      buffer_.value_stores_->identifiers().Add(identifier_text), byte_offset);
+  return LexToken(
+      TokenKind::Identifier,
+      buffer_.value_stores_->identifiers().Add(identifier_text).index,
+      byte_offset);
 }
 
 auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
@@ -1359,7 +1305,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     error_text = source_text.substr(position, 1);
   }
 
-  auto token = LexToken<TokenKind::Error>(error_text.size(), position);
+  auto token = LexToken(TokenKind::Error, error_text.size(), position);
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "Encountered unrecognized characters while parsing.");
   emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
@@ -1455,10 +1401,7 @@ class Lexer::ErrorRecoveryBuffer {
   auto ReplaceWithError(TokenIndex token) -> void {
     auto& token_info = buffer_.GetTokenInfo(token);
     int error_length = buffer_.GetTokenText(token).size();
-    bool has_leading_space = token_info.has_leading_space();
-    int32_t byte_offset = token_info.byte_offset();
-    token_info = TokenInfo(TokenKind::Error, has_leading_space, error_length,
-                           byte_offset);
+    token_info.ResetAsError(error_length);
     any_error_tokens_ = true;
   }
 
