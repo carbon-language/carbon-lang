@@ -100,11 +100,11 @@ class C {
 // CHECK:STDOUT:     %x.loc20_10.1: @F.2.%T (%T) = param x
 // CHECK:STDOUT:     %x.loc20_10.2: @F.2.%T (%T) = bind_name x, %x.loc20_10.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

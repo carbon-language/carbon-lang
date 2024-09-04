@@ -206,38 +206,38 @@ interface A(T: type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %X as %.1 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %X as %.3 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness () [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3: %X as %.10 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4: %X as %.5 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.5: %X as %.12 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness () [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(file.%T.loc8_9.2: type) {

@@ -305,19 +305,19 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 // Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocIdAndInst {
-  // Constructs a LocIdAndInst with no associated location. Note, we should
-  // generally do our best to associate a location for diagnostics.
+  // Constructs a LocIdAndInst with no associated location. This should be used
+  // very sparingly: only when it doesn't make sense to store a location even
+  // when the instruction kind usually has one, such as for instructions in the
+  // constants block.
   template <typename InstT>
   static auto NoLoc(InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
+    return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
   }
 
-  // Constructs a LocIdAndInst that reuses the location associated with some
-  // other inst, typically because `inst` doesn't have an explicit
-  // representation in the parse tree.
-  template <typename InstT>
-  static auto ReusingLoc(LocId loc_id, InstT inst) -> LocIdAndInst {
-    return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
+  // Unsafely form a pair of a location and an instruction. Used in the cases
+  // where we can't statically enforce the type matches.
+  static auto UncheckedLoc(LocId loc_id, Inst inst) -> LocIdAndInst {
+    return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }
 
   // Construction for the common case with a typed node.
@@ -326,20 +326,18 @@ struct LocIdAndInst {
   LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
 
-  // Imports can pass an ImportIRInstId instead of another location.
+  // Construction for the case where the instruction can have any associated
+  // node.
   template <typename InstT>
-  LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
-      : loc_id(import_ir_inst_id), inst(inst) {}
+    requires(Internal::HasUntypedNodeId<InstT>)
+  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
 
  private:
-  // Expose the internal constructor for GetWithLocId.
-  friend class InstStore;
-
-  // Note `is_untyped` serves to disambiguate from public constructors.
-  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
+  // Note `is_unchecked` serves to disambiguate from public constructors.
+  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_unchecked*/)
       : loc_id(loc_id), inst(inst) {}
 };
 
@@ -361,7 +359,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst(GetLocId(inst_id), Get(inst_id), /*is_untyped=*/true);
+    return LocIdAndInst::UncheckedLoc(GetLocId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.

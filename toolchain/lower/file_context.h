@@ -18,6 +18,15 @@ namespace Carbon::Lower {
 // Context and shared functionality for lowering handlers.
 class FileContext {
  public:
+  // Location information for use with DebugInfo. The line_number and
+  // column_number are >= 0, with 0 as unknown, so that they can be passed
+  // directly to DebugInfo.
+  struct LocForDI {
+    llvm::StringRef filename;
+    int32_t line_number;
+    int32_t column_number;
+  };
+
   explicit FileContext(llvm::LLVMContext& llvm_context, bool include_debug_info,
                        const Check::SemIRDiagnosticConverter& converter,
                        llvm::StringRef module_name, const SemIR::File& sem_ir,
@@ -46,8 +55,8 @@ class FileContext {
     return types_[type_id.index];
   }
 
-  // Returns the DiagnosticLoc associated with the specified inst_id.
-  auto GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc;
+  // Returns location information for use with DebugInfo.
+  auto GetLocForDI(SemIR::InstId inst_id) -> LocForDI;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {

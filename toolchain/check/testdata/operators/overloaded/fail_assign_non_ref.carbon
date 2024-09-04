@@ -154,11 +154,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %self.loc16_14.3: %.3 = bind_name self, %self.loc16_14.1
 // CHECK:STDOUT:     %.loc16_9: %.3 = addr_pattern %self.loc16_14.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C as %.7 {
@@ -172,11 +172,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %other.loc19_24.1: %C = param other
 // CHECK:STDOUT:     %other.loc19_24.2: %C = bind_name other, %other.loc19_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Op.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -205,9 +205,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.1.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc30: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc30(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access @impl.1.%.loc15, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
+// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc30_3.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,9 +215,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.1: %Op.type.4 = interface_witness_access @impl.2.%.1, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %.loc40: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc40(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access @impl.2.%.loc18, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
+// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc40_5.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

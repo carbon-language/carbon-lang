@@ -282,9 +282,10 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
         auto import_ir_inst_id = context.import_ir_insts().Add(
             {.ir_id = SemIR::ImportIRId::ApiForImpl,
              .inst_id = api_imports->import_decl_id});
-        import_decl_id = context.AddInstReusingLoc<SemIR::ImportDecl>(
-            import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
-                                    api_imports_entry.first)});
+        import_decl_id =
+            context.AddInst(context.MakeImportedLocAndInst<SemIR::ImportDecl>(
+                import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
+                                        api_imports_entry.first)}));
         package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;

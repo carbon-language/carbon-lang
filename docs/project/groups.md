@@ -125,10 +125,7 @@ any of the above community groups.
 ### GitHub commit access
 
 Developers who can merge and approve changes on GitHub. See
-[commit access](https://github.com/carbon-language/carbon-lang/pull/4246) for
-information.
-
-> TODO: link to commit_access.md when finalized.
+[commit access](commit_access.md) for information.
 
 -   GitHub teams:
     [Commit access](https://github.com/orgs/carbon-language/teams/commit-access)

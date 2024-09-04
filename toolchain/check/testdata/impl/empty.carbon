@@ -63,10 +63,10 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as %.1 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
