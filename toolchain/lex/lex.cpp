@@ -104,8 +104,8 @@ class [[clang::internal_linkage]] Lexer {
   auto next_line() -> LineIndex { return LineIndex(line_index_ + 1); }
 
   auto next_line_info() -> LineInfo* {
-    CARBON_DCHECK(line_index_ + 1 <
-                  static_cast<ssize_t>(buffer_.line_infos_.size()));
+    CARBON_CHECK(line_index_ + 1 <
+                 static_cast<ssize_t>(buffer_.line_infos_.size()));
     return &buffer_.line_infos_[line_index_ + 1];
   }
 
@@ -1059,6 +1059,7 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
     return LexError(source_text, position);
   }
 
+  // Capture the position before we step past the token.
   int32_t byte_offset = position;
   int token_size = literal->text().size();
   position += token_size;
@@ -1091,6 +1092,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     return LexError(source_text, position);
   }
 
+  // Capture the position before we step past the token.
   int32_t byte_offset = position;
   int string_column = byte_offset - current_line_info()->start;
   ssize_t literal_size = literal->text().size();
@@ -1265,6 +1267,7 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   CARBON_CHECK(
       IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
 
+  // Capture the position before we step past the token.
   int32_t byte_offset = position;
 
   // Take the valid characters off the front of the source buffer.

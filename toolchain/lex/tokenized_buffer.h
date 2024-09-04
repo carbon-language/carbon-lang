@@ -350,7 +350,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   };
 
   struct LineInfo {
-    explicit LineInfo(int64_t start) : start(start), indent(0) {}
+    explicit LineInfo(int32_t start) : start(start), indent(0) {}
 
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.
@@ -368,7 +368,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
 
-  auto FindLineIndexImpl(int32_t offset) const -> LineIndex;
+  auto FindLineIndex(int32_t byte_offset) const -> LineIndex;
   auto GetLineInfo(LineIndex line) -> LineInfo&;
   auto GetLineInfo(LineIndex line) const -> const LineInfo&;
   auto AddLine(LineInfo info) -> LineIndex;
