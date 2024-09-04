@@ -89,10 +89,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   llvm::raw_string_ostream os(result);
   os << "_C";
 
-  auto name = names().GetAsStringIfIdentifier(function.name_id);
-  CARBON_CHECK(name) << "Unexpected special name for function: "
-                     << function.name_id;
-  os << name->str();
+  os << names().GetAsStringIfIdentifier(function.name_id);
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
