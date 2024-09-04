@@ -60,6 +60,10 @@ namespace Carbon {
 // TODO: Need to check the installation structure of LLVM on Windows and figure
 // out what Carbon's should be within a Windows prefix and how much of the
 // structure we can share with the Unix-y layout of the prefix.
+//
+// TODO: InstallPaths is typically called from places using a VFS (both tests
+// and the Driver), but does not use a VFS itself. It currently only supports
+// using the real filesystem, but should probably support a VFS.
 class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
