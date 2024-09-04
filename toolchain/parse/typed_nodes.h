@@ -1060,14 +1060,13 @@ struct RequirementImpls {
   AnyExprId rhs;
 };
 
-// TODO
-// struct RequirementAnd {
-//   static constexpr auto Kind = NodeKind::RequirementAnd.Define(
-//       {.category = NodeCategory::Requirement, .child_count = 2});
-//   AnyRequirementId lhs;
-//   Lex::AndTokenIndex token;
-//   AnyRequirementId rhs;
-// };
+struct RequirementAnd {
+  static constexpr auto Kind = NodeKind::RequirementAnd.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  AnyRequirementId lhs;
+  Lex::AndTokenIndex token;
+  AnyRequirementId rhs;
+};
 
 // virtual node
 // FIXME: WhereType? WhereOperand?
