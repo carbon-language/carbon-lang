@@ -17,13 +17,13 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
-  auto AddScope = [&](SemIR::NameScopeId name_scope_id, char prefix) {
+  auto add_scope = [&](SemIR::NameScopeId name_scope_id, char prefix) {
     if (name_scope_id.is_valid() &&
         name_scope_id != SemIR::NameScopeId::Package) {
       names_to_render.push_back({name_scope_id, prefix});
     }
   };
-  AddScope(name_scope_id, '.');
+  add_scope(name_scope_id, '.');
   while (!names_to_render.empty()) {
     auto [name_scope_id, prefix] = names_to_render.back();
     names_to_render.pop_back();
@@ -31,7 +31,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     if (prefix) {
       os << prefix;
     }
-    AddScope(name_scope.parent_scope_id, '.');
+    add_scope(name_scope.parent_scope_id, '.');
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
