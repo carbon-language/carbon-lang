@@ -30,8 +30,7 @@ class Mangler {
   // may reduce the incidence of common prefixes in the name mangling. (ie:
   // every standard library name won't have a common prefix that has to be
   // skipped and compared before getting to the interesting part)
-  auto MangleInverseQualifiedNameScope(bool first_name_component,
-                                       llvm::raw_ostream& os,
+  auto MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                                        SemIR::NameScopeId name_scope_id)
       -> void;
 

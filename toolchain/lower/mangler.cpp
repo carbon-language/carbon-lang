@@ -9,22 +9,21 @@
 
 namespace Carbon::Lower {
 
-auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
-                                              llvm::raw_ostream& os,
+auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
   struct NameEntry {
     SemIR::NameScopeId name_id;
-    char prefix = 0;
+    char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
-  auto AddScope = [&](SemIR::NameScopeId name_scope_id, char prefix = '\0') {
+  auto AddScope = [&](SemIR::NameScopeId name_scope_id, char prefix) {
     if (name_scope_id.is_valid() &&
         name_scope_id != SemIR::NameScopeId::Package) {
       names_to_render.push_back({name_scope_id, prefix});
     }
   };
-  AddScope(name_scope_id, first_name_component ? '\0' : '.');
+  AddScope(name_scope_id, '.');
   while (!names_to_render.empty()) {
     auto [name_scope_id, prefix] = names_to_render.back();
     names_to_render.pop_back();
@@ -42,7 +41,7 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         auto interface = sem_ir().interfaces().Get(interface_type.interface_id);
         names_to_render.push_back({interface.scope_id, ':'});
 
-        CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(impl.self_id)) {
+        CARBON_KIND_SWITCH(types().GetAsInst(impl.self_id)) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;
@@ -70,10 +69,7 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
         break;
       }
       case SemIR::Namespace::Kind: {
-        auto name = names().GetAsStringIfIdentifier(name_scope.name_id);
-        CARBON_CHECK(name) << "Unexpected special name for namespace: "
-                           << name_scope.name_id;
-        os << *name;
+        os << names().GetAsStringIfIdentifier(name_scope.name_id);
         break;
       }
       default:
@@ -98,7 +94,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
                      << function.name_id;
   os << name->str();
 
-  MangleInverseQualifiedNameScope(false, os, function.parent_scope_id);
+  MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
   return os.str();
 }
