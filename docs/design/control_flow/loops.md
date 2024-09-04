@@ -63,6 +63,9 @@ for (var name: String in names) {
 
 `PrintNames()` prints each `String` in the `names` `List` in iteration order.
 
+TODO: Add semantics discussion from
+[#1885: ranged-based `for` for user-defined types](https://github.com/carbon-language/carbon-lang/pull/1885).
+
 ### `break`
 
 The `break` statement immediately ends a `while` or `for` loop. Execution will
