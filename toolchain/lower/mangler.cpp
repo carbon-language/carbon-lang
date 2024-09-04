@@ -17,15 +17,19 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
       name_scope_id == SemIR::NameScopeId::Package) {
     return;
   }
-  llvm::SmallVector<SemIR::NameScopeId> names_to_render = {name_scope_id};
+  struct NameEntry {
+    SemIR::NameScopeId name_id;
+    char prefix = 0;
+  };
+  llvm::SmallVector<NameEntry> names_to_render = {
+      {name_scope_id, first_name_component ? '\0' : '.'}};
   while (!names_to_render.empty()) {
-    auto name_scope_id = names_to_render.back();
+    auto [name_scope_id, prefix] = names_to_render.back();
     names_to_render.pop_back();
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
-    if (!first_name_component) {
-      os << '.';
+    if (prefix) {
+      os << prefix;
     }
-    first_name_component = false;
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
@@ -73,7 +77,7 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
     auto next_name_scope_id = name_scope.parent_scope_id;
     if (next_name_scope_id.is_valid() &&
         next_name_scope_id != SemIR::NameScopeId::Package) {
-      names_to_render.push_back(next_name_scope_id);
+      names_to_render.push_back({next_name_scope_id, '.'});
     }
   }
 }
