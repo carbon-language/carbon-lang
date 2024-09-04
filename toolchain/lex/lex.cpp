@@ -796,9 +796,8 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
 auto Lexer::NoteWhitespace() -> void { has_leading_space_ = true; }
 
 auto Lexer::AddLexedToken(TokenInfo info) -> TokenIndex {
-  auto token = buffer_.AddToken(info);
   has_leading_space_ = false;
-  return token;
+  return buffer_.AddToken(info);
 }
 
 auto Lexer::LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex {
@@ -1432,7 +1431,7 @@ class Lexer::ErrorRecoveryBuffer {
                  new_tokens_.back().first <= insert_before)
         << "Insertions performed out of order.";
 
-    // If the token we're inserting before had leading whitespace, mark the
+    // If the `insert_before` token has leading whitespace, mark the
     // inserted token as also having leading whitespace. This avoids changing
     // whether the prior tokens had leading or trailing whitespace when
     // inserting.

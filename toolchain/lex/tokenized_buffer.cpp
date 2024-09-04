@@ -311,7 +311,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   if (token_info.has_leading_space()) {
     output_stream << ", has_leading_space: true";
   }
-  if (!recovery_tokens_.empty() && recovery_tokens_[token_index]) {
+  if (IsRecoveryToken(token)) {
     output_stream << ", recovery: true";
   }
 
