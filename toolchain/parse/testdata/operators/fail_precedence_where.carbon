@@ -76,8 +76,6 @@ fn LessRequirement() {
 
 library "as_where";
 
-// FIXME: `impls` node should not have an error
-
 fn AsWhere() {
   // CHECK:STDERR: fail_as_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   Y as Z where .L impls M;
@@ -148,7 +146,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'A'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
@@ -194,7 +192,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'G'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f32'},
-// CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
@@ -260,7 +258,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'L'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'M'},
-// CHECK:STDOUT:           {kind: 'RequirementImpls', text: 'impls', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},

@@ -219,10 +219,9 @@ auto HandleExprInPostfix(Context& context) -> void {
   }
 }
 
-static auto BeginRequirement(Context& context,
-                             const Context::StateStackEntry& state) -> void {
-  // context.PushState(state, State::RequirementAnd);
-  context.PushState(state, State::RequirementOperator);
+static auto BeginRequirement(Context& context) -> void {
+  // context.PushState(State::RequirementAnd);
+  context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
@@ -398,7 +397,7 @@ auto HandleExprLoop(Context& context) -> void {
         context.AddNode(NodeKind::WhereIntroducer, state.token,
                         state.has_error);
         context.PushState(state, State::WhereFinish);
-        BeginRequirement(context, state);
+        BeginRequirement(context);
         return;
 
       default:
