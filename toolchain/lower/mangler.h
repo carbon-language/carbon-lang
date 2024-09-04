@@ -12,10 +12,17 @@
 
 namespace Carbon::Lower {
 
+// A class for producing mangled (deterministically unique, at least partially
+// human readable) names for externally referenceable entities such as extern
+// functions.
 class Mangler {
  public:
+  // Initialize a new Mangler instance for mangling entities within the
+  // specified `FileContext`.
   explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
 
+  // Produce a deterministically unique mangled name for the function specified
+  // by `function_id`.
   auto Mangle(SemIR::FunctionId function_id) -> std::string;
 
  private:
