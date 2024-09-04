@@ -94,7 +94,6 @@ auto InstallPaths::FindPreludeFiles() const
   }
 
   // Glob for <data>/core/prelude/**/*.carbon and add all the files we find.
-  // TODO: This should be using the vfs instead of actual filesystem.
   llvm::SmallString<256> prelude_dir(dir);
   llvm::sys::path::append(prelude_dir, llvm::sys::path::Style::posix,
                           "prelude");
