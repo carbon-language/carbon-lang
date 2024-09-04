@@ -23,6 +23,18 @@ struct FunctionFields {
   // always present if the function has a declared return type.
   InstId return_storage_id;
 
+  // Is this function declaration is virtual - which is to say, it includes an
+  // implementation, but can be overridden in a derived class.
+  bool is_virtual;
+
+  // Is this function declaration is abstract - having no implementation, and
+  // must be implemented in a concrete derived class.
+  bool is_abstract;
+
+  // Is this function declaration an implementation - overriding an abstract or
+  // virtual function declared in a base class.
+  bool is_impl;
+
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
 

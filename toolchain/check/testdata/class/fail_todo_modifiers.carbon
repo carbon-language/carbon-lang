@@ -23,26 +23,15 @@ base class Base {
 
   virtual fn H();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
-  // CHECK:STDERR:   impl fn I();
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR:
   impl fn I();
 }
 
 abstract class Abstract {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
-  // CHECK:STDERR:   abstract fn J();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   abstract fn J();
 
   virtual fn K();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
-  // CHECK:STDERR:   impl fn L();
-  // CHECK:STDERR:   ^~~~
   impl fn L();
 }
 

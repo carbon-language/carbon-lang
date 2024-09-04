@@ -92,8 +92,7 @@ class DeclNameStack {
     // construction.
     auto MakeEntityWithParamsBase(const NameComponent& name,
                                   SemIR::InstId decl_id, bool is_extern,
-                                  SemIR::LibraryNameId extern_library,
-                                  bool is_virtual = false)
+                                  SemIR::LibraryNameId extern_library)
         -> SemIR::EntityWithParamsBase {
       return {
           .name_id = name_id_for_new_inst(),
@@ -104,7 +103,6 @@ class DeclNameStack {
           .implicit_param_refs_id = name.implicit_params_id,
           .param_refs_id = name.params_id,
           .is_extern = is_extern,
-          .is_virtual = is_virtual,
           .extern_library_id = extern_library,
           .non_owning_decl_id =
               extern_library.is_valid() ? decl_id : SemIR::InstId::Invalid,

@@ -196,7 +196,10 @@ static auto BuildFunctionDecl(Context& context,
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   bool is_virtual =
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Virtual);
-  if (!is_virtual &&
+  bool is_abstract =
+      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract);
+  bool is_impl = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Impl);
+  if (!is_virtual && !is_abstract && !is_impl &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
     context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "method modifier");
@@ -216,10 +219,13 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info = SemIR::Function{
-      {name_context.MakeEntityWithParamsBase(
-          name, decl_id, is_extern, introducer.extern_library, is_virtual)},
-      {.return_storage_id = return_storage_id}};
+  auto function_info =
+      SemIR::Function{{name_context.MakeEntityWithParamsBase(
+                          name, decl_id, is_extern, introducer.extern_library)},
+                      {.return_storage_id = return_storage_id,
+                       .is_virtual = is_virtual,
+                       .is_abstract = is_abstract,
+                       .is_impl = is_impl}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
