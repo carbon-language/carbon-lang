@@ -76,6 +76,7 @@ cc_library(
     ]),
     hdrs = [
         "handle.h",
+        "handle_requirement.h",
         "parse.h",
     ],
     deps = [
