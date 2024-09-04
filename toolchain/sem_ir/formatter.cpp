@@ -265,6 +265,12 @@ class FormatterImpl {
     if (fn.is_virtual) {
       function_start += "virtual ";
     }
+    if (fn.is_abstract) {
+      function_start += "abstract ";
+    }
+    if (fn.is_impl) {
+      function_start += "impl ";
+    }
     if (fn.is_extern) {
       function_start += "extern ";
     }

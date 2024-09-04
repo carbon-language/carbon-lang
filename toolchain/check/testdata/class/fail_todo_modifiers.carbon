@@ -141,11 +141,11 @@ abstract class Abstract {
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @H();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @I();
+// CHECK:STDOUT: impl fn @I();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @J();
+// CHECK:STDOUT: abstract fn @J();
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @K();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @L();
+// CHECK:STDOUT: impl fn @L();
 // CHECK:STDOUT:
