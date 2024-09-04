@@ -37,12 +37,6 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   return context.TODO(node_id, "HandleRequirementImpls");
 }
 
-// TODO
-// auto HandleParseNode(Context& context, Parse::RequirementAndId node_id)
-//     -> bool {
-//   return context.TODO(node_id, "HandleRequirementAnd");
-// }
-
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   return context.TODO(node_id, "HandleWhereExpr");
 }

@@ -276,7 +276,6 @@ CARBON_PARSE_NODE_KIND(ShortCircuitOperatorOr)
 
 CARBON_PARSE_NODE_KIND(SelfTypeName)
 CARBON_PARSE_NODE_KIND(DesignatorExpr)
-// TODO: CARBON_PARSE_NODE_KIND(RequirementAnd)
 CARBON_PARSE_NODE_KIND(RequirementAssign)
 CARBON_PARSE_NODE_KIND(RequirementEquals)
 CARBON_PARSE_NODE_KIND(RequirementImpls)

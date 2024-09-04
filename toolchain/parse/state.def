@@ -639,26 +639,6 @@ CARBON_PARSE_STATE(RequirementOperator)
 //   (state done)
 CARBON_PARSE_STATE(RequirementOperatorFinish)
 
-// Handles an `and` operator in a `where` expression or a `require` declaration,
-// if any
-//
-// expr where requirement and ...
-//                        ^~~
-// expr where requirement
-//                       ^
-//   1. Expr
-//   2. RequirementOperator
-//   3. RequirementAndFinish
-// TODO: CARBON_PARSE_STATE(RequirementAnd)
-
-// Finishes an `and` operator in a `where` expression or a `require`
-// declaration, if any
-//
-// expr where requirement and requirement
-//                                       ^
-//   (state done)
-// TODO: CARBON_PARSE_STATE(RequirementAndFinish)
-
 // Finishes an `where` expression.
 //
 // expr where requirement
