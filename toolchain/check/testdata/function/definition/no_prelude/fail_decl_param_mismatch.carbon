@@ -29,7 +29,7 @@ fn G(x: ());
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: ERROR: Name `Core` not found.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: ERROR: Package `Core` implicitly referenced here, but not found.
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:         ^~~~
 // CHECK:STDERR:
