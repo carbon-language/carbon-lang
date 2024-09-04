@@ -369,12 +369,10 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   if (!di_compile_unit_) {
     return nullptr;
   }
-  auto loc = converter_.ConvertLoc(
-      function.definition_id,
-      [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
   auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
   CARBON_CHECK(name) << "Unexpected special name for function: "
                      << function.name_id;
+  auto loc = GetLocForDI(function.definition_id);
   // FIXME: Add more details here, including real subroutine type (once type
   // information is built), etc.
   return di_builder_.createFunction(
@@ -542,11 +540,15 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
                                   /*Initializer=*/nullptr, mangled_name);
 }
 
-auto FileContext::GetDiagnosticLoc(SemIR::InstId inst_id) -> DiagnosticLoc {
-  return converter_.ConvertLoc(
+auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
+  auto diag_loc = converter_.ConvertLoc(
       inst_id,
       [&](DiagnosticLoc /*context_loc*/,
           const Internal::DiagnosticBase<>& /*context_diagnostic_base*/) {});
+  return {.filename = diag_loc.filename,
+          .line_number = diag_loc.line_number == -1 ? 0 : diag_loc.line_number,
+          .column_number =
+              diag_loc.column_number == -1 ? 0 : diag_loc.column_number};
 }
 
 }  // namespace Carbon::Lower
