@@ -30,13 +30,29 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
     if (prefix) {
       os << prefix;
     }
+    auto next_name_scope_id = name_scope.parent_scope_id;
+    if (next_name_scope_id.is_valid() &&
+        next_name_scope_id != SemIR::NameScopeId::Package) {
+      names_to_render.push_back({next_name_scope_id, '.'});
+    }
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
+
+        auto interface_type =
+            types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
+        auto interface = sem_ir().interfaces().Get(interface_type.interface_id);
+        names_to_render.push_back({interface.scope_id, ':'});
+
         CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(impl.self_id)) {
           case CARBON_KIND(SemIR::ClassType class_type): {
+            /*
             MangleInverseQualifiedNameScope(
                 true, os, sem_ir().classes().Get(class_type.class_id).scope_id);
+            */
+            auto next_name_scope_id =
+                sem_ir().classes().Get(class_type.class_id).scope_id;
+            names_to_render.push_back({next_name_scope_id});
             break;
           }
           case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
@@ -47,20 +63,16 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
             CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
             break;
         }
-        os << ':';
-        // FIXME: Qualify the interface name.
-        auto opt_interface_constraint =
-            types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
-        os << names().GetFormatted(
-            sem_ir()
-                .interfaces()
-                .Get(opt_interface_constraint.interface_id)
-                .name_id);
-        return;
+        break;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        os << names().GetFormatted(
+        os << names().GetAsStringIfIdentifier(
             sem_ir().classes().Get(class_decl.class_id).name_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+        os << names().GetAsStringIfIdentifier(
+            sem_ir().interfaces().Get(interface_decl.interface_id).name_id);
         break;
       }
       case SemIR::Namespace::Kind: {
@@ -73,11 +85,6 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
       default:
         CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
         break;
-    }
-    auto next_name_scope_id = name_scope.parent_scope_id;
-    if (next_name_scope_id.is_valid() &&
-        next_name_scope_id != SemIR::NameScopeId::Package) {
-      names_to_render.push_back({next_name_scope_id, '.'});
     }
   }
 }
