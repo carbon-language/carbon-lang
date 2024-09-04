@@ -23,16 +23,23 @@ auto Mangler::MangleInverseQualifiedNameScope(bool first_name_component,
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
-        if (auto opt_class_self =
-                types().TryGetAs<SemIR::ClassType>(impl.self_id)) {
-          MangleInverseQualifiedNameScope(
-              true, os,
-              sem_ir().classes().Get(opt_class_self->class_id).scope_id);
-        } else {
-          auto builtin_self = types().GetAs<SemIR::BuiltinInst>(impl.self_id);
-          os << builtin_self.builtin_inst_kind.label();
+        CARBON_KIND_SWITCH(impl.self_id) {
+          case CARBON_KIND(SemIR::ClassType class_type): {
+            MangleInverseQualifiedNameScope(
+                true, os,
+                sem_ir().classes().Get(class_type->class_id).scope_id);
+            break;
+          }
+          case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
+            os << builtin_info.builtin_inst_kind.label();
+            break;
+          }
+          default:
+            CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
+            break;
         }
         os << ':';
+        // FIXME: Qualify the interface name.
         auto opt_interface_constraint =
             types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
         os << names().GetFormatted(
