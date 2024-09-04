@@ -11,8 +11,9 @@
 
 // --- a.carbon
 aaa
-// CHECK:STDOUT: a.carbon:[[@LINE-1]]: starts with "aaa\n// CHECK:STDOUT: a.carbon:{{\[\[}}@LINE-1]", length 3 lines
+// CHECK:STDOUT: a.carbon:[[@LINE-1]]: aaa
+
 
 // --- b.carbon
 bbb
-// CHECK:STDOUT: b.carbon:[[@LINE-1]]: starts with "bbb\n// CHECK:STDOUT: b.carbon:{{\[\[}}@LINE-1]", length 2 lines
+// CHECK:STDOUT: b.carbon:[[@LINE-1]]: bbb
