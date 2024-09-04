@@ -4,26 +4,327 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_precedence_or_and.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/operators/fail_precedence_where.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_precedence_or_and.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_precedence_where.carbon
 
-fn F() {
+// --- fail_and_where.carbon
+
+library "and_where";
+
+fn AndWhere() {
+  // CHECK:STDERR: fail_and_where.carbon:[[@LINE+4]]:14: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   true and T where .A = B;
+  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR:
   true and T where .A = B;
+}
 
+// --- fail_where_or.carbon
+
+library "where_or";
+
+fn WhereOr() {
+  // CHECK:STDERR: fail_where_or.carbon:[[@LINE+4]]:22: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR:   U where .C impls D or false;
+  // CHECK:STDERR:                      ^~
+  // CHECK:STDERR:
   U where .C impls D or false;
+}
 
+// --- fail_equals_where.carbon
+
+library "equals_where";
+
+fn EqualsWhere() {
+  // CHECK:STDERR: fail_equals_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   e == V where .G == f32;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   e == V where .G == f32;
+}
 
+// --- fail_where_neq.carbon
+
+library "where_neq";
+
+fn WhereNEq() {
+  // CHECK:STDERR: fail_where_neq.carbon:[[@LINE+4]]:21: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR:   W where .H = bool != i;
+  // CHECK:STDERR:                     ^~
+  // CHECK:STDERR:
   W where .H = bool != i;
+}
 
+// --- fail_less_requirement.carbon
+
+library "less_requirement";
+
+fn LessRequirement() {
+  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+8]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR:   X where .J < .K;
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:16: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR:   X where .J < .K;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   X where .J < .K;
+}
 
+// --- fail_as_where.carbon
+
+library "as_where";
+
+// FIXME: `impls` node should not have an error
+
+fn AsWhere() {
+  // CHECK:STDERR: fail_as_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   Y as Z where .L impls M;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   Y as Z where .L impls M;
+}
 
+// --- fail_where_as.carbon
+
+library "where_as";
+
+fn WhereAs() {
+  // CHECK:STDERR: fail_where_as.carbon:[[@LINE+4]]:21: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR:   S where .N == i32 as type;
+  // CHECK:STDERR:                     ^~
+  // CHECK:STDERR:
   S where .N == i32 as type;
+}
 
+// --- fail_as_in_argument.carbon
+
+library "as_in_argument";
+
+fn AsInArgument() {
+  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+8]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR:   R where .O as type impls P;
+  // CHECK:STDERR:              ^~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:17: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR:   R where .O as type impls P;
+  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:
   R where .O as type impls P;
+}
 
+// --- fail_greater_in_argument.carbon
+
+library "greater_in_argument";
+
+fn GreaterInArgument() {
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+7]]:15: ERROR: requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR:   Q where .AA > .BB impls CC;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:17: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR:   Q where .AA > .BB impls CC;
+  // CHECK:STDERR:                 ^
   Q where .AA > .BB impls CC;
 }
+
+// CHECK:STDOUT: - filename: fail_and_where.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"and_where"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'AndWhere'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:                 {kind: 'BoolLiteralTrue', text: 'true'},
+// CHECK:STDOUT:               {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'T'},
+// CHECK:STDOUT:             {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'A'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'B'},
+// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_where_or.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"where_or"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'WhereOr'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'U'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'C'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'D'},
+// CHECK:STDOUT:           {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_equals_where.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"equals_where"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'EqualsWhere'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'e'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'V'},
+// CHECK:STDOUT:             {kind: 'InfixOperatorEqualEqual', text: '==', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'G'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f32'},
+// CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_where_neq.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"where_neq"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'WhereNEq'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'W'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'H'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_less_requirement.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"less_requirement"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'LessRequirement'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'X'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'J'},
+// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_as_where.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"as_where"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'AsWhere'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Y'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Z'},
+// CHECK:STDOUT:             {kind: 'InfixOperatorAs', text: 'as', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'L'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'M'},
+// CHECK:STDOUT:           {kind: 'RequirementImpls', text: 'impls', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_where_as.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"where_as"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'WhereAs'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'S'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'N'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_as_in_argument.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"as_in_argument"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'AsInArgument'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'R'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'O'},
+// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_greater_in_argument.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"greater_in_argument"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'GreaterInArgument'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Q'},
+// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'AA'},
+// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

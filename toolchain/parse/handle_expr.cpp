@@ -221,8 +221,7 @@ auto HandleExprInPostfix(Context& context) -> void {
 
 static auto BeginRequirement(Context& context,
                              const Context::StateStackEntry& state) -> void {
-  // FIXME: handle `.AssociatedConst = _` here?
-  context.PushState(state, State::RequirementAnd);
+  // context.PushState(state, State::RequirementAnd);
   context.PushState(state, State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
@@ -248,15 +247,14 @@ auto HandleRequirementOperator(Context& context) -> void {
           "requirement should use `impls`, `=`, or `==` operator.");
       context.emitter().Emit(state.token, ExpectedRequirementOperator);
       context.ReturnErrorOnState();
-      break;
+      return;
     }
   }
-  context.PushState(state, State::RequirementAnd);
+  context.PushState(state, State::RequirementOperatorFinish);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
-// FIXME: split in 2
-auto HandleRequirementAnd(Context& context) -> void {
+auto HandleRequirementOperatorFinish(Context& context) -> void {
   auto state = context.PopState();
 
   switch (auto token_kind = context.tokens().GetKind(state.token)) {
@@ -275,20 +273,17 @@ auto HandleRequirementAnd(Context& context) -> void {
       break;
     }
     default:
-      // FIXME: better logic
-      if (state.has_error) {
-        context.ReturnErrorOnState();
-      } else {
-        CARBON_FATAL() << "Unexpected token kind for requirement operator: "
-                       << token_kind;
-      }
+      // RequirementOperatorFinish state is only pushed in
+      // HandleRequirementOperator on one of the three requirement operator
+      // tokens.
+      CARBON_FATAL() << "Unexpected token kind for requirement operator: "
+                     << token_kind;
       return;
   }
+}
 
-  // TODO: is the next token an `and`?
-  // state.has_error = false;
-
-  state = context.PopState();
+auto HandleWhereFinish(Context& context) -> void {
+  auto state = context.PopState();
   context.AddNode(NodeKind::WhereExpr, state.token, state.has_error);
 }
 
@@ -402,6 +397,7 @@ auto HandleExprLoop(Context& context) -> void {
       case Lex::TokenKind::Where:
         context.AddNode(NodeKind::WhereIntroducer, state.token,
                         state.has_error);
+        context.PushState(state, State::WhereFinish);
         BeginRequirement(context, state);
         return;
 

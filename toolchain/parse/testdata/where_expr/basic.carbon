@@ -29,7 +29,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'T'},
 // CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:             {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'DotSelf', text: 'Self'},
+// CHECK:STDOUT:                 {kind: 'SelfTypeName', text: 'Self'},
 // CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'RequirementEquals', text: '==', subtree_size: 4},
