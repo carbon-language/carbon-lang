@@ -23,7 +23,7 @@ class CompileBenchmark {
   CompileBenchmark()
       : installation_(InstallPaths::MakeForBazelRunfiles(GetExePath())),
         driver_(fs_, &installation_, llvm::outs(), llvm::errs()) {
-    CopyPreludeFilesToVfs(installation_, &fs_);
+    AddPreludeFilesToVfs(installation_, &fs_);
   }
 
   // Setup a set of source files in the VFS for the driver. Each string input is

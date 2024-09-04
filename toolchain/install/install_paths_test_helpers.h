@@ -11,8 +11,8 @@
 namespace Carbon::Testing {
 
 // Prepares the VFS with prelude files from the real filesystem.
-auto CopyPreludeFilesToVfs(InstallPaths install_paths,
-                           llvm::vfs::InMemoryFileSystem* vfs) -> void;
+auto AddPreludeFilesToVfs(InstallPaths install_paths,
+                          llvm::vfs::InMemoryFileSystem* vfs) -> void;
 
 }  // namespace Carbon::Testing
 
