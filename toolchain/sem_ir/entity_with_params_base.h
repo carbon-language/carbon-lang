@@ -94,7 +94,7 @@ struct EntityWithParamsBase {
   InstBlockId param_refs_id;
   // True if declarations are `extern`.
   bool is_extern : 1;
-  // Tru eif the declarations are `virtual`.
+  // True if the declarations are `virtual`.
   bool is_virtual : 1;
   // For an `extern library` declaration, the library name.
   SemIR::LibraryNameId extern_library_id;
