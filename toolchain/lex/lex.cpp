@@ -111,20 +111,35 @@ class [[clang::internal_linkage]] Lexer {
 
   // Note when the lexer has encountered whitespace, and the next lexed token
   // should reflect that it was preceded by some amount of whitespace.
-  auto NoteWhitespace() -> void;
+  auto NoteWhitespace() -> void{ has_leading_space_ = true; }
 
   // Add a lexed token to the tokenized buffer, and reset any token-specific
   // state tracked in the lexer for the next token.
-  auto AddLexedToken(TokenInfo info) -> TokenIndex;
+  auto AddLexedToken(TokenInfo info) -> TokenIndex {
+    has_leading_space_ = false;
+    return buffer_.AddToken(info);
+  }
 
   // Lexes a token with no payload: builds the correctly encoded token info,
   // adds it to the tokenized buffer and returns the token index.
-  auto LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex;
+  auto LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex {
+    // Check that we don't accidentally call this for one of the token kinds
+    // that *always* has a payload up front.
+    CARBON_DCHECK(!kind.IsOneOf(
+        {TokenKind::Identifier, TokenKind::StringLiteral, TokenKind::IntLiteral,
+         TokenKind::IntTypeLiteral, TokenKind::UnsignedIntTypeLiteral,
+         TokenKind::FloatTypeLiteral, TokenKind::RealLiteral,
+         TokenKind::Error}));
+    return AddLexedToken(TokenInfo(kind, has_leading_space_, byte_offset));
+  }
 
   // Lexes a token with a payload: builds the correctly encoded token info,
   // adds it to the tokenized buffer and returns the token index.
-  auto LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
-      -> TokenIndex;
+  auto LexToken(TokenKind kind, int token_payload,
+                int32_t byte_offset) -> TokenIndex {
+    return AddLexedToken(
+        TokenInfo(kind, has_leading_space_, token_payload, byte_offset));
+  }
 
   auto SkipHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
@@ -763,29 +778,6 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   // Now that all the infos are allocated, get a fresh pointer to the first
   // info for use while lexing.
   line_index_ = 0;
-}
-
-auto Lexer::NoteWhitespace() -> void { has_leading_space_ = true; }
-
-auto Lexer::AddLexedToken(TokenInfo info) -> TokenIndex {
-  has_leading_space_ = false;
-  return buffer_.AddToken(info);
-}
-
-auto Lexer::LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex {
-  // Check that we don't accidentally call this for one of the token kinds that
-  // *always* has a payload up front.
-  CARBON_DCHECK(!kind.IsOneOf(
-      {TokenKind::Identifier, TokenKind::StringLiteral, TokenKind::IntLiteral,
-       TokenKind::IntTypeLiteral, TokenKind::UnsignedIntTypeLiteral,
-       TokenKind::FloatTypeLiteral, TokenKind::RealLiteral, TokenKind::Error}));
-  return AddLexedToken(TokenInfo(kind, has_leading_space_, byte_offset));
-}
-
-auto Lexer::LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
-    -> TokenIndex {
-  return AddLexedToken(
-      TokenInfo(kind, has_leading_space_, token_payload, byte_offset));
 }
 
 auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
