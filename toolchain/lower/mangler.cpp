@@ -15,6 +15,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   // Maintain a stack of names for delayed rendering of interface impls.
   struct NameEntry {
     SemIR::NameScopeId name_scope_id;
+
+    // The prefix emitted before this name component. If '\0', no prefix will be
+    // emitted.
+    // * namespace components are separated by '.'
+    // * the two components of an interface are separated by ':'
     char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
