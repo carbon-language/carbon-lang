@@ -49,7 +49,7 @@ class B {}
 fn F(T:! Generic(A));
 fn G(T:! Generic(B)) {
   // TODO: Include generic arguments in the type name.
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `Generic` to `Generic`.
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: ERROR: Package `Core` implicitly referenced here, but not found.
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.
@@ -423,6 +423,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: %.5 = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT:     %.loc18: %.4 = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %F.call: init %.1 = call %F.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

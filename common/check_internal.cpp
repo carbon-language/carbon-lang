@@ -23,6 +23,8 @@ ExitingStream::~ExitingStream() {
 
 auto ExitingStream::Done() -> void {
   buffer_ << "\n";
+  buffer_.flush();
+
   // Register another signal handler to print the buffered message. This is
   // because we want it at the bottom of output, after LLVM's builtin stack
   // output, rather than the top.

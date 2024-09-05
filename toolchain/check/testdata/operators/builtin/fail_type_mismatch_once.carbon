@@ -11,11 +11,11 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: ERROR: Cannot access member of interface Add in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: ERROR: Cannot access member of interface `Add` in type `i32` that does not implement that interface.
   // CHECK:STDERR:   return 12 + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Add in type <error> that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `Add` in type `<error>` that does not implement that interface.
   // CHECK:STDERR:   return 12 + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~~~~~~
   return 12 + 3.4 + 12;
@@ -47,6 +47,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -86,7 +87,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_10: i32 = int_literal 12 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc21_15: f64 = float_literal 3.4000000000000004 [template = constants.%.3]
+// CHECK:STDOUT:   %Op.ref.loc21_13: %.5 = name_ref Op, imports.%import_ref.4 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc21_21: i32 = int_literal 12 [template = constants.%.2]
+// CHECK:STDOUT:   %Op.ref.loc21_19: %.5 = name_ref Op, imports.%import_ref.4 [template = constants.%.6]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
