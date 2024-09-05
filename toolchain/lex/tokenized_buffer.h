@@ -219,6 +219,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto size() const -> int { return token_infos_.size(); }
 
+  // This is an upper bound on the number of output parse nodes in the absence
+  // of errors.
   auto expected_parse_tree_size() const -> int {
     return expected_parse_tree_size_;
   }
