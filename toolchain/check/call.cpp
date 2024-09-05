@@ -22,7 +22,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                                       SemIR::ClassId class_id,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
-  auto& class_info = context.classes().Get(class_id);
+  CalleeParamsInfo class_info(context.classes().Get(class_id));
 
   // TODO: Pass in information about the specific in which the generic class
   // name was found.
@@ -47,7 +47,7 @@ static auto PerformCallToGenericInterface(Context& context, SemIR::LocId loc_id,
                                           SemIR::InterfaceId interface_id,
                                           llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
-  auto& interface_info = context.interfaces().Get(interface_id);
+  CalleeParamsInfo interface_info(context.interfaces().Get(interface_id));
 
   // TODO: Pass in information about the specific in which the generic interface
   // name was found.
@@ -144,9 +144,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
 
   // Convert the arguments to match the parameters.
-  auto converted_args_id =
-      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
-                      return_storage_id, callable, specific_id);
+  auto converted_args_id = ConvertCallArgs(
+      context, loc_id, callee_function.self_id, arg_ids, return_storage_id,
+      CalleeParamsInfo(callable), specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
                                             .callee_id = callee_id,

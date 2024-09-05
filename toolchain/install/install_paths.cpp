@@ -76,6 +76,46 @@ auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
   return paths;
 }
 
+auto InstallPaths::FindPreludeFiles() const
+    -> ErrorOr<llvm::SmallVector<std::string>> {
+  // This is structured to avoid a vector copy on success.
+  ErrorOr<llvm::SmallVector<std::string>> result =
+      llvm::SmallVector<std::string>();
+
+  std::string dir = core_package();
+
+  // Include <data>/core/prelude.carbon, which is the entry point into the
+  // prelude.
+  {
+    llvm::SmallString<256> prelude_file(dir);
+    llvm::sys::path::append(prelude_file, llvm::sys::path::Style::posix,
+                            "prelude.carbon");
+    result->push_back(prelude_file.str().str());
+  }
+
+  // Glob for <data>/core/prelude/**/*.carbon and add all the files we find.
+  llvm::SmallString<256> prelude_dir(dir);
+  llvm::sys::path::append(prelude_dir, llvm::sys::path::Style::posix,
+                          "prelude");
+  std::error_code ec;
+  for (llvm::sys::fs::recursive_directory_iterator prelude_files_it(
+           prelude_dir, ec, /*follow_symlinks=*/false);
+       prelude_files_it != llvm::sys::fs::recursive_directory_iterator();
+       prelude_files_it.increment(ec)) {
+    if (ec) {
+      result = ErrorBuilder() << "Could not find prelude: " << ec.message();
+      return result;
+    }
+
+    auto prelude_file = prelude_files_it->path();
+    if (llvm::sys::path::extension(prelude_file) == ".carbon") {
+      result->push_back(prelude_file);
+    }
+  }
+
+  return result;
+}
+
 auto InstallPaths::SetError(llvm::Twine message) -> void {
   // Use an empty prefix on error as that should use the working directory which
   // is the least likely problematic.

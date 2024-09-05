@@ -427,6 +427,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
     // We expect it to be a namespace.
     if (auto namespace_inst =
             context.insts().TryGetAs<SemIR::Namespace>(core_inst_id)) {
+      // TODO: Decide whether to allow the case where `Core` is not a package.
       return namespace_inst->name_scope_id;
     }
   }

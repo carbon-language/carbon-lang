@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 #define CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 
+#include "common/error.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -59,6 +60,10 @@ namespace Carbon {
 // TODO: Need to check the installation structure of LLVM on Windows and figure
 // out what Carbon's should be within a Windows prefix and how much of the
 // structure we can share with the Unix-y layout of the prefix.
+//
+// TODO: InstallPaths is typically called from places using a VFS (both tests
+// and the Driver), but does not use a VFS itself. It currently only supports
+// using the real filesystem, but should probably support a VFS.
 class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
@@ -81,6 +86,10 @@ class InstallPaths {
   // Provide an explicit install paths prefix. This is useful for testing or for
   // using Carbon in an environment with an unusual path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
+
+  // Finds the source files that define the prelude and returns a list of their
+  // filenames. The list always includes at least one file.
+  auto FindPreludeFiles() const -> ErrorOr<llvm::SmallVector<std::string>>;
 
   // Check for an error detecting the install paths correctly.
   //
