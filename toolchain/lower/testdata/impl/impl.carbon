@@ -29,7 +29,7 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'impl.carbon'
 // CHECK:STDOUT: source_filename = "impl.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.A.Main(ptr %self) !dbg !4 {
+// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main.Main"(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc21_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc21_16.2 = load i32, ptr %.loc21_16.1.n, align 4, !dbg !7
@@ -38,7 +38,7 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.A.Main(ptr %a), !dbg !10
+// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main.Main"(ptr %a), !dbg !10
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -49,7 +49,7 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "impl.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 21, column: 12, scope: !4)

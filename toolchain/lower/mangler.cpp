@@ -36,7 +36,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       } else {
         os << "Main";
       }
-      break;
+      continue;
     }
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
     names_to_render.push_back(

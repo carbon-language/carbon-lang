@@ -31,20 +31,20 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'extend_impl.carbon'
 // CHECK:STDOUT: source_filename = "extend_impl.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.A.Main() !dbg !4 {
+// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main.A.Main"() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTypeAccess.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.A.Main(), !dbg !9
+// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main.A.Main"(), !dbg !9
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CInstanceAccess.Main(ptr %a) !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.A.Main(), !dbg !12
+// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main.A.Main"(), !dbg !12
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,7 +55,7 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "extend_impl.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main.A.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
