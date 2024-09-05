@@ -330,8 +330,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   llvm::SmallVector<LineInfo> line_infos_;
 
-  // The number of parse tree nodes that we expect to be created for the tokens
-  // in this buffer.
+  // An upper bound on the number of parse tree nodes that we expect to be
+  // created for the tokens in this buffer.
   int expected_parse_tree_size_ = 0;
 
   bool has_errors_ = false;
