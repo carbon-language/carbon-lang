@@ -23,8 +23,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
-    std::optional<Context::Diagnoser> missing_impl_diagnoser = std::nullopt)
-    -> SemIR::InstId;
+    std::optional<Context::BuildDiagnosticFunction> missing_impl_diagnoser =
+        std::nullopt) -> SemIR::InstId;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.

@@ -158,7 +158,8 @@ static auto LookupInterfaceWitness(Context& context,
 static auto PerformImplLookup(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
-    std::optional<Context::Diagnoser> missing_impl_diagnoser) -> SemIR::InstId {
+    std::optional<Context::BuildDiagnosticFunction> missing_impl_diagnoser)
+    -> SemIR::InstId {
   auto interface_type =
       context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
   auto& interface = context.interfaces().Get(interface_type.interface_id);
@@ -417,7 +418,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
-    std::optional<Context::Diagnoser> missing_impl_diagnoser) -> SemIR::InstId {
+    std::optional<Context::BuildDiagnosticFunction> missing_impl_diagnoser)
+    -> SemIR::InstId {
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrRefExpr(context, base_id);
   auto base_type_id = context.insts().Get(base_id).type_id();

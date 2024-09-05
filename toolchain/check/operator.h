@@ -21,20 +21,20 @@ struct Operator {
 // `*operand` or `operand*`. If specified, `missing_impl_diagnoser` is used to
 // build a custom error diagnostic for the case where impl lookup for the
 // operator fails.
-auto BuildUnaryOperator(
-    Context& context, SemIR::LocId loc_id, Operator op,
-    SemIR::InstId operand_id,
-    std::optional<Context::Diagnoser> missing_impl_diagnoser = std::nullopt)
+auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                        SemIR::InstId operand_id,
+                        std::optional<Context::BuildDiagnosticFunction>
+                            missing_impl_diagnoser = std::nullopt)
     -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
 // `lhs_id * rhs_id`. If specified, `missing_impl_diagnoser` is used to build a
 // custom error diagnostic for the case where impl lookup for the operator
 // fails.
-auto BuildBinaryOperator(
-    Context& context, SemIR::LocId loc_id, Operator op, SemIR::InstId lhs_id,
-    SemIR::InstId rhs_id,
-    std::optional<Context::Diagnoser> missing_impl_diagnoser = std::nullopt)
+auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                         SemIR::InstId lhs_id, SemIR::InstId rhs_id,
+                         std::optional<Context::BuildDiagnosticFunction>
+                             missing_impl_diagnoser = std::nullopt)
     -> SemIR::InstId;
 
 }  // namespace Carbon::Check
