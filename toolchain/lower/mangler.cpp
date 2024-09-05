@@ -12,6 +12,7 @@ namespace Carbon::Lower {
 auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
+  // Maintain a stack of names for delayed rendering of interface impls.
   struct NameEntry {
     SemIR::NameScopeId name_scope_id;
     char prefix;
