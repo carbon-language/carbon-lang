@@ -8,8 +8,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/where_and.carbon
 
-// TODO: Support `and` to allow multiple requirements in `where` expressions.
-
 fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
 
 // CHECK:STDOUT: - filename: where_and.carbon
