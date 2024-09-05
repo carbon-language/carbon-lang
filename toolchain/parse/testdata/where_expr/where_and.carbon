@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/where_and.carbon
 
-fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
+fn Foo(T:! type where .U = i32 and .V == .W and .X impls I);
 
 // CHECK:STDOUT: - filename: where_and.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -35,7 +35,7 @@ fn Foo(T: type where .U = i32 and .V == .W and .X impls I);
 // CHECK:STDOUT:               {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
 // CHECK:STDOUT:             {kind: 'RequirementAnd', text: 'and', subtree_size: 15},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 18},
-// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 20},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 20},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 22},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 25},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
