@@ -13,7 +13,7 @@ interface I {
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: ERROR: Name `Core` not found.
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: ERROR: Package `Core` implicitly referenced here, but not found.
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:          ^~~
   let a: i32;
