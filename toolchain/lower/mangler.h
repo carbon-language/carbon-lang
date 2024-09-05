@@ -13,7 +13,7 @@
 namespace Carbon::Lower {
 
 // A class for producing mangled (deterministically unique, at least partially
-// human readable) names for externally referenceable entities such as extern
+// human readable) names for externally referenceable entities such as
 // functions.
 class Mangler {
  public:
