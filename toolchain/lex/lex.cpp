@@ -111,7 +111,7 @@ class [[clang::internal_linkage]] Lexer {
 
   // Note when the lexer has encountered whitespace, and the next lexed token
   // should reflect that it was preceded by some amount of whitespace.
-  auto NoteWhitespace() -> void{ has_leading_space_ = true; }
+  auto NoteWhitespace() -> void { has_leading_space_ = true; }
 
   // Add a lexed token to the tokenized buffer, and reset any token-specific
   // state tracked in the lexer for the next token.
@@ -135,8 +135,8 @@ class [[clang::internal_linkage]] Lexer {
 
   // Lexes a token with a payload: builds the correctly encoded token info,
   // adds it to the tokenized buffer and returns the token index.
-  auto LexToken(TokenKind kind, int token_payload,
-                int32_t byte_offset) -> TokenIndex {
+  auto LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
+      -> TokenIndex {
     return AddLexedToken(
         TokenInfo(kind, has_leading_space_, token_payload, byte_offset));
   }
