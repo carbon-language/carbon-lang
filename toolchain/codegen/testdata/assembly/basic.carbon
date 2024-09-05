@@ -5,6 +5,6 @@
 // ARGS: compile --no-prelude-import --target=x86_64-unknown-linux-gnu --output=- %s
 // NOAUTOUPDATE
 // SET-CHECK-SUBSET
-// CHECK:STDOUT: _CMain:
+// CHECK:STDOUT: _CMain.Main:
 
 fn Main() {}

@@ -18,35 +18,41 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
-  auto add_scope = [&](SemIR::NameScopeId name_scope_id, char prefix) {
-    if (name_scope_id.is_valid() &&
-        name_scope_id != SemIR::NameScopeId::Package) {
-      names_to_render.push_back({name_scope_id, prefix});
-    }
-  };
-  add_scope(name_scope_id, '.');
+  names_to_render.push_back({.name_id = name_scope_id, .prefix = '.'});
   while (!names_to_render.empty()) {
     auto [name_scope_id, prefix] = names_to_render.back();
     names_to_render.pop_back();
-    const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
     if (prefix) {
       os << prefix;
     }
-    add_scope(name_scope.parent_scope_id, '.');
+    if (name_scope_id == SemIR::NameScopeId::Package) {
+      if (auto package_id = sem_ir().package_id(); package_id.is_valid()) {
+        os << sem_ir().identifiers().Get(package_id);
+      } else {
+        os << "Main";
+      }
+      break;
+    }
+    const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
+    names_to_render.push_back(
+        {.name_id = name_scope.parent_scope_id, .prefix = '.'});
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
         auto interface_type =
             types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
-        const auto& interface = sem_ir().interfaces().Get(interface_type.interface_id);
-        names_to_render.push_back({interface.scope_id, ':'});
+        const auto& interface =
+            sem_ir().interfaces().Get(interface_type.interface_id);
+        names_to_render.push_back(
+            {.name_id = interface.scope_id, .prefix = ':'});
 
         CARBON_KIND_SWITCH(types().GetAsInst(impl.self_id)) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;
-            names_to_render.push_back({next_name_scope_id});
+            names_to_render.push_back(
+                {.name_id = next_name_scope_id, .prefix = '\0'});
             break;
           }
           case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
