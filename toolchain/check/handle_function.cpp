@@ -199,11 +199,6 @@ static auto BuildFunctionDecl(Context& context,
   bool is_abstract =
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract);
   bool is_impl = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Impl);
-  if (!is_virtual && !is_abstract && !is_impl &&
-      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "method modifier");
-  }
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
