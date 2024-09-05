@@ -38,7 +38,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
 
         auto interface_type =
             types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
-        auto interface = sem_ir().interfaces().Get(interface_type.interface_id);
+        const auto& interface = sem_ir().interfaces().Get(interface_type.interface_id);
         names_to_render.push_back({interface.scope_id, ':'});
 
         CARBON_KIND_SWITCH(types().GetAsInst(impl.self_id)) {
