@@ -66,6 +66,15 @@ fn Core.Int32() -> {} { return {}; }
 
 var n: {} = i32;
 
+// --- fail_prelude_as_class.carbon
+
+// TODO: Decide whether we want to accept this.
+class Core {
+  fn Int32() -> {} { return {}; }
+}
+
+var n: {} = i32;
+
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
