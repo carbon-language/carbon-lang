@@ -10,14 +10,12 @@
 
 
 base class Base {
-
   virtual fn H();
 
   impl fn I();
 }
 
 abstract class Abstract {
-
   abstract fn J();
 
   virtual fn K();
