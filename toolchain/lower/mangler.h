@@ -27,7 +27,7 @@ class Mangler {
 
  private:
   // Mangle this qualified name with inner scope first, working outwards. This
-  // may reduce the incidence of common prefixes in the name mangling. (ie:
+  // may reduce the incidence of common prefixes in the name mangling. (i.e.:
   // every standard library name won't have a common prefix that has to be
   // skipped and compared before getting to the interesting part)
   auto MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
