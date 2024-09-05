@@ -13,7 +13,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
     -> void {
   struct NameEntry {
-    SemIR::NameScopeId name_id;
+    SemIR::NameScopeId name_scope_id;
     char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
