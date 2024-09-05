@@ -234,7 +234,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
-  // TODO: Remap return type to i32 if `Run` doesn't return a value.
+  // TODO: For the `Run` entry point, remap return type to i32 if it doesn't return a value.
   llvm::Type* function_return_type =
       return_info.init_repr.kind == SemIR::InitRepr::ByCopy
           ? return_type
