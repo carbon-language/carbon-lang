@@ -117,16 +117,12 @@ class [[clang::internal_linkage]] Lexer {
   // state tracked in the lexer for the next token.
   auto AddLexedToken(TokenInfo info) -> TokenIndex;
 
-  // An overload for lexing a token.Builds the correctly encoded token info,
+  // Lexes a token with no payload: builds the correctly encoded token info,
   // adds it to the tokenized buffer and returns the token index.
-  //
-  // This overload is for tokens without a payload.
   auto LexToken(TokenKind kind, int32_t byte_offset) -> TokenIndex;
 
-  // An overload for lexing a token.Builds the correctly encoded token info,
+  // Lexes a token with a payload: builds the correctly encoded token info,
   // adds it to the tokenized buffer and returns the token index.
-  //
-  // This overload is for tokens with a payload.
   auto LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
       -> TokenIndex;
 
@@ -1020,15 +1016,11 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
             byte_offset);
       },
       [&](NumericLiteral::RealValue&& value) {
-        return LexToken(
-            TokenKind::RealLiteral,
-            buffer_.value_stores_->reals()
-                .Add(Real{.mantissa = value.mantissa,
-                          .exponent = value.exponent,
-                          .is_decimal =
-                              (value.radix == NumericLiteral::Radix::Decimal)})
-                .index,
-            byte_offset);
+        auto real_id = buffer_.value_stores_->reals().Add(Real{
+            .mantissa = value.mantissa,
+            .exponent = value.exponent,
+            .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
+        return LexToken(TokenKind::RealLiteral, real_id.index, byte_offset);
       },
       [&](NumericLiteral::UnrecoverableError) {
         return LexToken(TokenKind::Error, token_size, byte_offset);
