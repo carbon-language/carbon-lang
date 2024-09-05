@@ -83,7 +83,6 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
 auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
-    // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     return "main";
   }
   std::string result;
