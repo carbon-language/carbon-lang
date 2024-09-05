@@ -18,9 +18,9 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                                   Operator op) -> SemIR::InstId {
   // Look up the interface, and pass it any generic arguments.
   auto interface_id = context.LookupNameInCore(loc_id, op.interface_name);
-  if (!op.interface_args.empty()) {
+  if (!op.interface_args_ref.empty()) {
     interface_id =
-        PerformCall(context, loc_id, interface_id, op.interface_args);
+        PerformCall(context, loc_id, interface_id, op.interface_args_ref);
   }
 
   // Look up the interface member.
@@ -32,7 +32,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
 auto BuildUnaryOperator(
     Context& context, SemIR::LocId loc_id, Operator op,
     SemIR::InstId operand_id,
-    std::optional<Context::BuildDiagnosticFunction> missing_impl_diagnoser)
+    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id, op);
@@ -51,7 +51,7 @@ auto BuildUnaryOperator(
 auto BuildBinaryOperator(
     Context& context, SemIR::LocId loc_id, Operator op, SemIR::InstId lhs_id,
     SemIR::InstId rhs_id,
-    std::optional<Context::BuildDiagnosticFunction> missing_impl_diagnoser)
+    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id, op);

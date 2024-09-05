@@ -968,7 +968,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         .interface_name = target.kind == ConversionTarget::ExplicitAs
                               ? llvm::StringLiteral("As")
                               : llvm::StringLiteral("ImplicitAs"),
-        .interface_args = interface_args,
+        .interface_args_ref = interface_args,
         .op_name = "Convert",
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {

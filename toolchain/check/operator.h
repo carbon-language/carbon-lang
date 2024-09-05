@@ -13,7 +13,7 @@ namespace Carbon::Check {
 
 struct Operator {
   llvm::StringLiteral interface_name;
-  llvm::ArrayRef<SemIR::InstId> interface_args = {};
+  llvm::ArrayRef<SemIR::InstId> interface_args_ref = {};
   llvm::StringLiteral op_name = "Op";
 };
 
@@ -23,7 +23,7 @@ struct Operator {
 // operator fails.
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
-                        std::optional<Context::BuildDiagnosticFunction>
+                        std::optional<Context::BuildDiagnosticFn>
                             missing_impl_diagnoser = std::nullopt)
     -> SemIR::InstId;
 
@@ -33,7 +33,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 // fails.
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         std::optional<Context::BuildDiagnosticFunction>
+                         std::optional<Context::BuildDiagnosticFn>
                              missing_impl_diagnoser = std::nullopt)
     -> SemIR::InstId;
 
