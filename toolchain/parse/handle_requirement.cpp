@@ -80,6 +80,8 @@ auto HandleRequirementAnd(Context& context) -> void {
     context.PushState(state, State::RequirementAndFinish);
     context.PushState(State::RequirementOperator);
     context.PushStateForExpr(PrecedenceGroup::ForRequirements());
+  } else if (state.has_error) {
+    context.ReturnErrorOnState();
   }
 }
 
