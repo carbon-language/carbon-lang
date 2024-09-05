@@ -92,6 +92,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
 }
 
 auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
+  // FIXME: Add support for generic entities.
+
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     return "main";
