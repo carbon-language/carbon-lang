@@ -25,8 +25,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   llvm::SmallVector<NameEntry> names_to_render;
   names_to_render.push_back({.name_scope_id = name_scope_id, .prefix = '.'});
   while (!names_to_render.empty()) {
-    auto [name_scope_id, prefix] = names_to_render.back();
-    names_to_render.pop_back();
+    auto [name_scope_id, prefix] = names_to_render.pop_back_val();
     if (prefix) {
       os << prefix;
     }
