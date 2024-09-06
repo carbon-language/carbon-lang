@@ -135,8 +135,8 @@ class [[clang::internal_linkage]] Lexer {
 
   // Lexes a token with a payload: builds the correctly encoded token info,
   // adds it to the tokenized buffer and returns the token index.
-  auto LexToken(TokenKind kind, int token_payload, int32_t byte_offset)
-      -> TokenIndex {
+  auto LexTokenWithPayload(TokenKind kind, int token_payload,
+                           int32_t byte_offset) -> TokenIndex {
     return AddLexedToken(
         TokenInfo(kind, has_leading_space_, token_payload, byte_offset));
   }
@@ -1002,7 +1002,7 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   return VariantMatch(
       literal->ComputeValue(emitter_),
       [&](NumericLiteral::IntValue&& value) {
-        return LexToken(
+        return LexTokenWithPayload(
             TokenKind::IntLiteral,
             buffer_.value_stores_->ints().Add(std::move(value.value)).index,
             byte_offset);
@@ -1012,10 +1012,10 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
             .mantissa = value.mantissa,
             .exponent = value.exponent,
             .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
-        return LexToken(TokenKind::RealLiteral, real_id.index, byte_offset);
+        return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index, byte_offset);
       },
       [&](NumericLiteral::UnrecoverableError) {
-        return LexToken(TokenKind::Error, token_size, byte_offset);
+        return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
       });
 }
 
@@ -1047,12 +1047,12 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   if (literal->is_terminated()) {
     auto string_id = buffer_.value_stores_->string_literal_values().Add(
         literal->ComputeValue(buffer_.allocator_, emitter_));
-    return LexToken(TokenKind::StringLiteral, string_id.index, byte_offset);
+    return LexTokenWithPayload(TokenKind::StringLiteral, string_id.index, byte_offset);
   } else {
     CARBON_DIAGNOSTIC(UnterminatedString, Error,
                       "String is missing a terminator.");
     emitter_.Emit(literal->text().begin(), UnterminatedString);
-    return LexToken(TokenKind::Error, literal_size, byte_offset);
+    return LexTokenWithPayload(TokenKind::Error, literal_size, byte_offset);
   }
 }
 
@@ -1112,7 +1112,7 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   }
 
   TokenIndex opening_token = open_groups_.pop_back_val();
-  TokenIndex token = LexToken(kind, opening_token.index, byte_offset);
+  TokenIndex token = LexTokenWithPayload(kind, opening_token.index, byte_offset);
 
   auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
   if (LLVM_UNLIKELY(opening_token_info.kind() != kind.opening_symbol())) {
@@ -1174,14 +1174,14 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
 
   llvm::StringRef suffix = word.substr(1);
   if (!CanLexInt(emitter_, suffix)) {
-    return LexToken(TokenKind::Error, word.size(), byte_offset);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
   llvm::APInt suffix_value;
   if (suffix.getAsInteger(10, suffix_value)) {
     return LexResult::NoMatch();
   }
 
-  return LexToken(
+  return LexTokenWithPayload(
       kind, buffer_.value_stores_->ints().Add(std::move(suffix_value)).index,
       byte_offset);
 }
@@ -1220,7 +1220,7 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   }
 
   // Otherwise we have a generic identifier.
-  return LexToken(
+  return LexTokenWithPayload(
       TokenKind::Identifier,
       buffer_.value_stores_->identifiers().Add(identifier_text).index,
       byte_offset);
@@ -1289,7 +1289,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     error_text = source_text.substr(position, 1);
   }
 
-  auto token = LexToken(TokenKind::Error, error_text.size(), position);
+  auto token = LexTokenWithPayload(TokenKind::Error, error_text.size(), position);
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "Encountered unrecognized characters while parsing.");
   emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
