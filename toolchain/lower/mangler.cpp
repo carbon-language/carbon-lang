@@ -18,8 +18,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
 
     // The prefix emitted before this name component. If '\0', no prefix will be
     // emitted.
-    // * namespace components are separated by '.'
-    // * the two components of an interface are separated by ':'
+    // - Namespace components are separated by '.'.
+    // - The two components of an interface are separated by ':'.
     char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
