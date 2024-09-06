@@ -65,9 +65,9 @@ fn LessRequirement() {
   // CHECK:STDERR:   X where .J < .K;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:16: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: Expected `;` after expression statement.
   // CHECK:STDERR:   X where .J < .K;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:              ^
   // CHECK:STDERR:
   X where .J < .K;
 }
@@ -105,9 +105,9 @@ fn AsInArgument() {
   // CHECK:STDERR:   R where .O as type impls P;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:17: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: Expected `;` after expression statement.
   // CHECK:STDERR:   R where .O as type impls P;
-  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:              ^~
   // CHECK:STDERR:
   R where .O as type impls P;
 }
@@ -121,9 +121,9 @@ fn GreaterInArgument() {
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:17: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: Expected `;` after expression statement.
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:               ^
   Q where .AA > .BB impls CC;
 }
 

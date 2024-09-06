@@ -16,17 +16,36 @@ fn TwoAnd(Y:! I where .J impls K and .L == .M and .N = bool);
 
 // --- fail_and_prefix.carbon
 
+// CHECK:STDERR: fail_and_prefix.carbon:[[@LINE+8]]:29: ERROR: Expected expression.
+// CHECK:STDERR: fn AndPrefix(T:! type where and .V == .W);
+// CHECK:STDERR:                             ^~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_prefix.carbon:[[@LINE+4]]:29: ERROR: Expected `,` or `)`.
+// CHECK:STDERR: fn AndPrefix(T:! type where and .V == .W);
+// CHECK:STDERR:                             ^~~
+// CHECK:STDERR:
 fn AndPrefix(T:! type where and .V == .W);
 
 // --- fail_and_suffix.carbon
 
+// CHECK:STDERR: fail_and_suffix.carbon:[[@LINE+4]]:40: ERROR: Expected expression.
+// CHECK:STDERR: fn AndSuffix(Y:! I where .J impls K and);
+// CHECK:STDERR:                                        ^
+// CHECK:STDERR:
 fn AndSuffix(Y:! I where .J impls K and);
 
 // --- fail_and_early.carbon
 
+// CHECK:STDERR: fail_and_early.carbon:[[@LINE+7]]:28: ERROR: requirement should use `impls`, `=`, or `==` operator.
+// CHECK:STDERR: fn AndEarly(Z:! L where .M and N);
+// CHECK:STDERR:                            ^~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_early.carbon:[[@LINE+3]]:28: ERROR: Expected `,` or `)`.
+// CHECK:STDERR: fn AndEarly(Z:! L where .M and N);
+// CHECK:STDERR:                            ^~~
 fn AndEarly(Z:! L where .M and N);
 
-// CHECK:STDOUT: - filename: where_and.carbon
+// CHECK:STDOUT: - filename: success.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
@@ -74,5 +93,59 @@ fn AndEarly(Z:! L where .M and N);
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 20},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 22},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 25},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_and_prefix.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'AndPrefix'},
+// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'T'},
+// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
+// CHECK:STDOUT:             {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'InvalidParse', text: 'and', has_error: yes},
+// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_and_suffix.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'AndSuffix'},
+// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'Y'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'I'},
+// CHECK:STDOUT:             {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:                 {kind: 'IdentifierName', text: 'J'},
+// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'K'},
+// CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'RequirementAnd', text: 'and'},
+// CHECK:STDOUT:             {kind: 'InvalidParse', text: ')', has_error: yes},
+// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 11},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 16},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_and_early.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'AndEarly'},
+// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'Z'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'L'},
+// CHECK:STDOUT:             {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'M'},
+// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
