@@ -11,7 +11,6 @@
 namespace Carbon::Parse {
 
 auto BeginRequirement(Context& context) -> void {
-  context.PushState(State::RequirementAnd);
   context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
@@ -70,24 +69,14 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
                      << token_kind;
       return;
   }
-}
-
-auto HandleRequirementAnd(Context& context) -> void {
-  auto state = context.PopState();
-  if (auto token = context.ConsumeIf(Lex::TokenKind::And)) {
-    context.PushState(State::RequirementAnd);
-    state.token = *token;
-    context.PushState(state, State::RequirementAndFinish);
-    context.PushState(State::RequirementOperator);
-    context.PushStateForExpr(PrecedenceGroup::ForRequirements());
-  } else if (state.has_error) {
+  if (state.has_error) {
     context.ReturnErrorOnState();
   }
-}
-
-auto HandleRequirementAndFinish(Context& context) -> void {
-  auto state = context.PopState();
-  context.AddNode(NodeKind::RequirementAnd, state.token, state.has_error);
+  if (auto token = context.ConsumeIf(Lex::TokenKind::And)) {
+    context.AddNode(NodeKind::RequirementAnd, *token, /*has_error=*/false);
+    context.PushState(State::RequirementOperator);
+    context.PushStateForExpr(PrecedenceGroup::ForRequirements());
+  }
 }
 
 auto HandleWhereFinish(Context& context) -> void {

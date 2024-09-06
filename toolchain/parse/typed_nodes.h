@@ -1060,13 +1060,8 @@ struct RequirementImpls {
   AnyExprId rhs;
 };
 
-struct RequirementAnd {
-  static constexpr auto Kind = NodeKind::RequirementAnd.Define(
-      {.category = NodeCategory::Requirement, .child_count = 2});
-  AnyRequirementId lhs;
-  Lex::AndTokenIndex token;
-  AnyRequirementId rhs;
-};
+// An `and` token separating requirements in a `where` expression.
+using RequirementAnd = LeafNode<NodeKind::RequirementAnd, Lex::AndTokenIndex>;
 
 // virtual node
 // FIXME: WhereType? WhereOperand?
@@ -1078,13 +1073,11 @@ struct WhereIntroducer {
 };
 
 struct WhereExpr {
-  static constexpr auto Kind =
-      NodeKind::WhereExpr.Define({.category = NodeCategory::Expr,
-                                  .bracketed_by = WhereIntroducer::Kind,
-                                  .child_count = 2});
+  static constexpr auto Kind = NodeKind::WhereExpr.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = WhereIntroducer::Kind});
   WhereIntroducerId introducer;
   Lex::WhereTokenIndex token;
-  AnyRequirementId requirements;
+  CommaSeparatedList<AnyRequirementId, RequirementAndId> requirements;
 };
 
 // Choice nodes
