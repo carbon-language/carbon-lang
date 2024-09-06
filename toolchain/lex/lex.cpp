@@ -1012,7 +1012,8 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
             .mantissa = value.mantissa,
             .exponent = value.exponent,
             .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
-        return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index, byte_offset);
+        return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
+                                   byte_offset);
       },
       [&](NumericLiteral::UnrecoverableError) {
         return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
@@ -1047,7 +1048,8 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   if (literal->is_terminated()) {
     auto string_id = buffer_.value_stores_->string_literal_values().Add(
         literal->ComputeValue(buffer_.allocator_, emitter_));
-    return LexTokenWithPayload(TokenKind::StringLiteral, string_id.index, byte_offset);
+    return LexTokenWithPayload(TokenKind::StringLiteral, string_id.index,
+                               byte_offset);
   } else {
     CARBON_DIAGNOSTIC(UnterminatedString, Error,
                       "String is missing a terminator.");
@@ -1112,7 +1114,8 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   }
 
   TokenIndex opening_token = open_groups_.pop_back_val();
-  TokenIndex token = LexTokenWithPayload(kind, opening_token.index, byte_offset);
+  TokenIndex token =
+      LexTokenWithPayload(kind, opening_token.index, byte_offset);
 
   auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
   if (LLVM_UNLIKELY(opening_token_info.kind() != kind.opening_symbol())) {
@@ -1289,7 +1292,8 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     error_text = source_text.substr(position, 1);
   }
 
-  auto token = LexTokenWithPayload(TokenKind::Error, error_text.size(), position);
+  auto token =
+      LexTokenWithPayload(TokenKind::Error, error_text.size(), position);
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "Encountered unrecognized characters while parsing.");
   emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
