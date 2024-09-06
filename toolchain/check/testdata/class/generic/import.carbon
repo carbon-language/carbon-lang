@@ -202,6 +202,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.2
+// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %F.type => constants.%F.type.1
+// CHECK:STDOUT:   %F => constants.%F.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
@@ -353,6 +359,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.2
+// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %F.type => constants.%F.type.1
+// CHECK:STDOUT:   %F => constants.%F.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
@@ -518,6 +530,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.2
+// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %F.type => constants.%F.type.1
+// CHECK:STDOUT:   %F => constants.%F.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
@@ -649,6 +667,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.2
+// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %F.type => constants.%F.type.1
+// CHECK:STDOUT:   %F => constants.%F.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T) {
