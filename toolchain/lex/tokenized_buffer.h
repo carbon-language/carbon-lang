@@ -289,9 +289,18 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // once and then provides separate storage areas for the two arrays.
   class TokenInfo {
    public:
-    auto kind() const -> TokenKind { return TokenKind::FromInt(kind_); }
+    // The kind for this token.
+    auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
+
+    // Whether this token is preceded by whitespace. We only store the preceding
+    // state, and look at the next token to check for trailing whitespace.
     auto has_leading_space() const -> bool { return has_leading_space_; }
 
+    // A collection of methods to access the specific payload included with
+    // particular kinds of tokens. Only the specific payload accessor below may
+    // be used for an info entry of a token with a particular kind, and these
+    // check that the kind is valid. Some tokens do not include a payload at all
+    // and none of these methods may be called.
     auto ident_id() const -> IdentifierId {
       CARBON_DCHECK(kind() == TokenKind::Identifier);
       return IdentifierId(token_payload_);
@@ -345,6 +354,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
       return token_payload_;
     }
 
+    // Zero-based byte offset of the token within the file. This can be combined
+    // with the buffer's line information to locate the line and column of the
+    // token as well.
     auto byte_offset() const -> int32_t { return byte_offset_; }
 
     // Transforms the token into an error token of the given length but at its
@@ -366,8 +378,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // will be set later.
     //
     // Only used by the lexer which enforces only the correct kinds are used.
+    //
+    // When the payload is not being set, we leave it uninitialized. At least in
+    // some cases, this will allow MSan to correctly detect erroneous attempts
+    // to access the payload, as it works to track uninitialized memory
+    // bit-for-bit specifically to handle complex cases like bitfields.
     TokenInfo(TokenKind kind, bool has_leading_space, int32_t byte_offset)
-        : kind_(kind.AsInt()),
+        : kind_(kind),
           has_leading_space_(has_leading_space),
           byte_offset_(byte_offset) {}
 
@@ -376,7 +393,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Only used by the lexer which enforces the correct kind and payload types.
     TokenInfo(TokenKind kind, bool has_leading_space, int payload,
               int32_t byte_offset)
-        : kind_(kind.AsInt()),
+        : kind_(kind),
           has_leading_space_(has_leading_space),
           token_payload_(payload),
           byte_offset_(byte_offset) {
@@ -384,15 +401,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           << "Payload won't fit into unsigned bit pack: " << payload;
     }
 
-    unsigned kind_ : sizeof(TokenKind) * 8;
-
-    // Whether the token has leading whitespace.
-    unsigned has_leading_space_ : 1;
-
-    // Payload, typically representing an index into a kind-dependent array.
+    // A bitfield that encodes the token's kind, the leading space flag, and the
+    // remaining bits in a payload. These are encoded together as a bitfield for
+    // density and because these are the hottest fields of tokens for consumers
+    // after lexing.
+    TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
+    bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
 
-    // Zero-based byte offset of the token within the file.
+    // Separate storage for the byte offset, this is hot while lexing but then
+    // generally cold.
     int32_t byte_offset_;
   };
   static_assert(sizeof(TokenInfo) == 8,
