@@ -39,10 +39,10 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       continue;
     }
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
-    names_to_render.push_back(
-        {.name_scope_id = name_scope.parent_scope_id, .prefix = '.'});
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        names_to_render.clear();
+
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
         auto interface_type =
@@ -68,7 +68,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
             break;
         }
-        break;
+        // Skip the tail of the loop that adds the parent name scope to the
+        // stack - the scope in which the impl was defined is not part of the
+        // mangling, the constraint and interface alone uniquelify identify an
+        // impl.
+        continue;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
         os << names().GetAsStringIfIdentifier(
@@ -88,6 +92,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
         break;
     }
+    names_to_render.push_back(
+        {.name_scope_id = name_scope.parent_scope_id, .prefix = '.'});
   }
 }
 
