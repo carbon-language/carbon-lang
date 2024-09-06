@@ -465,7 +465,7 @@ struct SplitState {
 // Replaces the content keywords.
 //
 // TEST_NAME is the only content keyword at present, but we do validate that
-// other names
+// other names are reserved.
 static auto ReplaceContentKeywords(llvm::StringRef filename,
                                    std::string* content) -> ErrorOr<Success> {
   static constexpr llvm::StringLiteral Prefix = "[[@";
@@ -493,7 +493,6 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
     static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
     auto keyword = llvm::StringRef(*content).substr(keyword_pos);
     if (keyword.starts_with(TestName)) {
-      keyword = TestName;
       content->replace(keyword_pos, TestName.size(), test_name);
       keyword_pos += test_name.size();
     } else if (keyword.starts_with("[[@LINE")) {
