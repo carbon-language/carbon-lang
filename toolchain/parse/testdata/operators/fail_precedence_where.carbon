@@ -61,11 +61,7 @@ fn WhereNEq() {
 library "less_requirement";
 
 fn LessRequirement() {
-  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+8]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
-  // CHECK:STDERR:   X where .J < .K;
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   X where .J < .K;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -101,11 +97,7 @@ fn WhereAs() {
 library "as_in_argument";
 
 fn AsInArgument() {
-  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+8]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
-  // CHECK:STDERR:   R where .O as type impls P;
-  // CHECK:STDERR:              ^~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   R where .O as type impls P;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR:
@@ -117,11 +109,7 @@ fn AsInArgument() {
 library "greater_in_argument";
 
 fn GreaterInArgument() {
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+7]]:15: ERROR: requirement should use `impls`, `=`, or `==` operator.
-  // CHECK:STDERR:   Q where .AA > .BB impls CC;
-  // CHECK:STDERR:               ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
   // CHECK:STDERR:               ^
   Q where .AA > .BB impls CC;
@@ -148,7 +136,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'B'},
 // CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 11},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -194,7 +182,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f32'},
 // CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -260,7 +248,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'M'},
 // CHECK:STDOUT:           {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -83,6 +83,9 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
 auto HandleWhereFinish(Context& context) -> void {
   auto state = context.PopState();
   context.AddNode(NodeKind::WhereExpr, state.token, state.has_error);
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
 }
 
 }  // namespace Carbon::Parse
