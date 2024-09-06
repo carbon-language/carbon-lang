@@ -8,9 +8,23 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/where_and.carbon
 
+// --- success.carbon
+
 fn OneAnd(T:! type where .U = i32 and .V == .W);
 
 fn TwoAnd(Y:! I where .J impls K and .L == .M and .N = bool);
+
+// --- fail_and_prefix.carbon
+
+fn AndPrefix(T:! type where and .V == .W);
+
+// --- fail_and_suffix.carbon
+
+fn AndSuffix(Y:! I where .J impls K and);
+
+// --- fail_and_early.carbon
+
+fn AndEarly(Z:! L where .M and N);
 
 // CHECK:STDOUT: - filename: where_and.carbon
 // CHECK:STDOUT:   parse_tree: [
