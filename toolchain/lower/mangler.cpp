@@ -41,7 +41,6 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
     CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
-        names_to_render.clear();
 
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
