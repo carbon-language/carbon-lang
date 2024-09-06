@@ -194,6 +194,10 @@ TEST(ArgParserTest, ShortArgs) {
               StrEq("ERROR: Option '-z' (short for '--option2') requires a "
                     "value to be provided and none was.\n"));
 
+  EXPECT_THAT(parse({"--option2"}, os), Eq(ParseResult::Error));
+  EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Option '--option2' requires a value "
+                                  "to be provided and none was.\n"));
+
   EXPECT_THAT(parse({"-xz=123"}, os), Eq(ParseResult::Error));
   EXPECT_THAT(
       os.TakeStr(),
@@ -461,10 +465,15 @@ TEST(ArgParserTest, OneOfOption) {
   EXPECT_THAT(parse({"--option=z"}, llvm::errs()), Eq(ParseResult::Success));
   EXPECT_THAT(value, Eq(3));
 
+  TestRawOstream os;
+
+  EXPECT_THAT(parse({"--option"}, os), Eq(ParseResult::Error));
+  EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Option '--option' requires a value "
+                                  "to be provided and none was.\n"));
+
   constexpr const char* ErrorStr =
       "ERROR: Option '--option={0}' has an invalid value '{0}'; valid values "
       "are: 'x', 'y', or 'z'\n";
-  TestRawOstream os;
   EXPECT_THAT(parse({"--option=a"}, os), Eq(ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "a")));
 
