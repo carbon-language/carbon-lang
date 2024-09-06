@@ -17,10 +17,8 @@ auto BeginRequirement(Context& context) -> void {
 
 auto HandleRequirementOperator(Context& context) -> void {
   auto state = context.PopState();
-  auto kind = context.PositionKind();
-  state.token = context.Consume();
 
-  switch (kind) {
+  switch (context.PositionKind()) {
     case Lex::TokenKind::Impls: {
       break;
     }
@@ -31,14 +29,18 @@ auto HandleRequirementOperator(Context& context) -> void {
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(
-          ExpectedRequirementOperator, Error,
-          "requirement should use `impls`, `=`, or `==` operator.");
-      context.emitter().Emit(state.token, ExpectedRequirementOperator);
+      if (!state.has_error) {
+        CARBON_DIAGNOSTIC(
+            ExpectedRequirementOperator, Error,
+            "requirement should use `impls`, `=`, or `==` operator.");
+        context.emitter().Emit(*context.position(),
+                               ExpectedRequirementOperator);
+      }
       context.ReturnErrorOnState();
       return;
     }
   }
+  state.token = context.Consume();
   context.PushState(state, State::RequirementOperatorFinish);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
