@@ -23,13 +23,13 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @F(ptr sret({ i32, ptr }), ptr)
+// CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, ptr }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !7
 // CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8, !dbg !8
-// CHECK:STDOUT:   call void @F(ptr %d.var, ptr %c.var), !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(ptr %d.var, ptr %c.var), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

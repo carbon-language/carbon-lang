@@ -33,7 +33,7 @@ fn F() {
 // CHECK:STDOUT: @array.1.loc19_4 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
 // CHECK:STDOUT: @array.2.loc27_4 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ints.var = alloca [4 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   %.loc19_3.3.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 0, !dbg !8
@@ -67,7 +67,7 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "numeric_literals.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 7, scope: !4)

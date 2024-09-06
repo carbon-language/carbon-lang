@@ -24,7 +24,7 @@ fn Run() {
 // CHECK:STDOUT: @tuple.loc10_37 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT: @array.loc12_35 = internal constant [2 x i32] [i32 1, i32 2]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) !dbg !4 {
+// CHECK:STDOUT: define void @_CA.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc10_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
@@ -32,7 +32,7 @@ fn Run() {
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @B(ptr sret([2 x i32]) %return) !dbg !9 {
+// CHECK:STDOUT: define void @_CB.Main(ptr sret([2 x i32]) %return) !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_34.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc12_34.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 1, !dbg !10
@@ -44,7 +44,7 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !13
 // CHECK:STDOUT:   %.loc15_22.1.temp = alloca { i32, i32 }, align 8, !dbg !14
-// CHECK:STDOUT:   call void @A(ptr %.loc15_22.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_CA.Main(ptr %.loc15_22.1.temp), !dbg !14
 // CHECK:STDOUT:   %.loc15_22.3.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_22.1.temp, i32 0, i32 0, !dbg !14
 // CHECK:STDOUT:   %.loc15_22.4 = load i32, ptr %.loc15_22.3.tuple.elem, align 4, !dbg !14
 // CHECK:STDOUT:   %.loc15_22.6.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 0, !dbg !14
@@ -62,7 +62,7 @@ fn Run() {
 // CHECK:STDOUT:   store i32 %.loc17_19.2, ptr %c.var, align 4, !dbg !20
 // CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !21
 // CHECK:STDOUT:   %.loc18_17.1.temp = alloca [2 x i32], align 4, !dbg !22
-// CHECK:STDOUT:   call void @B(ptr %.loc18_17.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @_CB.Main(ptr %.loc18_17.1.temp), !dbg !22
 // CHECK:STDOUT:   %.loc18_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc18_17.1.temp, i32 0, i32 1, !dbg !22
 // CHECK:STDOUT:   %.loc18_21.2 = load i32, ptr %.loc18_21.1.array.index, align 4, !dbg !22
 // CHECK:STDOUT:   store i32 %.loc18_21.2, ptr %d.var, align 4, !dbg !23
@@ -84,12 +84,12 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "array_element_access.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "A", linkageName: "A", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "A", linkageName: "_CA.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 10, column: 31, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 10, column: 24, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "B", linkageName: "B", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "B", linkageName: "_CB.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 29, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 12, column: 22, scope: !9)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)

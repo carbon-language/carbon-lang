@@ -17,15 +17,15 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'nested_tuple_in_place.carbon'
 // CHECK:STDOUT: source_filename = "nested_tuple_in_place.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @F(ptr sret({ i32, i32, i32 }))
+// CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, i32, i32 }))
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G() !dbg !4 {
+// CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc14_56.1.tuple.elem = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   call void @F(ptr %.loc14_56.1.tuple.elem), !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_56.1.tuple.elem), !dbg !9
 // CHECK:STDOUT:   %.loc14_56.2.tuple.elem = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %v.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @F(ptr %.loc14_56.2.tuple.elem), !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_56.2.tuple.elem), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,7 +36,7 @@ fn G() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "nested_tuple_in_place.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "G", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 7, scope: !4)

@@ -16,9 +16,9 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: @a = internal global {}
 // CHECK:STDOUT: @struct.loc12_14 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @__global_init, ptr null }]
+// CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @__global_init() !dbg !4 {
+// CHECK:STDOUT: define void @_C__global_init.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @struct.loc12_14, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
@@ -36,7 +36,7 @@ var a: A = {};
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "class_obj.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "__global_init", linkageName: "__global_init", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 1, scope: !4)

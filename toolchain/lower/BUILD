@@ -32,6 +32,8 @@ cc_library(
         "constant.h",
         "file_context.cpp",
         "function_context.cpp",
+        "mangler.cpp",
+        "mangler.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([
