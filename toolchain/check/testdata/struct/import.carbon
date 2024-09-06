@@ -45,7 +45,10 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
+// CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: Type `C` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C({.a = 3, .b = 4}) = F();
@@ -91,6 +94,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -247,6 +251,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -397,6 +402,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -481,6 +487,22 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.9: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %struct.2: %.3 = struct_value (%.9, %.8) [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%struct.2) [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %.10: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.10) = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.10 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type %.10, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.10 [symbolic]
+// CHECK:STDOUT:   %.13: type = interface_type @ImplicitAs, @ImplicitAs(%C.3) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%C.3) [template]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.14: type = assoc_entity_type %.13, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.15: %.14 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.16: %.11 = assoc_entity element0, imports.%import_ref.11 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -489,15 +511,23 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+99, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+122, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+103, unloaded
+// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.2 (%.11) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.16)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+52, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -513,16 +543,35 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc6_20: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc6_28: i32 = int_literal 4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc6_29: %.3 = struct_literal (%.loc6_20, %.loc6_28)
-// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc6_20, %.loc6_28) [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc6_13.1: %.3 = converted %.loc6_29, %struct [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc6_13.2: init type = call %C.ref(%.loc6_13.1) [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc6_30.1: type = value_of_initializer %.loc6_13.2 [template = constants.%C.3]
-// CHECK:STDOUT:   %.loc6_30.2: type = converted %.loc6_13.2, %.loc6_30.1 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc9_20: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_28: i32 = int_literal 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_29: %.3 = struct_literal (%.loc9_20, %.loc9_28)
+// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc9_20, %.loc9_28) [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc9_13.1: %.3 = converted %.loc9_29, %struct [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc9_13.2: init type = call %C.ref(%.loc9_13.1) [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc9_30.1: type = value_of_initializer %.loc9_13.2 [template = constants.%C.3]
+// CHECK:STDOUT:   %.loc9_30.2: type = converted %.loc9_13.2, %.loc9_30.1 [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.10)]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.10), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.11)]
+// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.11) = assoc_entity element0, imports.%import_ref.10 [symbolic = %.3 (constants.%.12)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.7
+// CHECK:STDOUT:     .Convert = imports.%import_ref.8
+// CHECK:STDOUT:     witness = (imports.%import_ref.9)
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%S: %.3) {
@@ -538,11 +587,24 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %C.4;
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.10)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.10)]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc6: ref %C.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc6
+// CHECK:STDOUT:   %.loc9_35.1: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc9_35.1
+// CHECK:STDOUT:   %.loc9_37.1: init type = call constants.%ImplicitAs(constants.%C.3) [template = constants.%.13]
+// CHECK:STDOUT:   %.loc9_37.2: %.14 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%C.3) [template = constants.%.15]
+// CHECK:STDOUT:   %Convert.ref: %.14 = name_ref Convert, %.loc9_37.2 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc9_35.2: ref %C.4 = temporary %.loc9_35.1, %F.call
+// CHECK:STDOUT:   %.loc9_37.3: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -561,5 +623,35 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %S => constants.%struct.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%C.3) {
+// CHECK:STDOUT:   %Dest => constants.%C.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.13
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.2 => constants.%.14
+// CHECK:STDOUT:   %.3 => constants.%.15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

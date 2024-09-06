@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_unimplemented_op.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Add in type i32 that does not implement that interface.
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `Add` in type `i32` that does not implement that interface.
   // CHECK:STDERR:   return 12 + 34;
   // CHECK:STDERR:          ^~~~~~~
   return 12 + 34;
@@ -41,6 +41,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -80,6 +81,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_10: i32 = int_literal 12 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_15: i32 = int_literal 34 [template = constants.%.3]
+// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.4 [template = constants.%.6]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

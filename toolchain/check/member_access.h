@@ -12,20 +12,23 @@ namespace Carbon::Check {
 
 // Creates SemIR to perform a member access with base expression `base_id` and
 // member name `name_id`. Returns the result of the access.
-auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
+auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId;
 
 // Creates SemIR to perform a compound member access with base expression
 // `base_id` and member name expression `member_expr_id`. Returns the result of
-// the access.
-auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
-                                 SemIR::InstId base_id,
-                                 SemIR::InstId member_expr_id) -> SemIR::InstId;
+// the access. If specified, `missing_impl_diagnoser()` is used to build an
+// error diagnostic when impl binding fails due to a missing `impl`.
+auto PerformCompoundMemberAccess(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
+    SemIR::InstId member_expr_id,
+    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser =
+        std::nullopt) -> SemIR::InstId;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.
-auto PerformTupleIndex(Context& context, Parse::NodeId node_id,
+auto PerformTupleIndex(Context& context, SemIR::LocId loc_id,
                        SemIR::InstId tuple_inst_id, SemIR::InstId index_inst_id)
     -> SemIR::InstId;
 

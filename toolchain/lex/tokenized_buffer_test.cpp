@@ -637,7 +637,7 @@ TEST_F(LexerTest, Whitespace) {
   auto buffer = Lex("{( } {(");
 
   // Whether there should be whitespace before/after each token.
-  bool space[] = {true,
+  bool space[] = {false,
                   // start-of-file
                   true,
                   // {
@@ -1126,32 +1126,31 @@ TEST_F(LexerTest, PrintingOutputYaml) {
       Yaml::Value::FromText(print_stream.TakeStr()),
       IsYaml(ElementsAre(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(
           Pair("filename", source_storage_.front().filename().str()),
-          Pair("tokens",
-               Yaml::Sequence(ElementsAre(
-                   Yaml::Mapping(ElementsAre(
-                       Pair("index", "0"), Pair("kind", "FileStart"),
-                       Pair("line", "1"), Pair("column", "1"),
-                       Pair("indent", "1"), Pair("spelling", ""),
-                       Pair("has_trailing_space", "true"))),
-                   Yaml::Mapping(
-                       ElementsAre(Pair("index", "1"), Pair("kind", "Semi"),
-                                   Pair("line", "2"), Pair("column", "2"),
-                                   Pair("indent", "2"), Pair("spelling", ";"),
-                                   Pair("has_trailing_space", "true"))),
-                   Yaml::Mapping(
-                       ElementsAre(Pair("index", "2"), Pair("kind", "Semi"),
-                                   Pair("line", "5"), Pair("column", "1"),
-                                   Pair("indent", "1"), Pair("spelling", ";"),
-                                   Pair("has_trailing_space", "true"))),
-                   Yaml::Mapping(
-                       ElementsAre(Pair("index", "3"), Pair("kind", "Semi"),
-                                   Pair("line", "5"), Pair("column", "3"),
-                                   Pair("indent", "1"), Pair("spelling", ";"),
-                                   Pair("has_trailing_space", "true"))),
-                   Yaml::Mapping(ElementsAre(
-                       Pair("index", "4"), Pair("kind", "FileEnd"),
-                       Pair("line", "15"), Pair("column", "1"),
-                       Pair("indent", "1"), Pair("spelling", "")))))))))))));
+          Pair("tokens", Yaml::Sequence(ElementsAre(
+                             Yaml::Mapping(ElementsAre(
+                                 Pair("index", "0"), Pair("kind", "FileStart"),
+                                 Pair("line", "1"), Pair("column", "1"),
+                                 Pair("indent", "1"), Pair("spelling", ""))),
+                             Yaml::Mapping(ElementsAre(
+                                 Pair("index", "1"), Pair("kind", "Semi"),
+                                 Pair("line", "2"), Pair("column", "2"),
+                                 Pair("indent", "2"), Pair("spelling", ";"),
+                                 Pair("has_leading_space", "true"))),
+                             Yaml::Mapping(ElementsAre(
+                                 Pair("index", "2"), Pair("kind", "Semi"),
+                                 Pair("line", "5"), Pair("column", "1"),
+                                 Pair("indent", "1"), Pair("spelling", ";"),
+                                 Pair("has_leading_space", "true"))),
+                             Yaml::Mapping(ElementsAre(
+                                 Pair("index", "3"), Pair("kind", "Semi"),
+                                 Pair("line", "5"), Pair("column", "3"),
+                                 Pair("indent", "1"), Pair("spelling", ";"),
+                                 Pair("has_leading_space", "true"))),
+                             Yaml::Mapping(ElementsAre(
+                                 Pair("index", "4"), Pair("kind", "FileEnd"),
+                                 Pair("line", "15"), Pair("column", "1"),
+                                 Pair("indent", "1"), Pair("spelling", ""),
+                                 Pair("has_leading_space", "true")))))))))))));
 }
 
 }  // namespace

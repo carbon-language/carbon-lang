@@ -51,6 +51,11 @@ class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+  // A function that forms a diagnostic for some kind of problem. The
+  // DiagnosticBuilder is returned rather than emitted so that the caller can
+  // add contextual notes as appropriate.
+  using BuildDiagnosticFn =
+      llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
@@ -172,7 +177,7 @@ class Context {
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
+  auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
                            LookupScope scope, bool required = true)
       -> LookupResult;
 
@@ -275,8 +280,7 @@ class Context {
   // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
-      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
-          std::nullopt) -> bool;
+      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -286,14 +290,12 @@ class Context {
   // complete before they are fully defined.
   auto TryToDefineType(
       SemIR::TypeId type_id,
-      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
-          std::nullopt) -> bool;
+      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType.
-  auto AsCompleteType(SemIR::TypeId type_id,
-                      llvm::function_ref<auto()->DiagnosticBuilder> diagnoser)
+  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser)
       -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser) ? type_id
                                                  : SemIR::TypeId::Error;

@@ -21,11 +21,11 @@
 namespace Carbon::Lex {
 
 auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
-  return GetTokenInfo(token).kind;
+  return GetTokenInfo(token).kind();
 }
 
 auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
-  return FindLineIndex(GetTokenInfo(token).byte_offset);
+  return FindLineIndex(GetTokenInfo(token).byte_offset());
 }
 
 auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
@@ -34,8 +34,8 @@ auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
 
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   const auto& token_info = GetTokenInfo(token);
-  const auto& line_info = GetLineInfo(FindLineIndex(token_info.byte_offset));
-  return token_info.byte_offset - line_info.start + 1;
+  const auto& line_info = GetLineInfo(FindLineIndex(token_info.byte_offset()));
+  return token_info.byte_offset() - line_info.start + 1;
 }
 
 auto TokenizedBuffer::GetEndLoc(TokenIndex token) const
@@ -59,111 +59,117 @@ auto TokenizedBuffer::GetEndLoc(TokenIndex token) const
 
 auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
-  llvm::StringRef fixed_spelling = token_info.kind.fixed_spelling();
+  llvm::StringRef fixed_spelling = token_info.kind().fixed_spelling();
   if (!fixed_spelling.empty()) {
     return fixed_spelling;
   }
 
-  if (token_info.kind == TokenKind::Error) {
-    return source_->text().substr(token_info.byte_offset,
-                                  token_info.error_length);
+  if (token_info.kind() == TokenKind::Error) {
+    return source_->text().substr(token_info.byte_offset(),
+                                  token_info.error_length());
   }
 
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntLiteral ||
-      token_info.kind == TokenKind::RealLiteral) {
+  if (token_info.kind() == TokenKind::IntLiteral ||
+      token_info.kind() == TokenKind::RealLiteral) {
     std::optional<NumericLiteral> relexed_token =
-        NumericLiteral::Lex(source_->text().substr(token_info.byte_offset));
+        NumericLiteral::Lex(source_->text().substr(token_info.byte_offset()));
     CARBON_CHECK(relexed_token) << "Could not reform numeric literal token.";
     return relexed_token->text();
   }
 
   // Refer back to the source text to find the original spelling, including
   // escape sequences etc.
-  if (token_info.kind == TokenKind::StringLiteral) {
+  if (token_info.kind() == TokenKind::StringLiteral) {
     std::optional<StringLiteral> relexed_token =
-        StringLiteral::Lex(source_->text().substr(token_info.byte_offset));
+        StringLiteral::Lex(source_->text().substr(token_info.byte_offset()));
     CARBON_CHECK(relexed_token) << "Could not reform string literal token.";
     return relexed_token->text();
   }
 
   // Refer back to the source text to avoid needing to reconstruct the
   // spelling from the size.
-  if (token_info.kind.is_sized_type_literal()) {
+  if (token_info.kind().is_sized_type_literal()) {
     llvm::StringRef suffix = source_->text()
-                                 .substr(token_info.byte_offset + 1)
+                                 .substr(token_info.byte_offset() + 1)
                                  .take_while(IsDecimalDigit);
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::FileStart ||
-      token_info.kind == TokenKind::FileEnd) {
+  if (token_info.kind() == TokenKind::FileStart ||
+      token_info.kind() == TokenKind::FileEnd) {
     return llvm::StringRef();
   }
 
-  CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return value_stores_->identifiers().Get(token_info.ident_id);
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier) << token_info.kind();
+  return value_stores_->identifiers().Get(token_info.ident_id());
 }
 
 auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return token_info.ident_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier) << token_info.kind();
+  return token_info.ident_id();
 }
 
 auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::IntLiteral) << token_info.kind;
-  return token_info.int_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::IntLiteral) << token_info.kind();
+  return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::RealLiteral) << token_info.kind;
-  return token_info.real_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::RealLiteral)
+      << token_info.kind();
+  return token_info.real_id();
 }
 
 auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
     -> StringLiteralValueId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
-  return token_info.string_literal_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::StringLiteral)
+      << token_info.kind();
+  return token_info.string_literal_id();
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return token_info.int_id;
+  CARBON_CHECK(token_info.kind().is_sized_type_literal()) << token_info.kind();
+  return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
     -> TokenIndex {
   const auto& opening_token_info = GetTokenInfo(opening_token);
-  CARBON_CHECK(opening_token_info.kind.is_opening_symbol())
-      << opening_token_info.kind;
-  return opening_token_info.closing_token;
+  CARBON_CHECK(opening_token_info.kind().is_opening_symbol())
+      << opening_token_info.kind();
+  return opening_token_info.closing_token_index();
 }
 
 auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
     -> TokenIndex {
   const auto& closing_token_info = GetTokenInfo(closing_token);
-  CARBON_CHECK(closing_token_info.kind.is_closing_symbol())
-      << closing_token_info.kind;
-  return closing_token_info.opening_token;
+  CARBON_CHECK(closing_token_info.kind().is_closing_symbol())
+      << closing_token_info.kind();
+  return closing_token_info.opening_token_index();
 }
 
 auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const -> bool {
-  auto it = TokenIterator(token);
-  return it == tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
+  return GetTokenInfo(token).has_leading_space();
 }
 
 auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const -> bool {
-  return GetTokenInfo(token).has_trailing_space;
+  TokenIterator it(token);
+  ++it;
+  return it != tokens().end() && GetTokenInfo(*it).has_leading_space();
 }
 
 auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
-  return GetTokenInfo(token).is_recovery;
+  if (recovery_tokens_.empty()) {
+    return false;
+  }
+  return recovery_tokens_[token.index];
 }
 
 auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
@@ -251,7 +257,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
   const auto& token_info = GetTokenInfo(token);
-  LineIndex line_index = FindLineIndex(token_info.byte_offset);
+  LineIndex line_index = FindLineIndex(token_info.byte_offset());
   llvm::StringRef token_text = GetTokenText(token);
 
   // Output the main chunk using one format string. We have to do the
@@ -261,14 +267,15 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
       "    { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
-      llvm::right_justify(llvm::formatv("'{0}'", token_info.kind.name()).str(),
-                          widths.kind + 2),
+      llvm::right_justify(
+          llvm::formatv("'{0}'", token_info.kind().name()).str(),
+          widths.kind + 2),
       llvm::format_decimal(GetLineNumber(GetLine(token)), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),
       llvm::format_decimal(GetIndentColumnNumber(line_index), widths.indent),
       token_text);
 
-  switch (token_info.kind) {
+  switch (token_info.kind()) {
     case TokenKind::Identifier:
       output_stream << ", identifier: " << GetIdentifier(token).index;
       break;
@@ -290,20 +297,20 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
                     << "`";
       break;
     default:
-      if (token_info.kind.is_opening_symbol()) {
+      if (token_info.kind().is_opening_symbol()) {
         output_stream << ", closing_token: "
                       << GetMatchedClosingToken(token).index;
-      } else if (token_info.kind.is_closing_symbol()) {
+      } else if (token_info.kind().is_closing_symbol()) {
         output_stream << ", opening_token: "
                       << GetMatchedOpeningToken(token).index;
       }
       break;
   }
 
-  if (token_info.has_trailing_space) {
-    output_stream << ", has_trailing_space: true";
+  if (token_info.has_leading_space()) {
+    output_stream << ", has_leading_space: true";
   }
-  if (token_info.is_recovery) {
+  if (IsRecoveryToken(token)) {
     output_stream << ", recovery: true";
   }
 
@@ -358,7 +365,7 @@ auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const -> const TokenInfo& {
 
 auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
   token_infos_.push_back(info);
-  expected_parse_tree_size_ += info.kind.expected_parse_tree_size();
+  expected_parse_tree_size_ += info.kind().expected_parse_tree_size();
   return TokenIndex(static_cast<int>(token_infos_.size()) - 1);
 }
 
@@ -416,7 +423,7 @@ auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const char* token_start =
-      buffer_->source_->text().begin() + token_info.byte_offset;
+      buffer_->source_->text().begin() + token_info.byte_offset();
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token

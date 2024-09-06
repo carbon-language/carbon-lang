@@ -347,7 +347,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
   return SemIR::InstId::Invalid;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
+auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
                                   LookupScope scope, bool required)
     -> LookupResult {
   llvm::SmallVector<LookupScope> scopes = {scope};
@@ -362,7 +362,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
     has_error |= name_scope.has_error;
 
     auto scope_result_id =
-        LookupNameInExactScope(node_id, name_id, scope_id, name_scope);
+        LookupNameInExactScope(loc, name_id, scope_id, name_scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = name_scope.extended_scopes;
@@ -385,7 +385,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
           NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
           SemIR::NameId);
-      emitter_->Emit(node_id, NameAmbiguousDueToExtend, name_id);
+      emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::Invalid,
               .inst_id = SemIR::InstId::BuiltinError};
@@ -397,7 +397,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
 
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(node_id, name_id);
+      DiagnoseNameNotFound(loc, name_id);
     }
     return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = SemIR::InstId::BuiltinError};
@@ -633,10 +633,8 @@ namespace {
 //   complete.
 class TypeCompleter {
  public:
-  TypeCompleter(
-      Context& context,
-      std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>
-          diagnoser)
+  TypeCompleter(Context& context,
+                std::optional<Context::BuildDiagnosticFn> diagnoser)
       : context_(context), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
@@ -1019,21 +1017,18 @@ class TypeCompleter {
 
   Context& context_;
   llvm::SmallVector<WorkItem> work_list_;
-  std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>
-      diagnoser_;
+  std::optional<Context::BuildDiagnosticFn> diagnoser_;
 };
 }  // namespace
 
-auto Context::TryToCompleteType(
-    SemIR::TypeId type_id,
-    std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser)
+auto Context::TryToCompleteType(SemIR::TypeId type_id,
+                                std::optional<BuildDiagnosticFn> diagnoser)
     -> bool {
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
-auto Context::TryToDefineType(
-    SemIR::TypeId type_id,
-    std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser)
+auto Context::TryToDefineType(SemIR::TypeId type_id,
+                              std::optional<BuildDiagnosticFn> diagnoser)
     -> bool {
   if (!TryToCompleteType(type_id, diagnoser)) {
     return false;
