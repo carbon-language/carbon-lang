@@ -723,6 +723,17 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %A.type => constants.%A.type.1
+// CHECK:STDOUT:   %A => constants.%A.1
+// CHECK:STDOUT:   %B.type => constants.%B.type.1
+// CHECK:STDOUT:   %B => constants.%B.1
+// CHECK:STDOUT:   %C.type => constants.%C.type.1
+// CHECK:STDOUT:   %C => constants.%C.1
+// CHECK:STDOUT:   %D.type => constants.%D.type.1
+// CHECK:STDOUT:   %D => constants.%D.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(@A.%T) {
