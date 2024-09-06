@@ -262,14 +262,18 @@ class FormatterImpl {
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
     std::string function_start;
-    if (fn.is_virtual) {
-      function_start += "virtual ";
-    }
-    if (fn.is_abstract) {
-      function_start += "abstract ";
-    }
-    if (fn.is_impl) {
-      function_start += "impl ";
+    switch (fn.virtual_modifier) {
+      case FunctionFields::VirtualModifier::Virtual:
+        function_start += "virtual ";
+        break;
+      case FunctionFields::VirtualModifier::Abstract:
+        function_start += "abstract ";
+        break;
+      case FunctionFields::VirtualModifier::Impl:
+        function_start += "impl ";
+        break;
+      case FunctionFields::VirtualModifier::None:
+        break;
     }
     if (fn.is_extern) {
       function_start += "extern ";
