@@ -23,7 +23,6 @@ auto HandleImpls(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto impls = context.ConsumeIf(Lex::TokenKind::Impls)) {
-    // context.AddNode(NodeKind::ImplsTypeAs, *impls, state.has_error);
     state.token = *impls;
     state.state = State::ImplsFinish;
     context.PushState(state);
