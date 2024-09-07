@@ -310,11 +310,6 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 //   1. Alias
 //   2. DeclScopeLoop
 //
-// require ...
-// ^~~~~~~
-//   1. Require
-//   2. DeclScopeLoop
-//
 // base : ...
 // ^~~~
 //   1. BaseAfterIntroducer
@@ -378,6 +373,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // package ...    (in packaging directives)
 // ^~~~~~~
 //   1. Package
+//   2. DeclScopeLoop
+//
+// require ...
+// ^~~~~~~
+//   1. Require
 //   2. DeclScopeLoop
 //
 // var ...
@@ -753,28 +753,31 @@ CARBON_PARSE_STATE(Package)
 //   1. Expr
 //   2. Impls
 //   3. RequireFinish
-//
 CARBON_PARSE_STATE(Require)
 
 // Handles the processing of `impls` in a `require` declaration after the type
 // expression.
-// impls ...
-// ^~~~~
+//
+// expr impls ...
+//      ^~~~~
 //
 //   1. Expr
 //   2. ImplsFinish
 //
+// expr ???
+//     ^
+//   (state done)
 CARBON_PARSE_STATE(Impls)
 
-// Finishes impls processing
-// impls type_expression ...
-//                      ^
-//   (state done)
+// Finishes `impls` processing.
 //
-
+// expr impls expr
+//                ^
+//   (state done)
 CARBON_PARSE_STATE(ImplsFinish)
 
-// Finishes `require` processing
+// Finishes `require` processing.
+//
 // require ... ;
 //             ^
 //   (state done)
