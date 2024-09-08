@@ -340,7 +340,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 
   // Lower all blocks.
   for (auto block_id : body_block_ids) {
-    CARBON_VLOG() << "Lowering " << block_id << "\n";
+    CARBON_VLOG("Lowering {0}\n", block_id);
     auto* llvm_block = function_lowering.GetBlock(block_id);
     // Keep the LLVM blocks in lexical order.
     llvm_block->moveBefore(llvm_function->end());

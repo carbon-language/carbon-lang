@@ -52,7 +52,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   }
 
   CARBON_CHECK(!args.empty());
-  CARBON_VLOG() << "Running Clang driver with arguments: \n";
+  CARBON_VLOG("Running Clang driver with arguments: \n");
 
   // Render the arguments into null-terminated C-strings for use by the Clang
   // driver. Command lines can get quite long in build systems so this tries to
@@ -82,10 +82,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     ++i;
   }
   for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
-    CARBON_VLOG() << "    '" << cstr_arg << "'\n";
+    CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 
-  CARBON_VLOG() << "Preparing Clang driver...\n";
+  CARBON_VLOG("Preparing Clang driver...\n");
 
   // Create the diagnostic options and parse arguments controlling them out of
   // our arguments.
@@ -111,7 +111,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // above. This makes it appear that our binary was in the installed binaries
   // directory, and allows finding tools relative to it.
   driver.Dir = installation_->llvm_install_bin();
-  CARBON_VLOG() << "Setting bin directory to: " << driver.Dir << "\n";
+  CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
 
   // TODO: Directly run in-process rather than using a subprocess. This is both
   // more efficient and makes debugging (much) easier. Needs code like:
@@ -124,7 +124,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     return false;
   }
 
-  CARBON_VLOG() << "Running Clang driver...\n";
+  CARBON_VLOG("Running Clang driver...\n");
 
   llvm::SmallVector<std::pair<int, const clang::driver::Command*>>
       failing_commands;
@@ -134,10 +134,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // failures.
   diagnostic_client.finish();
 
-  CARBON_VLOG() << "Execution result code: " << result << "\n";
+  CARBON_VLOG("Execution result code: {0}\n", result);
   for (const auto& [command_result, failing_command] : failing_commands) {
-    CARBON_VLOG() << "Failing command '" << failing_command->getExecutable()
-                  << "' with code '" << command_result << "' was:\n";
+    CARBON_VLOG("Failing command '{0}' with code '{1}' was:\n",
+                failing_command->getExecutable(), command_result);
     if (vlog_stream_) {
       failing_command->Print(*vlog_stream_, "\n\n", /*Quote=*/true);
     }
