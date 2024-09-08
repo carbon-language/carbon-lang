@@ -26,12 +26,12 @@ TEST(CheckTest, CheckTrueCallbackNotUsed) {
     called = true;
     return "called";
   };
-  CARBON_CHECK(true) << callback();
+  CARBON_CHECK(true, "{0}", callback());
   EXPECT_FALSE(called);
 }
 
 TEST(CheckTest, CheckFalseMessage) {
-  ASSERT_DEATH({ CARBON_CHECK(false) << "msg"; },
+  ASSERT_DEATH({ CARBON_CHECK(false, "msg"); },
                "\nCHECK failure at common/check_test.cpp:.+: false: msg\n");
 }
 
@@ -39,19 +39,19 @@ TEST(CheckTest, CheckOutputForms) {
   const char msg[] = "msg";
   std::string str = "str";
   int i = 1;
-  CARBON_CHECK(true) << msg << str << i << 0;
+  CARBON_CHECK(true, "{0} {1} {2} {3}", msg, str, i, 0);
 }
 
 TEST(CheckTest, Fatal) {
-  ASSERT_DEATH({ CARBON_FATAL() << "msg"; },
+  ASSERT_DEATH({ CARBON_FATAL("msg"); },
                "\nFATAL failure at common/check_test.cpp:.+: msg\n");
 }
 
 TEST(CheckTest, FatalHasStackDump) {
-  ASSERT_DEATH({ CARBON_FATAL() << "msg"; }, "\nStack dump:\n");
+  ASSERT_DEATH({ CARBON_FATAL("msg"); }, "\nStack dump:\n");
 }
 
-auto FatalNoReturnRequired() -> int { CARBON_FATAL() << "msg"; }
+auto FatalNoReturnRequired() -> int { CARBON_FATAL("msg"); }
 
 TEST(ErrorTest, FatalNoReturnRequired) {
   ASSERT_DEATH({ FatalNoReturnRequired(); },
