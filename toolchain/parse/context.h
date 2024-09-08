@@ -267,8 +267,8 @@ class Context {
   auto PushState(StateStackEntry state) -> void {
     CARBON_VLOG("Push {0}: {1}\n", state_stack_.size(), state);
     state_stack_.push_back(state);
-    CARBON_CHECK(state_stack_.size() < (1 << 20))
-        << "Excessive stack size: likely infinite loop";
+    CARBON_CHECK(state_stack_.size() < (1 << 20),
+                 "Excessive stack size: likely infinite loop");
   }
 
   // Pushes a constructed state onto the stack, with a different parse state.

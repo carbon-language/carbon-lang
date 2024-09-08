@@ -325,8 +325,8 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
       }
       if (const auto* namespace_decl = dyn_cast<NamespaceDeclaration>(base)) {
         auto ns_it = namespace_scopes_.find(namespace_decl);
-        CARBON_CHECK(ns_it != namespace_scopes_.end())
-            << "name resolved to undeclared namespace";
+        CARBON_CHECK(ns_it != namespace_scopes_.end(),
+                     "name resolved to undeclared namespace");
         CARBON_ASSIGN_OR_RETURN(
             const auto value_node,
             ns_it->second.ResolveHere(scope, access.member_name(),
@@ -459,7 +459,7 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::BuiltinConvertExpression:
     case ExpressionKind::BaseAccessExpression:
-      CARBON_FATAL() << "should not exist before type checking";
+      CARBON_FATAL("should not exist before type checking");
     case ExpressionKind::UnimplementedExpression:
       return ProgramError(expression.source_loc()) << "Unimplemented";
   }
@@ -603,9 +603,9 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
       }
       CARBON_RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
       if (def.is_returned()) {
-        CARBON_CHECK(def.pattern().kind() == PatternKind::BindingPattern)
-            << def.pattern().source_loc()
-            << "returned var definition can only be a binding pattern";
+        CARBON_CHECK(def.pattern().kind() == PatternKind::BindingPattern,
+                     "{0}returned var definition can only be a binding pattern",
+                     def.pattern().source_loc());
         CARBON_RETURN_IF_ERROR(enclosing_scope.AddReturnedVar(
             ValueNodeView(&cast<BindingPattern>(def.pattern()))));
       }
@@ -924,7 +924,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
     }
 
     case DeclarationKind::SelfDeclaration: {
-      CARBON_FATAL() << "Unreachable: resolving names for `Self` declaration";
+      CARBON_FATAL("Unreachable: resolving names for `Self` declaration");
     }
 
     case DeclarationKind::AliasDeclaration: {

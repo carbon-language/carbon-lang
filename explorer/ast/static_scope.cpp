@@ -54,7 +54,7 @@ void StaticScope::PrintID(llvm::raw_ostream& out) const {
 
 void StaticScope::MarkDeclared(std::string_view name) {
   auto it = declared_names_.find(name);
-  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  CARBON_CHECK(it != declared_names_.end(), "{0} not found", name);
   if (it->second.status == NameStatus::KnownButNotDeclared) {
     it->second.status = NameStatus::DeclaredButNotUsable;
     if (trace_stream_->is_enabled()) {
@@ -67,7 +67,7 @@ void StaticScope::MarkDeclared(std::string_view name) {
 
 void StaticScope::MarkUsable(std::string_view name) {
   auto it = declared_names_.find(name);
-  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  CARBON_CHECK(it != declared_names_.end(), "{0} not found", name);
   it->second.status = NameStatus::Usable;
   if (trace_stream_->is_enabled()) {
     trace_stream_->Result()

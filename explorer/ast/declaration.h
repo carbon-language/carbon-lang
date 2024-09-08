@@ -101,7 +101,7 @@ class Declaration : public AstNode {
   // Set that this node is declared. Should only be called once, by the
   // type-checker, once the node is ready to be named and used.
   void set_is_declared() {
-    CARBON_CHECK(!is_declared_) << "should not be declared twice";
+    CARBON_CHECK(!is_declared_, "should not be declared twice");
     is_declared_ = true;
   }
 
@@ -111,7 +111,7 @@ class Declaration : public AstNode {
   // Set that this node is type-checked. Should only be called once, by the
   // type-checker, once full type-checking is complete.
   void set_is_type_checked() {
-    CARBON_CHECK(!is_type_checked_) << "should not be type-checked twice";
+    CARBON_CHECK(!is_type_checked_, "should not be type-checked twice");
     is_type_checked_ = true;
   }
 
@@ -674,7 +674,7 @@ class VariableDeclaration : public Declaration {
 
   // Can only be called by type-checking, if a conversion was required.
   void set_initializer(Nonnull<Expression*> initializer) {
-    CARBON_CHECK(has_initializer()) << "should not add a new initializer";
+    CARBON_CHECK(has_initializer(), "should not add a new initializer");
     initializer_ = initializer;
   }
 

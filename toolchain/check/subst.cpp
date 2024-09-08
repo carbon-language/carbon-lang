@@ -45,7 +45,7 @@ class Worklist {
     worklist_.push_back({.inst_id = inst_id,
                          .is_expanded = false,
                          .next_index = static_cast<int>(worklist_.size() + 1)});
-    CARBON_CHECK(worklist_.back().next_index > 0) << "Constant too large.";
+    CARBON_CHECK(worklist_.back().next_index > 0, "Constant too large.");
   }
   auto Pop() -> SemIR::InstId { return worklist_.pop_back_val().inst_id; }
 
@@ -240,8 +240,8 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     }
   }
 
-  CARBON_CHECK(worklist.size() == 1)
-      << "Unexpected data left behind in work list";
+  CARBON_CHECK(worklist.size() == 1,
+               "Unexpected data left behind in work list");
   return worklist.back().inst_id;
 }
 
@@ -288,8 +288,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
     auto result_id = TryEvalInst(context_, SemIR::InstId::Invalid, new_inst);
-    CARBON_CHECK(result_id.is_constant())
-        << "Substitution into constant produced non-constant";
+    CARBON_CHECK(result_id.is_constant(),
+                 "Substitution into constant produced non-constant");
     return context_.constant_values().GetInstId(result_id);
   }
 
@@ -301,7 +301,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
 
 auto SubstConstant(Context& context, SemIR::ConstantId const_id,
                    Substitutions substitutions) -> SemIR::ConstantId {
-  CARBON_CHECK(const_id.is_constant()) << "Substituting into non-constant";
+  CARBON_CHECK(const_id.is_constant(), "Substituting into non-constant");
 
   if (substitutions.empty()) {
     // Nothing to substitute.

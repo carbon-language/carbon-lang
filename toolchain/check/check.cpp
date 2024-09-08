@@ -555,8 +555,8 @@ class DeferredDefinitionWorklist {
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
-    CARBON_CHECK(worklist_.empty() && entered_scopes_.empty())
-        << "Tasks left behind on worklist.";
+    CARBON_CHECK(worklist_.empty() && entered_scopes_.empty(),
+                 "Tasks left behind on worklist.");
   }
 
  private:
@@ -627,8 +627,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   // worklist. We stay in that scope rather than suspending then immediately
   // resuming it.
   CARBON_CHECK(
-      holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()))
-      << "Unexpected task in worklist.";
+      holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()),
+      "Unexpected task in worklist.");
   worklist_.pop_back();
   CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (non-nested)\n",
               VlogPrefix);
@@ -690,8 +690,8 @@ class NodeIdTraversal {
   auto PerformTask(
       DeferredDefinitionWorklist::EnterDeferredDefinitionScope&& enter)
       -> void {
-    CARBON_CHECK(enter.suspended_name)
-        << "Entering a scope with no suspension information.";
+    CARBON_CHECK(enter.suspended_name,
+                 "Entering a scope with no suspension information.");
     context_.decl_name_stack().Restore(std::move(*enter.suspended_name));
   }
 
@@ -815,12 +815,10 @@ static auto DiagnoseMissingDefinitions(Context& context,
       case SemIR::InterfaceDecl::Kind: {
         // TODO: handle `interface` as well, once we can test it without
         // triggering https://github.com/carbon-language/carbon-lang/issues/4071
-        CARBON_FATAL()
-            << "TODO: Support interfaces in DiagnoseMissingDefinitions";
+        CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       default: {
-        CARBON_FATAL() << "Unexpected inst in definitions_required: "
-                       << decl_inst;
+        CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
       }
     }
   }
@@ -851,14 +849,15 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
     auto parse_kind = context.parse_tree().node_kind(node_id);
 
     switch (parse_kind) {
-#define CARBON_PARSE_NODE_KIND(Name)                                         \
-  case Parse::NodeKind::Name: {                                              \
-    if (!HandleParseNode(context, Parse::Name##Id(node_id))) {               \
-      CARBON_CHECK(err_tracker.seen_error())                                 \
-          << "Handle" #Name " returned false without printing a diagnostic"; \
-      return false;                                                          \
-    }                                                                        \
-    break;                                                                   \
+#define CARBON_PARSE_NODE_KIND(Name)                                 \
+  case Parse::NodeKind::Name: {                                      \
+    if (!HandleParseNode(context, Parse::Name##Id(node_id))) {       \
+      CARBON_CHECK(err_tracker.seen_error(),                         \
+                   "Handle" #Name                                    \
+                   " returned false without printing a diagnostic"); \
+      return false;                                                  \
+    }                                                                \
+    break;                                                           \
   }
 #include "toolchain/parse/node_kind.def"
     }
@@ -919,8 +918,8 @@ static auto CheckParseTree(
 
 #ifndef NDEBUG
   if (auto verify = sem_ir.Verify(); !verify.ok()) {
-    CARBON_FATAL() << sem_ir << "Built invalid semantics IR: " << verify.error()
-                   << "\n";
+    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir,
+                 verify.error());
   }
 #endif
 }

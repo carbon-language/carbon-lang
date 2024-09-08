@@ -924,8 +924,8 @@ class MixinPseudoType : public Value {
  public:
   explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration)
       : Value(Kind::MixinPseudoType), declaration_(declaration) {
-    CARBON_CHECK(!declaration->params().has_value())
-        << "missing arguments for parameterized mixin type";
+    CARBON_CHECK(!declaration->params().has_value(),
+                 "missing arguments for parameterized mixin type");
   }
   explicit MixinPseudoType(Nonnull<const MixinDeclaration*> declaration,
                            Nonnull<const Bindings*> bindings)
@@ -982,8 +982,8 @@ class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {
-    CARBON_CHECK(!declaration->params().has_value())
-        << "missing arguments for parameterized interface type";
+    CARBON_CHECK(!declaration->params().has_value(),
+                 "missing arguments for parameterized interface type");
   }
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
                          Nonnull<const Bindings*> bindings)
@@ -1334,8 +1334,8 @@ class ConstraintImplWitness : public Witness {
   // element.
   static auto Make(Nonnull<Arena*> arena, Nonnull<const Witness*> witness,
                    int index) -> Nonnull<const Witness*> {
-    CARBON_CHECK(!llvm::isa<ImplWitness>(witness))
-        << "impl witness has no components to access";
+    CARBON_CHECK(!llvm::isa<ImplWitness>(witness),
+                 "impl witness has no components to access");
     if (const auto* constraint_witness =
             llvm::dyn_cast<ConstraintWitness>(witness)) {
       return constraint_witness->witnesses()[index];
@@ -1348,8 +1348,8 @@ class ConstraintImplWitness : public Witness {
       : Witness(Kind::ConstraintImplWitness),
         constraint_witness_(constraint_witness),
         index_(index) {
-    CARBON_CHECK(!llvm::isa<ConstraintWitness>(constraint_witness))
-        << "should have resolved element from constraint witness";
+    CARBON_CHECK(!llvm::isa<ConstraintWitness>(constraint_witness),
+                 "should have resolved element from constraint witness");
   }
 
   static auto classof(const Value* value) -> bool {
@@ -1480,8 +1480,8 @@ class MemberName : public Value, public Printable<MemberName> {
         base_type_(base_type),
         interface_(interface),
         member_(member) {
-    CARBON_CHECK(base_type || interface)
-        << "member name must be in a type, an interface, or both";
+    CARBON_CHECK(base_type || interface,
+                 "member name must be in a type, an interface, or both");
   }
 
   static auto classof(const Value* value) -> bool {

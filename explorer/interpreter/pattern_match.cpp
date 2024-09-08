@@ -30,8 +30,8 @@ static auto InitializePlaceholderValue(const ValueNodeView& value_node,
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
-        CARBON_CHECK(v.address())
-            << "Missing location from initializing expression";
+        CARBON_CHECK(v.address(),
+                     "Missing location from initializing expression");
         bindings->Bind(value_node, *v.address());
       }
       break;
@@ -41,19 +41,18 @@ static auto InitializePlaceholderValue(const ValueNodeView& value_node,
         bindings->BindValue(value_node, v.value());
       } else if (v.expression_category() == ExpressionCategory::Reference) {
         // Bind the reference expression value directly.
-        CARBON_CHECK(v.address())
-            << "Missing location from reference expression";
+        CARBON_CHECK(v.address(), "Missing location from reference expression");
         bindings->BindAndPin(value_node, *v.address());
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
-        CARBON_CHECK(v.address())
-            << "Missing location from initializing expression";
+        CARBON_CHECK(v.address(),
+                     "Missing location from initializing expression");
         bindings->Bind(value_node, *v.address());
       }
       break;
     case ExpressionCategory::Initializing:
-      CARBON_FATAL() << "Cannot pattern match an initializing expression";
+      CARBON_FATAL("Cannot pattern match an initializing expression");
       break;
   }
 }
@@ -135,8 +134,8 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
           return true;
         }
         default:
-          CARBON_FATAL() << "expected a tuple value in pattern, not "
-                         << *v.value();
+          CARBON_FATAL("expected a tuple value in pattern, not {0}",
+                       *v.value());
       }
     case Value::Kind::StructValue: {
       const auto& p_struct = cast<StructValue>(*p);
@@ -172,12 +171,12 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
               source_loc, bindings, generic_args, trace_stream, arena);
         }
         default:
-          CARBON_FATAL() << "expected a choice alternative in pattern, not "
-                         << *v.value();
+          CARBON_FATAL("expected a choice alternative in pattern, not {0}",
+                       *v.value());
       }
     case Value::Kind::UninitializedValue:
-      CARBON_FATAL() << "uninitialized value is not allowed in pattern "
-                     << *v.value();
+      CARBON_FATAL("uninitialized value is not allowed in pattern {0}",
+                   *v.value());
     case Value::Kind::FunctionType:
       switch (v.value()->kind()) {
         case Value::Kind::FunctionType: {

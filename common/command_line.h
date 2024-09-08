@@ -735,7 +735,7 @@ struct Command {
 
 template <typename T>
 void ArgBuilder::MetaAction(T action) {
-  CARBON_CHECK(!arg_.meta_action) << "Cannot set a meta action twice!";
+  CARBON_CHECK(!arg_.meta_action, "Cannot set a meta action twice!");
   arg_.meta_action = std::move(action);
 }
 
@@ -814,9 +814,9 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
 
   // Fold over all the input values to see if there is a default.
   if ((input_values[Indices].is_default || ...)) {
-    CARBON_CHECK(!arg_.is_append) << "Can't append default.";
-    CARBON_CHECK((input_values[Indices].is_default + ... + 0) == 1)
-        << "Cannot default more than one value.";
+    CARBON_CHECK(!arg_.is_append, "Can't append default.");
+    CARBON_CHECK((input_values[Indices].is_default + ... + 0) == 1,
+                 "Cannot default more than one value.");
 
     arg_.has_default = true;
 

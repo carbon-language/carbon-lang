@@ -103,8 +103,8 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
 
   // Sets the contents of an empty block to the given content.
   auto SetContent(IdT block_id, llvm::ArrayRef<ElementType> content) -> void {
-    CARBON_CHECK(Get(block_id).empty())
-        << "inst block content set more than once";
+    CARBON_CHECK(Get(block_id).empty(),
+                 "inst block content set more than once");
     values_.Get(block_id) = AllocateCopy(content);
   }
 

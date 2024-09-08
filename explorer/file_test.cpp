@@ -23,8 +23,8 @@ class ExplorerFileTest : public FileTestBase {
       : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
-    CARBON_CHECK(prelude_line_re_.ok()) << prelude_line_re_.error();
-    CARBON_CHECK(timing_re_.ok()) << timing_re_.error();
+    CARBON_CHECK(prelude_line_re_.ok(), "{0}", prelude_line_re_.error());
+    CARBON_CHECK(timing_re_.ok(), "{0}", timing_re_.error());
   }
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,

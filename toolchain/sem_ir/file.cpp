@@ -49,9 +49,9 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
                       : TypeId::TypeType,                         \
        .builtin_inst_kind = BuiltinInstKind::Name}));
 #include "toolchain/sem_ir/builtin_inst_kind.def"
-  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount)
-      << "Builtins should produce " << BuiltinInstKind::ValidCount
-      << " insts, actual: " << insts_.size();
+  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount,
+               "Builtins should produce {0} insts, actual: {1}",
+               BuiltinInstKind::ValidCount, insts_.size());
   for (auto i : llvm::seq(BuiltinInstKind::ValidCount)) {
     auto builtin_id = SemIR::InstId(i);
     constant_values_.Set(builtin_id,
@@ -176,8 +176,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  CARBON_CHECK(kind.is_type() != InstIsType::Never)
-      << "Only called for kinds which can define a type.";
+  CARBON_CHECK(kind.is_type() != InstIsType::Never,
+               "Only called for kinds which can define a type.");
   if (kind == ConstType::Kind) {
     return -1;
   }

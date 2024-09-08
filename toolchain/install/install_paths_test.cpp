@@ -29,7 +29,7 @@ class InstallPathsTest : public ::testing::Test {
   InstallPathsTest() {
     std::string error;
     test_runfiles_.reset(Runfiles::Create(Testing::GetExePath().str(), &error));
-    CARBON_CHECK(test_runfiles_ != nullptr) << error;
+    CARBON_CHECK(test_runfiles_ != nullptr, "{0}", error);
   }
 
   // Test the install paths found with the given `exe_path`. Will check that
@@ -92,8 +92,8 @@ TEST_F(InstallPathsTest, PrefixRootExplicit) {
       "carbon/toolchain/install/prefix_root/lib/carbon/carbon_install.txt");
 
   llvm::StringRef prefix_path = marker_path;
-  CARBON_CHECK(prefix_path.consume_back("lib/carbon/carbon_install.txt"))
-      << "Unexpected suffix of the marker path: " << marker_path;
+  CARBON_CHECK(prefix_path.consume_back("lib/carbon/carbon_install.txt"),
+               "Unexpected suffix of the marker path: {0}", marker_path);
 
   auto paths = InstallPaths::Make(prefix_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
@@ -109,8 +109,8 @@ TEST_F(InstallPathsTest, TestRunfiles) {
 TEST_F(InstallPathsTest, BinaryRunfiles) {
   std::string test_binary_path =
       test_runfiles_->Rlocation("carbon/toolchain/install/test_binary");
-  CARBON_CHECK(llvm::sys::fs::can_execute(test_binary_path))
-      << test_binary_path;
+  CARBON_CHECK(llvm::sys::fs::can_execute(test_binary_path), "{0}",
+               test_binary_path);
 
   auto paths = InstallPaths::MakeForBazelRunfiles(test_binary_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();

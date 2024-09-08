@@ -22,8 +22,8 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
     // likely to refer to data that gets destroyed before the diagnostics
     // consumer is destroyed, because the diagnostics consumer is typically
     // created before the objects that diagnostics refer into are created.
-    CARBON_CHECK(diagnostics_.empty())
-        << "Must flush diagnostics consumer before destroying it";
+    CARBON_CHECK(diagnostics_.empty(),
+                 "Must flush diagnostics consumer before destroying it");
   }
 
   // Buffers the diagnostic.

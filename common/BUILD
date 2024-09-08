@@ -330,6 +330,7 @@ cc_library(
     hdrs = ["raw_hashtable_metadata_group.h"],
     deps = [
         ":check",
+        ":ostream",
         "@llvm-project//llvm:Support",
     ],
 )

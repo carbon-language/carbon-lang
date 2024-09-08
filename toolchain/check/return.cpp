@@ -11,8 +11,8 @@ namespace Carbon::Check {
 
 // Gets the function that lexically encloses the current location.
 static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
-  CARBON_CHECK(!context.return_scope_stack().empty())
-      << "Handling return but not in a function";
+  CARBON_CHECK(!context.return_scope_stack().empty(),
+               "Handling return but not in a function");
   auto function_id = context.insts()
                          .GetAs<SemIR::FunctionDecl>(
                              context.return_scope_stack().back().decl_id)
@@ -23,8 +23,8 @@ static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
 // Gets the currently in scope `returned var`, if any, that would be returned
 // by a `return var;`.
 static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
-  CARBON_CHECK(!context.return_scope_stack().empty())
-      << "Handling return but not in a function";
+  CARBON_CHECK(!context.return_scope_stack().empty(),
+               "Handling return but not in a function");
   return context.return_scope_stack().back().returned_var;
 }
 

@@ -80,8 +80,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
   if (auto base = element_inst.TryAs<SemIR::BaseDecl>()) {
     return base->index;
   }
-  CARBON_FATAL() << "Unexpected value " << element_inst
-                 << " in class element name";
+  CARBON_FATAL("Unexpected value {0} in class element name", element_inst);
 }
 
 // Returns whether `function_id` is an instance method, that is, whether it has
@@ -321,7 +320,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   auto inst = context.insts().Get(result.inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           inst.type_id());
-  CARBON_CHECK(type_id.is_valid()) << "Missing type for member " << inst;
+  CARBON_CHECK(type_id.is_valid(), "Missing type for member {0}", inst);
 
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.
@@ -372,9 +371,9 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
       // Find the specified element, which could be either a field or a base
       // class, and build an element access expression.
       auto element_id = context.constant_values().GetConstantInstId(member_id);
-      CARBON_CHECK(element_id.is_valid())
-          << "Non-constant value " << context.insts().Get(member_id)
-          << " of unbound element type";
+      CARBON_CHECK(element_id.is_valid(),
+                   "Non-constant value {0} of unbound element type",
+                   context.insts().Get(member_id));
       auto index = GetClassElementIndex(context, element_id);
       auto access_id = context.AddInst<SemIR::ClassElementAccess>(
           loc_id, {.type_id = unbound_element_type.element_type_id,

@@ -75,7 +75,7 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
       token_info.kind() == TokenKind::RealLiteral) {
     std::optional<NumericLiteral> relexed_token =
         NumericLiteral::Lex(source_->text().substr(token_info.byte_offset()));
-    CARBON_CHECK(relexed_token) << "Could not reform numeric literal token.";
+    CARBON_CHECK(relexed_token, "Could not reform numeric literal token.");
     return relexed_token->text();
   }
 
@@ -84,7 +84,7 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   if (token_info.kind() == TokenKind::StringLiteral) {
     std::optional<StringLiteral> relexed_token =
         StringLiteral::Lex(source_->text().substr(token_info.byte_offset()));
-    CARBON_CHECK(relexed_token) << "Could not reform string literal token.";
+    CARBON_CHECK(relexed_token, "Could not reform string literal token.");
     return relexed_token->text();
   }
 
@@ -102,56 +102,60 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
     return llvm::StringRef();
   }
 
-  CARBON_CHECK(token_info.kind() == TokenKind::Identifier) << token_info.kind();
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
+               token_info.kind());
   return value_stores_->identifiers().Get(token_info.ident_id());
 }
 
 auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind() == TokenKind::Identifier) << token_info.kind();
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
+               token_info.kind());
   return token_info.ident_id();
 }
 
 auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind() == TokenKind::IntLiteral) << token_info.kind();
+  CARBON_CHECK(token_info.kind() == TokenKind::IntLiteral, "{0}",
+               token_info.kind());
   return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind() == TokenKind::RealLiteral)
-      << token_info.kind();
+  CARBON_CHECK(token_info.kind() == TokenKind::RealLiteral, "{0}",
+               token_info.kind());
   return token_info.real_id();
 }
 
 auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
     -> StringLiteralValueId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind() == TokenKind::StringLiteral)
-      << token_info.kind();
+  CARBON_CHECK(token_info.kind() == TokenKind::StringLiteral, "{0}",
+               token_info.kind());
   return token_info.string_literal_id();
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind().is_sized_type_literal()) << token_info.kind();
+  CARBON_CHECK(token_info.kind().is_sized_type_literal(), "{0}",
+               token_info.kind());
   return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
     -> TokenIndex {
   const auto& opening_token_info = GetTokenInfo(opening_token);
-  CARBON_CHECK(opening_token_info.kind().is_opening_symbol())
-      << opening_token_info.kind();
+  CARBON_CHECK(opening_token_info.kind().is_opening_symbol(), "{0}",
+               opening_token_info.kind());
   return opening_token_info.closing_token_index();
 }
 
 auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
     -> TokenIndex {
   const auto& closing_token_info = GetTokenInfo(closing_token);
-  CARBON_CHECK(closing_token_info.kind().is_closing_symbol())
-      << closing_token_info.kind();
+  CARBON_CHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
+               closing_token_info.kind());
   return closing_token_info.opening_token_index();
 }
 
@@ -205,7 +209,7 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 //
 // This routine requires its argument to be *non-negative*.
 static auto ComputeDecimalPrintedWidth(int number) -> int {
-  CARBON_CHECK(number >= 0) << "Negative numbers are not supported.";
+  CARBON_CHECK(number >= 0, "Negative numbers are not supported.");
   if (number == 0) {
     return 1;
   }
@@ -382,8 +386,8 @@ auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
     const char* loc, ContextFnT /*context_fn*/) const -> DiagnosticLoc {
-  CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
-      << "location not within buffer";
+  CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc),
+               "location not within buffer");
   int32_t offset = loc - buffer_->source_->text().begin();
 
   // Find the first line starting after the given location.
@@ -392,8 +396,8 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
-  CARBON_CHECK(next_line_it != buffer_->line_infos_.begin())
-      << "location precedes the start of the first line";
+  CARBON_CHECK(next_line_it != buffer_->line_infos_.begin(),
+               "location precedes the start of the first line");
   const auto* line_it = std::prev(next_line_it);
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;

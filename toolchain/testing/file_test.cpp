@@ -71,8 +71,8 @@ class ToolchainFileTest : public FileTestBase {
     } else if (component_ == "lower") {
       args.push_back("--dump-llvm-ir");
     } else {
-      CARBON_FATAL() << "Unexpected test component " << component_ << ": "
-                     << test_name();
+      CARBON_FATAL("Unexpected test component {0}: {1}", component_,
+                   test_name());
     }
 
     // For `lex` and `parse`, we don't need to import the prelude; exclude it to
@@ -150,7 +150,7 @@ class ToolchainFileTest : public FileTestBase {
     // This handles cases where the toolchain directory may be copied into a
     // repository that doesn't put it at the root.
     auto pos = test_name.find("toolchain/");
-    CARBON_CHECK(pos != llvm::StringRef::npos) << test_name;
+    CARBON_CHECK(pos != llvm::StringRef::npos, "{0}", test_name);
     test_name = test_name.drop_front(pos + strlen("toolchain/"));
     test_name = test_name.take_front(test_name.find("/"));
     return test_name;
