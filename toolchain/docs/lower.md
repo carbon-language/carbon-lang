@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Mangling](#mangling)
 
 <!-- tocstop -->
 
@@ -23,3 +24,26 @@ can first generate type information for function arguments.
 Lowering is done per `SemIR::InstBlock`. This minimizes changes to the
 `IRBuilder` insertion point, something that is both expensive and potentially
 fragile.
+
+## Mangling
+
+Part of lowering is choosing deterministically unique identifiers for each
+lowered entity to use in platform object files. Any feature of an entity (eg:
+the namespace it appears in, parameters for overloaded functions, etc) that
+would create a distinct entity must be included in some way in the generated
+identifier.
+
+The current rudimentary name mangling scheme is as follows:
+
+-   Start with `_C`
+
+-   Then the unqualified function name (function name mangling is the only thing
+    implemented at the moment)
+
+-   `.` separated scopes (namespaces/classes), most nested first, outermost last
+
+-   or, if the function is in an `impl`:
+
+    -   the implementing type, per the scope mangling above
+
+    -   the interface type, per the scope mangling above
