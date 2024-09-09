@@ -15,7 +15,7 @@ namespace Carbon {
 // These arguments are required to be a "structural type", and so we copy the
 // string contents into a public array of `char`s. For details, see:
 // https://en.cppreference.com/w/cpp/language/template_parameters#Non-type_template_parameter
-// 
+//
 // Designed to support implicitly deduced construction from a string literal
 // template argument. This type will implicitly convert to an `llvm::StringRef`
 // for accessing the string contents, and also provides a dedicated `c_str()`
