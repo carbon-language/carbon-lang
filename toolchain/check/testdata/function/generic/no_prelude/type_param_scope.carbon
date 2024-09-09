@@ -27,10 +27,10 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.loc11_6.1: type = param T
+// CHECK:STDOUT:     %T.loc11_6.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %n.loc11_16.1: @F.%T.1 (%T) = param n
+// CHECK:STDOUT:     %n.loc11_16.1: @F.%T.1 (%T) = param n, runtime_param0
 // CHECK:STDOUT:     @F.%n: @F.%T.1 (%T) = bind_name n, %n.loc11_16.1
 // CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @F.%return: ref @F.%T.1 (%T) = var <return slot>

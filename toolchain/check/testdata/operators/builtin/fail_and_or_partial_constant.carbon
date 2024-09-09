@@ -80,7 +80,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type, %.loc4_23.1 [template = bool]
-// CHECK:STDOUT:     %x.loc4_20.1: bool = param x
+// CHECK:STDOUT:     %x.loc4_20.1: bool = param x, runtime_param0
 // CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc4_20.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -184,7 +184,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type, %.loc4_41.1 [template = bool]
-// CHECK:STDOUT:     %x.loc4_38.1: bool = param x
+// CHECK:STDOUT:     %x.loc4_38.1: bool = param x, runtime_param0
 // CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_name x, %x.loc4_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -937,6 +937,8 @@ class FormatterImpl {
 
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
+  auto FormatArg(RuntimeParamIndex index) -> void { out_ << index; }
+
   auto FormatArg(NameScopeId id) -> void {
     OpenBrace();
     FormatNameScope(id);

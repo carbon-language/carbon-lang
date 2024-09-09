@@ -138,16 +138,16 @@ fn Test() {
 // CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_16.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
 // CHECK:STDOUT:     %.loc25_16.2: type = converted %int.make_type_32.loc25, %.loc25_16.1 [template = i32]
-// CHECK:STDOUT:     %n.loc25_13.1: i32 = param n
+// CHECK:STDOUT:     %n.loc25_13.1: i32 = param n, runtime_param0
 // CHECK:STDOUT:     @Sink_i32.%n: i32 = bind_name n, %n.loc25_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sink_X.decl: %Sink_X.type = fn_decl @Sink_X [template = constants.%Sink_X] {
 // CHECK:STDOUT:     %X.ref.loc26: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %x.loc26_11.1: %X = param x
+// CHECK:STDOUT:     %x.loc26_11.1: %X = param x, runtime_param0
 // CHECK:STDOUT:     @Sink_X.%x: %X = bind_name x, %x.loc26_11.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [template = constants.%Source] {
-// CHECK:STDOUT:     %T.loc27_11.1: type = param T
+// CHECK:STDOUT:     %T.loc27_11.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     @Source.%T.loc27: type = bind_symbolic_name T 0, %T.loc27_11.1 [symbolic = @Source.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @Source.%T.loc27 [symbolic = @Source.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @Source.%return: ref @Source.%T.1 (%T) = var <return slot>
@@ -179,7 +179,7 @@ fn Test() {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_20.2: type = converted %int.make_type_32, %.loc16_20.1 [template = i32]
-// CHECK:STDOUT:     %self.loc16_14.1: i32 = param self
+// CHECK:STDOUT:     %self.loc16_14.1: i32 = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc16_14.2: i32 = bind_name self, %self.loc16_14.1
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return.var: ref %X = var <return slot>
@@ -194,7 +194,7 @@ fn Test() {
 // CHECK:STDOUT: impl @impl.2: %X as %.12 {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %self.loc20_14.1: %X = param self
+// CHECK:STDOUT:     %self.loc20_14.1: %X = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc20_14.2: %X = bind_name self, %self.loc20_14.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_28.1: type = value_of_initializer %int.make_type_32 [template = i32]

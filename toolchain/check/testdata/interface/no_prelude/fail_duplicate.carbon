@@ -153,7 +153,7 @@ interface Class { }
 // CHECK:STDOUT:     %Self.ref: %.2 = name_ref Self, %Self [symbolic = @F.%Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.%Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = @F.%Self (constants.%Self.2)]
-// CHECK:STDOUT:     %self.loc14_8.1: @F.%Self (%Self.2) = param self
+// CHECK:STDOUT:     %self.loc14_8.1: @F.%Self (%Self.2) = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc14_8.2: @F.%Self (%Self.2) = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_21: %.4 = assoc_entity element0, %F.decl [template = constants.%.5]

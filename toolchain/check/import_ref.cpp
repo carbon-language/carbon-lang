@@ -706,7 +706,8 @@ class ImportRefResolver {
           context_.GetTypeIdForTypeConstant(param_data.type_const_id);
 
       auto new_param_id = context_.AddInstInNoBlock<SemIR::Param>(
-          AddImportIRInst(param_id), {.type_id = type_id, .name_id = name_id});
+          AddImportIRInst(param_id),
+          {.type_id = type_id, .name_id = name_id, .index = param_inst.index});
       if (bind_inst) {
         switch (bind_inst->kind) {
           case SemIR::BindName::Kind: {

@@ -90,7 +90,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %b.loc13_6.1: %.3 = param b
+// CHECK:STDOUT:     %b.loc13_6.1: %.3 = param b, runtime_param0
 // CHECK:STDOUT:     @G.%b: %.3 = bind_name b, %b.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

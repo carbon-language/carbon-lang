@@ -144,7 +144,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_20.2: type = converted %int.make_type_32, %.loc16_20.1 [template = i32]
-// CHECK:STDOUT:     %self.loc16_14.1: i32 = param self
+// CHECK:STDOUT:     %self.loc16_14.1: i32 = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc16_14.2: i32 = bind_name self, %self.loc16_14.1
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return.var: ref %X = var <return slot>
@@ -159,7 +159,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: impl @impl.2: %X as %.12 {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %self.loc20_14.1: %X = param self
+// CHECK:STDOUT:     %self.loc20_14.1: %X = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc20_14.2: %X = bind_name self, %self.loc20_14.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_28.1: type = value_of_initializer %int.make_type_32 [template = i32]

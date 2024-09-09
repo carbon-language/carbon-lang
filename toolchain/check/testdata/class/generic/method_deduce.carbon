@@ -84,7 +84,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.loc14_13.1: type = param T
+// CHECK:STDOUT:     %T.loc14_13.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc14_13.2: type = bind_symbolic_name T 0, %T.loc14_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [template = constants.%CallGenericMethod] {
@@ -93,7 +93,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %.loc19_30: init type = call %Class.ref.loc19(%A.ref.loc19_31) [template = constants.%Class.3]
 // CHECK:STDOUT:     %.loc19_32.1: type = value_of_initializer %.loc19_30 [template = constants.%Class.3]
 // CHECK:STDOUT:     %.loc19_32.2: type = converted %.loc19_30, %.loc19_32.1 [template = constants.%Class.3]
-// CHECK:STDOUT:     %c.loc19_22.1: %Class.3 = param c
+// CHECK:STDOUT:     %c.loc19_22.1: %Class.3 = param c, runtime_param0
 // CHECK:STDOUT:     @CallGenericMethod.%c: %Class.3 = bind_name c, %c.loc19_22.1
 // CHECK:STDOUT:     %A.ref.loc19_39: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %B.ref.loc19: type = name_ref B, %B.decl [template = constants.%B]
@@ -107,7 +107,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %.loc23_49: init type = call %Class.ref.loc23(%A.ref.loc23_50) [template = constants.%Class.3]
 // CHECK:STDOUT:     %.loc23_51.1: type = value_of_initializer %.loc23_49 [template = constants.%Class.3]
 // CHECK:STDOUT:     %.loc23_51.2: type = converted %.loc23_49, %.loc23_51.1 [template = constants.%Class.3]
-// CHECK:STDOUT:     %c.loc23_41.1: %Class.3 = param c
+// CHECK:STDOUT:     %c.loc23_41.1: %Class.3 = param c, runtime_param0
 // CHECK:STDOUT:     @CallGenericMethodWithNonDeducedParam.%c: %Class.3 = bind_name c, %c.loc23_41.1
 // CHECK:STDOUT:     %A.ref.loc23_58: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %B.ref.loc23: type = name_ref B, %B.decl [template = constants.%B]
@@ -138,7 +138,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = %Get (constants.%Get.1)] {
-// CHECK:STDOUT:       %U.loc15_10.1: type = param U
+// CHECK:STDOUT:       %U.loc15_10.1: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc15_10.2: type = bind_symbolic_name U 1, %U.loc15_10.1 [symbolic = @Get.%U.1 (constants.%U)]
 // CHECK:STDOUT:       %T.ref.loc15: type = name_ref T, file.%T.loc14_13.2 [symbolic = @Get.%T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc15: type = name_ref U, %U.loc15_10.2 [symbolic = @Get.%U.1 (constants.%U)]
@@ -148,9 +148,9 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetNoDeduce.decl: @Class.%GetNoDeduce.type (%GetNoDeduce.type.1) = fn_decl @GetNoDeduce [symbolic = %GetNoDeduce (constants.%GetNoDeduce.1)] {
 // CHECK:STDOUT:       %T.ref.loc16_21: type = name_ref T, file.%T.loc14_13.2 [symbolic = @GetNoDeduce.%T (constants.%T)]
-// CHECK:STDOUT:       %x.loc16_18.1: @GetNoDeduce.%T (%T) = param x
+// CHECK:STDOUT:       %x.loc16_18.1: @GetNoDeduce.%T (%T) = param x, runtime_param0
 // CHECK:STDOUT:       %x.loc16_18.2: @GetNoDeduce.%T (%T) = bind_name x, %x.loc16_18.1
-// CHECK:STDOUT:       %U.loc16_24.1: type = param U
+// CHECK:STDOUT:       %U.loc16_24.1: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc16_24.2: type = bind_symbolic_name U 1, %U.loc16_24.1 [symbolic = @GetNoDeduce.%U.1 (constants.%U)]
 // CHECK:STDOUT:       %T.ref.loc16_38: type = name_ref T, file.%T.loc14_13.2 [symbolic = @GetNoDeduce.%T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc16: type = name_ref U, %U.loc16_24.2 [symbolic = @GetNoDeduce.%U.1 (constants.%U)]

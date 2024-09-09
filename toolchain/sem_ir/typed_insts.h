@@ -781,6 +781,7 @@ struct Param {
 
   TypeId type_id;
   NameId name_id;
+  RuntimeParamIndex index;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in

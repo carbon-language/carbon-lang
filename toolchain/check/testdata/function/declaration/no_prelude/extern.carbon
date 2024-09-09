@@ -174,7 +174,7 @@ class C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc13_15.1: %C = param self
+// CHECK:STDOUT:     %self.loc13_15.1: %C = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc13_15.2: %C = bind_name self, %self.loc13_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
