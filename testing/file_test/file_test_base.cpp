@@ -486,8 +486,10 @@ static auto ReplaceContentKeywords(llvm::StringRef filename,
   if (auto ext_dot = test_name.find("."); ext_dot != llvm::StringRef::npos) {
     test_name = test_name.substr(0, ext_dot);
   }
-  while (test_name.consume_front("fail_") || test_name.consume_front("todo_")) {
-  }
+  // Note this also handles `fail_todo_` and `todo_fail_`.
+  test_name.consume_front("todo_");
+  test_name.consume_front("fail_");
+  test_name.consume_front("todo_");
 
   while (keyword_pos != std::string::npos) {
     static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
