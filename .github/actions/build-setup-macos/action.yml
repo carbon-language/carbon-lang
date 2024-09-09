@@ -18,9 +18,6 @@ runs:
         xcrun simctl delete all
         sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
 
-        echo '*** Remove older Xcode versions'
-        sudo rm -rf /Applications/Xcode_14.3.1.app
-
     # Install and cache LLVM 16 from Homebrew.
     # TODO: We can potentially remove this and simplify things when the
     # Homebrew version of LLVM updates to 16 here:
