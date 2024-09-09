@@ -54,7 +54,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @HalfDozen(<unexpected>.inst+22.loc19_5: type) {
+// CHECK:STDOUT: generic fn @HalfDozen(<unexpected>.inst+21.loc19_5: type) {
 // CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic = %y (constants.%y)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

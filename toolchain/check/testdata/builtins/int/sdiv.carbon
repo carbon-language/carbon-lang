@@ -131,7 +131,6 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc5_10: %.6 = binding_pattern arr_p, @__global_init.%arr_p
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
@@ -270,15 +269,12 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
 // CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32.loc9, %.loc9_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_6: i32 = binding_pattern a, @__global_init.%a
 // CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_8.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_8.2: type = converted %int.make_type_32.loc12, %.loc12_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_6: i32 = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_8.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
 // CHECK:STDOUT:   %.loc19_8.2: type = converted %int.make_type_32.loc19, %.loc19_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_6: i32 = binding_pattern c, @__global_init.%c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -400,11 +396,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc10_8.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
 // CHECK:STDOUT:   %.loc10_8.2: type = converted %int.make_type_32.loc10, %.loc10_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_6: i32 = binding_pattern a, @__global_init.%a
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_6: i32 = binding_pattern b, @__global_init.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

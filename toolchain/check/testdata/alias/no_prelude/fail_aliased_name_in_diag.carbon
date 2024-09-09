@@ -46,7 +46,6 @@ let c_var: c = d;
 // CHECK:STDOUT:   %d.var: ref %D = var d
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
-// CHECK:STDOUT:   %.loc20: %C = binding_pattern c_var, @__global_init.%c_var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

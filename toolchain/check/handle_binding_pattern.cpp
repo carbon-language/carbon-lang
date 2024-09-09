@@ -202,13 +202,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
-      SemIR::LocIdAndInst bind_name =
-          make_bind_name(cast_type_id, SemIR::InstId::Invalid);
-      auto bind_id = context.AddPlaceholderInstInNoBlock(bind_name);
-      if (!is_generic) {
-        context.AddInst<SemIR::BindingPattern>(
-            node_id, {.type_id = cast_type_id, .bind_inst_id = bind_id});
-      }
+      auto bind_id = context.AddPlaceholderInstInNoBlock(
+          make_bind_name(cast_type_id, SemIR::InstId::Invalid));
       push_bind_name(bind_id);
       break;
     }

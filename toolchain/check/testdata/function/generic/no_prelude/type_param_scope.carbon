@@ -47,10 +47,9 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   fn(%T.loc11: type, %n: @F.%T.1 (%T)) -> @F.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc12: @F.%T.1 (%T) = binding_pattern m, %m.loc12_7.2
 // CHECK:STDOUT:     %n.ref: @F.%T.1 (%T) = name_ref n, %n
-// CHECK:STDOUT:     %m.loc12_7.2: @F.%T.1 (%T) = bind_name m, %n.ref
-// CHECK:STDOUT:     %m.ref: @F.%T.1 (%T) = name_ref m, %m.loc12_7.2
+// CHECK:STDOUT:     %m: @F.%T.1 (%T) = bind_name m, %n.ref
+// CHECK:STDOUT:     %m.ref: @F.%T.1 (%T) = name_ref m, %m
 // CHECK:STDOUT:     return %m.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

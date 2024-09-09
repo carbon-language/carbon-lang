@@ -114,7 +114,6 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %int.make_type_32.loc6, %.loc6_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_26: type = array_type %.loc6_18, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc6_27: type = ptr_type %.6 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc6_10: %.7 = binding_pattern arr_p, @__global_init.%arr_p
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %int.make_type_32.loc8_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_19.1: type = value_of_initializer %int.make_type_32.loc8_19 [template = i32]

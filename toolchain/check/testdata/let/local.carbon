@@ -64,10 +64,9 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_8: i32 = binding_pattern b, %b.loc12_7.2
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %b.loc12_7.2: i32 = bind_name b, %a.ref
-// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b.loc12_7.2
+// CHECK:STDOUT:   %b: i32 = bind_name b, %a.ref
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -186,13 +186,12 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc42_21: type = ptr_type %Inner [template = constants.%.2]
-// CHECK:STDOUT:   %.loc42_8: %.2 = binding_pattern b, %b.loc42_7.2
 // CHECK:STDOUT:   %a.ref.loc42: %.4 = name_ref a, %a
 // CHECK:STDOUT:   %.loc42_26: ref %Outer = deref %a.ref.loc42
 // CHECK:STDOUT:   %pi.ref.loc42: %.8 = name_ref pi, @Outer.%.loc38_9 [template = @Outer.%.loc38_9]
 // CHECK:STDOUT:   %.loc42_29.1: ref %.2 = class_element_access %.loc42_26, element2
 // CHECK:STDOUT:   %.loc42_29.2: %.2 = bind_value %.loc42_29.1
-// CHECK:STDOUT:   %b.loc42_7.2: %.2 = bind_name b, %.loc42_29.2
+// CHECK:STDOUT:   %b: %.2 = bind_name b, %.loc42_29.2
 // CHECK:STDOUT:   %a.ref.loc44_3: %.4 = name_ref a, %a
 // CHECK:STDOUT:   %.loc44_4.1: ref %Outer = deref %a.ref.loc44_3
 // CHECK:STDOUT:   %po.ref.loc44: %.7 = name_ref po, @Outer.%.loc36_9 [template = @Outer.%.loc36_9]
@@ -215,13 +214,13 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.loc46_12.2: ref %.2 = class_element_access %.loc46_12.1, element2
 // CHECK:STDOUT:   %.loc46_12.3: %.2 = bind_value %.loc46_12.2
 // CHECK:STDOUT:   assign %.loc46_4.2, %.loc46_12.3
-// CHECK:STDOUT:   %b.ref.loc47: %.2 = name_ref b, %b.loc42_7.2
+// CHECK:STDOUT:   %b.ref.loc47: %.2 = name_ref b, %b
 // CHECK:STDOUT:   %.loc47_4.1: ref %Inner = deref %b.ref.loc47
 // CHECK:STDOUT:   %po.ref.loc47: %.5 = name_ref po, @Inner.%.loc20_11 [template = @Inner.%.loc20_11]
 // CHECK:STDOUT:   %.loc47_4.2: ref %.4 = class_element_access %.loc47_4.1, element1
 // CHECK:STDOUT:   %a.ref.loc47: %.4 = name_ref a, %a
 // CHECK:STDOUT:   assign %.loc47_4.2, %a.ref.loc47
-// CHECK:STDOUT:   %b.ref.loc48: %.2 = name_ref b, %b.loc42_7.2
+// CHECK:STDOUT:   %b.ref.loc48: %.2 = name_ref b, %b
 // CHECK:STDOUT:   %.loc48_4.1: ref %Inner = deref %b.ref.loc48
 // CHECK:STDOUT:   %pi.ref.loc48_4: %.3 = name_ref pi, @Inner.%.loc19_11 [template = @Inner.%.loc19_11]
 // CHECK:STDOUT:   %.loc48_4.2: ref %.2 = class_element_access %.loc48_4.1, element0
@@ -231,7 +230,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.loc48_12.2: ref %.2 = class_element_access %.loc48_12.1, element2
 // CHECK:STDOUT:   %.loc48_12.3: %.2 = bind_value %.loc48_12.2
 // CHECK:STDOUT:   assign %.loc48_4.2, %.loc48_12.3
-// CHECK:STDOUT:   %b.ref.loc49: %.2 = name_ref b, %b.loc42_7.2
+// CHECK:STDOUT:   %b.ref.loc49: %.2 = name_ref b, %b
 // CHECK:STDOUT:   %.loc49_4.1: ref %Inner = deref %b.ref.loc49
 // CHECK:STDOUT:   %qi.ref: %.3 = name_ref qi, @Inner.%.loc21_11 [template = @Inner.%.loc21_11]
 // CHECK:STDOUT:   %.loc49_4.2: ref %.2 = class_element_access %.loc49_4.1, element2

@@ -313,10 +313,9 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: fn @Let(%p: %.4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc92_8: <error> = binding_pattern c, %c.loc92_7.2
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc92_18: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %c.loc92_7.2: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %.loc92: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
