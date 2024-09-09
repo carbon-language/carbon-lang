@@ -432,10 +432,10 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
     }
   }
 
-  CARBON_DIAGNOSTIC(CoreNotFound, Error,
-                    "Package `Core` implicitly referenced here, but not found.",
-                    SemIR::NameId);
-  context.emitter().Emit(loc, CoreNotFound, core_name_id);
+  CARBON_DIAGNOSTIC(
+      CoreNotFound, Error,
+      "Package `Core` implicitly referenced here, but not found.");
+  context.emitter().Emit(loc, CoreNotFound);
   return SemIR::NameScopeId::Invalid;
 }
 
