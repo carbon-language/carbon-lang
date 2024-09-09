@@ -76,12 +76,12 @@ static auto CheckFunctionSignature(
     auto param = context.insts().Get(param_id);
 
     // Find the parameter in the pattern.
-    // TODO: Decomposition of function parameter patterns is repeated in a few
-    // places. Factor this out.
+    // TODO: This duplicates work done by Function::GetParamFromParamRefId.
     if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
       param_id = addr_pattern->inner_id;
       param = context.insts().Get(param_id);
     }
+
     auto bind_name = param.TryAs<SemIR::AnyBindName>();
     if (bind_name) {
       param_id = bind_name->value_id;
@@ -93,6 +93,8 @@ static auto CheckFunctionSignature(
       // Once we support more generalized patterns we will need to diagnose
       // parameters with unsupported patterns.
       context.TODO(param_id, "unexpected syntax for parameter");
+      // TODO: Also repair the param ID so downstream code doesn't need to deal
+      // with this.
       continue;
     }
 
@@ -355,26 +357,20 @@ static auto HandleFunctionDefinitionAfterSignature(
                           SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
+  for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
            context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
-    auto param = context.insts().Get(param_id);
-
-    // Find the parameter in the pattern.
-    // TODO: More general pattern handling?
-    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
-      param_id = addr_pattern->inner_id;
-      param = context.insts().Get(param_id);
-    }
+    auto [param_id, param] =
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param.type_id(), [&] {
+    context.TryToCompleteType(param.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "Parameter has incomplete type `{0}` in function definition.",
           SemIR::TypeId);
       return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
-                                     param.type_id());
+                                     param.type_id);
     });
   }
 
