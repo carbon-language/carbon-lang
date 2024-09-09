@@ -38,7 +38,7 @@ TEST(TemplateStringTest, Test) {
   constexpr char GoodStr[5] = {'t', 'e', 's', 't', '\0'};
   EXPECT_THAT(FromTemplate<GoodStr>(), StrEq("test"));
 
-  // Uncomment to test compile-time rejection of missing nul-termination.
+  // Uncomment to test compile-time rejection of missing null terminator.
   // constexpr char BadStr[4] = {'t', 'e', 's', 't'};
   // EXPECT_THAT(FromTemplate<BadStr>(), StrEq("test"));
 }

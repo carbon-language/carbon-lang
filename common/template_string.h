@@ -40,7 +40,7 @@ struct TemplateString {
   // The closest we can get to explicitly accepting a string literal is to
   // accept an array of `const char`s, so we additionally use Clang's constexpr
   // `enable_if` attribute to require the array to be usable as a C-string with
-  // the expected length. This checks both for nul-termination and no embedded
+  // the expected length. This checks both for null-termination and no embedded
   // `0` bytes.
   //
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -70,7 +70,7 @@ struct TemplateString {
 
 // Allow deducing `N` when implicitly constructing these so that we can directly
 // use a string literal in a template argument. The array needs an extra char
-// for the nul-termination.
+// for the null terminator.
 template <int M>
 TemplateString(const char (&str)[M]) -> TemplateString<M - 1>;
 

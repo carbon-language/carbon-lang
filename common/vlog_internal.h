@@ -49,7 +49,7 @@ class VLoggingStream {
 // Implements verbose logging.
 //
 // This is designed to minimize the overhead in callers by being a
-// forcibly-outlined routine that takes a minimal number of parameters.
+// forcibly outlined routine that takes a minimal number of parameters.
 //
 // Internally uses `llvm::formatv` to render the format string with any value
 // arguments, and streams the result to the provided stream.
