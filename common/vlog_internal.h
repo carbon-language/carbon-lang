@@ -54,7 +54,7 @@ class VLoggingStream {
 // Internally uses `llvm::formatv` to render the format string with any value
 // arguments, and streams the result to the provided stream.
 template <TemplateString FormatStr, typename... Ts>
-[[clang::noinline, clang::preserve_most]] auto VLogImpl(
+[[gnu::cold, clang::noinline, clang::preserve_most]] auto VLogImpl(
     llvm::raw_ostream* stream, Ts&&... values) -> void {
   *stream << llvm::formatv(FormatStr.c_str(), std::forward<Ts>(values)...);
 }
