@@ -29,7 +29,7 @@ enum PrecedenceLevel : int8_t {
   // Type formation.
   TypePrefix,
   TypePostfix,
-  // `where` keyword
+  // `where` keyword.
   Where,
   // Casts.
   As,

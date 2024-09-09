@@ -32,7 +32,7 @@ auto HandleRequirementOperator(Context& context) -> void {
       if (!state.has_error) {
         CARBON_DIAGNOSTIC(
             ExpectedRequirementOperator, Error,
-            "requirement should use `impls`, `=`, or `==` operator.");
+            "Requirement should use `impls`, `=`, or `==` operator.");
         context.emitter().Emit(*context.position(),
                                ExpectedRequirementOperator);
       }
