@@ -9,6 +9,22 @@ inputs:
 runs:
   using: composite
   steps:
+    # Free up disk space as the macOS runners end up using most for Xcode
+    # versions we don't need and iOS simulators.
+    - name: Free up disk space
+      shell: bash
+      run: |
+        echo '*** Delete iOS simulators'
+        xcrun simctl delete all
+        sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
+
+        echo '*** Remove older Xcode versions'
+        sudo rm -rf /Applications/Xcode_14.3.1.app
+        sudo rm -rf /Applications/Xcode_15.0.1.app
+        sudo rm -rf /Applications/Xcode_15.1.app
+        sudo rm -rf /Applications/Xcode_15.2.app
+        sudo rm -rf /Applications/Xcode_15.3.app
+
     # Install and cache LLVM 16 from Homebrew.
     # TODO: We can potentially remove this and simplify things when the
     # Homebrew version of LLVM updates to 16 here:
