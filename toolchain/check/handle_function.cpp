@@ -194,18 +194,15 @@ static auto BuildFunctionDecl(Context& context,
   DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
                     parent_scope_inst);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
-  SemIR::FunctionFields::VirtualModifier virtual_modifier =
-      SemIR::FunctionFields::VirtualModifier::None;
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Virtual)) {
-    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Virtual;
-  }
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)) {
-    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Abstract;
-  }
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Impl)) {
-    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Impl;
-  }
+  auto virtual_modifier =
+      introducer.modifier_set.ToEnum<SemIR::Function::VirtualModifier>()
+          .Case(KeywordModifierSet::Virtual,
+                SemIR::Function::VirtualModifier::Virtual)
+          .Case(KeywordModifierSet::Abstract,
+                SemIR::Function::VirtualModifier::Abstract)
+          .Case(KeywordModifierSet::Impl,
+                SemIR::Function::VirtualModifier::Impl)
+          .Default(SemIR::Function::VirtualModifier::None);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
