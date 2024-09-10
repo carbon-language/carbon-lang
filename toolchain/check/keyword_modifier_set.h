@@ -77,12 +77,12 @@ class KeywordModifierSet {
   // Return a builder that implicitly converts to the specified enumeration type
   // mapping the cases passed to the `Case`s specified. For example:
   //   ```
-  //   SomeEnum e = set.ToEnumerator(SomeEnum::Default)
+  //   SomeEnum e = set.ToEnum(SomeEnum::Default)
   //                    .Case(KeywordModifierSet::A, SomeEnum::A)
   //                    .Case(KeywordModifierSet::B, SomeEnum::B);
   //   ```
   template <typename T>
-  auto ToEnumerator(T default_value) -> auto {
+  auto ToEnum(T default_value) -> auto {
     class Converter {
      public:
       Converter(const KeywordModifierSet& set, T default_value)

@@ -201,7 +201,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     context.TODO(node_id, "extern library");
   }
   SemIR::Class::InheritanceKind inheritance_kind =
-      introducer.modifier_set.ToEnumerator(SemIR::Class::Final)
+      introducer.modifier_set.ToEnum(SemIR::Class::Final)
           .Case(KeywordModifierSet::Abstract, SemIR::Class::Abstract)
           .Case(KeywordModifierSet::Base, SemIR::Class::Base);
 

@@ -196,7 +196,7 @@ static auto BuildFunctionDecl(Context& context,
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   SemIR::FunctionFields::VirtualModifier virtual_modifier =
       introducer.modifier_set
-          .ToEnumerator(SemIR::FunctionFields::VirtualModifier::None)
+          .ToEnum(SemIR::FunctionFields::VirtualModifier::None)
           .Case(KeywordModifierSet::Virtual,
                 SemIR::FunctionFields::VirtualModifier::Virtual)
           .Case(KeywordModifierSet::Abstract,
