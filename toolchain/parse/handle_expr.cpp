@@ -328,8 +328,7 @@ auto HandleExprLoop(Context& context) -> void {
       // argument in a mode where it can handle requirement operators like
       // `impls` and `=`.
       case Lex::TokenKind::Where:
-        context.AddNode(NodeKind::WhereIntroducer, state.token,
-                        state.has_error);
+        context.AddNode(NodeKind::WhereOperand, state.token, state.has_error);
         context.PushState(state, State::WhereFinish);
         BeginRequirement(context);
         return;

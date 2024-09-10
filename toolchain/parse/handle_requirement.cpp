@@ -54,12 +54,11 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::Equal: {
-      context.AddNode(NodeKind::RequirementAssign, state.token,
-                      state.has_error);
+      context.AddNode(NodeKind::RequirementEqual, state.token, state.has_error);
       break;
     }
     case Lex::TokenKind::EqualEqual: {
-      context.AddNode(NodeKind::RequirementEquals, state.token,
+      context.AddNode(NodeKind::RequirementEqualEqual, state.token,
                       state.has_error);
       break;
     }

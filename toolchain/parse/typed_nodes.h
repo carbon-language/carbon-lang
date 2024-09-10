@@ -1034,18 +1034,16 @@ struct DesignatorExpr {
   NodeIdOneOf<IdentifierName, SelfTypeName> name;
 };
 
-// FIXME: RequirementRewrite?
-struct RequirementAssign {
-  static constexpr auto Kind = NodeKind::RequirementAssign.Define(
+struct RequirementEqual {
+  static constexpr auto Kind = NodeKind::RequirementEqual.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
   AnyExprId lhs;
   Lex::EqualTokenIndex token;
   AnyExprId rhs;
 };
 
-// FIXME: RequirementEqualEqual?
-struct RequirementEquals {
-  static constexpr auto Kind = NodeKind::RequirementEquals.Define(
+struct RequirementEqualEqual {
+  static constexpr auto Kind = NodeKind::RequirementEqualEqual.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
   AnyExprId lhs;
   Lex::EqualEqualTokenIndex token;
@@ -1064,18 +1062,17 @@ struct RequirementImpls {
 using RequirementAnd = LeafNode<NodeKind::RequirementAnd, Lex::AndTokenIndex>;
 
 // virtual node
-// FIXME: WhereType? WhereOperand?
-struct WhereIntroducer {
+struct WhereOperand {
   static constexpr auto Kind =
-      NodeKind::WhereIntroducer.Define({.child_count = 1});
+      NodeKind::WhereOperand.Define({.child_count = 1});
   AnyExprId type;
   Lex::WhereTokenIndex token;
 };
 
 struct WhereExpr {
   static constexpr auto Kind = NodeKind::WhereExpr.Define(
-      {.category = NodeCategory::Expr, .bracketed_by = WhereIntroducer::Kind});
-  WhereIntroducerId introducer;
+      {.category = NodeCategory::Expr, .bracketed_by = WhereOperand::Kind});
+  WhereOperandId introducer;
   Lex::WhereTokenIndex token;
   CommaSeparatedList<AnyRequirementId, RequirementAndId> requirements;
 };

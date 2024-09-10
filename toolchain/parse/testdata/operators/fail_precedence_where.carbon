@@ -61,7 +61,7 @@ fn WhereNEq() {
 library "less_requirement";
 
 fn LessRequirement() {
-  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: Requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   X where .J < .K;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -97,7 +97,7 @@ fn WhereAs() {
 library "as_in_argument";
 
 fn AsInArgument() {
-  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: Requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   R where .O as type impls P;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR:
@@ -109,7 +109,7 @@ fn AsInArgument() {
 library "greater_in_argument";
 
 fn GreaterInArgument() {
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: Requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
   // CHECK:STDERR:               ^
   Q where .AA > .BB impls CC;
@@ -130,11 +130,11 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:               {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:             {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'A'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
@@ -152,7 +152,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'U'},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'C'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'D'},
@@ -176,11 +176,11 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'e'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'V'},
 // CHECK:STDOUT:             {kind: 'InfixOperatorEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'G'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f32'},
-// CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementEqualEqual', text: '==', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
@@ -198,11 +198,11 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'W'},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'H'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'RequirementAssign', text: '=', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
@@ -220,7 +220,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'X'},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'J'},
 // CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
@@ -242,7 +242,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Y'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Z'},
 // CHECK:STDOUT:             {kind: 'InfixOperatorAs', text: 'as', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'L'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'M'},
@@ -264,11 +264,11 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'S'},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'N'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'RequirementEquals', text: '==', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'RequirementEqualEqual', text: '==', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
@@ -286,7 +286,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'R'},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'O'},
 // CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
@@ -306,7 +306,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Q'},
-// CHECK:STDOUT:           {kind: 'WhereIntroducer', text: 'where', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'AA'},
 // CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
