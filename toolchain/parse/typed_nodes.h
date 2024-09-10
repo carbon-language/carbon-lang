@@ -1061,11 +1061,12 @@ struct RequirementImpls {
 // An `and` token separating requirements in a `where` expression.
 using RequirementAnd = LeafNode<NodeKind::RequirementAnd, Lex::AndTokenIndex>;
 
-// virtual node
 struct WhereOperand {
   static constexpr auto Kind =
       NodeKind::WhereOperand.Define({.child_count = 1});
   AnyExprId type;
+  // This is a virtual token. The `where` token is owned by the
+  // WhereExpr node.
   Lex::WhereTokenIndex token;
 };
 
