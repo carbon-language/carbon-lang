@@ -10,13 +10,13 @@
 
 // --- types.carbon
 
-library "types";
+library "[[@TEST_NAME]]";
 
 fn UInt(n: i32) -> type = "int.make_type_unsigned";
 
 // --- use_types.carbon
 
-library "uses_types";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -34,7 +34,7 @@ fn Symbolic(N:! i32, x: UInt(N)) -> UInt(N) {
 
 // --- fail_zero_size.carbon
 
-library "fail_zero_size";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -46,7 +46,7 @@ var n: UInt(0);
 
 // --- fail_negative_size.carbon
 
-library "fail_negative_size";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -60,7 +60,7 @@ var n: UInt(Negate(1));
 
 // --- fail_oversized.carbon
 
-library "fail_oversized";
+library "[[@TEST_NAME]]";
 
 import library "types";
 

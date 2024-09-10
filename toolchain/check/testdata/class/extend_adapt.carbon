@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 class SomeClassAdapter;
 
@@ -37,7 +37,7 @@ fn TestAdapterMethod(a: SomeClassAdapter) {
 
 // --- fail_todo_method_access.carbon
 
-library "fail_todo_method_access";
+library "[[@TEST_NAME]]";
 
 class SomeClass {
   fn F[self: Self]();
@@ -63,7 +63,7 @@ fn F(a: SomeClassAdapter) {
 
 // --- fail_todo_field_access.carbon
 
-library "fail_todo_field_access";
+library "[[@TEST_NAME]]";
 
 class SomeClass {
   var a: i32;
@@ -87,7 +87,7 @@ fn F(a: SomeClassAdapter) -> i32 {
 
 // --- fail_todo_adapt_non_class.carbon
 
-library "fail_todo_adapt_non_class";
+library "[[@TEST_NAME]]";
 
 class StructAdapter {
   // CHECK:STDERR: fail_todo_adapt_non_class.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `extending non-class type`.

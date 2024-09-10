@@ -10,7 +10,7 @@
 
 // --- foo.carbon
 
-library "foo";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type);
 
@@ -23,7 +23,7 @@ fn F() -> CompleteClass(i32);
 
 // --- foo.impl.carbon
 
-impl library "foo";
+impl library "[[@TEST_NAME]]";
 
 class Class(T:! type) {
   var x: T;
@@ -35,7 +35,7 @@ fn F() -> CompleteClass(i32) {
 
 // --- use_foo.carbon
 
-library "use_foo";
+library "[[@TEST_NAME]]";
 import library "foo";
 
 fn UseMethod() -> i32 {
@@ -50,7 +50,7 @@ fn UseField() -> i32 {
 
 // --- fail_generic_arg_mismatch.carbon
 
-library "fail_generic_arg_mismatch";
+library "[[@TEST_NAME]]";
 import library "foo";
 
 fn Use() {
@@ -65,14 +65,14 @@ fn Use() {
   var v: CompleteClass(i32*) = F();
 }
 
-// --- fail_bad_foo.impl.carbon
+// --- fail_foo.impl.carbon
 
-impl library "foo";
+impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class Class(U:! type) {
 // CHECK:STDERR:             ^
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE-5]]:6: In import.
 // CHECK:STDERR: impl library "foo";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
@@ -80,7 +80,7 @@ impl library "foo";
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 class Class(U:! type) {
-  // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+3]]:10: ERROR: Name `T` not found.
+  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+3]]:10: ERROR: Name `T` not found.
   // CHECK:STDERR:   var x: T;
   // CHECK:STDERR:          ^
   var x: T;
@@ -793,7 +793,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.3 => constants.%.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_bad_foo.impl.carbon
+// CHECK:STDOUT: --- fail_foo.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic]

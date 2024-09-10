@@ -14,19 +14,19 @@
 
 // --- other_define.carbon
 
-package Other library "define";
+package Other library "[[@TEST_NAME]]";
 
 class C {}
 
 // --- other_extern.carbon
 
-package Other library "extern";
+package Other library "[[@TEST_NAME]]";
 
 extern class C;
 
 // --- other_conflict.carbon
 
-package Other library "conflict";
+package Other library "[[@TEST_NAME]]";
 
 fn C() {}
 
@@ -36,23 +36,23 @@ fn C() {}
 
 // --- define.carbon
 
-library "define";
+library "[[@TEST_NAME]]";
 
-import Other library "define";
+import Other library "other_define";
 
 var c: Other.C = {};
 
 // --- fail_extern.carbon
 
-library "extern";
+library "[[@TEST_NAME]]";
 
-import Other library "extern";
+import Other library "other_extern";
 
 // CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: ERROR: Variable has incomplete type `C`.
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: import Other library "extern";
+// CHECK:STDERR: import Other library "other_extern";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_extern.carbon:4:1: Class was forward declared here.
 // CHECK:STDERR: extern class C;
@@ -62,22 +62,22 @@ var c: Other.C = {};
 
 // --- fail_todo_merge_define_extern.carbon
 
-library "merge_define_extern";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-import Other library "define";
-import Other library "extern";
+import Other library "other_define";
+import Other library "other_extern";
 
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
 // CHECK:STDERR: var c: Other.C = {};
@@ -87,22 +87,22 @@ var c: Other.C = {};
 
 // --- fail_conflict.carbon
 
-library "conflict";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-import Other library "define";
-import Other library "conflict";
+import Other library "other_define";
+import Other library "other_conflict";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: In name lookup for `C`.
 // CHECK:STDERR: var c: Other.C = {};
@@ -231,10 +231,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     import Other//define
+// CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//define, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//define, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -285,9 +285,9 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref
-// CHECK:STDOUT:     import Other//extern
+// CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref Other//extern, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref: type = import_ref Other//other_extern, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -336,12 +336,12 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     import Other//define
-// CHECK:STDOUT:     import Other//extern
+// CHECK:STDOUT:     import Other//other_define
+// CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//define, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//define, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//extern, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_extern, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -395,12 +395,12 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     import Other//define
-// CHECK:STDOUT:     import Other//conflict
+// CHECK:STDOUT:     import Other//other_define
+// CHECK:STDOUT:     import Other//other_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//define, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//define, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//conflict, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, inst+3, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_conflict, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

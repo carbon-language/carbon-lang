@@ -10,7 +10,7 @@
 
 // --- lib.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 // --- name.carbon
 

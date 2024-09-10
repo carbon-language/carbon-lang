@@ -10,7 +10,7 @@
 
 // --- fail_private_field_access.carbon
 
-library "private_field_access";
+library "[[@TEST_NAME]]";
 
 class Circle {
   private var radius: i32;
@@ -64,7 +64,7 @@ fn Run() {
 
 // --- fail_protected_field_access.carbon
 
-library "protected_field_access";
+library "[[@TEST_NAME]]";
 
 class A {
   protected var x: i32;
@@ -83,7 +83,7 @@ fn Run() {
 
 // --- instance_private_field_access_on_self.carbon
 
-library "instance_private_field_access_on_self";
+library "[[@TEST_NAME]]";
 
 class Circle {
   private var radius: i32;
@@ -103,7 +103,7 @@ class Circle {
 
 // --- public_global_access.carbon
 
-library "public_global_access";
+library "[[@TEST_NAME]]";
 
 class A {
   let x: i32 = 5;
@@ -113,7 +113,7 @@ let x: i32 = A.x;
 
 // --- fail_global_access.carbon
 
-library "global_access";
+library "[[@TEST_NAME]]";
 
 class A {
   protected let x: i32 = 5;
@@ -139,7 +139,7 @@ let y: i32 = A.y;
 
 // --- fail_todo_global_self_access.carbon
 
-library "global_self_access";
+library "[[@TEST_NAME]]";
 
 class A {
   private let internal: i32 = 10;

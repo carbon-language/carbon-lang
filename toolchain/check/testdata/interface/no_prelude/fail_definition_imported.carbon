@@ -10,13 +10,13 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 interface I;
 
 // --- fail_b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 import library "a";
 
 // CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.

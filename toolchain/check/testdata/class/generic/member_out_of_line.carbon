@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type) {
   fn F(n: T) -> T;
@@ -28,7 +28,7 @@ fn Class(T:! type).G[self: Self]() -> T {
 
 // --- nested.carbon
 
-library "nested";
+library "[[@TEST_NAME]]";
 
 class A(T:! type) {
   class B(N:! T) {
@@ -40,7 +40,7 @@ fn A(T:! type).B(N:! T).F[self: Self](a: T) {}
 
 // --- fail_mismatched_not_generic_vs_generic.carbon
 
-library "fail_mismatched_not_generic_vs_generic";
+library "[[@TEST_NAME]]";
 
 class NotGeneric {
   fn F();
@@ -57,7 +57,7 @@ fn NotGeneric(T:! type).F() {}
 
 // --- fail_mismatched_too_few_args.carbon
 
-library "fail_mismatched_too_few_args";
+library "[[@TEST_NAME]]";
 
 class Generic(T:! type) {
   fn TooFew();
@@ -74,7 +74,7 @@ fn Generic().TooFew() {}
 
 // --- fail_mismatched_too_many_args.carbon
 
-library "fail_mismatched_too_many_args";
+library "[[@TEST_NAME]]";
 
 class Generic(T:! type) {
   fn TooMany();
@@ -91,7 +91,7 @@ fn Generic(T:! type, U:! type).TooMany() {}
 
 // --- fail_mismatched_wrong_arg_type.carbon
 
-library "fail_mismatched_wrong_arg_type";
+library "[[@TEST_NAME]]";
 
 class Generic(T:! type) {
   fn WrongType();

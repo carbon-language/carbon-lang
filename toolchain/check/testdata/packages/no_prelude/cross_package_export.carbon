@@ -14,7 +14,7 @@
 
 // --- base.carbon
 
-package Other library "base";
+package Other library "[[@TEST_NAME]]";
 
 class C {
   var x: ();
@@ -22,31 +22,31 @@ class C {
 
 // --- conflict.carbon
 
-package Other library "conflict";
+package Other library "[[@TEST_NAME]]";
 
 fn C() {}
 
 // --- export_import.carbon
 
-package Other library "export_import";
+package Other library "[[@TEST_NAME]]";
 
 export import library "base";
 
 // --- export_import_copy.carbon
 
-package Other library "export_import_copy";
+package Other library "[[@TEST_NAME]]";
 
 export import library "base";
 
 // --- export_import_indirect.carbon
 
-package Other library "export_import_indirect";
+package Other library "[[@TEST_NAME]]";
 
 export import library "export_import";
 
 // --- export_name.carbon
 
-package Other library "export_name";
+package Other library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -54,7 +54,7 @@ export C;
 
 // --- export_name_copy.carbon
 
-package Other library "export_name_copy";
+package Other library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -62,7 +62,7 @@ export C;
 
 // --- export_name_indirect.carbon
 
-package Other library "export_name_indirect";
+package Other library "[[@TEST_NAME]]";
 
 import library "export_name";
 
@@ -74,7 +74,7 @@ export C;
 
 // --- use_export_import.carbon
 
-library "use_export_import";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 
@@ -82,7 +82,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_import_with_copy.carbon
 
-library "use_export_import_with_copy";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 import Other library "export_import_copy";
@@ -91,7 +91,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_import_indirect.carbon
 
-library "use_export_import_indirect";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import_indirect";
 
@@ -99,7 +99,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_name.carbon
 
-library "use_export_name";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name";
 
@@ -107,7 +107,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_name_with_copy.carbon
 
-library "use_export_name_with_copy";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name";
 import Other library "export_name_copy";
@@ -116,7 +116,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_name_indirect.carbon
 
-library "use_export_name_indirect";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name_indirect";
 
@@ -124,7 +124,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_all.carbon
 
-library "use_export_all";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 import Other library "export_name";
@@ -137,21 +137,21 @@ var c: Other.C = {.x = ()};
 
 // --- unused_conflict_on_export_import.carbon
 
-library "unused_conflict_on_export_import";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 import Other library "conflict";
 
 // --- unused_conflict_on_export_name.carbon
 
-library "unused_conflict_on_export_name";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name";
 import Other library "conflict";
 
 // --- fail_conflict_on_export_import.carbon
 
-library "fail_conflict_on_export_import";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "export_import";
@@ -176,7 +176,7 @@ alias C = Other.C;
 
 // --- fail_conflict_on_export_name.carbon
 
-library "fail_conflict_on_export_name";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+15]]:1: In import.
 // CHECK:STDERR: import Other library "export_name";

@@ -46,11 +46,11 @@ library;
 // CHECK:STDERR: library "trailing_impl" impl
 // CHECK:STDERR:                         ^~~~
 // CHECK:STDERR:
-library "trailing_impl" impl
+library "[[@TEST_NAME]]" impl
 
 // --- fail_no_semi.carbon
 
-library "NoSemi"
+library "[[@TEST_NAME]]"
 
 // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: ERROR: `library` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
@@ -95,7 +95,7 @@ library "NoSemi"
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"NoSemi"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: '"NoSemi"', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"no_semi"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: '"no_semi"', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

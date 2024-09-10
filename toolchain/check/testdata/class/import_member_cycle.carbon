@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 class Cycle {
   var a: Cycle*;
@@ -18,7 +18,7 @@ class Cycle {
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 import library "a";
 

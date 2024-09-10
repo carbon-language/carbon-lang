@@ -10,7 +10,7 @@
 
 // --- fail_not_type.carbon
 
-library "not_type";
+library "[[@TEST_NAME]]";
 
 class Bad {
   // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
@@ -31,7 +31,7 @@ fn Use(b: Bad) { b.F(); }
 
 // --- fail_extend_not_type.carbon
 
-library "extend_not_type";
+library "[[@TEST_NAME]]";
 
 class Bad {
   // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
@@ -49,7 +49,7 @@ fn Use(b: Bad) { b.F(); }
 
 // --- fail_repeated.carbon
 
-library "fail_repeated";
+library "[[@TEST_NAME]]";
 
 class MultipleAdapts {
   adapt ();
@@ -77,7 +77,7 @@ class MultipleAdaptsSameType {
 
 // --- fail_bad_scope.carbon
 
-library "fail_bad_scope";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: ERROR: `adapt` declaration can only be used in a class.
 // CHECK:STDERR: adapt {};

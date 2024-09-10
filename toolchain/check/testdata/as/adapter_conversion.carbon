@@ -10,7 +10,7 @@
 
 // --- adapt_class.carbon
 
-library "adapt_class";
+library "[[@TEST_NAME]]";
 
 class A {
   var x: i32;
@@ -36,7 +36,7 @@ var b_factory: B = A.Make() as B;
 
 // --- adapt_i32.carbon
 
-library "adapt_i32";
+library "[[@TEST_NAME]]";
 
 class A {
   adapt i32;
@@ -47,7 +47,7 @@ let n: i32 = a as i32;
 
 // --- multi_level_adapt.carbon
 
-library "multi_level_adapt";
+library "[[@TEST_NAME]]";
 
 class A { adapt {}; }
 class B { adapt A; }
@@ -58,7 +58,7 @@ let d: D = {} as D;
 
 // --- fail_init_class.carbon
 
-library "fail_init_class";
+library "[[@TEST_NAME]]";
 
 class A {
   var x: i32;
@@ -84,7 +84,7 @@ var b_init: B = ({.x = 1, .y = 2} as A) as B;
 
 // --- fail_adapt_init_from_struct.carbon
 
-library "fail_adapt_init_from_struct";
+library "[[@TEST_NAME]]";
 
 class A {
   var x: i32;

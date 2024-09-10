@@ -10,25 +10,25 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 fn A();
 
 // --- basic.impl.carbon
 
-impl library "basic";
+impl library "[[@TEST_NAME]]";
 
 fn A() {}
 
 // --- extern_api.carbon
 
-library "extern_api";
+library "[[@TEST_NAME]]";
 
 extern fn A();
 
 // --- fail_extern_api.impl.carbon
 
-impl library "extern_api";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: fn A() {}
@@ -44,13 +44,13 @@ fn A() {}
 
 // --- extern_impl.carbon
 
-library "extern_impl";
+library "[[@TEST_NAME]]";
 
 fn A();
 
 // --- fail_extern_impl.impl.carbon
 
-impl library "extern_impl";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: extern fn A() {}
@@ -66,13 +66,13 @@ extern fn A() {}
 
 // --- redecl_after_def.carbon
 
-library "redecl_after_def";
+library "[[@TEST_NAME]]";
 
 fn A() {}
 
 // --- fail_redecl_after_def.impl.carbon
 
-impl library "redecl_after_def";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `fn A` is redundant.
 // CHECK:STDERR: fn A();
@@ -88,13 +88,13 @@ fn A();
 
 // --- redef_after_def.carbon
 
-library "redef_after_def";
+library "[[@TEST_NAME]]";
 
 fn A() {}
 
 // --- fail_redef_after_def.impl.carbon
 
-impl library "redef_after_def";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redefinition of `fn A`.
 // CHECK:STDERR: fn A() {}
@@ -110,14 +110,14 @@ fn A() {}
 
 // --- def_alias.carbon
 
-library "def_alias";
+library "[[@TEST_NAME]]";
 
 fn A();
 alias B = A;
 
 // --- fail_def_alias.impl.carbon
 
-impl library "def_alias";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn B() {}

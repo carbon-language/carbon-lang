@@ -14,7 +14,7 @@
 
 // --- def.carbon
 
-package Test library "def";
+package Test library "[[@TEST_NAME]]";
 
 class C {}
 private alias A = C;
@@ -25,13 +25,13 @@ private alias A = C;
 
 // --- def.impl.carbon
 
-impl package Test library "def";
+impl package Test library "[[@TEST_NAME]]";
 
 var inst: A = {};
 
 // --- fail_local_def.carbon
 
-package Test library "fail_local_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
@@ -43,7 +43,7 @@ var inst: A = {};
 
 // --- fail_other_def.carbon
 
-package Other library "fail_other_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 

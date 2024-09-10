@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 class Empty {
 }
@@ -19,7 +19,7 @@ class Incomplete;
 
 // --- fail_b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 import library "a";
 
