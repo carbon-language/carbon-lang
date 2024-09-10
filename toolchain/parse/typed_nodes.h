@@ -1058,11 +1058,12 @@ struct RequirementImpls {
   AnyExprId rhs;
 };
 
-// virtual node
 struct WhereOperand {
   static constexpr auto Kind =
       NodeKind::WhereOperand.Define({.child_count = 1});
   AnyExprId type;
+  // This is a virtual token. The `where` token is owned by the
+  // WhereExpr node.
   Lex::WhereTokenIndex token;
 };
 
