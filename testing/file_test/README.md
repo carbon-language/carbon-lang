@@ -15,7 +15,7 @@ Hides `{{` from jekyll's liquid parsing. Note endraw at the bottom.
 
 A typical BUILD target will look like:
 
-```
+```starlark
 load("rules.bzl", "file_test")
 
 file_test(
@@ -35,7 +35,7 @@ file_test(
 
 A typical implementation will look like:
 
-```
+```cpp
 #include "my_library.h"
 
 #include "testing/file_test/file_test_base.h"
