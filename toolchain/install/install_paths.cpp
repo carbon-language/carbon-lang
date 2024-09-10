@@ -7,9 +7,11 @@
 #include <memory>
 
 #include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
@@ -76,43 +78,42 @@ auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
   return paths;
 }
 
-auto InstallPaths::FindPreludeFiles() const
+auto InstallPaths::ReadPreludeManifest() const
     -> ErrorOr<llvm::SmallVector<std::string>> {
   // This is structured to avoid a vector copy on success.
   ErrorOr<llvm::SmallVector<std::string>> result =
       llvm::SmallVector<std::string>();
 
-  std::string dir = core_package();
+  llvm::SmallString<256> manifest;
+  llvm::sys::path::append(manifest, llvm::sys::path::Style::posix,
+                          core_package(), "prelude_manifest.txt");
 
-  // Include <data>/core/prelude.carbon, which is the entry point into the
-  // prelude.
-  {
-    llvm::SmallString<256> prelude_file(dir);
-    llvm::sys::path::append(prelude_file, llvm::sys::path::Style::posix,
-                            "prelude.carbon");
-    result->push_back(prelude_file.str().str());
+  auto fs = llvm::vfs::getRealFileSystem();
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+      fs->getBufferForFile(manifest);
+  if (!file) {
+    result = ErrorBuilder() << "Loading prelude manifest `" << manifest
+                            << "`: " << file.getError().message();
+    return result;
   }
 
-  // Glob for <data>/core/prelude/**/*.carbon and add all the files we find.
-  llvm::SmallString<256> prelude_dir(dir);
-  llvm::sys::path::append(prelude_dir, llvm::sys::path::Style::posix,
-                          "prelude");
-  std::error_code ec;
-  for (llvm::sys::fs::recursive_directory_iterator prelude_files_it(
-           prelude_dir, ec, /*follow_symlinks=*/false);
-       prelude_files_it != llvm::sys::fs::recursive_directory_iterator();
-       prelude_files_it.increment(ec)) {
-    if (ec) {
-      result = ErrorBuilder() << "Could not find prelude: " << ec.message();
-      return result;
+  // The manifest should have one file per line.
+  llvm::StringRef buffer = file.get()->getBuffer();
+  while (true) {
+    auto [token, remainder] = llvm::getToken(buffer, "\n");
+    if (token.empty()) {
+      break;
     }
-
-    auto prelude_file = prelude_files_it->path();
-    if (llvm::sys::path::extension(prelude_file) == ".carbon") {
-      result->push_back(prelude_file);
-    }
+    llvm::SmallString<256> path;
+    llvm::sys::path::append(path, llvm::sys::path::Style::posix, core_package(),
+                            token);
+    result->push_back(path.str().str());
+    buffer = remainder;
   }
 
+  if (result->empty()) {
+    result = ErrorBuilder() << "Prelude manifest `" << manifest << "` is empty";
+  }
   return result;
 }
 

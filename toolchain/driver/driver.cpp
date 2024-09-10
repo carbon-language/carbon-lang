@@ -829,7 +829,7 @@ auto Driver::Compile(const CompileOptions& options,
   // package-specific search path based on the library name.
   llvm::SmallVector<std::string> prelude;
   if (options.prelude_import && options.phase >= CompileOptions::Phase::Check) {
-    if (auto find = installation_->FindPreludeFiles(); find.ok()) {
+    if (auto find = installation_->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
       error_stream_ << "ERROR: " << find.error() << "\n";

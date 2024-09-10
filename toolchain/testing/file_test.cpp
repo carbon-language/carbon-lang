@@ -36,7 +36,7 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.FindPreludeFiles());
+    CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
     for (const auto& file : prelude) {
       CARBON_RETURN_IF_ERROR(AddFile(fs, file));
     }
@@ -136,10 +136,11 @@ class ToolchainFileTest : public FileTestBase {
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
         llvm::MemoryBuffer::getFile(path);
     if (file.getError()) {
-      return ErrorBuilder() << file.getError().message();
+      return ErrorBuilder()
+             << "Getting `" << path << "`: " << file.getError().message();
     }
     if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
-      return ErrorBuilder() << "Duplicate file: " << path;
+      return ErrorBuilder() << "Duplicate file: `" << path << "`";
     }
     return Success();
   }
