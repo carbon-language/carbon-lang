@@ -2,15 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/parse/handle_requirement.h"
-
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
 namespace Carbon::Parse {
 
-auto BeginRequirement(Context& context) -> void {
+auto HandleRequirementBegin(Context& context) -> void {
+  context.PopAndDiscardState();
   context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
