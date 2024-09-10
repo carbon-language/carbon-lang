@@ -20,10 +20,6 @@ library "[[@TEST_NAME]]";
 
 // --- fail_main_lib2.carbon
 
-// CHECK:STDERR: fail_main_lib2.carbon:[[@LINE+4]]:1: ERROR: Library's API previously provided by `main_lib1.carbon`.
-// CHECK:STDERR: library "lib";
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 library "[[@TEST_NAME]]";
 
 // --- package1.carbon
@@ -32,10 +28,9 @@ package Package;
 
 // --- fail_package2.carbon
 
-// CHECK:STDERR: fail_package2.carbon:[[@LINE+4]]:1: ERROR: Library's API previously provided by `package1.carbon`.
+// CHECK:STDERR: fail_package2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package1.carbon`.
 // CHECK:STDERR: package Package;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 package Package;
 
 // --- package_lib1.carbon
@@ -44,9 +39,6 @@ package Package library "[[@TEST_NAME]]";
 
 // --- fail_package_lib2.carbon
 
-// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package_lib1.carbon`.
-// CHECK:STDERR: package Package library "lib";
-// CHECK:STDERR: ^~~~~~~
 package Package library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- main1.carbon

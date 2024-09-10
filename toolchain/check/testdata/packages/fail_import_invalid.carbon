@@ -52,7 +52,7 @@ import This;
 
 package This library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
+// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: ERROR: Imported API 'This//lib' not found.
 // CHECK:STDERR: import library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -78,9 +78,13 @@ package Implicit library "[[@TEST_NAME]]";
 
 // --- fail_implicit_lib.impl.carbon
 
+// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:6: ERROR: Corresponding API for 'Implicit//implicit_lib' not found.
+// CHECK:STDERR: impl package Implicit library "implicit_lib";
+// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:
 impl package Implicit library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Imports from the current package must omit the package name.
 // CHECK:STDERR: import Implicit library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -178,8 +182,10 @@ import ImportNotFound;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_api.carbon
@@ -268,8 +274,8 @@ import ImportNotFound;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }

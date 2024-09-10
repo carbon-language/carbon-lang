@@ -40,6 +40,10 @@ fn F2() {}
 
 package Other library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: other_fn_use.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library "fn";
 
 fn G() { F(); }
@@ -58,7 +62,15 @@ namespace Other;
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: main_use_other.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn";
+// CHECK:STDERR: main_use_other.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn2' not found.
+// CHECK:STDERR: import Other library "fn2";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn2";
 
 fn Run() {
@@ -70,26 +82,18 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 import Other library "fn";
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn_extern' not found.
+// CHECK:STDERR: import Other library "fn_extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn_extern";
 
 fn Run() {
-  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: In name lookup for `F`.
-  // CHECK:STDERR:   Other.F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Other.F();
 }
 
@@ -97,33 +101,33 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: main_unused_other_ambiguous.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn";
+// CHECK:STDERR: main_unused_other_ambiguous.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn_conflict' not found.
+// CHECK:STDERR: import Other library "fn_conflict";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn_conflict";
 
 // --- fail_main_use_other_ambiguous.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn F(x: ()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 import Other library "fn";
+// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn_conflict' not found.
+// CHECK:STDERR: import Other library "fn_conflict";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn_conflict";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: In name lookup for `F`.
-  // CHECK:STDERR:   Other.F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Other.F();
 }
 
@@ -131,28 +135,23 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
-import library "other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: In import.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Main//other_ns' not found.
 // CHECK:STDERR: import library "other_ns";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: main_other_ns.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: namespace Other;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+import library "other_ns";
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+7]]:4: ERROR: Imported packages cannot be used for declarations.
 // CHECK:STDERR: fn Other.F() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR:    ^~~~~
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: Package imported here.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Previously declared here.
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 fn Other.F() {}
 
@@ -160,6 +159,10 @@ fn Other.F() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn";
 
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
@@ -178,6 +181,10 @@ fn Other.G() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn";
 
 // CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+7]]:11: ERROR: Imported packages cannot be used for declarations.
@@ -196,6 +203,10 @@ fn Other.Nested.F() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//fn' not found.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "fn";
 
 // CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE+7]]:4: ERROR: Imported packages cannot be used for declarations.
@@ -211,11 +222,11 @@ fn Other.G() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+3]]:1: ERROR: Imported API 'Other//fn_use' not found.
+// CHECK:STDERR: import Other library "fn_use";
+// CHECK:STDERR: ^~~~~~
 import Other library "fn_use";
 
-// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+3]]:13: ERROR: Name `F` not found.
-// CHECK:STDERR: fn UseF() { Other.F(); }
-// CHECK:STDERR:             ^~~~~~~
 fn UseF() { Other.F(); }
 
 // CHECK:STDOUT: --- other_fn.carbon
@@ -306,18 +317,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref
 // CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
@@ -325,12 +330,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_other_ns.carbon
 // CHECK:STDOUT:
@@ -347,21 +349,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %F2.type: type = fn_type @F2 [template]
-// CHECK:STDOUT:   %F2: %F2.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.1
-// CHECK:STDOUT:     .F2 = %import_ref.2
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn2
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//fn2, inst+1, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -375,18 +368,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
-// CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%import_ref.2 [template = constants.%F2]
-// CHECK:STDOUT:   %F2.call: init %.1 = call %F2.ref()
+// CHECK:STDOUT:   %Other.ref.loc16: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
+// CHECK:STDOUT:   %Other.ref.loc17: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:   %F2.ref: <error> = name_ref F2, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
@@ -394,18 +381,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.1
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_extern
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//fn_extern, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -420,19 +401,15 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_conflict
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -449,18 +426,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.1
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_conflict
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//fn_conflict, inst+6, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -475,12 +446,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
@@ -491,17 +459,16 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//other_ns, inst+1, loaded
-// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .F = file.%F.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Other
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
@@ -524,7 +491,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .G = file.%G.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -535,7 +502,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT: }
@@ -556,7 +523,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .Nested = file.%Nested
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -587,7 +554,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .G = file.%G.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -614,7 +581,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn_use
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

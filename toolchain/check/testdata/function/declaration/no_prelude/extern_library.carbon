@@ -64,7 +64,7 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+10]]:1: ERROR: Declaration in library "fail_extern_library_redecl" doesn't match `extern library` declaration.
+// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+10]]:1: ERROR: Declaration in library "extern_library_redecl" doesn't match `extern library` declaration.
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE-5]]:1: In import.

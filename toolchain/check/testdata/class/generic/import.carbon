@@ -67,22 +67,12 @@ fn Use() {
 
 // --- fail_bad_foo.impl.carbon
 
+// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Main//bad_foo' not found.
+// CHECK:STDERR: impl library "bad_foo";
+// CHECK:STDERR:      ^~~~~~~
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: class Class(U:! type) {
-// CHECK:STDERR:             ^
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-5]]:6: In import.
-// CHECK:STDERR: impl library "foo";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class Class(T:! type);
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
 class Class(U:! type) {
-  // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+3]]:10: ERROR: Name `T` not found.
-  // CHECK:STDERR:   var x: T;
-  // CHECK:STDERR:          ^
   var x: T;
 }
 
@@ -800,17 +790,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, @.1(%U) [symbolic]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+6, loaded [template = constants.%Class.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+55, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -825,46 +808,34 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %U.loc14_13.1: type = param U
-// CHECK:STDOUT:     %U.loc14_13.2: type = bind_symbolic_name U 0, %U.loc14_13.1 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
+// CHECK:STDOUT:     %U.loc7_13.1: type = param U
+// CHECK:STDOUT:     %U.loc7_13.2: type = bind_symbolic_name U 0, %U.loc7_13.1 [symbolic = @Class.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(constants.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   class;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(file.%U.loc14_13.2: type) {
+// CHECK:STDOUT: generic class @Class(file.%U.loc7_13.2: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc18: <error> = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc8: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.3
-// CHECK:STDOUT:     .x = %.loc18
+// CHECK:STDOUT:     .Self = constants.%Class.2
+// CHECK:STDOUT:     .x = %.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(constants.%U) {
+// CHECK:STDOUT: specific @Class(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

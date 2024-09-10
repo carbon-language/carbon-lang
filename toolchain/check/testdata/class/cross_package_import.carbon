@@ -38,6 +38,10 @@ fn C() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: define.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//define' not found.
+// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "define";
 
 var c: Other.C = {};
@@ -46,67 +50,45 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-import Other library "extern";
-
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: ERROR: Variable has incomplete type `C`.
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//extern' not found.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:4:1: Class was forward declared here.
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
+import Other library "extern";
+
 var c: Other.C = {};
 
 // --- fail_todo_merge_define_extern.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//define' not found.
 // CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "define";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 import Other library "define";
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//extern' not found.
+// CHECK:STDERR: import Other library "extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Other library "extern";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR:
 var c: Other.C = {};
 
 // --- fail_conflict.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Other//define' not found.
 // CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn C() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "define";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 import Other library "define";
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:1: ERROR: Imported API 'Other//conflict' not found.
+// CHECK:STDERR: import Other library "conflict";
+// CHECK:STDERR: ^~~~~~
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: In name lookup for `C`.
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
 var c: Other.C = {};
 
 // CHECK:STDOUT: --- other_define.carbon
@@ -211,11 +193,7 @@ var c: Other.C = {};
 // CHECK:STDOUT: --- define.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -230,11 +208,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     import Other//define
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//define, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//define, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -246,29 +221,21 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
+// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_19.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc6_19.2: init %C = class_init (), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_20: init %C = converted %.loc6_19.1, %.loc6_19.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_20
+// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
+// CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,10 +251,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref
-// CHECK:STDOUT:     import Other//extern
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref Other//extern, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -299,16 +264,14 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -316,11 +279,7 @@ var c: Other.C = {};
 // CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -335,13 +294,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     import Other//define
-// CHECK:STDOUT:     import Other//extern
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//define, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//define, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//extern, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -353,33 +307,22 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
+// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_19.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc23_19.2: init %C = class_init (), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc23_20: init %C = converted %.loc23_19.1, %.loc23_19.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%c.var, %.loc23_20
+// CHECK:STDOUT:   %.loc15: %.1 = struct_literal ()
+// CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -394,13 +337,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     import Other//define
-// CHECK:STDOUT:     import Other//conflict
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//define, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//define, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//conflict, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -412,22 +350,15 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
+// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_19.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc22_19.2: init %C = class_init (), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc22_20: init %C = converted %.loc22_19.1, %.loc22_19.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%c.var, %.loc22_20
+// CHECK:STDOUT:   %.loc14: %.1 = struct_literal ()
+// CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
