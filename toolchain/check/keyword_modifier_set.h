@@ -87,12 +87,14 @@ class KeywordModifierSet {
      public:
       Converter(const KeywordModifierSet& set, T default_value)
           : set_(set), result_(default_value) {}
+
       auto Case(RawEnumType raw_enumerator, T result) -> Converter& {
         if (set_.HasAnyOf(raw_enumerator)) {
           result_ = result;
         }
         return *this;
       }
+
       operator T() { return result_; }
 
      private:
