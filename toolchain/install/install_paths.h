@@ -87,9 +87,9 @@ class InstallPaths {
   // using Carbon in an environment with an unusual path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
 
-  // Finds the source files that define the prelude and returns a list of their
-  // filenames. The list always includes at least one file.
-  auto FindPreludeFiles() const -> ErrorOr<llvm::SmallVector<std::string>>;
+  // Returns the contents of the prelude manifest file. This is the list of
+  // files that define the prelude, and will always be non-empty on success.
+  auto ReadPreludeManifest() const -> ErrorOr<llvm::SmallVector<std::string>>;
 
   // Check for an error detecting the install paths correctly.
   //
