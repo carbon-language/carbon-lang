@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/precedence_where.carbon
 
-fn PostfixStar(T:! I* where .A* impls .B*);
+fn PostfixStar(T:! I* where .A* == .B*);
 
 fn Ampersand(U:! J & K where C & D impls E & F);
 
@@ -32,7 +32,7 @@ fn UnaryMinus(W:! -P where -Q impls -R);
 // CHECK:STDOUT:                   {kind: 'IdentifierName', text: 'B'},
 // CHECK:STDOUT:                 {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'PostfixOperatorStar', text: '*', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 7},
+// CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 11},
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 13},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 15},

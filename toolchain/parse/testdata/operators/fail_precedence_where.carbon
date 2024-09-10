@@ -10,8 +10,6 @@
 
 // --- fail_and_where.carbon
 
-library "and_where";
-
 fn AndWhere() {
   // CHECK:STDERR: fail_and_where.carbon:[[@LINE+4]]:14: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   true and T where .A = B;
@@ -21,8 +19,6 @@ fn AndWhere() {
 }
 
 // --- fail_where_or.carbon
-
-library "where_or";
 
 fn WhereOr() {
   // CHECK:STDERR: fail_where_or.carbon:[[@LINE+4]]:22: ERROR: Expected `;` after expression statement.
@@ -34,8 +30,6 @@ fn WhereOr() {
 
 // --- fail_equals_where.carbon
 
-library "equals_where";
-
 fn EqualsWhere() {
   // CHECK:STDERR: fail_equals_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   e == V where .G == f32;
@@ -45,8 +39,6 @@ fn EqualsWhere() {
 }
 
 // --- fail_where_neq.carbon
-
-library "where_neq";
 
 fn WhereNEq() {
   // CHECK:STDERR: fail_where_neq.carbon:[[@LINE+4]]:21: ERROR: Expected `;` after expression statement.
@@ -58,8 +50,6 @@ fn WhereNEq() {
 
 // --- fail_less_requirement.carbon
 
-library "less_requirement";
-
 fn LessRequirement() {
   // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: Requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   X where .J < .K;
@@ -69,8 +59,6 @@ fn LessRequirement() {
 }
 
 // --- fail_as_where.carbon
-
-library "as_where";
 
 fn AsWhere() {
   // CHECK:STDERR: fail_as_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
@@ -82,8 +70,6 @@ fn AsWhere() {
 
 // --- fail_where_as.carbon
 
-library "where_as";
-
 fn WhereAs() {
   // CHECK:STDERR: fail_where_as.carbon:[[@LINE+4]]:21: ERROR: Expected `;` after expression statement.
   // CHECK:STDERR:   S where .N == i32 as type;
@@ -93,8 +79,6 @@ fn WhereAs() {
 }
 
 // --- fail_as_in_argument.carbon
-
-library "as_in_argument";
 
 fn AsInArgument() {
   // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: Requirement should use `impls`, `=`, or `==` operator.
@@ -106,8 +90,6 @@ fn AsInArgument() {
 
 // --- fail_greater_in_argument.carbon
 
-library "greater_in_argument";
-
 fn GreaterInArgument() {
   // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: Requirement should use `impls`, `=`, or `==` operator.
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
@@ -118,9 +100,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_and_where.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"and_where"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'AndWhere'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -143,9 +122,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_where_or.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"where_or"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'WhereOr'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -165,9 +141,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_equals_where.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"equals_where"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'EqualsWhere'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -189,9 +162,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_where_neq.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"where_neq"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'WhereNEq'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -211,9 +181,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_less_requirement.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"less_requirement"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'LessRequirement'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -231,9 +198,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_as_where.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"as_where"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'AsWhere'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -255,9 +219,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_where_as.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"where_as"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'WhereAs'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -277,9 +238,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_as_in_argument.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"as_in_argument"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'AsInArgument'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
@@ -297,9 +255,6 @@ fn GreaterInArgument() {
 // CHECK:STDOUT: - filename: fail_greater_in_argument.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"greater_in_argument"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'GreaterInArgument'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
