@@ -112,6 +112,12 @@ auto DeclNameStack::Restore(SuspendedName sus) -> void {
   // NOLINTNEXTLINE(performance-move-const-arg)
   decl_name_stack_.push_back(std::move(sus.name_context));
   for (auto& suspended_scope : llvm::reverse(sus.scopes)) {
+    // Reattempt to resolve the definition of the specific. The generic might
+    // have been defined after we suspended this scope.
+    if (suspended_scope.entry.specific_id.is_valid()) {
+      ResolveSpecificDefinition(*context_, suspended_scope.entry.specific_id);
+    }
+
     context_->scope_stack().Restore(std::move(suspended_scope));
   }
 }

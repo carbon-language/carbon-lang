@@ -4,6 +4,8 @@
 
 #include "toolchain/check/member_access.h"
 
+#include <optional>
+
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
@@ -13,6 +15,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -96,6 +99,82 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   }
 
   return false;
+}
+
+// Returns the FunctionId of the current function if it exists.
+static auto GetCurrentFunction(Context& context)
+    -> std::optional<SemIR::FunctionId> {
+  if (context.return_scope_stack().empty()) {
+    return std::nullopt;
+  }
+
+  return context.insts()
+      .GetAs<SemIR::FunctionDecl>(context.return_scope_stack().back().decl_id)
+      .function_id;
+}
+
+// Returns the highest allowed access. For example, if this returns `Protected`
+// then only `Public` and `Protected` accesses are allowed--not `Private`.
+static auto GetHighestAllowedAccess(Context& context, SemIRLoc loc,
+                                    SemIR::ConstantId name_scope_const_id)
+    -> SemIR::AccessKind {
+  // TODO: Maybe use LookupUnqualifiedName for `Self` to support things like
+  // `var x: Self.ParentProtectedType`?
+  auto current_function = GetCurrentFunction(context);
+  // If `current_function` is a `nullopt` then we're accessing from a global
+  // variable.
+  if (!current_function) {
+    return SemIR::AccessKind::Public;
+  }
+
+  auto scope_id = context.functions().Get(*current_function).parent_scope_id;
+  if (!scope_id.is_valid()) {
+    return SemIR::AccessKind::Public;
+  }
+  auto scope = context.name_scopes().Get(scope_id);
+
+  // Lookup the inst for `Self` in the parent scope of the current function.
+  auto [self_type_inst_id, _] = context.LookupNameInExactScope(
+      loc, SemIR::NameId::SelfType, scope_id, scope);
+  if (!self_type_inst_id.is_valid()) {
+    return SemIR::AccessKind::Public;
+  }
+
+  // TODO: Support other types for `Self`.
+  auto self_class_type =
+      context.insts().TryGetAs<SemIR::ClassType>(self_type_inst_id);
+  if (!self_class_type) {
+    return SemIR::AccessKind::Public;
+  }
+
+  auto self_class_info = context.classes().Get(self_class_type->class_id);
+
+  // TODO: Support other types.
+  if (auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
+          context.constant_values().GetInstId(name_scope_const_id))) {
+    auto class_info = context.classes().Get(class_type->class_id);
+
+    if (self_class_info.self_type_id == class_info.self_type_id) {
+      return SemIR::AccessKind::Private;
+    }
+
+    // If the `type_id` of `Self` does not match with the one we're currently
+    // accessing, try checking if this class is of the parent type of `Self`.
+    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
+            self_class_info.base_id)) {
+      if (base_decl->base_type_id == class_info.self_type_id) {
+        return SemIR::AccessKind::Protected;
+      }
+    } else if (auto adapt_decl =
+                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
+                       self_class_info.adapt_id)) {
+      if (adapt_decl->adapted_type_id == class_info.self_type_id) {
+        return SemIR::AccessKind::Protected;
+      }
+    }
+  }
+
+  return SemIR::AccessKind::Public;
 }
 
 // Returns whether `scope` is a scope for which impl lookup should be performed
@@ -224,7 +303,18 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::BuiltinError};
   if (lookup_scope.name_scope_id.is_valid()) {
-    result = context.LookupQualifiedName(loc_id, name_id, lookup_scope);
+    AccessInfo access_info = {
+        .constant_id = name_scope_const_id,
+        .highest_allowed_access =
+            GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
+    };
+
+    result = context.LookupQualifiedName(loc_id, name_id, lookup_scope,
+                                         /*required=*/true, access_info);
+
+    if (!result.inst_id.is_valid()) {
+      return SemIR::InstId::BuiltinError;
+    }
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
