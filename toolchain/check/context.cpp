@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -292,7 +293,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
     return LookupNameInExactScope(loc_id, name_id, scope_id,
-                                  name_scopes().Get(scope_id));
+                                  name_scopes().Get(scope_id))
+        .first;
   }
 }
 
@@ -334,26 +336,115 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
-    -> SemIR::InstId {
+    -> std::pair<SemIR::InstId, SemIR::AccessKind> {
   if (auto lookup = scope.name_map.Lookup(name_id)) {
-    auto inst_id = scope.names[lookup.value()].inst_id;
-    LoadImportRef(*this, inst_id);
-    return inst_id;
+    auto entry = scope.names[lookup.value()];
+    LoadImportRef(*this, entry.inst_id);
+    return {entry.inst_id, entry.access_kind};
   }
+
   if (!scope.import_ir_scopes.empty()) {
-    return ImportNameFromOtherPackage(*this, loc, scope_id,
-                                      scope.import_ir_scopes, name_id);
+    // TODO: Enforce other access modifiers for imports.
+    return {ImportNameFromOtherPackage(*this, loc, scope_id,
+                                       scope.import_ir_scopes, name_id),
+            SemIR::AccessKind::Public};
   }
-  return SemIR::InstId::Invalid;
+  return {SemIR::InstId::Invalid, SemIR::AccessKind::Public};
 }
 
+// Prints diagnostics on invalid qualified name access.
+static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
+                                               SemIR::InstId scope_result_id,
+                                               SemIR::NameId name_id,
+                                               SemIR::AccessKind access_kind,
+                                               bool is_parent_access,
+                                               AccessInfo access_info) -> void {
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
+      context.constant_values().GetInstId(access_info.constant_id));
+  if (!class_type) {
+    return;
+  }
+
+  // TODO: Support scoped entities other than just classes.
+  auto class_info = context.classes().Get(class_type->class_id);
+
+  // TODO: Support passing AccessKind to diagnostics.
+  CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
+                    "Cannot access {0} member `{1}` of type `{2}`.",
+                    llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
+  CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
+                    "The {0} member `{1}` is defined here.",
+                    llvm::StringLiteral, SemIR::NameId);
+
+  auto parent_type_id = class_info.self_type_id;
+  auto access_desc = access_kind == SemIR::AccessKind::Private
+                         ? llvm::StringLiteral("private")
+                         : llvm::StringLiteral("protected");
+
+  if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
+    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
+            class_info.base_id)) {
+      parent_type_id = base_decl->base_type_id;
+    } else if (auto adapt_decl =
+                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
+                       class_info.adapt_id)) {
+      parent_type_id = adapt_decl->adapted_type_id;
+    } else {
+      CARBON_FATAL() << "Expected parent for parent access";
+    }
+  }
+
+  context.emitter()
+      .Build(loc, ClassInvalidMemberAccess, access_desc, name_id,
+             parent_type_id)
+      .Note(scope_result_id, ClassMemberDefinition, access_desc, name_id)
+      .Emit();
+}
+
+// Returns whether the access is prohibited by the access modifiers.
+static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
+                               SemIR::AccessKind access_kind,
+                               bool is_parent_access) -> bool {
+  if (!access_info) {
+    return false;
+  }
+
+  switch (access_kind) {
+    case SemIR::AccessKind::Public:
+      return false;
+    case SemIR::AccessKind::Protected:
+      return access_info->highest_allowed_access == SemIR::AccessKind::Public;
+    case SemIR::AccessKind::Private:
+      return access_info->highest_allowed_access !=
+                 SemIR::AccessKind::Private ||
+             is_parent_access;
+  }
+}
+
+// Information regarding a prohibited access.
+struct ProhibitedAccessInfo {
+  // The resulting inst of the lookup.
+  SemIR::InstId scope_result_id;
+  // The access kind of the lookup.
+  SemIR::AccessKind access_kind;
+  // If the lookup is from an extended scope. For example, if this is a base
+  // class member access from a class that extends it.
+  bool is_parent_access;
+};
+
 auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                                  LookupScope scope, bool required)
+                                  LookupScope scope, bool required,
+                                  std::optional<AccessInfo> access_info)
     -> LookupResult {
   llvm::SmallVector<LookupScope> scopes = {scope};
+
+  // TODO: Support reporting of multiple prohibited access.
+  llvm::SmallVector<ProhibitedAccessInfo> prohibited_accesses;
+
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::Invalid};
   bool has_error = false;
+  bool is_parent_access = false;
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
@@ -361,10 +452,25 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     const auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error;
 
-    auto scope_result_id =
+    auto [scope_result_id, access_kind] =
         LookupNameInExactScope(loc, name_id, scope_id, name_scope);
-    if (!scope_result_id.is_valid()) {
-      // Nothing found in this scope: also look in its extended scopes.
+
+    auto is_access_prohibited =
+        IsAccessProhibited(access_info, access_kind, is_parent_access);
+
+    // Keep track of prohibited accesses, this will be useful for reporting
+    // multiple prohibited accesses if we can't find a suitable lookup.
+    if (is_access_prohibited) {
+      prohibited_accesses.push_back({
+          .scope_result_id = scope_result_id,
+          .access_kind = access_kind,
+          .is_parent_access = is_parent_access,
+      });
+    }
+
+    if (!scope_result_id.is_valid() || is_access_prohibited) {
+      // If nothing is found in this scope or if we encountered an invalid
+      // access, look in its extended scopes.
       auto extended = name_scope.extended_scopes;
       scopes.reserve(scopes.size() + extended.size());
       for (auto extended_id : llvm::reverse(extended)) {
@@ -373,6 +479,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
         scopes.push_back({.name_scope_id = extended_id,
                           .specific_id = SemIR::SpecificId::Invalid});
       }
+      is_parent_access |= !extended.empty();
       continue;
     }
 
@@ -397,8 +504,22 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(loc, name_id);
+      if (prohibited_accesses.empty()) {
+        DiagnoseNameNotFound(loc, name_id);
+      } else {
+        //  TODO: We should report multiple prohibited accesses in case we don't
+        //  find a valid lookup. Reporting the last one should suffice for now.
+        auto [scope_result_id, access_kind, is_parent_access] =
+            prohibited_accesses.back();
+
+        // Note, `access_info` is guaranteed to have a value here, since
+        // `prohibited_accesses` is non-empty.
+        DiagnoseInvalidQualifiedNameAccess(*this, loc, scope_result_id, name_id,
+                                           access_kind, is_parent_access,
+                                           *access_info);
+      }
     }
+
     return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = SemIR::InstId::BuiltinError};
   }
@@ -420,7 +541,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
   auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
 
   // Look up `package.Core`.
-  auto core_inst_id = context.LookupNameInExactScope(
+  auto [core_inst_id, _] = context.LookupNameInExactScope(
       loc, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_inst_id.is_valid()) {
@@ -447,8 +568,8 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
-  auto inst_id = LookupNameInExactScope(loc, name_id, core_package_id,
-                                        name_scopes().Get(core_package_id));
+  auto [inst_id, _] = LookupNameInExactScope(
+      loc, name_id, core_package_id, name_scopes().Get(core_package_id));
   if (!inst_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         CoreNameNotFound, Error,
