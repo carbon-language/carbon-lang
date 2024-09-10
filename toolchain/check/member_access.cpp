@@ -158,8 +158,8 @@ static auto GetHighestAllowedAccess(Context& context, SemIRLoc loc,
       return SemIR::AccessKind::Private;
     }
 
-    // If the type_id of `Self` does not match with the one we're currently
-    // accessing. Try checking if this class is of the parent type of `Self`.
+    // If the `type_id` of `Self` does not match with the one we're currently
+    // accessing, try checking if this class is of the parent type of `Self`.
     if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
             self_class_info.base_id)) {
       if (base_decl->base_type_id == class_info.self_type_id) {
