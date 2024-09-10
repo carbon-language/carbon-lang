@@ -200,10 +200,11 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   if (introducer.extern_library.is_valid()) {
     context.TODO(node_id, "extern library");
   }
-  SemIR::Class::InheritanceKind inheritance_kind =
-      introducer.modifier_set.ToEnum(SemIR::Class::Final)
+  auto inheritance_kind =
+      introducer.modifier_set.ToEnum<SemIR::Class::InheritanceKind>()
           .Case(KeywordModifierSet::Abstract, SemIR::Class::Abstract)
-          .Case(KeywordModifierSet::Base, SemIR::Class::Base);
+          .Case(KeywordModifierSet::Base, SemIR::Class::Base)
+          .Default(SemIR::Class::Final);
 
   auto decl_block_id = context.inst_block_stack().Pop();
 

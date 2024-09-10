@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_KEYWORD_MODIFIER_SET_H_
 #define CARBON_TOOLCHAIN_CHECK_KEYWORD_MODIFIER_SET_H_
 
+#include <optional>
+
 #include "llvm/ADT/BitmaskEnum.h"
 #include "toolchain/sem_ir/name_scope.h"
 
@@ -74,19 +76,19 @@ class KeywordModifierSet {
     return set_ & other.set_;
   }
 
-  // Return a builder that implicitly converts to the specified enumeration type
-  // mapping the cases passed to the `Case`s specified. For example:
+  // Return a builder that returns the new enumeration type once a series of
+  // mapping `Case`s and a final `Default` are provided:
   //   ```
-  //   SomeEnum e = set.ToEnum(SomeEnum::Default)
-  //                    .Case(KeywordModifierSet::A, SomeEnum::A)
-  //                    .Case(KeywordModifierSet::B, SomeEnum::B);
+  //   auto e = set.ToEnum<SomeEnum>()
+  //                .Case(KeywordModifierSet::A, SomeEnum::A)
+  //                .Case(KeywordModifierSet::B, SomeEnum::B)
+  //                .Default(SomeEnum::DefaultValue);
   //   ```
   template <typename T>
-  auto ToEnum(T default_value) -> auto {
+  auto ToEnum() -> auto {
     class Converter {
      public:
-      Converter(const KeywordModifierSet& set, T default_value)
-          : set_(set), result_(default_value) {}
+      Converter(const KeywordModifierSet& set) : set_(set) {}
 
       auto Case(RawEnumType raw_enumerator, T result) -> Converter& {
         if (set_.HasAnyOf(raw_enumerator)) {
@@ -95,13 +97,18 @@ class KeywordModifierSet {
         return *this;
       }
 
-      operator T() { return result_; }
+      auto Default(T default_value) -> T {
+        if (result_) {
+          return *result_;
+        }
+        return default_value;
+      }
 
      private:
       const KeywordModifierSet& set_;
-      T result_;
+      std::optional<T> result_;
     };
-    return Converter(*this, default_value);
+    return Converter(*this);
   }
 
   // Returns the access kind from modifiers.
