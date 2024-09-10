@@ -194,9 +194,17 @@ static auto BuildFunctionDecl(Context& context,
   DiagnoseModifiers(context, introducer, is_definition, parent_scope_inst_id,
                     parent_scope_inst);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "method modifier");
+  SemIR::FunctionFields::VirtualModifier virtual_modifier =
+      SemIR::FunctionFields::VirtualModifier::None;
+
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Virtual)) {
+    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Virtual;
+  }
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)) {
+    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Abstract;
+  }
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Impl)) {
+    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Impl;
   }
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
@@ -216,7 +224,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
-                      {.return_storage_id = return_storage_id}};
+                      {.return_storage_id = return_storage_id,
+                       .virtual_modifier = virtual_modifier}};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
