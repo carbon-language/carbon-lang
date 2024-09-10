@@ -88,7 +88,7 @@ class KeywordModifierSet {
   auto ToEnum() -> auto {
     class Converter {
      public:
-      Converter(const KeywordModifierSet& set) : set_(set) {}
+      explicit Converter(const KeywordModifierSet& set) : set_(set) {}
 
       auto Case(RawEnumType raw_enumerator, T result) -> Converter& {
         if (set_.HasAnyOf(raw_enumerator)) {
