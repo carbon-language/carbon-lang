@@ -195,17 +195,14 @@ static auto BuildFunctionDecl(Context& context,
                     parent_scope_inst);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   SemIR::FunctionFields::VirtualModifier virtual_modifier =
-      SemIR::FunctionFields::VirtualModifier::None;
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Virtual)) {
-    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Virtual;
-  }
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Abstract)) {
-    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Abstract;
-  }
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Impl)) {
-    virtual_modifier = SemIR::FunctionFields::VirtualModifier::Impl;
-  }
+      introducer.modifier_set
+          .ToEnumerator(SemIR::FunctionFields::VirtualModifier::None)
+          .Case(KeywordModifierSet::Virtual,
+                SemIR::FunctionFields::VirtualModifier::Virtual)
+          .Case(KeywordModifierSet::Abstract,
+                SemIR::FunctionFields::VirtualModifier::Abstract)
+          .Case(KeywordModifierSet::Impl,
+                SemIR::FunctionFields::VirtualModifier::Impl);
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.

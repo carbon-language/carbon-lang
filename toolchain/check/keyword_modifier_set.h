@@ -70,8 +70,36 @@ class KeywordModifierSet {
   auto Remove(KeywordModifierSet set) -> void { set_ &= ~set.set_; }
 
   // Returns true if there's a non-empty set intersection.
-  constexpr auto HasAnyOf(KeywordModifierSet other) -> bool {
+  constexpr auto HasAnyOf(KeywordModifierSet other) const -> bool {
     return set_ & other.set_;
+  }
+
+  // Return a builder that implicitly converts to the specified enumeration type
+  // mapping the cases passed to the `Case`s specified. For example:
+  //   ```
+  //   SomeEnum e = set.ToEnumerator(SomeEnum::Default)
+  //                    .Case(KeywordModifierSet::A, SomeEnum::A)
+  //                    .Case(KeywordModifierSet::B, SomeEnum::B);
+  //   ```
+  template <typename T>
+  auto ToEnumerator(T default_value) {
+    class Converter {
+     public:
+      Converter(const KeywordModifierSet& set, T default_value)
+          : set_(set), result_(default_value) {}
+      auto Case(RawEnumType raw_enumerator, T result) -> Converter& {
+        if (set_.HasAnyOf(raw_enumerator)) {
+          result_ = result;
+        }
+        return *this;
+      }
+      operator T() { return result_; }
+
+     private:
+      const KeywordModifierSet& set_;
+      T result_;
+    };
+    return Converter(*this, default_value);
   }
 
   // Returns the access kind from modifiers.
