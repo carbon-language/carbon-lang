@@ -82,7 +82,7 @@ class KeywordModifierSet {
   //                    .Case(KeywordModifierSet::B, SomeEnum::B);
   //   ```
   template <typename T>
-  auto ToEnumerator(T default_value) {
+  auto ToEnumerator(T default_value) -> auto {
     class Converter {
      public:
       Converter(const KeywordModifierSet& set, T default_value)
