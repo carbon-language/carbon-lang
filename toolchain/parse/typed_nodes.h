@@ -1037,6 +1037,7 @@ struct DesignatorExpr {
 struct RequirementEqual {
   static constexpr auto Kind = NodeKind::RequirementEqual.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
+  // TODO: Enforce that the lhs is always a DesignatorExpr.
   AnyExprId lhs;
   Lex::EqualTokenIndex token;
   AnyExprId rhs;
