@@ -371,7 +371,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   // TODO: Support passing AccessKind to diagnostics.
   CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
                     "Cannot access {0} member `{1}` of type `{2}`.",
-                    std::string_view, SemIR::NameId, SemIR::TypeId);
+                    llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
                     "The {0} member `{1}` is defined here.",
                     llvm::StringLiteral, SemIR::NameId);
