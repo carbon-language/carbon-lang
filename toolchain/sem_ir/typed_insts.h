@@ -317,7 +317,7 @@ struct BindValue {
 // and can be obtained via bind_inst_id.
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
-      {.ir_name = "binding_pattern"});
+      {.ir_name = "binding_pattern", .is_lowered = false});
 
   TypeId type_id;
   InstId bind_inst_id;
