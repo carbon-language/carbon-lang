@@ -50,7 +50,7 @@ import This;
 
 // --- fail_this_lib.carbon
 
-package This library "lib";
+package This library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import library "lib";
@@ -74,11 +74,11 @@ import Implicit;
 
 // --- implicit_lib_api.carbon
 
-package Implicit library "lib";
+package Implicit library "[[@TEST_NAME]]";
 
 // --- fail_implicit_lib.impl.carbon
 
-impl package Implicit library "lib";
+impl package Implicit library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit library "lib";

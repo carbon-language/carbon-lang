@@ -38,7 +38,7 @@ package r#Main;
 // CHECK:STDERR: fail_main_lib.carbon:[[@LINE+3]]:1: ERROR: Use `library` declaration in `Main` package libraries.
 // CHECK:STDERR: package Main library "lib";
 // CHECK:STDERR: ^~~~~~~
-package Main library "lib";
+package Main library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- fail_main.carbon
 // CHECK:STDOUT:

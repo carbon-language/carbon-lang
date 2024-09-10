@@ -10,7 +10,7 @@
 
 // --- foo.carbon
 
-library "foo";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type);
 
@@ -23,7 +23,7 @@ fn F() -> CompleteClass(i32);
 
 // --- foo.impl.carbon
 
-impl library "foo";
+impl library "[[@TEST_NAME]]";
 
 class Class(T:! type) {
   var x: T;
@@ -35,7 +35,7 @@ fn F() -> CompleteClass(i32) {
 
 // --- use_foo.carbon
 
-library "use_foo";
+library "[[@TEST_NAME]]";
 import library "foo";
 
 fn UseMethod() -> i32 {
@@ -50,7 +50,7 @@ fn UseField() -> i32 {
 
 // --- fail_generic_arg_mismatch.carbon
 
-library "fail_generic_arg_mismatch";
+library "[[@TEST_NAME]]";
 import library "foo";
 
 fn Use() {
@@ -67,7 +67,7 @@ fn Use() {
 
 // --- fail_bad_foo.impl.carbon
 
-impl library "foo";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class Class(U:! type) {

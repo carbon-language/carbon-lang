@@ -46,11 +46,11 @@ library;
 // CHECK:STDERR: library "trailing_impl" impl
 // CHECK:STDERR:                         ^~~~
 // CHECK:STDERR:
-library "trailing_impl" impl
+library "[[@TEST_NAME]]" impl
 
 // --- fail_no_semi.carbon
 
-library "NoSemi"
+library "[[@TEST_NAME]]"
 
 // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: ERROR: `library` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]

@@ -10,7 +10,7 @@
 
 // --- class1.carbon
 
-library "class1";
+library "[[@TEST_NAME]]";
 
 class C {}
 
@@ -20,7 +20,7 @@ var a: C*;
 
 // --- class2.carbon
 
-library "class2";
+library "[[@TEST_NAME]]";
 
 import library "class1";
 
@@ -30,7 +30,7 @@ var b: c_alias*;
 
 // --- class3.carbon
 
-library "class3";
+library "[[@TEST_NAME]]";
 
 import library "class2";
 
@@ -38,7 +38,7 @@ var c: c_alias_alias*;
 
 // --- var1.carbon
 
-library "var1";
+library "[[@TEST_NAME]]";
 
 var a: () = ();
 
@@ -46,7 +46,7 @@ alias a_alias = a;
 
 // --- var2.carbon
 
-library "var2";
+library "[[@TEST_NAME]]";
 
 import library "var1";
 
@@ -56,7 +56,7 @@ var b: () = a_alias;
 
 // --- fail_var3.carbon
 
-library "var3";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import library "var2";

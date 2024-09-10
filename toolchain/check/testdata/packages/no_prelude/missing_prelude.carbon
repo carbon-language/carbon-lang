@@ -10,7 +10,7 @@
 
 // --- fail_missing_prelude.carbon
 
-library "fail_missing_prelude";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: ERROR: Package `Core` implicitly referenced here, but not found.
 // CHECK:STDERR: var n: i32;
@@ -20,11 +20,11 @@ var n: i32;
 
 // --- prelude_empty.carbon
 
-package Core library "empty";
+package Core library "[[@TEST_NAME]]";
 
 // --- fail_missing_prelude_member.carbon
 
-library "fail_missing_prelude_member";
+library "[[@TEST_NAME]]";
 
 import Core library "empty";
 
@@ -36,13 +36,13 @@ var n: i32;
 
 // --- prelude_fake_int.carbon
 
-package Core library "fake_int";
+package Core library "[[@TEST_NAME]]";
 
 fn Int32() -> {} { return {}; }
 
 // --- use_fake_int.carbon
 
-library "use_fake_int";
+library "[[@TEST_NAME]]";
 
 import Core library "fake_int";
 
@@ -50,7 +50,7 @@ var n: {} = i32;
 
 // --- prelude_use_in_prelude.carbon
 
-package Core library "prelude_use_in_prelude";
+package Core library "[[@TEST_NAME]]";
 
 // Core is not an imported package here.
 
@@ -62,7 +62,7 @@ var n: () = i32;
 
 // --- prelude_as_namespace.carbon
 
-library "prelude_as_namespace";
+library "[[@TEST_NAME]]";
 
 // TODO: Decide whether we want to accept this.
 namespace Core;
@@ -73,7 +73,7 @@ var n: {} = i32;
 
 // --- fail_prelude_as_class.carbon
 
-library "prelude_as_class";
+library "[[@TEST_NAME]]";
 
 // TODO: Decide whether we want to accept this.
 class Core {

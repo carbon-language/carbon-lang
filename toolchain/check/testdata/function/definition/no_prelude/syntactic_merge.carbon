@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 class C {}
 alias D = C;
@@ -23,7 +23,7 @@ fn Bar(a: D) {}
 
 // --- spacing.carbon
 
-library "spacing";
+library "[[@TEST_NAME]]";
 
 class C {}
 
@@ -32,7 +32,7 @@ fn Foo[](a: C) {}
 
 // --- fail_parens.carbon
 
-library "parens";
+library "[[@TEST_NAME]]";
 
 class C {}
 
@@ -48,7 +48,7 @@ fn Foo(a: (C)) {}
 
 // --- todo_fail_raw_identifier.carbon
 
-library "raw_identifier";
+library "[[@TEST_NAME]]";
 
 class C {}
 
@@ -57,7 +57,7 @@ fn Foo(a: r#C) {}
 
 // --- two_file.carbon
 
-library "two_file";
+library "[[@TEST_NAME]]";
 
 class C {}
 alias D = C;
@@ -67,14 +67,14 @@ fn Bar(a: D);
 
 // --- two_file.impl.carbon
 
-impl library "two_file";
+impl library "[[@TEST_NAME]]";
 
 fn Foo(a: C) {}
 fn Bar(a: D) {}
 
 // --- fail_name_mismatch.carbon
 
-library "name_mismatch";
+library "[[@TEST_NAME]]";
 
 class C {}
 alias D = C;
@@ -91,7 +91,7 @@ fn Foo(b: D) {}
 
 // --- fail_alias.carbon
 
-library "alias";
+library "[[@TEST_NAME]]";
 
 class C {}
 alias D = C;
@@ -108,7 +108,7 @@ fn Foo(a: D) {}
 
 // --- fail_deduced_alias.carbon
 
-library "deduced_alias";
+library "[[@TEST_NAME]]";
 
 class C {}
 alias D = C;
@@ -125,7 +125,7 @@ fn Foo[a: D]() {}
 
 // --- todo_fail_alias_in_return.carbon
 
-library "alias_in_return";
+library "[[@TEST_NAME]]";
 
 class C {}
 alias D = C;
@@ -135,7 +135,7 @@ fn Foo() -> D { return {}; }
 
 // --- alias_two_file.carbon
 
-library "alias_two_file";
+library "[[@TEST_NAME]]";
 
 class C {}
 
@@ -143,7 +143,7 @@ fn Foo(a: C);
 
 // --- todo_fail_alias_two_file.impl.carbon
 
-impl library "alias_two_file";
+impl library "[[@TEST_NAME]]";
 
 alias D = C;
 
@@ -151,7 +151,7 @@ fn Foo(a: D) {}
 
 // --- fail_repeat_const.carbon
 
-library "repeat_const";
+library "[[@TEST_NAME]]";
 
 class C {}
 

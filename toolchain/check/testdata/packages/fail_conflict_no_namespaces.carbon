@@ -10,19 +10,19 @@
 
 // --- fn.carbon
 
-package Example library "fn";
+package Example library "[[@TEST_NAME]]";
 
 fn Foo();
 
 // --- var.carbon
 
-package Example library "var";
+package Example library "[[@TEST_NAME]]";
 
 var Foo: i32;
 
 // --- fail_conflict.carbon
 
-package Example library "conflict";
+package Example library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import library "fn";

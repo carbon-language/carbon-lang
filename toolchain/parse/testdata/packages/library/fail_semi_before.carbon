@@ -16,7 +16,7 @@
 // CHECK:STDERR: fail_semi_before.carbon:[[@LINE-5]]:1: First non-comment line is here.
 // CHECK:STDERR: ;
 // CHECK:STDERR: ^
-library "foo";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: fail_semi_before.carbon
 // CHECK:STDOUT:   parse_tree: [

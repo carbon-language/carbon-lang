@@ -14,7 +14,7 @@
 
 // --- base.carbon
 
-library "base";
+library "[[@TEST_NAME]]";
 
 class C {
   var x: ();
@@ -26,13 +26,13 @@ class D {
 
 // --- export_import.carbon
 
-library "export_import";
+library "[[@TEST_NAME]]";
 
 export import library "base";
 
 // --- export_import_then_name.carbon
 
-library "export_import_then_name";
+library "[[@TEST_NAME]]";
 
 import library "export_import";
 
@@ -40,7 +40,7 @@ export C;
 
 // --- export_name.carbon
 
-library "export_name";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -48,7 +48,7 @@ export C;
 
 // --- export_name_then_import.carbon
 
-library "export_name_then_import";
+library "[[@TEST_NAME]]";
 
 export import library "export_name";
 
@@ -58,7 +58,7 @@ export import library "export_name";
 
 // --- use_export_import_then_name.carbon
 
-library "use_export_import_then_name";
+library "[[@TEST_NAME]]";
 
 import library "export_import_then_name";
 
@@ -66,7 +66,7 @@ var c: C = {.x = ()};
 
 // --- use_export_name_then_import.carbon
 
-library "use_export_name_then_import";
+library "[[@TEST_NAME]]";
 
 import library "export_name_then_import";
 
@@ -74,7 +74,7 @@ var c: C = {.x = ()};
 
 // --- use_both.carbon
 
-library "use_both";
+library "[[@TEST_NAME]]";
 
 import library "export_import_then_name";
 import library "export_name_then_import";
@@ -83,7 +83,7 @@ var c: C = {.x = ()};
 
 // --- fail_nonexport_use_both.carbon
 
-library "fail_nonexport_use_both";
+library "[[@TEST_NAME]]";
 
 import library "export_import_then_name";
 import library "export_name_then_import";
@@ -95,7 +95,7 @@ var d: D = {.y = ()};
 
 // --- use_both_reversed.carbon
 
-library "use_both_reversed";
+library "[[@TEST_NAME]]";
 
 import library "export_import_then_name";
 import library "export_name_then_import";
@@ -104,7 +104,7 @@ var c: C = {.x = ()};
 
 // --- use_both_and_export_import.carbon
 
-library "use_both_and_export_import";
+library "[[@TEST_NAME]]";
 
 import library "export_import_then_name";
 import library "export_name_then_import";

@@ -14,7 +14,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 class C {
   fn F() {}
@@ -22,13 +22,13 @@ class C {
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 export import library "a";
 
 // --- c.carbon
 
-library "c";
+library "[[@TEST_NAME]]";
 
 import library "b";
 
@@ -36,13 +36,13 @@ export C;
 
 // --- d.carbon
 
-library "d";
+library "[[@TEST_NAME]]";
 
 export import library "c";
 
 // --- e.carbon
 
-library "e";
+library "[[@TEST_NAME]]";
 
 import library "c";
 
@@ -52,7 +52,7 @@ class D {
 
 // --- f.carbon
 
-library "f";
+library "[[@TEST_NAME]]";
 
 export import library "e";
 
@@ -62,7 +62,7 @@ export import library "e";
 
 // --- use_b.carbon
 
-library "use_b";
+library "[[@TEST_NAME]]";
 
 import library "b";
 
@@ -70,7 +70,7 @@ var x: () = C.F();
 
 // --- use_c.carbon
 
-library "use_c";
+library "[[@TEST_NAME]]";
 
 import library "c";
 
@@ -78,7 +78,7 @@ var x: () = C.F();
 
 // --- use_d.carbon
 
-library "use_d";
+library "[[@TEST_NAME]]";
 
 import library "d";
 
@@ -86,7 +86,7 @@ var x: () = C.F();
 
 // --- use_e.carbon
 
-library "use_e";
+library "[[@TEST_NAME]]";
 
 import library "e";
 
@@ -94,7 +94,7 @@ var x: () = D.C.F();
 
 // --- use_f.carbon
 
-library "use_f";
+library "[[@TEST_NAME]]";
 
 import library "f";
 

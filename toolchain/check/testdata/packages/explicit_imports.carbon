@@ -14,11 +14,11 @@ package Api;
 
 // --- api_lib.carbon
 
-package Api library "lib";
+package Api library "[[@TEST_NAME]]";
 
 // --- same_package.carbon
 
-package Api library "other";
+package Api library "[[@TEST_NAME]]";
 
 import library default;
 import library "lib";
@@ -32,7 +32,7 @@ import Api library "lib";
 
 // --- main_lib_api.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 // --- main_import.carbon
 

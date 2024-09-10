@@ -15,7 +15,7 @@ import B;
 
 // --- after_library.carbon
 
-library "A";
+library "[[@TEST_NAME]]";
 
 import B;
 

@@ -14,11 +14,11 @@ package Api;
 
 // --- api_lib.carbon
 
-package Api library "lib";
+package Api library "[[@TEST_NAME]]";
 
 // --- main_lib.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 // --- fail_import.carbon
 
@@ -54,7 +54,7 @@ import library "lib";
 
 // --- fail_default_import.carbon
 
-package Api library "not_default";
+package Api library "[[@TEST_NAME]]";
 
 import library default;
 // CHECK:STDERR: fail_default_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.

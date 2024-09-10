@@ -38,7 +38,7 @@ import library default;
 
 // --- fail_main_lib_import_default.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+3]]:1: ERROR: Cannot import `Main//default`.
 // CHECK:STDERR: import library default;

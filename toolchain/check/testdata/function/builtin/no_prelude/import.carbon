@@ -10,7 +10,7 @@
 
 // --- core.carbon
 
-package Core library "test";
+package Core library "[[@TEST_NAME]]";
 
 fn Int32() -> type = "int.make_type_32";
 fn TestAdd(a: i32, b: i32) -> i32 = "int.sadd";

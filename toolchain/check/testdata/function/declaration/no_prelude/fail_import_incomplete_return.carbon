@@ -10,7 +10,7 @@
 
 // --- fail_incomplete_return.carbon
 
-library "api";
+library "[[@TEST_NAME]]";
 
 class C;
 class D;
@@ -49,7 +49,7 @@ class D {}
 
 // --- fail_use_imported.carbon
 
-library "use_imported";
+library "[[@TEST_NAME]]";
 
 import library "api";
 

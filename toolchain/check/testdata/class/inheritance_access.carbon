@@ -11,7 +11,7 @@
 
 // --- instance_protected_field_access.carbon
 
-library "instance_protected_field_access";
+library "[[@TEST_NAME]]";
 
 base class Shape {
   protected var x: i32;
@@ -28,7 +28,7 @@ class Circle {
 
 // --- shadowing_access.carbon
 
-library "shadowing_access";
+library "[[@TEST_NAME]]";
 
 base class A {
   fn F();
@@ -46,7 +46,7 @@ base class C {
 
 // --- inherited_member_access.carbon
 
-library "inherited_member_access";
+library "[[@TEST_NAME]]";
 
 base class A {
   protected let SOME_CONSTANT: i32 = 5;
@@ -69,7 +69,7 @@ class B {
 
 // --- fail_inherited_private_field_access.carbon
 
-library "inherited_private_field_access";
+library "[[@TEST_NAME]]";
 
 base class Shape {
   private var y: i32;
@@ -92,7 +92,7 @@ class Square {
 
 // --- noninstance_private_on_self.carbon
 
-library "noninstance_private_on_self";
+library "[[@TEST_NAME]]";
 
 class C {
   private fn F() {}
@@ -101,7 +101,7 @@ class C {
 
 // --- noninstance_protected_on_self.carbon
 
-library "noninstance_protected_on_self";
+library "[[@TEST_NAME]]";
 
 class C {
   protected fn F() {}
@@ -110,7 +110,7 @@ class C {
 
 // --- fail_noninstance_private_on_parent.carbon
 
-library "noninstance_private_on_parent";
+library "[[@TEST_NAME]]";
 
 base class B {
   private fn F() {}
@@ -130,7 +130,7 @@ class C {
 
 // --- noninstance_protected_on_parent.carbon
 
-library "noninstance_protected_on_parent";
+library "[[@TEST_NAME]]";
 
 base class B {
   protected fn F() {}
@@ -143,7 +143,7 @@ class C {
 
 // --- fail_non_inherited_access.carbon
 
-library "non_inherited_access";
+library "[[@TEST_NAME]]";
 
 base class A {
   protected let SOME_PROTECTED_CONSTANT: i32 = 5;

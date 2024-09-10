@@ -14,31 +14,31 @@
 
 // --- other_fn.carbon
 
-package Other library "fn";
+package Other library "[[@TEST_NAME]]";
 
 fn F() {}
 
 // --- other_fn_extern.carbon
 
-package Other library "fn_extern";
+package Other library "[[@TEST_NAME]]";
 
 extern fn F();
 
 // --- other_fn_conflict.carbon
 
-package Other library "fn_conflict";
+package Other library "[[@TEST_NAME]]";
 
 fn F(x: ()) {}
 
 // --- other_fn2.carbon
 
-package Other library "fn2";
+package Other library "[[@TEST_NAME]]";
 
 fn F2() {}
 
 // --- other_fn_use.carbon
 
-package Other library "fn_use";
+package Other library "[[@TEST_NAME]]";
 
 import library "fn";
 
@@ -46,7 +46,7 @@ fn G() { F(); }
 
 // --- main_other_ns.carbon
 
-library "other_ns";
+library "[[@TEST_NAME]]";
 
 namespace Other;
 
@@ -56,7 +56,7 @@ namespace Other;
 
 // --- main_use_other.carbon
 
-library "use_other";
+library "[[@TEST_NAME]]";
 
 import Other library "fn";
 import Other library "fn2";
@@ -68,7 +68,7 @@ fn Run() {
 
 // --- fail_todo_main_use_other_extern.carbon
 
-library "use_other_extern";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "fn";
@@ -95,14 +95,14 @@ fn Run() {
 
 // --- main_unused_other_ambiguous.carbon
 
-library "unused_other_ambiguous";
+library "[[@TEST_NAME]]";
 
 import Other library "fn";
 import Other library "fn_conflict";
 
 // --- fail_main_use_other_ambiguous.carbon
 
-library "use_other_ambiguous";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "fn";
@@ -129,7 +129,7 @@ fn Run() {
 
 // --- fail_main_namespace_conflict.carbon
 
-library "namespace_conflict";
+library "[[@TEST_NAME]]";
 
 import library "other_ns";
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
@@ -158,7 +158,7 @@ fn Other.F() {}
 
 // --- fail_main_reopen_other.carbon
 
-library "reopen_other";
+library "[[@TEST_NAME]]";
 
 import Other library "fn";
 
@@ -176,7 +176,7 @@ fn Other.G() {}
 
 // --- fail_main_reopen_other_nested.carbon
 
-library "reopen_other_nested";
+library "[[@TEST_NAME]]";
 
 import Other library "fn";
 
@@ -194,7 +194,7 @@ fn Other.Nested.F() {}
 
 // --- fail_main_add_to_other.carbon
 
-library "add_to_other";
+library "[[@TEST_NAME]]";
 
 import Other library "fn";
 
@@ -209,7 +209,7 @@ fn Other.G() {}
 
 // --- fail_use_other_fn_use.carbon
 
-library "fail_use_other_fn_use";
+library "[[@TEST_NAME]]";
 
 import Other library "fn_use";
 

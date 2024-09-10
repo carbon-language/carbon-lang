@@ -12,13 +12,13 @@
 
 // --- lib.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 var a: i32 = 0;
 
 // --- lib.impl.carbon
 
-impl library "lib";
+impl library "[[@TEST_NAME]]";
 
 var b: i32 = a;
 

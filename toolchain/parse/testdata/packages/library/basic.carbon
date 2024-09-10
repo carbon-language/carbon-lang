@@ -14,7 +14,7 @@ library default;
 
 // --- named.carbon
 
-impl library "Shapes";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: default.carbon
 // CHECK:STDOUT:   parse_tree: [

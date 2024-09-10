@@ -10,13 +10,13 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 class ForwardDecl;
 
 // --- a.impl.carbon
 
-impl library "a";
+impl library "[[@TEST_NAME]]";
 
 class ForwardDecl {
 }

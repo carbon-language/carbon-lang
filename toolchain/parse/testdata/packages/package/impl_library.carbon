@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/impl_library.carbon
 
-impl package Geometry library "Shapes";
+impl package Geometry library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: impl_library.carbon
 // CHECK:STDOUT:   parse_tree: [

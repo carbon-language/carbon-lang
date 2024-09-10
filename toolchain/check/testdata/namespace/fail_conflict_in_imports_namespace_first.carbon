@@ -10,20 +10,20 @@
 
 // --- namespace.carbon
 
-package Example library "namespace";
+package Example library "[[@TEST_NAME]]";
 
 namespace NS;
 fn NS.Foo() {}
 
 // --- fn.carbon
 
-package Example library "fn";
+package Example library "[[@TEST_NAME]]";
 
 fn NS() {}
 
 // --- fail_conflict.carbon
 
-package Example library "namespace_then_fn";
+package Example library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import library "namespace";

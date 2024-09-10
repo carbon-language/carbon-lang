@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: ERROR: `package` declarations must end with a `;`.
 // CHECK:STDERR: package Foo library "bar" "baz";
 // CHECK:STDERR:                           ^~~~~
-package Foo library "bar" "baz";
+package Foo library "[[@TEST_NAME]]" "baz";
 
 // CHECK:STDOUT: - filename: fail_extra_string.carbon
 // CHECK:STDOUT:   parse_tree: [

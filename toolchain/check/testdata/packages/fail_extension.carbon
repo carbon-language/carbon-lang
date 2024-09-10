@@ -25,7 +25,7 @@
 // CHECK:STDERR: library "lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-library "lib";
+library "[[@TEST_NAME]]";
 
 // --- fail_main_lib_impl.incorrect
 
@@ -33,7 +33,7 @@ library "lib";
 // CHECK:STDERR: impl library "lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-impl library "lib";
+impl library "[[@TEST_NAME]]";
 
 // --- fail_package.incorrect
 
@@ -57,7 +57,7 @@ impl package Package;
 // CHECK:STDERR: package Package library "lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-package Package library "lib";
+package Package library "[[@TEST_NAME]]";
 
 // --- fail_package_lib_impl.incorrect
 
@@ -65,7 +65,7 @@ package Package library "lib";
 // CHECK:STDERR: impl package Package library "lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-impl package Package library "lib";
+impl package Package library "[[@TEST_NAME]]";
 
 // --- fail_swapped_ext.impl.carbon
 

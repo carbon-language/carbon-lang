@@ -14,38 +14,38 @@
 
 // --- c1.carbon
 
-library "C1";
+library "[[@TEST_NAME]]";
 
 class C1 {}
 
 // --- c2.carbon
 
-library "C2";
+library "[[@TEST_NAME]]";
 
 class C2 {}
 
 // --- ns.carbon
 
-library "ns";
+library "[[@TEST_NAME]]";
 
 namespace NS;
 class NS.C {}
 
 // --- o1.carbon
 
-package Other library "O1";
+package Other library "[[@TEST_NAME]]";
 
 class O1 {}
 
 // --- o2.carbon
 
-package Other library "O2";
+package Other library "[[@TEST_NAME]]";
 
 class O2 {}
 
 // --- local_other.carbon
 
-library "local_other";
+library "[[@TEST_NAME]]";
 
 class Other {}
 
@@ -55,13 +55,13 @@ class Other {}
 
 // --- mix_current_package.carbon
 
-library "mix_current_package";
+library "[[@TEST_NAME]]";
 
 import library "C1";
 
 // --- mix_current_package.impl.carbon
 
-impl library "mix_current_package";
+impl library "[[@TEST_NAME]]";
 
 import library "C2";
 
@@ -70,13 +70,13 @@ var c2: C2 = {};
 
 // --- dup_c1.carbon
 
-library "dup_c1";
+library "[[@TEST_NAME]]";
 
 import library "C1";
 
 // --- dup_c1.impl.carbon
 
-impl library "dup_c1";
+impl library "[[@TEST_NAME]]";
 
 import library "C1";
 
@@ -84,25 +84,25 @@ var c1: C1 = {};
 
 // --- use_ns.carbon
 
-library "use_ns";
+library "[[@TEST_NAME]]";
 
 import library "ns";
 
 // --- use_ns.impl.carbon
 
-impl library "use_ns";
+impl library "[[@TEST_NAME]]";
 
 var c: NS.C = {};
 
 // --- mix_other.carbon
 
-library "mix_other";
+library "[[@TEST_NAME]]";
 
 import Other library "O1";
 
 // --- mix_other.impl.carbon
 
-impl library "mix_other";
+impl library "[[@TEST_NAME]]";
 
 import Other library "O2";
 
@@ -111,13 +111,13 @@ var o2: Other.O2 = {};
 
 // --- dup_o1.carbon
 
-library "dup_o1";
+library "[[@TEST_NAME]]";
 
 import Other library "O1";
 
 // --- dup_o1.impl.carbon
 
-impl library "dup_o1";
+impl library "[[@TEST_NAME]]";
 
 import Other library "O1";
 
@@ -125,7 +125,7 @@ var o1: Other.O1 = {};
 
 // --- import_conflict.carbon
 
-library "import_conflict";
+library "[[@TEST_NAME]]";
 
 import Other library "O1";
 
@@ -144,19 +144,19 @@ import Other library "O1";
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-impl library "import_conflict";
+impl library "[[@TEST_NAME]]";
 
 import library "local_other";
 
 // --- import_conflict_reverse.carbon
 
-library "import_conflict_reverse";
+library "[[@TEST_NAME]]";
 
 import library "local_other";
 
 // --- fail_import_conflict_reverse.impl.carbon
 
-impl library "import_conflict_reverse";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: import Other library "O1";

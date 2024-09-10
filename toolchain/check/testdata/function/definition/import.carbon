@@ -14,7 +14,7 @@
 
 // --- fns.carbon
 
-library "fns";
+library "[[@TEST_NAME]]";
 
 fn A() {}
 fn B(b: i32) -> i32 { return b; }
@@ -23,7 +23,7 @@ fn D();
 
 // --- extern.carbon
 
-library "extern";
+library "[[@TEST_NAME]]";
 
 extern fn A();
 
@@ -33,7 +33,7 @@ extern fn A();
 
 // --- basics.carbon
 
-library "basics";
+library "[[@TEST_NAME]]";
 
 import library "fns";
 
@@ -43,7 +43,7 @@ var c: {.c: i32} = C((1,));
 
 // --- fail_def_ownership.carbon
 
-library "def_ownership";
+library "[[@TEST_NAME]]";
 
 import library "fns";
 
@@ -72,7 +72,7 @@ fn B(b: i32) -> i32;
 
 // --- fail_redecl_then_def.carbon
 
-library "redecl_then_def";
+library "[[@TEST_NAME]]";
 
 import library "extern";
 
@@ -102,7 +102,7 @@ fn A() {}
 
 // --- fail_mix_extern_decl.carbon
 
-library "mix_extern_decl";
+library "[[@TEST_NAME]]";
 
 import library "fns";
 
