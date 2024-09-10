@@ -5,7 +5,6 @@
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
-#include "toolchain/parse/handle_requirement.h"
 
 namespace Carbon::Parse {
 
@@ -330,7 +329,7 @@ auto HandleExprLoop(Context& context) -> void {
       case Lex::TokenKind::Where:
         context.AddNode(NodeKind::WhereOperand, state.token, state.has_error);
         context.PushState(state, State::WhereFinish);
-        BeginRequirement(context);
+        context.PushState(State::RequirementBegin);
         return;
 
       default:
