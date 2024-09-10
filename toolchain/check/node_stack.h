@@ -643,6 +643,7 @@ class NodeStack {
         case Parse::NodeKind::TypeTypeLiteral:
         case Parse::NodeKind::UnsignedIntTypeLiteral:
         case Parse::NodeKind::VariableDecl:
+        case Parse::NodeKind::VirtualModifier:
         case Parse::NodeKind::WhereExpr:
         case Parse::NodeKind::WhereOperand:
         case Parse::NodeKind::WhileStatement:
