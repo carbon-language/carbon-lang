@@ -77,7 +77,7 @@ class KeywordModifierSet {
   }
 
   // Return a builder that returns the new enumeration type once a series of
-  // mapping `Case`s and a final `Default` are provided:
+  // mapping `Case`s and a final `Default` are provided. For example:
   //   ```
   //   auto e = set.ToEnum<SomeEnum>()
   //                .Case(KeywordModifierSet::A, SomeEnum::A)
