@@ -443,7 +443,7 @@ struct SplitState {
   auto has_splits() const -> bool { return file_index > 0; }
 
   auto add_content(llvm::StringRef line) -> void {
-    content.append(line);
+    content.append(line.str());
     content.append("\n");
   }
 
@@ -462,13 +462,63 @@ struct SplitState {
   int file_index = 0;
 };
 
+// Replaces the content keywords.
+//
+// TEST_NAME is the only content keyword at present, but we do validate that
+// other names are reserved.
+static auto ReplaceContentKeywords(llvm::StringRef filename,
+                                   std::string* content) -> ErrorOr<Success> {
+  static constexpr llvm::StringLiteral Prefix = "[[@";
+
+  auto keyword_pos = content->find(Prefix);
+  // Return early if not finding anything.
+  if (keyword_pos == std::string::npos) {
+    return Success();
+  }
+
+  // Construct the test name by getting the base name without the extension,
+  // then removing any "fail_" or "todo_" prefixes.
+  llvm::StringRef test_name = filename;
+  if (auto last_slash = test_name.rfind("/");
+      last_slash != llvm::StringRef::npos) {
+    test_name = test_name.substr(last_slash + 1);
+  }
+  if (auto ext_dot = test_name.find("."); ext_dot != llvm::StringRef::npos) {
+    test_name = test_name.substr(0, ext_dot);
+  }
+  // Note this also handles `fail_todo_` and `todo_fail_`.
+  test_name.consume_front("todo_");
+  test_name.consume_front("fail_");
+  test_name.consume_front("todo_");
+
+  while (keyword_pos != std::string::npos) {
+    static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
+    auto keyword = llvm::StringRef(*content).substr(keyword_pos);
+    if (keyword.starts_with(TestName)) {
+      content->replace(keyword_pos, TestName.size(), test_name);
+      keyword_pos += test_name.size();
+    } else if (keyword.starts_with("[[@LINE")) {
+      // Just move past the prefix to find the next one.
+      keyword_pos += Prefix.size();
+    } else {
+      return ErrorBuilder()
+             << "Unexpected use of `[[@` at `" << keyword.substr(0, 5) << "`";
+    }
+    keyword_pos = content->find(Prefix, keyword_pos);
+  }
+  return Success();
+}
+
 // Adds a file. Used for both split and unsplit test files.
 static auto AddTestFile(llvm::StringRef filename, std::string* content,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
-    -> void {
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(ReplaceContentKeywords(filename, content));
+
   test_files->push_back(
       {.filename = filename.str(), .content = std::move(*content)});
   content->clear();
+  return Success();
 }
 
 // Process file split ("---") lines when found. Returns true if the line is
@@ -500,7 +550,8 @@ static auto TryConsumeSplit(
 
   // On a file split, add the previous file, then start a new one.
   if (split->has_splits()) {
-    AddTestFile(split->filename, &split->content, test_files);
+    CARBON_RETURN_IF_ERROR(
+        AddTestFile(split->filename, &split->content, test_files));
   } else {
     split->content.clear();
     if (split->found_code_pre_split) {
@@ -646,14 +697,14 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
 // Once all content is processed, do any remaining split processing.
 static auto FinishSplit(llvm::StringRef test_name, SplitState* split,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
-    -> void {
+    -> ErrorOr<Success> {
   if (split->has_splits()) {
-    AddTestFile(split->filename, &split->content, test_files);
+    return AddTestFile(split->filename, &split->content, test_files);
   } else {
     // If no file splitting happened, use the main file as the test file.
     // There will always be a `/` unless tests are in the repo root.
-    AddTestFile(test_name.drop_front(test_name.rfind("/") + 1), &split->content,
-                test_files);
+    return AddTestFile(test_name.drop_front(test_name.rfind("/") + 1),
+                       &split->content, test_files);
   }
 }
 
@@ -826,7 +877,7 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
   }
 
   context.has_splits = split.has_splits();
-  FinishSplit(test_name_, &split, &context.test_files);
+  CARBON_RETURN_IF_ERROR(FinishSplit(test_name_, &split, &context.test_files));
 
   // Assume there is always a suffix `\n` in output.
   if (!context.expected_stdout.empty()) {
