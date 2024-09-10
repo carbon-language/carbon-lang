@@ -15,11 +15,11 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @F(i32)
+// CHECK:STDOUT: declare void @_CF.Main(i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G(i32 %n) !dbg !4 {
+// CHECK:STDOUT: define void @_CG.Main(i32 %n) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @F(i32 %n), !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main(i32 %n), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -30,7 +30,7 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "simple.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "G", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 16, scope: !4)

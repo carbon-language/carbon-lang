@@ -15,6 +15,7 @@ filegroup(
 cc_library(
     name = "context",
     srcs = [
+        "call.cpp",
         "context.cpp",
         "convert.cpp",
         "decl_name_stack.cpp",
@@ -26,13 +27,16 @@ cc_library(
         "import.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
+        "member_access.cpp",
         "merge.cpp",
         "modifiers.cpp",
         "name_component.cpp",
+        "operator.cpp",
         "return.cpp",
         "subst.cpp",
     ],
     hdrs = [
+        "call.h",
         "context.h",
         "convert.h",
         "decl_introducer_state.h",
@@ -47,9 +51,11 @@ cc_library(
         "import_ref.h",
         "inst_block_stack.h",
         "keyword_modifier_set.h",
+        "member_access.h",
         "merge.h",
         "modifiers.h",
         "name_component.h",
+        "operator.h",
         "param_and_arg_refs_stack.h",
         "pending_block.h",
         "return.h",
@@ -93,12 +99,9 @@ cc_library(
     ]),
     hdrs = ["check.h"],
     deps = [
-        ":call",
         ":context",
         ":impl",
         ":interface",
-        ":member_access",
-        ":operator",
         ":pointer_dereference",
         ":sem_ir_diagnostic_converter",
         "//common:check",
@@ -136,21 +139,6 @@ cc_fuzz_test(
         "//testing/fuzzing:libfuzzer_header",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "call",
-    srcs = ["call.cpp"],
-    hdrs = ["call.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/base:kind_switch",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
     ],
 )
 
@@ -201,23 +189,6 @@ cc_library(
 )
 
 cc_library(
-    name = "member_access",
-    srcs = ["member_access.cpp"],
-    hdrs = ["member_access.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/base:kind_switch",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "node_stack",
     srcs = ["node_stack.cpp"],
     hdrs = ["node_stack.h"],
@@ -230,23 +201,6 @@ cc_library(
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "operator",
-    srcs = ["operator.cpp"],
-    hdrs = ["operator.h"],
-    deps = [
-        ":call",
-        ":context",
-        ":member_access",
-        "//common:check",
-        "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
     ],
 )
 

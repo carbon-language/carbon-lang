@@ -24,35 +24,35 @@ fn If(b: bool) {
 // CHECK:STDOUT: ; ModuleID = 'else.carbon'
 // CHECK:STDOUT: source_filename = "else.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @G() !dbg !8 {
+// CHECK:STDOUT: define void @_CG.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @H() !dbg !10 {
+// CHECK:STDOUT: define void @_CH.Main() !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @If(i1 %b) !dbg !12 {
+// CHECK:STDOUT: define void @_CIf.Main(i1 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @F(), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(), !dbg !14
 // CHECK:STDOUT:   br label %if.done, !dbg !15
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @G(), !dbg !16
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   br label %if.done, !dbg !15
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.done:                                          ; preds = %if.else, %if.then
-// CHECK:STDOUT:   call void @H(), !dbg !17
+// CHECK:STDOUT:   call void @_CH.Main(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,15 +63,15 @@ fn If(b: bool) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "else.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "G", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 12, column: 1, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "H", linkageName: "H", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !10)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "If", linkageName: "If", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "If", linkageName: "_CIf.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 16, column: 6, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 17, column: 5, scope: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !12)

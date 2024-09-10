@@ -17,7 +17,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !4 {
+// CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %print.int.printf = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
@@ -32,7 +32,7 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "print.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)

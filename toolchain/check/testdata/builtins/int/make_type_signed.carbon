@@ -10,13 +10,13 @@
 
 // --- types.carbon
 
-library "types";
+library "[[@TEST_NAME]]";
 
 fn Int(n: i32) -> type = "int.make_type_signed";
 
 // --- use_types.carbon
 
-library "uses_types";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -34,7 +34,7 @@ fn Symbolic(N:! i32, x: Int(N)) -> Int(N) {
 
 // --- fail_zero_size.carbon
 
-library "fail_zero_size";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -46,7 +46,7 @@ var n: Int(0);
 
 // --- fail_negative_size.carbon
 
-library "fail_negative_size";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -60,7 +60,7 @@ var n: Int(Negate(1));
 
 // --- fail_oversized.carbon
 
-library "fail_oversized";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -86,6 +86,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -143,6 +144,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -262,6 +264,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -309,6 +312,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -371,6 +375,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

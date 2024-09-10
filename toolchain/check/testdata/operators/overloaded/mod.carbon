@@ -73,6 +73,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -214,6 +215,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
+// CHECK:STDOUT:   %Op.ref: %.10 = name_ref Op, imports.%import_ref.3 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc27_12.1: %Op.type.2 = interface_witness_access @impl.1.%.loc17, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc27_12.2: <bound method> = bound_method %a.ref, %.loc27_12.1
 // CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
@@ -226,6 +228,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %.7 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31_3.1: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
+// CHECK:STDOUT:   %Op.ref: %.12 = name_ref Op, imports.%import_ref.7 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc31_6.1: %Op.type.4 = interface_witness_access @impl.2.%.loc22, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc31_6.2: <bound method> = bound_method %.loc31_3.1, %.loc31_6.1
 // CHECK:STDOUT:   %.loc31_3.2: %.7 = addr_of %.loc31_3.1

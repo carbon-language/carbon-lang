@@ -17,12 +17,12 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: ERROR: Cannot access member of interface `I` in type `C` that does not implement that interface.
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface `I` in type `C` that does not implement that interface.
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
   c.F();
@@ -51,6 +51,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

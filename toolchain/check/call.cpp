@@ -9,7 +9,6 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
-#include "toolchain/check/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -18,12 +17,12 @@ namespace Carbon::Check {
 
 // Performs a call where the callee is the name of a generic class, such as
 // `Vector(i32)`.
-static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
+static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId callee_id,
                                       SemIR::ClassId class_id,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
-  auto& class_info = context.classes().Get(class_id);
+  CalleeParamsInfo class_info(context.classes().Get(class_id));
 
   // TODO: Pass in information about the specific in which the generic class
   // name was found.
@@ -32,9 +31,9 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
 
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
-      context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
+      context, loc_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
       /*return_storage_id=*/SemIR::InstId::Invalid, class_info, specific_id);
-  return context.AddInst<SemIR::Call>(node_id,
+  return context.AddInst<SemIR::Call>(loc_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
                                        .args_id = converted_args_id});
@@ -43,13 +42,12 @@ static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
 // Performs a call where the callee is the name of a generic interface, such as
 // `AddWith(i32)`.
 // TODO: Refactor with PerformCallToGenericClass.
-static auto PerformCallToGenericInterface(Context& context,
-                                          Parse::NodeId node_id,
+static auto PerformCallToGenericInterface(Context& context, SemIR::LocId loc_id,
                                           SemIR::InstId callee_id,
                                           SemIR::InterfaceId interface_id,
                                           llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
-  auto& interface_info = context.interfaces().Get(interface_id);
+  CalleeParamsInfo interface_info(context.interfaces().Get(interface_id));
 
   // TODO: Pass in information about the specific in which the generic interface
   // name was found.
@@ -58,18 +56,17 @@ static auto PerformCallToGenericInterface(Context& context,
 
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
-      context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
+      context, loc_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
       /*return_storage_id=*/SemIR::InstId::Invalid, interface_info,
       specific_id);
-  return context.AddInst<SemIR::Call>(node_id,
+  return context.AddInst<SemIR::Call>(loc_id,
                                       {.type_id = SemIR::TypeId::TypeType,
                                        .callee_id = callee_id,
                                        .args_id = converted_args_id});
 }
 
-auto PerformCall(Context& context, Parse::NodeId node_id,
-                 SemIR::InstId callee_id, llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> SemIR::InstId {
+auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   // Identify the function we're calling.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
   if (!callee_function.function_id.is_valid()) {
@@ -77,11 +74,11 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
         context.types().GetAsInst(context.insts().Get(callee_id).type_id());
     CARBON_KIND_SWITCH(type_inst) {
       case CARBON_KIND(SemIR::GenericClassType generic_class): {
-        return PerformCallToGenericClass(context, node_id, callee_id,
+        return PerformCallToGenericClass(context, loc_id, callee_id,
                                          generic_class.class_id, arg_ids);
       }
       case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-        return PerformCallToGenericInterface(context, node_id, callee_id,
+        return PerformCallToGenericInterface(context, loc_id, callee_id,
                                              generic_interface.interface_id,
                                              arg_ids);
       }
@@ -90,7 +87,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
           CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                             "Value of type `{0}` is not callable.",
                             SemIR::TypeId);
-          context.emitter().Emit(node_id, CallToNonCallable,
+          context.emitter().Emit(loc_id, CallToNonCallable,
                                  context.insts().Get(callee_id).type_id());
         }
         return SemIR::InstId::BuiltinError;
@@ -104,7 +101,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   auto specific_id = SemIR::SpecificId::Invalid;
   if (callable.generic_id.is_valid()) {
     specific_id = DeduceGenericCallArguments(
-        context, node_id, callable.generic_id, callee_function.specific_id,
+        context, loc_id, callable.generic_id, callee_function.specific_id,
         callable.implicit_param_refs_id, callable.param_refs_id,
         callee_function.self_id, arg_ids);
     if (!specific_id.is_valid()) {
@@ -128,7 +125,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
       return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
-          node_id, {.type_id = return_info.type_id});
+          loc_id, {.type_id = return_info.type_id});
       break;
     case SemIR::InitRepr::None:
       // For functions with an implicit return type, the return type is the
@@ -147,13 +144,13 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   }
 
   // Convert the arguments to match the parameters.
-  auto converted_args_id =
-      ConvertCallArgs(context, node_id, callee_function.self_id, arg_ids,
-                      return_storage_id, callable, specific_id);
+  auto converted_args_id = ConvertCallArgs(
+      context, loc_id, callee_function.self_id, arg_ids, return_storage_id,
+      CalleeParamsInfo(callable), specific_id);
   auto call_inst_id =
-      context.AddInst<SemIR::Call>(node_id, {.type_id = return_info.type_id,
-                                             .callee_id = callee_id,
-                                             .args_id = converted_args_id});
+      context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
+                                            .callee_id = callee_id,
+                                            .args_id = converted_args_id});
 
   return call_inst_id;
 }

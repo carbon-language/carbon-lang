@@ -14,7 +14,7 @@ class D {}
 alias c = C;
 var d: D = {};
 
-// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `D` to `C`.
+// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:1: ERROR: Package `Core` implicitly referenced here, but not found.
 // CHECK:STDERR: let c_var: c = d;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 let c_var: c = d;
@@ -65,6 +65,7 @@ let c_var: c = d;
 // CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14
 // CHECK:STDOUT:   %d.ref: ref %D = name_ref d, file.%d
+// CHECK:STDOUT:   %.loc20: %C = converted %d.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

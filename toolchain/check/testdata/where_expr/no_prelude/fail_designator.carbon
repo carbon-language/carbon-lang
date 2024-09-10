@@ -10,7 +10,7 @@
 
 // --- fail_designator_matches_var.carbon
 
-library "designator_matches_var";
+library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
   var x: ();
@@ -23,7 +23,7 @@ fn Foo() -> () {
 
 // --- fail_unknown_designator.carbon
 
-library "unknown_designator";
+library "[[@TEST_NAME]]";
 
 fn Bar() -> () {
   // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `HandleDesignatorExpr`.
@@ -35,7 +35,7 @@ fn Bar() -> () {
 
 // --- fail_dot_self_method_return_value.carbon
 
-library "dot_self_method_return_value";
+library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:28: ERROR: Semantics TODO: `HandleSelfTypeName`.
@@ -47,7 +47,7 @@ class C {
 
 // --- fail_dot_self_method_return_type.carbon
 
-library "dot_self_method_return_type";
+library "[[@TEST_NAME]]";
 
 class D {
   // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleSelfTypeName`.

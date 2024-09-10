@@ -14,7 +14,7 @@ library default;
 
 // --- named.carbon
 
-impl library "Shapes";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: default.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -29,7 +29,7 @@ impl library "Shapes";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"Shapes"'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"named"'},
 // CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

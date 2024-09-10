@@ -20,7 +20,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @tuple.loc15_5 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !4 {
+// CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 12, ptr %a.var, align 4, !dbg !8
@@ -44,7 +44,7 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "assignment.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)

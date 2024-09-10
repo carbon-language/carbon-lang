@@ -10,7 +10,7 @@
 
 // --- fail_incomplete_return.carbon
 
-library "api";
+library "[[@TEST_NAME]]";
 
 class C;
 class D;
@@ -49,22 +49,22 @@ class D {}
 
 // --- fail_use_imported.carbon
 
-library "use_imported";
+library "[[@TEST_NAME]]";
 
-import library "api";
+import library "incomplete_return";
 
 fn CallFAndGIncomplete() {
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+16]]:3: ERROR: Function returns incomplete type `C`.
   // CHECK:STDERR:   ReturnCUnused();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: In import.
-  // CHECK:STDERR: import library "api";
+  // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:4:1: Class was forward declared here.
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-12]]:1: In import.
-  // CHECK:STDERR: import library "api";
+  // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:7:20: Return type declared here.
   // CHECK:STDERR: fn ReturnCUnused() -> C;
@@ -75,13 +75,13 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: In import.
-  // CHECK:STDERR: import library "api";
+  // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:4:1: Class was forward declared here.
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-29]]:1: In import.
-  // CHECK:STDERR: import library "api";
+  // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:8:18: Return type declared here.
   // CHECK:STDERR: fn ReturnCUsed() -> C;
@@ -187,14 +187,14 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %ReturnCUnused.type = import_ref Main//api, inst+7, loaded [template = constants.%ReturnCUnused]
-// CHECK:STDOUT:   %import_ref.4: %ReturnCUsed.type = import_ref Main//api, inst+13, loaded [template = constants.%ReturnCUsed]
-// CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref Main//api, inst+18, loaded [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref Main//api, inst+23, loaded [template = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//api, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//api, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//incomplete_return, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//incomplete_return, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: %ReturnCUnused.type = import_ref Main//incomplete_return, inst+7, loaded [template = constants.%ReturnCUnused]
+// CHECK:STDOUT:   %import_ref.4: %ReturnCUsed.type = import_ref Main//incomplete_return, inst+13, loaded [template = constants.%ReturnCUsed]
+// CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref Main//incomplete_return, inst+18, loaded [template = constants.%ReturnDUnused]
+// CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref Main//incomplete_return, inst+23, loaded [template = constants.%ReturnDUsed]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//incomplete_return, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//incomplete_return, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

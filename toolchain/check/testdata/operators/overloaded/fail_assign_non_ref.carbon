@@ -82,6 +82,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -205,6 +206,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
+// CHECK:STDOUT:   %Op.ref: %.11 = name_ref Op, imports.%import_ref.3 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access @impl.1.%.loc15, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
 // CHECK:STDOUT:   %Op.call: init %.4 = call %.loc30_3.2(<invalid>) [template = <error>]
@@ -215,6 +217,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
+// CHECK:STDOUT:   %Op.ref: %.13 = name_ref Op, imports.%import_ref.7 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access @impl.2.%.loc18, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
 // CHECK:STDOUT:   %Op.call: init %.4 = call %.loc40_5.2(<invalid>) [template = <error>]

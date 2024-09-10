@@ -10,7 +10,7 @@
 
 // --- fail_no_body.carbon
 
-library "no_body";
+library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_no_body.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `function with positional parameters`.
 // CHECK:STDERR: fn A;
 // CHECK:STDERR: ^~~~~
@@ -19,7 +19,7 @@ fn A;
 
 // --- fail_todo_brace_body.carbon
 
-library "brace_body";
+library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `function with positional parameters`.
 // CHECK:STDERR: fn A {
 // CHECK:STDERR: ^~~~~~
@@ -30,7 +30,7 @@ fn A {
 // --- fail_todo_arrow_body.carbon
 
 // TODO: We don't have parsing support for this yet.
-library "arrow_body";
+library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+7]]:1: ERROR: Semantics TODO: `function with positional parameters`.
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR: ^~~~~~~~~~

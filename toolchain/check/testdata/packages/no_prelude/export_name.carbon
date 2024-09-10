@@ -14,7 +14,7 @@
 
 // --- base.carbon
 
-library "base";
+library "[[@TEST_NAME]]";
 
 class C {
   var x: ();
@@ -27,7 +27,7 @@ class NS.NSC {
 
 // --- export.carbon
 
-library "export";
+library "[[@TEST_NAME]]";
 
 import library "base";
 export C;
@@ -35,13 +35,13 @@ export NS.NSC;
 
 // --- not_reexporting.carbon
 
-library "not_reexporting";
+library "[[@TEST_NAME]]";
 
 import library "export";
 
 // --- export_export.carbon
 
-library "export_export";
+library "[[@TEST_NAME]]";
 
 import library "export";
 export C;
@@ -50,7 +50,7 @@ export NS.NSC;
 // --- export_in_impl.carbon
 
 // This is just providing an API for the implicit import.
-library "export_in_impl";
+library "[[@TEST_NAME]]";
 
 // ============================================================================
 // Test files
@@ -58,7 +58,7 @@ library "export_in_impl";
 
 // --- use_export.carbon
 
-library "use_export";
+library "[[@TEST_NAME]]";
 
 import library "export";
 
@@ -67,14 +67,14 @@ var nsc: NS.NSC = {.y = ()};
 
 // --- export_export.impl.carbon
 
-impl library "export_export";
+impl library "[[@TEST_NAME]]";
 
 var c: C = {.x = ()};
 var nsc: NS.NSC = {.y = ()};
 
 // --- use_export_export.carbon
 
-library "use_export_export";
+library "[[@TEST_NAME]]";
 
 import library "export_export";
 
@@ -83,7 +83,7 @@ var nsc: NS.NSC = {.y = ()};
 
 // --- fail_export_ns.carbon
 
-library "fail_export_ns";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -101,7 +101,7 @@ export NS;
 
 // --- fail_export_decl.carbon
 
-library "fail_export_decl";
+library "[[@TEST_NAME]]";
 
 class Local {}
 
@@ -116,7 +116,7 @@ export Local;
 
 // --- fail_export_member.carbon
 
-library "fail_export_member";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -134,7 +134,7 @@ export C.x;
 
 // --- import_both.carbon
 
-library "import_both";
+library "[[@TEST_NAME]]";
 
 import library "base";
 import library "export";
@@ -144,7 +144,7 @@ var nsc: NS.NSC = {.y = ()};
 
 // --- import_both_reversed.carbon
 
-library "import_both_reversed";
+library "[[@TEST_NAME]]";
 
 import library "export";
 import library "base";
@@ -154,7 +154,7 @@ var nsc: NS.NSC = {.y = ()};
 
 // --- fail_use_not_reexporting.carbon
 
-library "fail_use_not_reexporting";
+library "[[@TEST_NAME]]";
 
 import library "not_reexporting";
 
@@ -171,7 +171,7 @@ alias NSLocal = NS.NSC;
 
 // --- repeat_export.carbon
 
-library "repeat_export";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -187,7 +187,7 @@ export C;
 
 // --- use_repeat_export.carbon
 
-library "use_repeat_export";
+library "[[@TEST_NAME]]";
 
 import library "repeat_export";
 
@@ -195,7 +195,7 @@ var c: C = {.x = ()};
 
 // --- fail_modifiers.carbon
 
-library "fail_modifiers";
+library "[[@TEST_NAME]]";
 
 import library "base";
 

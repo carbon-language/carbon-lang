@@ -35,7 +35,7 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @struct.2.loc22_36 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Make(ptr sret({ { i32 }, i32 }) %return) !dbg !4 {
+// CHECK:STDOUT: define void @_CMake.Main(ptr sret({ { i32 }, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_35.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc22_26.2.b = getelementptr inbounds nuw { i32 }, ptr %.loc22_35.2.base, i32 0, i32 0, !dbg !8
@@ -44,7 +44,7 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Access(ptr sret({ i32, i32 }) %return, ptr %d) !dbg !10 {
+// CHECK:STDOUT: define void @_CAccess.Main(ptr sret({ i32, i32 }) %return, ptr %d) !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc26_12.1.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc26_12.2 = load i32, ptr %.loc26_12.1.d, align 4, !dbg !11
@@ -58,7 +58,7 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @Convert(ptr %p) !dbg !15 {
+// CHECK:STDOUT: define ptr @_CConvert.Main(ptr %p) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc30_11.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %p, i32 0, i32 0, !dbg !16
 // CHECK:STDOUT:   ret ptr %.loc30_11.2.base, !dbg !16
@@ -76,16 +76,16 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "base.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "Make", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 22, column: 10, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 22, column: 19, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Access", linkageName: "Access", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Access", linkageName: "_CAccess.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 26, column: 11, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 26, column: 16, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 26, column: 10, scope: !10)
 // CHECK:STDOUT: !14 = !DILocation(line: 26, column: 3, scope: !10)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Convert", linkageName: "Convert", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 30, column: 3, scope: !15)

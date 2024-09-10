@@ -30,13 +30,13 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 class C {}
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 import library "a";
 
@@ -47,7 +47,7 @@ var b_ptr: D* = &b_val;
 
 // --- c.carbon
 
-library "c";
+library "[[@TEST_NAME]]";
 
 import library "a";
 
@@ -62,7 +62,7 @@ var c_ptr: E* = &c_val;
 
 // --- triangle.carbon
 
-library "triangle";
+library "[[@TEST_NAME]]";
 
 import library "a";
 import library "b";
@@ -72,7 +72,7 @@ var ptr: D* = &val;
 
 // --- triangle_reverse.carbon
 
-library "triangle_reverse";
+library "[[@TEST_NAME]]";
 
 import library "b";
 import library "a";
@@ -82,7 +82,7 @@ var ptr: D* = &val;
 
 // --- diamond.carbon
 
-library "diamond";
+library "[[@TEST_NAME]]";
 
 import library "b";
 import library "c";
@@ -92,7 +92,7 @@ var ptr: E* = &val;
 
 // --- diamond_reverse.carbon
 
-library "diamond_reverse";
+library "[[@TEST_NAME]]";
 
 import library "c";
 import library "b";
@@ -113,6 +113,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -151,6 +152,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -214,6 +216,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -280,6 +283,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -346,6 +350,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -414,6 +419,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -484,6 +490,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

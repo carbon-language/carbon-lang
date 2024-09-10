@@ -53,6 +53,7 @@ fn TestOp() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -126,6 +127,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %.loc22_16: init %C = converted %.loc22_15.1, %.loc22_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %c.var, %.loc22_16
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
+// CHECK:STDOUT:   %Op.ref: %.8 = name_ref Op, imports.%import_ref.3 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc23_3.1: %Op.type.2 = interface_witness_access @impl.%.loc17, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc23_3.2: <bound method> = bound_method %c.ref, %.loc23_3.1
 // CHECK:STDOUT:   %.loc23_5: %.3 = addr_of %c.ref

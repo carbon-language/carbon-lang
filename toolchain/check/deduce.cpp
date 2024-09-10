@@ -82,7 +82,7 @@ static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
 }
 
 auto DeduceGenericCallArguments(
-    Context& context, Parse::NodeId node_id, SemIR::GenericId generic_id,
+    Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
     SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_params_id,
     SemIR::InstBlockId params_id, [[maybe_unused]] SemIR::InstId self_id,
@@ -170,8 +170,8 @@ auto DeduceGenericCallArguments(
                                 "Inconsistent deductions for value of generic "
                                 "parameter `{0}`.",
                                 SemIR::NameId);
-              auto diag = context.emitter().Build(
-                  node_id, DeductionInconsistent, entity_name.name_id);
+              auto diag = context.emitter().Build(loc_id, DeductionInconsistent,
+                                                  entity_name.name_id);
               NoteGenericHere(context, generic_id, diag);
               diag.Emit();
               return SemIR::SpecificId::Invalid;
@@ -203,7 +203,7 @@ auto DeduceGenericCallArguments(
                         "Cannot deduce value for generic parameter `{0}`.",
                         SemIR::NameId);
       auto diag = context.emitter().Build(
-          node_id, DeductionIncomplete,
+          loc_id, DeductionIncomplete,
           context.entity_names().Get(entity_name_id).name_id);
       NoteGenericHere(context, generic_id, diag);
       diag.Emit();

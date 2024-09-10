@@ -10,7 +10,7 @@
 
 // --- deduce_explicit.carbon
 
-library "deduce_explicit";
+library "[[@TEST_NAME]]";
 
 fn ExplicitGenericParam(T:! type) -> T*;
 
@@ -24,7 +24,7 @@ fn CallExplicitGenericParamWithGenericArg(T:! type) -> {.a: T}* {
 
 // --- fail_todo_explicit_vs_deduced.carbon
 
-library "fail_todo_explicit_vs_deduced";
+library "[[@TEST_NAME]]";
 
 class A {}
 
@@ -44,7 +44,7 @@ fn CallExplicitAndAlsoDeduced(n: i32) -> i32* {
 
 // --- fail_todo_deduce_implicit.carbon
 
-library "fail_todo_deduce_implicit";
+library "[[@TEST_NAME]]";
 
 fn ImplicitGenericParam[T:! type](x: T) -> T*;
 
@@ -58,7 +58,7 @@ fn CallImplicitGenericParam(n: i32) -> i32* {
 
 // --- fail_todo_deduce_nested.carbon
 
-library "fail_todo_deduce_nested";
+library "[[@TEST_NAME]]";
 
 fn TupleParam[T:! type](x: (T, i32));
 
@@ -88,7 +88,7 @@ fn CallStructParam() {
 
 // --- fail_deduce_incomplete.carbon
 
-library "fail_deduce_incomplete";
+library "[[@TEST_NAME]]";
 
 // TODO: It would be nice to diagnose this at its point of declaration, because
 // U is not deducible.
@@ -107,7 +107,7 @@ fn CallImplicitNotDeducible() {
 
 // --- fail_deduce_inconsistent.carbon
 
-library "fail_deduce_inconsistent";
+library "[[@TEST_NAME]]";
 
 fn ImplicitNotDeducible[T:! type](x: T, y: T) -> T;
 
@@ -147,6 +147,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -271,6 +272,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -360,6 +362,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -458,6 +461,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -564,6 +568,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -630,6 +635,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

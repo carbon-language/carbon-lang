@@ -12,6 +12,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -958,25 +959,31 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return expr_id;
   }
 
-  // If the types don't match at this point, we can't perform the conversion.
-  // TODO: Look for an `ImplicitAs` impl, or an `As` impl in the case where
-  // `target.kind == ConversionTarget::ExplicitAs`.
+  // If this is not a builtin conversion, try an `ImplicitAs` conversion.
   SemIR::Inst expr = sem_ir.insts().Get(expr_id);
   if (expr.type_id() != target.type_id) {
-    CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                      "Cannot implicitly convert from `{0}` to `{1}`.",
-                      SemIR::TypeId, SemIR::TypeId);
-    CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                      "Cannot convert from `{0}` to `{1}` with `as`.",
-                      SemIR::TypeId, SemIR::TypeId);
-    context.emitter()
-        .Build(loc_id,
-               target.kind == ConversionTarget::ExplicitAs
-                   ? ExplicitAsConversionFailure
-                   : ImplicitAsConversionFailure,
-               expr.type_id(), target.type_id)
-        .Emit();
-    return SemIR::InstId::BuiltinError;
+    SemIR::InstId interface_args[] = {
+        context.types().GetInstId(target.type_id)};
+    Operator op = {
+        .interface_name = target.kind == ConversionTarget::ExplicitAs
+                              ? llvm::StringLiteral("As")
+                              : llvm::StringLiteral("ImplicitAs"),
+        .interface_args_ref = interface_args,
+        .op_name = "Convert",
+    };
+    expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
+      CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
+                        "Cannot implicitly convert from `{0}` to `{1}`.",
+                        SemIR::TypeId, SemIR::TypeId);
+      CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
+                        "Cannot convert from `{0}` to `{1}` with `as`.",
+                        SemIR::TypeId, SemIR::TypeId);
+      return context.emitter().Build(loc_id,
+                                     target.kind == ConversionTarget::ExplicitAs
+                                         ? ExplicitAsConversionFailure
+                                         : ImplicitAsConversionFailure,
+                                     expr.type_id(), target.type_id);
+    });
   }
 
   // Track that we performed a type conversion, if we did so.
@@ -1119,7 +1126,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
-                        SemIR::InstId callee_id,
+                        SemIRLoc callee_loc,
                         SemIR::SpecificId callee_specific_id,
                         std::optional<SemIR::AddrPattern> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
@@ -1129,7 +1136,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                       "Missing object argument in method call.");
     context.emitter()
         .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee_id, InCallToFunction)
+        .Note(callee_loc, InCallToFunction)
         .Emit();
     return SemIR::InstId::BuiltinError;
   }
@@ -1177,7 +1184,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id,
-                     const SemIR::EntityWithParamsBase& callee,
+                     const CalleeParamsInfo& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
   auto implicit_param_refs =
@@ -1193,7 +1200,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     context.emitter()
         .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(callee.latest_decl_id(), InCallToFunction)
+        .Note(callee.callee_loc, InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
   }
@@ -1211,7 +1218,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         context.sem_ir(), implicit_param_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
       auto converted_self_id = ConvertSelf(
-          context, call_loc_id, callee.latest_decl_id(), callee_specific_id,
+          context, call_loc_id, callee.callee_loc, callee_specific_id,
           addr_pattern, param_id, param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
@@ -1230,7 +1237,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(callee.latest_decl_id(), InCallToFunctionParam,
+        builder.Note(callee.callee_loc, InCallToFunctionParam,
                      diag_param_index + 1);
       });
 

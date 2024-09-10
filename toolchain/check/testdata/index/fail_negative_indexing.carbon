@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_negative_indexing.carbon
 
 var c: [i32; 2] = (42, 42);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface Negate in type i32 that does not implement that interface.
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface `Negate` in type `i32` that does not implement that interface.
 // CHECK:STDERR: var d: i32 = c[-10];
 // CHECK:STDERR:                ^~~
 var d: i32 = c[-10];
@@ -46,6 +46,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -110,6 +111,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_27
 // CHECK:STDOUT:   %c.ref: ref %.3 = name_ref c, file.%c
 // CHECK:STDOUT:   %.loc15_17: i32 = int_literal 10 [template = constants.%.9]
+// CHECK:STDOUT:   %Op.ref: %.11 = name_ref Op, imports.%import_ref.4 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc15_19.1: ref i32 = array_index %c.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15_19.2: i32 = bind_value %.loc15_19.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_19.2

@@ -10,7 +10,7 @@
 
 fn F(T:! type, U:! type) {
   var p: T*;
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `T` to `U`.
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: ERROR: Package `Core` implicitly referenced here, but not found.
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let n: U = *p;
@@ -56,6 +56,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %p.ref: ref @F.%.1 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc16_15: @F.%.1 (%.2) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc16_14: ref @F.%T.1 (%T) = deref %.loc16_15
+// CHECK:STDOUT:     %.loc16_16: @F.%U.1 (%U) = converted %.loc16_14, <error> [template = <error>]
 // CHECK:STDOUT:     %n: @F.%U.1 (%U) = bind_name n, <error>
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

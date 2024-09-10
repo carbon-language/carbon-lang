@@ -10,7 +10,7 @@
 
 // --- redeclare.carbon
 
-library "redeclare";
+library "[[@TEST_NAME]]";
 
 fn F(T:! type) -> T*;
 
@@ -20,7 +20,7 @@ fn F(T:! type) -> T* {
 
 // --- fail_different_return_type.carbon
 
-library "fail_different_return_type";
+library "[[@TEST_NAME]]";
 
 fn F(T:! type, U:! type) -> T*;
 
@@ -46,7 +46,7 @@ fn F(T:! type, U:! type) -> U* {
 
 // --- fail_reorder.carbon
 
-library "fail_reorder";
+library "[[@TEST_NAME]]";
 
 fn F(T:! type, U:! type) -> T*;
 
@@ -70,7 +70,7 @@ fn F(U:! type, T:! type) -> T* {
 
 // --- fail_rename.carbon
 
-library "fail_rename";
+library "[[@TEST_NAME]]";
 
 fn F(T:! type, U:! type) -> T*;
 
@@ -107,6 +107,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -177,6 +178,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -266,6 +268,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -355,6 +358,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

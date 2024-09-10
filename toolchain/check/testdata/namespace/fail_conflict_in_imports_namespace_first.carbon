@@ -10,20 +10,20 @@
 
 // --- namespace.carbon
 
-package Example library "namespace";
+package Example library "[[@TEST_NAME]]";
 
 namespace NS;
 fn NS.Foo() {}
 
 // --- fn.carbon
 
-package Example library "fn";
+package Example library "[[@TEST_NAME]]";
 
 fn NS() {}
 
 // --- fail_conflict.carbon
 
-package Example library "namespace_then_fn";
+package Example library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import library "namespace";
@@ -56,6 +56,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -93,6 +94,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -134,6 +136,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
