@@ -29,8 +29,8 @@ fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc11: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc18: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc11: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc18: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

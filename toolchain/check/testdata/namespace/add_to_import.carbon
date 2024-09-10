@@ -83,7 +83,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_14.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %int.make_type_32.loc4, %.loc4_14.1 [template = i32]

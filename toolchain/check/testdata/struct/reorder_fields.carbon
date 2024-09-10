@@ -62,20 +62,20 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %MakeI32.decl: %MakeI32.type = fn_decl @MakeI32 [template = constants.%MakeI32] {
+// CHECK:STDOUT:   %MakeI32.decl: %MakeI32.type = fn_decl @MakeI32 [template = constants.%MakeI32] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_17.2: type = converted %int.make_type_32.loc11, %.loc11_17.1 [template = i32]
 // CHECK:STDOUT:     @MakeI32.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MakeF64.decl: %MakeF64.type = fn_decl @MakeF64 [template = constants.%MakeF64] {
+// CHECK:STDOUT:   %MakeF64.decl: %MakeF64.type = fn_decl @MakeF64 [template = constants.%MakeF64] {} {
 // CHECK:STDOUT:     %.loc12_17.1: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %float.make_type.loc12: init type = call constants.%Float(%.loc12_17.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_17.2: type = value_of_initializer %float.make_type.loc12 [template = f64]
 // CHECK:STDOUT:     %.loc12_17.3: type = converted %float.make_type.loc12, %.loc12_17.2 [template = f64]
 // CHECK:STDOUT:     @MakeF64.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_16.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:     %.loc14_16.2: type = converted %int.make_type_32.loc14, %.loc14_16.1 [template = i32]

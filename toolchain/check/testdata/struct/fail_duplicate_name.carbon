@@ -93,7 +93,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc18_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_16.1: type = value_of_initializer %int.make_type_32.loc18_16 [template = i32]
 // CHECK:STDOUT:     %.loc18_16.2: type = converted %int.make_type_32.loc18_16, %.loc18_16.1 [template = i32]

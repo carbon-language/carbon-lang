@@ -38,8 +38,8 @@ let c_var: c = d;
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .c_var = @__global_init.%c_var
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]

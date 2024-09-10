@@ -412,12 +412,13 @@ import library "extern_api";
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc5_7: i32 = binding_pattern b, @B.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_7: i32 = binding_pattern b, @B.%b
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
@@ -426,12 +427,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %b.loc5_6.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern c, @C.%c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern c, @C.%c
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
@@ -440,11 +442,11 @@ import library "extern_api";
 // CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_6.3
 // CHECK:STDOUT:     %c.loc6_6.3: %.3 = param c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -504,12 +506,13 @@ import library "extern_api";
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc5_14: i32 = binding_pattern b, @B.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_16.1: type = value_of_initializer %int.make_type_32.loc5_16 [template = i32]
 // CHECK:STDOUT:     %.loc5_16.2: type = converted %int.make_type_32.loc5_16, %.loc5_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_14: i32 = binding_pattern b, @B.%b
 // CHECK:STDOUT:     %int.make_type_32.loc5_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_24.1: type = value_of_initializer %int.make_type_32.loc5_24 [template = i32]
 // CHECK:STDOUT:     %.loc5_24.2: type = converted %int.make_type_32.loc5_24, %.loc5_24.1 [template = i32]
@@ -518,12 +521,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %b.loc5_13.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %.loc6_14: %.3 = binding_pattern c, @C.%c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_21.1: %.2 = tuple_literal (%int.make_type_32.loc6_17)
 // CHECK:STDOUT:     %.loc6_21.2: type = value_of_initializer %int.make_type_32.loc6_17 [template = i32]
 // CHECK:STDOUT:     %.loc6_21.3: type = converted %int.make_type_32.loc6_17, %.loc6_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_21.4: type = converted %.loc6_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_14: %.3 = binding_pattern c, @C.%c
 // CHECK:STDOUT:     %int.make_type_32.loc6_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_32.1: type = value_of_initializer %int.make_type_32.loc6_32 [template = i32]
 // CHECK:STDOUT:     %.loc6_32.2: type = converted %int.make_type_32.loc6_32, %.loc6_32.1 [template = i32]
@@ -532,11 +536,11 @@ import library "extern_api";
 // CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_13.3
 // CHECK:STDOUT:     %c.loc6_13.3: %.3 = param c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -737,12 +741,13 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc7_14: i32 = binding_pattern b, %b.loc7_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc7_14: i32 = binding_pattern b, %b.loc7_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
@@ -751,12 +756,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %b.loc7_13.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %.loc8_14: %.3 = binding_pattern c, %c.loc8_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_21.1: %.2 = tuple_literal (%int.make_type_32.loc8_17)
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc8_14: %.3 = binding_pattern c, %c.loc8_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
@@ -765,8 +771,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.loc8_13.2: %.3 = bind_name c, %c.loc8_13.3
 // CHECK:STDOUT:     %c.loc8_13.3: %.3 = param c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
 // CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
@@ -892,12 +898,13 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc7_14: i32 = binding_pattern b, %b.loc7_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc7_14: i32 = binding_pattern b, %b.loc7_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
@@ -906,12 +913,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %b.loc7_13.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %.loc8_14: %.3 = binding_pattern c, %c.loc8_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_21.1: %.2 = tuple_literal (%int.make_type_32.loc8_17)
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc8_14: %.3 = binding_pattern c, %c.loc8_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
@@ -920,8 +928,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.loc8_13.2: %.3 = bind_name c, %c.loc8_13.3
 // CHECK:STDOUT:     %c.loc8_13.3: %.3 = param c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
 // CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
@@ -1288,7 +1296,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
 // CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -1352,7 +1360,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
 // CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc18_11.2: type = converted %int.make_type_32, %.loc18_11.1 [template = i32]
@@ -1419,7 +1427,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
 // CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();

@@ -39,7 +39,7 @@ fn Six() -> x;
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }

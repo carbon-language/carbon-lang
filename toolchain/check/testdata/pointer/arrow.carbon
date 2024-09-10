@@ -57,18 +57,19 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:     %.loc16_11: %.2 = binding_pattern ptr, @Foo.%ptr
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_14: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_11: %.2 = binding_pattern ptr, @Foo.%ptr
 // CHECK:STDOUT:     @Foo.%ptr: %.2 = bind_name ptr, %ptr.loc16_8.3
 // CHECK:STDOUT:     %ptr.loc16_8.3: %.2 = param ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {
+// CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc12_13.1: %C = param self
 // CHECK:STDOUT:     %self.loc12_13.2: %C = bind_name self, %self.loc12_13.1

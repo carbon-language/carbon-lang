@@ -88,23 +88,24 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     .Call = %Call.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
+// CHECK:STDOUT:     %.loc29_10: %.1 = binding_pattern a, @Call.%a
+// CHECK:STDOUT:     %.loc29_17: %.6 = binding_pattern b, @Call.%b
+// CHECK:STDOUT:     %.loc29_24: %.11 = binding_pattern c, @Call.%c
+// CHECK:STDOUT:     %.loc29_31: %.14 = binding_pattern d, @Call.%d
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc29_13: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %.loc29_10: %.1 = binding_pattern a, @Call.%a
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc29_20: type = ptr_type %B [template = constants.%.6]
-// CHECK:STDOUT:     %.loc29_17: %.6 = binding_pattern b, @Call.%b
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc29_27: type = ptr_type %C [template = constants.%.11]
-// CHECK:STDOUT:     %.loc29_24: %.11 = binding_pattern c, @Call.%c
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %.loc29_34: type = ptr_type %D [template = constants.%.14]
-// CHECK:STDOUT:     %.loc29_31: %.14 = binding_pattern d, @Call.%d
 // CHECK:STDOUT:     @Call.%a: %.1 = bind_name a, %a.loc29_9.3
 // CHECK:STDOUT:     %a.loc29_9.3: %.1 = param a
 // CHECK:STDOUT:     @Call.%b: %.6 = bind_name b, %b.loc29_16.3
@@ -117,7 +118,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
@@ -133,7 +134,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc16: %.5 = base_decl %A, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %.loc17_23: type = ptr_type %B [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc17_13.1: %.6 = param self
@@ -151,7 +152,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc21: %.10 = base_decl %B, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
+// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc22_23: type = ptr_type %C [template = constants.%.11]
 // CHECK:STDOUT:     %self.loc22_13.1: %.11 = param self

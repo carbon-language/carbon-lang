@@ -55,14 +55,15 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc11_7: i32 = binding_pattern a, @G.%a
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32, %.loc11_9.1 [template = i32]
-// CHECK:STDOUT:     %.loc11_7: i32 = binding_pattern a, @G.%a
 // CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc11_6.3
 // CHECK:STDOUT:     %a.loc11_6.3: i32 = param a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

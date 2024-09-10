@@ -118,23 +118,25 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Action.decl: %Action.type = interface_decl @Action [template = constants.%Action] {
 // CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_18.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_18.2: type = bind_symbolic_name T 0, %T.loc4_18.3 [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_18.3: type = param T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %.loc12_19.1: type = value_of_initializer %.loc12_17 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_19.2: type = converted %.loc12_17, %.loc12_19.1 [template = constants.%.6]
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %A.ref.loc12: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %Action.ref: %Action.type = name_ref Action, %Action.decl [template = constants.%Action]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc12_17: init type = call %Action.ref(%B.ref) [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %A.ref.loc16: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc16: %A = binding_pattern a, @F.%a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %A.ref.loc16: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     @F.%a: %A = bind_name a, %a.loc16_6.3
 // CHECK:STDOUT:     %a.loc16_6.3: %A = param a
 // CHECK:STDOUT:   }
@@ -153,7 +155,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Action.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %Op.decl: @Action.%Op.type (%Op.type.1) = fn_decl @Op.1 [symbolic = %Op (constants.%Op.1)] {}
+// CHECK:STDOUT:     %Op.decl: @Action.%Op.type (%Op.type.1) = fn_decl @Op.1 [symbolic = %Op (constants.%Op.1)] {} {}
 // CHECK:STDOUT:     %.loc5: @Action.%.2 (%.3) = assoc_entity element0, %Op.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -164,7 +166,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %A as %.6 {
-// CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {}
+// CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {} {}
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -294,8 +296,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %.loc4: %A = binding_pattern a, @G.%a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     @G.%a: %A = bind_name a, %a.loc4_6.3
 // CHECK:STDOUT:     %a.loc4_6.3: %A = param a
 // CHECK:STDOUT:   }
@@ -441,8 +444,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %.loc8: %A = binding_pattern a, @G.%a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     @G.%a: %A = bind_name a, %a.loc8_6.3
 // CHECK:STDOUT:     %a.loc8_6.3: %A = param a
 // CHECK:STDOUT:   }
@@ -571,14 +575,15 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Factory.decl: %Factory.type = interface_decl @Factory [template = constants.%Factory] {
 // CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_19.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.3 [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_19.3: type = param T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %.loc11_20.1: type = value_of_initializer %.loc11_18 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc11_20.2: type = converted %.loc11_18, %.loc11_20.1 [template = constants.%.6]
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %Factory.ref: %Factory.type = name_ref Factory, %Factory.decl [template = constants.%Factory]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
@@ -599,7 +604,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Factory.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %Make.decl: @Factory.%Make.type (%Make.type.1) = fn_decl @Make.1 [symbolic = %Make (constants.%Make.1)] {
+// CHECK:STDOUT:     %Make.decl: @Factory.%Make.type (%Make.type.1) = fn_decl @Make.1 [symbolic = %Make (constants.%Make.1)] {} {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc4_19.2 [symbolic = @Make.1.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var: ref @Make.1.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
@@ -613,7 +618,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %A as %.6 {
-// CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {
+// CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {} {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %return.var: ref %B = var <return slot>
 // CHECK:STDOUT:   }
@@ -726,8 +731,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %MakeB.decl: %MakeB.type = fn_decl @MakeB [template = constants.%MakeB] {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %.loc4: %A = binding_pattern a, @MakeB.%a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
 // CHECK:STDOUT:     @MakeB.%return: ref %B = var <return slot>
 // CHECK:STDOUT:     @MakeB.%a: %A = bind_name a, %a.loc4_10.3
@@ -874,10 +880,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [template = constants.%MakeC] {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %.loc6: %A = binding_pattern a, @MakeC.%a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @MakeC.%return: ref %C = var <return slot>
 // CHECK:STDOUT:     @MakeC.%a: %A = bind_name a, %a.loc6_10.3

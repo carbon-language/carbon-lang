@@ -56,7 +56,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32, %.loc15_8.1 [template = i32]
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

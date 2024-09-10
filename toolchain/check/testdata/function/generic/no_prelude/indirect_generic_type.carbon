@@ -29,10 +29,11 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc11_7: type = binding_pattern T 0, @F.%T.loc11
+// CHECK:STDOUT:     %.loc11_17: %.2 = binding_pattern p, @F.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_20: type = ptr_type %T [symbolic = @F.%.1 (constants.%.1)]
 // CHECK:STDOUT:     %.loc11_21: type = ptr_type %.1 [symbolic = @F.%.2 (constants.%.2)]
-// CHECK:STDOUT:     %.loc11_17: @F.%.2 (%.2) = binding_pattern p, @F.%p
 // CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_28: type = ptr_type %T [symbolic = @F.%.1 (constants.%.1)]
 // CHECK:STDOUT:     @F.%return: ref @F.%.1 (%.1) = var <return slot>

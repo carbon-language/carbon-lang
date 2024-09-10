@@ -16,11 +16,15 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
     -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
   context.decl_name_stack().PushScopeAndStartName();
+  context.pattern_block_stack().Push();
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/,
-                     Parse::AliasInitializerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::AliasInitializerId /*node_id*/)
+    -> bool {
+  // TODO: when/if parameterized aliases are supported, this must be
+  // attached to the `BindAlias` inst.
+  (void)context.pattern_block_stack().Pop();
   return true;
 }
 

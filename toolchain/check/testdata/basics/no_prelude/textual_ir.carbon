@@ -33,9 +33,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:     %.loc15_9: %.1 = binding_pattern n, @Foo.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_9: %.1 = binding_pattern n, @Foo.%n
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)

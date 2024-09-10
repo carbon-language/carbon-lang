@@ -36,18 +36,19 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     .Int32 = %Int32.decl
 // CHECK:STDOUT:     .TestAdd = %TestAdd.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
 // CHECK:STDOUT:     @Int32.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdd.decl: %TestAdd.type = fn_decl @TestAdd [template = constants.%TestAdd] {
+// CHECK:STDOUT:     %.loc5_13: i32 = binding_pattern a, @TestAdd.%a
+// CHECK:STDOUT:     %.loc5_21: i32 = binding_pattern b, @TestAdd.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5_15 [template = i32]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %int.make_type_32.loc5_15, %.loc5_15.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_13: i32 = binding_pattern a, @TestAdd.%a
 // CHECK:STDOUT:     %int.make_type_32.loc5_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_23.1: type = value_of_initializer %int.make_type_32.loc5_23 [template = i32]
 // CHECK:STDOUT:     %.loc5_23.2: type = converted %int.make_type_32.loc5_23, %.loc5_23.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_21: i32 = binding_pattern b, @TestAdd.%b
 // CHECK:STDOUT:     %int.make_type_32.loc5_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_31.1: type = value_of_initializer %int.make_type_32.loc5_31 [template = i32]
 // CHECK:STDOUT:     %.loc5_31.2: type = converted %int.make_type_32.loc5_31, %.loc5_31.1 [template = i32]

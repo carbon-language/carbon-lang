@@ -43,7 +43,7 @@ fn While() {
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {}
+// CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {

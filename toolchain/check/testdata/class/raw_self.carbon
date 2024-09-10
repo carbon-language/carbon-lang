@@ -62,8 +62,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc17_36: i32 = binding_pattern r#self, @F.%self.loc17_30
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc17_27: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc17_17.1: %.1 = param self
@@ -72,18 +74,18 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_38.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:     %.loc17_38.2: type = converted %int.make_type_32.loc17, %.loc17_38.1 [template = i32]
-// CHECK:STDOUT:     %.loc17_36: i32 = binding_pattern r#self, @F.%self.loc17_30
 // CHECK:STDOUT:     @F.%self.loc17_30: i32 = bind_name r#self, %self.loc17_30.3
 // CHECK:STDOUT:     %self.loc17_30.3: i32 = param r#self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc21_30: i32 = binding_pattern r#self, @G.%self.loc21_24
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc21_12.1: %Class = param self
 // CHECK:STDOUT:     @G.%self.loc21_12: %Class = bind_name self, %self.loc21_12.1
 // CHECK:STDOUT:     %int.make_type_32.loc21_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_32.1: type = value_of_initializer %int.make_type_32.loc21_32 [template = i32]
 // CHECK:STDOUT:     %.loc21_32.2: type = converted %int.make_type_32.loc21_32, %.loc21_32.1 [template = i32]
-// CHECK:STDOUT:     %.loc21_30: i32 = binding_pattern r#self, @G.%self.loc21_24
 // CHECK:STDOUT:     %int.make_type_32.loc21_41: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc21_46: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_49.1: %.3 = tuple_literal (%int.make_type_32.loc21_41, %int.make_type_32.loc21_46)
@@ -100,6 +102,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc12_32: i32 = binding_pattern r#self, %self.loc12_26.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
@@ -108,18 +112,18 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_34.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_34.2: type = converted %int.make_type_32.loc12, %.loc12_34.1 [template = i32]
-// CHECK:STDOUT:     %.loc12_32: i32 = binding_pattern r#self, %self.loc12_26.2
 // CHECK:STDOUT:     %self.loc12_26.2: i32 = bind_name r#self, %self.loc12_26.3
 // CHECK:STDOUT:     %self.loc12_26.3: i32 = param r#self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc13_26: i32 = binding_pattern r#self, %self.loc13_20.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_8.1: %Class = param self
 // CHECK:STDOUT:     %self.loc13_8.2: %Class = bind_name self, %self.loc13_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc13_28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_28.1: type = value_of_initializer %int.make_type_32.loc13_28 [template = i32]
 // CHECK:STDOUT:     %.loc13_28.2: type = converted %int.make_type_32.loc13_28, %.loc13_28.1 [template = i32]
-// CHECK:STDOUT:     %.loc13_26: i32 = binding_pattern r#self, %self.loc13_20.2
 // CHECK:STDOUT:     %int.make_type_32.loc13_37: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc13_42: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_45.1: %.3 = tuple_literal (%int.make_type_32.loc13_37, %int.make_type_32.loc13_42)

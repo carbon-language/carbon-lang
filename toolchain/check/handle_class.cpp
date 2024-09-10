@@ -41,6 +41,8 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // This class is potentially generic.
   StartGenericDecl(context);
+  // Start a new pattern block for the signature.
+  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -208,12 +210,15 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
           ? SemIR::Class::Base
           : SemIR::Class::Final;
 
+  SemIR::InstBlockId pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
+  SemIR::DeclId decl_id = context.sem_ir().decls().Add(
+      {.pattern_block_id = pattern_block_id, .decl_block_id = decl_block_id});
 
   // Add the class declaration.
   auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeId::TypeType,
                                      .class_id = SemIR::ClassId::Invalid,
-                                     .decl_block_id = decl_block_id};
+                                     .decl_id = decl_id};
   auto class_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, class_decl));
 

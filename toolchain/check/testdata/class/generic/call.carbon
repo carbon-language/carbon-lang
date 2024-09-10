@@ -126,10 +126,11 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %.loc4_14: type = binding_pattern T 0, %T.loc4_13.2
+// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_13.3: type = param T
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.3 [symbolic = @Class.%N (constants.%N)]
@@ -228,10 +229,11 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %.loc4_14: type = binding_pattern T 0, %T.loc4_13.2
+// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_13.3: type = param T
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.3 [symbolic = @Class.%N (constants.%N)]
@@ -308,10 +310,11 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %.loc4_14: type = binding_pattern T 0, %T.loc4_13.2
+// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_13.3: type = param T
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.3 [symbolic = @Class.%N (constants.%N)]
@@ -389,10 +392,11 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %.loc4_14: type = binding_pattern T 0, %T.loc4_13.2
+// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32.loc4, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_24: i32 = binding_pattern N 1, %N.loc4_23.2
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_13.3: type = param T
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.3 [symbolic = @Class.%N (constants.%N)]
@@ -489,6 +493,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [template = constants.%Outer.1] {
 // CHECK:STDOUT:     %.loc2: type = binding_pattern T 0, %T.loc2_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc2_13.2: type = bind_symbolic_name T 0, %T.loc2_13.3 [symbolic = @Outer.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc2_13.3: type = param T
 // CHECK:STDOUT:   }
@@ -502,6 +507,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.decl: %Inner.type = class_decl @Inner [template = constants.%Inner.1] {
 // CHECK:STDOUT:       %.loc3: type = binding_pattern U 1, %U.loc3_15.2
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.loc3_15.2: type = bind_symbolic_name U 1, %U.loc3_15.3 [symbolic = @Inner.%U (constants.%U)]
 // CHECK:STDOUT:       %U.loc3_15.3: type = param U
 // CHECK:STDOUT:     }
@@ -527,7 +533,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %D: @Inner.%D.type (%D.type.1) = struct_value () [symbolic = %D (constants.%D.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %A.decl: @Inner.%A.type (%A.type.1) = fn_decl @A [symbolic = %A (constants.%A.1)] {
+// CHECK:STDOUT:     %A.decl: @Inner.%A.type (%A.type.1) = fn_decl @A [symbolic = %A (constants.%A.1)] {} {
 // CHECK:STDOUT:       %Outer.ref.loc4: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:       %T.ref.loc4: type = name_ref T, file.%T.loc2_13.2 [symbolic = @A.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc4_20: init type = call %Outer.ref.loc4(%T.ref.loc4) [symbolic = @A.%Outer (constants.%Outer.2)]
@@ -535,7 +541,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %.loc4_22.2: type = converted %.loc4_20, %.loc4_22.1 [symbolic = @A.%Outer (constants.%Outer.2)]
 // CHECK:STDOUT:       %return.var.loc4: ref @A.%Outer (%Outer.2) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %B.decl: @Inner.%B.type (%B.type.1) = fn_decl @B [symbolic = %B (constants.%B.1)] {
+// CHECK:STDOUT:     %B.decl: @Inner.%B.type (%B.type.1) = fn_decl @B [symbolic = %B (constants.%B.1)] {} {
 // CHECK:STDOUT:       %Outer.ref.loc7: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:       %U.ref.loc7: type = name_ref U, @Outer.%U.loc3_15.2 [symbolic = @B.%U (constants.%U)]
 // CHECK:STDOUT:       %.loc7_20: init type = call %Outer.ref.loc7(%U.ref.loc7) [symbolic = @B.%Outer (constants.%Outer.3)]
@@ -543,7 +549,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %.loc7_22.2: type = converted %.loc7_20, %.loc7_22.1 [symbolic = @B.%Outer (constants.%Outer.3)]
 // CHECK:STDOUT:       %return.var.loc7: ref @B.%Outer (%Outer.3) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.decl: @Inner.%C.type (%C.type.1) = fn_decl @C [symbolic = %C (constants.%C.1)] {
+// CHECK:STDOUT:     %C.decl: @Inner.%C.type (%C.type.1) = fn_decl @C [symbolic = %C (constants.%C.1)] {} {
 // CHECK:STDOUT:       %Inner.ref.loc10: %Inner.type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner.1]
 // CHECK:STDOUT:       %T.ref.loc10: type = name_ref T, file.%T.loc2_13.2 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc10_20: init type = call %Inner.ref.loc10(%T.ref.loc10) [symbolic = @C.%Inner (constants.%Inner.3)]
@@ -551,7 +557,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %.loc10_22.2: type = converted %.loc10_20, %.loc10_22.1 [symbolic = @C.%Inner (constants.%Inner.3)]
 // CHECK:STDOUT:       %return.var.loc10: ref @C.%Inner (%Inner.3) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %D.decl: @Inner.%D.type (%D.type.1) = fn_decl @D [symbolic = %D (constants.%D.1)] {
+// CHECK:STDOUT:     %D.decl: @Inner.%D.type (%D.type.1) = fn_decl @D [symbolic = %D (constants.%D.1)] {} {
 // CHECK:STDOUT:       %Inner.ref.loc13: %Inner.type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner.1]
 // CHECK:STDOUT:       %U.ref.loc13: type = name_ref U, @Outer.%U.loc3_15.2 [symbolic = @D.%U (constants.%U)]
 // CHECK:STDOUT:       %.loc13_20: init type = call %Inner.ref.loc13(%U.ref.loc13) [symbolic = @D.%Inner (constants.%Inner.4)]

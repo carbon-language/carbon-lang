@@ -55,6 +55,8 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc15_7: %.4 = binding_pattern p, @G.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
 // CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_32.loc15_22, %.loc15_16.1 [template = i32]
@@ -62,7 +64,6 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc15_9: type = const_type %.2 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_26: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_27: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc15_7: %.4 = binding_pattern p, @G.%p
 // CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]

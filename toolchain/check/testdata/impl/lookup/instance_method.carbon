@@ -68,12 +68,13 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
 // CHECK:STDOUT:     %.loc23_7: %C = binding_pattern c, @F.3.%c
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc23_15.2: type = converted %int.make_type_32, %.loc23_15.1 [template = i32]
@@ -85,7 +86,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {
 // CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = @F.1.%Self (constants.%Self)]
@@ -105,7 +106,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1 {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc19_10.1: %C = param self
 // CHECK:STDOUT:     %self.loc19_10.2: %C = bind_name self, %self.loc19_10.1
@@ -122,7 +123,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

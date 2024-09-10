@@ -64,7 +64,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .A [private] = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %A: type = bind_alias A, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }

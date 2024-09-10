@@ -48,6 +48,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_19.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.3 [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc4_19.3: type = param T
 // CHECK:STDOUT:   }
@@ -66,7 +67,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @AddWith.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {}
+// CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {} {}
 // CHECK:STDOUT:     %.loc5: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -131,10 +132,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_18 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_18, %.loc7_20.1 [template = constants.%.6]
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, imports.%import_ref.1 [template = constants.%AddWith]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, %C.decl [template = constants.%C]
@@ -162,7 +163,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.6 {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

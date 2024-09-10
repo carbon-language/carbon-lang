@@ -30,7 +30,7 @@ var y: () = x;
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT:   %.loc18_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc18_9.2: type = converted %.loc18_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %y.var: ref %.1 = var y

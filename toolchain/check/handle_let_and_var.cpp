@@ -19,8 +19,9 @@ namespace Carbon::Check {
 template <Lex::TokenKind::RawEnumType Kind>
 static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   context.decl_introducer_state_stack().Push<Kind>();
-  // Push a bracketing node to establish the pattern context.
+  // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
+  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -145,6 +146,11 @@ template <const Lex::TokenKind& IntroducerTokenKind,
 static auto HandleDecl(Context& context, NodeT node_id)
     -> std::optional<DeclInfo> {
   std::optional<DeclInfo> decl_info = DeclInfo();
+
+  // TODO: update binding-pattern handling to use the pattern block even in
+  // a let/var context, and then consume it here.
+  (void)context.pattern_block_stack().Pop();
+
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs<InitializerNodeKind>()) {
     decl_info->init_id = context.node_stack().PopExpr();

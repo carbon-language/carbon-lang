@@ -14,6 +14,7 @@
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/decl.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -115,6 +116,8 @@ class File : public Printable<File> {
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
+  auto decls() -> ValueStore<DeclId>& { return decls_; }
+  auto decls() const -> const ValueStore<DeclId>& { return decls_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
   auto classes() const -> const ValueStore<ClassId>& { return classes_; }
   auto interfaces() -> ValueStore<InterfaceId>& { return interfaces_; }
@@ -198,6 +201,9 @@ class File : public Printable<File> {
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;
+
+  // Storage for declarations.
+  ValueStore<DeclId> decls_;
 
   // Storage for classes.
   ValueStore<ClassId> classes_;

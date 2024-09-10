@@ -68,25 +68,27 @@ fn Initializing() {
 // CHECK:STDOUT:     .Initializing = %Initializing.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %Value.decl: %Value.type = fn_decl @Value [template = constants.%Value] {
-// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc17: %X = binding_pattern n, @Value.%n
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     @Value.%n: %X = bind_name n, %n.loc17_10.3
 // CHECK:STDOUT:     %n.loc17_10.3: %X = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
+// CHECK:STDOUT:     %.loc21_15: %.4 = binding_pattern p, @Reference.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.4]
-// CHECK:STDOUT:     %.loc21_15: %.4 = binding_pattern p, @Reference.%p
 // CHECK:STDOUT:     @Reference.%p: %.4 = bind_name p, %p.loc21_14.3
 // CHECK:STDOUT:     %p.loc21_14.3: %.4 = param p
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
 // CHECK:STDOUT:     %X.ref.loc25: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     @Make.%return: ref %X = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Initializing.decl: %Initializing.type = fn_decl @Initializing [template = constants.%Initializing] {}
+// CHECK:STDOUT:   %Initializing.decl: %Initializing.type = fn_decl @Initializing [template = constants.%Initializing] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {

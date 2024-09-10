@@ -50,10 +50,10 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [template = constants.%ReturnType] {
+// CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [template = constants.%ReturnType] {} {
 // CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, %ReturnType.decl [template = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %ReturnType.call

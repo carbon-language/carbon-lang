@@ -50,13 +50,14 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc15_7: %.4 = binding_pattern p, @F.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_9.1: type = value_of_initializer %int.make_type_32.loc15_15 [template = i32]
 // CHECK:STDOUT:     %.loc15_9.2: type = converted %int.make_type_32.loc15_15, %.loc15_9.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_9.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_18: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_19: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc15_7: %.4 = binding_pattern p, @F.%p
 // CHECK:STDOUT:     %int.make_type_32.loc15_38: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_32.loc15_38 [template = i32]
 // CHECK:STDOUT:     %.loc15_32.2: type = converted %int.make_type_32.loc15_38, %.loc15_32.1 [template = i32]

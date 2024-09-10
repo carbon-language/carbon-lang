@@ -47,7 +47,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = constants.%C]

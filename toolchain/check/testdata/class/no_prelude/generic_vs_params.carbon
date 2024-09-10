@@ -100,19 +100,21 @@ fn F(T:! type) {
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotGenericNoParams.decl: type = class_decl @NotGenericNoParams [template = constants.%NotGenericNoParams] {}
-// CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = class_decl @NotGenericButParams [template = constants.%NotGenericButParams.1] {}
+// CHECK:STDOUT:   %NotGenericNoParams.decl: type = class_decl @NotGenericNoParams [template = constants.%NotGenericNoParams] {} {}
+// CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = class_decl @NotGenericButParams [template = constants.%NotGenericButParams.1] {} {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = class_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
 // CHECK:STDOUT:     %.loc6: type = binding_pattern T 0, %T.loc6_24.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc6_24.2: type = bind_symbolic_name T 0, %T.loc6_24.3 [symbolic = @GenericAndParams.1.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc6_24.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %.loc8: type = binding_pattern T 0, %T.loc8_9.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T 0, %T.loc8_9.3 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc8_9.3: type = param T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [template = constants.%NotGenericNoParams]
 // CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var a
 // CHECK:STDOUT:   %a: ref %NotGenericNoParams = bind_name a, %a.var
@@ -174,9 +176,10 @@ fn F(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [template = constants.%GenericNoParams.1] {}
+// CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [template = constants.%GenericNoParams.1] {} {}
 // CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = class_decl @GenericAndParams.2 [template = constants.%GenericAndParams.3] {
 // CHECK:STDOUT:       %.loc10: type = binding_pattern U 1, %U.loc10_26.2
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.loc10_26.2: type = bind_symbolic_name U 1, %U.loc10_26.3 [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:       %U.loc10_26.3: type = param U
 // CHECK:STDOUT:     }
@@ -284,7 +287,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
+// CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {} {
 // CHECK:STDOUT:     %T.loc8_9.1: type = param T
 // CHECK:STDOUT:     %T.loc8_9.2: type = bind_name T, %T.loc8_9.1
 // CHECK:STDOUT:   }
@@ -315,11 +318,13 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %.loc7: type = binding_pattern T, %T.loc7_9.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc7_9.2: type = bind_name T, %T.loc7_9.3
 // CHECK:STDOUT:     %T.loc7_9.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc10: type = binding_pattern T 0, @F.%T.loc10
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     @F.%T.loc10: type = bind_symbolic_name T 0, %T.loc10_6.3 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.loc10_6.3: type = param T
 // CHECK:STDOUT:   }

@@ -100,10 +100,11 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %UInt.decl: %UInt.type = fn_decl @UInt [template = constants.%UInt] {
+// CHECK:STDOUT:     %.loc4_10: i32 = binding_pattern n, @UInt.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_12.2: type = converted %int.make_type_32, %.loc4_12.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_10: i32 = binding_pattern n, @UInt.%n
 // CHECK:STDOUT:     @UInt.%return: ref type = var <return slot>
 // CHECK:STDOUT:     @UInt.%n: i32 = bind_name n, %n.loc4_9.3
 // CHECK:STDOUT:     %n.loc4_9.3: i32 = param n
@@ -162,12 +163,13 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern n, @F.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %UInt.ref.loc6_9: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_14: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc6_13: init type = call %UInt.ref.loc6_9(%.loc6_14) [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_16.1: type = value_of_initializer %int.make_type_unsigned.loc6_13 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_16.2: type = converted %int.make_type_unsigned.loc6_13, %.loc6_16.1 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern n, @F.%n
 // CHECK:STDOUT:     %UInt.ref.loc6_22: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_27: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc6_26: init type = call %UInt.ref.loc6_22(%.loc6_27) [template = constants.%.3]
@@ -178,12 +180,13 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %n.loc6_6.3: %.3 = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc10_7: %.5 = binding_pattern n, @G.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %UInt.ref.loc10_9: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_14: i32 = int_literal 13 [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc10_13: init type = call %UInt.ref.loc10_9(%.loc10_14) [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_16.1: type = value_of_initializer %int.make_type_unsigned.loc10_13 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %int.make_type_unsigned.loc10_13, %.loc10_16.1 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc10_7: %.5 = binding_pattern n, @G.%n
 // CHECK:STDOUT:     %UInt.ref.loc10_22: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_27: i32 = int_literal 13 [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc10_26: init type = call %UInt.ref.loc10_22(%.loc10_27) [template = constants.%.5]
@@ -194,16 +197,17 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %n.loc10_6.3: %.5 = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
+// CHECK:STDOUT:     %.loc14_14: i32 = binding_pattern N 0, @Symbolic.%N.loc14
+// CHECK:STDOUT:     %.loc14_23: %.6 = binding_pattern x, @Symbolic.%x
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %int.make_type_32, %.loc14_17.1 [template = i32]
-// CHECK:STDOUT:     %.loc14_14: i32 = binding_pattern N 0, @Symbolic.%N.loc14
 // CHECK:STDOUT:     %UInt.ref.loc14_25: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N.loc14 [symbolic = @Symbolic.%N.1 (constants.%N)]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = @Symbolic.%.1 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = @Symbolic.%.1 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = @Symbolic.%.1 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_23: @Symbolic.%.1 (%.6) = binding_pattern x, @Symbolic.%x
 // CHECK:STDOUT:     %UInt.ref.loc14_37: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, @Symbolic.%N.loc14 [symbolic = @Symbolic.%N.1 (constants.%N)]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = @Symbolic.%.1 (constants.%.6)]
@@ -331,10 +335,11 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
+// CHECK:STDOUT:     %.loc6_12: i32 = binding_pattern n, @Negate.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.2: type = converted %int.make_type_32.loc6_14, %.loc6_14.1 [template = i32]
-// CHECK:STDOUT:     %.loc6_12: i32 = binding_pattern n, @Negate.%n
 // CHECK:STDOUT:     %int.make_type_32.loc6_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_22.1: type = value_of_initializer %int.make_type_32.loc6_22 [template = i32]
 // CHECK:STDOUT:     %.loc6_22.2: type = converted %int.make_type_32.loc6_22, %.loc6_22.1 [template = i32]

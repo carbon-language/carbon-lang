@@ -181,7 +181,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // we don't want to add it to a block right now because it belongs in the
       // pattern-match IR, but we are currently generating the pattern IR.
       auto bind_id = context.AddInstInNoBlock(bind_name);
-      SemIR::InstId pattern_id = context.AddInst<SemIR::BindingPattern>(
+      SemIR::InstId pattern_id = context.AddPatternInst<SemIR::BindingPattern>(
           node_id, {.type_id = cast_type_id, .bind_inst_id = bind_id});
       push_bind_name(pattern_id);
       // TODO: Bindings should come into scope immediately in other contexts

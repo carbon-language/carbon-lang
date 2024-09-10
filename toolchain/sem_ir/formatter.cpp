@@ -13,6 +13,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/decl.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -775,7 +776,9 @@ class FormatterImpl {
 
   auto FormatInstRHS(FunctionDecl inst) -> void {
     FormatArgs(inst.function_id);
-    FormatTrailingBlock(inst.decl_block_id);
+    DeclInfo function_decl_info = sem_ir_.decls().Get(inst.decl_id);
+    FormatTrailingBlock(function_decl_info.pattern_block_id);
+    FormatTrailingBlock(function_decl_info.decl_block_id);
   }
 
   auto FormatInstRHS(FunctionType inst) -> void {
@@ -788,7 +791,9 @@ class FormatterImpl {
 
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
-    FormatTrailingBlock(inst.decl_block_id);
+    DeclInfo function_decl_info = sem_ir_.decls().Get(inst.decl_id);
+    FormatTrailingBlock(function_decl_info.pattern_block_id);
+    FormatTrailingBlock(function_decl_info.decl_block_id);
   }
 
   auto FormatInstRHS(ClassType inst) -> void {
@@ -801,12 +806,16 @@ class FormatterImpl {
 
   auto FormatInstRHS(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
-    FormatTrailingBlock(inst.decl_block_id);
+    DeclInfo function_decl_info = sem_ir_.decls().Get(inst.decl_id);
+    FormatTrailingBlock(function_decl_info.pattern_block_id);
+    FormatTrailingBlock(function_decl_info.decl_block_id);
   }
 
   auto FormatInstRHS(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
-    FormatTrailingBlock(inst.decl_block_id);
+    DeclInfo function_decl_info = sem_ir_.decls().Get(inst.decl_id);
+    FormatTrailingBlock(function_decl_info.pattern_block_id);
+    FormatTrailingBlock(function_decl_info.decl_block_id);
   }
 
   auto FormatInstRHS(InterfaceType inst) -> void {

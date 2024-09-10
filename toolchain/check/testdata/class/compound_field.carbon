@@ -91,11 +91,12 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     .AccessBaseIndirect = %AccessBaseIndirect.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [template = constants.%AccessDerived] {
-// CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc24_19: %Derived = binding_pattern d, @AccessDerived.%d
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32.loc24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc24_33.1: type = value_of_initializer %int.make_type_32.loc24 [template = i32]
 // CHECK:STDOUT:     %.loc24_33.2: type = converted %int.make_type_32.loc24, %.loc24_33.1 [template = i32]
@@ -104,8 +105,9 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %d.loc24_18.3: %Derived = param d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [template = constants.%AccessBase] {
-// CHECK:STDOUT:     %Derived.ref.loc28: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc28_16: %Derived = binding_pattern d, @AccessBase.%d
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Derived.ref.loc28: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32.loc28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc28_30.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:     %.loc28_30.2: type = converted %int.make_type_32.loc28, %.loc28_30.1 [template = i32]
@@ -114,9 +116,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %d.loc28_15.3: %Derived = param d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect.decl: %AccessDerivedIndirect.type = fn_decl @AccessDerivedIndirect [template = constants.%AccessDerivedIndirect] {
+// CHECK:STDOUT:     %.loc32_27: %.11 = binding_pattern p, @AccessDerivedIndirect.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc32_36: type = ptr_type %Derived [template = constants.%.11]
-// CHECK:STDOUT:     %.loc32_27: %.11 = binding_pattern p, @AccessDerivedIndirect.%p
 // CHECK:STDOUT:     %int.make_type_32.loc32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_45.1: type = value_of_initializer %int.make_type_32.loc32 [template = i32]
 // CHECK:STDOUT:     %.loc32_45.2: type = converted %int.make_type_32.loc32, %.loc32_45.1 [template = i32]
@@ -126,9 +129,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %p.loc32_26.3: %.11 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect.decl: %AccessBaseIndirect.type = fn_decl @AccessBaseIndirect [template = constants.%AccessBaseIndirect] {
+// CHECK:STDOUT:     %.loc36_24: %.11 = binding_pattern p, @AccessBaseIndirect.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc36: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc36_33: type = ptr_type %Derived [template = constants.%.11]
-// CHECK:STDOUT:     %.loc36_24: %.11 = binding_pattern p, @AccessBaseIndirect.%p
 // CHECK:STDOUT:     %int.make_type_32.loc36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc36_42.1: type = value_of_initializer %int.make_type_32.loc36 [template = i32]
 // CHECK:STDOUT:     %.loc36_42.2: type = converted %int.make_type_32.loc36, %.loc36_42.1 [template = i32]

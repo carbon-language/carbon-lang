@@ -137,12 +137,13 @@ fn D() {}
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc5_7: i32 = binding_pattern b, @B.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %.loc5_7: i32 = binding_pattern b, @B.%b
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
@@ -151,12 +152,13 @@ fn D() {}
 // CHECK:STDOUT:     %b.loc5_6.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern c, @C.%c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_7: %.3 = binding_pattern c, @C.%c
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
@@ -165,7 +167,7 @@ fn D() {}
 // CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_6.3
 // CHECK:STDOUT:     %c.loc6_6.3: %.3 = param c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -220,7 +222,7 @@ fn D() {}
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -358,12 +360,13 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc27_7: i32 = binding_pattern b, %b.loc27_6.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc27_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc27_9.1: type = value_of_initializer %int.make_type_32.loc27_9 [template = i32]
 // CHECK:STDOUT:     %.loc27_9.2: type = converted %int.make_type_32.loc27_9, %.loc27_9.1 [template = i32]
-// CHECK:STDOUT:     %.loc27_7: i32 = binding_pattern b, %b.loc27_6.2
 // CHECK:STDOUT:     %int.make_type_32.loc27_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc27_17.1: type = value_of_initializer %int.make_type_32.loc27_17 [template = i32]
 // CHECK:STDOUT:     %.loc27_17.2: type = converted %int.make_type_32.loc27_17, %.loc27_17.1 [template = i32]
@@ -410,8 +413,8 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %A.decl.loc7: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc7: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -453,8 +456,8 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.decl.loc6: %D.type = fn_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %D.decl.loc13: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl.loc6: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc13: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {

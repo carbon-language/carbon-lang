@@ -84,14 +84,15 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %LessEq.decl: %LessEq.type = fn_decl @LessEq [template = constants.%LessEq] {
+// CHECK:STDOUT:     %.loc2_12: i32 = binding_pattern a, @LessEq.%a
+// CHECK:STDOUT:     %.loc2_20: i32 = binding_pattern b, @LessEq.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_14.1: type = value_of_initializer %int.make_type_32.loc2_14 [template = i32]
 // CHECK:STDOUT:     %.loc2_14.2: type = converted %int.make_type_32.loc2_14, %.loc2_14.1 [template = i32]
-// CHECK:STDOUT:     %.loc2_12: i32 = binding_pattern a, @LessEq.%a
 // CHECK:STDOUT:     %int.make_type_32.loc2_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_22.1: type = value_of_initializer %int.make_type_32.loc2_22 [template = i32]
 // CHECK:STDOUT:     %.loc2_22.2: type = converted %int.make_type_32.loc2_22, %.loc2_22.1 [template = i32]
-// CHECK:STDOUT:     %.loc2_20: i32 = binding_pattern b, @LessEq.%b
 // CHECK:STDOUT:     %bool.make_type.loc2: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc2_30.1: type = value_of_initializer %bool.make_type.loc2 [template = bool]
 // CHECK:STDOUT:     %.loc2_30.2: type = converted %bool.make_type.loc2, %.loc2_30.1 [template = bool]
@@ -102,10 +103,11 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     %b.loc2_19.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
+// CHECK:STDOUT:     %.loc3_12: i32 = binding_pattern a, @Negate.%a
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc3_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_14.1: type = value_of_initializer %int.make_type_32.loc3_14 [template = i32]
 // CHECK:STDOUT:     %.loc3_14.2: type = converted %int.make_type_32.loc3_14, %.loc3_14.1 [template = i32]
-// CHECK:STDOUT:     %.loc3_12: i32 = binding_pattern a, @Negate.%a
 // CHECK:STDOUT:     %int.make_type_32.loc3_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_22.1: type = value_of_initializer %int.make_type_32.loc3_22 [template = i32]
 // CHECK:STDOUT:     %.loc3_22.2: type = converted %int.make_type_32.loc3_22, %.loc3_22.1 [template = i32]
@@ -113,27 +115,29 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc3_11.3
 // CHECK:STDOUT:     %a.loc3_11.3: i32 = param a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
-// CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
+// CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {} {}
+// CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
 // CHECK:STDOUT:     %.loc8_11: %True = binding_pattern true_, @F.%true_
-// CHECK:STDOUT:     %False.ref: type = name_ref False, %False.decl [template = constants.%False]
 // CHECK:STDOUT:     %.loc8_25: %False = binding_pattern false_, @F.%false_
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
+// CHECK:STDOUT:     %False.ref: type = name_ref False, %False.decl [template = constants.%False]
 // CHECK:STDOUT:     @F.%true_: %True = bind_name true_, %true_.loc8_6.3
 // CHECK:STDOUT:     %true_.loc8_6.3: %True = param true_
 // CHECK:STDOUT:     @F.%false_: %False = bind_name false_, %false_.loc8_19.3
 // CHECK:STDOUT:     %false_.loc8_19.3: %False = param false_
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
+// CHECK:STDOUT:     %.loc16_17: i32 = binding_pattern a, @RuntimeCall.%a
+// CHECK:STDOUT:     %.loc16_25: i32 = binding_pattern b, @RuntimeCall.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc16_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_19.1: type = value_of_initializer %int.make_type_32.loc16_19 [template = i32]
 // CHECK:STDOUT:     %.loc16_19.2: type = converted %int.make_type_32.loc16_19, %.loc16_19.1 [template = i32]
-// CHECK:STDOUT:     %.loc16_17: i32 = binding_pattern a, @RuntimeCall.%a
 // CHECK:STDOUT:     %int.make_type_32.loc16_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_27.1: type = value_of_initializer %int.make_type_32.loc16_27 [template = i32]
 // CHECK:STDOUT:     %.loc16_27.2: type = converted %int.make_type_32.loc16_27, %.loc16_27.1 [template = i32]
-// CHECK:STDOUT:     %.loc16_25: i32 = binding_pattern b, @RuntimeCall.%b
 // CHECK:STDOUT:     %bool.make_type.loc16: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_35.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
 // CHECK:STDOUT:     %.loc16_35.2: type = converted %bool.make_type.loc16, %.loc16_35.1 [template = bool]

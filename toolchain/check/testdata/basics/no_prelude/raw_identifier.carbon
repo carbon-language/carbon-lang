@@ -43,9 +43,10 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
+// CHECK:STDOUT:     %.loc15_7: %.1 = binding_pattern n, @A.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_7: %.1 = binding_pattern n, @A.%n
 // CHECK:STDOUT:     %.loc15_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_17.2: type = converted %.loc15_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @A.%return: ref %.1 = var <return slot>
@@ -53,9 +54,10 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %n.loc15_6.3: %.1 = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
+// CHECK:STDOUT:     %.loc19_9: %.1 = binding_pattern n, @B.%n
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_12.2: type = converted %.loc19_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc19_9: %.1 = binding_pattern n, @B.%n
 // CHECK:STDOUT:     %.loc19_19.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_19.2: type = converted %.loc19_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @B.%return: ref %.1 = var <return slot>
@@ -63,9 +65,10 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %n.loc19_6.3: %.1 = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %.loc23_10: %.1 = binding_pattern r#if, @C.%if
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc23_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_13.2: type = converted %.loc23_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc23_10: %.1 = binding_pattern r#if, @C.%if
 // CHECK:STDOUT:     %.loc23_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_20.2: type = converted %.loc23_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @C.%return: ref %.1 = var <return slot>

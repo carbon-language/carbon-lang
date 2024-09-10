@@ -58,14 +58,14 @@ class Y {
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [template = constants.%A.1] {}
-// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
-// CHECK:STDOUT:   %A.decl.loc19: type = class_decl @A.1 [template = constants.%A.1] {}
-// CHECK:STDOUT:   %Y.decl: type = class_decl @Y [template = constants.%Y] {}
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [template = constants.%A.1] {} {}
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
+// CHECK:STDOUT:   %A.decl.loc19: type = class_decl @A.1 [template = constants.%A.1] {} {}
+// CHECK:STDOUT:   %Y.decl: type = class_decl @Y [template = constants.%Y] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [template = constants.%B.2] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [template = constants.%B.2] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.1
@@ -73,8 +73,8 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [template = constants.%A.2] {}
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [template = constants.%A.2] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
@@ -82,7 +82,7 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.2
@@ -97,7 +97,7 @@ class Y {
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Y

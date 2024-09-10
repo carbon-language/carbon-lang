@@ -82,10 +82,11 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %If1.decl: %If1.type = fn_decl @If1 [template = constants.%If1] {
+// CHECK:STDOUT:     %.loc11_9: bool = binding_pattern b, @If1.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11, %.loc11_11.1 [template = bool]
-// CHECK:STDOUT:     %.loc11_9: bool = binding_pattern b, @If1.%b
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %int.make_type_32.loc11, %.loc11_20.1 [template = i32]
@@ -94,10 +95,11 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %b.loc11_8.3: bool = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If2.decl: %If2.type = fn_decl @If2 [template = constants.%If2] {
+// CHECK:STDOUT:     %.loc22_9: bool = binding_pattern b, @If2.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc22: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc22_11.1: type = value_of_initializer %bool.make_type.loc22 [template = bool]
 // CHECK:STDOUT:     %.loc22_11.2: type = converted %bool.make_type.loc22, %.loc22_11.1 [template = bool]
-// CHECK:STDOUT:     %.loc22_9: bool = binding_pattern b, @If2.%b
 // CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
 // CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32.loc22, %.loc22_20.1 [template = i32]
@@ -106,10 +108,11 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %b.loc22_8.3: bool = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If3.decl: %If3.type = fn_decl @If3 [template = constants.%If3] {
+// CHECK:STDOUT:     %.loc33_9: bool = binding_pattern b, @If3.%b
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc33: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc33_11.1: type = value_of_initializer %bool.make_type.loc33 [template = bool]
 // CHECK:STDOUT:     %.loc33_11.2: type = converted %bool.make_type.loc33, %.loc33_11.1 [template = bool]
-// CHECK:STDOUT:     %.loc33_9: bool = binding_pattern b, @If3.%b
 // CHECK:STDOUT:     %int.make_type_32.loc33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_20.1: type = value_of_initializer %int.make_type_32.loc33 [template = i32]
 // CHECK:STDOUT:     %.loc33_20.2: type = converted %int.make_type_32.loc33, %.loc33_20.1 [template = i32]

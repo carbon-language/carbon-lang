@@ -47,11 +47,12 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
+// CHECK:STDOUT:     %.loc11_19: %.3 = binding_pattern p, @ConstMismatch.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_28: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_21.2: type = const_type %.1 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_29: type = ptr_type %.2 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc11_19: %.3 = binding_pattern p, @ConstMismatch.%p
 // CHECK:STDOUT:     %.loc11_43: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_44.1: type = converted %.loc11_43, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_44.2: type = ptr_type %.1 [template = constants.%.4]

@@ -49,15 +49,17 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .Int32 = %Int32.decl
 // CHECK:STDOUT:     .Add = %Add.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
 // CHECK:STDOUT:     @Int32.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [template = constants.%.2] {}
+// CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
+// CHECK:STDOUT:     %.loc7_26: %Self = binding_pattern other, %other.loc7_21.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.2: type = converted %Self.ref.loc7_15, %.loc7_15.1 [symbolic = @Op.%Self (constants.%Self)]
@@ -66,7 +68,6 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = @Op.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc7_26: @Op.%Self (%Self) = binding_pattern other, %other.loc7_21.2
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = @Op.%Self (constants.%Self)]
@@ -143,7 +144,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_32.loc6, %.loc6_6.1 [template = i32]
@@ -172,11 +173,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
+// CHECK:STDOUT:     %.loc7: i32 = binding_pattern other, %other.loc7_21.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self
 // CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_name self, %self.loc7_9.1
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
-// CHECK:STDOUT:     %.loc7: i32 = binding_pattern other, %other.loc7_21.2
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:     %other.loc7_21.2: i32 = bind_name other, %other.loc7_21.3

@@ -81,9 +81,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl
 // CHECK:STDOUT:     .f_ref = %f_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
-// CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [template = constants.%.2] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [template = constants.%.8] {}
+// CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [template = constants.%.8] {} {}
 // CHECK:STDOUT:   %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [template = constants.%.8]
 // CHECK:STDOUT:   %.loc20: type = struct_type {.f: %.8} [template = constants.%.13]
 // CHECK:STDOUT:   %f_ref.var: ref %.13 = var f_ref
@@ -102,7 +102,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc8: %.3 = assoc_entity element0, %T [template = constants.%.4]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
 // CHECK:STDOUT:   %.loc9: %.6 = assoc_entity element1, %F.decl [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -116,7 +116,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc16: %.9 = assoc_entity element0, %T [template = constants.%.10]
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %.loc17: %.11 = assoc_entity element1, %F.decl [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -212,20 +212,23 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
-// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc6: %.1 = binding_pattern e, @UseEmpty.%e
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:     @UseEmpty.%e: %.1 = bind_name e, %e.loc6_13.3
 // CHECK:STDOUT:     %e.loc6_13.3: %.1 = param e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [template = constants.%UseBasic] {
-// CHECK:STDOUT:     %Basic.ref.loc7: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc7: %.3 = binding_pattern e, @UseBasic.%e
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Basic.ref.loc7: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]
 // CHECK:STDOUT:     @UseBasic.%e: %.3 = bind_name e, %e.loc7_13.3
 // CHECK:STDOUT:     %e.loc7_13.3: %.3 = param e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [template = constants.%UseForwardDeclared] {
-// CHECK:STDOUT:     %ForwardDeclared.ref.loc8: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc8: %.4 = binding_pattern f, @UseForwardDeclared.%f
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %ForwardDeclared.ref.loc8: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%.4]
 // CHECK:STDOUT:     @UseForwardDeclared.%f: %.4 = bind_name f, %f.loc8_23.3
 // CHECK:STDOUT:     %f.loc8_23.3: %.4 = param f
 // CHECK:STDOUT:   }

@@ -45,7 +45,7 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT:     .Procedure = %Procedure.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Procedure.decl: %Procedure.type = fn_decl @Procedure [template = constants.%Procedure] {
+// CHECK:STDOUT:   %Procedure.decl: %Procedure.type = fn_decl @Procedure [template = constants.%Procedure] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32, %.loc11_19.1 [template = i32]

@@ -79,13 +79,14 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %Class.ref.loc16_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_7: %Class = binding_pattern c, @F.2.%c
+// CHECK:STDOUT:     %.loc16_17: %.1 = binding_pattern p, @F.2.%p
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Class.ref.loc16_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %Class.ref.loc16_19: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_24: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %.loc16_17: %.1 = binding_pattern p, @F.2.%p
 // CHECK:STDOUT:     @F.2.%c: %Class = bind_name c, %c.loc16_6.3
 // CHECK:STDOUT:     %c.loc16_6.3: %Class = param c
 // CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %p.loc16_16.3
@@ -94,14 +95,14 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {
 // CHECK:STDOUT:     %Class.ref.loc12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_24: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
 // CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
 // CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %Class.ref.loc13: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_13.1: %Class = param self
 // CHECK:STDOUT:     %self.loc13_13.3: %Class = bind_name self, %self.loc13_13.1

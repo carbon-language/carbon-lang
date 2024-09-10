@@ -55,9 +55,9 @@ interface Outer {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [template = constants.%.3] {}
+// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
+// CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [template = constants.%.3] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -71,8 +71,8 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [template = constants.%.4] {}
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [symbolic = constants.%F.2] {}
+// CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [template = constants.%.4] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [symbolic = constants.%F.2] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -90,7 +90,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Inner.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.3 (constants.%Self.3)]
-// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = %.2 (constants.%.6)] {}
+// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = %.2 (constants.%.6)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1

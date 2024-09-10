@@ -44,14 +44,15 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc14_7: i32 = binding_pattern n, @F.%n
+// CHECK:STDOUT:     %.loc14_15: <error> = binding_pattern a, @F.%a
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
 // CHECK:STDOUT:     %.loc14_9.2: type = converted %int.make_type_32.loc14_9, %.loc14_9.1 [template = i32]
-// CHECK:STDOUT:     %.loc14_7: i32 = binding_pattern n, @F.%n
 // CHECK:STDOUT:     %int.make_type_32.loc14_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %n.ref: i32 = name_ref n, @F.%n
 // CHECK:STDOUT:     %.loc14_25: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %.loc14_15: <error> = binding_pattern a, @F.%a
 // CHECK:STDOUT:     @F.%n: i32 = bind_name n, %n.loc14_6.3
 // CHECK:STDOUT:     %n.loc14_6.3: i32 = param n
 // CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc14_14.3

@@ -125,10 +125,11 @@ class C {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
+// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %.loc16: %Bad = binding_pattern b, @Use.%b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.3
 // CHECK:STDOUT:     %b.loc16_8.3: %Bad = param b
 // CHECK:STDOUT:   }
@@ -178,10 +179,11 @@ class C {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
+// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %.loc13: %Bad = binding_pattern b, @Use.%b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc13_8.3
 // CHECK:STDOUT:     %b.loc13_8.3: %Bad = param b
 // CHECK:STDOUT:   }
@@ -231,8 +233,8 @@ class C {
 // CHECK:STDOUT:     .MultipleAdaptsSameType = %MultipleAdaptsSameType.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %MultipleAdapts.decl: type = class_decl @MultipleAdapts [template = constants.%MultipleAdapts] {}
-// CHECK:STDOUT:   %MultipleAdaptsSameType.decl: type = class_decl @MultipleAdaptsSameType [template = constants.%MultipleAdaptsSameType] {}
+// CHECK:STDOUT:   %MultipleAdapts.decl: type = class_decl @MultipleAdapts [template = constants.%MultipleAdapts] {} {}
+// CHECK:STDOUT:   %MultipleAdaptsSameType.decl: type = class_decl @MultipleAdaptsSameType [template = constants.%MultipleAdaptsSameType] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdapts {
@@ -286,8 +288,8 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%.2] {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
@@ -309,7 +311,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%.3] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%.3] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

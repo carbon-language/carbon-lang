@@ -39,13 +39,14 @@ interface I {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc12_9: type = binding_pattern T 1, %T.loc12_8.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.3 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.loc12_8.3: type = param T
 // CHECK:STDOUT:   }
@@ -54,6 +55,7 @@ interface I {
 // CHECK:STDOUT:   %.loc13: %.5 = assoc_entity element1, %U [template = constants.%.6]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc16_9: type = binding_pattern T 1, %T.loc16_8.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T 1, %T.loc16_8.3 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.loc16_8.3: type = param T
 // CHECK:STDOUT:   }

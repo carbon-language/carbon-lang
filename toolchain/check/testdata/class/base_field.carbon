@@ -70,12 +70,13 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     .Access = %Access.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
+// CHECK:STDOUT:     %.loc24_12: %.8 = binding_pattern p, @Access.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc24_21: type = ptr_type %Derived [template = constants.%.8]
-// CHECK:STDOUT:     %.loc24_12: %.8 = binding_pattern p, @Access.%p
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc24_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc24_30.2: type = converted %int.make_type_32, %.loc24_30.1 [template = i32]

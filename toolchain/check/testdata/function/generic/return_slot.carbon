@@ -79,11 +79,12 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [template = constants.%Wrap.1] {
 // CHECK:STDOUT:     %.loc11: type = binding_pattern T 0, %T.loc11_12.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_12.2: type = bind_symbolic_name T 0, %T.loc11_12.3 [symbolic = @Wrap.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc11_12.3: type = param T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Wrap(file.%T.loc11_12.2: type) {
@@ -94,7 +95,7 @@ fn G() {
 // CHECK:STDOUT:   %Make: @Wrap.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.1) = fn_decl @Make [symbolic = %Make (constants.%Make.1)] {
+// CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.1) = fn_decl @Make [symbolic = %Make (constants.%Make.1)] {} {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc11_12.2 [symbolic = @Make.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var: ref @Make.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }

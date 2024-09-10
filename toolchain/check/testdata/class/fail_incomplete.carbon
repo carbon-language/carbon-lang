@@ -199,20 +199,21 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     .CallReturnIncomplete = %CallReturnIncomplete.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
-// CHECK:STDOUT:   %CallClassFunction.decl: %CallClassFunction.type = fn_decl @CallClassFunction [template = constants.%CallClassFunction] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %CallClassFunction.decl: %CallClassFunction.type = fn_decl @CallClassFunction [template = constants.%CallClassFunction] {} {}
 // CHECK:STDOUT:   %Class.ref.loc40: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %global_var.var: ref <error> = var global_var
 // CHECK:STDOUT:   %global_var: ref <error> = bind_name global_var, %global_var.var
-// CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [template = constants.%ConvertFromStruct] {
+// CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [template = constants.%ConvertFromStruct] {} {
 // CHECK:STDOUT:     %Class.ref.loc49: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ConvertFromStruct.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc51_7: %.4 = binding_pattern p, @G.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc51: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc51_14: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc51_7: %.4 = binding_pattern p, @G.%p
 // CHECK:STDOUT:     %int.make_type_32.loc51: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc51_20.1: type = value_of_initializer %int.make_type_32.loc51 [template = i32]
 // CHECK:STDOUT:     %.loc51_20.2: type = converted %int.make_type_32.loc51, %.loc51_20.1 [template = i32]
@@ -221,9 +222,10 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %p.loc51_6.3: %.4 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MemberAccess.decl: %MemberAccess.type = fn_decl @MemberAccess [template = constants.%MemberAccess] {
+// CHECK:STDOUT:     %.loc62_18: %.4 = binding_pattern p, @MemberAccess.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc62: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc62_25: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc62_18: %.4 = binding_pattern p, @MemberAccess.%p
 // CHECK:STDOUT:     %int.make_type_32.loc62: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc62_31.1: type = value_of_initializer %int.make_type_32.loc62 [template = i32]
 // CHECK:STDOUT:     %.loc62_31.2: type = converted %int.make_type_32.loc62, %.loc62_31.1 [template = i32]
@@ -232,39 +234,43 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %p.loc62_17.3: %.4 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [template = constants.%Copy] {
+// CHECK:STDOUT:     %.loc80_10: %.4 = binding_pattern p, @Copy.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc80_12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc80_17: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc80_10: %.4 = binding_pattern p, @Copy.%p
 // CHECK:STDOUT:     %Class.ref.loc80_23: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Copy.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:     @Copy.%p: %.4 = bind_name p, %p.loc80_9.3
 // CHECK:STDOUT:     %p.loc80_9.3: %.4 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {
+// CHECK:STDOUT:     %.loc84_9: %.4 = binding_pattern p, @Let.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc84: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc84_16: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc84_9: %.4 = binding_pattern p, @Let.%p
 // CHECK:STDOUT:     @Let.%p: %.4 = bind_name p, %p.loc84_8.3
 // CHECK:STDOUT:     %p.loc84_8.3: %.4 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakeIncomplete.decl: %TakeIncomplete.type = fn_decl @TakeIncomplete [template = constants.%TakeIncomplete] {
-// CHECK:STDOUT:     %Class.ref.loc95: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc95: %Class = binding_pattern c, @TakeIncomplete.%c
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Class.ref.loc95: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @TakeIncomplete.%c: %Class = bind_name c, %c.loc95_19.3
 // CHECK:STDOUT:     %c.loc95_19.3: %Class = param c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnIncomplete.decl: %ReturnIncomplete.type = fn_decl @ReturnIncomplete [template = constants.%ReturnIncomplete] {
+// CHECK:STDOUT:   %ReturnIncomplete.decl: %ReturnIncomplete.type = fn_decl @ReturnIncomplete [template = constants.%ReturnIncomplete] {} {
 // CHECK:STDOUT:     %Class.ref.loc97: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ReturnIncomplete.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTakeIncomplete.decl: %CallTakeIncomplete.type = fn_decl @CallTakeIncomplete [template = constants.%CallTakeIncomplete] {
+// CHECK:STDOUT:     %.loc99_24: %.4 = binding_pattern p, @CallTakeIncomplete.%p
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc99: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc99_31: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %.loc99_24: %.4 = binding_pattern p, @CallTakeIncomplete.%p
 // CHECK:STDOUT:     @CallTakeIncomplete.%p: %.4 = bind_name p, %p.loc99_23.3
 // CHECK:STDOUT:     %p.loc99_23.3: %.4 = param p
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CallReturnIncomplete.decl: %CallReturnIncomplete.type = fn_decl @CallReturnIncomplete [template = constants.%CallReturnIncomplete] {}
+// CHECK:STDOUT:   %CallReturnIncomplete.decl: %CallReturnIncomplete.type = fn_decl @CallReturnIncomplete [template = constants.%CallReturnIncomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;

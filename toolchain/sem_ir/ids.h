@@ -20,6 +20,7 @@ class File;
 class Inst;
 struct EntityName;
 struct Class;
+struct DeclInfo;
 struct Function;
 struct Generic;
 struct Specific;
@@ -244,6 +245,22 @@ struct FunctionId : public IdBase, public Printable<FunctionId> {
 };
 
 constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
+
+// The ID of a decl.
+struct DeclId : public IdBase, public Printable<DeclId> {
+  using ValueType = DeclInfo;
+
+  // An explicitly invalid ID.
+  static const DeclId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "decl";
+    IdBase::Print(out);
+  }
+};
+
+constexpr DeclId DeclId::Invalid = DeclId(InvalidIndex);
 
 // The ID of an IR within the set of all IRs being evaluated in the current
 // check execution.

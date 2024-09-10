@@ -57,6 +57,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %.loc11: type = binding_pattern T 0, %T.loc11_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.3 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc11_13.3: type = param T
 // CHECK:STDOUT:   }
@@ -74,12 +75,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = %MakeSelf (constants.%MakeSelf)] {
+// CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = %MakeSelf (constants.%MakeSelf)] {} {
 // CHECK:STDOUT:       %.loc14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @MakeSelf.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14 [symbolic = @MakeSelf.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %return.var.loc14: ref @MakeSelf.%Class (%Class.2) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = %MakeClass (constants.%MakeClass)] {
+// CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = %MakeClass (constants.%MakeClass)] {} {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc11_13.2 [symbolic = @MakeClass.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc15_26: init type = call %Class.ref(%T.ref) [symbolic = @MakeClass.%Class (constants.%Class.2)]
@@ -87,7 +88,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %.loc15_28.2: type = converted %.loc15_26, %.loc15_28.1 [symbolic = @MakeClass.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %return.var.loc15: ref @MakeClass.%Class (%Class.2) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {}
+// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2

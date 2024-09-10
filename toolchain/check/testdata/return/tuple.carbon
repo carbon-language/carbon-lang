@@ -49,7 +49,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc12_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc12_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_23.1: %.2 = tuple_literal (%int.make_type_32.loc12_15, %int.make_type_32.loc12_20)

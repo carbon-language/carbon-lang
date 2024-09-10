@@ -64,22 +64,23 @@ interface I {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.loc13: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.loc14_9: i32 = binding_pattern a, %a.loc14_8.2
+// CHECK:STDOUT:     %.loc14_17: i32 = binding_pattern b, %b.loc14_16.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32.loc14_11 [template = i32]
 // CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32.loc14_11, %.loc14_11.1 [template = i32]
-// CHECK:STDOUT:     %.loc14_9: i32 = binding_pattern a, %a.loc14_8.2
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
-// CHECK:STDOUT:     %.loc14_17: i32 = binding_pattern b, %b.loc14_16.2
 // CHECK:STDOUT:     %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_27.1: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %int.make_type_32.loc14_27, %.loc14_27.1 [template = i32]

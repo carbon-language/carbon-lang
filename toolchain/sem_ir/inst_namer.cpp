@@ -443,7 +443,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(ClassDecl inst): {
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".decl");
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        DeclInfo decl = sem_ir_.decls().Get(inst.decl_id);
+        CollectNamesInBlock(scope_id, decl.pattern_block_id);
+        CollectNamesInBlock(scope_id, decl.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -453,7 +455,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(FunctionDecl inst): {
         add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id,
                          ".decl");
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        DeclInfo decl = sem_ir_.decls().Get(inst.decl_id);
+        CollectNamesInBlock(scope_id, decl.pattern_block_id);
+        CollectNamesInBlock(scope_id, decl.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -471,7 +475,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        DeclInfo decl = sem_ir_.decls().Get(inst.decl_id);
+        CollectNamesInBlock(scope_id, decl.pattern_block_id);
+        CollectNamesInBlock(scope_id, decl.decl_block_id);
         break;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -500,7 +506,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(InterfaceDecl inst): {
         add_inst_name_id(sem_ir_.interfaces().Get(inst.interface_id).name_id,
                          ".decl");
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        DeclInfo decl = sem_ir_.decls().Get(inst.decl_id);
+        CollectNamesInBlock(scope_id, decl.pattern_block_id);
+        CollectNamesInBlock(scope_id, decl.decl_block_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {

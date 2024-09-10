@@ -40,7 +40,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
@@ -48,7 +48,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %NS.ref.loc16: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %a.ref.loc16: type = name_ref a, %a [template = constants.%C]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %NS.ref.loc18: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:     %a.ref.loc18: type = name_ref a, %a [template = constants.%C]
 // CHECK:STDOUT:     @F.%return: ref %C = var <return slot>

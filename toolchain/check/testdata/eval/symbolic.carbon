@@ -54,6 +54,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc12: type = binding_pattern T 0, @F.%T.loc12
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     @F.%T.loc12: type = bind_symbolic_name T 0, %T.loc12_6.3 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.loc12_6.3: type = param T
 // CHECK:STDOUT:   }

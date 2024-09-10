@@ -91,39 +91,41 @@ interface A(T: type) {}
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotGenericNoParams.decl: type = interface_decl @NotGenericNoParams [template = constants.%.1] {}
-// CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = interface_decl @NotGenericButParams [template = constants.%NotGenericButParams] {}
+// CHECK:STDOUT:   %NotGenericNoParams.decl: type = interface_decl @NotGenericNoParams [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = interface_decl @NotGenericButParams [template = constants.%NotGenericButParams] {} {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = interface_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
 // CHECK:STDOUT:     %.loc6: type = binding_pattern T 0, %T.loc6_28.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc6_28.2: type = bind_symbolic_name T 0, %T.loc6_28.3 [symbolic = @GenericAndParams.1.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc6_28.3: type = param T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %.loc8: type = binding_pattern T 0, %T.loc8_9.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T 0, %T.loc8_9.3 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:     %T.loc8_9.3: type = param T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
-// CHECK:STDOUT:   impl_decl @impl.1 {
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
+// CHECK:STDOUT:   impl_decl @impl.1 {} {
 // CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_31.1: type = value_of_initializer %.loc15_30 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc15_31.2: type = converted %.loc15_30, %.loc15_31.1 [template = constants.%.3]
-// CHECK:STDOUT:   impl_decl @impl.2 {
+// CHECK:STDOUT:   impl_decl @impl.2 {} {
 // CHECK:STDOUT:     %X.ref.loc15: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, %NotGenericButParams.decl [template = constants.%NotGenericButParams]
 // CHECK:STDOUT:     %.loc15_30: init type = call %NotGenericButParams.ref() [template = constants.%.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_29.1: type = value_of_initializer %.loc16_27 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc16_29.2: type = converted %.loc16_27, %.loc16_29.1 [template = constants.%.10]
-// CHECK:STDOUT:   impl_decl @impl.3 {
+// CHECK:STDOUT:   impl_decl @impl.3 {} {
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref.loc16: %GenericAndParams.type.1 = name_ref GenericAndParams, %GenericAndParams.decl [template = constants.%GenericAndParams.1]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc16_27: init type = call %GenericAndParams.ref.loc16(%X.ref.loc16_28) [template = constants.%.10]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.4 {
+// CHECK:STDOUT:   impl_decl @impl.4 {} {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref.loc17: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %X.ref.loc17_13: type = name_ref X, %X.decl [template = constants.%X]
@@ -132,7 +134,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18_34.1: type = value_of_initializer %.loc18_32 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc18_34.2: type = converted %.loc18_32, %.loc18_34.1 [template = constants.%.12]
-// CHECK:STDOUT:   impl_decl @impl.5 {
+// CHECK:STDOUT:   impl_decl @impl.5 {} {
 // CHECK:STDOUT:     %X.ref.loc18_6: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %X.ref.loc18_13: type = name_ref X, %X.decl [template = constants.%X]
@@ -248,9 +250,10 @@ interface A(T: type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%.5] {}
+// CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%.5] {} {}
 // CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = interface_decl @GenericAndParams.2 [template = constants.%GenericAndParams.2] {
 // CHECK:STDOUT:       %.loc10: type = binding_pattern U 1, %U.loc10_30.2
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.loc10_30.2: type = bind_symbolic_name U 1, %U.loc10_30.3 [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:       %U.loc10_30.3: type = param U
 // CHECK:STDOUT:     }
@@ -332,7 +335,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
+// CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {} {
 // CHECK:STDOUT:     %T.loc8_13.1: type = param T
 // CHECK:STDOUT:     %T.loc8_13.2: type = bind_name T, %T.loc8_13.1
 // CHECK:STDOUT:   }
@@ -362,6 +365,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %.loc7: type = binding_pattern T, %T.loc7_13.2
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc7_13.2: type = bind_name T, %T.loc7_13.3
 // CHECK:STDOUT:     %T.loc7_13.3: type = param T
 // CHECK:STDOUT:   }

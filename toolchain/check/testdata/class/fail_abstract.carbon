@@ -82,15 +82,16 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     .Access = %Access.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {}
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
 // CHECK:STDOUT:     %Derived.ref.loc21: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     @Make.%return: ref %Derived = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
-// CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc29_12: %Derived = binding_pattern d, @Access.%d
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32.loc29_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc29_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_35.1: %.14 = tuple_literal (%int.make_type_32.loc29_27, %int.make_type_32.loc29_32)
