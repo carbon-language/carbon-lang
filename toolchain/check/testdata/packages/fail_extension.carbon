@@ -27,14 +27,10 @@
 // CHECK:STDERR:
 library "[[@TEST_NAME]]";
 
-// --- fail_main_lib_impl.incorrect
+// --- fail_main_lib.impl.incorrect
 
-// CHECK:STDERR: fail_main_lib_impl.incorrect:[[@LINE+8]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: impl library "main_lib_impl";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_main_lib_impl.incorrect:[[@LINE+4]]:6: ERROR: Corresponding API for 'Main//main_lib_impl' not found.
-// CHECK:STDERR: impl library "main_lib_impl";
+// CHECK:STDERR: fail_main_lib.impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl library "main_lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
 impl library "[[@TEST_NAME]]";
@@ -63,14 +59,10 @@ impl package Package;
 // CHECK:STDERR:
 package Package library "[[@TEST_NAME]]";
 
-// --- fail_package_lib_impl.incorrect
+// --- fail_package_lib.impl.incorrect
 
-// CHECK:STDERR: fail_package_lib_impl.incorrect:[[@LINE+8]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: impl package Package library "package_lib_impl";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_package_lib_impl.incorrect:[[@LINE+4]]:6: ERROR: Corresponding API for 'Package//package_lib_impl' not found.
-// CHECK:STDERR: impl package Package library "package_lib_impl";
+// CHECK:STDERR: fail_package_lib.impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl package Package library "package_lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
 impl package Package library "[[@TEST_NAME]]";
@@ -158,7 +150,7 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib_impl.incorrect
+// CHECK:STDOUT: --- fail_main_lib.impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -176,9 +168,9 @@ impl package SwappedExt;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %default.import.loc6_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc6_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -250,7 +242,7 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_lib_impl.incorrect
+// CHECK:STDOUT: --- fail_package_lib.impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -268,8 +260,8 @@ impl package SwappedExt;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Package.import = import Package
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }

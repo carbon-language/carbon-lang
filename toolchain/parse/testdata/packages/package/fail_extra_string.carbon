@@ -8,17 +8,17 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_extra_string.carbon
 
-// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:36: ERROR: `package` declarations must end with a `;`.
-// CHECK:STDERR: package Foo library "extra_string" "baz";
-// CHECK:STDERR:                                    ^~~~~
-package Foo library "[[@TEST_NAME]]" "baz";
+// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: ERROR: `package` declarations must end with a `;`.
+// CHECK:STDERR: package Foo library "bar" "baz";
+// CHECK:STDERR:                           ^~~~~
+package Foo library "bar" "baz";
 
 // CHECK:STDOUT: - filename: fail_extra_string.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Foo'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"extra_string"'},
+// CHECK:STDOUT:         {kind: 'LibraryName', text: '"bar"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

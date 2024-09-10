@@ -32,33 +32,25 @@ import Api;
 // CHECK:STDERR:
 import Api;
 
-// CHECK:STDERR: fail_import.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Api//lib' not found.
-// CHECK:STDERR: import Api library "lib";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import Api library "lib";
+import Api library "api_lib";
 // CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
-// CHECK:STDERR: import Api library "lib";
+// CHECK:STDERR: import Api library "api_lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
-// CHECK:STDERR: import Api library "lib";
+// CHECK:STDERR: import Api library "api_lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
-import Api library "lib";
+import Api library "api_lib";
 
-// CHECK:STDERR: fail_import.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Main//lib' not found.
-// CHECK:STDERR: import library "lib";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import library "lib";
+import library "main_lib";
 // CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
-// CHECK:STDERR: import library "lib";
+// CHECK:STDERR: import library "main_lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
-// CHECK:STDERR: import library "lib";
+// CHECK:STDERR: import library "main_lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
-import library "lib";
+import library "main_lib";
 
 // --- fail_default_import.carbon
 
@@ -154,7 +146,7 @@ import library default;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Api: <namespace> = namespace file.%Api.import, [template] {
 // CHECK:STDOUT:     import Api//default
-// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:     import Api//api_lib
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -162,7 +154,6 @@ import library default;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Api = imports.%Api
-// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Api.import = import Api

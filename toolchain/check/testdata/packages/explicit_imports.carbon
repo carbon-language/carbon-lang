@@ -21,22 +21,14 @@ package Api library "[[@TEST_NAME]]";
 package Api library "[[@TEST_NAME]]";
 
 import library default;
-// CHECK:STDERR: same_package.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Api//lib' not found.
-// CHECK:STDERR: import library "lib";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import library "lib";
+import library "api_lib";
 
 // --- different_package.carbon
 
 package ApiOther;
 
 import Api;
-// CHECK:STDERR: different_package.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Api//lib' not found.
-// CHECK:STDERR: import Api library "lib";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import Api library "lib";
+import Api library "api_lib";
 
 // --- main_lib_api.carbon
 
@@ -44,10 +36,7 @@ library "[[@TEST_NAME]]";
 
 // --- main_import.carbon
 
-// CHECK:STDERR: main_import.carbon:[[@LINE+3]]:1: ERROR: Imported API 'Main//lib' not found.
-// CHECK:STDERR: import library "lib";
-// CHECK:STDERR: ^~~~~~
-import library "lib";
+import library "main_lib_api";
 
 // CHECK:STDOUT: --- api.carbon
 // CHECK:STDOUT:
@@ -111,7 +100,6 @@ import library "lib";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -132,7 +120,7 @@ import library "lib";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Api: <namespace> = namespace file.%Api.import, [template] {
 // CHECK:STDOUT:     import Api//default
-// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:     import Api//api_lib
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -185,7 +173,6 @@ import library "lib";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>

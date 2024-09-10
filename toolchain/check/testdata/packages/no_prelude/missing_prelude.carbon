@@ -26,11 +26,7 @@ package Core library "[[@TEST_NAME]]";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Core//empty' not found.
-// CHECK:STDERR: import Core library "empty";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import Core library "empty";
+import Core library "prelude_empty";
 
 // CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: ERROR: Name `Core.Int32` implicitly referenced here, but not found.
 // CHECK:STDERR: var n: i32;
@@ -48,16 +44,8 @@ fn Int32() -> {} { return {}; }
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: use_fake_int.carbon:[[@LINE+4]]:1: ERROR: Imported API 'Core//fake_int' not found.
-// CHECK:STDERR: import Core library "fake_int";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import Core library "fake_int";
+import Core library "prelude_fake_int";
 
-// CHECK:STDERR: use_fake_int.carbon:[[@LINE+4]]:13: ERROR: Name `Core.Int32` implicitly referenced here, but not found.
-// CHECK:STDERR: var n: {} = i32;
-// CHECK:STDERR:             ^~~
-// CHECK:STDERR:
 var n: {} = i32;
 
 // --- prelude_use_in_prelude.carbon
@@ -117,7 +105,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:     import Core//prelude_empty
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,12 +153,16 @@ var n: {} = i32;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude_fake_int
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude_fake_int, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -179,15 +171,18 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_9.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %n.var: ref %.1 = var n
 // CHECK:STDOUT:   %n: ref %.1 = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> %.1;
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   assign file.%n.var, <error>
+// CHECK:STDOUT:   %Int32.call: init %.1 = call constants.%Int32()
+// CHECK:STDOUT:   assign file.%n.var, %Int32.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
