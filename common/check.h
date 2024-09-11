@@ -15,6 +15,11 @@ namespace Carbon {
 //
 // For example:
 //   CARBON_CHECK(is_valid, "Data is not valid!");
+//
+// The condition must be parenthesized if it contains top-level commas, for
+// example in a template argument list:
+//   CARBON_CHECK((inst.IsOneOf<Call, TupleLiteral>()),
+//                "Unexpected inst {0}", inst);
 #define CARBON_CHECK(condition, ...) \
   (condition) ? (void)0              \
               : CARBON_INTERNAL_CHECK(condition __VA_OPT__(, ) __VA_ARGS__)
