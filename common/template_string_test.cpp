@@ -22,25 +22,41 @@ constexpr auto CStrFromTemplate() -> const char* {
   return S.c_str();
 }
 
+template <TemplateString>
+constexpr auto IsValidTemplateString(int) -> std::true_type { return {}; }
+
+struct AnythingAsTemplateArg {
+  template <typename T>
+  constexpr AnythingAsTemplateArg(T&&) {}
+};
+template <AnythingAsTemplateArg>
+constexpr auto IsValidTemplateString(...) -> std::false_type { return {}; }
+
 // Compile time tests with `static_assert`
 static_assert(FromTemplate<"test">().size() == 4,
               "Not usable in a `constexpr` context.");
 static_assert(__builtin_strlen(CStrFromTemplate<"test">()) == 4,
               "Not usable in a `constexpr` context.");
 
+// The string must not contain embedded nulls.
+static_assert(IsValidTemplateString<"test">(0));
+static_assert(!IsValidTemplateString<"te\0st">(0));
+
+// The string must be null-terminated.
+using FourChars = char[4];
+static_assert(IsValidTemplateString<FourChars{'t', 'e', 's', 0}>(0));
+static_assert(!IsValidTemplateString<FourChars{'t', 'e', 's', 't'}>(0));
+
 TEST(TemplateStringTest, Test) {
   EXPECT_THAT(FromTemplate<"test">(), StrEq("test"));
   EXPECT_THAT(CStrFromTemplate<"test">(), StrEq("test"));
 
-  // Uncomment to test compile-time rejection of embedded `0`-bytes.
-  // EXPECT_THAT(FromTemplate<"test\0test">(), StrEq("test"));
-
   constexpr char GoodStr[5] = {'t', 'e', 's', 't', '\0'};
+  static_assert(IsValidTemplateString<GoodStr>(0));
   EXPECT_THAT(FromTemplate<GoodStr>(), StrEq("test"));
 
-  // Uncomment to test compile-time rejection of missing null terminator.
-  // constexpr char BadStr[4] = {'t', 'e', 's', 't'};
-  // EXPECT_THAT(FromTemplate<BadStr>(), StrEq("test"));
+  constexpr char BadStr[4] = {'t', 'e', 's', 't'};
+  static_assert(!IsValidTemplateString<BadStr>(0));
 }
 
 }  // namespace
