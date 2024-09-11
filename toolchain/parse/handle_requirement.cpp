@@ -8,14 +8,11 @@
 
 namespace Carbon::Parse {
 
-static auto BeginRequirement(Context& context) -> void {
-  context.PushState(State::RequirementOperator);
-  context.PushStateForExpr(PrecedenceGroup::ForRequirements());
-}
-
 auto HandleRequirementBegin(Context& context) -> void {
   context.PopAndDiscardState();
-  BeginRequirement(context);
+  // TODO: Peek aheadd for `.designator = ...`, and give it special handling.
+  context.PushState(State::RequirementOperator);
+  context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
 auto HandleRequirementOperator(Context& context) -> void {
@@ -78,7 +75,7 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
   }
   if (auto token = context.ConsumeIf(Lex::TokenKind::And)) {
     context.AddNode(NodeKind::RequirementAnd, *token, /*has_error=*/false);
-    BeginRequirement(context);
+    context.PushState(State::RequirementBegin);
   }
 }
 
