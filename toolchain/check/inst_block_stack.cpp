@@ -11,7 +11,7 @@
 namespace Carbon::Check {
 
 auto InstBlockStack::Push(SemIR::InstBlockId id) -> void {
-  CARBON_VLOG() << name_ << " Push " << id_stack_.size() << "\n";
+  CARBON_VLOG("{0} Push {1}\n", name_, id_stack_.size());
   CARBON_CHECK(id_stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
   id_stack_.push_back(id);
@@ -50,7 +50,7 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
 
   insts_stack_.PopArray();
 
-  CARBON_VLOG() << name_ << " Pop " << id_stack_.size() << ": " << id << "\n";
+  CARBON_VLOG("{0} Pop {1}: {2}\n", name_, id_stack_.size(), id);
   return id.is_valid() ? id : SemIR::InstBlockId::Empty;
 }
 
@@ -58,7 +58,7 @@ auto InstBlockStack::PopAndDiscard() -> void {
   CARBON_CHECK(!empty()) << "no current block";
   id_stack_.pop_back();
   insts_stack_.PopArray();
-  CARBON_VLOG() << name_ << " PopAndDiscard " << id_stack_.size() << "\n";
+  CARBON_VLOG("{0} PopAndDiscard {1}\n", name_, id_stack_.size());
 }
 
 auto InstBlockStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,

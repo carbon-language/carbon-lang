@@ -101,8 +101,8 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
   auto const_id = TryEvalInst(*this, inst_id, inst);
   constant_values().Set(inst_id, const_id);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << inst << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
+    CARBON_VLOG("Constant: {0} -> {1}\n", inst,
+                constant_values().GetInstId(const_id));
 
     // If the constant value is symbolic, track that we need to substitute into
     // it.
@@ -150,7 +150,7 @@ auto Context::CheckCompatibleImportedNodeKind(
 auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG() << "AddInst: " << loc_id_and_inst.inst << "\n";
+  CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
   FinishInst(inst_id, loc_id_and_inst.inst);
   return inst_id;
 }
@@ -164,7 +164,7 @@ auto Context::AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
 auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG() << "AddPlaceholderInst: " << loc_id_and_inst.inst << "\n";
+  CARBON_VLOG("AddPlaceholderInst: {0}\n", loc_id_and_inst.inst);
   constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
@@ -179,22 +179,21 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
 auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
     -> SemIR::ConstantId {
   auto const_id = constants().GetOrAdd(inst, is_symbolic);
-  CARBON_VLOG() << "AddConstant: " << inst << "\n";
+  CARBON_VLOG("AddConstant: {0}\n", inst);
   return const_id;
 }
 
 auto Context::ReplaceLocIdAndInstBeforeConstantUse(
     SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
   sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << loc_id_and_inst.inst
-                << "\n";
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, loc_id_and_inst.inst);
   FinishInst(inst_id, loc_id_and_inst.inst);
 }
 
 auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
                                            SemIR::Inst inst) -> void {
   sem_ir().insts().Set(inst_id, inst);
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << inst << "\n";
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
   FinishInst(inst_id, inst);
 }
 
@@ -678,8 +677,8 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   }
 
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << insts().Get(select_id) << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
+    CARBON_VLOG("Constant: {0} -> {1}\n", insts().Get(select_id),
+                constant_values().GetInstId(const_id));
     constant_values().Set(select_id, const_id);
   }
 }
