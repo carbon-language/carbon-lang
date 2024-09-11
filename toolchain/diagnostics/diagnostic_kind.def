@@ -246,6 +246,7 @@ CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
+CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
@@ -279,6 +280,8 @@ CARBON_DIAGNOSTIC_KIND(CompileTimeFloatBitWidth)
 CARBON_DIAGNOSTIC_KIND(CompileTimeShiftOutOfRange)
 CARBON_DIAGNOSTIC_KIND(ContinueOutsideLoop)
 CARBON_DIAGNOSTIC_KIND(CopyOfUncopyableType)
+CARBON_DIAGNOSTIC_KIND(CoreNameNotFound)
+CARBON_DIAGNOSTIC_KIND(CoreNotFound)
 CARBON_DIAGNOSTIC_KIND(DerefOfNonPointer)
 CARBON_DIAGNOSTIC_KIND(DerefOfType)
 CARBON_DIAGNOSTIC_KIND(CompileTimeBindingInVarDecl)
@@ -347,6 +350,10 @@ CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
 CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryOnDefinition)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIsCurrentLibrary)
+
+// Access modifiers.
+CARBON_DIAGNOSTIC_KIND(ClassMemberDefinition)
+CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)

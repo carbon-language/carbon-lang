@@ -21,15 +21,15 @@ var a: A = {};
 // CHECK:STDOUT: @a = internal global {}
 // CHECK:STDOUT: @struct.loc13_12 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @struct.loc16_14 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @__global_init, ptr null }]
+// CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @ret_a(ptr sret({}) %return) !dbg !4 {
+// CHECK:STDOUT: define void @_Cret_a.Main(ptr sret({}) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @struct.loc13_12, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @__global_init() !dbg !8 {
+// CHECK:STDOUT: define void @_C__global_init.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @struct.loc16_14, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -50,10 +50,10 @@ var a: A = {};
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "class_with_fun.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "ret_a", linkageName: "ret_a", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "ret_a", linkageName: "_Cret_a.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", linkageName: "__global_init", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 1, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 0, scope: !8)

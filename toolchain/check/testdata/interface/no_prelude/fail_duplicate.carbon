@@ -10,7 +10,7 @@
 
 // --- fail_redefine_without_dependents.carbon
 
-library "redefine_without_dependents";
+library "[[@TEST_NAME]]";
 
 interface Interface { }
 
@@ -27,7 +27,7 @@ interface Interface {
 
 // --- fail_redefine_with_dependents.carbon
 
-library "redefine_with_dependents";
+library "[[@TEST_NAME]]";
 
 interface Interface {}
 
@@ -44,7 +44,7 @@ interface Interface {
 
 // --- fail_name_conflict_with_fn.carbon
 
-library "name_conflict";
+library "[[@TEST_NAME]]";
 
 fn Function();
 

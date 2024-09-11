@@ -14,25 +14,25 @@
 
 // --- decl.carbon
 
-library "decl";
+library "[[@TEST_NAME]]";
 
 class C;
 
 // --- extern_decl.carbon
 
-library "extern_decl";
+library "[[@TEST_NAME]]";
 
 extern class C;
 
 // --- extern_decl_copy.carbon
 
-library "extern_decl_copy";
+library "[[@TEST_NAME]]";
 
 extern class C;
 
 // --- def.carbon
 
-library "def";
+library "[[@TEST_NAME]]";
 
 class C {}
 
@@ -42,7 +42,7 @@ class C {}
 
 // --- fail_decl_fn_in_extern.carbon
 
-library "fail_decl_fn_in_extern";
+library "[[@TEST_NAME]]";
 
 extern class C;
 // CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: ERROR: Cannot declare a member of incomplete class `C`.
@@ -56,13 +56,13 @@ fn C.F();
 
 // --- extern_def.carbon
 
-library "fail_extern_def";
+library "[[@TEST_NAME]]";
 
 extern class C {}
 
 // --- fail_extern_decl_after_extern_decl.carbon
 
-library "fail_extern_decl_after_extern_decl";
+library "[[@TEST_NAME]]";
 
 extern class C;
 // CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
@@ -76,7 +76,7 @@ extern class C;
 
 // --- fail_decl_after_extern_decl.carbon
 
-library "fail_decl_after_extern_decl";
+library "[[@TEST_NAME]]";
 
 extern class C;
 // CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
@@ -90,7 +90,7 @@ class C;
 
 // --- fail_extern_member_class.carbon
 
-library "fail_extern_member_class";
+library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `class` declaration that is a member.
@@ -102,7 +102,7 @@ class C {
 
 // --- fail_def_after_extern_decl.carbon
 
-library "fail_def_after_extern_decl";
+library "[[@TEST_NAME]]";
 
 extern class C;
 // CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `class C` must match use of `extern`.
@@ -116,7 +116,7 @@ class C {}
 
 // --- fail_extern_decl_after_decl.carbon
 
-library "fail_extern_decl_after_decl";
+library "[[@TEST_NAME]]";
 
 class C;
 // CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
@@ -130,7 +130,7 @@ extern class C;
 
 // --- fail_import_extern_decl_then_decl.carbon
 
-library "import_extern_decl_then_decl";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
@@ -150,7 +150,7 @@ import library "decl";
 
 // --- fail_import_decl_then_extern_decl.carbon
 
-library "import_decl_then_extern_decl";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "decl";
@@ -170,7 +170,7 @@ import library "extern_decl";
 
 // --- fail_import_extern_decl_then_def.carbon
 
-library "import_extern_decl_then_def";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
@@ -190,7 +190,7 @@ import library "def";
 
 // --- fail_import_ownership_conflict.carbon
 
-library "fail_import_ownership_conflict";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+26]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
@@ -224,7 +224,7 @@ import library "def";
 
 // --- fail_todo_import_extern_decl_copy.carbon
 
-library "import_extern_decl_copy";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
@@ -244,7 +244,7 @@ import library "extern_decl_copy";
 
 // --- fail_extern_decl_after_import_extern_decl.carbon
 
-library "extern_decl_after_import_extern_decl";
+library "[[@TEST_NAME]]";
 
 import library "extern_decl";
 
@@ -262,7 +262,7 @@ extern class C;
 
 // --- fail_decl_after_import_extern_decl.carbon
 
-library "decl_after_import_extern_decl";
+library "[[@TEST_NAME]]";
 
 import library "decl";
 
@@ -280,7 +280,7 @@ extern class C;
 
 // --- fail_def_after_import_extern_decl.carbon
 
-library "def_after_import_extern_decl";
+library "[[@TEST_NAME]]";
 
 import library "def";
 
@@ -298,7 +298,7 @@ extern class C;
 
 // --- fail_extern_decl_after_import_def.carbon
 
-library "extern_decl_after_import_def";
+library "[[@TEST_NAME]]";
 
 import library "def";
 

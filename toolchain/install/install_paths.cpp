@@ -7,9 +7,11 @@
 #include <memory>
 
 #include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
@@ -74,6 +76,45 @@ auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
   InstallPaths paths(install_prefix);
   paths.CheckMarkerFile();
   return paths;
+}
+
+auto InstallPaths::ReadPreludeManifest() const
+    -> ErrorOr<llvm::SmallVector<std::string>> {
+  // This is structured to avoid a vector copy on success.
+  ErrorOr<llvm::SmallVector<std::string>> result =
+      llvm::SmallVector<std::string>();
+
+  llvm::SmallString<256> manifest;
+  llvm::sys::path::append(manifest, llvm::sys::path::Style::posix,
+                          core_package(), "prelude_manifest.txt");
+
+  auto fs = llvm::vfs::getRealFileSystem();
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+      fs->getBufferForFile(manifest);
+  if (!file) {
+    result = ErrorBuilder() << "Loading prelude manifest `" << manifest
+                            << "`: " << file.getError().message();
+    return result;
+  }
+
+  // The manifest should have one file per line.
+  llvm::StringRef buffer = file.get()->getBuffer();
+  while (true) {
+    auto [token, remainder] = llvm::getToken(buffer, "\n");
+    if (token.empty()) {
+      break;
+    }
+    llvm::SmallString<256> path;
+    llvm::sys::path::append(path, llvm::sys::path::Style::posix, core_package(),
+                            token);
+    result->push_back(path.str().str());
+    buffer = remainder;
+  }
+
+  if (result->empty()) {
+    result = ErrorBuilder() << "Prelude manifest `" << manifest << "` is empty";
+  }
+  return result;
 }
 
 auto InstallPaths::SetError(llvm::Twine message) -> void {

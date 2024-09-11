@@ -15,7 +15,7 @@ Hides `{{` from jekyll's liquid parsing. Note endraw at the bottom.
 
 A typical BUILD target will look like:
 
-```
+```starlark
 load("rules.bzl", "file_test")
 
 file_test(
@@ -35,7 +35,7 @@ file_test(
 
 A typical implementation will look like:
 
-```
+```cpp
 #include "my_library.h"
 
 #include "testing/file_test/file_test_base.h"
@@ -80,6 +80,21 @@ The main test file and any split-files must have a `fail_` prefix if and only if
 they have an associated error. An exception is that the main test file may omit
 `fail_` when it contains split-files that have a `fail_` prefix.
 
+## Content replacement
+
+Some keywords can be inserted for content:
+
+-   ```
+    [[@TEST_NAME]]
+    ```
+
+    Replaces with the test name, which is the filename with the extension and
+    any `fail_` or `todo_` prefixes removed. For split files, this is based on
+    the split filename.
+
+The `[[@` string is reserved for future replacements, but `[[` is allowed in
+content (comment markers don't allow `[[`).
+
 ## Comment markers
 
 Settings in files are provided in comments, similar to `FileCheck` syntax.
@@ -106,7 +121,9 @@ Supported comment markers are:
     check line refers to any line in the test, all STDOUT check lines are placed
     at the end of the file instead of immediately after AUTOUPDATE.
 
--   `// ARGS: <arguments>`
+-   ```
+    // ARGS: <arguments>
+    ```
 
     Provides a space-separated list of arguments, which will be passed to
     RunWithFiles as test_args. These are intended for use by the command as
@@ -131,7 +148,9 @@ Supported comment markers are:
     ARGS can be specified at most once. If not provided, the FileTestBase child
     is responsible for providing default arguments.
 
--   `// SET-CHECK-SUBSET`
+-   ```
+    // SET-CHECK-SUBSET
+    ```
 
     By default, all lines of output must have a CHECK match. Adding this as a
     option sets it so that non-matching lines are ignored. All provided
@@ -139,7 +158,9 @@ Supported comment markers are:
 
     SET-CHECK-SUBSET can be specified at most once.
 
--   `// --- <filename>`
+-   ```
+    // --- <filename>
+    ```
 
     By default, all file content is provided to the test as a single file in
     test_files. Using this marker allows the file to be split into multiple

@@ -25,29 +25,29 @@ fn While() {
 // CHECK:STDOUT: ; ModuleID = 'while.carbon'
 // CHECK:STDOUT: source_filename = "while.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @Cond()
+// CHECK:STDOUT: declare i1 @_CCond.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @F()
+// CHECK:STDOUT: declare void @_CF.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @G()
+// CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @H()
+// CHECK:STDOUT: declare void @_CH.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @While() !dbg !4 {
+// CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @F(), !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main(), !dbg !7
 // CHECK:STDOUT:   br label %while.cond, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %while.body, %entry
-// CHECK:STDOUT:   %Cond.call = call i1 @Cond(), !dbg !9
+// CHECK:STDOUT:   %Cond.call = call i1 @_CCond.Main(), !dbg !9
 // CHECK:STDOUT:   br i1 %Cond.call, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @G(), !dbg !10
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !10
 // CHECK:STDOUT:   br label %while.cond, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @H(), !dbg !12
+// CHECK:STDOUT:   call void @_CH.Main(), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,7 +58,7 @@ fn While() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "while.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "While", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "_CWhile.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)

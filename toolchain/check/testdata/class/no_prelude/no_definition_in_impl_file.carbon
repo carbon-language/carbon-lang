@@ -10,13 +10,13 @@
 
 // --- decl_in_api_definition_in_impl.carbon
 
-library "decl_in_api_definition_in_impl";
+library "[[@TEST_NAME]]";
 
 class A;
 
 // --- decl_in_api_definition_in_impl.impl.carbon
 
-impl library "decl_in_api_definition_in_impl";
+impl library "[[@TEST_NAME]]";
 
 class A;
 
@@ -24,33 +24,33 @@ class A {}
 
 // --- use_decl_in_api.carbon
 
-library "use_decl_in_api";
+library "[[@TEST_NAME]]";
 
 // --- use_decl_in_api.impl.carbon
 
-impl library "use_decl_in_api";
+impl library "[[@TEST_NAME]]";
 
 import library "decl_in_api_definition_in_impl";
 
 // --- decl_only_in_api.carbon
 
-library "decl_only_in_api";
+library "[[@TEST_NAME]]";
 
 class B;
 
 // --- decl_only_in_api.impl.carbon
 
-impl library "decl_only_in_api";
+impl library "[[@TEST_NAME]]";
 
 // --- decl_in_api_decl_in_impl.carbon
 
-library "decl_in_api_decl_in_impl";
+library "[[@TEST_NAME]]";
 
 class C;
 
 // --- fail_decl_in_api_decl_in_impl.impl.carbon
 
-impl library "decl_in_api_decl_in_impl";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: No definition found for declaration in impl file
 // CHECK:STDERR: class C;
@@ -60,11 +60,11 @@ class C;
 
 // --- decl_only_in_impl.carbon
 
-library "decl_only_in_impl";
+library "[[@TEST_NAME]]";
 
 // --- fail_decl_only_in_impl.impl.carbon
 
-impl library "decl_only_in_impl";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: No definition found for declaration in impl file
 // CHECK:STDERR: class D;

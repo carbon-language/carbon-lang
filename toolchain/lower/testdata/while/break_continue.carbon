@@ -22,29 +22,29 @@ fn While() {
 // CHECK:STDOUT: ; ModuleID = 'break_continue.carbon'
 // CHECK:STDOUT: source_filename = "break_continue.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @A()
+// CHECK:STDOUT: declare i1 @_CA.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @B()
+// CHECK:STDOUT: declare i1 @_CB.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @C()
+// CHECK:STDOUT: declare i1 @_CC.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @While() !dbg !4 {
+// CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc18, %if.then.loc17
-// CHECK:STDOUT:   %A.call = call i1 @A(), !dbg !7
+// CHECK:STDOUT:   %A.call = call i1 @_CA.Main(), !dbg !7
 // CHECK:STDOUT:   br i1 %A.call, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %B.call = call i1 @B(), !dbg !9
+// CHECK:STDOUT:   %B.call = call i1 @_CB.Main(), !dbg !9
 // CHECK:STDOUT:   br i1 %B.call, label %if.then.loc17, label %if.else.loc17, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc17:                                    ; preds = %while.body
 // CHECK:STDOUT:   br label %while.cond, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc17:                                    ; preds = %while.body
-// CHECK:STDOUT:   %C.call = call i1 @C(), !dbg !12
+// CHECK:STDOUT:   %C.call = call i1 @_CC.Main(), !dbg !12
 // CHECK:STDOUT:   br i1 %C.call, label %if.then.loc18, label %if.else.loc18, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc18:                                    ; preds = %if.else.loc17
@@ -67,7 +67,7 @@ fn While() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "break_continue.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "While", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "_CWhile.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 10, scope: !4)

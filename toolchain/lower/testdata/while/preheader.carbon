@@ -31,34 +31,34 @@ fn While() {
 // CHECK:STDOUT: ; ModuleID = 'preheader.carbon'
 // CHECK:STDOUT: source_filename = "preheader.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @Cond()
+// CHECK:STDOUT: declare i1 @_CCond.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @F()
+// CHECK:STDOUT: declare void @_CF.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @G()
+// CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @While() !dbg !4 {
+// CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond.loc20:                                 ; preds = %entry, %while.body.loc20
-// CHECK:STDOUT:   %Cond.call.loc20 = call i1 @Cond(), !dbg !7
+// CHECK:STDOUT:   %Cond.call.loc20 = call i1 @_CCond.Main(), !dbg !7
 // CHECK:STDOUT:   br i1 %Cond.call.loc20, label %while.body.loc20, label %while.done.loc20, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body.loc20:                                 ; preds = %while.cond.loc20
-// CHECK:STDOUT:   call void @F(), !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
 // CHECK:STDOUT:   br label %while.cond.loc20, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done.loc20:                                 ; preds = %while.cond.loc20
-// CHECK:STDOUT:   %Cond.call.loc24 = call i1 @Cond(), !dbg !11
+// CHECK:STDOUT:   %Cond.call.loc24 = call i1 @_CCond.Main(), !dbg !11
 // CHECK:STDOUT:   br i1 %Cond.call.loc24, label %while.cond.loc25, label %if.else, !dbg !12
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond.loc25:                                 ; preds = %while.body.loc25, %while.done.loc20
-// CHECK:STDOUT:   %Cond.call.loc25 = call i1 @Cond(), !dbg !13
+// CHECK:STDOUT:   %Cond.call.loc25 = call i1 @_CCond.Main(), !dbg !13
 // CHECK:STDOUT:   br i1 %Cond.call.loc25, label %while.body.loc25, label %while.done.loc25, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body.loc25:                                 ; preds = %while.cond.loc25
-// CHECK:STDOUT:   call void @G(), !dbg !15
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !15
 // CHECK:STDOUT:   br label %while.cond.loc25, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done.loc25:                                 ; preds = %while.cond.loc25
@@ -78,7 +78,7 @@ fn While() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "preheader.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "While", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "_CWhile.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 20, column: 10, scope: !4)

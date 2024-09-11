@@ -10,13 +10,13 @@
 
 // --- extern_library.carbon
 
-library "extern_library";
+library "[[@TEST_NAME]]";
 
 extern library "extern_library_owner" fn F();
 
 // --- extern_library_owner.carbon
 
-library "extern_library_owner";
+library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
@@ -24,7 +24,7 @@ extern fn F();
 
 // --- fail_extern_library_nonowner.carbon
 
-library "extern_library_nonowner";
+library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
@@ -42,7 +42,7 @@ extern fn F();
 
 // --- fail_extern_library_nonextern.carbon
 
-library "extern_library_nonextern";
+library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
@@ -60,11 +60,11 @@ fn F();
 
 // --- fail_extern_library_redecl.carbon
 
-library "fail_extern_library_redecl";
+library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+10]]:1: ERROR: Declaration in library "fail_extern_library_redecl" doesn't match `extern library` declaration.
+// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+10]]:1: ERROR: Declaration in library "extern_library_redecl" doesn't match `extern library` declaration.
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE-5]]:1: In import.
@@ -78,13 +78,13 @@ extern library "extern_library_owner" fn F();
 
 // --- extern_library_copy.carbon
 
-library "extern_library_copy";
+library "[[@TEST_NAME]]";
 
 extern library "extern_library_owner" fn F();
 
 // --- fail_extern_library_collision.carbon
 
-library "extern_library_collision";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_library_collision.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "extern_library";
@@ -104,13 +104,13 @@ import library "extern_library_copy";
 
 // --- extern_library_mismatch.carbon
 
-library "extern_library_mismatch";
+library "[[@TEST_NAME]]";
 
 extern library "extern_library_owner" fn F();
 
 // --- fail_extern_library_mismatch_owner.carbon
 
-library "extern_library_mismatch_owner";
+library "[[@TEST_NAME]]";
 
 import library "extern_library_mismatch"
 
@@ -122,7 +122,7 @@ extern fn F();
 
 // --- fail_extern_self_library.carbon
 
-library "extern_self_library";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_self_library.carbon:[[@LINE+4]]:1: ERROR: `extern library` cannot specify the current library.
 // CHECK:STDERR: extern library "extern_self_library" fn F();
@@ -132,13 +132,13 @@ extern library "extern_self_library" fn F();
 
 // --- extern_of_import.carbon
 
-library "extern_of_import";
+library "[[@TEST_NAME]]";
 
 fn F();
 
 // --- fail_extern_of_import_redecl.carbon
 
-library "extern_of_import_redecl";
+library "[[@TEST_NAME]]";
 
 import library "extern_of_import";
 

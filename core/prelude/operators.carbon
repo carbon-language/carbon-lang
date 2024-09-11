@@ -5,5 +5,6 @@
 package Core library "prelude/operators";
 
 export import library "prelude/operators/arithmetic";
+export import library "prelude/operators/as";
 export import library "prelude/operators/bitwise";
 export import library "prelude/operators/comparison";

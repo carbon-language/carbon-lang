@@ -10,7 +10,7 @@
 
 // --- fail_adapt_with_base.carbon
 
-library "fail_adapt_with_base";
+library "[[@TEST_NAME]]";
 
 base class Base {}
 
@@ -28,7 +28,7 @@ class AdaptWithBase {
 
 // --- fail_adapt_with_fields.carbon
 
-library "fail_adapt_with_fields";
+library "[[@TEST_NAME]]";
 
 class AdaptWithField {
   // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: ERROR: Adapter cannot have fields.
@@ -58,7 +58,7 @@ class AdaptWithFields {
 
 // --- fail_adapt_with_base_and_fields.carbon
 
-library "fail_adapt_with_base_and_fields";
+library "[[@TEST_NAME]]";
 
 base class Base {}
 
@@ -94,6 +94,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -152,6 +153,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -233,6 +235,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

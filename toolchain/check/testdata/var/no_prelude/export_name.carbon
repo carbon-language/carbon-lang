@@ -14,13 +14,13 @@
 
 // --- base.carbon
 
-library "base";
+library "[[@TEST_NAME]]";
 
 var v: ();
 
 // --- export.carbon
 
-library "export";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -32,7 +32,7 @@ export v;
 
 // --- fail_todo_use_export.carbon
 
-library "use_export";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_use_export.carbon:[[@LINE+9]]:1: In import.
 // CHECK:STDERR: import library "export";

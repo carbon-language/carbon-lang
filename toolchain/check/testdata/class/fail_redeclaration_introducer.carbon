@@ -10,7 +10,7 @@
 
 // --- fail_add_base.carbon
 
-library "fail_add_base";
+library "[[@TEST_NAME]]";
 
 class A;
 // CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -24,7 +24,7 @@ base class A {}
 
 // --- fail_add_abstract.carbon
 
-library "fail_add_abstract";
+library "[[@TEST_NAME]]";
 
 class B;
 // CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -38,7 +38,7 @@ abstract class B {}
 
 // --- fail_remove_base.carbon
 
-library "fail_remove_base";
+library "[[@TEST_NAME]]";
 
 base class C;
 // CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -52,7 +52,7 @@ class C {}
 
 // --- fail_base_to_abstract.carbon
 
-library "fail_base_to_abstract";
+library "[[@TEST_NAME]]";
 
 base class D;
 // CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -66,7 +66,7 @@ abstract class D {}
 
 // --- fail_remove_abstract.carbon
 
-library "fail_remove_abstract";
+library "[[@TEST_NAME]]";
 
 abstract class E;
 // CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -80,7 +80,7 @@ class E {}
 
 // --- fail_abstract_to_base.carbon
 
-library "fail_abstract_to_base";
+library "[[@TEST_NAME]]";
 
 abstract class F;
 // CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -104,6 +104,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -138,6 +139,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -172,6 +174,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -206,6 +209,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -240,6 +244,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -274,6 +279,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

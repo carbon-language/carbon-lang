@@ -19,7 +19,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @tuple.loc11_39 = internal constant { i32, i32 } { i32 12, i32 24 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F(ptr sret({ i32, i32 }) %return) !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc11_38.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc11_38.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
@@ -31,7 +31,7 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %t.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc14_17.1.temp = alloca { i32, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @F(ptr %.loc14_17.1.temp), !dbg !11
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_17.1.temp), !dbg !11
 // CHECK:STDOUT:   %.loc14_19.1.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_17.1.temp, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc14_19.2 = load i32, ptr %.loc14_19.1.tuple.index, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc14_19.2, ptr %t.var, align 4, !dbg !12
@@ -50,7 +50,7 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "return_value_access.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 11, column: 31, scope: !4)

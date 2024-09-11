@@ -18,7 +18,7 @@ class C {
 
 fn F() -> i32 {
   // TODO: This should produce a more useful error message.
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface I in type C that does not implement that interface.
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `I` in type `C` that does not implement that interface.
   // CHECK:STDERR:   return C.F();
   // CHECK:STDERR:          ^~~
   return C.F();
@@ -57,6 +57,7 @@ impl C as I {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

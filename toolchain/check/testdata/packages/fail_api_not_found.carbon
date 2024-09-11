@@ -18,18 +18,18 @@ impl package Foo;
 
 // --- fail_no_api_lib.impl.carbon
 
-// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+4]]:6: ERROR: Corresponding API for 'Foo//Bar' not found.
-// CHECK:STDERR: impl package Foo library "Bar";
+// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+4]]:6: ERROR: Corresponding API for 'Foo//no_api_lib' not found.
+// CHECK:STDERR: impl package Foo library "no_api_lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-impl package Foo library "Bar";
+impl package Foo library "[[@TEST_NAME]]";
 
 // --- fail_no_api_main_lib.impl.carbon
 
-// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Main//Bar' not found.
-// CHECK:STDERR: impl library "Bar";
+// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Main//no_api_main_lib' not found.
+// CHECK:STDERR: impl library "no_api_main_lib";
 // CHECK:STDERR:      ^~~~~~~
-impl library "Bar";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- fail_no_api.impl.carbon
 // CHECK:STDOUT:
@@ -39,6 +39,7 @@ impl library "Bar";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -62,6 +63,7 @@ impl library "Bar";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -85,6 +87,7 @@ impl library "Bar";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

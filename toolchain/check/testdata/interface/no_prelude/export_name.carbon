@@ -14,13 +14,13 @@
 
 // --- base.carbon
 
-library "base";
+library "[[@TEST_NAME]]";
 
 interface I {}
 
 // --- export.carbon
 
-library "export";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -32,7 +32,7 @@ export I;
 
 // --- use_export.carbon
 
-library "use_export";
+library "[[@TEST_NAME]]";
 
 import library "export";
 

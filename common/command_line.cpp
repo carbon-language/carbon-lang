@@ -927,9 +927,13 @@ auto Parser::ParseArg(const Arg& arg, bool short_spelling,
     return ParseFlag(arg, value);
   }
 
-  auto name =
-      llvm::formatv(short_spelling ? "'-{0}' (short for '--{1}')" : "'--{1}'",
-                    arg.info.short_name, arg.info.name);
+  std::string name;
+  if (short_spelling) {
+    name = llvm::formatv("'-{0}' (short for '--{1}')", arg.info.short_name,
+                         arg.info.name);
+  } else {
+    name = llvm::formatv("'--{0}'", arg.info.name);
+  }
 
   if (!value) {
     // We can't have a positional argument without a value, so we know this is

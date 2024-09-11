@@ -11,7 +11,7 @@
 namespace Carbon::Check {
 
 // Deduces the generic arguments to use in a call to a generic.
-auto DeduceGenericCallArguments(Context& context, Parse::NodeId node_id,
+auto DeduceGenericCallArguments(Context& context, SemIR::LocId loc_id,
                                 SemIR::GenericId generic_id,
                                 SemIR::SpecificId enclosing_specific_id,
                                 SemIR::InstBlockId implicit_params_id,

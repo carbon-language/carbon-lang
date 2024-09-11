@@ -21,7 +21,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @tuple.3.loc16_4.4 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_12.tuple.index = extractvalue { i32 } %b, 0, !dbg !7
 // CHECK:STDOUT:   %.loc12_17.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
@@ -37,10 +37,10 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() !dbg !12 {
+// CHECK:STDOUT: define void @_CMain.Main() !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_4.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
-// CHECK:STDOUT:   call void @F(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.3.loc16_4.4), !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.3.loc16_4.4), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,7 +54,7 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "tuple_param_with_return_slot.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "F", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 11, scope: !4)
@@ -62,6 +62,6 @@ fn Main() {
 // CHECK:STDOUT: !9 = !DILocation(line: 12, column: 21, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Main", linkageName: "Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 16, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 15, column: 1, scope: !12)

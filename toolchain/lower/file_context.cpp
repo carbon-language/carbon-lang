@@ -11,6 +11,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/lower/mangler.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
@@ -233,22 +234,15 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   // Compute the return type to use for the LLVM function. If the initializing
   // representation doesn't produce a value, set the return type to void.
+  // TODO: For the `Run` entry point, remap return type to i32 if it doesn't
+  // return a value.
   llvm::Type* function_return_type =
       return_info.init_repr.kind == SemIR::InitRepr::ByCopy
           ? return_type
           : llvm::Type::getVoidTy(llvm_context());
 
-  std::string mangled_name;
-  if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
-    // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
-    mangled_name = "main";
-  } else {
-    // TODO: Decide on a name mangling scheme.
-    auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
-    CARBON_CHECK(name) << "Unexpected special name for function: "
-                       << function.name_id;
-    mangled_name = *name;
-  }
+  Mangler m(*this);
+  std::string mangled_name = m.Mangle(function_id);
 
   llvm::FunctionType* function_type = llvm::FunctionType::get(
       function_return_type, param_types, /*isVarArg=*/false);
