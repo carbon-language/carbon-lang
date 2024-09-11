@@ -9,8 +9,8 @@
 
 namespace Carbon {
 
-// Represent a compile-time string in a form suitable for non-type template
-// arguments.
+// Represents a compile-time string in a form suitable for use as a non-type
+// template argument.
 //
 // These arguments are required to be a "structural type", and so we copy the
 // string contents into a public array of `char`s. For details, see:
@@ -35,7 +35,7 @@ template <int N>
 struct TemplateString {
   // Constructs the template string from a string literal.
   //
-  // Intentionally implicit conversion from string literals for use as a
+  // Intentionally allows implicit conversion from string literals for use as a
   // non-type template parameter.
   //
   // The closest we can get to explicitly accepting a string literal is to
@@ -47,7 +47,7 @@ struct TemplateString {
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr TemplateString(const char (&str)[N + 1]) __attribute__((
       enable_if(__builtin_strlen(str) == N,
-                "character array is not nul-terminated valid C-string"))) {
+                "character array is not null-terminated valid C string"))) {
     // Rely on Clang's constexpr `__builtin_memcpy` to minimize compile time
     // overhead copying the string contents around.
     __builtin_memcpy(storage_, str, N + 1);
@@ -61,7 +61,7 @@ struct TemplateString {
     return llvm::StringRef(storage_, N);
   }
 
-  // Accesses the string data directly as a compile-time C-string.
+  // Accesses the string data directly as a compile-time C string.
   constexpr auto c_str() const -> const char* { return storage_; }
 
   // Note that this must be public for the type to be structural and available
