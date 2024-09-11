@@ -369,7 +369,7 @@ Carbon focused talks from the community:
 
 ### 2024
 
--   [The Carbon Language: Road to 0.1](https://ndctechtown.com/agenda/the-carbon-language-road-to-01-0sqv/0526yb03a59),
+-   [The Carbon Language: Road to 0.1](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1),
     NDC {TechTown}
 -   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://cppnorth.ca/speaker-chandler-carruth.html),
     CppNorth
