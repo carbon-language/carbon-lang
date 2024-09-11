@@ -8,10 +8,14 @@
 
 namespace Carbon::Parse {
 
-auto HandleRequirementBegin(Context& context) -> void {
-  context.PopAndDiscardState();
+static auto BeginRequirement(Context& context) -> void {
   context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
+}
+
+auto HandleRequirementBegin(Context& context) -> void {
+  context.PopAndDiscardState();
+  BeginRequirement(context);
 }
 
 auto HandleRequirementOperator(Context& context) -> void {
