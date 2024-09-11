@@ -323,6 +323,15 @@ auto HandleExprLoop(Context& context) -> void {
         state.state = State::ExprLoopForShortCircuitOperatorAsOr;
         break;
 
+      // `where` also needs a virtual parse tree node, and parses its right
+      // argument in a mode where it can handle requirement operators like
+      // `impls` and `=`.
+      case Lex::TokenKind::Where:
+        context.AddNode(NodeKind::WhereOperand, state.token, state.has_error);
+        context.PushState(state, State::WhereFinish);
+        context.PushState(State::RequirementBegin);
+        return;
+
       default:
         state.state = State::ExprLoopForInfixOperator;
         break;

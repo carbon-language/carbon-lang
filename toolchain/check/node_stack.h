@@ -621,6 +621,9 @@ class NodeStack {
         case Parse::NodeKind::PrivateModifier:
         case Parse::NodeKind::ProtectedModifier:
         case Parse::NodeKind::RealLiteral:
+        case Parse::NodeKind::RequirementEqual:
+        case Parse::NodeKind::RequirementEqualEqual:
+        case Parse::NodeKind::RequirementImpls:
         case Parse::NodeKind::ReturnStatement:
         case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfTypeNameExpr:
@@ -641,6 +644,8 @@ class NodeStack {
         case Parse::NodeKind::UnsignedIntTypeLiteral:
         case Parse::NodeKind::VariableDecl:
         case Parse::NodeKind::VirtualModifier:
+        case Parse::NodeKind::WhereExpr:
+        case Parse::NodeKind::WhereOperand:
         case Parse::NodeKind::WhileStatement:
           return Id::Kind::Invalid;
       }

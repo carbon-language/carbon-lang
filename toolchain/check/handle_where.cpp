@@ -17,4 +17,27 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
   return context.TODO(node_id, "HandleDesignatorExpr");
 }
 
+auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
+  return context.TODO(node_id, "HandleWhereOperand");
+}
+
+auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleRequirementEqual");
+}
+
+auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleRequirementEqualEqual");
+}
+
+auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleRequirementImpls");
+}
+
+auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
+  return context.TODO(node_id, "HandleWhereExpr");
+}
+
 }  // namespace Carbon::Check

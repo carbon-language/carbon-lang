@@ -17,7 +17,7 @@
 //
 // The comments before each state describe the portion of the grammar that the
 // state is implementing, by giving an example of each kind of token sequence
-// that this state handles. In this example, `...` indicates a sequence of
+// that this state handles. In these examples, `...` indicates a sequence of
 // tokens handled by some other state, and `???` indicates a sequence of invalid
 // tokens. A trailing `??? ;` indicates an attempt to skip to the end of the
 // declaration, which may or may not actually find a `;` token.
@@ -613,6 +613,46 @@ CARBON_PARSE_STATE(IfExprFinishElse)
 //       ^
 //   (state done)
 CARBON_PARSE_STATE(IfExprFinish)
+
+// Handles the beginning of a requirement expression after a `where` operator in
+// an expression.
+// TODO: Also a `require` declaration?
+//
+// expr where ...
+//           ^
+//   1. Expr
+//   2. RequirementOperator
+CARBON_PARSE_STATE(RequirementBegin)
+
+// Handles a requirement operator in a `where` expression.
+//
+// expr where expr impls ...
+//                 ^~~~
+// expr where expr = ...
+//                 ^
+// expr where expr == ...
+//                 ^~
+//   1. Expr
+//   2. RequirementOperatorFinish
+CARBON_PARSE_STATE(RequirementOperator)
+
+// Finishes a requirement operator in a `where` expression.
+//
+// expr where expr impls expr
+//                           ^
+// expr where expr = expr
+//                       ^
+// expr where expr == expr
+//                        ^
+//   (state done)
+CARBON_PARSE_STATE(RequirementOperatorFinish)
+
+// Finishes an `where` expression.
+//
+// expr where requirement
+//                       ^
+//   (state done)
+CARBON_PARSE_STATE(WhereFinish)
 
 // Handles the `;` for an expression statement, which is different from most
 // keyword statements.
