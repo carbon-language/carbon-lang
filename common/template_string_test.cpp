@@ -53,7 +53,7 @@ static_assert(__builtin_strlen(CStrFromTemplate<"test">()) == 4,
 
 // The string must not contain embedded nulls.
 static_assert(IsValidTemplateString<"test">(0));
-static_assert(!IsValidTemplateString<"te\0st">(0));
+static_assert(!IsValidTemplateString<"test\0test">(0));
 
 // The string must be null-terminated.
 using FourChars = char[4];
