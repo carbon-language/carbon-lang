@@ -10,7 +10,7 @@
 
 // --- explicit.carbon
 
-library "explicit";
+library "[[@TEST_NAME]]";
 
 fn Function(T:! type, x: T) -> T {
   return x;
@@ -32,7 +32,7 @@ fn CallSpecific(x: C) -> C {
 
 // --- deduced.carbon
 
-library "deduced";
+library "[[@TEST_NAME]]";
 
 fn Function[T:! type](x: T) -> T {
   return x;
