@@ -10,6 +10,7 @@ namespace Carbon::Parse {
 
 auto HandleRequirementBegin(Context& context) -> void {
   context.PopAndDiscardState();
+  // TODO: Peek ahead for `.designator = ...`, and give it special handling.
   context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
@@ -69,7 +70,13 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
                      << token_kind;
       return;
   }
-  // TODO: Handle `and` token.
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+  if (auto token = context.ConsumeIf(Lex::TokenKind::And)) {
+    context.AddNode(NodeKind::RequirementAnd, *token, /*has_error=*/false);
+    context.PushState(State::RequirementBegin);
+  }
 }
 
 auto HandleWhereFinish(Context& context) -> void {
