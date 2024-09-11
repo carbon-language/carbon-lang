@@ -22,15 +22,28 @@ constexpr auto CStrFromTemplate() -> const char* {
   return S.c_str();
 }
 
-template <TemplateString>
-constexpr auto IsValidTemplateString(int) -> std::true_type { return {}; }
+// An overload that will be active when it is passed a valid `TemplateString`.
+// Returns a true type to allow detection of a valid `TemplateString` argument.
+template <TemplateString /*Unused*/>
+constexpr auto IsValidTemplateString(int /*unused*/) -> std::true_type {
+  return {};
+}
 
+// A struct that can be used as a template parameter for any template argument.
 struct AnythingAsTemplateArg {
+  // An implicit constructor that can accept any argument and discards it.
   template <typename T>
-  constexpr AnythingAsTemplateArg(T&&) {}
+  // NOLINTNEXTLINE(google-explicit-constructor,bugprone-forwarding-reference-overload)
+  constexpr AnythingAsTemplateArg(T&& /*unused*/) {}
 };
-template <AnythingAsTemplateArg>
-constexpr auto IsValidTemplateString(...) -> std::false_type { return {}; }
+
+// An overload that will be active for any template argument. Returns a false
+// type and is used to detect when a template argument cannot correctly match a
+// `TemplateString`.
+template <AnythingAsTemplateArg /*Unused*/>
+constexpr auto IsValidTemplateString(...) -> std::false_type {
+  return {};
+}
 
 // Compile time tests with `static_assert`
 static_assert(FromTemplate<"test">().size() == 4,
