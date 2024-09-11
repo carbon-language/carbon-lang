@@ -150,22 +150,16 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Run0.ref.loc23: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
 // CHECK:STDOUT:   %.loc23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Run0.call.loc23: init %.1 = call %Run0.ref.loc23(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run0.ref.loc31: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
 // CHECK:STDOUT:   %.loc31_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc31_11: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Run0.call.loc31: init %.1 = call %Run0.ref.loc31(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run1.ref.loc40: %Run1.type = name_ref Run1, file.%Run1.decl [template = constants.%Run1]
-// CHECK:STDOUT:   %Run1.call.loc40: init %.1 = call %Run1.ref.loc40(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run1.ref.loc48: %Run1.type = name_ref Run1, file.%Run1.decl [template = constants.%Run1]
 // CHECK:STDOUT:   %.loc48_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc48_11: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Run1.call.loc48: init %.1 = call %Run1.ref.loc48(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run2.ref.loc57: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %Run2.call.loc57: init %.1 = call %Run2.ref.loc57(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run2.ref.loc64: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
 // CHECK:STDOUT:   %.loc64: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %Run2.call.loc64: init %.1 = call %Run2.ref.loc64(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

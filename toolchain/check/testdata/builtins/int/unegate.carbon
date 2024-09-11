@@ -359,10 +359,9 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %JustRight.ref: %JustRight.type = name_ref JustRight, %JustRight.decl [template = constants.%JustRight]
 // CHECK:STDOUT:   %.loc44_31: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc44_34: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %int.unegate: init i32 = call %JustRight.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %.loc44_16.1: type = value_of_initializer %int.make_type_32.loc44 [template = i32]
 // CHECK:STDOUT:   %.loc44_16.2: type = converted %int.make_type_32.loc44, %.loc44_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc44_36: type = array_type %int.unegate, i32 [template = <error>]
+// CHECK:STDOUT:   %.loc44_36: type = array_type <error>, i32 [template = <error>]
 // CHECK:STDOUT:   %bad_call.var: ref <error> = var bad_call
 // CHECK:STDOUT:   %bad_call: ref <error> = bind_name bad_call, %bad_call.var
 // CHECK:STDOUT:   %RuntimeCallTooFew.decl: %RuntimeCallTooFew.type = fn_decl @RuntimeCallTooFew [template = constants.%RuntimeCallTooFew] {
@@ -431,10 +430,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %TooFew.call: init i32 = call %TooFew.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc54_19.1: i32 = value_of_initializer %TooFew.call [template = <error>]
-// CHECK:STDOUT:   %.loc54_19.2: i32 = converted %TooFew.call, %.loc54_19.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc54_19.2
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a: i32, %b: i32, %c: i32) -> i32 {
@@ -443,10 +439,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: i32 = name_ref c, %c
-// CHECK:STDOUT:   %TooMany.call: init i32 = call %TooMany.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc65_26.1: i32 = value_of_initializer %TooMany.call [template = <error>]
-// CHECK:STDOUT:   %.loc65_26.2: i32 = converted %TooMany.call, %.loc65_26.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc65_26.2
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: i32, %b: i32) -> bool {
@@ -454,10 +447,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [template = constants.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %BadReturnType.call: init bool = call %BadReturnType.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc75_29.1: bool = value_of_initializer %BadReturnType.call [template = <error>]
-// CHECK:STDOUT:   %.loc75_29.2: bool = converted %BadReturnType.call, %.loc75_29.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc75_29.2
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- overflow.carbon

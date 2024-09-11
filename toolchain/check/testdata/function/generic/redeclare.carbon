@@ -34,10 +34,10 @@ fn F(T:! type, U:! type) -> T*;
 fn F(T:! type, U:! type) -> U* {
   // TODO: This diagnostic is not very good. We should check the arity in a
   // function call before, or as part of, deduction.
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: ERROR: Cannot deduce value for generic parameter `T`.
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-15]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-15]]:1: Calling function declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -58,10 +58,10 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> T* {
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: ERROR: Cannot deduce value for generic parameter `T`.
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: Calling function declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -82,10 +82,10 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> U* {
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: ERROR: Cannot deduce value for generic parameter `T`.
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: Calling function declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F(T);

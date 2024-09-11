@@ -351,10 +351,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %TooFew.call: init f64 = call %TooFew.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc29_19.1: f64 = value_of_initializer %TooFew.call [template = <error>]
-// CHECK:STDOUT:   %.loc29_19.2: f64 = converted %TooFew.call, %.loc29_19.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc29_19.2
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a: f64, %b: f64, %c: f64) -> f64 {
@@ -363,10 +360,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: f64 = name_ref c, %c
-// CHECK:STDOUT:   %TooMany.call: init f64 = call %TooMany.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc40_26.1: f64 = value_of_initializer %TooMany.call [template = <error>]
-// CHECK:STDOUT:   %.loc40_26.2: f64 = converted %TooMany.call, %.loc40_26.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc40_26.2
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: f64, %b: f64) -> bool {
@@ -374,9 +368,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [template = constants.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %BadReturnType.call: init bool = call %BadReturnType.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc50_29.1: bool = value_of_initializer %BadReturnType.call [template = <error>]
-// CHECK:STDOUT:   %.loc50_29.2: bool = converted %BadReturnType.call, %.loc50_29.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc50_29.2
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

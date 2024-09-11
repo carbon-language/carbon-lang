@@ -350,10 +350,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %.loc43_31: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc43_34: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc43_37: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %int.uadd: init i32 = call %JustRight.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %.loc43_16.1: type = value_of_initializer %int.make_type_32.loc43 [template = i32]
 // CHECK:STDOUT:   %.loc43_16.2: type = converted %int.make_type_32.loc43, %.loc43_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc43_39: type = array_type %int.uadd, i32 [template = <error>]
+// CHECK:STDOUT:   %.loc43_39: type = array_type <error>, i32 [template = <error>]
 // CHECK:STDOUT:   %bad_call.var: ref <error> = var bad_call
 // CHECK:STDOUT:   %bad_call: ref <error> = bind_name bad_call, %bad_call.var
 // CHECK:STDOUT:   %RuntimeCallTooFew.decl: %RuntimeCallTooFew.type = fn_decl @RuntimeCallTooFew [template = constants.%RuntimeCallTooFew] {

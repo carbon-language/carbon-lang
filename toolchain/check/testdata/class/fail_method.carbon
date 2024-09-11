@@ -129,7 +129,6 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc38: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc38: %Class = name_ref c, %c
-// CHECK:STDOUT:   %WithSelf.call.loc38: init %.1 = call %WithSelf.ref.loc38(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: %WithSelf.type = name_ref A, file.%A [template = constants.%WithSelf]
 // CHECK:STDOUT:   %WithSelf.call.loc46: init %.1 = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return

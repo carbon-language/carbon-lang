@@ -454,6 +454,12 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
+  // Adds a block with the given content, returning an ID to reference it.
+  // Returns Empty rather than creating a unique ID if the block is empty.
+  auto AddOrEmpty(llvm::ArrayRef<ElementType> content) -> InstBlockId {
+    return content.empty() ? InstBlockId::Empty : Add(content);
+  }
+
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
     BlockValueStore<InstBlockId>::SetContent(block_id, content);

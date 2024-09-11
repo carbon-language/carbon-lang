@@ -138,7 +138,7 @@ fn B() {
 // CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type(inst+10)}
 // CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: block5, type: type(inst+5)}
+// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: empty, type: type(inst+5)}
 // CHECK:STDOUT:     'inst+14':         {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
@@ -167,8 +167,7 @@ fn B() {
 // CHECK:STDOUT:       1:               inst+12
 // CHECK:STDOUT:       2:               inst+13
 // CHECK:STDOUT:       3:               inst+14
-// CHECK:STDOUT:     block5:          {}
-// CHECK:STDOUT:     block6:
+// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT:       2:               inst+3

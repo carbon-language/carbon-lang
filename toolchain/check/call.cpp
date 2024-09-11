@@ -9,11 +9,62 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+// Information about a callee in a checked call to an entity.
+struct CalleeInfo {
+  // Whether the call appears to be valid.
+  bool is_valid;
+  // The specific version of the callee to invoke.
+  SemIR::SpecificId specific_id;
+};
+
+static auto ResolveCalleeInCall(
+    Context& context, SemIR::LocId loc_id,
+    const SemIR::EntityWithParamsBase& entity,
+    llvm::StringLiteral entity_kind_for_diagnostic,
+    SemIR::GenericId entity_generic_id, SemIR::SpecificId enclosing_specific_id,
+    SemIR::InstId self_id,
+    llvm::ArrayRef<SemIR::InstId> arg_ids) -> CalleeInfo {
+  CalleeParamsInfo callee_info(entity);
+
+  // Check that the arity matches.
+  auto params = context.inst_blocks().GetOrEmpty(callee_info.param_refs_id);
+  if (arg_ids.size() != params.size()) {
+    CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
+                      "{0} argument(s) passed to {1} expecting "
+                      "{2} argument(s).",
+                      int, llvm::StringLiteral, int);
+    CARBON_DIAGNOSTIC(InCallToEntity, Note, "Calling {0} declared here.",
+                      llvm::StringLiteral);
+    context.emitter()
+        .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
+               entity_kind_for_diagnostic, params.size())
+        .Note(callee_info.callee_loc, InCallToEntity,
+              entity_kind_for_diagnostic)
+        .Emit();
+    return {.is_valid = false, .specific_id = SemIR::SpecificId::Invalid};
+  }
+
+
+  // Perform argument deduction.
+  auto specific_id = SemIR::SpecificId::Invalid;
+  if (entity_generic_id.is_valid()) {
+    specific_id = DeduceGenericCallArguments(
+        context, loc_id, entity_generic_id, enclosing_specific_id,
+        callee_info.implicit_param_refs_id, callee_info.param_refs_id, self_id,
+        arg_ids);
+    if (!specific_id.is_valid()) {
+      return {.is_valid = false, .specific_id = SemIR::SpecificId::Invalid};
+    }
+  }
+  return {.is_valid = true, .specific_id = specific_id};
+}
 
 // Performs a call where the callee is the name of a generic class, such as
 // `Vector(i32)`.
@@ -22,51 +73,35 @@ static auto PerformCallToGenericClass(
     SemIR::SpecificId enclosing_specific_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   const auto& generic_class = context.classes().Get(class_id);
-  CalleeParamsInfo class_info(generic_class);
-
-  // Perform argument deduction.
-  auto specific_id = SemIR::SpecificId::Invalid;
-  if (generic_class.generic_id.is_valid()) {
-    specific_id = DeduceGenericCallArguments(
-        context, loc_id, generic_class.generic_id, enclosing_specific_id,
-        class_info.implicit_param_refs_id, class_info.param_refs_id,
-        /*self_id*/ SemIR::InstId::Invalid, arg_ids);
-    if (!specific_id.is_valid()) {
-      return SemIR::InstId::BuiltinError;
-    }
+  auto callee = ResolveCalleeInCall(
+      context, loc_id, generic_class, "generic class", generic_class.generic_id,
+      enclosing_specific_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids);
+  if (!callee.is_valid) {
+    return SemIR::InstId::BuiltinError;
   }
   return context.AddInst<SemIR::ClassType>(loc_id,
                                            {.type_id = SemIR::TypeId::TypeType,
                                             .class_id = class_id,
-                                            .specific_id = specific_id});
+                                            .specific_id = callee.specific_id});
 }
 
 // Performs a call where the callee is the name of a generic interface, such as
 // `AddWith(i32)`.
-// TODO: Refactor with PerformCallToGenericClass.
 static auto PerformCallToGenericInterface(
     Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
     SemIR::SpecificId enclosing_specific_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_id);
-  CalleeParamsInfo interface_info(context.interfaces().Get(interface_id));
-
-  // Perform argument deduction.
-  auto specific_id = SemIR::SpecificId::Invalid;
-  if (interface.generic_id.is_valid()) {
-    specific_id = DeduceGenericCallArguments(
-        context, loc_id, interface.generic_id, enclosing_specific_id,
-        interface_info.implicit_param_refs_id, interface_info.param_refs_id,
-        /*self_id*/ SemIR::InstId::Invalid, arg_ids);
-    if (!specific_id.is_valid()) {
-      return SemIR::InstId::BuiltinError;
-    }
+  auto callee = ResolveCalleeInCall(
+      context, loc_id, interface, "generic interface", interface.generic_id,
+      enclosing_specific_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids);
+  if (!callee.is_valid) {
+    return SemIR::InstId::BuiltinError;
   }
-
   return context.AddInst<SemIR::InterfaceType>(
       loc_id, {.type_id = SemIR::TypeId::TypeType,
                .interface_id = interface_id,
-               .specific_id = specific_id});
+               .specific_id = callee.specific_id});
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
@@ -103,15 +138,11 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
 
   // If the callee is a generic function, determine the generic argument values
   // for the call.
-  auto specific_id = SemIR::SpecificId::Invalid;
-  if (callable.generic_id.is_valid()) {
-    specific_id = DeduceGenericCallArguments(
-        context, loc_id, callable.generic_id, callee_function.specific_id,
-        callable.implicit_param_refs_id, callable.param_refs_id,
-        callee_function.self_id, arg_ids);
-    if (!specific_id.is_valid()) {
-      return SemIR::InstId::BuiltinError;
-    }
+  auto callee = ResolveCalleeInCall(
+      context, loc_id, callable, "function", callable.generic_id,
+      callee_function.specific_id, callee_function.self_id, arg_ids);
+  if (!callee.is_valid) {
+    return SemIR::InstId::BuiltinError;
   }
 
   // If there is a return slot, build storage for the result.
@@ -123,7 +154,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                             "Return type declared here.");
           builder.Note(callable.return_storage_id, IncompleteReturnTypeHere);
         });
-    return CheckFunctionReturnType(context, callee_id, callable, specific_id);
+    return CheckFunctionReturnType(context, callee_id, callable,
+                                   callee.specific_id);
   }();
   switch (return_info.init_repr.kind) {
     case SemIR::InitRepr::InPlace:
@@ -151,7 +183,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, loc_id, callee_function.self_id, arg_ids, return_storage_id,
-      CalleeParamsInfo(callable), specific_id);
+      CalleeParamsInfo(callable), callee.specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
                                             .callee_id = callee_id,

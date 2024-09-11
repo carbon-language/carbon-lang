@@ -1191,19 +1191,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       context.inst_blocks().GetOrEmpty(callee.implicit_param_refs_id);
   auto param_refs = context.inst_blocks().GetOrEmpty(callee.param_refs_id);
 
-  // If sizes mismatch, fail early.
-  if (arg_refs.size() != param_refs.size()) {
-    CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                      "{0} argument(s) passed to function expecting "
-                      "{1} argument(s).",
-                      int, int);
-    context.emitter()
-        .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
-               param_refs.size())
-        .Note(callee.callee_loc, InCallToFunction)
-        .Emit();
-    return SemIR::InstBlockId::Invalid;
-  }
+  // The caller should have ensured this callee has the right arity.
+  CARBON_CHECK(arg_refs.size() == param_refs.size());
 
   // Start building a block to hold the converted arguments.
   llvm::SmallVector<SemIR::InstId> args;
@@ -1274,7 +1263,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     args.push_back(return_storage_id);
   }
 
-  return context.inst_blocks().Add(args);
+  return context.inst_blocks().AddOrEmpty(args);
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
