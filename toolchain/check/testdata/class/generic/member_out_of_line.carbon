@@ -271,7 +271,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.2: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic]
-// CHECK:STDOUT:   %B.type: type = generic_class_type @B [template]
+// CHECK:STDOUT:   %B.type: type = generic_class_type @B, @A(%T) [template]
 // CHECK:STDOUT:   %B.1: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %B.2: type = class_type @B, @B(%T, %N) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @B(%T, %N) [symbolic]

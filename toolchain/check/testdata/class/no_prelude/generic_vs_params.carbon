@@ -27,13 +27,6 @@ var a: NotGenericNoParams = {};
 var b: NotGenericButParams() = {};
 var c: GenericAndParams(X) = {};
 var d: C(X).GenericNoParams = {};
-// CHECK:STDERR: params.carbon:[[@LINE+7]]:8: ERROR: Cannot deduce value for generic parameter `T`.
-// CHECK:STDERR: var e: C(X).GenericAndParams(X) = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: params.carbon:[[@LINE-12]]:3: While deducing parameters of generic declared here.
-// CHECK:STDERR:   class GenericAndParams(U:! type) {}
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 var e: C(X).GenericAndParams(X) = {};
 
 // --- fail_non_generic_implicit_params.carbon
@@ -79,7 +72,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %GenericNoParams.1: type = class_type @GenericNoParams [template]
 // CHECK:STDOUT:   %GenericNoParams.2: type = class_type @GenericNoParams, @GenericNoParams(%T) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.type.2: type = generic_class_type @GenericAndParams.2 [template]
+// CHECK:STDOUT:   %GenericAndParams.type.2: type = generic_class_type @GenericAndParams.2, @C(%T) [template]
 // CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %GenericAndParams.4: type = class_type @GenericAndParams.2, @GenericAndParams.2(%T, %U) [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
@@ -90,6 +83,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %struct.3: %GenericAndParams.5 = struct_value () [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %struct.4: %GenericNoParams.1 = struct_value () [template]
+// CHECK:STDOUT:   %GenericAndParams.6: type = class_type @GenericAndParams.2, @GenericAndParams.2(%T, %X) [symbolic]
+// CHECK:STDOUT:   %struct.5: %GenericAndParams.6 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,7 +120,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %b: ref %NotGenericButParams.2 = bind_name b, %b.var
 // CHECK:STDOUT:   %GenericAndParams.ref.loc17: %GenericAndParams.type.1 = name_ref GenericAndParams, %GenericAndParams.decl [template = constants.%GenericAndParams.1]
 // CHECK:STDOUT:   %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %GenericAndParams: type = class_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%GenericAndParams.5]
+// CHECK:STDOUT:   %GenericAndParams.loc17: type = class_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%GenericAndParams.5]
 // CHECK:STDOUT:   %c.var: ref %GenericAndParams.5 = var c
 // CHECK:STDOUT:   %c: ref %GenericAndParams.5 = bind_name c, %c.var
 // CHECK:STDOUT:   %C.ref.loc18: %C.type = name_ref C, %C.decl [template = constants.%C.1]
@@ -134,13 +129,14 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%GenericNoParams.1]
 // CHECK:STDOUT:   %d.var: ref %GenericNoParams.1 = var d
 // CHECK:STDOUT:   %d: ref %GenericNoParams.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %C.ref.loc26: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:   %X.ref.loc26_10: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %C.loc26: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
-// CHECK:STDOUT:   %GenericAndParams.ref.loc26: %GenericAndParams.type.2 = name_ref GenericAndParams, @C.%GenericAndParams.decl [template = constants.%GenericAndParams.3]
-// CHECK:STDOUT:   %X.ref.loc26_30: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %e.var: ref <error> = var e
-// CHECK:STDOUT:   %e: ref <error> = bind_name e, %e.var
+// CHECK:STDOUT:   %C.ref.loc19: %C.type = name_ref C, %C.decl [template = constants.%C.1]
+// CHECK:STDOUT:   %X.ref.loc19_10: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:   %C.loc19: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
+// CHECK:STDOUT:   %GenericAndParams.ref.loc19: %GenericAndParams.type.2 = name_ref GenericAndParams, @C.%GenericAndParams.decl [template = constants.%GenericAndParams.3]
+// CHECK:STDOUT:   %X.ref.loc19_30: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:   %GenericAndParams.loc19: type = class_type @GenericAndParams.2, @GenericAndParams.2(constants.%T, constants.%X) [symbolic = constants.%GenericAndParams.6]
+// CHECK:STDOUT:   %e.var: ref %GenericAndParams.6 = var e
+// CHECK:STDOUT:   %e: ref %GenericAndParams.6 = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGenericNoParams {
@@ -226,8 +222,10 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.1 = class_init (), file.%d.var [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc18_33: init %GenericNoParams.1 = converted %.loc18_32.1, %.loc18_32.2 [template = constants.%struct.4]
 // CHECK:STDOUT:   assign file.%d.var, %.loc18_33
-// CHECK:STDOUT:   %.loc26: %.1 = struct_literal ()
-// CHECK:STDOUT:   assign file.%e.var, <error>
+// CHECK:STDOUT:   %.loc19_36.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.6 = class_init (), file.%e.var [symbolic = constants.%struct.5]
+// CHECK:STDOUT:   %.loc19_37: init %GenericAndParams.6 = converted %.loc19_36.1, %.loc19_36.2 [symbolic = constants.%struct.5]
+// CHECK:STDOUT:   assign file.%e.var, %.loc19_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,6 +251,12 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %T => constants.%X
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%X) {
+// CHECK:STDOUT:   %U => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

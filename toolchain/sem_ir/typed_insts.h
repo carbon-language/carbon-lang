@@ -587,6 +587,7 @@ struct GenericClassType {
 
   TypeId type_id;
   ClassId class_id;
+  SpecificId enclosing_specific_id;
 };
 
 // The type of the name of a generic interface. The corresponding value is an
@@ -601,6 +602,7 @@ struct GenericInterfaceType {
 
   TypeId type_id;
   InterfaceId interface_id;
+  SpecificId enclosing_specific_id;
 };
 
 // An `impl` declaration.

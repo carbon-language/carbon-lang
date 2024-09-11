@@ -793,6 +793,14 @@ class FormatterImpl {
     }
   }
 
+  auto FormatInstRHS(GenericClassType inst) -> void {
+    if (inst.enclosing_specific_id.is_valid()) {
+      FormatArgs(inst.class_id, inst.enclosing_specific_id);
+    } else {
+      FormatArgs(inst.class_id);
+    }
+  }
+
   auto FormatInstRHS(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
     FormatTrailingBlock(inst.decl_block_id);
@@ -806,6 +814,14 @@ class FormatterImpl {
   auto FormatInstRHS(InterfaceType inst) -> void {
     if (inst.specific_id.is_valid()) {
       FormatArgs(inst.interface_id, inst.specific_id);
+    } else {
+      FormatArgs(inst.interface_id);
+    }
+  }
+
+  auto FormatInstRHS(GenericInterfaceType inst) -> void {
+    if (inst.enclosing_specific_id.is_valid()) {
+      FormatArgs(inst.interface_id, inst.enclosing_specific_id);
     } else {
       FormatArgs(inst.interface_id);
     }
