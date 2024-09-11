@@ -14,6 +14,11 @@ namespace Carbon::Internal {
 //
 // This is out-of-line and will arrange to stop the program, print any debugging
 // information and this string.
+//
+// This API uses `const char*` C string arguments rather than `llvm::StringRef`
+// because that lets the code size of calling it be smaller as it only needs to
+// materialize a single pointer argument. The runtime cost of re-computing the
+// size should be minimal.
 [[noreturn]] auto CheckFailImpl(const char* kind, const char* file, int line,
                                 const char* condition_str,
                                 llvm::StringRef extra_message) -> void;
@@ -33,7 +38,10 @@ template <TemplateString Kind, TemplateString File, int Line,
 [[noreturn, gnu::cold, clang::noinline, clang::preserve_most]] auto CheckFail(
     Ts&&... values) -> void {
   if constexpr (llvm::StringRef(FormatStr).empty()) {
-    // Skip the format string rendering if empty.
+    // Skip the format string rendering if empty. Note that we don't skip it
+    // even if there are no values as we want to have consistent handling of
+    // `{}`s in the format string. This case is about when there is no message
+    // at all, just the condition.
     CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
                   FormatStr.c_str());
   } else {
@@ -83,11 +91,11 @@ template <TemplateString Kind, TemplateString File, int Line,
       "FATAL", __FILE__, __LINE__, "" __VA_OPT__(, ) __VA_ARGS__)
 
 #ifdef NDEBUG
-// For optimized builds we have a dead check that we want to potentially "use"
-// arguments, but otherwise have the minimal overhead. We avoid forming
-// interesting format strings here so that we don't have to repeatedly
-// instantiate the `Check` function above. This format string would be an error
-// if actually used.
+// For `DCHECK` in optimized builds we have a dead check that we want to
+// potentially "use" arguments, but otherwise have the minimal overhead. We
+// avoid forming interesting format strings here so that we don't have to
+// repeatedly instantiate the `Check` function above. This format string would
+// be an error if actually used.
 #define CARBON_INTERNAL_DEAD_DCHECK(condition, ...) \
   CARBON_INTERNAL_DEAD_DCHECK_IMPL##__VA_OPT__(_FORMAT)(__VA_ARGS__)
 
