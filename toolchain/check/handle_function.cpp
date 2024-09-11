@@ -67,8 +67,9 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
 
 // Checks that the parameter lists specified in a function declaration are
 // valid for a function declaration, and numbers the parameters.
-static auto CheckFunctionSignature(
-    Context& context, const NameComponent& name_and_params) -> void {
+static auto CheckFunctionSignature(Context& context,
+                                   const NameComponent& name_and_params)
+    -> void {
   SemIR::RuntimeParamIndex next_index(0);
   for (auto param_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(name_and_params.implicit_params_id),

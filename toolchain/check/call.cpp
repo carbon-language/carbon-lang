@@ -24,13 +24,14 @@ struct CalleeInfo {
   SemIR::SpecificId specific_id;
 };
 
-static auto ResolveCalleeInCall(
-    Context& context, SemIR::LocId loc_id,
-    const SemIR::EntityWithParamsBase& entity,
-    llvm::StringLiteral entity_kind_for_diagnostic,
-    SemIR::GenericId entity_generic_id, SemIR::SpecificId enclosing_specific_id,
-    SemIR::InstId self_id,
-    llvm::ArrayRef<SemIR::InstId> arg_ids) -> CalleeInfo {
+static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
+                                const SemIR::EntityWithParamsBase& entity,
+                                llvm::StringLiteral entity_kind_for_diagnostic,
+                                SemIR::GenericId entity_generic_id,
+                                SemIR::SpecificId enclosing_specific_id,
+                                SemIR::InstId self_id,
+                                llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> CalleeInfo {
   CalleeParamsInfo callee_info(entity);
 
   // Check that the arity matches.
@@ -51,7 +52,6 @@ static auto ResolveCalleeInCall(
     return {.is_valid = false, .specific_id = SemIR::SpecificId::Invalid};
   }
 
-
   // Perform argument deduction.
   auto specific_id = SemIR::SpecificId::Invalid;
   if (entity_generic_id.is_valid()) {
@@ -68,10 +68,11 @@ static auto ResolveCalleeInCall(
 
 // Performs a call where the callee is the name of a generic class, such as
 // `Vector(i32)`.
-static auto PerformCallToGenericClass(
-    Context& context, SemIR::LocId loc_id, SemIR::ClassId class_id,
-    SemIR::SpecificId enclosing_specific_id,
-    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
+                                      SemIR::ClassId class_id,
+                                      SemIR::SpecificId enclosing_specific_id,
+                                      llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   const auto& generic_class = context.classes().Get(class_id);
   auto callee = ResolveCalleeInCall(
       context, loc_id, generic_class, "generic class", generic_class.generic_id,
