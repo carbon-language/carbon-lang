@@ -25,8 +25,8 @@ namespace Carbon::Internal {
                                 const char* condition_str,
                                 llvm::StringRef extra_message) -> void;
 
-// Prints a check failure, including rendering any user-provided message based
-// on its format string.
+// Prints a check failure, including rendering any user-provided message using
+// a format string.
 //
 // Most of the parameters are passed as compile-time template strings to avoid
 // runtime cost of parameter setup in optimized builds. Each of these are passed
