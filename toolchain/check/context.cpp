@@ -390,7 +390,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
                        class_info.adapt_id)) {
       parent_type_id = adapt_decl->adapted_type_id;
     } else {
-      CARBON_FATAL() << "Expected parent for parent access";
+      CARBON_FATAL("Expected parent for parent access");
     }
   }
 
