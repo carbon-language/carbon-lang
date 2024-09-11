@@ -77,8 +77,14 @@ sh_test(
 cc_library(
     name = "driver",
     srcs = [
+        "codegen_options.cpp",
+        "codegen_options.h",
+        "compile_subcommand.cpp",
+        "compile_subcommand.h",
         "driver.cpp",
         "driver_env.h",
+        "link_subcommand.cpp",
+        "link_subcommand.h",
     ],
     hdrs = ["driver.h"],
     data = [
