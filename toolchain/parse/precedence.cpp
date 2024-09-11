@@ -29,6 +29,8 @@ enum PrecedenceLevel : int8_t {
   // Type formation.
   TypePrefix,
   TypePostfix,
+  // `where` keyword.
+  Where,
   // Casts.
   As,
   // Logical.
@@ -60,9 +62,9 @@ struct OperatorPriorityTable {
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan(
         {Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
-        {Relational});
+        {Relational, Where});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan({As, LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({As, LogicalAnd, LogicalOr, Where}, {If});
     MarkHigherThan({If}, {Assignment});
     MarkHigherThan({Assignment, IncrementDecrement}, {Lowest});
 
@@ -194,6 +196,10 @@ auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
   return PrecedenceGroup(As);
 }
 
+auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
+  return PrecedenceGroup(Where);
+}
+
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
     -> std::optional<PrecedenceGroup> {
   switch (kind) {
@@ -288,6 +294,10 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     // Cast operator.
     case Lex::TokenKind::As:
       return Trailing{.level = As, .is_binary = true};
+
+    // Requirement operator.
+    case Lex::TokenKind::Where:
+      return Trailing{.level = Where, .is_binary = true};
 
     // Prefix-only operators.
     case Lex::TokenKind::Const:

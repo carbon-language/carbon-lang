@@ -10,7 +10,7 @@
 
 // --- fn.carbon
 
-package Example library "fn";
+package Example library "[[@TEST_NAME]]";
 
 fn NS();
 

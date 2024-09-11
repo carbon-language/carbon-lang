@@ -14,13 +14,13 @@
 
 // --- def.carbon
 
-package Test library "def";
+package Test library "[[@TEST_NAME]]";
 
 private class Def {}
 
 // --- forward_with_def.carbon
 
-package Test library "forward_with_def";
+package Test library "[[@TEST_NAME]]";
 
 private class ForwardWithDef;
 
@@ -28,7 +28,7 @@ class ForwardWithDef {}
 
 // --- forward.carbon
 
-package Test library "forward";
+package Test library "[[@TEST_NAME]]";
 
 private class Forward;
 
@@ -38,13 +38,13 @@ private class Forward;
 
 // --- def.impl.carbon
 
-impl package Test library "def";
+impl package Test library "[[@TEST_NAME]]";
 
 var c: Def = {};
 
 // --- fail_local_def.carbon
 
-package Test library "fail_local_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
@@ -56,7 +56,7 @@ var c: Def = {};
 
 // --- fail_other_def.carbon
 
-package Other library "fail_other_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
@@ -68,13 +68,13 @@ var c: Test.Def = {};
 
 // --- forward_with_def.impl.carbon
 
-impl package Test library "forward_with_def";
+impl package Test library "[[@TEST_NAME]]";
 
 var c: ForwardWithDef = {};
 
 // --- fail_local_forward_with_def.carbon
 
-package Test library "fail_local_forward_with_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
@@ -86,7 +86,7 @@ var c: ForwardWithDef = {};
 
 // --- fail_other_forward_with_def.carbon
 
-package Other library "fail_other_forward_with_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
@@ -98,7 +98,7 @@ var c: Test.ForwardWithDef = {};
 
 // --- forward.impl.carbon
 
-impl package Test library "forward";
+impl package Test library "[[@TEST_NAME]]";
 
 fn F(c: Forward*) {}
 
@@ -106,7 +106,7 @@ class Forward {}
 
 // --- fail_local_forward.carbon
 
-package Test library "fail_local_forward";
+package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
@@ -118,7 +118,7 @@ fn F(c: Forward*) {}
 
 // --- fail_other_forward.carbon
 
-package Other library "fail_other_forward";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
@@ -129,7 +129,7 @@ fn F(c: Test.Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon
 
-library "fail_private_on_redecl";
+library "[[@TEST_NAME]]";
 
 private class Redecl;
 

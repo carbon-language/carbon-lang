@@ -10,7 +10,7 @@
 
 // --- params.carbon
 
-library "params";
+library "[[@TEST_NAME]]";
 
 interface NotGenericNoParams {}
 interface NotGenericButParams() {}
@@ -30,7 +30,7 @@ impl X as C(X).GenericAndParams(X) {}
 
 // --- fail_non_generic_implicit_params.carbon
 
-library "non_generic_implicit_params";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: ERROR: Parameters of generic types must be constant.
 // CHECK:STDERR: interface A[T: type]() {}
@@ -40,7 +40,7 @@ interface A[T: type]() {}
 
 // --- fail_non_generic_params.carbon
 
-library "non_generic_params";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: ERROR: Parameters of generic types must be constant.
 // CHECK:STDERR: interface A(T: type) {}

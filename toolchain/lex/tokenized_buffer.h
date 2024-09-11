@@ -219,8 +219,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto size() const -> int { return token_infos_.size(); }
 
-  auto expected_parse_tree_size() const -> int {
-    return expected_parse_tree_size_;
+  // This is an upper bound on the number of output parse nodes in the absence
+  // of errors.
+  auto expected_max_parse_tree_size() const -> int {
+    return expected_max_parse_tree_size_;
   }
 
   auto source() const -> const SourceBuffer& { return *source_; }
@@ -456,9 +458,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   llvm::SmallVector<LineInfo> line_infos_;
 
-  // The number of parse tree nodes that we expect to be created for the tokens
-  // in this buffer.
-  int expected_parse_tree_size_ = 0;
+  // An upper bound on the number of parse tree nodes that we expect to be
+  // created for the tokens in this buffer.
+  int expected_max_parse_tree_size_ = 0;
 
   bool has_errors_ = false;
 

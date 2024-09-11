@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 
@@ -22,7 +22,7 @@ var x: () = F();
 
 // --- fail_redecl.carbon
 
-library "redecl";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
@@ -36,7 +36,7 @@ extern fn F();
 
 // --- fail_redecl_extern.carbon
 
-library "redecl_extern";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 // CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
@@ -50,7 +50,7 @@ fn F();
 
 // --- fail_member_extern.carbon
 
-library "member_extern";
+library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.

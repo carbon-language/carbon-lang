@@ -9,6 +9,7 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Testing {
@@ -21,121 +22,8 @@ class FileTestBaseTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
-           llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    llvm::ArrayRef<llvm::StringRef> args = test_args;
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override;
 
-    llvm::ListSeparator sep;
-    stdout << args.size() << " args: ";
-    for (auto arg : args) {
-      stdout << sep << "`" << arg << "`";
-    }
-    stdout << "\n";
-
-    auto filename = std::filesystem::path(test_name().str()).filename();
-    if (filename == "args.carbon") {
-      // 'args.carbon' has custom arguments, so don't do regular argument
-      // validation for it.
-      return {{.success = true}};
-    }
-
-    if (args.empty() || args.front() != "default_args") {
-      return ErrorBuilder() << "missing `default_args` argument";
-    }
-    args = args.drop_front();
-
-    for (auto arg : args) {
-      if (!fs.exists(arg)) {
-        return ErrorBuilder() << "Missing file: " << arg;
-      }
-    }
-
-    if (filename == "example.carbon") {
-      int delta_line = 10;
-      stdout << "something\n"
-             << "\n"
-             << "example.carbon:" << delta_line + 1 << ": Line delta\n"
-             << "example.carbon:" << delta_line << ": Negative line delta\n"
-             << "+*[]{}\n"
-             << "Foo baz\n";
-      return {{.success = true}};
-    } else if (filename == "fail_example.carbon") {
-      stderr << "Oops\n";
-      return {{.success = false}};
-    } else if (filename == "two_files.carbon" ||
-               filename == "not_split.carbon") {
-      for (auto arg : args) {
-        // Describe file contents to stdout to validate splitting.
-        auto file = fs.getBufferForFile(arg, /*FileSize=*/-1,
-                                        /*RequiresNullTerminator=*/false);
-        if (file.getError()) {
-          return Error(file.getError().message());
-        }
-        llvm::StringRef content = file.get()->getBuffer();
-        stdout << arg << ":1: starts with \"";
-        stdout.write_escaped(content.take_front(40));
-        stdout << "\", length " << content.count('\n') << " lines\n";
-      }
-      return {{.success = true}};
-    } else if (filename == "alternating_files.carbon") {
-      stdout << "unattached message 1\n"
-             << "a.carbon:2: message 2\n"
-             << "b.carbon:5: message 3\n"
-             << "a.carbon:2: message 4\n"
-             << "b.carbon:5: message 5\n"
-             << "unattached message 6\n";
-      stderr << "unattached message 1\n"
-             << "a.carbon:2: message 2\n"
-             << "b.carbon:5: message 3\n"
-             << "a.carbon:2: message 4\n"
-             << "b.carbon:5: message 5\n"
-             << "unattached message 6\n";
-      return {{.success = true}};
-    } else if (filename == "unattached_multi_file.carbon") {
-      stdout << "unattached message 1\n"
-             << "unattached message 2\n";
-      stderr << "unattached message 3\n"
-             << "unattached message 4\n";
-      return {{.success = true}};
-    } else if (filename == "file_only_re_one_file.carbon") {
-      stdout << "unattached message 1\n"
-             << "file: file_only_re_one_file.carbon\n"
-             << "line: 1\n"
-             << "unattached message 2\n";
-      return {{.success = true}};
-    } else if (filename == "file_only_re_multi_file.carbon") {
-      int msg_count = 0;
-      stdout << "unattached message " << ++msg_count << "\n"
-             << "file: a.carbon\n"
-             << "unattached message " << ++msg_count << "\n"
-             << "line: 3: attached message " << ++msg_count << "\n"
-             << "unattached message " << ++msg_count << "\n"
-             << "line: 8: late message " << ++msg_count << "\n"
-             << "unattached message " << ++msg_count << "\n"
-             << "file: b.carbon\n"
-             << "line: 2: attached message " << ++msg_count << "\n"
-             << "unattached message " << ++msg_count << "\n"
-             << "line: 7: late message " << ++msg_count << "\n"
-             << "unattached message " << ++msg_count << "\n";
-      return {{.success = true}};
-    } else if (filename == "fail_multi_success_overall_fail.carbon") {
-      RunResult result = {.success = false};
-      result.per_file_success.push_back({"a.carbon", true});
-      result.per_file_success.push_back({"b.carbon", true});
-      return result;
-    } else if (filename == "multi_success.carbon") {
-      RunResult result = {.success = true};
-      result.per_file_success.push_back({"a.carbon", true});
-      result.per_file_success.push_back({"b.carbon", true});
-      return result;
-    } else if (filename == "multi_success_and_fail.carbon") {
-      RunResult result = {.success = false};
-      result.per_file_success.push_back({"a.carbon", true});
-      result.per_file_success.push_back({"fail_b.carbon", false});
-      return result;
-    } else {
-      return ErrorBuilder() << "Unexpected file: " << filename;
-    }
-  }
   auto GetArgReplacements() -> llvm::StringMap<std::string> override {
     return {{"replacement", "replaced"}};
   }
@@ -162,6 +50,208 @@ class FileTestBaseTest : public FileTestBase {
     return replacements;
   }
 };
+
+// Prints arguments so that they can be validated in tests.
+static auto PrintArgs(llvm::ArrayRef<llvm::StringRef> args,
+                      llvm::raw_pwrite_stream& stdout) -> void {
+  llvm::ListSeparator sep;
+  stdout << args.size() << " args: ";
+  for (auto arg : args) {
+    stdout << sep << "`" << arg << "`";
+  }
+  stdout << "\n";
+}
+
+// Verifies arguments are well-structured, and returns the files in them.
+static auto GetFilesFromArgs(llvm::ArrayRef<llvm::StringRef> args,
+                             llvm::vfs::InMemoryFileSystem& fs)
+    -> ErrorOr<llvm::ArrayRef<llvm::StringRef>> {
+  if (args.empty() || args.front() != "default_args") {
+    return ErrorBuilder() << "missing `default_args` argument";
+  }
+  args = args.drop_front();
+
+  for (auto arg : args) {
+    if (!fs.exists(arg)) {
+      return ErrorBuilder() << "Missing file: " << arg;
+    }
+  }
+  return args;
+}
+
+// Parameters used to by individual test handlers, for easy value forwarding.
+struct TestParams {
+  // These are the arguments to `Run()`.
+  llvm::vfs::InMemoryFileSystem& fs;
+  llvm::raw_pwrite_stream& stdout;
+  llvm::raw_pwrite_stream& stderr;
+
+  // This is assigned after construction.
+  llvm::ArrayRef<llvm::StringRef> files;
+};
+
+// Does printing and returns expected results for alternating_files.carbon.
+static auto TestAlternatingFiles(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.stdout << "unattached message 1\n"
+                << "a.carbon:2: message 2\n"
+                << "b.carbon:5: message 3\n"
+                << "a.carbon:2: message 4\n"
+                << "b.carbon:5: message 5\n"
+                << "unattached message 6\n";
+  params.stderr << "unattached message 1\n"
+                << "a.carbon:2: message 2\n"
+                << "b.carbon:5: message 3\n"
+                << "a.carbon:2: message 4\n"
+                << "b.carbon:5: message 5\n"
+                << "unattached message 6\n";
+  return {{.success = true}};
+}
+
+// Does printing and returns expected results for example.carbon.
+static auto TestExample(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  int delta_line = 10;
+  params.stdout << "something\n"
+                << "\n"
+                << "example.carbon:" << delta_line + 1 << ": Line delta\n"
+                << "example.carbon:" << delta_line << ": Negative line delta\n"
+                << "+*[]{}\n"
+                << "Foo baz\n";
+  return {{.success = true}};
+}
+
+// Does printing and returns expected results for fail_example.carbon.
+static auto TestFailExample(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.stderr << "Oops\n";
+  return {{.success = false}};
+}
+
+// Does printing and returns expected results for
+// file_only_re_multi_file.carbon.
+static auto TestFileOnlyREMultiFile(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  int msg_count = 0;
+  params.stdout << "unattached message " << ++msg_count << "\n"
+                << "file: a.carbon\n"
+                << "unattached message " << ++msg_count << "\n"
+                << "line: 3: attached message " << ++msg_count << "\n"
+                << "unattached message " << ++msg_count << "\n"
+                << "line: 8: late message " << ++msg_count << "\n"
+                << "unattached message " << ++msg_count << "\n"
+                << "file: b.carbon\n"
+                << "line: 2: attached message " << ++msg_count << "\n"
+                << "unattached message " << ++msg_count << "\n"
+                << "line: 7: late message " << ++msg_count << "\n"
+                << "unattached message " << ++msg_count << "\n";
+  return {{.success = true}};
+}
+
+// Does printing and returns expected results for file_only_re_one_file.carbon.
+static auto TestFileOnlyREOneFile(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.stdout << "unattached message 1\n"
+                << "file: file_only_re_one_file.carbon\n"
+                << "line: 1\n"
+                << "unattached message 2\n";
+  return {{.success = true}};
+}
+
+// Does printing and returns expected results for unattached_multi_file.carbon.
+static auto TestUnattachedMultiFile(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.stdout << "unattached message 1\n"
+                << "unattached message 2\n";
+  params.stderr << "unattached message 3\n"
+                << "unattached message 4\n";
+  return {{.success = true}};
+}
+
+// Does printing and returns expected results for:
+// - fail_multi_success_overall_fail.carbon
+// - multi_success.carbon
+// - multi_success_and_fail.carbon
+//
+// Parameters indicate overall and per-file success.
+static auto HandleMultiSuccessTests(bool overall, bool a, bool b)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  FileTestBaseTest::RunResult result = {.success = overall};
+  result.per_file_success.push_back({a ? "a.carbon" : "fail_a.carbon", a});
+  result.per_file_success.push_back({b ? "b.carbon" : "fail_b.carbon", b});
+  return result;
+}
+
+// Echoes back non-comment file content. Used for default file handling.
+static auto EchoFileContent(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  // By default, echo non-comment content of files back.
+  for (auto test_file : params.files) {
+    // Describe file contents to stdout to validate splitting.
+    auto file = params.fs.getBufferForFile(test_file, /*FileSize=*/-1,
+                                           /*RequiresNullTerminator=*/false);
+    if (file.getError()) {
+      return Error(file.getError().message());
+    }
+    llvm::StringRef buffer = file.get()->getBuffer();
+    for (int line_number = 1; !buffer.empty(); ++line_number) {
+      auto [line, remainder] = buffer.split('\n');
+      if (!line.empty() && !line.starts_with("//")) {
+        params.stdout << test_file << ":" << line_number << ": " << line
+                      << "\n";
+      }
+      buffer = remainder;
+    }
+  }
+  return {{.success = true}};
+}
+
+auto FileTestBaseTest::Run(const llvm::SmallVector<llvm::StringRef>& test_args,
+                           llvm::vfs::InMemoryFileSystem& fs,
+                           llvm::raw_pwrite_stream& stdout,
+                           llvm::raw_pwrite_stream& stderr)
+    -> ErrorOr<RunResult> {
+  PrintArgs(test_args, stdout);
+
+  auto filename = std::filesystem::path(test_name().str()).filename();
+  if (filename == "args.carbon") {
+    // 'args.carbon' has custom arguments, so don't do regular argument
+    // validation for it.
+    return {{.success = true}};
+  }
+
+  // Choose the test function based on filename.
+  auto test_fn =
+      llvm::StringSwitch<std::function<ErrorOr<RunResult>(TestParams&)>>(
+          filename.string())
+          .Case("alternating_files.carbon", &TestAlternatingFiles)
+          .Case("example.carbon", &TestExample)
+          .Case("fail_example.carbon", &TestFailExample)
+          .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)
+          .Case("file_only_re_multi_file.carbon", &TestFileOnlyREMultiFile)
+          .Case("unattached_multi_file.carbon", &TestUnattachedMultiFile)
+          .Case("fail_multi_success_overall_fail.carbon",
+                [&](TestParams&) {
+                  return HandleMultiSuccessTests(/*overall=*/false, /*a=*/true,
+                                                 /*b=*/true);
+                })
+          .Case("multi_success.carbon",
+                [&](TestParams&) {
+                  return HandleMultiSuccessTests(/*overall=*/true, /*a=*/true,
+                                                 /*b=*/true);
+                })
+          .Case("multi_success_and_fail.carbon",
+                [&](TestParams&) {
+                  return HandleMultiSuccessTests(/*overall=*/false, /*a=*/true,
+                                                 /*b=*/false);
+                })
+          .Default(&EchoFileContent);
+
+  // Call the appropriate test function for the file.
+  TestParams params = {.fs = fs, .stdout = stdout, .stderr = stderr};
+  CARBON_ASSIGN_OR_RETURN(params.files, GetFilesFromArgs(test_args, fs));
+  return test_fn(params);
+}
 
 }  // namespace
 

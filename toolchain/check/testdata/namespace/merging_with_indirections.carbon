@@ -10,14 +10,14 @@
 
 // --- a.carbon
 
-package Other library "a";
+package Other library "[[@TEST_NAME]]";
 
 namespace NS1;
 class NS1.A {}
 
 // --- b.carbon
 
-package Other library "b";
+package Other library "[[@TEST_NAME]]";
 import library "a";
 
 namespace NS1;

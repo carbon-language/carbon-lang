@@ -32,7 +32,7 @@ fn AddrMethodCall(p: Class(i32)*) -> i32 {
 
 // --- fail_todo_static_member_fn_call.carbon
 
-library "fail_todo_static_member_fn_call";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type) {
   fn Make() -> Class(T) { return {}; }

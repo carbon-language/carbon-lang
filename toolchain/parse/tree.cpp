@@ -45,12 +45,20 @@ auto Tree::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  if (!has_errors() &&
-      static_cast<int32_t>(size()) != tokens_->expected_parse_tree_size()) {
+  // Not every token that can produce a virtual node will, so we only check that
+  // the number of nodes is in a range.
+  int32_t num_nodes = size();
+  if (!has_errors() && num_nodes > tokens_->expected_max_parse_tree_size()) {
     return Error(llvm::formatv(
         "Tree has {0} nodes and no errors, but "
-        "Lex::TokenizedBuffer expected {1} nodes for {2} tokens.",
-        size(), tokens_->expected_parse_tree_size(), tokens_->size()));
+        "Lex::TokenizedBuffer expected up to {1} nodes for {2} tokens.",
+        num_nodes, tokens_->expected_max_parse_tree_size(), tokens_->size()));
+  }
+  if (!has_errors() && num_nodes < tokens_->size()) {
+    return Error(
+        llvm::formatv("Tree has {0} nodes and no errors, but expected at least "
+                      "{1} nodes to match the number of tokens.",
+                      num_nodes, tokens_->size()));
   }
 
 #ifndef NDEBUG

@@ -10,14 +10,14 @@
 
 // --- core.carbon
 
-package Core library "test";
+package Core library "[[@TEST_NAME]]";
 
 fn Int32() -> type = "int.make_type_32";
 fn TestAdd(a: i32, b: i32) -> i32 = "int.sadd";
 
 // --- use.carbon
 
-import Core library "test";
+import Core library "core";
 
 var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 
@@ -83,10 +83,10 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.1
 // CHECK:STDOUT:     .TestAdd = %import_ref.2
-// CHECK:STDOUT:     import Core//test
+// CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//test, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//test, inst+20, loaded [template = constants.%TestAdd]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//core, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//core, inst+20, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

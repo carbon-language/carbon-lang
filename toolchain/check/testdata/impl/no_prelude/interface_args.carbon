@@ -10,7 +10,7 @@
 
 // --- action.carbon
 
-library "action";
+library "[[@TEST_NAME]]";
 
 interface Action(T:! type) {
   fn Op();
@@ -28,13 +28,13 @@ fn F(a: A) { a.(Action(B).Op)(); }
 
 // --- action.impl.carbon
 
-impl library "action";
+impl library "[[@TEST_NAME]]";
 
 fn G(a: A) { a.(Action(B).Op)(); }
 
 // --- fail_action.impl.carbon
 
-impl library "action";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_action.impl.carbon:[[@LINE+4]]:14: ERROR: Cannot access member of interface `Action` in type `A` that does not implement that interface.
 // CHECK:STDERR: fn G(a: A) { a.(Action(C).Op)(); }
@@ -44,7 +44,7 @@ fn G(a: A) { a.(Action(C).Op)(); }
 
 // --- factory.carbon
 
-library "factory";
+library "[[@TEST_NAME]]";
 
 interface Factory(T:! type) {
   fn Make() -> T;
@@ -59,7 +59,7 @@ impl A as Factory(B) {
 
 // --- factory.impl.carbon
 
-impl library "factory";
+impl library "[[@TEST_NAME]]";
 
 fn MakeB(a: A) -> B {
   return a.(Factory(B).Make)();
@@ -67,7 +67,7 @@ fn MakeB(a: A) -> B {
 
 // --- fail_factory.impl.carbon
 
-impl library "factory";
+impl library "[[@TEST_NAME]]";
 
 class C {}
 

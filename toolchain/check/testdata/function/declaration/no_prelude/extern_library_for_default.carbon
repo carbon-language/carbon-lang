@@ -16,7 +16,7 @@ extern library "expected" fn F();
 
 // --- expected.carbon
 
-package Foo library "expected";
+package Foo library "[[@TEST_NAME]]";
 
 import library default;
 
@@ -24,7 +24,7 @@ extern fn F();
 
 // --- fail_wrong_library.carbon
 
-package Foo library "wrong_library";
+package Foo library "[[@TEST_NAME]]";
 
 import library default;
 

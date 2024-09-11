@@ -21,7 +21,7 @@ fn InitFromStructGeneric(T:! type, x: T) -> T {
 
 // --- fail_todo_init.carbon
 
-library "fail_todo_init";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type) {
   var k: T;

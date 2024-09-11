@@ -10,25 +10,25 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 fn A();
 
 // --- basic.impl.carbon
 
-impl library "basic";
+impl library "[[@TEST_NAME]]";
 
 fn A() {}
 
 // --- extern_api.carbon
 
-library "extern_api";
+library "[[@TEST_NAME]]";
 
 extern fn A();
 
 // --- fail_extern_api.impl.carbon
 
-impl library "extern_api";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+14]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: fn A();
@@ -48,13 +48,13 @@ fn A();
 
 // --- extern_impl.carbon
 
-library "extern_impl";
+library "[[@TEST_NAME]]";
 
 fn A();
 
 // --- fail_extern_impl.impl.carbon
 
-impl library "extern_impl";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
 // CHECK:STDERR: extern fn A();

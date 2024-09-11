@@ -22,18 +22,18 @@
 // --- fail_main_lib.incorrect
 
 // CHECK:STDERR: fail_main_lib.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.carbon` required for `api`.
-// CHECK:STDERR: library "lib";
+// CHECK:STDERR: library "main_lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-library "lib";
+library "[[@TEST_NAME]]";
 
-// --- fail_main_lib_impl.incorrect
+// --- fail_main_lib.impl.incorrect
 
-// CHECK:STDERR: fail_main_lib_impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: impl library "lib";
+// CHECK:STDERR: fail_main_lib.impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl library "main_lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-impl library "lib";
+impl library "[[@TEST_NAME]]";
 
 // --- fail_package.incorrect
 
@@ -54,18 +54,18 @@ impl package Package;
 // --- fail_package_lib.incorrect
 
 // CHECK:STDERR: fail_package_lib.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.carbon` required for `api`.
-// CHECK:STDERR: package Package library "lib";
+// CHECK:STDERR: package Package library "package_lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-package Package library "lib";
+package Package library "[[@TEST_NAME]]";
 
-// --- fail_package_lib_impl.incorrect
+// --- fail_package_lib.impl.incorrect
 
-// CHECK:STDERR: fail_package_lib_impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: impl package Package library "lib";
+// CHECK:STDERR: fail_package_lib.impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl package Package library "package_lib";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-impl package Package library "lib";
+impl package Package library "[[@TEST_NAME]]";
 
 // --- fail_swapped_ext.impl.carbon
 
@@ -150,7 +150,7 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib_impl.incorrect
+// CHECK:STDOUT: --- fail_main_lib.impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -242,7 +242,7 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_lib_impl.incorrect
+// CHECK:STDOUT: --- fail_package_lib.impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {

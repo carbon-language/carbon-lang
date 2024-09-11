@@ -10,7 +10,7 @@
 
 // --- extern_library.carbon
 
-library "extern_library";
+library "[[@TEST_NAME]]";
 
 extern library default fn F();
 
@@ -22,7 +22,7 @@ extern fn F();
 
 // --- fail_wrong_library.carbon
 
-library "wrong_library";
+library "[[@TEST_NAME]]";
 
 import library "extern_library";
 

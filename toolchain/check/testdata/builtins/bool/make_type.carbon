@@ -10,13 +10,13 @@
 
 // --- types.carbon
 
-library "types";
+library "[[@TEST_NAME]]";
 
 fn Bool() -> type = "bool.make_type";
 
 // --- use_types.carbon
 
-library "uses_types";
+library "[[@TEST_NAME]]";
 
 import library "types";
 

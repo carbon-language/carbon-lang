@@ -10,7 +10,7 @@
 
 // --- call.carbon
 
-library "call";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -21,7 +21,7 @@ var b: Class((), 0);
 
 // --- fail_too_few.carbon
 
-library "too_few";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -36,7 +36,7 @@ var a: Class(i32*);
 
 // --- fail_too_many.carbon
 
-library "too_many";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -51,7 +51,7 @@ var a: Class(i32*, 1, 2);
 
 // --- fail_no_conversion.carbon
 
-library "no_conversion";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 

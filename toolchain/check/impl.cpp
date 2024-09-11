@@ -163,7 +163,7 @@ static auto BuildInterfaceWitness(
           CARBON_FATAL() << "Unexpected type: " << type_inst;
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto impl_decl_id = context.LookupNameInExactScope(
+        auto [impl_decl_id, _] = context.LookupNameInExactScope(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);

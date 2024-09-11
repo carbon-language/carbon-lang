@@ -14,13 +14,13 @@
 
 // --- def.carbon
 
-package Test library "def";
+package Test library "[[@TEST_NAME]]";
 
 private interface Def {}
 
 // --- forward_with_def.carbon
 
-package Test library "forward_with_def";
+package Test library "[[@TEST_NAME]]";
 
 private interface ForwardWithDef;
 
@@ -28,7 +28,7 @@ interface ForwardWithDef {}
 
 // --- forward.carbon
 
-package Test library "forward";
+package Test library "[[@TEST_NAME]]";
 
 // TODO: Import of forward declared interfaces crashes.
 // private interface Forward;
@@ -39,13 +39,13 @@ package Test library "forward";
 
 // --- def.impl.carbon
 
-impl package Test library "def";
+impl package Test library "[[@TEST_NAME]]";
 
 fn F(i: Def) {}
 
 // --- fail_local_def.carbon
 
-package Test library "fail_local_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
@@ -57,7 +57,7 @@ fn F(i: Def) {}
 
 // --- fail_other_def.carbon
 
-package Other library "fail_other_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
@@ -69,13 +69,13 @@ fn F(i: Test.Def) {}
 
 // --- forward_with_def.impl.carbon
 
-impl package Test library "forward_with_def";
+impl package Test library "[[@TEST_NAME]]";
 
 fn F(i: ForwardWithDef) {}
 
 // --- fail_local_forward_with_def.carbon
 
-package Test library "fail_local_forward_with_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
@@ -87,7 +87,7 @@ fn F(i: ForwardWithDef) {}
 
 // --- fail_other_forward_with_def.carbon
 
-package Other library "fail_other_forward_with_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
@@ -99,7 +99,7 @@ fn F(i: Test.ForwardWithDef) {}
 
 // --- fail_todo_forward.impl.carbon
 
-impl package Test library "forward";
+impl package Test library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:9: ERROR: Name `Forward` not found.
 // CHECK:STDERR: fn F(i: Forward*) {}
@@ -111,7 +111,7 @@ interface Forward {}
 
 // --- fail_local_forward.carbon
 
-package Test library "fail_local_forward";
+package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
@@ -123,7 +123,7 @@ fn F(i: Forward*) {}
 
 // --- fail_other_forward.carbon
 
-package Other library "fail_other_forward";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
@@ -134,7 +134,7 @@ fn F(i: Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon
 
-library "fail_private_on_redecl";
+library "[[@TEST_NAME]]";
 
 private interface Redecl;
 

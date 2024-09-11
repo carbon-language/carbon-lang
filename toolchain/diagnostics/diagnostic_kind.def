@@ -127,6 +127,9 @@ CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 
+// Where requirement diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
+
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================
@@ -349,6 +352,10 @@ CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
 CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryOnDefinition)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIsCurrentLibrary)
+
+// Access modifiers.
+CARBON_DIAGNOSTIC_KIND(ClassMemberDefinition)
+CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)

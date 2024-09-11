@@ -10,13 +10,13 @@
 
 // --- types.carbon
 
-library "types";
+library "[[@TEST_NAME]]";
 
 fn Float(size: i32) -> type = "float.make_type";
 
 // --- use_types.carbon
 
-library "uses_types";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -28,7 +28,7 @@ fn GetFloat(dyn_size: i32) -> type {
 
 // --- fail_invalid_size.carbon
 
-library "invalid_size";
+library "[[@TEST_NAME]]";
 
 import library "types";
 

@@ -547,8 +547,7 @@ class Driver::CompilationUnit {
       success_ = false;
       return;
     }
-    CARBON_VLOG() << "*** SourceBuffer ***\n```\n"
-                  << source_->text() << "\n```\n";
+    CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
     LogCall("Lex::Lex",
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
@@ -559,7 +558,7 @@ class Driver::CompilationUnit {
     if (mem_usage_) {
       mem_usage_->Collect("tokens_", *tokens_);
     }
-    CARBON_VLOG() << "*** Lex::TokenizedBuffer ***\n" << tokens_;
+    CARBON_VLOG("*** Lex::TokenizedBuffer ***\n{0}", tokens_);
     if (tokens_->has_errors()) {
       success_ = false;
     }
@@ -584,7 +583,7 @@ class Driver::CompilationUnit {
     if (mem_usage_) {
       mem_usage_->Collect("parse_tree_", *parse_tree_);
     }
-    CARBON_VLOG() << "*** Parse::Tree ***\n" << parse_tree_;
+    CARBON_VLOG("*** Parse::Tree ***\n{0}", parse_tree_);
     if (parse_tree_->has_errors()) {
       success_ = false;
     }
@@ -618,7 +617,7 @@ class Driver::CompilationUnit {
     }
 
     if (options_.dump_raw_sem_ir && IncludeInDumps()) {
-      CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
+      CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
       sem_ir_->Print(driver_->output_stream_, options_.builtin_sem_ir);
       if (options_.dump_sem_ir) {
         driver_->output_stream_ << "\n";
@@ -629,7 +628,7 @@ class Driver::CompilationUnit {
     if (vlog_stream_ || print) {
       SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
       if (vlog_stream_) {
-        CARBON_VLOG() << "*** SemIR::File ***\n";
+        CARBON_VLOG("*** SemIR::File ***\n");
         formatter.Print(*vlog_stream_);
       }
       if (print) {
@@ -655,7 +654,7 @@ class Driver::CompilationUnit {
                                    &inst_namer, vlog_stream_);
     });
     if (vlog_stream_) {
-      CARBON_VLOG() << "*** llvm::Module ***\n";
+      CARBON_VLOG("*** llvm::Module ***\n");
       module_->print(*vlog_stream_, /*AAW=*/nullptr,
                      /*ShouldPreserveUseListOrder=*/false,
                      /*IsForDebug=*/true);
@@ -702,7 +701,7 @@ class Driver::CompilationUnit {
       return false;
     }
     if (vlog_stream_) {
-      CARBON_VLOG() << "*** Assembly ***\n";
+      CARBON_VLOG("*** Assembly ***\n");
       codegen->EmitAssembly(*vlog_stream_);
     }
 
@@ -739,7 +738,7 @@ class Driver::CompilationUnit {
         // Currently each unit overwrites the output from the previous one in
         // this case.
       }
-      CARBON_VLOG() << "Writing output to: " << output_filename << "\n";
+      CARBON_VLOG("Writing output to: {0}\n", output_filename);
 
       std::error_code ec;
       llvm::raw_fd_ostream output_file(output_filename, ec,
@@ -779,9 +778,9 @@ class Driver::CompilationUnit {
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
       -> void {
-    CARBON_VLOG() << "*** " << label << ": " << input_filename_ << " ***\n";
+    CARBON_VLOG("*** {0}: {1} ***\n", label, input_filename_);
     fn();
-    CARBON_VLOG() << "*** " << label << " done ***\n";
+    CARBON_VLOG("*** {0} done ***\n", label);
   }
 
   // Returns true if the file can be dumped.
@@ -829,7 +828,7 @@ auto Driver::Compile(const CompileOptions& options,
   // package-specific search path based on the library name.
   llvm::SmallVector<std::string> prelude;
   if (options.prelude_import && options.phase >= CompileOptions::Phase::Check) {
-    if (auto find = installation_->FindPreludeFiles(); find.ok()) {
+    if (auto find = installation_->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
       error_stream_ << "ERROR: " << find.error() << "\n";
@@ -910,10 +909,10 @@ auto Driver::Compile(const CompileOptions& options,
     node_converters.emplace_back(unit.tokens, unit.tokens->source().filename(),
                                  unit.get_parse_tree_and_subtrees);
   }
-  CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
+  CARBON_VLOG("*** Check::CheckParseTrees ***\n");
   Check::CheckParseTrees(check_units, node_converters, options.prelude_import,
                          vlog_stream_);
-  CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
+  CARBON_VLOG("*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units) {
     if (unit->has_source()) {
       unit->PostCheck();
@@ -926,7 +925,7 @@ auto Driver::Compile(const CompileOptions& options,
   // Unlike previous steps, errors block further progress.
   if (std::any_of(units.begin(), units.end(),
                   [&](const auto& unit) { return !unit->success(); })) {
-    CARBON_VLOG() << "*** Stopping before lowering due to errors ***";
+    CARBON_VLOG("*** Stopping before lowering due to errors ***");
     return make_result();
   }
 

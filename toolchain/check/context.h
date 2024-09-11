@@ -24,6 +24,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -44,6 +45,16 @@ struct LookupResult {
   SemIR::SpecificId specific_id;
   // The declaration that was found by name lookup.
   SemIR::InstId inst_id;
+};
+
+// Information about an access.
+struct AccessInfo {
+  // The constant being accessed.
+  SemIR::ConstantId constant_id;
+
+  // The highest allowed access for a lookup. For example, `Protected` allows
+  // access to `Public` and `Protected` names, but not `Private`.
+  SemIR::AccessKind highest_allowed_access;
 };
 
 // Context and shared functionality for semantics handlers.
@@ -173,12 +184,14 @@ class Context {
   // instruction if the name is not found.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
-                              const SemIR::NameScope& scope) -> SemIR::InstId;
+                              const SemIR::NameScope& scope)
+      -> std::pair<SemIR::InstId, SemIR::AccessKind>;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
   auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                           LookupScope scope, bool required = true)
+                           LookupScope scope, bool required = true,
+                           std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or

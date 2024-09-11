@@ -81,8 +81,7 @@ class NodeStack {
     auto kind = parse_tree_->node_kind(node_id);
     CARBON_CHECK(NodeKindToIdKind(kind) == Id::Kind::None)
         << "Parse kind expects an Id: " << kind;
-    CARBON_VLOG() << "Node Push " << stack_.size() << ": " << kind
-                  << " -> <none>\n";
+    CARBON_VLOG("Node Push {0}: {1} -> <none>\n", stack_.size(), kind);
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
     stack_.push_back({.node_id = node_id, .id = Id()});
@@ -97,8 +96,7 @@ class NodeStack {
         << "\n";
     CARBON_CHECK(id.is_valid())
         << "Push called with invalid id: " << parse_tree_->node_kind(node_id);
-    CARBON_VLOG() << "Node Push " << stack_.size() << ": " << kind << " -> "
-                  << id << "\n";
+    CARBON_VLOG("Node Push {0}: {1} -> {2}\n", stack_.size(), kind, id);
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
     stack_.push_back({.node_id = node_id, .id = Id(id)});
@@ -152,8 +150,8 @@ class NodeStack {
   // Pops the top of the stack without any verification.
   auto PopAndIgnore() -> void {
     Entry back = stack_.pop_back_val();
-    CARBON_VLOG() << "Node Pop " << stack_.size() << ": "
-                  << parse_tree_->node_kind(back.node_id) << " -> <ignored>\n";
+    CARBON_VLOG("Node Pop {0}: {1} -> <ignored>\n", stack_.size(),
+                parse_tree_->node_kind(back.node_id));
   }
 
   // Pops the top of the stack and returns the node_id.
@@ -621,6 +619,10 @@ class NodeStack {
         case Parse::NodeKind::PrivateModifier:
         case Parse::NodeKind::ProtectedModifier:
         case Parse::NodeKind::RealLiteral:
+        case Parse::NodeKind::RequirementAnd:
+        case Parse::NodeKind::RequirementEqual:
+        case Parse::NodeKind::RequirementEqualEqual:
+        case Parse::NodeKind::RequirementImpls:
         case Parse::NodeKind::ReturnStatement:
         case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfTypeNameExpr:
@@ -641,6 +643,8 @@ class NodeStack {
         case Parse::NodeKind::UnsignedIntTypeLiteral:
         case Parse::NodeKind::VariableDecl:
         case Parse::NodeKind::VirtualModifier:
+        case Parse::NodeKind::WhereExpr:
+        case Parse::NodeKind::WhereOperand:
         case Parse::NodeKind::WhileStatement:
           return Id::Kind::Invalid;
       }
@@ -669,9 +673,9 @@ class NodeStack {
   template <typename IdT>
   auto PopEntry() -> Entry {
     Entry back = stack_.pop_back_val();
-    CARBON_VLOG() << "Node Pop " << stack_.size() << ": "
-                  << parse_tree_->node_kind(back.node_id) << " -> "
-                  << back.id.template As<IdT>() << "\n";
+    CARBON_VLOG("Node Pop {0}: {1} -> {2}\n", stack_.size(),
+                parse_tree_->node_kind(back.node_id),
+                back.id.template As<IdT>());
     return back;
   }
 

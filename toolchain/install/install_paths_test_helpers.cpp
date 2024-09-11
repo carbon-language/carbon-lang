@@ -14,7 +14,7 @@ auto AddPreludeFilesToVfs(InstallPaths install_paths,
                           llvm::vfs::InMemoryFileSystem* vfs) -> void {
   // Load the prelude into the test VFS.
   auto real_fs = llvm::vfs::getRealFileSystem();
-  auto prelude = install_paths.FindPreludeFiles();
+  auto prelude = install_paths.ReadPreludeManifest();
   CARBON_CHECK(prelude.ok()) << prelude.error();
 
   for (const auto& path : *prelude) {

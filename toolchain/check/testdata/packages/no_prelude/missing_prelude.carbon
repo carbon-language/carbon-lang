@@ -10,7 +10,7 @@
 
 // --- fail_missing_prelude.carbon
 
-library "fail_missing_prelude";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: ERROR: Package `Core` implicitly referenced here, but not found.
 // CHECK:STDERR: var n: i32;
@@ -20,13 +20,13 @@ var n: i32;
 
 // --- prelude_empty.carbon
 
-package Core library "empty";
+package Core library "[[@TEST_NAME]]";
 
 // --- fail_missing_prelude_member.carbon
 
-library "fail_missing_prelude_member";
+library "[[@TEST_NAME]]";
 
-import Core library "empty";
+import Core library "prelude_empty";
 
 // CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: ERROR: Name `Core.Int32` implicitly referenced here, but not found.
 // CHECK:STDERR: var n: i32;
@@ -36,21 +36,21 @@ var n: i32;
 
 // --- prelude_fake_int.carbon
 
-package Core library "fake_int";
+package Core library "[[@TEST_NAME]]";
 
 fn Int32() -> {} { return {}; }
 
 // --- use_fake_int.carbon
 
-library "use_fake_int";
+library "[[@TEST_NAME]]";
 
-import Core library "fake_int";
+import Core library "prelude_fake_int";
 
 var n: {} = i32;
 
 // --- prelude_use_in_prelude.carbon
 
-package Core library "prelude_use_in_prelude";
+package Core library "[[@TEST_NAME]]";
 
 // Core is not an imported package here.
 
@@ -62,7 +62,7 @@ var n: () = i32;
 
 // --- prelude_as_namespace.carbon
 
-library "prelude_as_namespace";
+library "[[@TEST_NAME]]";
 
 // TODO: Decide whether we want to accept this.
 namespace Core;
@@ -73,7 +73,7 @@ var n: {} = i32;
 
 // --- fail_prelude_as_class.carbon
 
-library "prelude_as_class";
+library "[[@TEST_NAME]]";
 
 // TODO: Decide whether we want to accept this.
 class Core {
@@ -105,7 +105,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//empty
+// CHECK:STDOUT:     import Core//prelude_empty
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,9 +160,9 @@ var n: {} = i32;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
-// CHECK:STDOUT:     import Core//fake_int
+// CHECK:STDOUT:     import Core//prelude_fake_int
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//fake_int, inst+5, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude_fake_int, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
