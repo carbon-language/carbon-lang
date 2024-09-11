@@ -72,8 +72,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %GenericNoParams.1: type = class_type @GenericNoParams [template]
 // CHECK:STDOUT:   %GenericNoParams.2: type = class_type @GenericNoParams, @GenericNoParams(%T) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.type.2: type = generic_class_type @GenericAndParams.2, @C(%T) [template]
-// CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %GenericAndParams.type.2: type = generic_class_type @GenericAndParams.2, @C(%T) [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.4: type = class_type @GenericAndParams.2, @GenericAndParams.2(%T, %U) [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
@@ -82,9 +82,11 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %GenericAndParams.5: type = class_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %struct.3: %GenericAndParams.5 = struct_value () [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
+// CHECK:STDOUT:   %GenericAndParams.type.3: type = generic_class_type @GenericAndParams.2, @C(%X) [template]
+// CHECK:STDOUT:   %GenericAndParams.6: %GenericAndParams.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %struct.4: %GenericNoParams.1 = struct_value () [template]
-// CHECK:STDOUT:   %GenericAndParams.6: type = class_type @GenericAndParams.2, @GenericAndParams.2(%T, %X) [symbolic]
-// CHECK:STDOUT:   %struct.5: %GenericAndParams.6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.7: type = class_type @GenericAndParams.2, @GenericAndParams.2(%X, %X) [template]
+// CHECK:STDOUT:   %struct.5: %GenericAndParams.7 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -132,11 +134,12 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %C.ref.loc19: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:   %X.ref.loc19_10: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:   %C.loc19: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
-// CHECK:STDOUT:   %GenericAndParams.ref.loc19: %GenericAndParams.type.2 = name_ref GenericAndParams, @C.%GenericAndParams.decl [template = constants.%GenericAndParams.3]
+// CHECK:STDOUT:   %.loc19: %GenericAndParams.type.3 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.6]
+// CHECK:STDOUT:   %GenericAndParams.ref.loc19: %GenericAndParams.type.3 = name_ref GenericAndParams, %.loc19 [template = constants.%GenericAndParams.6]
 // CHECK:STDOUT:   %X.ref.loc19_30: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %GenericAndParams.loc19: type = class_type @GenericAndParams.2, @GenericAndParams.2(constants.%T, constants.%X) [symbolic = constants.%GenericAndParams.6]
-// CHECK:STDOUT:   %e.var: ref %GenericAndParams.6 = var e
-// CHECK:STDOUT:   %e: ref %GenericAndParams.6 = bind_name e, %e.var
+// CHECK:STDOUT:   %GenericAndParams.loc19: type = class_type @GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X) [template = constants.%GenericAndParams.7]
+// CHECK:STDOUT:   %e.var: ref %GenericAndParams.7 = var e
+// CHECK:STDOUT:   %e: ref %GenericAndParams.7 = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGenericNoParams {
@@ -164,10 +167,12 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %GenericAndParams.type: type = generic_class_type @GenericAndParams.2, @C(%T) [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.2)]
+// CHECK:STDOUT:   %GenericAndParams: @C.%GenericAndParams.type (%GenericAndParams.type.2) = struct_value () [symbolic = %GenericAndParams (constants.%GenericAndParams.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [template = constants.%GenericNoParams.1] {}
-// CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = class_decl @GenericAndParams.2 [template = constants.%GenericAndParams.3] {
+// CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.2) = class_decl @GenericAndParams.2 [symbolic = %GenericAndParams (constants.%GenericAndParams.3)] {
 // CHECK:STDOUT:       %U.loc10_26.1: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc10_26.2: type = bind_symbolic_name U 1, %U.loc10_26.1 [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:     }
@@ -223,8 +228,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.loc18_33: init %GenericNoParams.1 = converted %.loc18_32.1, %.loc18_32.2 [template = constants.%struct.4]
 // CHECK:STDOUT:   assign file.%d.var, %.loc18_33
 // CHECK:STDOUT:   %.loc19_36.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.6 = class_init (), file.%e.var [symbolic = constants.%struct.5]
-// CHECK:STDOUT:   %.loc19_37: init %GenericAndParams.6 = converted %.loc19_36.1, %.loc19_36.2 [symbolic = constants.%struct.5]
+// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.7 = class_init (), file.%e.var [template = constants.%struct.5]
+// CHECK:STDOUT:   %.loc19_37: init %GenericAndParams.7 = converted %.loc19_36.1, %.loc19_36.2 [template = constants.%struct.5]
 // CHECK:STDOUT:   assign file.%e.var, %.loc19_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -243,6 +248,10 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@C.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%X) {
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
@@ -253,9 +262,11 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.3
+// CHECK:STDOUT:   %GenericAndParams => constants.%GenericAndParams.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%X) {
+// CHECK:STDOUT: specific @GenericAndParams.2(constants.%X, constants.%X) {
 // CHECK:STDOUT:   %U => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

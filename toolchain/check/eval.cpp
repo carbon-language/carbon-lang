@@ -1171,6 +1171,13 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
+    case SemIR::GenericClassType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);
+    case SemIR::GenericInterfaceType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst,
+          &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::InterfaceType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::InterfaceType::specific_id);
@@ -1235,8 +1242,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
     case SemIR::BuiltinInst::Kind:
-    case SemIR::GenericClassType::Kind:
-    case SemIR::GenericInterfaceType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(eval_context.context(), inst, Phase::Template);
 

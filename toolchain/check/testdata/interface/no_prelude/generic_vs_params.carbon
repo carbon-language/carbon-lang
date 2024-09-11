@@ -69,8 +69,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %.6: type = interface_type @GenericNoParams, @GenericNoParams(%T) [symbolic]
 // CHECK:STDOUT:   %Self.4: %.6 = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.type.2: type = generic_interface_type @GenericAndParams.2, @C(%T) [template]
-// CHECK:STDOUT:   %GenericAndParams.2: %GenericAndParams.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %GenericAndParams.type.2: type = generic_interface_type @GenericAndParams.2, @C(%T) [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.2: %GenericAndParams.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.7: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%T, %U) [symbolic]
 // CHECK:STDOUT:   %Self.5: %.7 = bind_symbolic_name Self 2 [symbolic]
 // CHECK:STDOUT:   %.8: type = struct_type {} [template]
@@ -78,8 +78,10 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %.9: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %.10: type = interface_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
+// CHECK:STDOUT:   %GenericAndParams.type.3: type = generic_interface_type @GenericAndParams.2, @C(%X) [template]
+// CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
-// CHECK:STDOUT:   %.12: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%T, %X) [symbolic]
+// CHECK:STDOUT:   %.12: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X, %X) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -128,9 +130,10 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %X.ref.loc18_13: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.loc18: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
-// CHECK:STDOUT:     %GenericAndParams.ref.loc18: %GenericAndParams.type.2 = name_ref GenericAndParams, @C.%GenericAndParams.decl [template = constants.%GenericAndParams.2]
+// CHECK:STDOUT:     %.loc18_15: %GenericAndParams.type.3 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.3]
+// CHECK:STDOUT:     %GenericAndParams.ref.loc18: %GenericAndParams.type.3 = name_ref GenericAndParams, %.loc18_15 [template = constants.%GenericAndParams.3]
 // CHECK:STDOUT:     %X.ref.loc18_33: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc18: type = interface_type @GenericAndParams.2, @GenericAndParams.2(constants.%T, constants.%X) [symbolic = constants.%.12]
+// CHECK:STDOUT:     %.loc18_32: type = interface_type @GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X) [template = constants.%.12]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -237,10 +240,12 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %GenericAndParams.type: type = generic_interface_type @GenericAndParams.2, @C(%T) [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.2)]
+// CHECK:STDOUT:   %GenericAndParams: @C.%GenericAndParams.type (%GenericAndParams.type.2) = struct_value () [symbolic = %GenericAndParams (constants.%GenericAndParams.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%.5] {}
-// CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = interface_decl @GenericAndParams.2 [template = constants.%GenericAndParams.2] {
+// CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.2) = interface_decl @GenericAndParams.2 [symbolic = %GenericAndParams (constants.%GenericAndParams.2)] {
 // CHECK:STDOUT:       %U.loc10_30.1: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc10_30.2: type = bind_symbolic_name U 1, %U.loc10_30.1 [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:     }
@@ -281,6 +286,10 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@C.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%X) {
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
@@ -293,13 +302,15 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.3
+// CHECK:STDOUT:   %GenericAndParams => constants.%GenericAndParams.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%X) {
+// CHECK:STDOUT: specific @GenericAndParams.2(constants.%X, constants.%X) {
 // CHECK:STDOUT:   %U => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %.1 => constants.%.12
 // CHECK:STDOUT:   %Self.2 => constants.%Self.5
 // CHECK:STDOUT: }

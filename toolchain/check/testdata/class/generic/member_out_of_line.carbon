@@ -271,8 +271,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.2: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic]
-// CHECK:STDOUT:   %B.type: type = generic_class_type @B, @A(%T) [template]
-// CHECK:STDOUT:   %B.1: %B.type = struct_value () [template]
+// CHECK:STDOUT:   %B.type: type = generic_class_type @B, @A(%T) [symbolic]
+// CHECK:STDOUT:   %B.1: %B.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %B.2: type = class_type @B, @B(%T, %N) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @B(%T, %N) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
@@ -323,9 +323,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %B.type: type = generic_class_type @B, @A(%T) [symbolic = %B.type (constants.%B.type)]
+// CHECK:STDOUT:   %B: @A.%B.type (%B.type) = struct_value () [symbolic = %B (constants.%B.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
+// CHECK:STDOUT:     %B.decl: @A.%B.type (%B.type) = class_decl @B [symbolic = %B (constants.%B.1)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc4_9.2 [symbolic = @B.%T (constants.%T)]
 // CHECK:STDOUT:       %N.loc5_11.1: @B.%T (%T) = param N, runtime_param<invalid>
 // CHECK:STDOUT:       %N.loc5_11.2: @B.%T (%T) = bind_symbolic_name N 1, %N.loc5_11.1 [symbolic = @B.%N (constants.%N)]
@@ -379,6 +381,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %B.type => constants.%B.type
+// CHECK:STDOUT:   %B => constants.%B.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%T, constants.%N) {
@@ -404,6 +408,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific @B(@B.%T, @B.%N) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(@A.%T) {
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_not_generic_vs_generic.carbon

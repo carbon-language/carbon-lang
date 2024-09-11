@@ -35,7 +35,7 @@ fn F(T:! type, U:! type) -> U* {
   // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-15]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: Calling function declared here.
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
