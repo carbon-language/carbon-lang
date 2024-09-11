@@ -19,49 +19,26 @@
 
 namespace Carbon {
 
-struct Driver::Options {
+namespace {
+struct Options {
   static const CommandLine::CommandInfo Info;
 
-  enum class Subcommand : int8_t {
-    Compile,
-    Link,
-  };
-
-  void Build(CommandLine::CommandBuilder& b) {
-    b.AddFlag(
-        {
-            .name = "verbose",
-            .short_name = "v",
-            .help = "Enable verbose logging to the stderr stream.",
-        },
-        [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
-
-    b.AddSubcommand(CompileOptions::Info,
-                    [&](CommandLine::CommandBuilder& sub_b) {
-                      compile_options.Build(sub_b, codegen_options);
-                      sub_b.Do([&] { subcommand = Subcommand::Compile; });
-                    });
-
-    b.AddSubcommand(LinkOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
-      link_options.Build(sub_b, codegen_options);
-      sub_b.Do([&] { subcommand = Subcommand::Link; });
-    });
-
-    b.RequiresSubcommand();
-  }
+  auto Build(CommandLine::CommandBuilder& b) -> void;
 
   bool verbose;
-  Subcommand subcommand;
 
-  CodegenOptions codegen_options;
-  CompileOptions compile_options;
-  LinkOptions link_options;
+  CompileSubcommand compile;
+  LinkSubcommand link;
+
+  // On success, this is set to the subcommand to run.
+  DriverSubcommand* subcommand = nullptr;
 };
+}  // namespace
 
 // Note that this is not constexpr so that it can include information generated
 // in separate translation units and potentially overridden at link time in the
 // version string.
-const CommandLine::CommandInfo Driver::Options::Info = {
+const CommandLine::CommandInfo Options::Info = {
     .name = "carbon",
     .version = Version::ToolchainInfo,
     .help = R"""(
@@ -77,16 +54,36 @@ For questions, issues, or bug reports, please use our GitHub project:
 )""",
 };
 
-auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
-    -> CommandLine::ParseResult {
-  return CommandLine::Parse(
-      args, driver_env_.output_stream, driver_env_.error_stream, Options::Info,
-      [&](CommandLine::CommandBuilder& b) { options.Build(b); });
+auto Options::Build(CommandLine::CommandBuilder& b) -> void {
+  b.AddFlag(
+      {
+          .name = "verbose",
+          .short_name = "v",
+          .help = "Enable verbose logging to the stderr stream.",
+      },
+      [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
+
+  b.AddSubcommand(CompileOptions::Info,
+                  [&](CommandLine::CommandBuilder& sub_b) {
+                    compile.BuildOptions(sub_b);
+                    sub_b.Do([&] { subcommand = &compile; });
+                  });
+
+  b.AddSubcommand(LinkOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
+    link.BuildOptions(sub_b);
+    sub_b.Do([&] { subcommand = &link; });
+  });
+
+  b.RequiresSubcommand();
 }
 
-auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult {
+auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   Options options;
-  CommandLine::ParseResult result = ParseArgs(args, options);
+
+  CommandLine::ParseResult result = CommandLine::Parse(
+      args, driver_env_.output_stream, driver_env_.error_stream, Options::Info,
+      [&](CommandLine::CommandBuilder& b) { options.Build(b); });
+
   if (result == CommandLine::ParseResult::Error) {
     return {.success = false};
   } else if (result == CommandLine::ParseResult::MetaSuccess) {
@@ -98,12 +95,8 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult {
     driver_env_.vlog_stream = &driver_env_.error_stream;
   }
 
-  switch (options.subcommand) {
-    case Options::Subcommand::Compile:
-      return Compile(options.compile_options, options.codegen_options);
-    case Options::Subcommand::Link:
-      return Link(options.link_options, options.codegen_options);
-  }
+  options.subcommand->Run(driver_env_);
+
   llvm_unreachable("All subcommands handled!");
 }
 

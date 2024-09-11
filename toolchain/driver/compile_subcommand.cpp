@@ -17,9 +17,6 @@
 #include "toolchain/sem_ir/inst_namer.h"
 #include "toolchain/source/source_buffer.h"
 
-// TODO: Remove this include.
-#include "toolchain/driver/driver.h"
-
 namespace Carbon {
 
 auto operator<<(llvm::raw_ostream& out, CompileOptions::Phase phase)
@@ -59,8 +56,7 @@ can be written to standard output as these phases progress.
 )""",
 };
 
-auto CompileOptions::Build(CommandLine::CommandBuilder& b,
-                           CodegenOptions& codegen_options) -> void {
+auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
       {
           .name = "FILE",
@@ -268,34 +264,33 @@ Emit DWARF debug information.
       });
 }
 
-auto Driver::ValidateCompileOptions(const CompileOptions& options) const
-    -> bool {
+auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
   using Phase = CompileOptions::Phase;
-  switch (options.phase) {
+  switch (options_.phase) {
     case Phase::Lex:
-      if (options.dump_parse_tree) {
-        driver_env_.error_stream
+      if (options_.dump_parse_tree) {
+        driver_env.error_stream
             << "ERROR: Requested dumping the parse tree but compile "
                "phase is limited to '"
-            << options.phase << "'.\n";
+            << options_.phase << "'.\n";
         return false;
       }
       [[fallthrough]];
     case Phase::Parse:
-      if (options.dump_sem_ir) {
-        driver_env_.error_stream
+      if (options_.dump_sem_ir) {
+        driver_env.error_stream
             << "ERROR: Requested dumping the SemIR but compile phase "
                "is limited to '"
-            << options.phase << "'.\n";
+            << options_.phase << "'.\n";
         return false;
       }
       [[fallthrough]];
     case Phase::Check:
-      if (options.dump_llvm_ir) {
-        driver_env_.error_stream
+      if (options_.dump_llvm_ir) {
+        driver_env.error_stream
             << "ERROR: Requested dumping the LLVM IR but compile "
                "phase is limited to '"
-            << options.phase << "'.\n";
+            << options_.phase << "'.\n";
         return false;
       }
       [[fallthrough]];
@@ -307,16 +302,17 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
   return true;
 }
 
+namespace {
 // Ties together information for a file being compiled.
-class Driver::CompilationUnit {
+// TODO: Refactor this because it's a long class to have function definitions
+// inline.
+class CompilationUnit {
  public:
   explicit CompilationUnit(DriverEnv& driver_env, const CompileOptions& options,
-                           const CodegenOptions& codegen_options,
                            DiagnosticConsumer* consumer,
                            llvm::StringRef input_filename)
       : driver_env_(&driver_env),
         options_(options),
-        codegen_options_(codegen_options),
         input_filename_(input_filename),
         vlog_stream_(driver_env_->vlog_stream) {
     if (vlog_stream_ != nullptr || options_.stream_errors) {
@@ -497,7 +493,7 @@ class Driver::CompilationUnit {
   // Do codegen. Returns true on success.
   auto RunCodeGenHelper() -> bool {
     std::optional<CodeGen> codegen = CodeGen::Make(
-        *module_, codegen_options_.target, driver_env_->error_stream);
+        *module_, options_.codegen_options.target, driver_env_->error_stream);
     if (!codegen) {
       return false;
     }
@@ -593,7 +589,6 @@ class Driver::CompilationUnit {
   DriverEnv* driver_env_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
-  const CodegenOptions& codegen_options_;
   std::string input_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
@@ -617,10 +612,10 @@ class Driver::CompilationUnit {
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
 };
+}  // namespace
 
-auto Driver::Compile(const CompileOptions& options,
-                     const CodegenOptions& codegen_options) -> RunResult {
-  if (!ValidateCompileOptions(options)) {
+auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
+  if (!ValidateOptions(driver_env)) {
     return {.success = false};
   }
 
@@ -628,33 +623,31 @@ auto Driver::Compile(const CompileOptions& options,
   // TODO: Replace this with a search for library api files in a
   // package-specific search path based on the library name.
   llvm::SmallVector<std::string> prelude;
-  if (options.prelude_import && options.phase >= CompileOptions::Phase::Check) {
-    if (auto find = driver_env_.installation->ReadPreludeManifest();
-        find.ok()) {
+  if (options_.prelude_import &&
+      options_.phase >= CompileOptions::Phase::Check) {
+    if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
-      driver_env_.error_stream << "ERROR: " << find.error() << "\n";
+      driver_env.error_stream << "ERROR: " << find.error() << "\n";
       return {.success = false};
     }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(driver_env_.error_stream);
+  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
-  units.reserve(prelude.size() + options.input_filenames.size());
+  units.reserve(prelude.size() + options_.input_filenames.size());
 
   // Add the prelude files.
   for (const auto& input_filename : prelude) {
-    units.push_back(
-        std::make_unique<CompilationUnit>(driver_env_, options, codegen_options,
-                                          &stream_consumer, input_filename));
+    units.push_back(std::make_unique<CompilationUnit>(
+        driver_env, options_, &stream_consumer, input_filename));
   }
 
   // Add the input source files.
-  for (const auto& input_filename : options.input_filenames) {
-    units.push_back(
-        std::make_unique<CompilationUnit>(driver_env_, options, codegen_options,
-                                          &stream_consumer, input_filename));
+  for (const auto& input_filename : options_.input_filenames) {
+    units.push_back(std::make_unique<CompilationUnit>(
+        driver_env, options_, &stream_consumer, input_filename));
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
@@ -667,9 +660,9 @@ auto Driver::Compile(const CompileOptions& options,
     stream_consumer.Flush();
   });
 
-  // Returns a RunResult object. Called whenever Compile returns.
+  // Returns a DriverResult object. Called whenever Compile returns.
   auto make_result = [&]() {
-    RunResult result = {.success = true};
+    DriverResult result = {.success = true};
     for (const auto& unit : units) {
       result.success &= unit->success();
       result.per_file_success.push_back(
@@ -682,7 +675,7 @@ auto Driver::Compile(const CompileOptions& options,
   for (auto& unit : units) {
     unit->RunLex();
   }
-  if (options.phase == CompileOptions::Phase::Lex) {
+  if (options_.phase == CompileOptions::Phase::Lex) {
     return make_result();
   }
   // Parse and check phases examine `has_source` because they want to proceed if
@@ -695,7 +688,7 @@ auto Driver::Compile(const CompileOptions& options,
       unit->RunParse();
     }
   }
-  if (options.phase == CompileOptions::Phase::Parse) {
+  if (options_.phase == CompileOptions::Phase::Parse) {
     return make_result();
   }
 
@@ -713,24 +706,24 @@ auto Driver::Compile(const CompileOptions& options,
     node_converters.emplace_back(unit.tokens, unit.tokens->source().filename(),
                                  unit.get_parse_tree_and_subtrees);
   }
-  CARBON_VLOG_TO(driver_env_.vlog_stream, "*** Check::CheckParseTrees ***\n");
-  Check::CheckParseTrees(check_units, node_converters, options.prelude_import,
-                         driver_env_.vlog_stream);
-  CARBON_VLOG_TO(driver_env_.vlog_stream,
+  CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
+  Check::CheckParseTrees(check_units, node_converters, options_.prelude_import,
+                         driver_env.vlog_stream);
+  CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units) {
     if (unit->has_source()) {
       unit->PostCheck();
     }
   }
-  if (options.phase == CompileOptions::Phase::Check) {
+  if (options_.phase == CompileOptions::Phase::Check) {
     return make_result();
   }
 
   // Unlike previous steps, errors block further progress.
   if (std::any_of(units.begin(), units.end(),
                   [&](const auto& unit) { return !unit->success(); })) {
-    CARBON_VLOG_TO(driver_env_.vlog_stream,
+    CARBON_VLOG_TO(driver_env.vlog_stream,
                    "*** Stopping before lowering due to errors ***");
     return make_result();
   }
@@ -741,10 +734,10 @@ auto Driver::Compile(const CompileOptions& options,
                                               &**unit->GetCheckUnit().sem_ir);
     unit->RunLower(converter);
   }
-  if (options.phase == CompileOptions::Phase::Lower) {
+  if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();
   }
-  CARBON_CHECK(options.phase == CompileOptions::Phase::CodeGen,
+  CARBON_CHECK(options_.phase == CompileOptions::Phase::CodeGen,
                "CodeGen should be the last stage");
 
   // Codegen.
