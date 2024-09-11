@@ -32,7 +32,7 @@ template <TemplateString Kind, TemplateString File, int Line,
           TemplateString ConditionStr, TemplateString FormatStr, typename... Ts>
 [[noreturn, gnu::cold, clang::noinline, clang::preserve_most]] auto CheckFail(
     Ts&&... values) -> void {
-  if constexpr (llvm::StringRef(FormatStr).empty() == 0) {
+  if constexpr (llvm::StringRef(FormatStr).empty()) {
     // Skip the format string rendering if empty.
     CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
                   FormatStr.c_str());
@@ -87,7 +87,7 @@ template <TemplateString Kind, TemplateString File, int Line,
 // arguments, but otherwise have the minimal overhead. We avoid forming
 // interesting format strings here so that we don't have to repeatedly
 // instantiate the `Check` function above. This format string would be an error
-// if actually used, but as this is dead that shouldn't matter.
+// if actually used.
 #define CARBON_INTERNAL_DEAD_DCHECK(condition, ...) \
   CARBON_INTERNAL_DEAD_DCHECK_IMPL##__VA_OPT__(_FORMAT)(__VA_ARGS__)
 
