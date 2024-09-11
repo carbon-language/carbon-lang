@@ -651,8 +651,7 @@ CARBON_PARSE_STATE(RequirementOperator)
 //                        ^~~
 // expr where expr == expr and
 //                         ^~~
-//   1. Expr
-//   2. RequirementOperator
+//   1. RequirementBegin
 CARBON_PARSE_STATE(RequirementOperatorFinish)
 
 // Finishes an `where` expression.

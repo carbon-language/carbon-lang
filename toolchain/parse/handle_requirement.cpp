@@ -10,7 +10,7 @@ namespace Carbon::Parse {
 
 auto HandleRequirementBegin(Context& context) -> void {
   context.PopAndDiscardState();
-  // TODO: Peek aheadd for `.designator = ...`, and give it special handling.
+  // TODO: Peek ahead for `.designator = ...`, and give it special handling.
   context.PushState(State::RequirementOperator);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
