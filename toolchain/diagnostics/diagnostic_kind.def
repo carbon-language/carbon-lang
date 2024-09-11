@@ -127,6 +127,9 @@ CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 
+// Require diagnostics.
+CARBON_DIAGNOSTIC_KIND(RequireExpectedImpls)
+
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================
