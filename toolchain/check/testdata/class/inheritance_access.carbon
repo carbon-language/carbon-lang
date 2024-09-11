@@ -212,6 +212,7 @@ class B {
 // --- inherited_compound_member_access.carbon
 
 library "inherited_compound_member_access";
+
 base class A {
   protected var x: i32;
 }
@@ -1043,8 +1044,8 @@ class B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, @B.%self.loc36_15.2
 // CHECK:STDOUT:   %internal.ref: %.5 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
-// CHECK:STDOUT:   %.loc43_16.1: ref %Internal = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc43_16.2: %Internal = bind_value %.loc43_16.1
+// CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc44_16.2: %Internal = bind_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -1172,41 +1173,41 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc4_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc4_20.2: type = converted %int.make_type_32, %.loc4_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc4_18: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_32, %.loc5_20.1 [template = i32]
+// CHECK:STDOUT:   %.loc5_18: %.2 = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x [protected] = %.loc4_18
+// CHECK:STDOUT:   .x [protected] = %.loc5_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc8: %.5 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.loc10_8.1: %B = param self
-// CHECK:STDOUT:     %self.loc10_8.2: %B = bind_name self, %self.loc10_8.1
+// CHECK:STDOUT:     %self.loc11_8.1: %B = param self
+// CHECK:STDOUT:     %self.loc11_8.2: %B = bind_name self, %self.loc11_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .base = %.loc8
+// CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@B.%self.loc10_8.2: %B]() {
+// CHECK:STDOUT: fn @F[@B.%self.loc11_8.2: %B]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %B = name_ref self, @B.%self.loc10_8.2
+// CHECK:STDOUT:   %self.ref: %B = name_ref self, @B.%self.loc11_8.2
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @A.%.loc4_18 [template = @A.%.loc4_18]
-// CHECK:STDOUT:   %.loc11_9.1: ref %A = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc11_9.2: ref %A = converted %self.ref, %.loc11_9.1
-// CHECK:STDOUT:   %.loc11_9.3: ref i32 = class_element_access %.loc11_9.2, element0
+// CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @A.%.loc5_18 [template = @A.%.loc5_18]
+// CHECK:STDOUT:   %.loc12_9.1: ref %A = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc12_9.2: ref %A = converted %self.ref, %.loc12_9.1
+// CHECK:STDOUT:   %.loc12_9.3: ref i32 = class_element_access %.loc12_9.2, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
