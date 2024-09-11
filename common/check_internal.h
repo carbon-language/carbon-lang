@@ -16,9 +16,11 @@ namespace Carbon::Internal {
 // information and this string.
 //
 // This API uses `const char*` C string arguments rather than `llvm::StringRef`
-// because that lets the code size of calling it be smaller as it only needs to
-// materialize a single pointer argument. The runtime cost of re-computing the
-// size should be minimal.
+// because we know that these are available as C strings and passing them that
+// way lets the code size of calling it be smaller: it only needs to materialize
+// a single pointer argument for each. The runtime cost of re-computing the size
+// should be minimal. The extra message however might not be compile-time
+// guaranteed to be a C string so we use a normal `StringRef` there.
 [[noreturn]] auto CheckFailImpl(const char* kind, const char* file, int line,
                                 const char* condition_str,
                                 llvm::StringRef extra_message) -> void;
