@@ -1,5 +1,5 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
+// Exceptions. See /LICENSE for license informatio.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #ifndef CARBON_COMMON_TEMPLATE_STRING_H_
@@ -19,7 +19,7 @@ namespace Carbon {
 // Designed to support implicitly deduced construction from a string literal
 // template argument. This type will implicitly convert to an `llvm::StringRef`
 // for accessing the string contents, and also provides a dedicated `c_str()`
-// method to access the string as a C-string.
+// method to access the string as a C string.
 //
 // Example usage:
 // ```cpp
@@ -40,7 +40,7 @@ struct TemplateString {
   //
   // The closest we can get to explicitly accepting a string literal is to
   // accept an array of `const char`s, so we additionally use Clang's constexpr
-  // `enable_if` attribute to require the array to be usable as a C-string with
+  // `enable_if` attribute to require the array to be usable as a C string with
   // the expected length. This checks both for null-termination and no embedded
   // `0` bytes.
   //
