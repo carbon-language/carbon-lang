@@ -26,7 +26,6 @@ class VLogger {
 
   void VLog() { CARBON_VLOG("Test\n"); }
   void VLogFormatArgs() { CARBON_VLOG("Test {0} {1} {2}\n", 1, 2, 3); }
-  void VLogStream() { CARBON_VLOG() << "Test\n"; }
 
   auto TakeStr() -> std::string { return buffer_.TakeStr(); }
 
@@ -42,8 +41,6 @@ TEST(VLogTest, Enabled) {
   EXPECT_THAT(vlog.TakeStr(), StrEq("Test\n"));
   vlog.VLogFormatArgs();
   EXPECT_THAT(vlog.TakeStr(), StrEq("Test 1 2 3\n"));
-  vlog.VLogStream();
-  EXPECT_THAT(vlog.TakeStr(), StrEq("Test\n"));
 }
 
 TEST(VLogTest, Disabled) {

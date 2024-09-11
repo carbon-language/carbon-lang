@@ -95,7 +95,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   }
 
   auto inst = sem_ir().insts().Get(inst_id);
-  CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
+  CARBON_VLOG("Lowering {0}: {1}\n", inst_id, inst);
   builder_.getInserter().SetCurrentInstId(inst_id);
   if (di_subprogram_) {
     auto loc = file_context_->GetLocForDI(inst_id);

@@ -5,9 +5,26 @@
 #ifndef CARBON_COMMON_VLOG_H_
 #define CARBON_COMMON_VLOG_H_
 
-#include "common/vlog_internal.h"
+#include "common/ostream.h"
+#include "common/template_string.h"
+#include "llvm/Support/FormatVariadic.h"
 
-namespace Carbon {
+namespace Carbon::Internal {
+
+// Implements verbose logging.
+//
+// This is designed to minimize the overhead in callers by being a
+// forcibly-outlined routine that takes a minimal number of parameters.
+//
+// Internally uses `llvm::formatv` to render the format string with any value
+// arguments, and streams the result to the provided stream.
+template <TemplateString FormatStr, typename... Ts>
+[[clang::noinline, clang::preserve_most]] auto VLogImpl(
+    llvm::raw_ostream* stream, Ts&&... values) -> void {
+  *stream << llvm::formatv(FormatStr.c_str(), std::forward<Ts>(values)...);
+}
+
+}  // namespace Carbon::Internal
 
 // Logs when verbose logging is enabled (vlog_stream_ is non-null).
 //
@@ -25,12 +42,10 @@ namespace Carbon {
 // However, the streaming syntax has higher overhead and can inhibit inlining.
 // Code should prefer the format string form, and eventually when all code has
 // migrated the streaming interface will be removed.
-#define CARBON_VLOG(...)                                                    \
-  __builtin_expect(vlog_stream_ == nullptr, true)                           \
-      ? (void)0                                                             \
-      : CARBON_VLOG_INTERNAL##__VA_OPT__(_CALL)(vlog_stream_ __VA_OPT__(, ) \
-                                                    __VA_ARGS__)
-
-}  // namespace Carbon
+#define CARBON_VLOG(FormatStr, ...)                                          \
+  __builtin_expect(vlog_stream_ == nullptr, true)                            \
+      ? (void)0                                                              \
+      : Carbon::Internal::VLogImpl<"" FormatStr>(vlog_stream_ __VA_OPT__(, ) \
+                                                     __VA_ARGS__)
 
 #endif  // CARBON_COMMON_VLOG_H_

@@ -570,7 +570,6 @@ cc_library(
 
 cc_library(
     name = "vlog",
-    srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],
     deps = [
         ":ostream",

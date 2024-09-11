@@ -225,14 +225,14 @@ class Context {
   // Pops the state and keeps the value for inspection.
   auto PopState() -> StateStackEntry {
     auto back = state_stack_.pop_back_val();
-    CARBON_VLOG() << "Pop " << state_stack_.size() << ": " << back << "\n";
+    CARBON_VLOG("Pop {0}: {1}\n", state_stack_.size(), back);
     return back;
   }
 
   // Pops the state and discards it.
   auto PopAndDiscardState() -> void {
-    CARBON_VLOG() << "PopAndDiscard " << state_stack_.size() - 1 << ": "
-                  << state_stack_.back() << "\n";
+    CARBON_VLOG("PopAndDiscard {0}: {1}\n", state_stack_.size() - 1,
+                state_stack_.back());
     state_stack_.pop_back();
   }
 
@@ -265,7 +265,7 @@ class Context {
 
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
-    CARBON_VLOG() << "Push " << state_stack_.size() << ": " << state << "\n";
+    CARBON_VLOG("Push {0}: {1}\n", state_stack_.size(), state);
     state_stack_.push_back(state);
     CARBON_CHECK(state_stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
