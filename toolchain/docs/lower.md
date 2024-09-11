@@ -38,7 +38,8 @@ The current rudimentary name mangling scheme is as follows:
 -   Start with `_C`.
 -   Then the unqualified function name (function name mangling is the only thing
     implemented at the moment).
--   Then `.` separated scopes (namespaces/classes), most nested first, outermost last.
+-   Then `.` separated scopes (namespaces/classes), most nested first, outermost
+    last.
 -   Or, if the function is in an `impl`:
     -   the implementing type, per the scope mangling above.
     -   the interface type, per the scope mangling above.
