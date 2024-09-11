@@ -6,11 +6,16 @@
 #define CARBON_COMMON_VLOG_INTERNAL_H_
 
 #include "common/ostream.h"
+#include "common/template_string.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Internal {
 
 // Wraps a stream and exiting for fatal errors. Should only be used by check.h
 // macros.
+//
+// TODO: Remove this when the last streaming `vlog` is replaced with a function
+// call variant.
 class VLoggingStream {
  public:
   // Internal type used in macros to dispatch to the `operator|` overload.
@@ -38,17 +43,33 @@ class VLoggingStream {
   }
 
  private:
-  [[noreturn]] auto Done() -> void;
-
   llvm::raw_ostream* stream_;
 };
 
+// Implements verbose logging.
+//
+// This is designed to minimize the overhead in callers by being a
+// forcibly outlined routine that takes a minimal number of parameters.
+//
+// Internally uses `llvm::formatv` to render the format string with any value
+// arguments, and streams the result to the provided stream.
+template <TemplateString FormatStr, typename... Ts>
+[[gnu::cold, clang::noinline, clang::preserve_most]] auto VLogImpl(
+    llvm::raw_ostream* stream, Ts&&... values) -> void {
+  *stream << llvm::formatv(FormatStr.c_str(), std::forward<Ts>(values)...);
+}
+
 }  // namespace Carbon::Internal
 
-// Raw logging stream. This should be used when building forms of vlog
-// macros.
-#define CARBON_VLOG_INTERNAL_STREAM(stream)    \
+// Raw logging stream. This should be used when building the streaming forms of
+// vlog macros.
+#define CARBON_VLOG_INTERNAL(stream)           \
   Carbon::Internal::VLoggingStream::Helper() | \
       Carbon::Internal::VLoggingStream(stream)
+
+// Raw logging call. This should be used when building the format-string forms
+// of vlog macros.
+#define CARBON_VLOG_INTERNAL_CALL(stream, FormatStr, ...) \
+  Carbon::Internal::VLogImpl<"" FormatStr>(stream __VA_OPT__(, ) __VA_ARGS__)
 
 #endif  // CARBON_COMMON_VLOG_INTERNAL_H_

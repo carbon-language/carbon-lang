@@ -470,6 +470,25 @@ cc_test(
 )
 
 cc_library(
+    name = "template_string",
+    hdrs = ["template_string.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "template_string_test",
+    size = "small",
+    srcs = ["template_string_test.cpp"],
+    deps = [
+        ":template_string",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "variant_helpers",
     hdrs = ["variant_helpers.h"],
     deps = [
@@ -555,6 +574,7 @@ cc_library(
     hdrs = ["vlog.h"],
     deps = [
         ":ostream",
+        ":template_string",
         "@llvm-project//llvm:Support",
     ],
 )
