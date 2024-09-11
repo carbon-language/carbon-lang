@@ -198,11 +198,12 @@ base class A {
 }
 
 class B {
+  extend base: A;
   fn F[self: Self]() {
     // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+6]]:11: ERROR: Cannot access private member `x` of type `A`.
     // CHECK:STDERR:     self.(A.x);
     // CHECK:STDERR:           ^~~
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-8]]:15: The private member `x` is defined here.
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: The private member `x` is defined here.
     // CHECK:STDERR:   private var x: i32;
     // CHECK:STDERR:               ^~~~~~
     self.(A.x);
@@ -211,7 +212,7 @@ class B {
 
 // --- inherited_compound_member_access.carbon
 
-library "inherited_compound_member_access";
+library "[[@TEST_NAME]]";
 
 base class A {
   protected var x: i32;
@@ -1060,11 +1061,13 @@ class B {
 // CHECK:STDOUT:   %.2: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: %.4} [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1105,22 +1108,26 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.loc9_8.1: %B = param self
-// CHECK:STDOUT:     %self.loc9_8.2: %B = bind_name self, %self.loc9_8.1
+// CHECK:STDOUT:     %self.loc10_8.1: %B = param self
+// CHECK:STDOUT:     %self.loc10_8.2: %B = bind_name self, %self.loc10_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@B.%self.loc9_8.2: %B]() {
+// CHECK:STDOUT: fn @F[@B.%self.loc10_8.2: %B]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %B = name_ref self, @B.%self.loc9_8.2
+// CHECK:STDOUT:   %self.ref: %B = name_ref self, @B.%self.loc10_8.2
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   return
