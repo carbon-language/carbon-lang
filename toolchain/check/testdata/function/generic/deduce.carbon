@@ -42,7 +42,7 @@ fn CallExplicitAndAlsoDeduced(n: i32) -> i32* {
   return ExplicitAndAlsoDeduced(A, {});
 }
 
-// --- fail_todo_deduce_implicit.carbon
+// --- deduce_implicit.carbon
 
 library "fail_todo_deduce_implicit";
 
@@ -336,7 +336,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduce_implicit.carbon
+// CHECK:STDOUT: --- deduce_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
