@@ -516,11 +516,11 @@ class Driver::CompilationUnit {
                            const CodegenOptions& codegen_options,
                            DiagnosticConsumer* consumer,
                            llvm::StringRef input_filename)
-      : driver_env_(driver_env),
+      : driver_env_(&driver_env),
         options_(options),
         codegen_options_(codegen_options),
         input_filename_(input_filename),
-        vlog_stream_(driver_env_.vlog_stream) {
+        vlog_stream_(driver_env_->vlog_stream) {
     if (vlog_stream_ != nullptr || options_.stream_errors) {
       consumer_ = consumer;
     } else {
@@ -538,7 +538,7 @@ class Driver::CompilationUnit {
       if (input_filename_ == "-") {
         source_ = SourceBuffer::MakeFromStdin(*consumer_);
       } else {
-        source_ = SourceBuffer::MakeFromFile(driver_env_.fs, input_filename_,
+        source_ = SourceBuffer::MakeFromFile(driver_env_->fs, input_filename_,
                                              *consumer_);
       }
     });
@@ -556,7 +556,7 @@ class Driver::CompilationUnit {
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
-      driver_env_.output_stream << tokens_;
+      driver_env_->output_stream << tokens_;
     }
     if (mem_usage_) {
       mem_usage_->Collect("tokens_", *tokens_);
@@ -578,9 +578,9 @@ class Driver::CompilationUnit {
       consumer_->Flush();
       const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
       if (options_.preorder_parse_tree) {
-        tree_and_subtrees.PrintPreorder(driver_env_.output_stream);
+        tree_and_subtrees.PrintPreorder(driver_env_->output_stream);
       } else {
-        tree_and_subtrees.Print(driver_env_.output_stream);
+        tree_and_subtrees.Print(driver_env_->output_stream);
       }
     }
     if (mem_usage_) {
@@ -621,9 +621,9 @@ class Driver::CompilationUnit {
 
     if (options_.dump_raw_sem_ir && IncludeInDumps()) {
       CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
-      sem_ir_->Print(driver_env_.output_stream, options_.builtin_sem_ir);
+      sem_ir_->Print(driver_env_->output_stream, options_.builtin_sem_ir);
       if (options_.dump_sem_ir) {
-        driver_env_.output_stream << "\n";
+        driver_env_->output_stream << "\n";
       }
     }
 
@@ -635,7 +635,7 @@ class Driver::CompilationUnit {
         formatter.Print(*vlog_stream_);
       }
       if (print) {
-        formatter.Print(driver_env_.output_stream);
+        formatter.Print(driver_env_->output_stream);
       }
     }
     if (sem_ir_->has_errors()) {
@@ -663,7 +663,7 @@ class Driver::CompilationUnit {
                      /*IsForDebug=*/true);
     }
     if (options_.dump_llvm_ir && IncludeInDumps()) {
-      module_->print(driver_env_.output_stream, /*AAW=*/nullptr,
+      module_->print(driver_env_->output_stream, /*AAW=*/nullptr,
                      /*ShouldPreserveUseListOrder=*/true);
     }
   }
@@ -677,12 +677,12 @@ class Driver::CompilationUnit {
   // actions on the CompilationUnit.
   auto PostCompile() -> void {
     if (options_.dump_shared_values && IncludeInDumps()) {
-      Yaml::Print(driver_env_.output_stream,
+      Yaml::Print(driver_env_->output_stream,
                   value_stores_.OutputYaml(input_filename_));
     }
     if (mem_usage_) {
       mem_usage_->Collect("value_stores_", value_stores_);
-      Yaml::Print(driver_env_.output_stream,
+      Yaml::Print(driver_env_->output_stream,
                   mem_usage_->OutputYaml(input_filename_));
     }
 
@@ -699,7 +699,7 @@ class Driver::CompilationUnit {
   // Do codegen. Returns true on success.
   auto RunCodeGenHelper() -> bool {
     std::optional<CodeGen> codegen = CodeGen::Make(
-        *module_, codegen_options_.target, driver_env_.error_stream);
+        *module_, codegen_options_.target, driver_env_->error_stream);
     if (!codegen) {
       return false;
     }
@@ -713,11 +713,11 @@ class Driver::CompilationUnit {
       // textual assembly output are all somewhat linked flags. We should add
       // some validation that they are used correctly.
       if (options_.force_obj_output) {
-        if (!codegen->EmitObject(driver_env_.output_stream)) {
+        if (!codegen->EmitObject(driver_env_->output_stream)) {
           return false;
         }
       } else {
-        if (!codegen->EmitAssembly(driver_env_.output_stream)) {
+        if (!codegen->EmitAssembly(driver_env_->output_stream)) {
           return false;
         }
       }
@@ -726,7 +726,7 @@ class Driver::CompilationUnit {
       if (output_filename.empty()) {
         if (!source_->is_regular_file()) {
           // Don't invent file names like `-.o` or `/dev/stdin.o`.
-          driver_env_.error_stream
+          driver_env_->error_stream
               << "ERROR: Output file name must be specified for input '"
               << input_filename_ << "' that is not a regular file.\n";
           return false;
@@ -747,9 +747,9 @@ class Driver::CompilationUnit {
       llvm::raw_fd_ostream output_file(output_filename, ec,
                                        llvm::sys::fs::OF_None);
       if (ec) {
-        driver_env_.error_stream << "ERROR: Could not open output file '"
-                                 << output_filename << "': " << ec.message()
-                                 << "\n";
+        driver_env_->error_stream << "ERROR: Could not open output file '"
+                                  << output_filename << "': " << ec.message()
+                                  << "\n";
         return false;
       }
       if (options_.asm_output) {
@@ -792,7 +792,7 @@ class Driver::CompilationUnit {
            !input_filename_.starts_with(options_.exclude_dump_file_prefix);
   }
 
-  DriverEnv& driver_env_;
+  DriverEnv* driver_env_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
   const CodegenOptions& codegen_options_;
