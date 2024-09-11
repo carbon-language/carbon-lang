@@ -135,8 +135,19 @@ auto DeduceGenericCallArguments(
           needs_substitution);
     } else {
       // The argument needs to have the same type as the parameter.
-      // TODO: Annotate any diagnostic coming from here to explain why we're
-      // performing this conversion.
+      DiagnosticAnnotationScope annotate_diagnostics(
+          &context.emitter(), [&](auto& builder) {
+            if (auto param = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+                    param_id)) {
+              CARBON_DIAGNOSTIC(
+                  InitializingGenericParam, Note,
+                  "Initializing generic parameter `{0}` declared here.",
+                  SemIR::NameId);
+              builder.Note(
+                  param_id, InitializingGenericParam,
+                  context.entity_names().Get(param->entity_name_id).name_id);
+            }
+          });
       arg_id = ConvertToValueOfType(context, loc_id, arg_id, param_type_id);
       if (arg_id == SemIR::InstId::BuiltinError) {
         return SemIR::SpecificId::Invalid;

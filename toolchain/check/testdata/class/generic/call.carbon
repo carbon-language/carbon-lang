@@ -55,12 +55,15 @@ library "no_conversion";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+9]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:8: Type `i32` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: Type `i32` does not implement interface `ImplicitAs`.
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:13: Initializing generic parameter `T` declared here.
+// CHECK:STDERR: class Class(T:! type, N:! i32) {}
+// CHECK:STDERR:             ^
 var a: Class(5, i32*);
 
 // --- call_in_nested_return_type.carbon
@@ -408,15 +411,15 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: i32 = bind_symbolic_name N 1, %N.loc4_23.1 [symbolic = @Class.%N (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 5 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_20.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
-// CHECK:STDOUT:   %.loc12_20.2: type = converted %int.make_type_32.loc12, %.loc12_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_20.3: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_13.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_13.2: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc12_13.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc12_13.3: type = converted %.loc12_14, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_14: i32 = int_literal 5 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc15_20.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:   %.loc15_20.2: type = converted %int.make_type_32.loc15, %.loc15_20.1 [template = i32]
+// CHECK:STDOUT:   %.loc15_20.3: type = ptr_type i32 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15_13.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc15_13.2: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.10]
+// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc15_13.2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc15_13.3: type = converted %.loc15_14, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
