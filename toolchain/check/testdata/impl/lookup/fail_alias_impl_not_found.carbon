@@ -68,11 +68,11 @@ fn F(c: C) {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc19: %C = binding_pattern c, @F.2.%c
+// CHECK:STDOUT:     %.loc19: %C = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %c.loc19_6.3
-// CHECK:STDOUT:     %c.loc19_6.3: %C = param c
+// CHECK:STDOUT:     %c.loc19_6.1: %C = param c
+// CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %c.loc19_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -47,10 +47,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
-// CHECK:STDOUT:     %.loc4: type = binding_pattern T 0, %T.loc4_19.2
+// CHECK:STDOUT:     %.loc4: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.3 [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:     %T.loc4_19.3: type = param T
+// CHECK:STDOUT:     %T.loc4_19.1: type = param T
+// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -55,17 +55,17 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc12_7: i32 = binding_pattern a, @F.%a
+// CHECK:STDOUT:     %.loc12_6: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_9.1: type = value_of_initializer %int.make_type_32.loc12_9 [template = i32]
 // CHECK:STDOUT:     %.loc12_9.2: type = converted %int.make_type_32.loc12_9, %.loc12_9.1 [template = i32]
+// CHECK:STDOUT:     %a.loc12_6.1: i32 = param a
+// CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc12_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc12_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32.loc12_17 [template = i32]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32.loc12_17, %.loc12_17.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc12_6.3
-// CHECK:STDOUT:     %a.loc12_6.3: i32 = param a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

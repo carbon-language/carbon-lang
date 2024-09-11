@@ -1479,6 +1479,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:
+    case SemIR::SymbolicBindingPattern::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;

@@ -49,23 +49,23 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Add.decl: %Add.type = fn_decl @Add [template = constants.%Add] {
-// CHECK:STDOUT:     %.loc11_9: i32 = binding_pattern a, @Add.%a
-// CHECK:STDOUT:     %.loc11_17: i32 = binding_pattern b, @Add.%b
+// CHECK:STDOUT:     %.loc11_8: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc11_16: i32 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
+// CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
+// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc11_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
+// CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
+// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc11_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %int.make_type_32.loc11_27 [template = i32]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %int.make_type_32.loc11_27, %.loc11_27.1 [template = i32]
 // CHECK:STDOUT:     @Add.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc11_8.3
-// CHECK:STDOUT:     %a.loc11_8.3: i32 = param a
-// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc11_16.3
-// CHECK:STDOUT:     %b.loc11_16.3: i32 = param b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, %Add.decl [template = constants.%Add]

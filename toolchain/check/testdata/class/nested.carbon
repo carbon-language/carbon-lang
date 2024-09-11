@@ -96,12 +96,12 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc41_7: %.4 = binding_pattern a, @F.2.%a
+// CHECK:STDOUT:     %.loc41_6: %.4 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41_14: type = ptr_type %Outer [template = constants.%.4]
-// CHECK:STDOUT:     @F.2.%a: %.4 = bind_name a, %a.loc41_6.3
-// CHECK:STDOUT:     %a.loc41_6.3: %.4 = param a
+// CHECK:STDOUT:     %a.loc41_6.1: %.4 = param a
+// CHECK:STDOUT:     @F.2.%a: %.4 = bind_name a, %a.loc41_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

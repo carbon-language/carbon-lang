@@ -33,10 +33,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %.loc15_9: %.1 = binding_pattern n, @Foo.%n
+// CHECK:STDOUT:     %.loc15_8: %.1 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %n.loc15_8.1: %.1 = param n
+// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.1
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)
@@ -44,8 +46,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     @Foo.%return: ref %.2 = var <return slot>
-// CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.3
-// CHECK:STDOUT:     %n.loc15_8.3: %.1 = param n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

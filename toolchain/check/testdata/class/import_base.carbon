@@ -81,12 +81,16 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %.loc5: %Base = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc5_8.1: %Base = param self
 // CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_name self, %self.loc5_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {} {
+// CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
+// CHECK:STDOUT:     %.loc6: %Base = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc6_13.1: %Base = param self
 // CHECK:STDOUT:     %self.loc6_13.2: %Base = bind_name self, %self.loc6_13.1
@@ -151,7 +155,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+37, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+39, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -162,12 +166,12 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+8, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref Main//a, inst+27, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+9, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref Main//a, inst+29, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+35, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+40, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+44, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

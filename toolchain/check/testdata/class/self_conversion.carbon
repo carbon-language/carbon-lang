@@ -82,7 +82,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
-// CHECK:STDOUT:   %SelfBase.decl: %SelfBase.type = fn_decl @SelfBase [template = constants.%SelfBase] {} {
+// CHECK:STDOUT:   %SelfBase.decl: %SelfBase.type = fn_decl @SelfBase [template = constants.%SelfBase] {
+// CHECK:STDOUT:     %.loc22_21: %Base = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc22_21.1: %Base = param self
 // CHECK:STDOUT:     @SelfBase.%self: %Base = bind_name self, %self.loc22_21.1
@@ -91,7 +93,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc22_38.2: type = converted %int.make_type_32.loc22, %.loc22_38.1 [template = i32]
 // CHECK:STDOUT:     @SelfBase.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {} {
+// CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
+// CHECK:STDOUT:     %.loc26_30: %.6 = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc26_40: type = ptr_type %Base [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc26_30.1: %.6 = param self
@@ -99,16 +103,16 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     @AddrSelfBase.%.loc26: %.6 = addr_pattern @AddrSelfBase.%self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
-// CHECK:STDOUT:     %.loc30_10: %.9 = binding_pattern p, @Call.%p
+// CHECK:STDOUT:     %.loc30_9: %.9 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc30_19: type = ptr_type %Derived [template = constants.%.9]
+// CHECK:STDOUT:     %p.loc30_9.1: %.9 = param p
+// CHECK:STDOUT:     @Call.%p: %.9 = bind_name p, %p.loc30_9.1
 // CHECK:STDOUT:     %int.make_type_32.loc30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc30_25.1: type = value_of_initializer %int.make_type_32.loc30 [template = i32]
 // CHECK:STDOUT:     %.loc30_25.2: type = converted %int.make_type_32.loc30, %.loc30_25.1 [template = i32]
 // CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:     @Call.%p: %.9 = bind_name p, %p.loc30_9.3
-// CHECK:STDOUT:     %p.loc30_9.3: %.9 = param p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -126,7 +130,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref.loc16: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc16: %.5 = base_decl %Base, element0 [template]
-// CHECK:STDOUT:   %SelfBase.decl: %SelfBase.type = fn_decl @SelfBase [template = constants.%SelfBase] {} {
+// CHECK:STDOUT:   %SelfBase.decl: %SelfBase.type = fn_decl @SelfBase [template = constants.%SelfBase] {
+// CHECK:STDOUT:     %.loc18_15: %Base = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc18: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc18_15.1: %Base = param self
 // CHECK:STDOUT:     %self.loc18_15.2: %Base = bind_name self, %self.loc18_15.1
@@ -135,7 +141,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc18_32.2: type = converted %int.make_type_32, %.loc18_32.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {} {
+// CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
+// CHECK:STDOUT:     %.loc19_24: %.6 = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc19: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc19_34: type = ptr_type %Base [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc19_24.1: %.6 = param self

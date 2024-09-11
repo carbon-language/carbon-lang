@@ -56,13 +56,13 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Print.decl: %Print.type.1 = fn_decl @Print.1 [template = constants.%Print.1] {
-// CHECK:STDOUT:     %.loc11_11: i32 = binding_pattern a, @Print.1.%a
+// CHECK:STDOUT:     %.loc11_10: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %int.make_type_32, %.loc11_13.1 [template = i32]
-// CHECK:STDOUT:     @Print.1.%a: i32 = bind_name a, %a.loc11_10.3
-// CHECK:STDOUT:     %a.loc11_10.3: i32 = param a
+// CHECK:STDOUT:     %a.loc11_10.1: i32 = param a
+// CHECK:STDOUT:     @Print.1.%a: i32 = bind_name a, %a.loc11_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }

@@ -52,7 +52,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
-// CHECK:STDOUT:     %.loc5_26: %Self = binding_pattern other, %other.loc5_21.2
+// CHECK:STDOUT:     %.loc5_9: %Self = binding_pattern self
+// CHECK:STDOUT:     %.loc5_21: %Self = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_15: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = @Op.%Self (constants.%Self)]
@@ -62,12 +63,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc5_28: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = @Op.%Self (constants.%Self)]
+// CHECK:STDOUT:     %other.loc5_21.1: @Op.%Self (%Self) = param other
+// CHECK:STDOUT:     %other.loc5_21.2: @Op.%Self (%Self) = bind_name other, %other.loc5_21.1
 // CHECK:STDOUT:     %Self.ref.loc5_37: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %return.var: ref @Op.%Self (%Self) = var <return slot>
-// CHECK:STDOUT:     %other.loc5_21.2: @Op.%Self (%Self) = bind_name other, %other.loc5_21.3
-// CHECK:STDOUT:     %other.loc5_21.3: @Op.%Self (%Self) = param other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_41: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -108,9 +109,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref Main//a, inst+26, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+20, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.4 = import_ref Main//a, inst+27, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+21, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+21, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,20 +126,20 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc10_7: %.1 = binding_pattern x, @F.%x
-// CHECK:STDOUT:     %.loc10_14: %.1 = binding_pattern y, @F.%y
+// CHECK:STDOUT:     %.loc10_6: %.1 = binding_pattern x
+// CHECK:STDOUT:     %.loc10_13: %.1 = binding_pattern y
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %x.loc10_6.1: %.1 = param x
+// CHECK:STDOUT:     @F.%x: %.1 = bind_name x, %x.loc10_6.1
 // CHECK:STDOUT:     %.loc10_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_17.2: type = converted %.loc10_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %y.loc10_13.1: %.1 = param y
+// CHECK:STDOUT:     @F.%y: %.1 = bind_name y, %y.loc10_13.1
 // CHECK:STDOUT:     %.loc10_24.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @F.%return: ref %.1 = var <return slot>
-// CHECK:STDOUT:     @F.%x: %.1 = bind_name x, %x.loc10_6.3
-// CHECK:STDOUT:     %x.loc10_6.3: %.1 = param x
-// CHECK:STDOUT:     @F.%y: %.1 = bind_name y, %y.loc10_13.3
-// CHECK:STDOUT:     %y.loc10_13.3: %.1 = param y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,16 +152,17 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.1 as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
-// CHECK:STDOUT:     %.loc7: %.1 = binding_pattern other, %other.loc7_21.2
+// CHECK:STDOUT:     %.loc7_9: %.1 = binding_pattern self
+// CHECK:STDOUT:     %.loc7_21: %.1 = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc7_9.1: %.1 = param self
 // CHECK:STDOUT:     %self.loc7_9.2: %.1 = bind_name self, %self.loc7_9.1
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %other.loc7_21.1: %.1 = param other
+// CHECK:STDOUT:     %other.loc7_21.2: %.1 = bind_name other, %other.loc7_21.1
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref %.1 = var <return slot>
-// CHECK:STDOUT:     %other.loc7_21.2: %.1 = bind_name other, %other.loc7_21.3
-// CHECK:STDOUT:     %other.loc7_21.3: %.1 = param other
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:

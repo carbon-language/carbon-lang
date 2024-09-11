@@ -64,12 +64,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   auto push_bind_name = [&](SemIR::InstId bind_id) {
     context.node_stack().Push(node_id, bind_id);
     if (is_generic && !is_associated_constant) {
-      // TODO: this is a temporary workaround until bind_id has a more
-      // consistent kind.
-      if (auto binding_pattern =
-              context.insts().TryGetAs<SemIR::BindingPattern>(bind_id)) {
-        bind_id = binding_pattern->bind_inst_id;
-      }
       context.scope_stack().PushCompileTimeBinding(bind_id);
     }
   };
@@ -156,9 +150,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       break;
     }
 
-    case Parse::NodeKind::ImplicitParamListStart: {
+    case Parse::NodeKind::ImplicitParamListStart:
+    case Parse::NodeKind::TuplePatternStart: {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
+      // TODO: A tuple pattern can appear in other places than function
+      // parameters.
       auto param_id = context.AddInst<SemIR::Param>(
           name_node, {.type_id = cast_type_id, .name_id = name_id});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
@@ -166,27 +163,20 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
       context.AddNameToLookup(name_id, bind_id);
-      break;
-    }
-    case Parse::NodeKind::TuplePatternStart: {
-      // Parameters can have incomplete types in a function declaration, but not
-      // in a function definition. We don't know which kind we have here.
-      // TODO: A tuple pattern can appear in other places than function
-      // parameters.
-      auto param_id = context.AddInstInNoBlock<SemIR::Param>(
-          name_node, {.type_id = cast_type_id, .name_id = name_id});
-      SemIR::LocIdAndInst bind_name = make_bind_name(cast_type_id, param_id);
-      // We need the bind_name inst now so that we can add it to name lookup
-      // (in case it's referenced later in the current pattern). However,
-      // we don't want to add it to a block right now because it belongs in the
-      // pattern-match IR, but we are currently generating the pattern IR.
-      auto bind_id = context.AddInstInNoBlock(bind_name);
-      SemIR::InstId pattern_id = context.AddPatternInst<SemIR::BindingPattern>(
-          node_id, {.type_id = cast_type_id, .bind_inst_id = bind_id});
-      push_bind_name(pattern_id);
-      // TODO: Bindings should come into scope immediately in other contexts
-      // too.
-      context.AddNameToLookup(name_id, bind_id);
+      auto entity_name_id =
+          context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+      if (is_generic) {
+        context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+            name_node,
+            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      } else {
+        context.AddPatternInst<SemIR::BindingPattern>(
+            name_node,
+            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      }
+      // TODO: use the pattern insts to generate the pattern-match insts
+      // at the end of the full pattern, instead of eagerly generating them
+      // here.
       break;
     }
 

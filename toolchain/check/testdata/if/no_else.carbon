@@ -57,13 +57,13 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [template = constants.%If] {
-// CHECK:STDOUT:     %.loc14_8: bool = binding_pattern b, @If.%b
+// CHECK:STDOUT:     %.loc14_7: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %bool.make_type, %.loc14_10.1 [template = bool]
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc14_7.3
-// CHECK:STDOUT:     %b.loc14_7.3: bool = param b
+// CHECK:STDOUT:     %b.loc14_7.1: bool = param b
+// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc14_7.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

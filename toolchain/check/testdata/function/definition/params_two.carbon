@@ -41,19 +41,19 @@ fn Foo(a: i32, b: i32) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %.loc11_9: i32 = binding_pattern a, @Foo.%a
-// CHECK:STDOUT:     %.loc11_17: i32 = binding_pattern b, @Foo.%b
+// CHECK:STDOUT:     %.loc11_8: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc11_16: i32 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
+// CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
+// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc11_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
-// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc11_8.3
-// CHECK:STDOUT:     %a.loc11_8.3: i32 = param a
-// CHECK:STDOUT:     @Foo.%b: i32 = bind_name b, %b.loc11_16.3
-// CHECK:STDOUT:     %b.loc11_16.3: i32 = param b
+// CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
+// CHECK:STDOUT:     @Foo.%b: i32 = bind_name b, %b.loc11_16.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

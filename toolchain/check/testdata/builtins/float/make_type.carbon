@@ -75,14 +75,14 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Float.decl: %Float.type = fn_decl @Float [template = constants.%Float] {
-// CHECK:STDOUT:     %.loc4_14: i32 = binding_pattern size, @Float.%size
+// CHECK:STDOUT:     %.loc4_10: i32 = binding_pattern size
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %int.make_type_32, %.loc4_16.1 [template = i32]
+// CHECK:STDOUT:     %size.loc4_10.1: i32 = param size
+// CHECK:STDOUT:     @Float.%size: i32 = bind_name size, %size.loc4_10.1
 // CHECK:STDOUT:     @Float.%return: ref type = var <return slot>
-// CHECK:STDOUT:     @Float.%size: i32 = bind_name size, %size.loc4_10.3
-// CHECK:STDOUT:     %size.loc4_10.3: i32 = param size
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -136,14 +136,14 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %f.var: ref f64 = var f
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [template = constants.%GetFloat] {
-// CHECK:STDOUT:     %.loc8_21: i32 = binding_pattern dyn_size, @GetFloat.%dyn_size
+// CHECK:STDOUT:     %.loc8_13: i32 = binding_pattern dyn_size
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_32, %.loc8_23.1 [template = i32]
+// CHECK:STDOUT:     %dyn_size.loc8_13.1: i32 = param dyn_size
+// CHECK:STDOUT:     @GetFloat.%dyn_size: i32 = bind_name dyn_size, %dyn_size.loc8_13.1
 // CHECK:STDOUT:     @GetFloat.%return: ref type = var <return slot>
-// CHECK:STDOUT:     @GetFloat.%dyn_size: i32 = bind_name dyn_size, %dyn_size.loc8_13.3
-// CHECK:STDOUT:     %dyn_size.loc8_13.3: i32 = param dyn_size
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

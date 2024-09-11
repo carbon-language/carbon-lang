@@ -70,12 +70,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc16_7: %.4 = binding_pattern p, @G.%p
+// CHECK:STDOUT:     %.loc16_6: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_14: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc16_6.3
-// CHECK:STDOUT:     %p.loc16_6.3: %.4 = param p
+// CHECK:STDOUT:     %p.loc16_6.1: %.4 = param p
+// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc16_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
