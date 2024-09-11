@@ -52,6 +52,8 @@ class Driver {
 
  private:
   struct Options;
+
+  // TODO: Remove from Driver.
   class CompilationUnit;
 
   // Delegates to the command line library to parse the arguments and store the
@@ -61,13 +63,16 @@ class Driver {
 
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports.
+  // TODO: Remove from Driver.
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
 
   // Implements the compile subcommand of the driver.
+  // TODO: Remove from Driver.
   auto Compile(const CompileOptions& options,
                const CodegenOptions& codegen_options) -> RunResult;
 
   // Implements the link subcommand of the driver.
+  // TODO: Remove from Driver.
   auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
       -> RunResult;
 
