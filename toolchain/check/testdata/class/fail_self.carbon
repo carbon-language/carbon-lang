@@ -205,7 +205,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc55_5: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc55_7.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc55_7.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc55_7.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc55_7.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc55_7.3: %Class = converted %ws.ref, <error> [template = <error>]

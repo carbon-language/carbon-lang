@@ -183,7 +183,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %G.ref.loc47: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc47_7: <bound method> = bound_method %.loc47_4.1, %G.ref.loc47
 // CHECK:STDOUT:   %.loc47_4.2: %.1 = addr_of %.loc47_4.1
-// CHECK:STDOUT:   %.loc47_9.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc47_9.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc47_9.2: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.10]
 // CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc47_9.2 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc47_9.3: %Class = converted %.loc47_4.2, <error> [template = <error>]

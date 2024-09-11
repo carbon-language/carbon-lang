@@ -26,6 +26,17 @@ impl X as NotGenericNoParams {}
 impl X as NotGenericButParams() {}
 impl X as GenericAndParams(X) {}
 impl X as C(X).GenericNoParams {}
+// CHECK:STDERR: params.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `impl as non-interface`.
+// CHECK:STDERR: impl X as C(X).GenericAndParams(X) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: params.carbon:[[@LINE+7]]:11: ERROR: Cannot deduce value for generic parameter `T`.
+// CHECK:STDERR: impl X as C(X).GenericAndParams(X) {}
+// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: params.carbon:[[@LINE-15]]:3: While deducing parameters of generic declared here.
+// CHECK:STDERR:   interface GenericAndParams(U:! type) {}
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl X as C(X).GenericAndParams(X) {}
 
 // --- fail_non_generic_implicit_params.carbon
@@ -79,8 +90,6 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %.10: type = interface_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
-// CHECK:STDOUT:   %.12: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X) [template]
-// CHECK:STDOUT:   %.13: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X, %U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,38 +115,31 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_31.1: type = value_of_initializer %.loc15_30 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_31.2: type = converted %.loc15_30, %.loc15_31.1 [template = constants.%.3]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %X.ref.loc15: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, %NotGenericButParams.decl [template = constants.%NotGenericButParams]
-// CHECK:STDOUT:     %.loc15_30: init type = call %NotGenericButParams.ref() [template = constants.%.3]
+// CHECK:STDOUT:     %.loc15: type = interface_type @NotGenericButParams [template = constants.%.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_29.1: type = value_of_initializer %.loc16_27 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc16_29.2: type = converted %.loc16_27, %.loc16_29.1 [template = constants.%.10]
 // CHECK:STDOUT:   impl_decl @impl.3 {
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref.loc16: %GenericAndParams.type.1 = name_ref GenericAndParams, %GenericAndParams.decl [template = constants.%GenericAndParams.1]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc16_27: init type = call %GenericAndParams.ref.loc16(%X.ref.loc16_28) [template = constants.%.10]
+// CHECK:STDOUT:     %.loc16: type = interface_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%.10]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.4 {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref.loc17: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %X.ref.loc17_13: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc17: init type = call %C.ref.loc17(%X.ref.loc17_13) [template = constants.%C.3]
+// CHECK:STDOUT:     %C.loc17: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
 // CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%.5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18_34.1: type = value_of_initializer %.loc18_32 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc18_34.2: type = converted %.loc18_32, %.loc18_34.1 [template = constants.%.12]
 // CHECK:STDOUT:   impl_decl @impl.5 {
-// CHECK:STDOUT:     %X.ref.loc18_6: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %X.ref.loc18_13: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc18_12: init type = call %C.ref.loc18(%X.ref.loc18_13) [template = constants.%C.3]
-// CHECK:STDOUT:     %GenericAndParams.ref.loc18: %GenericAndParams.type.2 = name_ref GenericAndParams, @C.%GenericAndParams.decl [template = constants.%GenericAndParams.2]
-// CHECK:STDOUT:     %X.ref.loc18_33: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc18_32: init type = call %GenericAndParams.ref.loc18(%X.ref.loc18_33) [template = constants.%.12]
+// CHECK:STDOUT:     %X.ref.loc29_6: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %C.ref.loc29: %C.type = name_ref C, %C.decl [template = constants.%C.1]
+// CHECK:STDOUT:     %X.ref.loc29_13: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %C.loc29: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
+// CHECK:STDOUT:     %GenericAndParams.ref.loc29: %GenericAndParams.type.2 = name_ref GenericAndParams, @C.%GenericAndParams.decl [template = constants.%GenericAndParams.2]
+// CHECK:STDOUT:     %X.ref.loc29_33: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,11 +235,9 @@ interface A(T: type) {}
 // CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: %X as %.12 {
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness () [template = constants.%.9]
-// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.5: %X as <error> {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc18
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(file.%T.loc8_9.2: type) {
@@ -300,19 +300,6 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(constants.%X) {
-// CHECK:STDOUT:   %U => constants.%U
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T => constants.%X
-// CHECK:STDOUT:   %.1 => constants.%.13
-// CHECK:STDOUT:   %Self.2 => constants.%Self.5
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(constants.%X, constants.%U) {
-// CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_generic_implicit_params.carbon

@@ -112,8 +112,6 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
-// CHECK:STDOUT:   %.loc15_30.1: type = value_of_initializer %.loc15_28 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_30.2: type = converted %.loc15_28, %.loc15_30.1 [template = constants.%.7]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
@@ -121,10 +119,8 @@ fn Test() {
 // CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref.loc15: %ImplicitAs.type = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
 // CHECK:STDOUT:     %X.ref.loc15: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc15_28: init type = call %ImplicitAs.ref.loc15(%X.ref.loc15) [template = constants.%.7]
+// CHECK:STDOUT:     %.loc15_28: type = interface_type @ImplicitAs, @ImplicitAs(constants.%X) [template = constants.%.7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_30.1: type = value_of_initializer %.loc19_26.3 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc19_30.2: type = converted %.loc19_26.3, %.loc19_30.1 [template = constants.%.12]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %X.ref.loc19: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %Core.ref.loc19: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
@@ -132,7 +128,7 @@ fn Test() {
 // CHECK:STDOUT:     %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_26.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
 // CHECK:STDOUT:     %.loc19_26.2: type = converted %int.make_type_32.loc19, %.loc19_26.1 [template = i32]
-// CHECK:STDOUT:     %.loc19_26.3: init type = call %ImplicitAs.ref.loc19(%.loc19_26.2) [template = constants.%.12]
+// CHECK:STDOUT:     %.loc19_26.3: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.12]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sink_i32.decl: %Sink_i32.type = fn_decl @Sink_i32 [template = constants.%Sink_i32] {
 // CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%Int32() [template = i32]
@@ -265,8 +261,8 @@ fn Test() {
 // CHECK:STDOUT:   %Source.ref.loc30: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc30_18.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.ref.loc30(%X.ref) to %.loc30_18.1
-// CHECK:STDOUT:   %.loc30_11.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.12]
+// CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.ref.loc30() to %.loc30_18.1
+// CHECK:STDOUT:   %.loc30_11.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.12]
 // CHECK:STDOUT:   %.loc30_11.2: %.13 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.14]
 // CHECK:STDOUT:   %Convert.ref.loc30: %.13 = name_ref Convert, %.loc30_11.2 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc30_18.2: ref %X = temporary %.loc30_18.1, %Source.call.loc30
@@ -284,8 +280,8 @@ fn Test() {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc31_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc31_16.2: type = converted %int.make_type_32, %.loc31_16.1 [template = i32]
-// CHECK:STDOUT:   %Source.call.loc31: init i32 = call %Source.ref.loc31(%.loc31_16.2)
-// CHECK:STDOUT:   %.loc31_9.1: init type = call constants.%ImplicitAs(constants.%X) [template = constants.%.7]
+// CHECK:STDOUT:   %Source.call.loc31: init i32 = call %Source.ref.loc31()
+// CHECK:STDOUT:   %.loc31_9.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%X) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc31_9.2: %.8 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%X) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref.loc31: %.8 = name_ref Convert, %.loc31_9.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc31_16.3: ref i32 = temporary_storage

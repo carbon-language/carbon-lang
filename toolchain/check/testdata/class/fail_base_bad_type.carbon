@@ -497,7 +497,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromNonType {
 // CHECK:STDOUT:   %.loc35_16.1: i32 = int_literal 32 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc35_16.2: init type = call constants.%ImplicitAs(type) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc35_16.2: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc35_16.3: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc35_16.3 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc35_16.4: type = converted %.loc35_16.1, <error> [template = <error>]
@@ -600,7 +600,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBasei32(%p: %.15) -> %.16 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.15 = name_ref p, %p
-// CHECK:STDOUT:   %.loc57_61.1: init type = call constants.%ImplicitAs(constants.%.16) [template = constants.%.17]
+// CHECK:STDOUT:   %.loc57_61.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.16) [template = constants.%.17]
 // CHECK:STDOUT:   %.loc57_61.2: %.18 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.16) [template = constants.%.19]
 // CHECK:STDOUT:   %Convert.ref: %.18 = name_ref Convert, %.loc57_61.2 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc57_61.3: %.16 = converted %p.ref, <error> [template = <error>]
@@ -618,7 +618,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseTuple(%p: %.24) -> %.25 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.24 = name_ref p, %p
-// CHECK:STDOUT:   %.loc76_69.1: init type = call constants.%ImplicitAs(constants.%.25) [template = constants.%.26]
+// CHECK:STDOUT:   %.loc76_69.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.25) [template = constants.%.26]
 // CHECK:STDOUT:   %.loc76_69.2: %.27 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.25) [template = constants.%.28]
 // CHECK:STDOUT:   %Convert.ref: %.27 = name_ref Convert, %.loc76_69.2 [template = constants.%.28]
 // CHECK:STDOUT:   %.loc76_69.3: %.25 = converted %p.ref, <error> [template = <error>]
@@ -636,7 +636,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseStruct(%p: %.31) -> %.30 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.31 = name_ref p, %p
-// CHECK:STDOUT:   %.loc97_82.1: init type = call constants.%ImplicitAs(constants.%.30) [template = constants.%.32]
+// CHECK:STDOUT:   %.loc97_82.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.30) [template = constants.%.32]
 // CHECK:STDOUT:   %.loc97_82.2: %.33 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.30) [template = constants.%.34]
 // CHECK:STDOUT:   %Convert.ref: %.33 = name_ref Convert, %.loc97_82.2 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc97_82.3: %.30 = converted %p.ref, <error> [template = <error>]
@@ -654,7 +654,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseIncomplete(%p: %.35) -> %.36 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.35 = name_ref p, %p
-// CHECK:STDOUT:   %.loc122_82.1: init type = call constants.%ImplicitAs(constants.%.36) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc122_82.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.36) [template = constants.%.37]
 // CHECK:STDOUT:   %.loc122_82.2: %.38 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.36) [template = constants.%.39]
 // CHECK:STDOUT:   %Convert.ref: %.38 = name_ref Convert, %.loc122_82.2 [template = constants.%.39]
 // CHECK:STDOUT:   %.loc122_82.3: %.36 = converted %p.ref, <error> [template = <error>]

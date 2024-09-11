@@ -450,7 +450,7 @@ struct ClassInit {
 
 // The type for a class, either non-generic or specific.
 struct ClassType {
-  static constexpr auto Kind = InstKind::ClassType.Define<Parse::InvalidNodeId>(
+  static constexpr auto Kind = InstKind::ClassType.Define<Parse::NodeId>(
       {.ir_name = "class_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
@@ -688,11 +688,10 @@ struct InterfaceDecl {
 
 // The type for an interface, either non-generic or specific.
 struct InterfaceType {
-  static constexpr auto Kind =
-      InstKind::InterfaceType.Define<Parse::InvalidNodeId>(
-          {.ir_name = "interface_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::InterfaceType.Define<Parse::NodeId>(
+      {.ir_name = "interface_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   InterfaceId interface_id;

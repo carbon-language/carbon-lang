@@ -112,7 +112,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %.loc17_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc17_25.2: type = converted %int.make_type_32, %.loc17_25.1 [template = i32]
 // CHECK:STDOUT:   %.loc17_28: type = struct_type {.a: i32} [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_29.1: init type = call constants.%ImplicitAs(constants.%.2) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_29.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.2) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_29.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.2) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc17_29.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc17_29.3: %.2 = converted %.loc17_28, <error> [template = <error>]

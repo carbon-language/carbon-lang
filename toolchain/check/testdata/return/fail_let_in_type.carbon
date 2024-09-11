@@ -104,7 +104,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc27_30: i32 = int_literal 6 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc27_31.1: init type = call constants.%ImplicitAs(constants.%y) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:     %.loc27_31.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%y) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:     %.loc27_31.2: @HalfDozen.%.2 (%.7) = specific_constant <unexpected>.inst+43, @ImplicitAs(constants.%y) [symbolic = %.3 (constants.%.8)]
 // CHECK:STDOUT:     %Convert.ref: @HalfDozen.%.2 (%.7) = name_ref Convert, %.loc27_31.2 [symbolic = %.3 (constants.%.8)]
 // CHECK:STDOUT:     %.loc27_31.3: @HalfDozen.%y (%y) = converted %.loc27_30, <error> [template = <error>]

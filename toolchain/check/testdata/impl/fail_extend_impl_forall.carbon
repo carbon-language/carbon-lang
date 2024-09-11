@@ -109,14 +109,12 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc19_54.1: type = value_of_initializer %.loc19_52 [symbolic = constants.%.2]
-// CHECK:STDOUT:   %.loc19_54.2: type = converted %.loc19_52, %.loc19_54.1 [symbolic = constants.%.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.loc19_23.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19_23.2: type = bind_symbolic_name T 0, %T.loc19_23.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc19_52: init type = call %GenericInterface.ref(%T.ref) [symbolic = constants.%.2]
+// CHECK:STDOUT:     %.loc19: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

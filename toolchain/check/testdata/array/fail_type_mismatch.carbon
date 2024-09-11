@@ -197,7 +197,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc18_39.2: i32 = int_literal 0 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc18_39.3: ref i32 = array_index file.%a.var, %.loc18_39.2
 // CHECK:STDOUT:   %.loc18_39.4: init i32 = initialize_from %.loc18_20 to %.loc18_39.3 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_39.5: init type = call constants.%ImplicitAs(i32) [template = constants.%.14]
+// CHECK:STDOUT:   %.loc18_39.5: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc18_39.6: %.15 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.16]
 // CHECK:STDOUT:   %Convert.ref.loc18: %.15 = name_ref Convert, %.loc18_39.6 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc18_39.7: i32 = converted %.loc18_23, <error> [template = <error>]
@@ -209,7 +209,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc28_19.4: ref i32 = array_index file.%b.var, %.loc28_19.3
 // CHECK:STDOUT:   %.loc28_19.5: init i32 = initialize_from %.loc28_19.2 to %.loc28_19.4
 // CHECK:STDOUT:   %.loc28_19.6: ref String = tuple_access %t1.ref, element1
-// CHECK:STDOUT:   %.loc28_19.7: init type = call constants.%ImplicitAs(i32) [template = constants.%.14]
+// CHECK:STDOUT:   %.loc28_19.7: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc28_19.8: %.15 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.16]
 // CHECK:STDOUT:   %Convert.ref.loc28: %.15 = name_ref Convert, %.loc28_19.8 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc28_19.9: i32 = converted %.loc28_19.6, <error> [template = <error>]

@@ -184,7 +184,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
 // CHECK:STDOUT:   %.loc12_9: i32 = int_literal 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_12.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_12.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_12.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc12_12.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc12_12.3: type = converted %.loc12_9, <error> [template = <error>]
@@ -321,7 +321,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_19.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_19.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_19.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc12_19.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc12_19.3: type = converted %.loc12_16, <error> [template = <error>]

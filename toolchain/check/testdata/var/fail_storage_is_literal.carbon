@@ -94,7 +94,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc18_10.1: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_10.2: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_10.2: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc18_10.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_10.3 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc18_10.4: type = converted %.loc18_10.1, <error> [template = <error>]

@@ -157,7 +157,7 @@ let a: T = 0;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_12: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_13.1: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.6]
+// CHECK:STDOUT:   %.loc11_13.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%T) [symbolic = constants.%.6]
 // CHECK:STDOUT:   %.loc11_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc11_13.2 [symbolic = constants.%.8]
 // CHECK:STDOUT:   %.loc11_13.3: %T = converted %.loc11_12, <error> [template = <error>]

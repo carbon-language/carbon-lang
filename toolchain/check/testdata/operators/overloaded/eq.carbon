@@ -632,7 +632,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Equal.ref: %.6 = name_ref Equal, imports.%import_ref.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc23_12.1: %Equal.type.2 = interface_witness_access @impl.%.loc7, element0 [template = constants.%Equal.1]
 // CHECK:STDOUT:   %.loc23_12.2: <bound method> = bound_method %a.ref, %.loc23_12.1
-// CHECK:STDOUT:   %.loc23_12.3: init type = call constants.%ImplicitAs(constants.%C) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc23_12.3: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.11]
 // CHECK:STDOUT:   %.loc23_12.4: %.12 = specific_constant imports.%import_ref.11, @ImplicitAs(constants.%C) [template = constants.%.13]
 // CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc23_12.4 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc23_12.5: %C = converted %b.ref, <error> [template = <error>]

@@ -121,7 +121,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc23_5: f64 = float_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc23_4.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc23_4.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc23_4.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc23_4.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc23_4.3: i32 = converted %.loc23_5, <error> [template = <error>]

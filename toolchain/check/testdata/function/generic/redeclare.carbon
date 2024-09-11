@@ -146,7 +146,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %F.call: init @F.%.1 (%.1) = call %F.ref(%T.ref)
+// CHECK:STDOUT:     %F.call: init @F.%.1 (%.1) = call %F.ref()
 // CHECK:STDOUT:     %.loc7_14.1: @F.%.1 (%.1) = value_of_initializer %F.call
 // CHECK:STDOUT:     %.loc7_14.2: @F.%.1 (%.1) = converted %F.call, %.loc7_14.1
 // CHECK:STDOUT:     return %.loc7_14.2

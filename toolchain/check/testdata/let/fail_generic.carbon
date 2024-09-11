@@ -131,13 +131,13 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc13_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc21_14: i32 = int_literal 5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc21_15.1: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.6]
+// CHECK:STDOUT:   %.loc21_15.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%T) [symbolic = constants.%.6]
 // CHECK:STDOUT:   %.loc21_15.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref.loc21: %.7 = name_ref Convert, %.loc21_15.2 [symbolic = constants.%.8]
 // CHECK:STDOUT:   %.loc21_15.3: %T = converted %.loc21_14, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
-// CHECK:STDOUT:   %.loc28_11.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc28_11.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc28_11.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc28: %.11 = name_ref Convert, %.loc28_11.2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc28_11.3: i32 = converted %x.ref, <error> [template = <error>]

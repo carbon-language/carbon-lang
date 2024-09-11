@@ -122,7 +122,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc17_35.4: type = value_of_initializer %int.make_type_32.loc17_32 [template = i32]
 // CHECK:STDOUT:   %.loc17_35.5: type = converted %int.make_type_32.loc17_32, %.loc17_35.4 [template = i32]
 // CHECK:STDOUT:   %.loc17_35.6: type = converted %.loc17_35.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17_23.1: init type = call constants.%As(constants.%.3) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17_23.1: type = interface_type @As, @As(constants.%.3) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc17_23.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%.3) [template = constants.%.11]
 // CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc17_23.2 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc17_23.3: %.3 = converted %.loc17_21, <error> [template = <error>]

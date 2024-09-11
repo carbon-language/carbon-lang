@@ -18,51 +18,59 @@ namespace Carbon::Check {
 // Performs a call where the callee is the name of a generic class, such as
 // `Vector(i32)`.
 static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
-                                      SemIR::InstId callee_id,
                                       SemIR::ClassId class_id,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
-  CalleeParamsInfo class_info(context.classes().Get(class_id));
+  const auto& generic_class = context.classes().Get(class_id);
+  CalleeParamsInfo class_info(generic_class);
 
+  // Perform argument deduction.
   // TODO: Pass in information about the specific in which the generic class
   // name was found.
-  // TODO: Perform argument deduction.
   auto specific_id = SemIR::SpecificId::Invalid;
-
-  // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, class_info, specific_id);
-  return context.AddInst<SemIR::Call>(loc_id,
-                                      {.type_id = SemIR::TypeId::TypeType,
-                                       .callee_id = callee_id,
-                                       .args_id = converted_args_id});
+  if (generic_class.generic_id.is_valid()) {
+    specific_id = DeduceGenericCallArguments(
+        context, loc_id, generic_class.generic_id, SemIR::SpecificId::Invalid,
+        class_info.implicit_param_refs_id, class_info.param_refs_id,
+        /*self_id*/ SemIR::InstId::Invalid, arg_ids);
+    if (!specific_id.is_valid()) {
+      return SemIR::InstId::BuiltinError;
+    }
+  }
+  return context.AddInst<SemIR::ClassType>(loc_id,
+                                           {.type_id = SemIR::TypeId::TypeType,
+                                            .class_id = class_id,
+                                            .specific_id = specific_id});
 }
 
 // Performs a call where the callee is the name of a generic interface, such as
 // `AddWith(i32)`.
 // TODO: Refactor with PerformCallToGenericClass.
 static auto PerformCallToGenericInterface(Context& context, SemIR::LocId loc_id,
-                                          SemIR::InstId callee_id,
                                           SemIR::InterfaceId interface_id,
                                           llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
+  const auto& interface = context.interfaces().Get(interface_id);
   CalleeParamsInfo interface_info(context.interfaces().Get(interface_id));
 
+  // Perform argument deduction.
   // TODO: Pass in information about the specific in which the generic interface
   // name was found.
-  // TODO: Perform argument deduction.
   auto specific_id = SemIR::SpecificId::Invalid;
+  if (interface.generic_id.is_valid()) {
+    specific_id = DeduceGenericCallArguments(
+        context, loc_id, interface.generic_id, SemIR::SpecificId::Invalid,
+        interface_info.implicit_param_refs_id, interface_info.param_refs_id,
+        /*self_id*/ SemIR::InstId::Invalid, arg_ids);
+    if (!specific_id.is_valid()) {
+      return SemIR::InstId::BuiltinError;
+    }
+  }
 
-  // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
-      /*return_storage_id=*/SemIR::InstId::Invalid, interface_info,
-      specific_id);
-  return context.AddInst<SemIR::Call>(loc_id,
-                                      {.type_id = SemIR::TypeId::TypeType,
-                                       .callee_id = callee_id,
-                                       .args_id = converted_args_id});
+  return context.AddInst<SemIR::InterfaceType>(
+      loc_id, {.type_id = SemIR::TypeId::TypeType,
+               .interface_id = interface_id,
+               .specific_id = specific_id});
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
@@ -74,13 +82,12 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
         context.types().GetAsInst(context.insts().Get(callee_id).type_id());
     CARBON_KIND_SWITCH(type_inst) {
       case CARBON_KIND(SemIR::GenericClassType generic_class): {
-        return PerformCallToGenericClass(context, loc_id, callee_id,
+        return PerformCallToGenericClass(context, loc_id,
                                          generic_class.class_id, arg_ids);
       }
       case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-        return PerformCallToGenericInterface(context, loc_id, callee_id,
-                                             generic_interface.interface_id,
-                                             arg_ids);
+        return PerformCallToGenericInterface(
+            context, loc_id, generic_interface.interface_id, arg_ids);
       }
       default: {
         if (!callee_function.is_error) {

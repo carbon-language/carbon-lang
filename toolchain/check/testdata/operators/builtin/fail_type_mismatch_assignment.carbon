@@ -108,7 +108,7 @@ fn Main() {
 // CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc19_7: f64 = float_literal 5.6000000000000005 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc19_5.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc19_5.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc19_5.2: %.8 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc19_5.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc19_5.3: i32 = converted %.loc19_7, <error> [template = <error>]

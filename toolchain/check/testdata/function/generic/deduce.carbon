@@ -49,10 +49,6 @@ library "fail_todo_deduce_implicit";
 fn ImplicitGenericParam[T:! type](x: T) -> T*;
 
 fn CallImplicitGenericParam(n: i32) -> i32* {
-  // CHECK:STDERR: fail_todo_deduce_implicit.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `Call with implicit parameters`.
-  // CHECK:STDERR:   return ImplicitGenericParam(n);
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   return ImplicitGenericParam(n);
 }
 
@@ -202,7 +198,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc7_30.2: type = converted %int.make_type_32, %.loc7_30.1 [template = i32]
-// CHECK:STDOUT:   %ExplicitGenericParam.call: init %.3 = call %ExplicitGenericParam.ref(%.loc7_30.2)
+// CHECK:STDOUT:   %ExplicitGenericParam.call: init %.3 = call %ExplicitGenericParam.ref()
 // CHECK:STDOUT:   %.loc7_35.1: %.3 = value_of_initializer %ExplicitGenericParam.call
 // CHECK:STDOUT:   %.loc7_35.2: %.3 = converted %ExplicitGenericParam.call, %.loc7_35.1
 // CHECK:STDOUT:   return %.loc7_35.2
@@ -220,7 +216,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %ExplicitGenericParam.ref: %ExplicitGenericParam.type = name_ref ExplicitGenericParam, file.%ExplicitGenericParam.decl [template = constants.%ExplicitGenericParam]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_37: type = struct_type {.a: %T} [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:     %ExplicitGenericParam.call: init @CallExplicitGenericParamWithGenericArg.%.2 (%.5) = call %ExplicitGenericParam.ref(%.loc11_37)
+// CHECK:STDOUT:     %ExplicitGenericParam.call: init @CallExplicitGenericParamWithGenericArg.%.2 (%.5) = call %ExplicitGenericParam.ref()
 // CHECK:STDOUT:     %.loc11_39.1: @CallExplicitGenericParamWithGenericArg.%.2 (%.5) = value_of_initializer %ExplicitGenericParam.call
 // CHECK:STDOUT:     %.loc11_39.2: @CallExplicitGenericParamWithGenericArg.%.2 (%.5) = converted %ExplicitGenericParam.call, %.loc11_39.1
 // CHECK:STDOUT:     return %.loc11_39.2
@@ -414,10 +410,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ImplicitGenericParam.ref: %ImplicitGenericParam.type = name_ref ImplicitGenericParam, file.%ImplicitGenericParam.decl [template = constants.%ImplicitGenericParam]
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %ImplicitGenericParam.call: init %.3 = call %ImplicitGenericParam.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc11_33.1: %.3 = value_of_initializer %ImplicitGenericParam.call [template = <error>]
-// CHECK:STDOUT:   %.loc11_33.2: %.3 = converted %ImplicitGenericParam.call, %.loc11_33.1 [template = <error>]
-// CHECK:STDOUT:   return %.loc11_33.2
+// CHECK:STDOUT:   %ImplicitGenericParam.call: init %.3 = call %ImplicitGenericParam.ref(%n.ref)
+// CHECK:STDOUT:   %.loc7_33.1: %.3 = value_of_initializer %ImplicitGenericParam.call
+// CHECK:STDOUT:   %.loc7_33.2: %.3 = converted %ImplicitGenericParam.call, %.loc7_33.1
+// CHECK:STDOUT:   return %.loc7_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%T) {
