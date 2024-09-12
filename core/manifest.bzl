@@ -5,7 +5,7 @@
 """Rule for producing a manifest for a filegroup."""
 
 def _manifest(ctx):
-    dir = ctx.build_file_path.removesuffix("BUILD")
+    dir = ctx.label.package + "/"
     content = [f.path.removeprefix(dir) for f in ctx.files.srcs]
     ctx.actions.write(ctx.outputs.out, "\n".join(content) + "\n")
 
