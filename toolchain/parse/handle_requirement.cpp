@@ -15,7 +15,8 @@ auto HandleRequirementBegin(Context& context) -> void {
   if (context.PositionKind() == Lex::TokenKind::Period &&
       context.PositionKind(Lookahead::NextToken) ==
           Lex::TokenKind::Identifier &&
-      context.PositionKind(Lookahead(2)) == Lex::TokenKind::Equal) {
+      context.PositionKind(static_cast<Lookahead>(2)) ==
+          Lex::TokenKind::Equal) {
     auto period = context.Consume();
     context.AddNode(NodeKind::IdentifierName, context.Consume(),
                     /*has_error=*/false);
