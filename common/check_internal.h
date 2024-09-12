@@ -44,8 +44,7 @@ template <TemplateString Kind, TemplateString File, int Line,
     // even if there are no values as we want to have consistent handling of
     // `{}`s in the format string. This case is about when there is no message
     // at all, just the condition.
-    CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
-                  FormatStr.c_str());
+    CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(), "");
   } else {
     CheckFailImpl(
         Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
