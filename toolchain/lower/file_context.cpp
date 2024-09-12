@@ -249,6 +249,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
                              mangled_name, llvm_module());
 
+  CARBON_CHECK(llvm_function->getName() == mangled_name,
+               "Do not rely on llvm::Function overload renaming");
+
   // Set up parameters and the return slot.
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
