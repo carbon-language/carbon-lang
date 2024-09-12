@@ -39,8 +39,9 @@ TEST(CheckTest, CheckFalseFormattedMessage) {
   const char msg[] = "msg";
   std::string str = "str";
   int i = 1;
-  ASSERT_DEATH({ CARBON_CHECK(false, "{0} {1} {2} {3}", msg, str, i, 0); },
-               "\nCHECK failure at common/check_test.cpp:.+: false: msg str 1 0\n");
+  ASSERT_DEATH(
+      { CARBON_CHECK(false, "{0} {1} {2} {3}", msg, str, i, 0); },
+      "\nCHECK failure at common/check_test.cpp:.+: false: msg str 1 0\n");
 }
 
 TEST(CheckTest, CheckOutputForms) {
