@@ -8,9 +8,7 @@
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/VirtualFileSystem.h"
-#include "llvm/Support/raw_ostream.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/driver/driver_env.h"
 
 namespace Carbon {
 
@@ -36,10 +34,10 @@ class Driver {
   Driver(llvm::vfs::FileSystem& fs, const InstallPaths* installation,
          llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
-      : fs_(fs),
-        installation_(installation),
-        output_stream_(output_stream),
-        error_stream_(error_stream) {}
+      : driver_env_{.fs = fs,
+                    .installation = installation,
+                    .output_stream = output_stream,
+                    .error_stream = error_stream} {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -73,19 +71,7 @@ class Driver {
   auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
       -> RunResult;
 
-  // The filesystem for source code.
-  llvm::vfs::FileSystem& fs_;
-
-  // Helper to locate the toolchain installation's files.
-  const InstallPaths* installation_;
-
-  // Standard output; stdout.
-  llvm::raw_pwrite_stream& output_stream_;
-  // Error output; stderr.
-  llvm::raw_pwrite_stream& error_stream_;
-
-  // For CARBON_VLOG.
-  llvm::raw_pwrite_stream* vlog_stream_ = nullptr;
+  DriverEnv driver_env_;
 };
 
 }  // namespace Carbon
