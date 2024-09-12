@@ -1037,8 +1037,7 @@ struct DesignatorExpr {
 struct RequirementEqual {
   static constexpr auto Kind = NodeKind::RequirementEqual.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
-  // TODO: Enforce that the lhs is always a DesignatorExpr.
-  AnyExprId lhs;
+  DesignatorExprId lhs;
   Lex::EqualTokenIndex token;
   AnyExprId rhs;
 };
@@ -1059,6 +1058,9 @@ struct RequirementImpls {
   AnyExprId rhs;
 };
 
+// An `and` token separating requirements in a `where` expression.
+using RequirementAnd = LeafNode<NodeKind::RequirementAnd, Lex::AndTokenIndex>;
+
 struct WhereOperand {
   static constexpr auto Kind =
       NodeKind::WhereOperand.Define({.child_count = 1});
@@ -1069,13 +1071,11 @@ struct WhereOperand {
 };
 
 struct WhereExpr {
-  static constexpr auto Kind =
-      NodeKind::WhereExpr.Define({.category = NodeCategory::Expr,
-                                  .bracketed_by = WhereOperand::Kind,
-                                  .child_count = 2});
+  static constexpr auto Kind = NodeKind::WhereExpr.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = WhereOperand::Kind});
   WhereOperandId introducer;
   Lex::WhereTokenIndex token;
-  AnyRequirementId requirements;
+  CommaSeparatedList<AnyRequirementId, RequirementAndId> requirements;
 };
 
 // Choice nodes

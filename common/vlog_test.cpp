@@ -49,5 +49,13 @@ TEST(VLogTest, Disabled) {
   EXPECT_THAT(vlog.TakeStr(), IsEmpty());
 }
 
+TEST(VLogTest, To) {
+  TestRawOstream buffer;
+  CARBON_VLOG_TO(&buffer, "Test");
+  EXPECT_THAT(buffer.TakeStr(), "Test");
+}
+
+TEST(VLogTest, ToNull) { CARBON_VLOG_TO(nullptr, "Unused"); }
+
 }  // namespace
 }  // namespace Carbon::Testing

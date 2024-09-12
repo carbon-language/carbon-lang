@@ -94,7 +94,7 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // Get the expected number of parse tree nodes that will be created for this
   // token.
-  auto expected_parse_tree_size() const -> int {
+  auto expected_max_parse_tree_size() const -> int {
     return ExpectedParseTreeSize[AsInt()];
   }
 

@@ -29,8 +29,10 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
         size += subtree_sizes_[child.index];
         if (kind.has_bracket() && i == kind.child_count() - 1) {
           CARBON_CHECK(kind.bracket() == tree.node_kind(child),
-                       "Node {0} needs bracket {1}, found wrong bracket {2}",
-                       kind, kind.bracket(), tree.node_kind(child));
+                       "Node {0} with child count {1} needs bracket {2}, found "
+                       "wrong bracket {3}",
+                       kind, kind.child_count(), kind.bracket(),
+                       tree.node_kind(child));
         }
       }
     } else {

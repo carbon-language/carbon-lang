@@ -76,7 +76,10 @@ sh_test(
 
 cc_library(
     name = "driver",
-    srcs = ["driver.cpp"],
+    srcs = [
+        "driver.cpp",
+        "driver_env.h",
+    ],
     hdrs = ["driver.h"],
     data = [
         "//toolchain/install:install_lib_data",
@@ -85,6 +88,7 @@ cc_library(
     deps = [
         ":clang_runner",
         "//common:command_line",
+        "//common:ostream",
         "//common:version",
         "//common:vlog",
         "//toolchain/base:value_store",

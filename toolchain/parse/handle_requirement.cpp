@@ -9,8 +9,23 @@
 namespace Carbon::Parse {
 
 auto HandleRequirementBegin(Context& context) -> void {
-  context.PopAndDiscardState();
-  context.PushState(State::RequirementOperator);
+  auto state = context.PopState();
+
+  // Peek ahead for `.designator = ...`, and give it special handling.
+  if (context.PositionKind() == Lex::TokenKind::Period &&
+      context.PositionKind(Lookahead::NextToken) ==
+          Lex::TokenKind::Identifier &&
+      context.PositionKind(static_cast<Lookahead>(2)) ==
+          Lex::TokenKind::Equal) {
+    auto period = context.Consume();
+    context.AddNode(NodeKind::IdentifierName, context.Consume(),
+                    /*has_error=*/false);
+    context.AddNode(NodeKind::DesignatorExpr, period, /*has_error=*/false);
+    state.token = context.Consume();
+    context.PushState(state, State::RequirementOperatorFinish);
+  } else {
+    context.PushState(State::RequirementOperator);
+  }
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
@@ -18,14 +33,22 @@ auto HandleRequirementOperator(Context& context) -> void {
   auto state = context.PopState();
 
   switch (context.PositionKind()) {
-    case Lex::TokenKind::Impls: {
+    // Accept either `impls` or `==`
+    case Lex::TokenKind::Impls:
+    case Lex::TokenKind::EqualEqual:
       break;
-    }
+
+    // Reject `=` since correct usage is consumed in `HandleRequirementBegin`.
     case Lex::TokenKind::Equal: {
-      break;
-    }
-    case Lex::TokenKind::EqualEqual: {
-      break;
+      if (!state.has_error) {
+        CARBON_DIAGNOSTIC(
+            RequirementEqualAfterNonDesignator, Error,
+            "Requirement can only use `=` after `.member` designator.");
+        context.emitter().Emit(*context.position(),
+                               RequirementEqualAfterNonDesignator);
+      }
+      context.ReturnErrorOnState();
+      return;
     }
     default: {
       if (!state.has_error) {
@@ -69,7 +92,13 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
                    token_kind);
       return;
   }
-  // TODO: Handle `and` token.
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+  if (auto token = context.ConsumeIf(Lex::TokenKind::And)) {
+    context.AddNode(NodeKind::RequirementAnd, *token, /*has_error=*/false);
+    context.PushState(State::RequirementBegin);
+  }
 }
 
 auto HandleWhereFinish(Context& context) -> void {

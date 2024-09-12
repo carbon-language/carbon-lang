@@ -618,6 +618,10 @@ CARBON_PARSE_STATE(IfExprFinish)
 // an expression.
 // TODO: Also a `require` declaration?
 //
+// expr where .designator = ...
+//            ^~~~~~~~~~~~~
+//   1. Expr
+//   2. RequirementOperatorFinish
 // expr where ...
 //           ^
 //   1. Expr
@@ -645,6 +649,13 @@ CARBON_PARSE_STATE(RequirementOperator)
 // expr where expr == expr
 //                        ^
 //   (state done)
+// expr where expr impls expr and
+//                            ^~~
+// expr where expr = expr and
+//                        ^~~
+// expr where expr == expr and
+//                         ^~~
+//   1. RequirementBegin
 CARBON_PARSE_STATE(RequirementOperatorFinish)
 
 // Finishes an `where` expression.

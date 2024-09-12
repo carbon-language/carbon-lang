@@ -618,6 +618,7 @@ class NodeStack {
         case Parse::NodeKind::PrivateModifier:
         case Parse::NodeKind::ProtectedModifier:
         case Parse::NodeKind::RealLiteral:
+        case Parse::NodeKind::RequirementAnd:
         case Parse::NodeKind::RequirementEqual:
         case Parse::NodeKind::RequirementEqualEqual:
         case Parse::NodeKind::RequirementImpls:
