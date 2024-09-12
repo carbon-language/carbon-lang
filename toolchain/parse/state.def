@@ -618,6 +618,10 @@ CARBON_PARSE_STATE(IfExprFinish)
 // an expression.
 // TODO: Also a `require` declaration?
 //
+// expr where .designator = ...
+//            ^~~~~~~~~~~~~
+//   1. Expr
+//   2. RequirementOperatorFinish
 // expr where ...
 //           ^
 //   1. Expr
