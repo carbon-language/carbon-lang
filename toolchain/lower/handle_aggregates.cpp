@@ -34,16 +34,16 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Initializing:
     case SemIR::ExprCategory::Mixed:
-      CARBON_FATAL() << "Unexpected expression category for aggregate access";
+      CARBON_FATAL("Unexpected expression category for aggregate access");
 
     case SemIR::ExprCategory::Value: {
       auto value_rep =
           SemIR::ValueRepr::ForType(context.sem_ir(), aggr_inst.type_id());
-      CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate)
-          << "aggregate type should have aggregate value representation";
+      CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate,
+                   "aggregate type should have aggregate value representation");
       switch (value_rep.kind) {
         case SemIR::ValueRepr::Unknown:
-          CARBON_FATAL() << "Lowering access to incomplete aggregate type";
+          CARBON_FATAL("Lowering access to incomplete aggregate type");
         case SemIR::ValueRepr::None:
           return aggr_value;
         case SemIR::ValueRepr::Copy:
@@ -73,8 +73,8 @@ static auto GetAggregateElement(FunctionContext& context,
               context.GetType(result_value_type_id), elem_ptr, name + ".load");
         }
         case SemIR::ValueRepr::Custom:
-          CARBON_FATAL()
-              << "Aggregate should never have custom value representation";
+          CARBON_FATAL(
+              "Aggregate should never have custom value representation");
       }
     }
 
@@ -132,8 +132,9 @@ static auto EmitAggregateInitializer(FunctionContext& context,
 
     case SemIR::InitRepr::ByCopy: {
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
-      CARBON_CHECK(refs.size() == 1)
-          << "Unexpected size for aggregate with by-copy value representation";
+      CARBON_CHECK(
+          refs.size() == 1,
+          "Unexpected size for aggregate with by-copy value representation");
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
@@ -142,8 +143,8 @@ static auto EmitAggregateInitializer(FunctionContext& context,
     }
 
     case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL() << "Lowering aggregate initialization of incomplete type "
-                     << context.sem_ir().types().GetAsInst(type_id);
+      CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
+                   context.sem_ir().types().GetAsInst(type_id));
   }
 }
 
@@ -177,7 +178,7 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
   auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
-      CARBON_FATAL() << "Incomplete aggregate type in lowering";
+      CARBON_FATAL("Incomplete aggregate type in lowering");
 
     case SemIR::ValueRepr::None:
       // TODO: Add a helper to get a "no value representation" value.
@@ -185,8 +186,9 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
 
     case SemIR::ValueRepr::Copy: {
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
-      CARBON_CHECK(refs.size() == 1)
-          << "Unexpected size for aggregate with by-copy value representation";
+      CARBON_CHECK(
+          refs.size() == 1,
+          "Unexpected size for aggregate with by-copy value representation");
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
@@ -211,8 +213,7 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
     }
 
     case SemIR::ValueRepr::Custom:
-      CARBON_FATAL()
-          << "Aggregate should never have custom value representation";
+      CARBON_FATAL("Aggregate should never have custom value representation");
   }
 }
 

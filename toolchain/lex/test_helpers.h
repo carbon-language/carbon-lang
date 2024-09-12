@@ -26,8 +26,8 @@ class SingleTokenDiagnosticConverter : public DiagnosticConverter<const char*> {
 
   auto ConvertLoc(const char* pos, ContextFnT /*context_fn*/) const
       -> DiagnosticLoc override {
-    CARBON_CHECK(StringRefContainsPointer(token_, pos))
-        << "invalid diagnostic location";
+    CARBON_CHECK(StringRefContainsPointer(token_, pos),
+                 "invalid diagnostic location");
     llvm::StringRef prefix = token_.take_front(pos - token_.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');
     if (before_last_newline.size() == prefix.size()) {

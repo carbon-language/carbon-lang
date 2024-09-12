@@ -19,25 +19,26 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
     auto kind = tree.node_kind(n);
     if (kind.has_child_count()) {
       // When the child count is set, remove the specific number from the stack.
-      CARBON_CHECK(static_cast<int32_t>(size_stack.size()) >=
-                   kind.child_count())
-          << "Need " << kind.child_count() << " children for " << kind
-          << ", have " << size_stack.size() << " available";
+      CARBON_CHECK(
+          static_cast<int32_t>(size_stack.size()) >= kind.child_count(),
+          "Need {0} children for {1}, have {2} available", kind.child_count(),
+          kind, size_stack.size());
       for (auto i : llvm::seq(kind.child_count())) {
         auto child = size_stack.pop_back_val();
         CARBON_CHECK((size_t)child.index < subtree_sizes_.size());
         size += subtree_sizes_[child.index];
         if (kind.has_bracket() && i == kind.child_count() - 1) {
-          CARBON_CHECK(kind.bracket() == tree.node_kind(child))
-              << "Node " << kind << " with child count " << kind.child_count()
-              << " needs bracket " << kind.bracket() << ", found wrong bracket "
-              << tree.node_kind(child);
+          CARBON_CHECK(kind.bracket() == tree.node_kind(child),
+                       "Node {0} with child count {1} needs bracket {2}, found "
+                       "wrong bracket {3}",
+                       kind, kind.child_count(), kind.bracket(),
+                       tree.node_kind(child));
         }
       }
     } else {
       while (true) {
-        CARBON_CHECK(!size_stack.empty())
-            << "Node " << kind << " is missing bracket " << kind.bracket();
+        CARBON_CHECK(!size_stack.empty(), "Node {0} is missing bracket {1}",
+                     kind, kind.bracket());
         auto child = size_stack.pop_back_val();
         size += subtree_sizes_[child.index];
         if (kind.bracket() == tree.node_kind(child)) {
@@ -52,15 +53,15 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
   CARBON_CHECK(static_cast<int>(subtree_sizes_.size()) == tree_->size());
 
   // Remaining nodes should all be roots in the tree; make sure they line up.
-  CARBON_CHECK(size_stack.back().index ==
-               static_cast<int32_t>(tree_->size()) - 1)
-      << size_stack.back() << " " << tree_->size() - 1;
+  CARBON_CHECK(
+      size_stack.back().index == static_cast<int32_t>(tree_->size()) - 1,
+      "{0} {1}", size_stack.back(), tree_->size() - 1);
   int prev_index = -1;
   for (const auto& n : size_stack) {
-    CARBON_CHECK(n.index - subtree_sizes_[n.index] == prev_index)
-        << "NodeId " << n << " is a root " << tree_->node_kind(n)
-        << " with subtree_size " << subtree_sizes_[n.index]
-        << ", but previous root was at " << prev_index << ".";
+    CARBON_CHECK(n.index - subtree_sizes_[n.index] == prev_index,
+                 "NodeId {0} is a root {1} with subtree_size {2}, but previous "
+                 "root was at {3}.",
+                 n, tree_->node_kind(n), subtree_sizes_[n.index], prev_index);
     prev_index = n.index;
   }
 }
@@ -219,7 +220,7 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
     }
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
-    CARBON_CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
+    CARBON_CHECK(next_depth <= depth, "Cannot have the next depth increase!");
     for (int close_children_count : llvm::seq(0, depth - next_depth)) {
       (void)close_children_count;
       output << "]}";

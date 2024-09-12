@@ -38,10 +38,10 @@ auto ParseAndExecuteProto(const Fuzzing::Carbon& carbon) -> ErrorOr<int> {
   const ErrorOr<std::string> prelude_path =
       GetRunfilesFile("carbon/explorer/data/prelude.carbon");
   // Can't do anything without a prelude, so it's a fatal error.
-  CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
+  CARBON_CHECK(prelude_path.ok(), "{0}", prelude_path.error());
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
       llvm::MemoryBuffer::getFile(*prelude_path);
-  CARBON_CHECK(!prelude.getError()) << prelude.getError().message();
+  CARBON_CHECK(!prelude.getError(), "{0}", prelude.getError().message());
   CARBON_CHECK(fs.addFile("prelude.carbon", /*ModificationTime=*/0,
                           std::move(*prelude)));
 

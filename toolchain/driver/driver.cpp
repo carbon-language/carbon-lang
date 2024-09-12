@@ -946,8 +946,8 @@ auto Driver::Compile(const CompileOptions& options,
   if (options.phase == CompileOptions::Phase::Lower) {
     return make_result();
   }
-  CARBON_CHECK(options.phase == CompileOptions::Phase::CodeGen)
-      << "CodeGen should be the last stage";
+  CARBON_CHECK(options.phase == CompileOptions::Phase::CodeGen,
+               "CodeGen should be the last stage");
 
   // Codegen.
   for (auto& unit : units) {

@@ -206,7 +206,7 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
 
 auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
   llvm::StringMapEntry<NameResult>* value = value_;
-  CARBON_CHECK(value) << "cannot print a null name";
+  CARBON_CHECK(value, "cannot print a null name");
   while (value->second.ambiguous && value->second.fallback) {
     value = value->second.fallback.value_;
   }

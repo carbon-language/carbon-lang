@@ -92,7 +92,7 @@ void ActionStack::MergeScope(RuntimeScope scope) {
     globals_->Merge(std::move(scope));
     return;
   }
-  CARBON_FATAL() << "No current scope";
+  CARBON_FATAL("No current scope");
 }
 
 namespace {
@@ -132,9 +132,9 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
   std::unique_ptr<Action> act = Pop();
   switch (FinishActionKindFor(act->kind())) {
     case FinishActionKind::Value:
-      CARBON_FATAL() << "This kind of action must produce a result: " << *act;
+      CARBON_FATAL("This kind of action must produce a result: {0}", *act);
     case FinishActionKind::NeverCalled:
-      CARBON_FATAL() << "Should not call FinishAction for: " << *act;
+      CARBON_FATAL("Should not call FinishAction for: {0}", *act);
     case FinishActionKind::NoValue:
       PopScopes(scopes_to_destroy);
       break;
@@ -150,9 +150,9 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
   std::unique_ptr<Action> act = Pop();
   switch (FinishActionKindFor(act->kind())) {
     case FinishActionKind::NoValue:
-      CARBON_FATAL() << "This kind of action cannot produce results: " << *act;
+      CARBON_FATAL("This kind of action cannot produce results: {0}", *act);
     case FinishActionKind::NeverCalled:
-      CARBON_FATAL() << "Should not call FinishAction for: " << *act;
+      CARBON_FATAL("Should not call FinishAction for: {0}", *act);
     case FinishActionKind::Value:
       PopScopes(scopes_to_destroy);
       SetResult(result);
@@ -183,8 +183,8 @@ auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
     -> ErrorOr<Success> {
   std::unique_ptr<Action> old = Pop();
   CARBON_CHECK(FinishActionKindFor(old->kind()) ==
-               FinishActionKindFor(replacement->kind()))
-      << "Can't replace action " << *old << " with " << *replacement;
+                   FinishActionKindFor(replacement->kind()),
+               "Can't replace action {0} with {1}", *old, *replacement);
   Push(std::move(replacement));
   return Success();
 }

@@ -152,10 +152,11 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
       return type_names_.pop_back_val();
     }
 
-    CARBON_CHECK(last_type_name_index_ != initial_last_type_name_index)
-        << "Failed to find a valid type name with " << type_names_.size()
-        << " candidates, an initial index of " << initial_last_type_name_index
-        << ", and with " << class_names_.size() << " classes left to emit!";
+    CARBON_CHECK(last_type_name_index_ != initial_last_type_name_index,
+                 "Failed to find a valid type name with {0} candidates, an "
+                 "initial index of {1}, and with {2} classes left to emit!",
+                 type_names_.size(), initial_last_type_name_index,
+                 class_names_.size());
   }
 }
 
@@ -319,8 +320,8 @@ auto SourceGen::GenAPIFileDenseDecls(int target_lines,
   // needs a blank line.
   constexpr int NumFileCommentLines = 4;
   double avg_class_lines = EstimateAvgClassDefLines(params.class_params);
-  CARBON_CHECK(target_lines > NumFileCommentLines + avg_class_lines)
-      << "Not enough target lines to generate a single class!";
+  CARBON_CHECK(target_lines > NumFileCommentLines + avg_class_lines,
+               "Not enough target lines to generate a single class!");
   int num_classes = static_cast<double>(target_lines - NumFileCommentLines) /
                     (avg_class_lines + 1);
   int expected_lines =
@@ -372,9 +373,9 @@ auto SourceGen::GetShuffledIdentifiers(int number, int min_length,
 auto SourceGen::GetShuffledUniqueIdentifiers(int number, int min_length,
                                              int max_length, bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
-  CARBON_CHECK(min_length >= 4)
-      << "Cannot trivially guarantee enough distinct, unique identifiers for "
-         "lengths <= 3";
+  CARBON_CHECK(min_length >= 4,
+               "Cannot trivially guarantee enough distinct, unique identifiers "
+               "for lengths <= 3");
   llvm::SmallVector<llvm::StringRef> idents =
       GetUniqueIdentifiers(number, min_length, max_length, uniform);
   std::shuffle(idents.begin(), idents.end(), rng_);
@@ -398,9 +399,9 @@ auto SourceGen::GetIdentifiers(int number, int min_length, int max_length,
 auto SourceGen::GetUniqueIdentifiers(int number, int min_length, int max_length,
                                      bool uniform)
     -> llvm::SmallVector<llvm::StringRef> {
-  CARBON_CHECK(min_length >= 4)
-      << "Cannot trivially guarantee enough distinct, unique identifiers for "
-         "lengths <= 3";
+  CARBON_CHECK(min_length >= 4,
+               "Cannot trivially guarantee enough distinct, unique identifiers "
+               "for lengths <= 3");
   llvm::SmallVector<llvm::StringRef> idents =
       GetIdentifiersImpl(number, min_length, max_length, uniform,
                          [this](int length, int length_count,
@@ -634,10 +635,10 @@ auto SourceGen::GetIdentifiersImpl(int number, int min_length, int max_length,
                                    llvm::function_ref<AppendFn> append)
     -> llvm::SmallVector<llvm::StringRef> {
   CARBON_CHECK(min_length <= max_length);
-  CARBON_CHECK(uniform || max_length <= 64)
-      << "Cannot produce a meaningful non-uniform distribution of lengths "
-         "longer than 64 as those are exceedingly rare in our observed data "
-         "sets.";
+  CARBON_CHECK(
+      uniform || max_length <= 64,
+      "Cannot produce a meaningful non-uniform distribution of lengths longer "
+      "than 64 as those are exceedingly rare in our observed data sets.");
 
   llvm::SmallVector<llvm::StringRef> idents;
   idents.reserve(number);
@@ -667,11 +668,10 @@ auto SourceGen::GetIdentifiersImpl(int number, int min_length, int max_length,
     }
     append(length, length_count, idents);
   }
-  CARBON_CHECK(number_rem == 0)
-      << "Unexpected number remaining: " << number_rem;
-  CARBON_CHECK(static_cast<int>(idents.size()) == number)
-      << "Ended up with " << idents.size()
-      << " identifiers instead of the requested " << number;
+  CARBON_CHECK(number_rem == 0, "Unexpected number remaining: {0}", number_rem);
+  CARBON_CHECK(static_cast<int>(idents.size()) == number,
+               "Ended up with {0} identifiers instead of the requested {1}",
+               idents.size(), number);
 
   return idents;
 }

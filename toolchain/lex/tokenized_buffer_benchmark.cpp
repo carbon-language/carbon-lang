@@ -85,9 +85,10 @@ struct RandomSourceOptions {
                                string_literal_percent));
 
     CARBON_CHECK(tokens_per_line <= NumTokens);
-    CARBON_CHECK(NumTokens % tokens_per_line == 0)
-        << "Tokens per line of " << tokens_per_line
-        << " does not divide the number of tokens " << NumTokens;
+    CARBON_CHECK(
+        NumTokens % tokens_per_line == 0,
+        "Tokens per line of {0} does not divide the number of tokens {1}",
+        tokens_per_line, NumTokens);
 
     CARBON_CHECK(is_percentage(comment_line_percent));
     CARBON_CHECK(is_percentage(blank_line_percent));
@@ -142,10 +143,10 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
   int num_symbols = (NumTokens / 100) * options.symbol_percent;
   int num_keywords = (NumTokens / 100) * options.keyword_percent;
   int num_identifiers = NumTokens - num_symbols - num_keywords;
-  CARBON_CHECK(num_identifiers == 0 || num_identifiers > 500)
-      << "We require at least 500 identifiers as we need to collect a "
-         "reasonable number of samples to end up with a reasonable "
-         "distribution of lengths.";
+  CARBON_CHECK(
+      num_identifiers == 0 || num_identifiers > 500,
+      "We require at least 500 identifiers as we need to collect a reasonable "
+      "number of samples to end up with a reasonable distribution of lengths.");
   llvm::SmallVector<llvm::StringRef> ids =
       Testing::SourceGen::Global().GetIdentifiers(num_identifiers);
 
@@ -221,8 +222,8 @@ class LexerBenchHelper {
     StreamDiagnosticConsumer consumer(out);
     auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
-    CARBON_CHECK(buffer.has_errors())
-        << "Asked to diagnose errors but none found!";
+    CARBON_CHECK(buffer.has_errors(),
+                 "Asked to diagnose errors but none found!");
     return result;
   }
 
@@ -332,7 +333,7 @@ void BM_ValidIdentifiers(benchmark::State& state) {
   LexerBenchHelper helper(source);
   for (auto _ : state) {
     TokenizedBuffer buffer = helper.Lex();
-    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+    CARBON_CHECK(!buffer.has_errors(), "{0}", helper.DiagnoseErrors());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());
@@ -370,7 +371,7 @@ void BM_HorizontalWhitespace(benchmark::State& state) {
 
     // Ensure that lexing actually occurs for benchmarking and that it doesn't
     // hit errors that would skew the benchmark results.
-    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+    CARBON_CHECK(!buffer.has_errors(), "{0}", helper.DiagnoseErrors());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());
@@ -388,7 +389,7 @@ void BM_RandomSource(benchmark::State& state) {
 
     // Ensure that lexing actually occurs for benchmarking and that it doesn't
     // hit errors that would skew the benchmark results.
-    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+    CARBON_CHECK(!buffer.has_errors(), "{0}", helper.DiagnoseErrors());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());
@@ -454,7 +455,7 @@ void BM_GroupingSymbols(benchmark::State& state) {
 
     // Ensure that lexing actually occurs for benchmarking and that it doesn't
     // hit errors that would skew the benchmark results.
-    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+    CARBON_CHECK(!buffer.has_errors(), "{0}", helper.DiagnoseErrors());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());
@@ -504,7 +505,7 @@ void BM_BlankLines(benchmark::State& state) {
 
     // Ensure that lexing actually occurs for benchmarking and that it doesn't
     // hit errors that would skew the benchmark results.
-    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+    CARBON_CHECK(!buffer.has_errors(), "{0}", helper.DiagnoseErrors());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());
@@ -539,7 +540,7 @@ void BM_CommentLines(benchmark::State& state) {
 
     // Ensure that lexing actually occurs for benchmarking and that it doesn't
     // hit errors that would skew the benchmark results.
-    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+    CARBON_CHECK(!buffer.has_errors(), "{0}", helper.DiagnoseErrors());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());

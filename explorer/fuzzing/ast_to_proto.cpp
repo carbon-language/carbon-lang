@@ -638,10 +638,10 @@ static auto DeclarationToProto(const Declaration& declaration)
           default:
             // Parser shouldn't allow self_pattern to be anything other than
             // AddrPattern or BindingPattern
-            CARBON_FATAL()
-                << "self_pattern in method declaration can be either "
-                   "AddrPattern or BindingPattern. Actual pattern: "
-                << function.self_pattern();
+            CARBON_FATAL(
+                "self_pattern in method declaration can be either AddrPattern "
+                "or BindingPattern. Actual pattern: {0}",
+                function.self_pattern());
             break;
         }
       }
@@ -674,10 +674,10 @@ static auto DeclarationToProto(const Declaration& declaration)
           default:
             // Parser shouldn't allow self_pattern to be anything other than
             // AddrPattern or BindingPattern
-            CARBON_FATAL()
-                << "self_pattern in method declaration can be either "
-                   "AddrPattern or BindingPattern. Actual pattern: "
-                << function.self_pattern();
+            CARBON_FATAL(
+                "self_pattern in method declaration can be either AddrPattern "
+                "or BindingPattern. Actual pattern: {0}",
+                function.self_pattern());
             break;
         }
       }
@@ -833,7 +833,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     }
 
     case DeclarationKind::SelfDeclaration: {
-      CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
+      CARBON_FATAL("Unreachable SelfDeclaration in DeclarationToProto().");
     }
 
     case DeclarationKind::AliasDeclaration: {

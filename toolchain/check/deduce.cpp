@@ -156,10 +156,10 @@ auto DeduceGenericCallArguments(
         auto& entity_name = context.entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index;
         if (index.is_valid() && index >= first_deduced_index) {
-          CARBON_CHECK(static_cast<size_t>(index.index) < result_arg_ids.size())
-              << "Deduced value for unexpected index " << index
-              << "; expected to deduce " << result_arg_ids.size()
-              << " arguments.";
+          CARBON_CHECK(static_cast<size_t>(index.index) < result_arg_ids.size(),
+                       "Deduced value for unexpected index {0}; expected to "
+                       "deduce {1} arguments.",
+                       index, result_arg_ids.size());
           auto arg_const_inst_id =
               context.constant_values().GetConstantInstId(arg_id);
           if (arg_const_inst_id.is_valid()) {

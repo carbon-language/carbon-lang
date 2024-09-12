@@ -363,8 +363,7 @@ class Context {
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
   auto SetTotalIRCount(int num_irs) -> void {
-    CARBON_CHECK(check_ir_map_.empty())
-        << "SetTotalIRCount is only called once";
+    CARBON_CHECK(check_ir_map_.empty(), "SetTotalIRCount is only called once");
     check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
   }
 

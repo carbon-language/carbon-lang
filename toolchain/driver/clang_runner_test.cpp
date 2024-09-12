@@ -106,7 +106,7 @@ static auto WriteTestFile(llvm::StringRef name_suffix, llvm::Twine contents)
   {
     std::error_code ec;
     llvm::raw_fd_ostream test_file_stream(test_file.string(), ec);
-    CARBON_CHECK(!ec) << "Test file error: " << ec.message();
+    CARBON_CHECK(!ec, "Test file error: {0}", ec.message());
     test_file_stream << contents;
   }
   return test_file;

@@ -426,8 +426,8 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
 
   // Returns the `bool` corresponding to this `BoolValue`.
   constexpr auto ToBool() -> bool {
-    CARBON_CHECK(*this == False || *this == True)
-        << "Invalid bool value " << index;
+    CARBON_CHECK(*this == False || *this == True, "Invalid bool value {0}",
+                 index);
     return *this != False;
   }
 
@@ -438,7 +438,7 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
     } else if (*this == True) {
       out << "true";
     } else {
-      CARBON_FATAL() << "Invalid bool value " << index;
+      CARBON_FATAL("Invalid bool value {0}", index);
     }
   }
 };
@@ -465,7 +465,7 @@ struct IntKind : public IdBase, public Printable<IntKind> {
     } else if (*this == Signed) {
       out << "signed";
     } else {
-      CARBON_FATAL() << "Invalid int kind value " << index;
+      CARBON_FATAL("Invalid int kind value {0}", index);
     }
   }
 };
@@ -510,7 +510,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (!id.is_valid()) {
       return NameId::Invalid;
     } else {
-      CARBON_FATAL() << "Unexpected identifier ID " << id;
+      CARBON_FATAL("Unexpected identifier ID {0}", id);
     }
   }
 
@@ -535,7 +535,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (*this == Base) {
       out << "Base";
     } else {
-      CARBON_CHECK(!is_valid() || index >= 0) << "Unknown index " << index;
+      CARBON_CHECK(!is_valid() || index >= 0, "Unknown index {0}", index);
       IdBase::Print(out);
     }
   }
@@ -710,8 +710,8 @@ struct LibraryNameId : public IdBase, public Printable<NameId> {
   // Returns the LibraryNameId for a library name as a string literal.
   static auto ForStringLiteralValueId(StringLiteralValueId id)
       -> LibraryNameId {
-    CARBON_CHECK(id.index >= InvalidIndex)
-        << "Unexpected library name ID " << id;
+    CARBON_CHECK(id.index >= InvalidIndex, "Unexpected library name ID {0}",
+                 id);
     if (id == StringLiteralValueId::Invalid) {
       // Prior to SemIR, we use invalid to indicate `default`.
       return LibraryNameId::Default;
@@ -724,7 +724,7 @@ struct LibraryNameId : public IdBase, public Printable<NameId> {
 
   // Converts a LibraryNameId back to a string literal.
   auto AsStringLiteralValueId() const -> StringLiteralValueId {
-    CARBON_CHECK(index >= InvalidIndex) << *this << " must be handled directly";
+    CARBON_CHECK(index >= InvalidIndex, "{0} must be handled directly", *this);
     return StringLiteralValueId(index);
   }
 

@@ -140,8 +140,8 @@ static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
     case ExpressionKind::OperatorExpression: {
       const auto& opt_exp = cast<OperatorExpression>(*expression);
       if (opt_exp.op() == Operator::AddressOf) {
-        CARBON_CHECK(opt_exp.arguments().size() == 1)
-            << "OperatorExpression with op & can only have 1 argument";
+        CARBON_CHECK(opt_exp.arguments().size() == 1,
+                     "OperatorExpression with op & can only have 1 argument");
         CARBON_RETURN_IF_ERROR(
             // When a variable is taken address of, defer the unformed check to
             // runtime. A more sound analysis can be implemented when a

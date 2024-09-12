@@ -66,15 +66,14 @@ template <typename InstT>
 static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
                             InstT inst) {
   if constexpr (!InstT::Kind.is_lowered()) {
-    CARBON_FATAL()
-        << "Encountered an instruction that isn't expected to lower. It's "
-           "possible that logic needs to be changed in order to stop "
-           "showing this instruction in lowered contexts. Instruction: "
-        << inst;
+    CARBON_FATAL(
+        "Encountered an instruction that isn't expected to lower. It's "
+        "possible that logic needs to be changed in order to stop showing this "
+        "instruction in lowered contexts. Instruction: {0}",
+        inst);
   } else if constexpr (InstT::Kind.constant_kind() ==
                        SemIR::InstConstantKind::Always) {
-    CARBON_FATAL() << "Missing constant value for constant instruction "
-                   << inst;
+    CARBON_FATAL("Missing constant value for constant instruction {0}", inst);
   } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
     // For instructions that are always of type `type`, produce the trivial
     // runtime representation of type `type`.
@@ -99,9 +98,9 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(inst_id);
   if (di_subprogram_) {
     auto loc = file_context_->GetLocForDI(inst_id);
-    CARBON_CHECK(loc.filename == di_subprogram_->getFile()->getFilename())
-        << "Instructions located in a different file from their enclosing "
-           "function aren't handled yet";
+    CARBON_CHECK(loc.filename == di_subprogram_->getFile()->getFilename(),
+                 "Instructions located in a different file from their "
+                 "enclosing function aren't handled yet");
     builder_.SetCurrentDebugLocation(
         llvm::DILocation::get(builder_.getContext(), loc.line_number,
                               loc.column_number, di_subprogram_));
@@ -129,9 +128,9 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
   // Find the existing phi, if any.
   auto phis = block->phis();
   if (!phis.empty()) {
-    CARBON_CHECK(std::next(phis.begin()) == phis.end())
-        << "Expected at most one phi, found "
-        << std::distance(phis.begin(), phis.end());
+    CARBON_CHECK(std::next(phis.begin()) == phis.end(),
+                 "Expected at most one phi, found {0}",
+                 std::distance(phis.begin(), phis.end()));
     return &*phis.begin();
   }
 
@@ -163,8 +162,8 @@ auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
       CopyValue(type_id, source_id, dest_id);
       break;
     case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL() << "Lowering aggregate initialization of incomplete type "
-                     << sem_ir().types().GetAsInst(type_id);
+      CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
+                   sem_ir().types().GetAsInst(type_id));
   }
 }
 
@@ -172,7 +171,7 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
   switch (auto rep = SemIR::ValueRepr::ForType(sem_ir(), type_id); rep.kind) {
     case SemIR::ValueRepr::Unknown:
-      CARBON_FATAL() << "Attempt to copy incomplete type";
+      CARBON_FATAL("Attempt to copy incomplete type");
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:
@@ -182,7 +181,7 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
       CopyObject(type_id, source_id, dest_id);
       break;
     case SemIR::ValueRepr::Custom:
-      CARBON_FATAL() << "TODO: Add support for CopyValue with custom value rep";
+      CARBON_FATAL("TODO: Add support for CopyValue with custom value rep");
   }
 }
 

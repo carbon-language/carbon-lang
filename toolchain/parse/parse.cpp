@@ -13,8 +13,8 @@
 namespace Carbon::Parse {
 
 auto HandleInvalid(Context& context) -> void {
-  CARBON_FATAL() << "The Invalid state shouldn't be on the stack: "
-                 << context.PopState();
+  CARBON_FATAL("The Invalid state shouldn't be on the stack: {0}",
+               context.PopState());
 }
 
 auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
@@ -55,7 +55,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
     // hopefully comfortable copy-pasting stderr when there are bugs in tree
     // construction.
     tree.Print(llvm::errs());
-    CARBON_FATAL() << "Invalid tree returned by Parse(): " << verify.error();
+    CARBON_FATAL("Invalid tree returned by Parse(): {0}", verify.error());
   }
   return tree;
 }

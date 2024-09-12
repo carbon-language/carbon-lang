@@ -54,8 +54,8 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
   std::string runtimes_error;
   std::unique_ptr<Runfiles> runfiles(
       Runfiles::Create(exe_path.str(), &runtimes_error));
-  CARBON_CHECK(runfiles != nullptr)
-      << "Failed to find runtimes tree: " << runtimes_error;
+  CARBON_CHECK(runfiles != nullptr, "Failed to find runtimes tree: {0}",
+               runtimes_error);
 
   std::string relative_marker_path = (PrefixRoot.str() + MarkerPath).str();
   std::string runtimes_marker_path = runfiles->Rlocation(relative_marker_path);
@@ -68,7 +68,7 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
                           "../../");
 
   paths.CheckMarkerFile();
-  CARBON_CHECK(!paths.error()) << *paths.error();
+  CARBON_CHECK(!paths.error(), "{0}", *paths.error());
   return paths;
 }
 

@@ -59,11 +59,11 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
-  CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
+  CARBON_CHECK(position_ != end_, "Empty TokenizedBuffer");
   --end_;
-  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd)
-      << "TokenizedBuffer should end with FileEnd, ended with "
-      << tokens_->GetKind(*end_);
+  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd,
+               "TokenizedBuffer should end with FileEnd, ended with {0}",
+               tokens_->GetKind(*end_));
 }
 
 auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
@@ -79,8 +79,8 @@ auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
 auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
                                      Lex::TokenIndex token, bool has_error)
     -> void {
-  CARBON_CHECK(position >= 0 && position < tree_->size())
-      << "position: " << position << " size: " << tree_->size();
+  CARBON_CHECK(position >= 0 && position < tree_->size(),
+               "position: {0} size: {1}", position, tree_->size());
   auto* node_impl = &tree_->node_impls_[position];
   CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
   node_impl->kind = kind;
@@ -138,8 +138,8 @@ auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
 }
 
 auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
-  CARBON_CHECK(PositionIs(kind))
-      << "Required " << kind << ", found " << PositionKind();
+  CARBON_CHECK(PositionIs(kind), "Required {0}, found {1}", kind,
+               PositionKind());
   return Consume();
 }
 
@@ -230,10 +230,10 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
 }
 
 auto Context::SkipTo(Lex::TokenIndex t) -> void {
-  CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
-                                << " to " << Lex::TokenIterator(t);
+  CARBON_CHECK(t >= *position_, "Tried to skip backwards from {0} to {1}",
+               position_, Lex::TokenIterator(t));
   position_ = Lex::TokenIterator(t);
-  CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
+  CARBON_CHECK(position_ != end_, "Skipped past EOF.");
 }
 
 // Determines whether the given token is considered to be the start of an
@@ -265,7 +265,7 @@ static auto IsPossibleStartOfOperand(Lex::TokenKind kind) -> bool {
 }
 
 auto Context::IsLexicallyValidInfixOperator() -> bool {
-  CARBON_CHECK(position_ != end_) << "Expected an operator token.";
+  CARBON_CHECK(position_ != end_, "Expected an operator token.");
 
   bool leading_space = tokens().HasLeadingWhitespace(*position_);
   bool trailing_space = tokens().HasTrailingWhitespace(*position_);
@@ -371,9 +371,8 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     // Recover from the invalid token.
     auto end_of_element = FindNextOf({Lex::TokenKind::Comma, close_kind});
     // The lexer guarantees that parentheses are balanced.
-    CARBON_CHECK(end_of_element)
-        << "missing matching `" << close_kind.opening_symbol() << "` for `"
-        << close_kind << "`";
+    CARBON_CHECK(end_of_element, "missing matching `{0}` for `{1}`",
+                 close_kind.opening_symbol(), close_kind);
 
     SkipTo(*end_of_element);
   }

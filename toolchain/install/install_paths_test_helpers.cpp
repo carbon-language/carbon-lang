@@ -15,14 +15,14 @@ auto AddPreludeFilesToVfs(InstallPaths install_paths,
   // Load the prelude into the test VFS.
   auto real_fs = llvm::vfs::getRealFileSystem();
   auto prelude = install_paths.ReadPreludeManifest();
-  CARBON_CHECK(prelude.ok()) << prelude.error();
+  CARBON_CHECK(prelude.ok(), "{0}", prelude.error());
 
   for (const auto& path : *prelude) {
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
         real_fs->getBufferForFile(path);
-    CARBON_CHECK(file) << "Error getting file: " << file.getError().message();
+    CARBON_CHECK(file, "Error getting file: {0}", file.getError().message());
     bool added = vfs->addFile(path, /*ModificationTime=*/0, std::move(*file));
-    CARBON_CHECK(added) << "Duplicate file: " << path;
+    CARBON_CHECK(added, "Duplicate file: {0}", path);
   }
 }
 

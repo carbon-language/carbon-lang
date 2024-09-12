@@ -77,9 +77,10 @@ class EvalContext {
               specifics().Get(specific_id_).generic_id &&
           symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-        CARBON_CHECK(inst_id.is_valid())
-            << "Forward reference in eval block: index "
-            << symbolic_info.index.index() << " referenced before evaluation";
+        CARBON_CHECK(inst_id.is_valid(),
+                     "Forward reference in eval block: index {0} referenced "
+                     "before evaluation",
+                     symbolic_info.index.index());
         return constant_values().Get(inst_id);
       }
     }
@@ -464,14 +465,14 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
                 aggregate_id)) {
       auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
       auto index = static_cast<size_t>(access_inst.index.index);
-      CARBON_CHECK(index < elements.size()) << "Access out of bounds.";
+      CARBON_CHECK(index < elements.size(), "Access out of bounds.");
       // `Phase` is not used here. If this element is a template constant, then
       // so is the result of indexing, even if the aggregate also contains a
       // symbolic context.
       return eval_context.GetConstantValue(elements[index]);
     } else {
-      CARBON_CHECK(phase != Phase::Template)
-          << "Failed to evaluate template constant " << inst;
+      CARBON_CHECK(phase != Phase::Template,
+                   "Failed to evaluate template constant {0}", inst);
     }
   }
   return MakeNonConstantResult(phase);
@@ -490,8 +491,8 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   }
   auto index = eval_context.insts().TryGetAs<SemIR::IntLiteral>(index_id);
   if (!index) {
-    CARBON_CHECK(phase != Phase::Template)
-        << "Template constant integer should be a literal";
+    CARBON_CHECK(phase != Phase::Template,
+                 "Template constant integer should be a literal");
     return MakeNonConstantResult(phase);
   }
 
@@ -529,15 +530,15 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   auto aggregate =
       eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
   if (!aggregate) {
-    CARBON_CHECK(phase != Phase::Template)
-        << "Unexpected representation for template constant aggregate";
+    CARBON_CHECK(phase != Phase::Template,
+                 "Unexpected representation for template constant aggregate");
     return MakeNonConstantResult(phase);
   }
 
   auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
   // We checked this for the array case above.
-  CARBON_CHECK(index_val.ult(elements.size()))
-      << "Index out of bounds in tuple indexing";
+  CARBON_CHECK(index_val.ult(elements.size()),
+               "Index out of bounds in tuple indexing");
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
@@ -649,7 +650,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
       op_val.flipAllBits();
       break;
     default:
-      CARBON_FATAL() << "Unexpected builtin kind";
+      CARBON_FATAL("Unexpected builtin kind");
   }
 
   return MakeIntResult(context, op.type_id, std::move(op_val));
@@ -774,7 +775,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       break;
 
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   if (overflow) {
@@ -823,7 +824,7 @@ static auto PerformBuiltinIntComparison(Context& context,
       result = is_signed ? lhs_val.sge(rhs_val) : lhs_val.sge(rhs_val);
       break;
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   return MakeBoolResult(context, bool_type_id, result);
@@ -842,7 +843,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
       op_val.changeSign();
       break;
     default:
-      CARBON_FATAL() << "Unexpected builtin kind";
+      CARBON_FATAL("Unexpected builtin kind");
   }
 
   return MakeFloatResult(context, op.type_id, std::move(op_val));
@@ -875,7 +876,7 @@ static auto PerformBuiltinBinaryFloatOp(Context& context,
       result_val = lhs_val / rhs_val;
       break;
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   return MakeFloatResult(context, lhs.type_id, std::move(result_val));
@@ -912,7 +913,7 @@ static auto PerformBuiltinFloatComparison(
       result = lhs_val >= rhs_val;
       break;
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   return MakeBoolResult(context, bool_type_id, result);
@@ -926,7 +927,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
                                        Phase phase) -> SemIR::ConstantId {
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
-      CARBON_FATAL() << "Not a builtin function.";
+      CARBON_FATAL("Not a builtin function.");
 
     case SemIR::BuiltinFunctionKind::PrintInt: {
       // Providing a constant result would allow eliding the function call.
@@ -1483,8 +1484,8 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       break;
 
     case SemIR::ImportRefUnloaded::Kind:
-      CARBON_FATAL()
-          << "ImportRefUnloaded should be loaded before TryEvalInst: " << inst;
+      CARBON_FATAL("ImportRefUnloaded should be loaded before TryEvalInst: {0}",
+                   inst);
   }
   return SemIR::ConstantId::NotConstant;
 }

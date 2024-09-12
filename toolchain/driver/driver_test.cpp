@@ -65,7 +65,7 @@ class DriverTest : public testing::Test {
     // Save our current working directory.
     std::error_code ec;
     auto original_dir = std::filesystem::current_path(ec);
-    CARBON_CHECK(!ec) << ec.message();
+    CARBON_CHECK(!ec, "{0}", ec.message());
 
     const auto* unit_test = ::testing::UnitTest::GetInstance();
     const auto* test_info = unit_test->current_test_info();
@@ -74,19 +74,20 @@ class DriverTest : public testing::Test {
                       test_info->name())
             .str());
     std::filesystem::create_directory(test_dir, ec);
-    CARBON_CHECK(!ec) << "Could not create test working dir '" << test_dir
-                      << "': " << ec.message();
+    CARBON_CHECK(!ec, "Could not create test working dir '{0}': {1}", test_dir,
+                 ec.message());
     std::filesystem::current_path(test_dir, ec);
-    CARBON_CHECK(!ec) << "Could not change the current working dir to '"
-                      << test_dir << "': " << ec.message();
+    CARBON_CHECK(!ec, "Could not change the current working dir to '{0}': {1}",
+                 test_dir, ec.message());
     return llvm::make_scope_exit([original_dir, test_dir] {
       std::error_code ec;
       std::filesystem::current_path(original_dir, ec);
-      CARBON_CHECK(!ec) << "Could not change the current working dir to '"
-                        << original_dir << "': " << ec.message();
+      CARBON_CHECK(!ec,
+                   "Could not change the current working dir to '{0}': {1}",
+                   original_dir, ec.message());
       std::filesystem::remove_all(test_dir, ec);
-      CARBON_CHECK(!ec) << "Could not remove the test working dir '" << test_dir
-                        << "': " << ec.message();
+      CARBON_CHECK(!ec, "Could not remove the test working dir '{0}': {1}",
+                   test_dir, ec.message());
     });
   }
 
