@@ -53,6 +53,7 @@ class Driver {
  private:
   struct Options;
 
+  // Implementation is in compile_subcommand.cpp.
   // TODO: Remove from Driver.
   class CompilationUnit;
 
@@ -63,15 +64,18 @@ class Driver {
 
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports.
+  // Implementation is in compile_subcommand.cpp.
   // TODO: Remove from Driver.
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
 
   // Implements the compile subcommand of the driver.
+  // Implementation is in compile_subcommand.cpp.
   // TODO: Remove from Driver.
   auto Compile(const CompileOptions& options,
                const CodegenOptions& codegen_options) -> RunResult;
 
   // Implements the link subcommand of the driver.
+  // Implementation is in link_subcommand.cpp.
   // TODO: Remove from Driver.
   auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
       -> RunResult;
