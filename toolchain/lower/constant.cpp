@@ -30,14 +30,15 @@ class ConstantContext {
   // Gets the lowered constant value for a constant that has already been
   // lowered.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
-    CARBON_CHECK(const_id.is_template())
-        << "Unexpected constant ID " << const_id;
+    CARBON_CHECK(const_id.is_template(), "Unexpected constant ID {0}",
+                 const_id);
     auto inst_id =
         file_context_->sem_ir().constant_values().GetInstId(const_id);
-    CARBON_CHECK(inst_id.index >= 0 &&
-                 inst_id.index <= last_lowered_constant_index_)
-        << "Queried constant " << const_id << " with instruction " << inst_id
-        << " that has not been lowered yet";
+    CARBON_CHECK(
+        inst_id.index >= 0 && inst_id.index <= last_lowered_constant_index_,
+        "Queried constant {0} with instruction {1} that has not been lowered "
+        "yet",
+        const_id, inst_id);
     return constants_[inst_id.index];
   }
 
@@ -109,7 +110,7 @@ template <typename InstT>
            InstT::Kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly)
 static auto EmitAsConstant(ConstantContext& /*context*/, InstT inst)
     -> llvm::Constant* {
-  CARBON_FATAL() << "Unexpected constant instruction kind " << inst;
+  CARBON_FATAL("Unexpected constant instruction kind {0}", inst);
 }
 
 // For constants that are always of type `type`, produce the trivial runtime
@@ -147,7 +148,7 @@ static auto EmitAsConstant(ConstantContext& /*context*/, SemIR::AddrOf /*inst*/)
     -> llvm::Constant* {
   // TODO: Constant lvalue support. For now we have no constant lvalues, so we
   // should never form a constant AddrOf.
-  CARBON_FATAL() << "AddrOf constants not supported yet";
+  CARBON_FATAL("AddrOf constants not supported yet");
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -204,7 +205,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
 
 static auto EmitAsConstant(ConstantContext& /*context*/,
                            SemIR::StringLiteral inst) -> llvm::Constant* {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
+  CARBON_FATAL("TODO: Add support: {0}", inst);
 }
 
 static auto EmitAsConstant(ConstantContext& /*context*/,

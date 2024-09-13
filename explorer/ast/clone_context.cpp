@@ -13,10 +13,10 @@ namespace Carbon {
 auto CloneContext::CloneBase(Nonnull<const AstNode*> node)
     -> Nonnull<AstNode*> {
   auto [it, added] = nodes_.insert({node, nullptr});
-  CARBON_CHECK(added) << (it->second
-                              ? "node was cloned multiple times: "
-                              : "node was remapped before it was cloned: ")
-                      << *node;
+  CARBON_CHECK(
+      added, "node was {0}: {1}",
+      it->second ? "cloned multiple times" : "remapped before it was cloned",
+      *node);
 
   // TODO: Generate a Visit member on AstNode and use it here to avoid these
   // macros.
@@ -34,7 +34,7 @@ auto CloneContext::CloneBase(Nonnull<const AstNode*> node)
 
   // Cloning may have invalidated our iterator; redo lookup.
   auto* result = nodes_[node];
-  CARBON_CHECK(result) << "CloneImpl didn't set the result pointer";
+  CARBON_CHECK(result, "CloneImpl didn't set the result pointer");
   return result;
 }
 

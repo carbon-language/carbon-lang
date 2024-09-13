@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
@@ -18,7 +18,7 @@ interface Add {
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 import library "a";
 

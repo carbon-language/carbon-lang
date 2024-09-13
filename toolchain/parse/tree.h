@@ -100,7 +100,7 @@ class Tree : public Printable<Tree> {
   // be used to actually parse the tokens into a tree.
   explicit Tree(Lex::TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
     // If the tree is valid, there will be one node per token, so reserve once.
-    node_impls_.reserve(tokens_->expected_parse_tree_size());
+    node_impls_.reserve(tokens_->expected_max_parse_tree_size());
   }
 
   auto has_errors() const -> bool { return has_errors_; }

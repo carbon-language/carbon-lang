@@ -36,8 +36,8 @@ auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
     // We don't have a check_ir_id, so add without touching check_ir_map.
     ir_id = InternalAddImportIR(context, import_ir);
   }
-  CARBON_CHECK(ir_id == SemIR::ImportIRId::ApiForImpl)
-      << "ApiForImpl must be the first IR";
+  CARBON_CHECK(ir_id == SemIR::ImportIRId::ApiForImpl,
+               "ApiForImpl must be the first IR");
 }
 
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
@@ -244,9 +244,9 @@ class ImportRefResolver {
       auto [new_const_id, retry] =
           TryResolveInst(work.inst_id, existing.const_id);
 
-      CARBON_CHECK(!existing.const_id.is_valid() ||
-                   existing.const_id == new_const_id)
-          << "Constant value changed in third phase.";
+      CARBON_CHECK(
+          !existing.const_id.is_valid() || existing.const_id == new_const_id,
+          "Constant value changed in third phase.");
       if (!existing.const_id.is_valid()) {
         SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
       }
@@ -394,8 +394,8 @@ class ImportRefResolver {
       }
       cursor_inst_id = ir_inst.inst_id;
 
-      CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id)
-          << cursor_ir->insts().Get(cursor_inst_id);
+      CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
+                   "{0}", cursor_ir->insts().Get(cursor_inst_id));
 
       if (auto const_id =
               context_.import_ir_constant_values()[cursor_ir_id.index].Get(
@@ -426,8 +426,8 @@ class ImportRefResolver {
   // Returns true if new unresolved constants were found as part of this
   // `Resolve` step.
   auto HasNewWork() -> bool {
-    CARBON_CHECK(initial_work_ <= work_stack_.size())
-        << "Work shouldn't decrease";
+    CARBON_CHECK(initial_work_ <= work_stack_.size(),
+                 "Work shouldn't decrease");
     return initial_work_ < work_stack_.size();
   }
 
@@ -586,7 +586,7 @@ class ImportRefResolver {
             .generic_id;
       }
       default: {
-        CARBON_FATAL() << "Unexpected type for generic declaration: " << type;
+        CARBON_FATAL("Unexpected type for generic declaration: {0}", type);
       }
     }
   }
@@ -736,7 +736,7 @@ class ImportRefResolver {
             break;
           }
           default: {
-            CARBON_FATAL() << "Unexpected kind: " << bind_inst->kind;
+            CARBON_FATAL("Unexpected kind: {0}", bind_inst->kind);
           }
         }
       }
@@ -829,8 +829,8 @@ class ImportRefResolver {
         break;
       }
     }
-    CARBON_FATAL() << "Unexpected instruction kind for name scope: "
-                   << name_scope_inst;
+    CARBON_FATAL("Unexpected instruction kind for name scope: {0}",
+                 name_scope_inst);
   }
 
   // Given an imported entity base, returns an incomplete, local version of it.
@@ -961,8 +961,8 @@ class ImportRefResolver {
     } else {
       // Third phase: perform a consistency check and produce the constant we
       // created in the second phase.
-      CARBON_CHECK(result.const_id == inner_const_id)
-          << "Constant value changed in third phase.";
+      CARBON_CHECK(result.const_id == inner_const_id,
+                   "Constant value changed in third phase.");
       result.const_id = const_id;
     }
 
@@ -1104,7 +1104,7 @@ class ImportRefResolver {
   auto ResolveAsUntyped(SemIR::Inst inst) -> ResolveResult {
     CARBON_CHECK(!HasNewWork());
     auto result = TryEvalInst(context_, SemIR::InstId::Invalid, inst);
-    CARBON_CHECK(result.is_constant()) << inst << " is not constant";
+    CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
     return {.const_id = result};
   }
 
@@ -1602,8 +1602,8 @@ class ImportRefResolver {
     new_interface.body_block_id = context_.inst_block_stack().Pop();
     new_interface.self_param_id = self_param_id;
 
-    CARBON_CHECK(import_scope.extended_scopes.empty())
-        << "Interfaces don't currently have extended scopes to support.";
+    CARBON_CHECK(import_scope.extended_scopes.empty(),
+                 "Interfaces don't currently have extended scopes to support.");
   }
 
   auto TryResolveTypedInst(SemIR::InterfaceDecl inst,

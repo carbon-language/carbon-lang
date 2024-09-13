@@ -10,7 +10,7 @@
 
 // --- adapt_class.carbon
 
-library "adapt_class";
+library "[[@TEST_NAME]]";
 
 class PairOfInts {
   var a: i32;
@@ -41,7 +41,7 @@ fn Use() -> i32 {
 
 // --- adapt_int.carbon
 
-library "adapt_int";
+library "[[@TEST_NAME]]";
 
 class Int {
   adapt i32;

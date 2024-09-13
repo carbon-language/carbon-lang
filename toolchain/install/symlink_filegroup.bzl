@@ -6,13 +6,14 @@
 
 def _symlink_filegroup_impl(ctx):
     prefix = ctx.attr.out_prefix
-    remove_prefix = ctx.attr.remove_prefix
 
     outputs = []
     for f in ctx.files.srcs:
-        out = ctx.actions.declare_file(
-            prefix + f.short_path.removeprefix(remove_prefix),
-        )
+        # We normalize the path to be package-relative in order to ensure
+        # consistent paths across possible repositories.
+        relative_path = f.short_path.removeprefix(f.owner.package)
+
+        out = ctx.actions.declare_file(prefix + relative_path)
         outputs.append(out)
         ctx.actions.symlink(output = out, target_file = f)
 
@@ -21,8 +22,8 @@ def _symlink_filegroup_impl(ctx):
 
     return [
         DefaultInfo(
-            files = depset(outputs),
-            runfiles = ctx.runfiles(files = outputs),
+            files = depset(direct = outputs),
+            default_runfiles = ctx.runfiles(files = outputs),
         ),
     ]
 
@@ -30,7 +31,6 @@ symlink_filegroup = rule(
     implementation = _symlink_filegroup_impl,
     attrs = {
         "out_prefix": attr.string(mandatory = True),
-        "remove_prefix": attr.string(default = ""),
         "srcs": attr.label_list(mandatory = True),
     },
 )

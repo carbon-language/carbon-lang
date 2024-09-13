@@ -10,7 +10,7 @@
 
 // --- init_adapt.carbon
 
-library "init_adapt";
+library "[[@TEST_NAME]]";
 
 class C {
   var a: i32;
@@ -37,7 +37,7 @@ var e: C = MakeAdaptC() as C;
 
 // --- fail_not_implicit.carbon
 
-library "fail_not_implicit";
+library "[[@TEST_NAME]]";
 
 class C {
   var a: i32;

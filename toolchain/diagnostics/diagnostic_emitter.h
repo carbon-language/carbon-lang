@@ -63,8 +63,8 @@ class DiagnosticEmitter {
     auto Note(LocT loc,
               const Internal::DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
-      CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
-          << static_cast<int>(diagnostic_base.Level);
+      CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note, "{0}",
+                   static_cast<int>(diagnostic_base.Level));
       AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
       return *this;
     }
@@ -137,9 +137,9 @@ class DiagnosticEmitter {
     static auto FormatFn(const DiagnosticMessage& message,
                          std::index_sequence<N...> /*indices*/) -> std::string {
       static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
-      CARBON_CHECK(message.format_args.size() == sizeof...(Args))
-          << "Argument count mismatch on " << message.kind << ": "
-          << message.format_args.size() << " != " << sizeof...(Args);
+      CARBON_CHECK(message.format_args.size() == sizeof...(Args),
+                   "Argument count mismatch on {0}: {1} != {2}", message.kind,
+                   message.format_args.size(), sizeof...(Args));
       return llvm::formatv(
           message.format.data(),
           llvm::any_cast<
@@ -189,9 +189,10 @@ class DiagnosticEmitter {
   auto MakeAny(Arg arg) -> llvm::Any {
     llvm::Any converted = converter_->ConvertArg(arg);
     using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
-    CARBON_CHECK(llvm::any_cast<Storage>(&converted))
-        << "Failed to convert argument of type " << typeid(Arg).name()
-        << " to its storage type " << typeid(Storage).name();
+    CARBON_CHECK(
+        llvm::any_cast<Storage>(&converted),
+        "Failed to convert argument of type {0} to its storage type {1}",
+        typeid(Arg).name(), typeid(Storage).name());
     return converted;
   }
 

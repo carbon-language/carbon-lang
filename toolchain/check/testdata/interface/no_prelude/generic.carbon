@@ -10,7 +10,7 @@
 
 // --- generic.carbon
 
-library "generic";
+library "[[@TEST_NAME]]";
 
 interface Simple(T:! type) {}
 
@@ -39,7 +39,7 @@ fn Pass(T:! Simple(C)) {
 
 // --- fail_mismatched_args.carbon
 
-library "fail_mismatched_args";
+library "[[@TEST_NAME]]";
 
 interface Generic(T:! type) {}
 

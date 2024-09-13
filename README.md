@@ -364,13 +364,15 @@ Carbon focused talks from the community:
 
 ### Upcoming
 
--   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://cppnorth.ca/speaker-chandler-carruth.html),
-    CppNorth, July 21-24
--   [The Carbon Language: Road to 0.1](https://ndctechtown.com/agenda/the-carbon-language-road-to-01-0sqv/0526yb03a59),
-    NDC {TechTown}, Sept. 11
+-   [Generic implementation strategies in Carbon and Clang](https://discourse.llvm.org/t/announcing-the-2024-llvm-developers-meeting-program/81108),
+    LLVM Developers' Meeting, Oct 23-24
 
 ### 2024
 
+-   [The Carbon Language: Road to 0.1](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1),
+    NDC {TechTown}
+-   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://chandlerc.blog/slides/2024-cppnorth-design-stories),
+    CppNorth
 -   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
     C++Now
 -   [Carbon: An experiment in different tradeoffs](https://youtu.be/Za_KWj5RMR8)

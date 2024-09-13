@@ -10,7 +10,7 @@
 
 // --- fail_incomplete_type.carbon
 
-library "incomplete_type";
+library "[[@TEST_NAME]]";
 
 class Incomplete;
 

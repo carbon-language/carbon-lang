@@ -86,8 +86,8 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     CARBON_CHECK(value_repr.kind != ValueRepr::Unknown);
     auto insert_info =
         complete_type_info_.Insert(type_id, {.value_repr = value_repr});
-    CARBON_CHECK(insert_info.is_inserted())
-        << "Type " << type_id << " completed more than once";
+    CARBON_CHECK(insert_info.is_inserted(), "Type {0} completed more than once",
+                 type_id);
     complete_types_.push_back(type_id);
     CARBON_CHECK(IsComplete(type_id));
   }

@@ -653,7 +653,7 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
 auto CheckNoDuplicateValues(llvm::ArrayRef<HashedString> hashes) -> void {
   for (int i = 0, size = hashes.size(); i < size - 1; ++i) {
     const auto& [_, value] = hashes[i];
-    CARBON_CHECK(value != hashes[i + 1].v) << "Duplicate value: " << value;
+    CARBON_CHECK(value != hashes[i + 1].v, "Duplicate value: {0}", value);
   }
 }
 

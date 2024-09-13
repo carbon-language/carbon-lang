@@ -10,49 +10,49 @@
 
 // --- one_file_extern.carbon
 
-library "one_file_extern";
+library "[[@TEST_NAME]]";
 
 extern library "one_file" fn F();
 
 // --- one_file.carbon
 
-library "one_file";
+library "[[@TEST_NAME]]";
 
 extern fn F() {}
 
 // --- two_file_extern.carbon
 
-library "two_file_extern";
+library "[[@TEST_NAME]]";
 
 extern library "two_file" fn F();
 
 // --- two_file.carbon
 
-library "two_file";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 
 // --- two_file.impl.carbon
 
-impl library "two_file";
+impl library "[[@TEST_NAME]]";
 
 extern fn F() {}
 
 // --- two_file_impl_mismatch_extern.carbon
 
-library "two_file_impl_mismatch_extern";
+library "[[@TEST_NAME]]";
 
 extern library "two_file_impl_mismatch" fn F();
 
 // --- two_file_impl_mismatch.carbon
 
-library "two_file_impl_mismatch";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 
 // --- fail_two_file_impl_mismatch.impl.carbon
 
-impl library "two_file_impl_mismatch";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
 // CHECK:STDERR: fn F() {}
@@ -68,19 +68,19 @@ fn F() {}
 
 // --- indirect_two_file_extern.carbon
 
-library "indirect_two_file_extern";
+library "[[@TEST_NAME]]";
 
 extern library "indirect_two_file" fn F();
 
 // --- indirect_two_file.carbon
 
-library "indirect_two_file";
+library "[[@TEST_NAME]]";
 
 import library "indirect_two_file_extern";
 
 // --- fail_indirect_two_file.impl.carbon
 
-impl library "indirect_two_file";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_indirect_two_file.impl.carbon:[[@LINE+4]]:1: ERROR: `extern` entities must have a declaration in the API file.
 // CHECK:STDERR: extern fn F() {}
@@ -90,17 +90,17 @@ extern fn F() {}
 
 // --- in_impl_extern.carbon
 
-library "in_impl_extern";
+library "[[@TEST_NAME]]";
 
 extern library "in_impl" fn F();
 
 // --- in_impl.carbon
 
-library "in_impl";
+library "[[@TEST_NAME]]";
 
 // --- fail_in_impl.impl.carbon
 
-impl library "in_impl";
+impl library "[[@TEST_NAME]]";
 
 import library "in_impl_extern";
 

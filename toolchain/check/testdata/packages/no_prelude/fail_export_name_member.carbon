@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-package Foo library "a";
+package Foo library "[[@TEST_NAME]]";
 
 class C {
   var n: {};
@@ -18,7 +18,7 @@ class C {
 
 // --- fail_b.carbon
 
-package Foo library "b";
+package Foo library "[[@TEST_NAME]]";
 
 import library "a";
 

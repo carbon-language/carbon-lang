@@ -508,7 +508,7 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
                                   ssize_t position) -> void {                \
     Lexer::LexResult result = lexer.LexMethod(source_text, position);        \
-    CARBON_CHECK(result) << "Failed to form a token!";                       \
+    CARBON_CHECK(result, "Failed to form a token!");                         \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }
 CARBON_DISPATCH_LEX_TOKEN(LexError)
@@ -527,7 +527,7 @@ CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
         OneCharTokenKindTable[static_cast<unsigned char>(                    \
             source_text[position])],                                         \
         position);                                                           \
-    CARBON_CHECK(result) << "Failed to form a token!";                       \
+    CARBON_CHECK(result, "Failed to form a token!");                         \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
@@ -855,7 +855,7 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 
   // This code path should produce a token, make sure that happens.
   LexResult result = LexSymbolToken(source_text, position);
-  CARBON_CHECK(result) << "Failed to form a token!";
+  CARBON_CHECK(result, "Failed to form a token!");
 }
 
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
@@ -1063,10 +1063,10 @@ auto Lexer::LexOneCharSymbolToken(llvm::StringRef source_text, TokenKind kind,
   // Verify in a debug build that the incoming token kind is correct.
   CARBON_DCHECK(kind != TokenKind::Error);
   CARBON_DCHECK(kind.fixed_spelling().size() == 1);
-  CARBON_DCHECK(source_text[position] == kind.fixed_spelling().front())
-      << "Source text starts with '" << source_text[position]
-      << "' instead of the spelling '" << kind.fixed_spelling()
-      << "' of the incoming token kind '" << kind << "'";
+  CARBON_DCHECK(source_text[position] == kind.fixed_spelling().front(),
+                "Source text starts with '{0}' instead of the spelling '{1}' "
+                "of the incoming token kind '{2}'",
+                source_text[position], kind.fixed_spelling(), kind);
 
   TokenIndex token = LexToken(kind, position);
   ++position;
@@ -1077,10 +1077,10 @@ auto Lexer::LexOpeningSymbolToken(llvm::StringRef source_text, TokenKind kind,
                                   ssize_t& position) -> LexResult {
   CARBON_DCHECK(kind.is_opening_symbol());
   CARBON_DCHECK(kind.fixed_spelling().size() == 1);
-  CARBON_DCHECK(source_text[position] == kind.fixed_spelling().front())
-      << "Source text starts with '" << source_text[position]
-      << "' instead of the spelling '" << kind.fixed_spelling()
-      << "' of the incoming token kind '" << kind << "'";
+  CARBON_DCHECK(source_text[position] == kind.fixed_spelling().front(),
+                "Source text starts with '{0}' instead of the spelling '{1}' "
+                "of the incoming token kind '{2}'",
+                source_text[position], kind.fixed_spelling(), kind);
 
   int32_t byte_offset = position;
   ++position;
@@ -1096,10 +1096,10 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                                   ssize_t& position) -> LexResult {
   CARBON_DCHECK(kind.is_closing_symbol());
   CARBON_DCHECK(kind.fixed_spelling().size() == 1);
-  CARBON_DCHECK(source_text[position] == kind.fixed_spelling().front())
-      << "Source text starts with '" << source_text[position]
-      << "' instead of the spelling '" << kind.fixed_spelling()
-      << "' of the incoming token kind '" << kind << "'";
+  CARBON_DCHECK(source_text[position] == kind.fixed_spelling().front(),
+                "Source text starts with '{0}' instead of the spelling '{1}' "
+                "of the incoming token kind '{2}'",
+                source_text[position], kind.fixed_spelling(), kind);
 
   int32_t byte_offset = position;
   ++position;
@@ -1204,7 +1204,7 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   // Take the valid characters off the front of the source buffer.
   llvm::StringRef identifier_text =
       ScanForIdentifierPrefix(source_text.substr(position));
-  CARBON_CHECK(!identifier_text.empty()) << "Must have at least one character!";
+  CARBON_CHECK(!identifier_text.empty(), "Must have at least one character!");
   position += identifier_text.size();
 
   // Check if the text is a type literal, and if so form such a literal.
@@ -1255,7 +1255,7 @@ auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
   // Take the valid characters off the front of the source buffer.
   llvm::StringRef identifier_text =
       ScanForIdentifierPrefix(source_text.substr(position + 1));
-  CARBON_CHECK(!identifier_text.empty()) << "Must have at least one character!";
+  CARBON_CHECK(!identifier_text.empty(), "Must have at least one character!");
   position += 1 + identifier_text.size();
 
   // Replace the `r` identifier's value with the raw identifier.
@@ -1359,14 +1359,14 @@ class Lexer::ErrorRecoveryBuffer {
   // currently require insertions to be specified in source order, but this
   // restriction would be easy to relax.
   auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> void {
-    CARBON_CHECK(insert_before.index > 0)
-        << "Cannot insert before the start of file token.";
-    CARBON_CHECK(insert_before.index <
-                 static_cast<int>(buffer_.token_infos_.size()))
-        << "Cannot insert after the end of file token.";
-    CARBON_CHECK(new_tokens_.empty() ||
-                 new_tokens_.back().first <= insert_before)
-        << "Insertions performed out of order.";
+    CARBON_CHECK(insert_before.index > 0,
+                 "Cannot insert before the start of file token.");
+    CARBON_CHECK(
+        insert_before.index < static_cast<int>(buffer_.token_infos_.size()),
+        "Cannot insert after the end of file token.");
+    CARBON_CHECK(
+        new_tokens_.empty() || new_tokens_.back().first <= insert_before,
+        "Insertions performed out of order.");
 
     // If the `insert_before` token has leading whitespace, mark the
     // inserted token as also having leading whitespace. This avoids changing
@@ -1423,12 +1423,12 @@ class Lexer::ErrorRecoveryBuffer {
       if (kind.is_opening_symbol()) {
         open_groups.push_back(token);
       } else if (kind.is_closing_symbol()) {
-        CARBON_CHECK(!open_groups.empty()) << "Failed to balance brackets";
+        CARBON_CHECK(!open_groups.empty(), "Failed to balance brackets");
         auto opening_token = open_groups.pop_back_val();
 
         CARBON_CHECK(
-            kind == buffer_.GetTokenInfo(opening_token).kind().closing_symbol())
-            << "Failed to balance brackets";
+            kind == buffer_.GetTokenInfo(opening_token).kind().closing_symbol(),
+            "Failed to balance brackets");
         auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
         auto& closing_token_info = buffer_.GetTokenInfo(token);
         opening_token_info.set_closing_token_index(token);
@@ -1530,7 +1530,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     fixes.ReplaceWithError(token);
   }
 
-  CARBON_CHECK(!fixes.empty()) << "Didn't find anything to fix";
+  CARBON_CHECK(!fixes.empty(), "Didn't find anything to fix");
   fixes.Apply();
   fixes.FixTokenCrossReferences();
 }

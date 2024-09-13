@@ -36,8 +36,8 @@ static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
   }
 
   // Return parse results.
-  CARBON_CHECK(ast != std::nullopt)
-      << "parser validated syntax yet didn't produce an AST.";
+  CARBON_CHECK(ast != std::nullopt,
+               "parser validated syntax yet didn't produce an AST.");
   return *ast;
 }
 

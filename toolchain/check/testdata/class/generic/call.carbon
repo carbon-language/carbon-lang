@@ -10,7 +10,7 @@
 
 // --- call.carbon
 
-library "call";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -21,7 +21,7 @@ var b: Class((), 0);
 
 // --- fail_too_few.carbon
 
-library "too_few";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -36,7 +36,7 @@ var a: Class(i32*);
 
 // --- fail_too_many.carbon
 
-library "too_many";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -51,7 +51,7 @@ var a: Class(i32*, 1, 2);
 
 // --- fail_no_conversion.carbon
 
-library "no_conversion";
+library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
@@ -723,6 +723,17 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %A.type => constants.%A.type.1
+// CHECK:STDOUT:   %A => constants.%A.1
+// CHECK:STDOUT:   %B.type => constants.%B.type.1
+// CHECK:STDOUT:   %B => constants.%B.1
+// CHECK:STDOUT:   %C.type => constants.%C.type.1
+// CHECK:STDOUT:   %C => constants.%C.1
+// CHECK:STDOUT:   %D.type => constants.%D.type.1
+// CHECK:STDOUT:   %D => constants.%D.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(@A.%T) {

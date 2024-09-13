@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/import_interface_decl.carbon
 
 // --- a.carbon
-library "a";
+library "[[@TEST_NAME]]";
 interface A;
 impl () as A;
 
 
 // --- a.impl.carbon
-impl library "a";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:

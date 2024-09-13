@@ -14,6 +14,9 @@ namespace Carbon::SemIR {
 
 // Function-specific fields.
 struct FunctionFields {
+  // Kinds of virtual modifiers that can apply to functions.
+  enum class VirtualModifier { None, Virtual, Abstract, Impl };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -22,6 +25,10 @@ struct FunctionFields {
   // function, depending on whether the return type needs a return slot, but is
   // always present if the function has a declared return type.
   InstId return_storage_id;
+
+  // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
+  // this function.
+  VirtualModifier virtual_modifier;
 
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.

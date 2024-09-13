@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 class SomeClass {
   var a: i32;
@@ -27,7 +27,7 @@ class StructAdapter {
 
 // --- fail_not_extend.carbon
 
-library "fail_not_extend";
+library "[[@TEST_NAME]]";
 
 class Adapted {
   fn F();

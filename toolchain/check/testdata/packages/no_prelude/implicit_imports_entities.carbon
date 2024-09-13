@@ -14,38 +14,38 @@
 
 // --- c1.carbon
 
-library "C1";
+library "[[@TEST_NAME]]";
 
 class C1 {}
 
 // --- c2.carbon
 
-library "C2";
+library "[[@TEST_NAME]]";
 
 class C2 {}
 
 // --- ns.carbon
 
-library "ns";
+library "[[@TEST_NAME]]";
 
 namespace NS;
 class NS.C {}
 
 // --- o1.carbon
 
-package Other library "O1";
+package Other library "[[@TEST_NAME]]";
 
 class O1 {}
 
 // --- o2.carbon
 
-package Other library "O2";
+package Other library "[[@TEST_NAME]]";
 
 class O2 {}
 
 // --- local_other.carbon
 
-library "local_other";
+library "[[@TEST_NAME]]";
 
 class Other {}
 
@@ -55,79 +55,79 @@ class Other {}
 
 // --- mix_current_package.carbon
 
-library "mix_current_package";
+library "[[@TEST_NAME]]";
 
-import library "C1";
+import library "c1";
 
 // --- mix_current_package.impl.carbon
 
-impl library "mix_current_package";
+impl library "[[@TEST_NAME]]";
 
-import library "C2";
+import library "c2";
 
 var c1: C1 = {};
 var c2: C2 = {};
 
 // --- dup_c1.carbon
 
-library "dup_c1";
+library "[[@TEST_NAME]]";
 
-import library "C1";
+import library "c1";
 
 // --- dup_c1.impl.carbon
 
-impl library "dup_c1";
+impl library "[[@TEST_NAME]]";
 
-import library "C1";
+import library "c1";
 
 var c1: C1 = {};
 
 // --- use_ns.carbon
 
-library "use_ns";
+library "[[@TEST_NAME]]";
 
 import library "ns";
 
 // --- use_ns.impl.carbon
 
-impl library "use_ns";
+impl library "[[@TEST_NAME]]";
 
 var c: NS.C = {};
 
 // --- mix_other.carbon
 
-library "mix_other";
+library "[[@TEST_NAME]]";
 
-import Other library "O1";
+import Other library "o1";
 
 // --- mix_other.impl.carbon
 
-impl library "mix_other";
+impl library "[[@TEST_NAME]]";
 
-import Other library "O2";
+import Other library "o2";
 
 var o1: Other.O1 = {};
 var o2: Other.O2 = {};
 
 // --- dup_o1.carbon
 
-library "dup_o1";
+library "[[@TEST_NAME]]";
 
-import Other library "O1";
+import Other library "o1";
 
 // --- dup_o1.impl.carbon
 
-impl library "dup_o1";
+impl library "[[@TEST_NAME]]";
 
-import Other library "O1";
+import Other library "o1";
 
 var o1: Other.O1 = {};
 
 // --- import_conflict.carbon
 
-library "import_conflict";
+library "[[@TEST_NAME]]";
 
-import Other library "O1";
+import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
@@ -135,7 +135,7 @@ import Other library "O1";
 // CHECK:STDERR: impl library "import_conflict";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: import_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: import Other library "O1";
+// CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+7]]:6: In import.
 // CHECK:STDERR: impl library "import_conflict";
@@ -144,22 +144,22 @@ import Other library "O1";
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-impl library "import_conflict";
+impl library "[[@TEST_NAME]]";
 
 import library "local_other";
 
 // --- import_conflict_reverse.carbon
 
-library "import_conflict_reverse";
+library "[[@TEST_NAME]]";
 
 import library "local_other";
 
 // --- fail_import_conflict_reverse.impl.carbon
 
-impl library "import_conflict_reverse";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: import Other library "O1";
+// CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: In import.
 // CHECK:STDERR: impl library "import_conflict_reverse";
@@ -170,7 +170,7 @@ impl library "import_conflict_reverse";
 // CHECK:STDERR: local_other.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-import Other library "O1";
+import Other library "o1";
 
 // CHECK:STDOUT: --- c1.carbon
 // CHECK:STDOUT:
@@ -292,7 +292,7 @@ import Other library "O1";
 // CHECK:STDOUT: --- mix_current_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//C1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//c1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -316,9 +316,9 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//mix_current_package, inst+2, loaded [template = constants.%C1]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//C2, inst+1, loaded [template = constants.%C2]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//C1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//C2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//c2, inst+1, loaded [template = constants.%C2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//c2, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -364,7 +364,7 @@ import Other library "O1";
 // CHECK:STDOUT: --- dup_c1.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//C1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//c1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -386,7 +386,7 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//dup_c1, inst+2, loaded [template = constants.%C1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//C1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//c1, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -482,7 +482,7 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -509,13 +509,13 @@ import Other library "O1";
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .O1 = %import_ref.1
 // CHECK:STDOUT:     .O2 = %import_ref.3
-// CHECK:STDOUT:     import Other//O2
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o2
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//O1, inst+1, loaded [template = constants.%O1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//O1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Other//O2, inst+1, loaded [template = constants.%O2]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Other//O2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//o1, inst+1, loaded [template = constants.%O1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//o1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Other//o2, inst+1, loaded [template = constants.%O2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Other//o2, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -564,7 +564,7 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -588,10 +588,10 @@ import Other library "O1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .O1 = %import_ref.1
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//O1, inst+1, loaded [template = constants.%O1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//O1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//o1, inst+1, loaded [template = constants.%O1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//o1, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -626,7 +626,7 @@ import Other library "O1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -642,7 +642,7 @@ import Other library "O1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref = import_ref Main//local_other, inst+1, unloaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -673,7 +673,7 @@ import Other library "O1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref = import_ref Main//import_conflict_reverse, inst+2, unloaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//O1
+// CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

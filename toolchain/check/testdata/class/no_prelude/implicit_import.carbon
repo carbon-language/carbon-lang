@@ -10,25 +10,25 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 class C;
 
 // --- basic.impl.carbon
 
-impl library "basic";
+impl library "[[@TEST_NAME]]";
 
 class C {}
 
 // --- redecl_after_def.carbon
 
-library "redecl_after_def";
+library "[[@TEST_NAME]]";
 
 class C {}
 
 // --- fail_redecl_after_def.impl.carbon
 
-impl library "redecl_after_def";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `class C` is redundant.
 // CHECK:STDERR: class C;
@@ -44,13 +44,13 @@ class C;
 
 // --- redef_after_def.carbon
 
-library "redef_after_def";
+library "[[@TEST_NAME]]";
 
 class C {}
 
 // --- fail_redef_after_def.impl.carbon
 
-impl library "redef_after_def";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redefinition of `class C`.
 // CHECK:STDERR: class C {}
@@ -66,14 +66,14 @@ class C {}
 
 // --- def_alias.carbon
 
-library "def_alias";
+library "[[@TEST_NAME]]";
 
 class C;
 alias B = C;
 
 // --- fail_def_alias.impl.carbon
 
-impl library "def_alias";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class B {}

@@ -8,9 +8,10 @@
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/VirtualFileSystem.h"
-#include "llvm/Support/raw_ostream.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/driver/codegen_options.h"
+#include "toolchain/driver/compile_subcommand.h"
+#include "toolchain/driver/driver_env.h"
+#include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
 
@@ -36,10 +37,10 @@ class Driver {
   Driver(llvm::vfs::FileSystem& fs, const InstallPaths* installation,
          llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
-      : fs_(fs),
-        installation_(installation),
-        output_stream_(output_stream),
-        error_stream_(error_stream) {}
+      : driver_env_{.fs = fs,
+                    .installation = installation,
+                    .output_stream = output_stream,
+                    .error_stream = error_stream} {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -51,9 +52,9 @@ class Driver {
 
  private:
   struct Options;
-  struct CodegenOptions;
-  struct CompileOptions;
-  struct LinkOptions;
+
+  // Implementation is in compile_subcommand.cpp.
+  // TODO: Remove from Driver.
   class CompilationUnit;
 
   // Delegates to the command line library to parse the arguments and store the
@@ -63,29 +64,23 @@ class Driver {
 
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports.
+  // Implementation is in compile_subcommand.cpp.
+  // TODO: Remove from Driver.
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
 
   // Implements the compile subcommand of the driver.
+  // Implementation is in compile_subcommand.cpp.
+  // TODO: Remove from Driver.
   auto Compile(const CompileOptions& options,
                const CodegenOptions& codegen_options) -> RunResult;
 
   // Implements the link subcommand of the driver.
+  // Implementation is in link_subcommand.cpp.
+  // TODO: Remove from Driver.
   auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
       -> RunResult;
 
-  // The filesystem for source code.
-  llvm::vfs::FileSystem& fs_;
-
-  // Helper to locate the toolchain installation's files.
-  const InstallPaths* installation_;
-
-  // Standard output; stdout.
-  llvm::raw_pwrite_stream& output_stream_;
-  // Error output; stderr.
-  llvm::raw_pwrite_stream& error_stream_;
-
-  // For CARBON_VLOG.
-  llvm::raw_pwrite_stream* vlog_stream_ = nullptr;
+  DriverEnv driver_env_;
 };
 
 }  // namespace Carbon

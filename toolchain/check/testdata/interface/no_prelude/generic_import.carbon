@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 interface AddWith(T:! type) {
   fn F();
@@ -18,7 +18,7 @@ interface AddWith(T:! type) {
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 import library "a";
 
 class C {}

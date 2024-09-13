@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -100,8 +101,8 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
   auto const_id = TryEvalInst(*this, inst_id, inst);
   constant_values().Set(inst_id, const_id);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << inst << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
+    CARBON_VLOG("Constant: {0} -> {1}\n", inst,
+                constant_values().GetInstId(const_id));
 
     // If the constant value is symbolic, track that we need to substitute into
     // it.
@@ -141,15 +142,16 @@ auto Context::CheckCompatibleImportedNodeKind(
   auto& import_ir_inst = import_ir_insts().Get(imported_loc_id);
   const auto* import_ir = import_irs().Get(import_ir_inst.ir_id).sem_ir;
   auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id).kind();
-  CARBON_CHECK(HasCompatibleImportedNodeKind(imported_kind, kind))
-      << "Node of kind " << kind
-      << " created with location of imported node of kind " << imported_kind;
+  CARBON_CHECK(
+      HasCompatibleImportedNodeKind(imported_kind, kind),
+      "Node of kind {0} created with location of imported node of kind {1}",
+      kind, imported_kind);
 }
 
 auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG() << "AddInst: " << loc_id_and_inst.inst << "\n";
+  CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
   FinishInst(inst_id, loc_id_and_inst.inst);
   return inst_id;
 }
@@ -163,7 +165,7 @@ auto Context::AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
 auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG() << "AddPlaceholderInst: " << loc_id_and_inst.inst << "\n";
+  CARBON_VLOG("AddPlaceholderInst: {0}\n", loc_id_and_inst.inst);
   constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
@@ -178,22 +180,21 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
 auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
     -> SemIR::ConstantId {
   auto const_id = constants().GetOrAdd(inst, is_symbolic);
-  CARBON_VLOG() << "AddConstant: " << inst << "\n";
+  CARBON_VLOG("AddConstant: {0}\n", inst);
   return const_id;
 }
 
 auto Context::ReplaceLocIdAndInstBeforeConstantUse(
     SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
   sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << loc_id_and_inst.inst
-                << "\n";
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, loc_id_and_inst.inst);
   FinishInst(inst_id, loc_id_and_inst.inst);
 }
 
 auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
                                            SemIR::Inst inst) -> void {
   sem_ir().insts().Set(inst_id, inst);
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << inst << "\n";
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
   FinishInst(inst_id, inst);
 }
 
@@ -218,7 +219,7 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
-  CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
+  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "Class is incomplete within its definition.");
@@ -233,7 +234,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
 auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                                      DiagnosticBuilder& builder) -> void {
   const auto& interface_info = interfaces().Get(interface_id);
-  CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
+  CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
                       "Interface is currently being defined.");
@@ -292,7 +293,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
     return LookupNameInExactScope(loc_id, name_id, scope_id,
-                                  name_scopes().Get(scope_id));
+                                  name_scopes().Get(scope_id))
+        .first;
   }
 }
 
@@ -334,26 +336,115 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
-    -> SemIR::InstId {
+    -> std::pair<SemIR::InstId, SemIR::AccessKind> {
   if (auto lookup = scope.name_map.Lookup(name_id)) {
-    auto inst_id = scope.names[lookup.value()].inst_id;
-    LoadImportRef(*this, inst_id);
-    return inst_id;
+    auto entry = scope.names[lookup.value()];
+    LoadImportRef(*this, entry.inst_id);
+    return {entry.inst_id, entry.access_kind};
   }
+
   if (!scope.import_ir_scopes.empty()) {
-    return ImportNameFromOtherPackage(*this, loc, scope_id,
-                                      scope.import_ir_scopes, name_id);
+    // TODO: Enforce other access modifiers for imports.
+    return {ImportNameFromOtherPackage(*this, loc, scope_id,
+                                       scope.import_ir_scopes, name_id),
+            SemIR::AccessKind::Public};
   }
-  return SemIR::InstId::Invalid;
+  return {SemIR::InstId::Invalid, SemIR::AccessKind::Public};
 }
 
+// Prints diagnostics on invalid qualified name access.
+static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
+                                               SemIR::InstId scope_result_id,
+                                               SemIR::NameId name_id,
+                                               SemIR::AccessKind access_kind,
+                                               bool is_parent_access,
+                                               AccessInfo access_info) -> void {
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
+      context.constant_values().GetInstId(access_info.constant_id));
+  if (!class_type) {
+    return;
+  }
+
+  // TODO: Support scoped entities other than just classes.
+  auto class_info = context.classes().Get(class_type->class_id);
+
+  // TODO: Support passing AccessKind to diagnostics.
+  CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
+                    "Cannot access {0} member `{1}` of type `{2}`.",
+                    llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
+  CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
+                    "The {0} member `{1}` is defined here.",
+                    llvm::StringLiteral, SemIR::NameId);
+
+  auto parent_type_id = class_info.self_type_id;
+  auto access_desc = access_kind == SemIR::AccessKind::Private
+                         ? llvm::StringLiteral("private")
+                         : llvm::StringLiteral("protected");
+
+  if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
+    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
+            class_info.base_id)) {
+      parent_type_id = base_decl->base_type_id;
+    } else if (auto adapt_decl =
+                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
+                       class_info.adapt_id)) {
+      parent_type_id = adapt_decl->adapted_type_id;
+    } else {
+      CARBON_FATAL("Expected parent for parent access");
+    }
+  }
+
+  context.emitter()
+      .Build(loc, ClassInvalidMemberAccess, access_desc, name_id,
+             parent_type_id)
+      .Note(scope_result_id, ClassMemberDefinition, access_desc, name_id)
+      .Emit();
+}
+
+// Returns whether the access is prohibited by the access modifiers.
+static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
+                               SemIR::AccessKind access_kind,
+                               bool is_parent_access) -> bool {
+  if (!access_info) {
+    return false;
+  }
+
+  switch (access_kind) {
+    case SemIR::AccessKind::Public:
+      return false;
+    case SemIR::AccessKind::Protected:
+      return access_info->highest_allowed_access == SemIR::AccessKind::Public;
+    case SemIR::AccessKind::Private:
+      return access_info->highest_allowed_access !=
+                 SemIR::AccessKind::Private ||
+             is_parent_access;
+  }
+}
+
+// Information regarding a prohibited access.
+struct ProhibitedAccessInfo {
+  // The resulting inst of the lookup.
+  SemIR::InstId scope_result_id;
+  // The access kind of the lookup.
+  SemIR::AccessKind access_kind;
+  // If the lookup is from an extended scope. For example, if this is a base
+  // class member access from a class that extends it.
+  bool is_parent_access;
+};
+
 auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                                  LookupScope scope, bool required)
+                                  LookupScope scope, bool required,
+                                  std::optional<AccessInfo> access_info)
     -> LookupResult {
   llvm::SmallVector<LookupScope> scopes = {scope};
+
+  // TODO: Support reporting of multiple prohibited access.
+  llvm::SmallVector<ProhibitedAccessInfo> prohibited_accesses;
+
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::Invalid};
   bool has_error = false;
+  bool is_parent_access = false;
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
@@ -361,10 +452,25 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     const auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error;
 
-    auto scope_result_id =
+    auto [scope_result_id, access_kind] =
         LookupNameInExactScope(loc, name_id, scope_id, name_scope);
-    if (!scope_result_id.is_valid()) {
-      // Nothing found in this scope: also look in its extended scopes.
+
+    auto is_access_prohibited =
+        IsAccessProhibited(access_info, access_kind, is_parent_access);
+
+    // Keep track of prohibited accesses, this will be useful for reporting
+    // multiple prohibited accesses if we can't find a suitable lookup.
+    if (is_access_prohibited) {
+      prohibited_accesses.push_back({
+          .scope_result_id = scope_result_id,
+          .access_kind = access_kind,
+          .is_parent_access = is_parent_access,
+      });
+    }
+
+    if (!scope_result_id.is_valid() || is_access_prohibited) {
+      // If nothing is found in this scope or if we encountered an invalid
+      // access, look in its extended scopes.
       auto extended = name_scope.extended_scopes;
       scopes.reserve(scopes.size() + extended.size());
       for (auto extended_id : llvm::reverse(extended)) {
@@ -373,6 +479,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
         scopes.push_back({.name_scope_id = extended_id,
                           .specific_id = SemIR::SpecificId::Invalid});
       }
+      is_parent_access |= !extended.empty();
       continue;
     }
 
@@ -397,8 +504,22 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(loc, name_id);
+      if (prohibited_accesses.empty()) {
+        DiagnoseNameNotFound(loc, name_id);
+      } else {
+        //  TODO: We should report multiple prohibited accesses in case we don't
+        //  find a valid lookup. Reporting the last one should suffice for now.
+        auto [scope_result_id, access_kind, is_parent_access] =
+            prohibited_accesses.back();
+
+        // Note, `access_info` is guaranteed to have a value here, since
+        // `prohibited_accesses` is non-empty.
+        DiagnoseInvalidQualifiedNameAccess(*this, loc, scope_result_id, name_id,
+                                           access_kind, is_parent_access,
+                                           *access_info);
+      }
     }
+
     return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = SemIR::InstId::BuiltinError};
   }
@@ -420,7 +541,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
   auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
 
   // Look up `package.Core`.
-  auto core_inst_id = context.LookupNameInExactScope(
+  auto [core_inst_id, _] = context.LookupNameInExactScope(
       loc, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_inst_id.is_valid()) {
@@ -432,10 +553,10 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
     }
   }
 
-  CARBON_DIAGNOSTIC(CoreNotFound, Error,
-                    "Package `Core` implicitly referenced here, but not found.",
-                    SemIR::NameId);
-  context.emitter().Emit(loc, CoreNotFound, core_name_id);
+  CARBON_DIAGNOSTIC(
+      CoreNotFound, Error,
+      "Package `Core` implicitly referenced here, but not found.");
+  context.emitter().Emit(loc, CoreNotFound);
   return SemIR::NameScopeId::Invalid;
 }
 
@@ -447,8 +568,8 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
-  auto inst_id = LookupNameInExactScope(loc, name_id, core_package_id,
-                                        name_scopes().Get(core_package_id));
+  auto [inst_id, _] = LookupNameInExactScope(
+      loc, name_id, core_package_id, name_scopes().Get(core_package_id));
   if (!inst_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         CoreNameNotFound, Error,
@@ -495,7 +616,7 @@ auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
 
 auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
     -> void {
-  CARBON_CHECK(num_blocks >= 2) << "no convergence";
+  CARBON_CHECK(num_blocks >= 2, "no convergence");
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
@@ -513,7 +634,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
 auto Context::AddConvergenceBlockWithArgAndPush(
     Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
     -> SemIR::InstId {
-  CARBON_CHECK(block_args.size() >= 2) << "no convergence";
+  CARBON_CHECK(block_args.size() >= 2, "no convergence");
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
   for (auto arg_id : block_args) {
@@ -551,24 +672,24 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
     const_id = constant_values().Get(literal.value().value.ToBool() ? if_true
                                                                     : if_false);
   } else {
-    CARBON_CHECK(cond_const_id == SemIR::ConstantId::Error)
-        << "Unexpected constant branch condition.";
+    CARBON_CHECK(cond_const_id == SemIR::ConstantId::Error,
+                 "Unexpected constant branch condition.");
     const_id = SemIR::ConstantId::Error;
   }
 
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << insts().Get(select_id) << " -> "
-                  << constant_values().GetInstId(const_id) << "\n";
+    CARBON_VLOG("Constant: {0} -> {1}\n", insts().Get(select_id),
+                constant_values().GetInstId(const_id));
     constant_values().Set(select_id, const_id);
   }
 }
 
 auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
-  CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
+  CARBON_CHECK(!inst_block_stack().empty(), "no current code block");
 
   if (return_scope_stack().empty()) {
-    CARBON_CHECK(node_id.is_valid())
-        << "No current function, but node_id not provided";
+    CARBON_CHECK(node_id.is_valid(),
+                 "No current function, but node_id not provided");
     TODO(node_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
@@ -678,16 +799,16 @@ class TypeCompleter {
         if (!AddNestedIncompleteTypes(inst)) {
           return false;
         }
-        CARBON_CHECK(work_list_.size() >= old_work_list_size)
-            << "AddNestedIncompleteTypes should not remove work items";
+        CARBON_CHECK(work_list_.size() >= old_work_list_size,
+                     "AddNestedIncompleteTypes should not remove work items");
         work_list_[old_work_list_size - 1].phase = Phase::BuildValueRepr;
         break;
 
       case Phase::BuildValueRepr: {
         auto value_rep = BuildValueRepr(type_id, inst);
         context_.types().SetValueRepr(type_id, value_rep);
-        CARBON_CHECK(old_work_list_size == work_list_.size())
-            << "BuildValueRepr should not change work items";
+        CARBON_CHECK(old_work_list_size == work_list_.size(),
+                     "BuildValueRepr should not change work items");
         work_list_.pop_back();
 
         // Also complete the value representation type, if necessary. This
@@ -799,11 +920,11 @@ class TypeCompleter {
   // Gets the value representation of a nested type, which should already be
   // complete.
   auto GetNestedValueRepr(SemIR::TypeId nested_type_id) const {
-    CARBON_CHECK(context_.types().IsComplete(nested_type_id))
-        << "Nested type should already be complete";
+    CARBON_CHECK(context_.types().IsComplete(nested_type_id),
+                 "Nested type should already be complete");
     auto value_rep = context_.types().GetValueRepr(nested_type_id);
-    CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown)
-        << "Complete type should have a value representation";
+    CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown,
+                 "Complete type should have a value representation");
     return value_rep;
   }
 
@@ -985,7 +1106,7 @@ class TypeCompleter {
     requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
       -> SemIR::ValueRepr {
-    CARBON_FATAL() << "Type refers to non-type inst " << inst;
+    CARBON_FATAL("Type refers to non-type inst {0}", inst);
   }
 
   // Builds and returns the value representation for the given type. All nested
@@ -1053,16 +1174,16 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
     -> SemIR::TypeId {
-  CARBON_CHECK(constant_id.is_constant())
-      << "Canonicalizing non-constant type: " << constant_id;
+  CARBON_CHECK(constant_id.is_constant(),
+               "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
       insts().Get(constant_values().GetInstId(constant_id)).type_id();
   // TODO: For now, we allow values of facet type to be used as types.
   CARBON_CHECK(type_id == SemIR::TypeId::TypeType ||
-               types().Is<SemIR::InterfaceType>(type_id) ||
-               constant_id == SemIR::ConstantId::Error)
-      << "Forming type ID for non-type constant of type "
-      << types().GetAsInst(type_id);
+                   types().Is<SemIR::InterfaceType>(type_id) ||
+                   constant_id == SemIR::ConstantId::Error,
+               "Forming type ID for non-type constant of type {0}",
+               types().GetAsInst(type_id));
 
   return SemIR::TypeId::ForTypeConstant(constant_id);
 }
@@ -1085,7 +1206,7 @@ static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
   bool complete = context.TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Type completion should not fail";
+  CARBON_CHECK(complete, "Type completion should not fail");
   return type_id;
 }
 
@@ -1111,7 +1232,7 @@ auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
   auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Failed to complete builtin type";
+  CARBON_CHECK(complete, "Failed to complete builtin type");
   return type_id;
 }
 

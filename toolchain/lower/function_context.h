@@ -63,8 +63,8 @@ class FunctionContext {
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
     bool added = locals_.Insert(inst_id, value).is_inserted();
-    CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
-                        << sem_ir().insts().Get(inst_id);
+    CARBON_CHECK(added, "Duplicate local insert: {0} {1}", inst_id,
+                 sem_ir().insts().Get(inst_id));
   }
 
   // Gets a callable's function.

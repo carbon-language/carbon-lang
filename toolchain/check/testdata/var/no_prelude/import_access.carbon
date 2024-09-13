@@ -14,7 +14,7 @@
 
 // --- def.carbon
 
-package Test library "def";
+package Test library "[[@TEST_NAME]]";
 
 private var v: () = ();
 
@@ -24,13 +24,13 @@ private var v: () = ();
 
 // --- def.impl.carbon
 
-impl package Test library "def";
+impl package Test library "[[@TEST_NAME]]";
 
 var v2: () = v;
 
 // --- fail_local_def.carbon
 
-package Test library "fail_local_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
@@ -42,7 +42,7 @@ var v2: () = v;
 
 // --- fail_other_def.carbon
 
-package Other library "fail_other_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 

@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 base class Base {
   fn F[self: Self]();
@@ -26,7 +26,7 @@ class Child {
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 import library "a";
 

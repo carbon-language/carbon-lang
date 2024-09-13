@@ -10,32 +10,32 @@
 
 // --- extern_def.carbon
 
-library "extern_def";
+library "[[@TEST_NAME]]";
 
 extern fn F() {}
 
 // --- def_for_extern_decl.carbon
 
-library "def_for_extern_decl";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 extern fn F() {}
 
 // --- split_library.carbon
 
-library "split_library";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 
 // --- split_library.impl.carbon
 
-impl library "split_library";
+impl library "[[@TEST_NAME]]";
 
 extern fn F() {}
 
 // --- fail_def_extern_mismatch.carbon
 
-library "def_extern_mismatch";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 // CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
@@ -49,7 +49,7 @@ fn F() {}
 
 // --- fail_def_extern_mismatch_reverse.carbon
 
-library "def_extern_mismatch_reverse";
+library "[[@TEST_NAME]]";
 
 fn F();
 // CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
@@ -63,7 +63,7 @@ extern fn F() {}
 
 // --- fail_extern_diag_suppressed.carbon
 
-library "extern_diag_suppressed";
+library "[[@TEST_NAME]]";
 
 extern fn F();
 // CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
@@ -85,7 +85,7 @@ fn F() {}
 
 // --- fail_extern_decl_after_def.carbon
 
-library "extern_decl_after_def";
+library "[[@TEST_NAME]]";
 
 fn F() {}
 // CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
@@ -99,11 +99,11 @@ extern fn F();
 
 // --- in_impl.carbon
 
-library "in_impl";
+library "[[@TEST_NAME]]";
 
 // --- fail_in_impl.impl.carbon
 
-impl library "in_impl";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: `extern` entities must have a declaration in the API file.
 // CHECK:STDERR: extern fn F() {}

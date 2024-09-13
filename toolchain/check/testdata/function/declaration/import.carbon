@@ -14,7 +14,7 @@
 
 // --- api.carbon
 
-library "api";
+library "[[@TEST_NAME]]";
 
 fn A();
 fn B(b: i32) -> i32;
@@ -26,7 +26,7 @@ fn NS.E();
 
 // --- extern_api.carbon
 
-library "extern_api";
+library "[[@TEST_NAME]]";
 
 extern library "redecl_extern_api" fn A();
 extern library "redecl_extern_api" fn B(b: i32) -> i32;
@@ -42,7 +42,7 @@ extern library "redecl_extern_api" fn NS.E();
 
 // --- basics.carbon
 
-library "basics";
+library "[[@TEST_NAME]]";
 
 import library "api";
 
@@ -54,7 +54,7 @@ var e: () = NS.E();
 
 // --- fail_redecl_api.carbon
 
-library "redecl_api";
+library "[[@TEST_NAME]]";
 
 import library "api";
 
@@ -122,7 +122,7 @@ var e: () = NS.E();
 
 // --- redecl_extern_api.carbon
 
-library "redecl_extern_api";
+library "[[@TEST_NAME]]";
 
 import library "extern_api";
 
@@ -140,7 +140,7 @@ var e: () = NS.E();
 
 // --- fail_merge.carbon
 
-library "merge";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_merge.carbon:[[@LINE+65]]:1: In import.
 // CHECK:STDERR: import library "api";
@@ -218,7 +218,7 @@ var e: () = NS.E();
 
 // --- fail_merge_reverse.carbon
 
-library "merge_reverse";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+64]]:1: In import.
 // CHECK:STDERR: import library "extern_api";
@@ -295,13 +295,13 @@ var e: () = NS.E();
 
 // --- unloaded.carbon
 
-library "unloaded";
+library "[[@TEST_NAME]]";
 
 import library "api";
 
 // --- unloaded_extern.carbon
 
-library "unloaded_extern";
+library "[[@TEST_NAME]]";
 
 import library "extern_api";
 

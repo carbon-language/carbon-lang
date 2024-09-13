@@ -10,7 +10,7 @@
 
 // --- namespace.carbon
 
-package Example library "namespace";
+package Example library "[[@TEST_NAME]]";
 
 namespace NS;
 

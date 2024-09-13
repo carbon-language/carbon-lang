@@ -30,7 +30,7 @@ fn B();
 
 // --- same_package_importer.carbon
 
-package SamePackage library "importer";
+package SamePackage library "[[@TEST_NAME]]";
 
 import library default;
 

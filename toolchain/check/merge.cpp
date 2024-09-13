@@ -348,12 +348,12 @@ static auto CheckRedeclParamSyntax(Context& context,
       !prev_first_param_node_id.is_valid()) {
     return true;
   }
-  CARBON_CHECK(new_last_param_node_id.is_valid())
-      << "new_last_param_node_id.is_valid should match "
-         "new_first_param_node_id.is_valid";
-  CARBON_CHECK(prev_last_param_node_id.is_valid())
-      << "prev_last_param_node_id.is_valid should match "
-         "prev_first_param_node_id.is_valid";
+  CARBON_CHECK(new_last_param_node_id.is_valid(),
+               "new_last_param_node_id.is_valid should match "
+               "new_first_param_node_id.is_valid");
+  CARBON_CHECK(prev_last_param_node_id.is_valid(),
+               "prev_last_param_node_id.is_valid should match "
+               "prev_first_param_node_id.is_valid");
 
   auto new_range = Parse::Tree::PostorderIterator::MakeRange(
       new_first_param_node_id, new_last_param_node_id);

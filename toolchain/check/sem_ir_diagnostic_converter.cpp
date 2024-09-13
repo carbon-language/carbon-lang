@@ -18,9 +18,9 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
   auto follow_import_ref = [&](SemIR::ImportIRInstId import_ir_inst_id) {
     auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
-    CARBON_CHECK(import_ir.decl_id.is_valid())
-        << "If we get invalid locations here, we may need to more thoroughly "
-           "track ImportDecls.";
+    CARBON_CHECK(import_ir.decl_id.is_valid(),
+                 "If we get invalid locations here, we may need to more "
+                 "thoroughly track ImportDecls.");
 
     DiagnosticLoc in_import_loc;
     auto import_loc_id = cursor_ir->insts().GetLocId(import_ir.decl_id);
@@ -37,8 +37,8 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
           cursor_ir->import_irs().Get(implicit_import_ir_inst.ir_id);
       auto implicit_loc_id =
           implicit_ir.sem_ir->insts().GetLocId(implicit_import_ir_inst.inst_id);
-      CARBON_CHECK(implicit_loc_id.is_node_id())
-          << "Should only be one layer of implicit imports";
+      CARBON_CHECK(implicit_loc_id.is_node_id(),
+                   "Should only be one layer of implicit imports");
       in_import_loc =
           ConvertLocInFile(implicit_ir.sem_ir, implicit_loc_id.node_id(),
                            loc.token_only, context_fn);
@@ -75,7 +75,7 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
     if (auto diag_loc = handle_loc(loc.loc_id)) {
       return *diag_loc;
     }
-    CARBON_CHECK(cursor_inst_id.is_valid()) << "Should have been set";
+    CARBON_CHECK(cursor_inst_id.is_valid(), "Should have been set");
   }
 
   while (true) {
