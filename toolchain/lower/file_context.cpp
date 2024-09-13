@@ -250,7 +250,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
                              mangled_name, llvm_module());
 
   CARBON_CHECK(llvm_function->getName() == mangled_name,
-               "Do not rely on llvm::Function overload renaming");
+               "Mangled name collision: {0}", mangled_name);
 
   // Set up parameters and the return slot.
   for (auto [inst_id, arg] :
