@@ -182,11 +182,11 @@ static auto CheckRedeclParam(Context& context,
     return false;
   }
 
-  if (new_param_ref.Is<SemIR::AddrPattern>()) {
+  if (new_param_ref.Is<SemIR::AddrParam>()) {
     new_param_ref =
-        context.insts().Get(new_param_ref.As<SemIR::AddrPattern>().inner_id);
+        context.insts().Get(new_param_ref.As<SemIR::AddrParam>().inner_id);
     prev_param_ref =
-        context.insts().Get(prev_param_ref.As<SemIR::AddrPattern>().inner_id);
+        context.insts().Get(prev_param_ref.As<SemIR::AddrParam>().inner_id);
     if (new_param_ref.kind() != prev_param_ref.kind()) {
       diagnose();
       return false;

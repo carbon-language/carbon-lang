@@ -53,6 +53,7 @@ cc_library(
         "name_component.h",
         "param_and_arg_refs_stack.h",
         "pattern_block_stack.h",
+        "pattern_node_stack.h",
         "pending_block.h",
         "return.h",
         "subst.h",

@@ -64,11 +64,22 @@ struct AddrOf {
   InstId lvalue_id;
 };
 
-// An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
-// generally be one of `AnyBindName`.
-struct AddrPattern {
+// The parameter-list counterpart of an `addr` pattern. Structurally, `inner_id`
+// will generally be one of `AnyBindName`.
+struct AddrParam {
   static constexpr auto Kind =
-      InstKind::AddrPattern.Define<Parse::AddrId>({.ir_name = "addr_pattern"});
+      InstKind::AddrParam.Define<Parse::AddrId>({.ir_name = "addr_param"});
+
+  TypeId type_id;
+  // The `self` binding.
+  InstId inner_id;
+};
+
+// An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
+// generally be a pattern inst.
+struct AddrPattern {
+  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
+      {.ir_name = "addr_pattern", .is_lowered = false});
 
   TypeId type_id;
   // The `self` binding.

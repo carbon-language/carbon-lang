@@ -17,6 +17,7 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/pattern_block_stack.h"
+#include "toolchain/check/pattern_node_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -404,6 +405,8 @@ class Context {
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
+  auto pattern_node_stack() -> PatternNodeStack& { return pattern_node_stack_; }
+
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
   auto pattern_block_stack() -> PatternBlockStack& {
     return pattern_block_stack_;
@@ -541,6 +544,8 @@ class Context {
 
   // The stack during Build. Will contain file-level parse nodes on return.
   NodeStack node_stack_;
+
+  PatternNodeStack pattern_node_stack_;
 
   // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;

@@ -86,16 +86,16 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+56, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/arithmetic, inst+75, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+69, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+57, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+59, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+71, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/arithmetic, inst+54, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+48, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/arithmetic, inst+55, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+49, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+71, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+49, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -154,12 +154,13 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %.loc16_14: %.3 = binding_pattern self
+// CHECK:STDOUT:     %.loc16_9.1: %.3 = addr_pattern %.loc16_14
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc16_14.1: %.3 = param self
 // CHECK:STDOUT:     %self.loc16_14.3: %.3 = bind_name self, %self.loc16_14.1
-// CHECK:STDOUT:     %.loc16_9: %.3 = addr_pattern %self.loc16_14.3
+// CHECK:STDOUT:     %.loc16_9.2: %.3 = addr_param %self.loc16_14.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -171,13 +172,14 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C as %.7 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %.loc19_14: %.3 = binding_pattern self
+// CHECK:STDOUT:     %.loc19_9.1: %.3 = addr_pattern %.loc19_14
 // CHECK:STDOUT:     %.loc19_24: %C = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc19_14.1: %.3 = param self
 // CHECK:STDOUT:     %self.loc19_14.3: %.3 = bind_name self, %self.loc19_14.1
-// CHECK:STDOUT:     %.loc19_9: %.3 = addr_pattern %self.loc19_14.3
+// CHECK:STDOUT:     %.loc19_9.2: %.3 = addr_param %self.loc19_14.3
 // CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other.loc19_24.1: %C = param other
 // CHECK:STDOUT:     %other.loc19_24.2: %C = bind_name other, %other.loc19_24.1

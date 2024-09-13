@@ -97,11 +97,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+79, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Core//prelude/operators/arithmetic, inst+96, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+79, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+81, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Core//prelude/operators/arithmetic, inst+98, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+93, unloaded
 // CHECK:STDOUT:   %import_ref.6: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.8: %.8 = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.9]
@@ -109,14 +109,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+21, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.13: %.12 = import_ref Core//prelude/operators/arithmetic, inst+54, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/arithmetic, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/arithmetic, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/arithmetic, inst+56, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/arithmetic, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.18: %.16 = import_ref Core//prelude/operators/arithmetic, inst+75, loaded [template = constants.%.17]
-// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.13: %.12 = import_ref Core//prelude/operators/arithmetic, inst+55, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/arithmetic, inst+49, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/arithmetic, inst+49, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/arithmetic, inst+57, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/arithmetic, inst+59, unloaded
+// CHECK:STDOUT:   %import_ref.18: %.16 = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%.17]
+// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/arithmetic, inst+71, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/arithmetic, inst+71, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

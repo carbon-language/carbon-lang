@@ -226,12 +226,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc13_13: %.2 = binding_pattern self
+// CHECK:STDOUT:     %.loc13_8.1: %.2 = addr_pattern %.loc13_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]
 // CHECK:STDOUT:     %self.loc13_13.1: %.2 = param self
 // CHECK:STDOUT:     %self.loc13_13.3: %.2 = bind_name self, %self.loc13_13.1
-// CHECK:STDOUT:     %.loc13_8: %.2 = addr_pattern %self.loc13_13.3
+// CHECK:STDOUT:     %.loc13_8.2: %.2 = addr_param %self.loc13_13.3
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_31.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_31.2: type = converted %int.make_type_32.loc13, %.loc13_31.1 [template = i32]

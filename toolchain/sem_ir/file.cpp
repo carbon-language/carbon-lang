@@ -413,6 +413,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
+      case AddrParam::Kind:
       case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
@@ -507,6 +508,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     auto untyped_inst = ir->insts().Get(inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
       case AdaptDecl::Kind:
+      case AddrPattern::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
       case BindingPattern::Kind:
@@ -561,7 +563,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case AddrOf::Kind:
-      case AddrPattern::Kind:
+      case AddrParam::Kind:
       case ArrayType::Kind:
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:

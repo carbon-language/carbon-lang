@@ -323,7 +323,7 @@ static auto HandleFunctionDefinitionAfterSignature(
 
     // Find the parameter in the pattern.
     // TODO: More general pattern handling?
-    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
+    if (auto addr_pattern = param.TryAs<SemIR::AddrParam>()) {
       param_id = addr_pattern->inner_id;
       param = context.insts().Get(param_id);
     }

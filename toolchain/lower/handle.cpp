@@ -24,7 +24,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::AddrPattern /*inst*/) -> void {
+                SemIR::AddrParam /*inst*/) -> void {
   CARBON_FATAL() << "`addr` should be lowered by `BuildFunctionDefinition`";
 }
 

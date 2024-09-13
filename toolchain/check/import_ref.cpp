@@ -653,7 +653,7 @@ class ImportRefResolver {
       // constant.
       auto bind_id = inst_id;
       auto bind_inst = import_ir_.insts().Get(bind_id);
-      if (auto addr = bind_inst.TryAs<SemIR::AddrPattern>()) {
+      if (auto addr = bind_inst.TryAs<SemIR::AddrParam>()) {
         bind_id = addr->inner_id;
         bind_inst = import_ir_.insts().Get(bind_id);
       }
@@ -682,7 +682,7 @@ class ImportRefResolver {
       // Function::GetParamFromParamRefId.
       // TODO: Consider a different parameter handling to simplify import logic.
       auto inst = import_ir_.insts().Get(ref_id);
-      auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
+      auto addr_inst = inst.TryAs<SemIR::AddrParam>();
 
       auto bind_id = ref_id;
       auto param_id = ref_id;
@@ -741,7 +741,7 @@ class ImportRefResolver {
         }
       }
       if (addr_inst) {
-        new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(
+        new_param_id = context_.AddInstInNoBlock<SemIR::AddrParam>(
             AddImportIRInst(ref_id),
             {.type_id = type_id, .inner_id = new_param_id});
       }

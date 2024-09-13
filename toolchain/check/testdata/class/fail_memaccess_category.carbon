@@ -96,12 +96,13 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %.loc12_13: %.1 = binding_pattern self
+// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_pattern %.loc12_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
 // CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
-// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
+// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

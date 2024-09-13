@@ -997,12 +997,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {
 // CHECK:STDOUT:     %.loc16_16: %.3 = binding_pattern self
+// CHECK:STDOUT:     %.loc16_11.1: %.3 = addr_pattern %.loc16_16
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc16_26: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc16_16.1: %.3 = param self
 // CHECK:STDOUT:     @.1.%self: %.3 = bind_name self, %self.loc16_16.1
-// CHECK:STDOUT:     @.1.%.loc16: %.3 = addr_pattern @.1.%self
+// CHECK:STDOUT:     @.1.%.loc16: %.3 = addr_param @.1.%self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1012,12 +1013,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc7_13: %.3 = binding_pattern self
+// CHECK:STDOUT:     %.loc7_8.1: %.3 = addr_pattern %.loc7_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc7_23: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %self.loc7_13.1: %.3 = param self
 // CHECK:STDOUT:     %self.loc7_13.3: %.3 = bind_name self, %self.loc7_13.1
-// CHECK:STDOUT:     %.loc7_8: %.3 = addr_pattern %self.loc7_13.3
+// CHECK:STDOUT:     %.loc7_8.2: %.3 = addr_param %self.loc7_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

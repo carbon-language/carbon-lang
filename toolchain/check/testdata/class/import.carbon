@@ -125,12 +125,13 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc15_13: %.5 = binding_pattern self
+// CHECK:STDOUT:     %.loc15_8.1: %.5 = addr_pattern %.loc15_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.5]
 // CHECK:STDOUT:     %self.loc15_13.1: %.5 = param self
 // CHECK:STDOUT:     %self.loc15_13.3: %.5 = bind_name self, %self.loc15_13.1
-// CHECK:STDOUT:     %.loc15_8: %.5 = addr_pattern %self.loc15_13.3
+// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_param %self.loc15_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -180,7 +181,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+6, loaded [template = constants.%Field]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+22, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+42, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+43, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -195,10 +196,10 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.7: %.7 = import_ref Main//a, inst+18, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.9: %F.type = import_ref Main//a, inst+29, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+39, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+40, loaded [template = constants.%G]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+40, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

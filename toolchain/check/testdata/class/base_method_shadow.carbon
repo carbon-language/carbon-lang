@@ -120,12 +120,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %.loc12_13: %.1 = binding_pattern self
+// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_pattern %.loc12_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
 // CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
-// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
+// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -138,12 +139,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc16: %.5 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %.loc17_13: %.6 = binding_pattern self
+// CHECK:STDOUT:     %.loc17_8.1: %.6 = addr_pattern %.loc17_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %.loc17_23: type = ptr_type %B [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc17_13.1: %.6 = param self
 // CHECK:STDOUT:     %self.loc17_13.3: %.6 = bind_name self, %self.loc17_13.1
-// CHECK:STDOUT:     %.loc17_8: %.6 = addr_pattern %self.loc17_13.3
+// CHECK:STDOUT:     %.loc17_8.2: %.6 = addr_param %self.loc17_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -158,12 +160,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc21: %.10 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %.loc22_13: %.11 = binding_pattern self
+// CHECK:STDOUT:     %.loc22_8.1: %.11 = addr_pattern %.loc22_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc22_23: type = ptr_type %C [template = constants.%.11]
 // CHECK:STDOUT:     %self.loc22_13.1: %.11 = param self
 // CHECK:STDOUT:     %self.loc22_13.3: %.11 = bind_name self, %self.loc22_13.1
-// CHECK:STDOUT:     %.loc22_8: %.11 = addr_pattern %self.loc22_13.3
+// CHECK:STDOUT:     %.loc22_8.2: %.11 = addr_param %self.loc22_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

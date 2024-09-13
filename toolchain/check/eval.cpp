@@ -1465,6 +1465,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
 
     // These cases are either not expressions or not constant.
     case SemIR::AdaptDecl::Kind:
+    case SemIR::AddrParam::Kind:
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
     case SemIR::BindName::Kind:

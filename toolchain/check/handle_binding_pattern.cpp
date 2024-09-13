@@ -165,15 +165,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.AddNameToLookup(name_id, bind_id);
       auto entity_name_id =
           context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+      auto pattern_inst = SemIR::InstId::Invalid;
       if (is_generic) {
-        context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+        pattern_inst = context.AddPatternInst<SemIR::SymbolicBindingPattern>(
             name_node,
             {.type_id = cast_type_id, .entity_name_id = entity_name_id});
       } else {
-        context.AddPatternInst<SemIR::BindingPattern>(
+        pattern_inst = context.AddPatternInst<SemIR::BindingPattern>(
             name_node,
             {.type_id = cast_type_id, .entity_name_id = entity_name_id});
       }
+      context.pattern_node_stack().Push(name_node, pattern_inst);
+
       // TODO: use the pattern insts to generate the pattern-match insts
       // at the end of the full pattern, instead of eagerly generating them
       // here.
@@ -217,6 +220,7 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
+  auto self_pattern_id = context.pattern_node_stack().PopPattern();
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
       self_param &&
@@ -224,8 +228,11 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
           SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
-    context.AddInstAndPush<SemIR::AddrPattern>(
+    context.AddInstAndPush<SemIR::AddrParam>(
         node_id, {.type_id = self_param->type_id, .inner_id = self_param_id});
+    auto addr_pattern_id = context.AddPatternInst<SemIR::AddrPattern>(
+        node_id, {.type_id = self_param->type_id, .inner_id = self_pattern_id});
+    context.pattern_node_stack().Push(node_id, addr_pattern_id);
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");

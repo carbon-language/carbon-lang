@@ -92,13 +92,14 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type) = fn_decl @GetAddr [symbolic = %GetAddr (constants.%GetAddr)] {
 // CHECK:STDOUT:       %.loc12_19: %.2 = binding_pattern self
+// CHECK:STDOUT:       %.loc12_14.1: %.2 = addr_pattern %.loc12_19
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc12_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetAddr.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref.loc12: type = name_ref Self, %.loc12_25 [symbolic = @GetAddr.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %.loc12_29: type = ptr_type %Class.2 [symbolic = @GetAddr.%.1 (constants.%.2)]
 // CHECK:STDOUT:       %self.loc12_19.1: @GetAddr.%.1 (%.2) = param self
 // CHECK:STDOUT:       %self.loc12_19.3: @GetAddr.%.1 (%.2) = bind_name self, %self.loc12_19.1
-// CHECK:STDOUT:       %.loc12_14: @GetAddr.%.1 (%.2) = addr_pattern %self.loc12_19.3
+// CHECK:STDOUT:       %.loc12_14.2: @GetAddr.%.1 (%.2) = addr_param %self.loc12_19.3
 // CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetAddr.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc12_38: type = ptr_type %T [symbolic = @GetAddr.%.2 (constants.%.3)]
 // CHECK:STDOUT:       %return.var.loc12: ref @GetAddr.%.2 (%.3) = var <return slot>

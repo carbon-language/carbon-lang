@@ -448,7 +448,7 @@ class FormatterImpl {
         out_ << "invalid";
         continue;
       }
-      if (auto addr = sem_ir_.insts().TryGetAs<SemIR::AddrPattern>(param_id)) {
+      if (auto addr = sem_ir_.insts().TryGetAs<SemIR::AddrParam>(param_id)) {
         out_ << "addr ";
         param_id = addr->inner_id;
       }

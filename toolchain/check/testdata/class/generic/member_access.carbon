@@ -189,13 +189,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type.1) = fn_decl @GetAddr [symbolic = %GetAddr (constants.%GetAddr.1)] {
 // CHECK:STDOUT:       %.loc7_19: %.3 = binding_pattern self
+// CHECK:STDOUT:       %.loc7_14.1: %.3 = addr_pattern %.loc7_19
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc7_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetAddr.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref.loc7: type = name_ref Self, %.loc7_25 [symbolic = @GetAddr.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %.loc7_29: type = ptr_type %Class.2 [symbolic = @GetAddr.%.1 (constants.%.3)]
 // CHECK:STDOUT:       %self.loc7_19.1: @GetAddr.%.1 (%.3) = param self
 // CHECK:STDOUT:       %self.loc7_19.3: @GetAddr.%.1 (%.3) = bind_name self, %self.loc7_19.1
-// CHECK:STDOUT:       %.loc7_14: @GetAddr.%.1 (%.3) = addr_pattern %self.loc7_19.3
+// CHECK:STDOUT:       %.loc7_14.2: @GetAddr.%.1 (%.3) = addr_param %self.loc7_19.3
 // CHECK:STDOUT:       %T.ref.loc7: type = name_ref T, file.%T.loc2_13.2 [symbolic = @GetAddr.%T (constants.%T)]
 // CHECK:STDOUT:       %.loc7_38: type = ptr_type %T [symbolic = @GetAddr.%.2 (constants.%.4)]
 // CHECK:STDOUT:       %return.var.loc7: ref @GetAddr.%.2 (%.4) = var <return slot>

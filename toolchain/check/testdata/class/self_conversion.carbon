@@ -95,12 +95,13 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %.loc26_30: %.6 = binding_pattern self
+// CHECK:STDOUT:     %.loc26_25.1: %.6 = addr_pattern %.loc26_30
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc26_40: type = ptr_type %Base [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc26_30.1: %.6 = param self
 // CHECK:STDOUT:     @AddrSelfBase.%self: %.6 = bind_name self, %self.loc26_30.1
-// CHECK:STDOUT:     @AddrSelfBase.%.loc26: %.6 = addr_pattern @AddrSelfBase.%self
+// CHECK:STDOUT:     @AddrSelfBase.%.loc26: %.6 = addr_param @AddrSelfBase.%self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %.loc30_9: %.9 = binding_pattern p
@@ -143,12 +144,13 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %.loc19_24: %.6 = binding_pattern self
+// CHECK:STDOUT:     %.loc19_19.1: %.6 = addr_pattern %.loc19_24
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc19: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc19_34: type = ptr_type %Base [template = constants.%.6]
 // CHECK:STDOUT:     %self.loc19_24.1: %.6 = param self
 // CHECK:STDOUT:     %self.loc19_24.3: %.6 = bind_name self, %self.loc19_24.1
-// CHECK:STDOUT:     %.loc19_19: %.6 = addr_pattern %self.loc19_24.3
+// CHECK:STDOUT:     %.loc19_19.2: %.6 = addr_param %self.loc19_24.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

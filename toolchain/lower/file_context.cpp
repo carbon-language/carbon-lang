@@ -292,8 +292,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     //
     // TODO: Support general patterns here.
     auto bind_name_id = param_ref_id;
-    if (auto addr =
-            sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_ref_id)) {
+    if (auto addr = sem_ir().insts().TryGetAs<SemIR::AddrParam>(param_ref_id)) {
       bind_name_id = addr->inner_id;
     }
     auto bind_name = sem_ir().insts().Get(bind_name_id);

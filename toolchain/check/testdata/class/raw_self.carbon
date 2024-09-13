@@ -65,13 +65,14 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc17_17: %.1 = binding_pattern self
+// CHECK:STDOUT:     %.loc17_12.1: %.1 = addr_pattern %.loc17_17
 // CHECK:STDOUT:     %.loc17_30: i32 = binding_pattern r#self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc17_27: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc17_17.1: %.1 = param self
 // CHECK:STDOUT:     @F.%self.loc17_17: %.1 = bind_name self, %self.loc17_17.1
-// CHECK:STDOUT:     @F.%.loc17: %.1 = addr_pattern @F.%self.loc17_17
+// CHECK:STDOUT:     @F.%.loc17: %.1 = addr_param @F.%self.loc17_17
 // CHECK:STDOUT:     %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_38.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:     %.loc17_38.2: type = converted %int.make_type_32.loc17, %.loc17_38.1 [template = i32]
@@ -105,13 +106,14 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc12_13: %.1 = binding_pattern self
+// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_pattern %.loc12_13
 // CHECK:STDOUT:     %.loc12_26: i32 = binding_pattern r#self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
 // CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
-// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
+// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.3
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_34.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_34.2: type = converted %int.make_type_32.loc12, %.loc12_34.1 [template = i32]

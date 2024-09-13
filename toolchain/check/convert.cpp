@@ -1122,7 +1122,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId callee_id,
                         SemIR::SpecificId callee_specific_id,
-                        std::optional<SemIR::AddrPattern> addr_pattern,
+                        std::optional<SemIR::AddrParam> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
                         SemIR::InstId self_id) -> SemIR::InstId {
   if (!self_id.is_valid()) {
@@ -1207,7 +1207,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
     auto addr_pattern =
-        context.insts().TryGetAs<SemIR::AddrPattern>(implicit_param_id);
+        context.insts().TryGetAs<SemIR::AddrParam>(implicit_param_id);
     auto [param_id, param] = SemIR::Function::GetParamFromParamRefId(
         context.sem_ir(), implicit_param_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
