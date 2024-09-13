@@ -82,7 +82,7 @@ class NameSpace.Implementation {
 }
 // Mangled as `main`.
 fn Run() {
-  var v: Implementation;
+  var v: NameSpace.Implementation;
   v.(P1.Interface.Op)();
 }
 ```
