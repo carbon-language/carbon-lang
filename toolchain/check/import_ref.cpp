@@ -1284,16 +1284,10 @@ class ImportRefResolver {
         return Retry();
       }
 
-      auto enclosing_specific_id =
-          GetOrAddLocalSpecific(import_specific_id, specific_data);
-
-      if (HasNewWork()) {
-        // This is the end of the first phase. Don't make a new class yet if we
-        // already have new work.
-        return Retry();
-      }
       // On the second phase, create a forward declaration of the class for any
       // recursive references.
+      auto enclosing_specific_id =
+          GetOrAddLocalSpecific(import_specific_id, specific_data);
       std::tie(class_id, class_const_id) =
           MakeIncompleteClass(import_class, enclosing_specific_id);
     } else {
@@ -1450,10 +1444,9 @@ class ImportRefResolver {
         return Retry();
       }
 
+      // On the second phase, create a forward declaration of the interface.
       auto specific_id =
           GetOrAddLocalSpecific(import_specific_id, specific_data);
-
-      // On the second phase, create a forward declaration of the interface.
       std::tie(function_id, function_const_id) =
           MakeFunctionDecl(import_function, specific_id);
     } else {
@@ -1651,9 +1644,9 @@ class ImportRefResolver {
         return Retry();
       }
 
+      // On the second phase, create a forward declaration of the interface.
       auto enclosing_specific_id =
           GetOrAddLocalSpecific(import_specific_id, specific_data);
-      // On the second phase, create a forward declaration of the interface.
       std::tie(interface_id, interface_const_id) =
           MakeInterfaceDecl(import_interface, enclosing_specific_id);
     } else {
