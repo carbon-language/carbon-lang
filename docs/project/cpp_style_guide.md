@@ -147,6 +147,9 @@ these.
         although these guidelines differ slightly.
 -   Always mark constructors `explicit` unless there's a specific reason to
     support implicit or `{}` initialization.
+-   When storing unowned objects as members, prefer to pass by reference and
+    store as a pointer. For example, `Foo* foo_;` and
+    `Bar(Foo& foo) : foo_(&foo)`.
 -   Always use braces for conditional, `switch`, and loop statements, even when
     the body is a single statement.
     -   Within a `switch` statement, use braces after a `case` label when
