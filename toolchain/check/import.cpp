@@ -165,7 +165,8 @@ static auto CopySingleNameScopeFromImportIR(
     Map<SemIR::NameScopeId, SemIR::NameScopeId>* copied_namespaces,
     SemIR::ImportIRId ir_id, SemIR::InstId import_inst_id,
     SemIR::NameScopeId import_scope_id, SemIR::NameScopeId parent_scope_id,
-    SemIR::NameId name_id) -> std::pair<SemIR::NameScopeId, SemIR::InstId> {
+    SemIR::NameId name_id)
+    -> std::tuple<SemIR::NameScopeId, SemIR::InstId, bool> {
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
     auto entity_name_id = context.entity_names().Add(
@@ -182,7 +183,7 @@ static auto CopySingleNameScopeFromImportIR(
     context.import_ref_ids().push_back(inst_id);
     return inst_id;
   };
-  auto [namespace_scope_id, namespace_inst_id, _] =
+  auto [namespace_scope_id, namespace_inst_id, is_duplicate] =
       AddNamespace(context, namespace_type_id, name_id, parent_scope_id,
                    /*diagnose_duplicate_namespace=*/false, make_import_id);
 
@@ -194,7 +195,7 @@ static auto CopySingleNameScopeFromImportIR(
     CacheCopiedNamespace(*copied_namespaces, import_scope_id,
                          namespace_scope_id);
   }
-  return {namespace_scope_id, namespace_inst_id};
+  return {namespace_scope_id, namespace_inst_id, is_duplicate};
 }
 
 // Copies ancestor name scopes from the import IR. Handles the parent traversal.
@@ -238,11 +239,9 @@ static auto CopyAncestorNameScopesFromImportIR(
     auto import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
     auto name_id =
         CopyNameFromImportIR(context, import_sem_ir, import_scope.name_id);
-    scope_cursor =
-        CopySingleNameScopeFromImportIR(
-            context, namespace_type_id, &copied_namespaces, ir_id,
-            import_scope.inst_id, import_scope_id, scope_cursor, name_id)
-            .first;
+    scope_cursor = std::get<0>(CopySingleNameScopeFromImportIR(
+        context, namespace_type_id, &copied_namespaces, ir_id,
+        import_scope.inst_id, import_scope_id, scope_cursor, name_id));
   }
 
   return scope_cursor;
@@ -366,13 +365,11 @@ auto ImportApiFile(Context& context, SemIR::TypeId namespace_type_id,
                          SemIR::NameScopeId::Package, todo_scopes);
   while (!todo_scopes.empty()) {
     auto todo_scope = todo_scopes.pop_back_val();
-    auto impl_scope_id =
-        CopySingleNameScopeFromImportIR(
-            context, namespace_type_id, /*copied_namespaces=*/nullptr,
-            SemIR::ImportIRId::ApiForImpl, todo_scope.api_inst_id,
-            todo_scope.api_scope_id, todo_scope.impl_parent_scope_id,
-            todo_scope.impl_name_id)
-            .first;
+    auto impl_scope_id = std::get<0>(CopySingleNameScopeFromImportIR(
+        context, namespace_type_id, /*copied_namespaces=*/nullptr,
+        SemIR::ImportIRId::ApiForImpl, todo_scope.api_inst_id,
+        todo_scope.api_scope_id, todo_scope.impl_parent_scope_id,
+        todo_scope.impl_name_id));
     ImportScopeFromApiFile(context, api_sem_ir, todo_scope.api_scope_id,
                            impl_scope_id, todo_scopes);
   }
@@ -500,12 +497,14 @@ static auto AddNamespaceFromOtherPackage(Context& context,
     -> SemIR::InstId {
   auto namespace_type_id =
       context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType);
-  auto [new_scope_id, namespace_inst_id] = CopySingleNameScopeFromImportIR(
-      context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
-      import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);
-  context.name_scopes()
-      .Get(new_scope_id)
-      .import_ir_scopes.push_back({import_ir_id, import_ns.name_scope_id});
+  auto [new_scope_id, namespace_inst_id, is_duplicate] =
+      CopySingleNameScopeFromImportIR(
+          context, namespace_type_id, /*copied_namespaces=*/nullptr,
+          import_ir_id, import_inst_id, import_ns.name_scope_id,
+          parent_scope_id, name_id);
+  auto& scope = context.name_scopes().Get(new_scope_id);
+  scope.is_closed_import = !is_duplicate;
+  scope.import_ir_scopes.push_back({import_ir_id, import_ns.name_scope_id});
   return namespace_inst_id;
 }
 
