@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Mangling](#mangling)
+    -   [Examples](#examples)
 
 <!-- tocstop -->
 
@@ -35,11 +36,53 @@ identifier.
 
 The current rudimentary name mangling scheme is as follows:
 
--   Start with `_C`.
--   Then the unqualified function name (function name mangling is the only thing
-    implemented at the moment).
--   Then `.` separated scopes (namespaces/classes), most nested first, outermost
-    last.
--   Or, if the function is in an `impl`:
-    -   the implementing type, per the scope mangling above.
-    -   the interface type, per the scope mangling above.
+-   As a special case, `Main.Run` is emitted as `main`.
+
+Otherwise the resulting name consists of:
+
+1.  `_C`.
+2.  The unqualified function name (function name mangling is the only thing
+    implemented at the moment)
+3.  `.`
+4.  If the function being mangled is a member of:
+    -   an `impl`, then add:
+        1.  The implementing type, per the scope mangling.
+        2.  `:`
+        3.  The interface type, per the scope mangling.
+    -   a type or namespace, then add:
+        1.  the scope, per the scope mangling.
+
+Scope mangling:
+
+1.  The unqualified name of the type or namespace.
+2.  If the type or namespace is within another type or namespace:
+    1.  `.`
+    2.  The enclosing scope per the scope mangling
+3.  `.`
+4.  The package name.
+
+### Examples
+
+```carbon
+package P1;
+interface Interface {
+  fn Op[self: Self]();
+}
+```
+
+```carbon
+namespace NameSpace;
+class NameSpace.Implementation {
+  // Mangled as:
+  // `_COp.Implementation.NameSpace.Main:Interface1.P1`
+  impl as P1.Interface {
+    fn Op[self: Self]() {
+    }
+  }
+}
+// Mangled as `main`.
+fn Run() {
+  var v: Implementation;
+  v.(P1.Interface.Op)();
+}
+```
