@@ -8,48 +8,11 @@
 
 namespace Carbon::Parse {
 
-namespace {
-enum PrecedenceLevel : int8_t {
-  // Sentinel representing the absence of any operator.
-  Highest,
-  // Terms.
-  TermPrefix,
-  // Numeric.
-  IncrementDecrement,
-  NumericPrefix,
-  Modulo,
-  Multiplicative,
-  Additive,
-  // Bitwise.
-  BitwisePrefix,
-  BitwiseAnd,
-  BitwiseOr,
-  BitwiseXor,
-  BitShift,
-  // Type formation.
-  TypePrefix,
-  TypePostfix,
-  // `where` keyword.
-  Where,
-  // Casts.
-  As,
-  // Logical.
-  LogicalPrefix,
-  Relational,
-  LogicalAnd,
-  LogicalOr,
-  // Conditional.
-  If,
-  // Assignment.
-  Assignment,
-  // Sentinel representing a context in which any operator can appear.
-  Lowest,
-};
-constexpr int8_t NumPrecedenceLevels = Lowest + 1;
+constexpr int8_t PrecedenceGroup::NumPrecedenceLevels = Lowest + 1;
 
 // A precomputed lookup table determining the relative precedence of two
 // precedence groups.
-struct OperatorPriorityTable {
+struct PrecedenceGroup::OperatorPriorityTable {
   constexpr OperatorPriorityTable() : table() {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
@@ -176,29 +139,6 @@ struct OperatorPriorityTable {
 
   OperatorPriority table[NumPrecedenceLevels][NumPrecedenceLevels];
 };
-}  // namespace
-
-auto PrecedenceGroup::ForPostfixExpr() -> PrecedenceGroup {
-  return PrecedenceGroup(Highest);
-}
-
-auto PrecedenceGroup::ForTopLevelExpr() -> PrecedenceGroup {
-  return PrecedenceGroup(If);
-}
-
-auto PrecedenceGroup::ForExprStatement() -> PrecedenceGroup {
-  return PrecedenceGroup(Lowest);
-}
-
-auto PrecedenceGroup::ForType() -> PrecedenceGroup { return ForTopLevelExpr(); }
-
-auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
-  return PrecedenceGroup(As);
-}
-
-auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
-  return PrecedenceGroup(Where);
-}
 
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
     -> std::optional<PrecedenceGroup> {
