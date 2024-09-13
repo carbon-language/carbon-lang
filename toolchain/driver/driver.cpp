@@ -96,8 +96,6 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   }
 
   options.subcommand->Run(driver_env_);
-
-  llvm_unreachable("All subcommands handled!");
 }
 
 }  // namespace Carbon
