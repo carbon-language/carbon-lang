@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_bad_name.carbon
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected name in binding pattern.
 // CHECK:STDERR: let ? = 4;
 // CHECK:STDERR:     ^
 let ? = 4;

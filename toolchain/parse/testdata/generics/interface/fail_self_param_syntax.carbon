@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/fail_self_param_syntax.carbon
 
 interface Foo {
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+4]]:13: ERROR: Expected binding pattern.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+4]]:13: ERROR: Expected `:` or `:!` in binding pattern.
   // CHECK:STDERR:   fn Sub[me Self](b: Self) -> Self;
   // CHECK:STDERR:             ^~~~
   // CHECK:STDERR:
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: ERROR: Expected binding pattern.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: ERROR: Expected name in binding pattern.
   // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
   // CHECK:STDERR:          ^~~~
   fn Mul[Self](b: Self) -> Self;
