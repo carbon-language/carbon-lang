@@ -50,7 +50,7 @@ Otherwise the resulting name consists of:
         2.  `:`
         3.  The interface type, per the scope mangling.
     -   a type or namespace, then add:
-        1.  the scope, per the scope mangling.
+        1.  The scope, per the scope mangling.
 
 The scope mangling scheme is as follows:
 
