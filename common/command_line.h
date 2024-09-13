@@ -314,7 +314,7 @@ class ArgBuilder {
 
  protected:
   friend CommandBuilder;
-  explicit ArgBuilder(Arg* arg);
+  explicit ArgBuilder(Arg& arg);
 
   Arg* arg_;
 };
@@ -630,9 +630,9 @@ class CommandBuilder {
  private:
   friend Parser;
 
-  explicit CommandBuilder(Command* command, MetaPrinter* meta_printer);
+  explicit CommandBuilder(Command& command, MetaPrinter& meta_printer);
 
-  auto AddArgImpl(const ArgInfo& info, ArgKind kind) -> Arg*;
+  auto AddArgImpl(const ArgInfo& info, ArgKind kind) -> Arg&;
   void AddPositionalArgImpl(const ArgInfo& info, ArgKind kind,
                             llvm::function_ref<void(Arg&)> build);
   void Finalize();
