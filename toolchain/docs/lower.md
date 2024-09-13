@@ -74,7 +74,7 @@ interface Interface {
 namespace NameSpace;
 class NameSpace.Implementation {
   // Mangled as:
-  // `_COp.Implementation.NameSpace.Main:Interface1.P1`
+  // `_COp.Implementation.NameSpace.Main:Interface.P1`
   impl as P1.Interface {
     fn Op[self: Self]() {
     }
