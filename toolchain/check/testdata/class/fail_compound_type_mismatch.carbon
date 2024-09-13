@@ -94,7 +94,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %AccessBInA.decl: %AccessBInA.type = fn_decl @AccessBInA [template = constants.%AccessBInA] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %a.loc19_15.1: %A = param a
+// CHECK:STDOUT:     %a.loc19_15.1: %A = param a, runtime_param0
 // CHECK:STDOUT:     @AccessBInA.%a: %A = bind_name a, %a.loc19_15.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -151,7 +151,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %.4 = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
-// CHECK:STDOUT:   %.loc26_11.1: init type = call constants.%ImplicitAs(constants.%B) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc26_11.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%B) [template = constants.%.11]
 // CHECK:STDOUT:   %.loc26_11.2: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%B) [template = constants.%.13]
 // CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc26_11.2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc26_11.3: %B = converted %a.ref, <error> [template = <error>]

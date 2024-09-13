@@ -62,7 +62,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type = interface_decl @GenericInterface [template = constants.%GenericInterface] {
-// CHECK:STDOUT:     %T.loc11_28.1: type = param T
+// CHECK:STDOUT:     %T.loc11_28.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11_28.2: type = bind_symbolic_name T 0, %T.loc11_28.1 [symbolic = @GenericInterface.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
@@ -83,7 +83,7 @@ class C {
 // CHECK:STDOUT:     %Self.1: @GenericInterface.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @GenericInterface.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc11_28.2 [symbolic = @F.1.%T (constants.%T)]
-// CHECK:STDOUT:       %x.loc12_8.1: @F.1.%T (%T) = param x
+// CHECK:STDOUT:       %x.loc12_8.1: @F.1.%T (%T) = param x, runtime_param0
 // CHECK:STDOUT:       %x.loc12_8.2: @F.1.%T (%T) = bind_name x, %x.loc12_8.1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc12: @GenericInterface.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
@@ -98,7 +98,7 @@ class C {
 // CHECK:STDOUT: impl @impl: %C as %.2 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = @F.2.%T (constants.%T)]
-// CHECK:STDOUT:     %x.loc20_10.1: @F.2.%T (%T) = param x
+// CHECK:STDOUT:     %x.loc20_10.1: @F.2.%T (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x.loc20_10.2: @F.2.%T (%T) = bind_name x, %x.loc20_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.5]
@@ -109,14 +109,12 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc19_54.1: type = value_of_initializer %.loc19_52 [symbolic = constants.%.2]
-// CHECK:STDOUT:   %.loc19_54.2: type = converted %.loc19_52, %.loc19_54.1 [symbolic = constants.%.2]
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %T.loc19_23.1: type = param T
+// CHECK:STDOUT:     %T.loc19_23.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19_23.2: type = bind_symbolic_name T 0, %T.loc19_23.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc19_52: init type = call %GenericInterface.ref(%T.ref) [symbolic = constants.%.2]
+// CHECK:STDOUT:     %.loc19: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

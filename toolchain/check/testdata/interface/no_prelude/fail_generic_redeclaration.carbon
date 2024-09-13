@@ -68,22 +68,22 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.1 = interface_decl @.1 [template = constants.%.3] {
-// CHECK:STDOUT:     %T.loc19_22.1: type = param T
+// CHECK:STDOUT:     %T.loc19_22.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19_22.2: type = bind_symbolic_name T 0, %T.loc19_22.1 [symbolic = @.1.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
-// CHECK:STDOUT:     %T.loc21_19.1: type = param T
+// CHECK:STDOUT:     %T.loc21_19.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc21_19.2: type = bind_symbolic_name T 0, %T.loc21_19.1 [symbolic = @Generic.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.5] {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams] {
-// CHECK:STDOUT:     %T.loc31_27.1: type = param T
+// CHECK:STDOUT:     %T.loc31_27.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc31_27.2: type = bind_symbolic_name T 0, %T.loc31_27.1 [symbolic = @DifferentParams.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc38: %.type.2 = interface_decl @.3 [template = constants.%.6] {
 // CHECK:STDOUT:     %.loc38_32.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %T.loc38_27.1: %.2 = param T
+// CHECK:STDOUT:     %T.loc38_27.1: %.2 = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc38_27.2: %.2 = bind_symbolic_name T 0, %T.loc38_27.1 [symbolic = @.3.%T (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

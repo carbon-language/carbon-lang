@@ -1104,41 +1104,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
         eval_context.inst_blocks().Get(call.args_id), phase);
   }
 
-  // Look at the type of the callee for special cases: calls to generic class
-  // and generic interface types.
-  auto type_inst = eval_context.GetConstantValueAsInst(
-      eval_context.insts().Get(call.callee_id).type_id());
-  CARBON_KIND_SWITCH(type_inst) {
-    case CARBON_KIND(SemIR::GenericClassType generic_class): {
-      auto specific_id = MakeSpecificIfGeneric(
-          eval_context.context(),
-          eval_context.classes().Get(generic_class.class_id).generic_id,
-          call.args_id);
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::ClassType{.type_id = call.type_id,
-                           .class_id = generic_class.class_id,
-                           .specific_id = specific_id},
-          phase);
-    }
-    case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-      auto specific_id =
-          MakeSpecificIfGeneric(eval_context.context(),
-                                eval_context.interfaces()
-                                    .Get(generic_interface.interface_id)
-                                    .generic_id,
-                                call.args_id);
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::InterfaceType{.type_id = call.type_id,
-                               .interface_id = generic_interface.interface_id,
-                               .specific_id = specific_id},
-          phase);
-    }
-    default: {
-      return SemIR::ConstantId::NotConstant;
-    }
-  }
+  return SemIR::ConstantId::NotConstant;
 }
 
 auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
@@ -1206,6 +1172,13 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
+    case SemIR::GenericClassType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);
+    case SemIR::GenericInterfaceType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst,
+          &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::InterfaceType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::InterfaceType::specific_id);
@@ -1270,8 +1243,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
     case SemIR::BuiltinInst::Kind:
-    case SemIR::GenericClassType::Kind:
-    case SemIR::GenericInterfaceType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(eval_context.context(), inst, Phase::Template);
 

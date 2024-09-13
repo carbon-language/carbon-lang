@@ -37,7 +37,7 @@ interface UseSelf {
 // CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, %Self [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = @F.%Self (constants.%Self)]
-// CHECK:STDOUT:     %self.loc12_8.1: @F.%Self (%Self) = param self
+// CHECK:STDOUT:     %self.loc12_8.1: @F.%Self (%Self) = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc12_8.2: @F.%Self (%Self) = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:     %Self.ref.loc12_25: %.1 = name_ref Self, %Self [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_25.1: type = facet_type_access %Self.ref.loc12_25 [symbolic = @F.%Self (constants.%Self)]

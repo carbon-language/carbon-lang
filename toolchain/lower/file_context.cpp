@@ -213,10 +213,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_type_id =
-        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id)
-            .second.type_id;
-    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
+    auto [param_id, param] =
+        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
+    if (!param.runtime_index.is_valid()) {
+      continue;
+    }
+    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param.type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL("Incomplete parameter type lowering function declaration");
@@ -311,6 +313,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto [param_id, param] =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
+    if (!param.runtime_index.is_valid()) {
+      continue;
+    }
 
     // Get the value of the parameter from the function argument.
     auto param_type_id = param.type_id;
@@ -335,8 +340,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       bind_name_id = addr->inner_id;
     }
     auto bind_name = sem_ir().insts().Get(bind_name_id);
-    // TODO: Should we stop passing compile-time bindings at runtime?
-    CARBON_CHECK(bind_name.Is<SemIR::AnyBindName>());
+    CARBON_CHECK(bind_name.Is<SemIR::BindName>());
     function_lowering.SetLocal(bind_name_id, param_value);
   }
 

@@ -1241,13 +1241,18 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id,
   return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
 }
 
-auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id);
+auto Context::GetGenericClassType(SemIR::ClassId class_id,
+                                  SemIR::SpecificId enclosing_specific_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id,
+                                                      enclosing_specific_id);
 }
 
-auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id)
+auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id,
+                                      SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(*this, interface_id);
+  return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(
+      *this, interface_id, enclosing_specific_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

@@ -85,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32, %.loc11_9.1 [template = i32]
-// CHECK:STDOUT:     %a.loc11_6.1: i32 = param a
+// CHECK:STDOUT:     %a.loc11_6.1: i32 = param a, runtime_param0
 // CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc11_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
@@ -121,7 +121,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc23_5: f64 = float_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc23_4.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc23_4.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc23_4.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc23_4.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc23_4.3: i32 = converted %.loc23_5, <error> [template = <error>]

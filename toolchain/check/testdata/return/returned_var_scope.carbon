@@ -78,7 +78,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc21_25.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc21_25.2: type = converted %bool.make_type, %.loc21_25.1 [template = bool]
-// CHECK:STDOUT:     %b.loc21_22.1: bool = param b
+// CHECK:STDOUT:     %b.loc21_22.1: bool = param b, runtime_param0
 // CHECK:STDOUT:     @EnclosingButAfter.%b: bool = bind_name b, %b.loc21_22.1
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_34.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]

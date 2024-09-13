@@ -50,7 +50,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc11_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11_9 [template = i32]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32.loc11_9, %.loc11_9.1 [template = i32]
-// CHECK:STDOUT:     %a.loc11_6.1: i32 = param a
+// CHECK:STDOUT:     %a.loc11_6.1: i32 = param a, runtime_param0
 // CHECK:STDOUT:     @F.%a.loc11: i32 = bind_name a, %a.loc11_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17.1: type = value_of_initializer %int.make_type_32.loc11_17 [template = i32]

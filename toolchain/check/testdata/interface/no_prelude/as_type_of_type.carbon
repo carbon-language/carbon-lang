@@ -33,7 +33,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.loc13_6.1: %.1 = param T
+// CHECK:STDOUT:     %T.loc13_6.1: %.1 = param T, runtime_param<invalid>
 // CHECK:STDOUT:     @F.%T.loc13: %.1 = bind_symbolic_name T 0, %T.loc13_6.1 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

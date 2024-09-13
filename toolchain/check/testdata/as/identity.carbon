@@ -72,13 +72,13 @@ fn Initializing() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %Value.decl: %Value.type = fn_decl @Value [template = constants.%Value] {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %n.loc17_10.1: %X = param n
+// CHECK:STDOUT:     %n.loc17_10.1: %X = param n, runtime_param0
 // CHECK:STDOUT:     @Value.%n: %X = bind_name n, %n.loc17_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc21_14.1: %.4 = param p
+// CHECK:STDOUT:     %p.loc21_14.1: %.4 = param p, runtime_param0
 // CHECK:STDOUT:     @Reference.%p: %.4 = bind_name p, %p.loc21_14.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {

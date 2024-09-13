@@ -73,25 +73,21 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc2_13.2: type = converted %int.make_type_32, %.loc2_13.1 [template = i32]
-// CHECK:STDOUT:     %a.loc2_9.1: i32 = param a
+// CHECK:STDOUT:     %a.loc2_9.1: i32 = param a, runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_symbolic_name a 0, %a.loc2_9.1 [symbolic = @C.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc3: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc3_15: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc3_14: init type = call %C.ref.loc3(%.loc3_15) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_20.1: type = value_of_initializer %.loc3_14 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_20.2: type = converted %.loc3_14, %.loc3_20.1 [template = constants.%C.3]
-// CHECK:STDOUT:     %b.loc3_9.1: %C.3 = param b
+// CHECK:STDOUT:     %.loc3: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %C.loc3: type = class_type @C, @C(constants.%.3) [template = constants.%C.3]
+// CHECK:STDOUT:     %b.loc3_9.1: %C.3 = param b, runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_symbolic_name b 0, %b.loc3_9.1 [symbolic = @D.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc4: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %C.ref.loc4: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc4_15: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc4_14: init type = call %C.ref.loc4(%.loc4_15) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc4_20.1: type = value_of_initializer %.loc4_14 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc4_20.2: type = converted %.loc4_14, %.loc4_20.1 [template = constants.%C.3]
-// CHECK:STDOUT:     %b.loc4_9.1: %C.3 = param b
+// CHECK:STDOUT:     %.loc4: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %C.loc4: type = class_type @C, @C(constants.%.3) [template = constants.%C.3]
+// CHECK:STDOUT:     %b.loc4_9.1: %C.3 = param b, runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc4_9.2: %C.3 = bind_symbolic_name b 0, %b.loc4_9.1 [symbolic = constants.%b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -180,25 +176,21 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc2_13.2: type = converted %int.make_type_32, %.loc2_13.1 [template = i32]
-// CHECK:STDOUT:     %a.loc2_9.1: i32 = param a
+// CHECK:STDOUT:     %a.loc2_9.1: i32 = param a, runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_symbolic_name a 0, %a.loc2_9.1 [symbolic = @C.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [template = constants.%D.1] {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc3_15: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc3_14: init type = call %C.ref.loc3(%.loc3_15) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %.loc3_14 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc3_19.2: type = converted %.loc3_14, %.loc3_19.1 [template = constants.%C.3]
-// CHECK:STDOUT:     %b.loc3_9.1: %C.3 = param b
+// CHECK:STDOUT:     %.loc3: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %C.loc3: type = class_type @C, @C(constants.%.3) [template = constants.%C.3]
+// CHECK:STDOUT:     %b.loc3_9.1: %C.3 = param b, runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_symbolic_name b 0, %b.loc3_9.1 [symbolic = @D.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc10_15: i32 = int_literal 1000 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc10_14: init type = call %C.ref.loc10(%.loc10_15) [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc10_20.1: type = value_of_initializer %.loc10_14 [template = constants.%C.3]
-// CHECK:STDOUT:     %.loc10_20.2: type = converted %.loc10_14, %.loc10_20.1 [template = constants.%C.3]
-// CHECK:STDOUT:     %b.loc10_9.1: %C.3 = param b
+// CHECK:STDOUT:     %.loc10: i32 = int_literal 1000 [template = constants.%.3]
+// CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%.3) [template = constants.%C.3]
+// CHECK:STDOUT:     %b.loc10_9.1: %C.3 = param b, runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc10_9.2: %C.3 = bind_symbolic_name b 0, %b.loc10_9.1 [symbolic = @.1.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

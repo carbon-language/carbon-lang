@@ -103,7 +103,7 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc18_21: i32 = int_literal 12 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_17.1: init type = call constants.%ImplicitAs(bool) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_17.1: type = interface_type @ImplicitAs, @ImplicitAs(bool) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc18_17.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(bool) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_17.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc18_17.3: bool = converted %.loc18_21, <error> [template = <error>]
