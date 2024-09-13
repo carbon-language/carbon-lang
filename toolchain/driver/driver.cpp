@@ -94,7 +94,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     // Note this implies streamed output in order to interleave.
     driver_env_.vlog_stream = &driver_env_.error_stream;
   }
-
+  CARBON_CHECK(options.subcommand != nullptr);
   return options.subcommand->Run(driver_env_);
 }
 
