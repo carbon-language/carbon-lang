@@ -8,7 +8,10 @@
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/driver/codegen_options.h"
+#include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/driver_env.h"
+#include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
 
@@ -49,9 +52,9 @@ class Driver {
 
  private:
   struct Options;
-  struct CodegenOptions;
-  struct CompileOptions;
-  struct LinkOptions;
+
+  // Implementation is in compile_subcommand.cpp.
+  // TODO: Remove from Driver.
   class CompilationUnit;
 
   // Delegates to the command line library to parse the arguments and store the
@@ -61,13 +64,19 @@ class Driver {
 
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports.
+  // Implementation is in compile_subcommand.cpp.
+  // TODO: Remove from Driver.
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
 
   // Implements the compile subcommand of the driver.
+  // Implementation is in compile_subcommand.cpp.
+  // TODO: Remove from Driver.
   auto Compile(const CompileOptions& options,
                const CodegenOptions& codegen_options) -> RunResult;
 
   // Implements the link subcommand of the driver.
+  // Implementation is in link_subcommand.cpp.
+  // TODO: Remove from Driver.
   auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
       -> RunResult;
 
