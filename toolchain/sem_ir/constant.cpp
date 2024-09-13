@@ -29,9 +29,9 @@ auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
     return const_id;
   });
   CARBON_CHECK(result.value() != ConstantId::Invalid);
-  CARBON_CHECK(result.value().is_symbolic() == is_symbolic)
-      << "Constant " << inst
-      << " registered as both symbolic and template constant.";
+  CARBON_CHECK(
+      result.value().is_symbolic() == is_symbolic,
+      "Constant {0} registered as both symbolic and template constant.", inst);
   return result.value();
 }
 

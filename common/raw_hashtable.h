@@ -381,8 +381,8 @@ class ViewImpl {
   // given size. This is trivial, but we use this routine to enforce invariants
   // on the sizes.
   static constexpr auto EntriesOffset(ssize_t alloc_size) -> ssize_t {
-    CARBON_DCHECK(llvm::isPowerOf2_64(alloc_size))
-        << "Size must be a power of two for a hashed buffer!";
+    CARBON_DCHECK(llvm::isPowerOf2_64(alloc_size),
+                  "Size must be a power of two for a hashed buffer!");
     // The size is always a power of two. We prevent any too-small sizes so it
     // being a power of two provides the needed alignment. As a result, the
     // offset is exactly the size. We validate this here to catch alignment bugs
@@ -615,8 +615,8 @@ inline auto ComputeSeed() -> uint64_t {
 }
 
 inline auto ComputeProbeMaskFromSize(ssize_t size) -> size_t {
-  CARBON_DCHECK(llvm::isPowerOf2_64(size))
-      << "Size must be a power of two for a hashed buffer!";
+  CARBON_DCHECK(llvm::isPowerOf2_64(size),
+                "Size must be a power of two for a hashed buffer!");
   // Since `size` is a power of two, we can make sure the probes are less
   // than `size` by making the mask `size - 1`. We also mask off the low
   // bits so the probes are a multiple of the size of the groups of entries.
@@ -659,12 +659,14 @@ class ProbeSequence {
     // everything down by `GroupSize`.
     CARBON_DCHECK(
         (p_ / GroupSize) ==
-        ((start_ / GroupSize +
-          (step_ / GroupSize + (step_ / GroupSize) * (step_ / GroupSize)) / 2) %
-         (size_ / GroupSize)))
-        << "Index in probe sequence does not match the expected formula.";
-    CARBON_DCHECK(step_ < size_) << "We necessarily visit all groups, so we "
-                                    "can't have more probe steps than groups.";
+            ((start_ / GroupSize +
+              (step_ / GroupSize + (step_ / GroupSize) * (step_ / GroupSize)) /
+                  2) %
+             (size_ / GroupSize)),
+        "Index in probe sequence does not match the expected formula.");
+    CARBON_DCHECK(step_ < size_,
+                  "We necessarily visit all groups, so we can't have more "
+                  "probe steps than groups.");
 #endif
   }
 
@@ -924,13 +926,14 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
     }
 
     --growth_budget_;
-    CARBON_DCHECK(growth_budget() >= 0)
-        << "Growth budget shouldn't have gone negative!";
+    CARBON_DCHECK(growth_budget() >= 0,
+                  "Growth budget shouldn't have gone negative!");
     return return_insert_at_index(group_index + empty_match.index());
   }
 
-  CARBON_FATAL() << "We should never finish probing without finding the entry "
-                    "or an empty slot.";
+  CARBON_FATAL(
+      "We should never finish probing without finding the entry or an empty "
+      "slot.");
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -1264,11 +1267,11 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertIntoEmpty(
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeNextAllocSize(
     ssize_t old_alloc_size) -> ssize_t {
-  CARBON_DCHECK(llvm::isPowerOf2_64(old_alloc_size))
-      << "Expected a power of two!";
+  CARBON_DCHECK(llvm::isPowerOf2_64(old_alloc_size),
+                "Expected a power of two!");
   ssize_t new_alloc_size;
   bool overflow = __builtin_mul_overflow(old_alloc_size, 2, &new_alloc_size);
-  CARBON_CHECK(!overflow) << "Computing the new size overflowed `ssize_t`!";
+  CARBON_CHECK(!overflow, "Computing the new size overflowed `ssize_t`!");
   return new_alloc_size;
 }
 
@@ -1340,11 +1343,10 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
       llvm::count(llvm::ArrayRef(old_metadata, old_size), MetadataGroup::Empty);
   ssize_t debug_deleted_count = llvm::count(
       llvm::ArrayRef(old_metadata, old_size), MetadataGroup::Deleted);
-  CARBON_DCHECK(debug_empty_count >=
-                (old_size - GrowthThresholdForAllocSize(old_size)))
-      << "debug_empty_count: " << debug_empty_count
-      << ", debug_deleted_count: " << debug_deleted_count
-      << ", size: " << old_size;
+  CARBON_DCHECK(
+      debug_empty_count >= (old_size - GrowthThresholdForAllocSize(old_size)),
+      "debug_empty_count: {0}, debug_deleted_count: {1}, size: {2}",
+      debug_empty_count, debug_deleted_count, old_size);
 #endif
 
   // Configure for the new size and allocate the new storage.

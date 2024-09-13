@@ -350,8 +350,8 @@ auto HandleExprLoop(Context& context) -> void {
 #include "toolchain/parse/node_kind.def"
 
       default:
-        CARBON_FATAL() << "Unexpected token kind for postfix operator: "
-                       << operator_kind;
+        CARBON_FATAL("Unexpected token kind for postfix operator: {0}",
+                     operator_kind);
     }
 
     context.AddNode(node_kind, state.token, state.has_error);
@@ -381,8 +381,7 @@ auto HandleExprLoopForInfixOperator(Context& context) -> void {
 #include "toolchain/parse/node_kind.def"
 
     default:
-      CARBON_FATAL() << "Unexpected token kind for infix operator: "
-                     << token_kind;
+      CARBON_FATAL("Unexpected token kind for infix operator: {0}", token_kind);
   }
 }
 
@@ -398,8 +397,8 @@ auto HandleExprLoopForPrefixOperator(Context& context) -> void {
 #include "toolchain/parse/node_kind.def"
 
     default:
-      CARBON_FATAL() << "Unexpected token kind for prefix operator: "
-                     << token_kind;
+      CARBON_FATAL("Unexpected token kind for prefix operator: {0}",
+                   token_kind);
   }
 }
 

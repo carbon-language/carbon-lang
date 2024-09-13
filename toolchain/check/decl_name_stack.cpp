@@ -23,9 +23,9 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
       return SemIR::InstId::Invalid;
 
     case NameContext::State::Empty:
-      CARBON_FATAL()
-          << "Name is missing, not expected to call existing_inst_id (but "
-             "that may change based on error handling).";
+      CARBON_FATAL(
+          "Name is missing, not expected to call existing_inst_id (but that "
+          "may change based on error handling).");
 
     case NameContext::State::Resolved:
       return resolved_inst_id;
@@ -34,7 +34,7 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
       return SemIR::InstId::Invalid;
 
     case NameContext::State::Finished:
-      CARBON_FATAL() << "Finished state should only be used internally";
+      CARBON_FATAL("Finished state should only be used internally");
   }
 }
 
@@ -59,8 +59,8 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
 }
 
 auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
-  CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
-      << "Finished name twice";
+  CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished,
+               "Finished name twice");
 
   ApplyAndLookupName(decl_name_stack_.back(), name.name_loc_id, name.name_id);
 
@@ -70,8 +70,8 @@ auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
 }
 
 auto DeclNameStack::FinishImplName() -> NameContext {
-  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Empty)
-      << "Impl has a name";
+  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Empty,
+               "Impl has a name");
 
   NameContext result = decl_name_stack_.back();
   decl_name_stack_.back().state = NameContext::State::Finished;
@@ -79,15 +79,15 @@ auto DeclNameStack::FinishImplName() -> NameContext {
 }
 
 auto DeclNameStack::PopScope() -> void {
-  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
-      << "Missing call to FinishName before PopScope";
+  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished,
+               "Missing call to FinishName before PopScope");
   context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index);
   decl_name_stack_.pop_back();
 }
 
 auto DeclNameStack::Suspend() -> SuspendedName {
-  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
-      << "Missing call to FinishName before Suspend";
+  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished,
+               "Missing call to FinishName before Suspend");
   SuspendedName result = {.name_context = decl_name_stack_.pop_back_val(),
                           .scopes = {}};
   auto scope_index = result.name_context.initial_scope_index;
@@ -95,17 +95,17 @@ auto DeclNameStack::Suspend() -> SuspendedName {
   while (scope_stack.PeekIndex() > scope_index) {
     result.scopes.push_back(scope_stack.Suspend());
   }
-  CARBON_CHECK(scope_stack.PeekIndex() == scope_index)
-      << "Scope index " << scope_index << " does not enclose the current scope "
-      << scope_stack.PeekIndex();
+  CARBON_CHECK(scope_stack.PeekIndex() == scope_index,
+               "Scope index {0} does not enclose the current scope {1}",
+               scope_index, scope_stack.PeekIndex());
   return result;
 }
 
 auto DeclNameStack::Restore(SuspendedName sus) -> void {
   // The parent state must be the same when a name is restored.
   CARBON_CHECK(context_->scope_stack().PeekIndex() ==
-               sus.name_context.initial_scope_index)
-      << "Name restored at the wrong position in the name stack.";
+                   sus.name_context.initial_scope_index,
+               "Name restored at the wrong position in the name stack.");
 
   // clang-tidy warns that the `std::move` below has no effect. While that's
   // true, this `move` defends against `NameContext` growing more state later.
@@ -164,15 +164,15 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
         };
         auto result = name_scope.name_map.Insert(
             name_context.unresolved_name_id, add_scope);
-        CARBON_CHECK(result.is_inserted())
-            << "Duplicate names should have been resolved previously: "
-            << name_context.unresolved_name_id << " in "
-            << name_context.parent_scope_id;
+        CARBON_CHECK(
+            result.is_inserted(),
+            "Duplicate names should have been resolved previously: {0} in {1}",
+            name_context.unresolved_name_id, name_context.parent_scope_id);
       }
       break;
 
     default:
-      CARBON_FATAL() << "Should not be calling AddName";
+      CARBON_FATAL("Should not be calling AddName");
       break;
   }
 }
@@ -284,7 +284,7 @@ static auto CheckQualifierIsResolved(
     Context& context, const DeclNameStack::NameContext& name_context) -> bool {
   switch (name_context.state) {
     case DeclNameStack::NameContext::State::Empty:
-      CARBON_FATAL() << "No qualifier to resolve";
+      CARBON_FATAL("No qualifier to resolve");
 
     case DeclNameStack::NameContext::State::Resolved:
       return true;
@@ -297,7 +297,7 @@ static auto CheckQualifierIsResolved(
       return false;
 
     case DeclNameStack::NameContext::State::Finished:
-      CARBON_FATAL() << "Added a qualifier after calling FinishName";
+      CARBON_FATAL("Added a qualifier after calling FinishName");
 
     case DeclNameStack::NameContext::State::Error:
       // Already in an error state, so return without examining.

@@ -54,8 +54,8 @@ struct NameScope : Printable<NameScope> {
       return index;
     };
     auto result = name_map.Insert(name_entry.name_id, add_name);
-    CARBON_CHECK(result.is_inserted())
-        << "Failed to add required name: " << name_entry.name_id;
+    CARBON_CHECK(result.is_inserted(), "Failed to add required name: {0}",
+                 name_entry.name_id);
   }
 
   // Names in the scope. We store both an insertion-ordered vector for iterating

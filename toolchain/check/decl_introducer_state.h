@@ -74,9 +74,8 @@ class DeclIntroducerStateStack {
   template <Lex::TokenKind::RawEnumType Kind>
     requires(IsDeclIntroducer<Kind>())
   auto Pop() -> DeclIntroducerState {
-    CARBON_CHECK(stack_.back().kind == Kind)
-        << "Found: " << stack_.back().kind
-        << " expected: " << Lex::TokenKind::Make(Kind);
+    CARBON_CHECK(stack_.back().kind == Kind, "Found: {0} expected: {1}",
+                 stack_.back().kind, Lex::TokenKind::Make(Kind));
     return stack_.pop_back_val();
   }
 

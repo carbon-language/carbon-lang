@@ -12,8 +12,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   switch (auto rep = SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id);
           rep.kind) {
     case SemIR::ValueRepr::Unknown:
-      CARBON_FATAL()
-          << "Value binding for type with incomplete value representation";
+      CARBON_FATAL(
+          "Value binding for type with incomplete value representation");
     case SemIR::ValueRepr::None:
       // Nothing should use this value, but StubRef needs a value to
       // propagate.
@@ -30,7 +30,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
     case SemIR::ValueRepr::Custom:
-      CARBON_FATAL() << "TODO: Add support for BindValue with custom value rep";
+      CARBON_FATAL("TODO: Add support for BindValue with custom value rep");
   }
 }
 

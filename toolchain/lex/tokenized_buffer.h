@@ -399,8 +399,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           has_leading_space_(has_leading_space),
           token_payload_(payload),
           byte_offset_(byte_offset) {
-      CARBON_DCHECK(payload >= 0 && payload < (2 << PayloadBits))
-          << "Payload won't fit into unsigned bit pack: " << payload;
+      CARBON_DCHECK(payload >= 0 && payload < (2 << PayloadBits),
+                    "Payload won't fit into unsigned bit pack: {0}", payload);
     }
 
     // A bitfield that encodes the token's kind, the leading space flag, and the

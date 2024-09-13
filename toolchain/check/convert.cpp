@@ -66,8 +66,7 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
         return sem_ir.inst_blocks().Get(call.args_id).back();
       }
       default:
-        CARBON_FATAL() << "Initialization from unexpected inst "
-                       << init_untyped;
+        CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
     }
   }
 }
@@ -80,10 +79,10 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
   if (return_slot_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
     CARBON_CHECK(sem_ir.insts().Get(return_slot_id).kind() ==
-                 SemIR::TemporaryStorage::Kind)
-        << "Return slot for initializer does not contain a temporary; "
-        << "initialized multiple times? Have "
-        << sem_ir.insts().Get(return_slot_id);
+                     SemIR::TemporaryStorage::Kind,
+                 "Return slot for initializer does not contain a temporary; "
+                 "initialized multiple times? Have {0}",
+                 sem_ir.insts().Get(return_slot_id));
     target_block.MergeReplacing(return_slot_id, target_id);
   }
 }
@@ -100,10 +99,10 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
     CARBON_CHECK(sem_ir.insts().Get(return_slot_id).kind() ==
-                 SemIR::TemporaryStorage::Kind)
-        << "Return slot for initializer does not contain a temporary; "
-        << "initialized multiple times? Have "
-        << sem_ir.insts().Get(return_slot_id);
+                     SemIR::TemporaryStorage::Kind,
+                 "Return slot for initializer does not contain a temporary; "
+                 "initialized multiple times? Have {0}",
+                 sem_ir.insts().Get(return_slot_id));
     auto init = sem_ir.insts().Get(init_id);
     return context.AddInst<SemIR::Temporary>(sem_ir.insts().GetLocId(init_id),
                                              {.type_id = init.type_id(),
@@ -423,8 +422,7 @@ static auto ConvertStructToStructOrClass(Context& context,
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
       auto result = src_field_indexes.Insert(
           context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i);
-      CARBON_CHECK(result.is_inserted())
-          << "Duplicate field in source structure";
+      CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
     }
   }
 
@@ -496,8 +494,8 @@ static auto ConvertStructToStructOrClass(Context& context,
 
   if (is_class) {
     target.init_block->InsertHere();
-    CARBON_CHECK(is_init)
-        << "Converting directly to a class value is not supported";
+    CARBON_CHECK(is_init,
+                 "Converting directly to a class value is not supported");
     return context.AddInst<SemIR::ClassInit>(value_loc_id,
                                              {.type_id = target.type_id,
                                               .elements_id = new_block.id(),
@@ -1004,8 +1002,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
-      CARBON_FATAL() << "Unexpected expression " << expr
-                     << " after builtin conversions";
+      CARBON_FATAL("Unexpected expression {0} after builtin conversions", expr);
 
     case SemIR::ExprCategory::Error:
       return SemIR::InstId::BuiltinError;

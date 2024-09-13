@@ -94,7 +94,7 @@ struct llvm::yaml::ScalarTraits<Carbon::Yaml::OutputScalar> {
   }
   static auto input(StringRef /*scalar*/, void* /*ctxt*/,
                     Carbon::Yaml::OutputScalar& /*value*/) -> StringRef {
-    CARBON_FATAL() << "Input is unsupported.";
+    CARBON_FATAL("Input is unsupported.");
   }
   static auto mustQuote(StringRef /*value*/) -> QuotingType {
     return QuotingType::None;

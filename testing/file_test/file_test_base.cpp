@@ -900,10 +900,10 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
   }
 
   // Extracts tests from the target file.
-  CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty())
-      << "Missing --test_targets_file.";
+  CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty(),
+               "Missing --test_targets_file.");
   auto content = ReadFile(absl::GetFlag(FLAGS_test_targets_file));
-  CARBON_CHECK(content.ok()) << content.error();
+  CARBON_CHECK(content.ok(), "{0}", content.error());
   llvm::SmallVector<std::string> all_tests;
   for (llvm::StringRef file_ref : llvm::split(*content, "\n")) {
     if (file_ref.empty()) {

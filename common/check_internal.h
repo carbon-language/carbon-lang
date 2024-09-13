@@ -5,73 +5,106 @@
 #ifndef CARBON_COMMON_CHECK_INTERNAL_H_
 #define CARBON_COMMON_CHECK_INTERNAL_H_
 
-#include "common/ostream.h"
+#include "common/template_string.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Internal {
 
-// Wraps a stream and exiting for fatal errors. Should only be used by check.h
-// macros.
-class ExitingStream {
- public:
-  // A tag type that renders as ": " in an ExitingStream, but only if it is
-  // followed by additional output. Otherwise, it renders as "". Primarily used
-  // when building macros around these streams.
-  struct AddSeparator {};
+// Implements the check failure message printing.
+//
+// This is out-of-line and will arrange to stop the program, print any debugging
+// information and this string.
+//
+// This API uses `const char*` C string arguments rather than `llvm::StringRef`
+// because we know that these are available as C strings and passing them that
+// way lets the code size of calling it be smaller: it only needs to materialize
+// a single pointer argument for each. The runtime cost of re-computing the size
+// should be minimal. The extra message however might not be compile-time
+// guaranteed to be a C string so we use a normal `StringRef` there.
+[[noreturn]] auto CheckFailImpl(const char* kind, const char* file, int line,
+                                const char* condition_str,
+                                llvm::StringRef extra_message) -> void;
 
-  // Internal type used in macros to dispatch to the `operator|` overload.
-  struct Helper {};
-
-  ExitingStream()
-      // Prefix the buffer with the current bug report message.
-      : buffer_(buffer_str_) {}
-
-  // Never called.
-  [[noreturn]] ~ExitingStream();
-
-  // If the bool cast occurs, it's because the condition is false. This supports
-  // && short-circuiting the creation of ExitingStream.
-  explicit operator bool() const { return true; }
-
-  // Forward output to llvm::errs.
-  template <typename T>
-  auto operator<<(const T& message) -> ExitingStream& {
-    if (separator_) {
-      buffer_ << ": ";
-      separator_ = false;
-    }
-    buffer_ << message;
-    return *this;
+// Prints a check failure, including rendering any user-provided message using
+// a format string.
+//
+// Most of the parameters are passed as compile-time template strings to avoid
+// runtime cost of parameter setup in optimized builds. Each of these are passed
+// along to the underlying implementation to include in the final printed
+// message.
+//
+// Any user-provided format string and values are directly passed to
+// `llvm::formatv` which handles all of the formatting of output.
+template <TemplateString Kind, TemplateString File, int Line,
+          TemplateString ConditionStr, TemplateString FormatStr, typename... Ts>
+[[noreturn, gnu::cold, clang::noinline, clang::preserve_most]] auto CheckFail(
+    Ts&&... values) -> void {
+  if constexpr (llvm::StringRef(FormatStr).empty()) {
+    // Skip the format string rendering if empty. Note that we don't skip it
+    // even if there are no values as we want to have consistent handling of
+    // `{}`s in the format string. This case is about when there is no message
+    // at all, just the condition.
+    CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(), "");
+  } else {
+    CheckFailImpl(
+        Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
+        llvm::formatv(FormatStr.c_str(), std::forward<Ts>(values)...).str());
   }
-
-  auto operator<<(AddSeparator /*add_separator*/) -> ExitingStream& {
-    separator_ = true;
-    return *this;
-  }
-
-  // Low-precedence binary operator overload used in check.h macros to flush the
-  // output and exit the program. We do this in a binary operator rather than
-  // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*helper*/, ExitingStream& stream)
-      -> void {
-    stream.Done();
-  }
-
- private:
-  [[noreturn]] auto Done() -> void;
-
-  // Whether a separator should be printed if << is used again.
-  bool separator_ = false;
-
-  std::string buffer_str_;
-  llvm::raw_string_ostream buffer_;
-};
+}
 
 }  // namespace Carbon::Internal
 
-// Raw exiting stream. This should be used when building forms of exiting
-// macros. It evaluates to a temporary `ExitingStream` object that can be
-// manipulated, streamed into, and then will exit the program.
-#define CARBON_CHECK_INTERNAL_STREAM() \
-  Carbon::Internal::ExitingStream::Helper() | Carbon::Internal::ExitingStream()
+// Implements check messages without any formatted values.
+//
+// Passes each of the provided components of the message to the template
+// parameters of the check failure printing function above, including an empty
+// string for the format string. Because there are multiple template arguments,
+// the entire call is wrapped in parentheses.
+#define CARBON_INTERNAL_CHECK_IMPL(kind, file, line, condition_str) \
+  (Carbon::Internal::CheckFail<kind, file, line, condition_str, "">())
+
+// Implements check messages with a format string and potentially formatted
+// values.
+//
+// Each of the main components is passed as a template arguments, and then any
+// formatted values are passed as arguments. Because there are multiple template
+// arguments, the entire call is wrapped in parentheses.
+#define CARBON_INTERNAL_CHECK_IMPL_FORMAT(kind, file, line, condition_str,   \
+                                          format_str, ...)                   \
+  (Carbon::Internal::CheckFail<kind, file, line, condition_str, format_str>( \
+      __VA_ARGS__))
+
+// Implements the failure of a check.
+//
+// Collects all the metadata about the failure to be printed, such as source
+// location and stringified condition, and passes those, any format string and
+// formatted arguments to the correct implementation macro above.
+#define CARBON_INTERNAL_CHECK(condition, ...)      \
+  CARBON_INTERNAL_CHECK_IMPL##__VA_OPT__(_FORMAT)( \
+      "CHECK", __FILE__, __LINE__, #condition __VA_OPT__(, ) __VA_ARGS__)
+
+// Implements the fatal macro.
+//
+// Similar to the check failure macro, but tags the message as a fatal one and
+// leaves the stringified condition empty.
+#define CARBON_INTERNAL_FATAL(...)                 \
+  CARBON_INTERNAL_CHECK_IMPL##__VA_OPT__(_FORMAT)( \
+      "FATAL", __FILE__, __LINE__, "" __VA_OPT__(, ) __VA_ARGS__)
+
+#ifdef NDEBUG
+// For `DCHECK` in optimized builds we have a dead check that we want to
+// potentially "use" arguments, but otherwise have the minimal overhead. We
+// avoid forming interesting format strings here so that we don't have to
+// repeatedly instantiate the `Check` function above. This format string would
+// be an error if actually used.
+#define CARBON_INTERNAL_DEAD_DCHECK(condition, ...) \
+  CARBON_INTERNAL_DEAD_DCHECK_IMPL##__VA_OPT__(_FORMAT)(__VA_ARGS__)
+
+#define CARBON_INTERNAL_DEAD_DCHECK_IMPL() \
+  Carbon::Internal::CheckFail<"", "", 0, "", "">()
+
+#define CARBON_INTERNAL_DEAD_DCHECK_IMPL_FORMAT(format_str, ...) \
+  Carbon::Internal::CheckFail<"", "", 0, "", "">(__VA_ARGS__)
+#endif
 
 #endif  // CARBON_COMMON_CHECK_INTERNAL_H_

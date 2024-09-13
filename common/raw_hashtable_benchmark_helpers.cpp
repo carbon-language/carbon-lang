@@ -43,8 +43,9 @@ static auto MakeChars() -> llvm::OwningArrayRef<char> {
       ++i;
     }
   }
-  CARBON_CHECK(i == NumChars) << "Expected exactly " << NumChars
-                              << " characters, got " << i << " instead!";
+  CARBON_CHECK(i == NumChars,
+               "Expected exactly {0} characters, got {1} instead!", NumChars,
+               i);
   return characters;
 }
 
@@ -344,7 +345,7 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
                                                     GroupShift);
   for (auto [i, k] : llvm::enumerate(keys)) {
     ssize_t hash_index = get_hash_index(k);
-    CARBON_CHECK(hash_index < (expected_size >> GroupShift)) << hash_index;
+    CARBON_CHECK(hash_index < (expected_size >> GroupShift), "{0}", hash_index);
     grouped_key_indices[hash_index].push_back(i);
   }
   ssize_t max_group_index =

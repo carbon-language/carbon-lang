@@ -118,7 +118,7 @@ MatchingImplSet::Match::Match(Nonnull<MatchingImplSet*> parent,
 }
 
 MatchingImplSet::Match::~Match() {
-  CARBON_CHECK(parent_->matches_.back() == this) << "match stack broken";
+  CARBON_CHECK(parent_->matches_.back() == this, "match stack broken");
   parent_->matches_.pop_back();
 }
 

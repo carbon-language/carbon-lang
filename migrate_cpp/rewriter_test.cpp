@@ -27,8 +27,8 @@ class Annotations {
     }
     start_ = index;
     end_ = annotated_source.find("]]$", index);
-    CARBON_CHECK(end_ != llvm::StringRef::npos)
-        << "Found `$[[` but no matching `]]$`";
+    CARBON_CHECK(end_ != llvm::StringRef::npos,
+                 "Found `$[[` but no matching `]]$`");
     source_code_ = (llvm::Twine(annotated_source.substr(0, start_)) +
                     annotated_source.substr(start_ + 3, end_ - start_ - 3) +
                     annotated_source.substr(end_ + 3))

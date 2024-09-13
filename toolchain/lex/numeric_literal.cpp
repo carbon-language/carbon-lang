@@ -82,7 +82,7 @@ auto NumericLiteral::Lex(llvm::StringRef source_text)
         IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
-      CARBON_CHECK(!seen_plus_minus) << "should only consume one + or -";
+      CARBON_CHECK(!seen_plus_minus, "should only consume one + or -");
       seen_plus_minus = true;
       continue;
     }

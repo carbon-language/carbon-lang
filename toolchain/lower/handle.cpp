@@ -26,7 +26,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::AddrPattern /*inst*/) -> void {
-  CARBON_FATAL() << "`addr` should be lowered by `BuildFunctionDefinition`";
+  CARBON_FATAL("`addr` should be lowered by `BuildFunctionDefinition`");
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -140,8 +140,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       context.TryToReuseBlock(inst.target_id, block)) {
     // Reuse this block as the branch target.
     phi_predecessor = block->getSinglePredecessor();
-    CARBON_CHECK(phi_predecessor)
-        << "Synthetic block did not have a single predecessor";
+    CARBON_CHECK(phi_predecessor,
+                 "Synthetic block did not have a single predecessor");
   } else {
     context.builder().CreateBr(context.GetBlock(inst.target_id));
   }
@@ -184,7 +184,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::Param /*inst*/) -> void {
-  CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
+  CARBON_FATAL("Parameters should be lowered by `BuildFunctionDefinition`");
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -209,8 +209,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
     case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL() << "Lowering return of incomplete type "
-                     << context.sem_ir().types().GetAsInst(result_type_id);
+      CARBON_FATAL("Lowering return of incomplete type {0}",
+                   context.sem_ir().types().GetAsInst(result_type_id));
   }
 }
 

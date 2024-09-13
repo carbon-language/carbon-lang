@@ -56,7 +56,7 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // The token kind must be an opening symbol.
   auto closing_symbol() const -> TokenKind {
     auto result = ClosingSymbol[AsInt()];
-    CARBON_DCHECK(result != Error) << "Only opening symbols are valid!";
+    CARBON_DCHECK(result != Error, "Only opening symbols are valid!");
     return result;
   }
 
@@ -68,7 +68,7 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // The token kind must be a closing symbol.
   auto opening_symbol() const -> TokenKind {
     auto result = OpeningSymbol[AsInt()];
-    CARBON_DCHECK(result != Error) << "Only closing symbols are valid!";
+    CARBON_DCHECK(result != Error, "Only closing symbols are valid!");
     return result;
   }
 

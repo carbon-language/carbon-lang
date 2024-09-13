@@ -14,7 +14,7 @@ auto NodeStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,
     if constexpr (Kind == Id::Kind::None) {
       output << "no value\n";
     } else if constexpr (Kind == Id::Kind::Invalid) {
-      CARBON_FATAL() << "Should not be in node stack";
+      CARBON_FATAL("Should not be in node stack");
     } else if constexpr (Kind == Id::KindFor<SemIR::InstId>()) {
       output << "\n";
       formatter.PrintInst(id.As<Id::KindFor<SemIR::InstId>()>(), indent + 4,

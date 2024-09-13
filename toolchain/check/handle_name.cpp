@@ -104,7 +104,7 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
   auto value = context.insts().Get(result.inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
                                           value.type_id());
-  CARBON_CHECK(type_id.is_valid()) << "Missing type for " << value;
+  CARBON_CHECK(type_id.is_valid(), "Missing type for {0}", value);
 
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.

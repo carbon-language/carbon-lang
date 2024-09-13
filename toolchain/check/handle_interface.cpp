@@ -137,8 +137,8 @@ auto HandleParseNode(Context& context,
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  CARBON_CHECK(!interface_info.is_defined())
-      << "Can't merge with defined interfaces.";
+  CARBON_CHECK(!interface_info.is_defined(),
+               "Can't merge with defined interfaces.");
   interface_info.definition_id = interface_decl_id;
   interface_info.scope_id =
       context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,

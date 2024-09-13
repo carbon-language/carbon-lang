@@ -73,9 +73,10 @@ class RebuildGenericConstantInEvalBlockCallbacks final
     if (!const_id.is_valid()) {
       // An unloaded import ref should never contain anything we need to
       // substitute into. Don't trigger loading it here.
-      CARBON_CHECK(context_.insts().Is<SemIR::ImportRefUnloaded>(inst_id))
-          << "Substituting into instruction with invalid constant ID: "
-          << context_.insts().Get(inst_id);
+      CARBON_CHECK(
+          context_.insts().Is<SemIR::ImportRefUnloaded>(inst_id),
+          "Substituting into instruction with invalid constant ID: {0}",
+          context_.insts().Get(inst_id));
       return true;
     }
     if (!const_id.is_symbolic()) {
@@ -174,9 +175,9 @@ static auto AddGenericConstantToEvalBlock(
       SubstInst(context, const_inst_id,
                 RebuildGenericConstantInEvalBlockCallbacks(
                     context, generic_id, region, constants_in_generic));
-  CARBON_CHECK(new_inst_id != const_inst_id)
-      << "Did not apply any substitutions to symbolic constant "
-      << context.insts().Get(const_inst_id);
+  CARBON_CHECK(new_inst_id != const_inst_id,
+               "Did not apply any substitutions to symbolic constant {0}",
+               context.insts().Get(const_inst_id));
   return context.constant_values().Get(new_inst_id);
 }
 
@@ -192,9 +193,9 @@ static auto PopulateConstantsFromDeclaration(
   for (auto inst_id : decl_eval_block) {
     auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
     auto result = constants_in_generic.Insert(const_inst_id, inst_id);
-    CARBON_CHECK(result.is_inserted())
-        << "Duplicate constant in generic decl eval block: "
-        << context.insts().Get(const_inst_id);
+    CARBON_CHECK(result.is_inserted(),
+                 "Duplicate constant in generic decl eval block: {0}",
+                 context.insts().Get(const_inst_id));
   }
 }
 
@@ -252,12 +253,13 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
     }
   }
 
-  CARBON_CHECK(num_dependent_insts ==
-               context.generic_region_stack().PeekDependentInsts().size())
-      << "Building eval block added new dependent insts, for example "
-      << context.insts().Get(context.generic_region_stack()
-                                 .PeekDependentInsts()[num_dependent_insts]
-                                 .inst_id);
+  CARBON_CHECK(
+      num_dependent_insts ==
+          context.generic_region_stack().PeekDependentInsts().size(),
+      "Building eval block added new dependent insts, for example {0}",
+      context.insts().Get(context.generic_region_stack()
+                              .PeekDependentInsts()[num_dependent_insts]
+                              .inst_id));
 
   return context.inst_block_stack().Pop();
 }
@@ -283,11 +285,11 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
     // Build a constant in the inst block.
     AddGenericConstantToEvalBlock(context, generic_id, region,
                                   constants_in_generic, inst_id);
-    CARBON_CHECK(context.inst_block_stack().PeekCurrentBlockContents().size() ==
-                 i + 1)
-        << "Produced "
-        << (context.inst_block_stack().PeekCurrentBlockContents().size() - i)
-        << " instructions when importing " << context.insts().Get(inst_id);
+    CARBON_CHECK(
+        context.inst_block_stack().PeekCurrentBlockContents().size() == i + 1,
+        "Produced {0} instructions when importing {1}",
+        (context.inst_block_stack().PeekCurrentBlockContents().size() - i),
+        context.insts().Get(inst_id));
   }
 
   return context.inst_block_stack().Pop();
@@ -299,9 +301,9 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
       context.scope_stack().compile_time_bindings_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
-    CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty())
-        << "Have dependent instructions but no compile time bindings are in "
-           "scope.";
+    CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty(),
+                 "Have dependent instructions but no compile time bindings are "
+                 "in scope.");
     context.generic_region_stack().Pop();
     return SemIR::GenericId::Invalid;
   }
@@ -396,7 +398,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
     -> bool {
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
-  CARBON_CHECK(generic_id.is_valid()) << "Specific with no generic ID";
+  CARBON_CHECK(generic_id.is_valid(), "Specific with no generic ID");
 
   if (!specific.definition_block_id.is_valid()) {
     // Evaluate the eval block for the definition of the generic.

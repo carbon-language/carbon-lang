@@ -26,9 +26,11 @@ template <TemplateString FormatStr, typename... Ts>
 
 }  // namespace Carbon::Internal
 
-// Logs when verbose logging is enabled (vlog_stream_ is non-null).
+// Logs when verbose logging is enabled. CARBON_VLOG_TO uses a provided stream;
+// CARBON_VLOG requires a member named `vlog_stream_`.
 //
 // For example:
+//   CARBON_VLOG_TO(vlog_stream, "Verbose message: {0}", "extra information");
 //   CARBON_VLOG("Verbose message: {0}", "extra information");
 //
 // The first argument must be a string literal format string valid for passing
@@ -42,10 +44,13 @@ template <TemplateString FormatStr, typename... Ts>
 // However, the streaming syntax has higher overhead and can inhibit inlining.
 // Code should prefer the format string form, and eventually when all code has
 // migrated the streaming interface will be removed.
-#define CARBON_VLOG(FormatStr, ...)                                          \
-  __builtin_expect(vlog_stream_ == nullptr, true)                            \
-      ? (void)0                                                              \
-      : Carbon::Internal::VLogImpl<"" FormatStr>(vlog_stream_ __VA_OPT__(, ) \
+#define CARBON_VLOG_TO(Stream, FormatStr, ...)                         \
+  __builtin_expect(Stream == nullptr, true)                            \
+      ? (void)0                                                        \
+      : Carbon::Internal::VLogImpl<"" FormatStr>(Stream __VA_OPT__(, ) \
                                                      __VA_ARGS__)
+
+#define CARBON_VLOG(FormatStr, ...) \
+  CARBON_VLOG_TO(vlog_stream_, FormatStr, __VA_ARGS__)
 
 #endif  // CARBON_COMMON_VLOG_H_

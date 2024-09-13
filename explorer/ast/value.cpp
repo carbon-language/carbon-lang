@@ -159,8 +159,8 @@ static auto GetPositionalElement(Nonnull<const TupleValue*> tuple,
                                  const ElementPath::Component& path_comp,
                                  SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(path_comp.element()->kind() == ElementKind::PositionalElement)
-      << "Invalid non-tuple member";
+  CARBON_CHECK(path_comp.element()->kind() == ElementKind::PositionalElement,
+               "Invalid non-tuple member");
   const auto* tuple_element = cast<PositionalElement>(path_comp.element());
   const size_t index = tuple_element->index();
   if (index < 0 || index >= tuple->elements().size()) {
@@ -175,8 +175,8 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                             SourceLocation source_loc,
                             std::optional<Nonnull<const Value*>> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
-  CARBON_CHECK(field.element()->kind() == ElementKind::NamedElement)
-      << "Invalid element, expecting NamedElement";
+  CARBON_CHECK(field.element()->kind() == ElementKind::NamedElement,
+               "Invalid element, expecting NamedElement");
   const auto* member = cast<NamedElement>(field.element());
   const auto f = member->name();
   if (field.witness().has_value()) {
@@ -186,7 +186,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     if (const auto* assoc_const =
             dyn_cast_or_null<AssociatedConstantDeclaration>(
                 member->declaration().value_or(nullptr))) {
-      CARBON_CHECK(field.interface()) << "have witness but no interface";
+      CARBON_CHECK(field.interface(), "have witness but no interface");
       // TODO: Use witness to find the value of the constant.
       return arena->New<AssociatedConstant>(v, *field.interface(), assoc_const,
                                             witness);
@@ -259,8 +259,8 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           // Get class value matching the virtual method, and turn it into a
           // bound method.
           for (int i = 0; i < level_diff; ++i) {
-            CARBON_CHECK(m_class_value->base())
-                << "Error trying to access function class value";
+            CARBON_CHECK(m_class_value->base(),
+                         "Error trying to access function class value");
             m_class_value = *m_class_value->base();
           }
           return arena->New<BoundMethodValue>(
@@ -299,7 +299,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                        &class_type.bindings());
     }
     default:
-      CARBON_FATAL() << "named element access not supported for value " << *v;
+      CARBON_FATAL("named element access not supported for value {0}", *v);
   }
 }
 
@@ -315,7 +315,7 @@ static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       if (const auto* tuple = dyn_cast<TupleValue>(v)) {
         return GetPositionalElement(tuple, path_comp, source_loc);
       } else {
-        CARBON_FATAL() << "Invalid value for positional element";
+        CARBON_FATAL("Invalid value for positional element");
       }
     }
     case ElementKind::BaseElement:
@@ -328,7 +328,7 @@ static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
               ptr->address().ElementAddress(path_comp.element()));
         }
         default:
-          CARBON_FATAL() << "Invalid value for base element";
+          CARBON_FATAL("Invalid value for base element");
       }
   }
 }
@@ -404,9 +404,9 @@ static auto SetFieldImpl(
     }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
-      CARBON_CHECK((*path_begin).element()->kind() ==
-                   ElementKind::PositionalElement)
-          << "Invalid non-positional member for tuple";
+      CARBON_CHECK(
+          (*path_begin).element()->kind() == ElementKind::PositionalElement,
+          "Invalid non-positional member for tuple");
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValueBase>(*value).elements();
       const size_t index =
@@ -425,7 +425,7 @@ static auto SetFieldImpl(
       }
     }
     default:
-      CARBON_FATAL() << "field access not allowed for value " << *value;
+      CARBON_FATAL("field access not allowed for value {0}", *value);
   }
 }
 
@@ -841,7 +841,7 @@ void IntrinsicConstraint::Print(llvm::raw_ostream& out) const {
 static auto BindingMapEqual(
     const BindingMap& map1, const BindingMap& map2,
     std::optional<Nonnull<const EqualityContext*>> equality_ctx) -> bool {
-  CARBON_CHECK(map1.size() == map2.size()) << "maps should have same keys";
+  CARBON_CHECK(map1.size() == map2.size(), "maps should have same keys");
   for (const auto& [key, value] : map1) {
     if (!ValueEqual(value, map2.at(key), equality_ctx)) {
       return false;
@@ -1025,17 +1025,16 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::MixinPseudoType:
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfNamespaceName:
-      CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
-                     << *t1 << "\n"
-                     << *t2;
+      CARBON_FATAL("TypeEqual used to compare non-type values\n{0}\n{1}", *t1,
+                   *t2);
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
-      CARBON_FATAL() << "TypeEqual: unexpected Witness";
+      CARBON_FATAL("TypeEqual: unexpected Witness");
       break;
     case Value::Kind::AutoType:
-      CARBON_FATAL() << "TypeEqual: unexpected AutoType";
+      CARBON_FATAL("TypeEqual: unexpected AutoType");
       break;
   }
 }
@@ -1123,8 +1122,8 @@ static auto ValueStructurallyEqual(
           GetName(cast<ParameterizedEntityName>(v1)->declaration());
       std::optional<std::string_view> name2 =
           GetName(cast<ParameterizedEntityName>(v2)->declaration());
-      CARBON_CHECK(name1.has_value() && name2.has_value())
-          << "parameterized name refers to unnamed declaration";
+      CARBON_CHECK(name1.has_value() && name2.has_value(),
+                   "parameterized name refers to unnamed declaration");
       return *name1 == *name2;
     }
     case Value::Kind::AssociatedConstant: {
@@ -1171,8 +1170,7 @@ static auto ValueStructurallyEqual(
     case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
-      CARBON_FATAL() << "ValueEqual does not support this kind of value: "
-                     << *v1;
+      CARBON_FATAL("ValueEqual does not support this kind of value: {0}", *v1);
   }
 }
 

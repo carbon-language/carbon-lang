@@ -54,12 +54,12 @@ static auto GetSelfSpecificForInterfaceMemberWithSelfType(
   // Add the `Self` argument.
   CARBON_CHECK(
       context.entity_names()
-          .Get(context.insts()
-                   .GetAs<SemIR::BindSymbolicName>(bindings[arg_ids.size()])
-                   .entity_name_id)
-          .name_id == SemIR::NameId::SelfType)
-      << "Expected a Self binding, found "
-      << context.insts().Get(bindings[arg_ids.size()]);
+              .Get(context.insts()
+                       .GetAs<SemIR::BindSymbolicName>(bindings[arg_ids.size()])
+                       .entity_name_id)
+              .name_id == SemIR::NameId::SelfType,
+      "Expected a Self binding, found {0}",
+      context.insts().Get(bindings[arg_ids.size()]));
   arg_ids.push_back(context.types().GetInstId(self_type_id));
 
   // Take any trailing argument values from the self specific.
@@ -150,7 +150,7 @@ static auto BuildInterfaceWitness(
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_type.specific_id, decl_id));
-    CARBON_CHECK(decl_id.is_valid()) << "Non-constant associated entity";
+    CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
@@ -160,7 +160,7 @@ static auto BuildInterfaceWitness(
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
         if (!fn_type) {
-          CARBON_FATAL() << "Unexpected type: " << type_inst;
+          CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
         auto [impl_decl_id, _] = context.LookupNameInExactScope(
@@ -190,8 +190,8 @@ static auto BuildInterfaceWitness(
                      "impl of interface with associated constant");
         return SemIR::InstId::BuiltinError;
       default:
-        CARBON_CHECK(decl_id == SemIR::InstId::BuiltinError)
-            << "Unexpected kind of associated entity " << decl;
+        CARBON_CHECK(decl_id == SemIR::InstId::BuiltinError,
+                     "Unexpected kind of associated entity {0}", decl);
         table.push_back(SemIR::InstId::BuiltinError);
         break;
     }

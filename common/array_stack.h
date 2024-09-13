@@ -62,15 +62,15 @@ class ArrayStack {
 
   // Appends a value to the top array on the stack.
   auto AppendToTop(ValueT value) -> void {
-    CARBON_CHECK(!array_offsets_.empty())
-        << "Must call PushArray before PushValue.";
+    CARBON_CHECK(!array_offsets_.empty(),
+                 "Must call PushArray before PushValue.");
     values_.push_back(value);
   }
 
   // Adds multiple values to the top array on the stack.
   auto AppendToTop(llvm::ArrayRef<ValueT> values) -> void {
-    CARBON_CHECK(!array_offsets_.empty())
-        << "Must call PushArray before PushValues.";
+    CARBON_CHECK(!array_offsets_.empty(),
+                 "Must call PushArray before PushValues.");
     values_.append(values.begin(), values.end());
   }
 
