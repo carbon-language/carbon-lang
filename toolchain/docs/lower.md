@@ -52,7 +52,7 @@ Otherwise the resulting name consists of:
     -   a type or namespace, then add:
         1.  the scope, per the scope mangling.
 
-Scope mangling:
+The scope mangling scheme is as follows:
 
 1.  The unqualified name of the type or namespace.
 2.  If the type or namespace is within another type or namespace:
