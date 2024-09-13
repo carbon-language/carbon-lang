@@ -13,7 +13,7 @@ def _symlink_filegroup_impl(ctx):
         # consistent paths across possible repositories.
         relative_path = f.short_path.removeprefix(f.owner.package)
 
-        out = ctx.actions.declare_file(prefix + "core/" + relative_path)
+        out = ctx.actions.declare_file(prefix + relative_path)
         outputs.append(out)
         ctx.actions.symlink(output = out, target_file = f)
 
