@@ -1211,8 +1211,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       }
       args.push_back(converted_self_id);
     } else {
-      CARBON_CHECK(!param.runtime_index.is_valid())
-          << "Unexpected implicit parameter passed at runtime";
+      CARBON_CHECK(!param.runtime_index.is_valid(),
+                   "Unexpected implicit parameter passed at runtime");
     }
   }
 
@@ -1250,8 +1250,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       return SemIR::InstBlockId::Invalid;
     }
 
-    CARBON_CHECK(static_cast<int32_t>(args.size()) == param.runtime_index.index)
-        << "Parameters not numbered in order.";
+    CARBON_CHECK(static_cast<int32_t>(args.size()) == param.runtime_index.index,
+                 "Parameters not numbered in order.");
     args.push_back(converted_arg_id);
   }
 
