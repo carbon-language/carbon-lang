@@ -40,7 +40,7 @@ The current rudimentary name mangling scheme is as follows:
 
 Otherwise the resulting name consists of:
 
-1.  `_C`.
+1.  `_C`
 2.  The unqualified function name (function name mangling is the only thing
     implemented at the moment)
 3.  `.`
