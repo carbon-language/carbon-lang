@@ -95,7 +95,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     driver_env_.vlog_stream = &driver_env_.error_stream;
   }
 
-  options.subcommand->Run(driver_env_);
+  return options.subcommand->Run(driver_env_);
 }
 
 }  // namespace Carbon
