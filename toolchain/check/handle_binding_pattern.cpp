@@ -159,7 +159,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto param_id = context.AddInst<SemIR::Param>(
           name_node, {.type_id = cast_type_id,
                       .name_id = name_id,
-                      .index = SemIR::RuntimeParamIndex::Invalid});
+                      .runtime_index = SemIR::RuntimeParamIndex::Invalid});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
       push_bind_name(bind_id);
       // TODO: Bindings should come into scope immediately in other contexts

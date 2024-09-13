@@ -435,7 +435,7 @@ auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
           context.insts().GetLocId(inst_id),
           {.type_id = SemIR::TypeId::Error,
            .name_id = SemIR::NameId::Base,
-           .index = SemIR::RuntimeParamIndex::Invalid});
+           .runtime_index = SemIR::RuntimeParamIndex::Invalid});
     }
   }
 }

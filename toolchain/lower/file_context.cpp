@@ -215,8 +215,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto [param_id, param] =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param.index.is_valid()) {
-      // Parameter is not passed at runtime.
+    if (!param.runtime_index.is_valid()) {
       continue;
     }
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param.type_id);
@@ -312,8 +311,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto [param_id, param] =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param.index.is_valid()) {
-      // Parameter is not passed at runtime.
+    if (!param.runtime_index.is_valid()) {
       continue;
     }
 

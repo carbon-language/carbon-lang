@@ -707,7 +707,7 @@ class ImportRefResolver {
 
       auto new_param_id = context_.AddInstInNoBlock<SemIR::Param>(
           AddImportIRInst(param_id),
-          {.type_id = type_id, .name_id = name_id, .index = param_inst.index});
+          {.type_id = type_id, .name_id = name_id, .runtime_index = param_inst.runtime_index});
       if (bind_inst) {
         switch (bind_inst->kind) {
           case SemIR::BindName::Kind: {

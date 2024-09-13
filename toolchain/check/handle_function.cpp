@@ -101,7 +101,7 @@ static auto CheckFunctionSignature(Context& context,
 
     // If this is a runtime parameter, number it.
     if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
-      param_inst->index = next_index;
+      param_inst->runtime_index = next_index;
       context.ReplaceInstBeforeConstantUse(param_id, *param_inst);
       ++next_index.index;
     }
