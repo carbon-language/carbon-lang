@@ -57,7 +57,7 @@ The scope mangling scheme is as follows:
 1.  The unqualified name of the type or namespace.
 2.  If the type or namespace is within another type or namespace:
     1.  `.`
-    2.  The enclosing scope per the scope mangling
+    2.  The enclosing scope, per the scope mangling.
 3.  `.`
 4.  The package name.
 
