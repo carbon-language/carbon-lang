@@ -513,7 +513,7 @@ auto ImportNameFromOtherPackage(
     Context& context, SemIRLoc loc, SemIR::NameScopeId scope_id,
     llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>>
         import_ir_scopes,
-    SemIR::NameId name_id) -> SemIR::InstId {
+    SemIR::NameId name_id) -> std::pair<SemIR::InstId, SemIR::AccessKind> {
   // If the name is an identifier, get the string first so that it can be shared
   // when there are multiple IRs.
   llvm::StringRef identifier;
@@ -533,6 +533,8 @@ auto ImportNameFromOtherPackage(
   // Although we track the result here and look in each IR, we pretty much use
   // the first result.
   auto result_id = SemIR::InstId::Invalid;
+  auto access_kind = SemIR::AccessKind::Public;
+
   // The canonical IR and inst_id for where `result_id` came from, which may be
   // indirectly imported. This is only resolved on a conflict, when it can be
   // used to determine the conflict is actually the same instruction.
@@ -569,6 +571,8 @@ auto ImportNameFromOtherPackage(
             SemIR::AccessKind::Public);
         LoadImportRef(context, result_id);
       }
+
+      access_kind = import_scope_entry->access_kind;
       continue;
     }
 
@@ -593,7 +597,7 @@ auto ImportNameFromOtherPackage(
                                     import_scope_entry->inst_id);
   }
 
-  return result_id;
+  return {result_id, access_kind};
 }
 
 }  // namespace Carbon::Check

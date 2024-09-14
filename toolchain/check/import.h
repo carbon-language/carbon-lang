@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
 
@@ -53,7 +54,7 @@ auto ImportNameFromOtherPackage(
     Context& context, SemIRLoc loc, SemIR::NameScopeId scope_id,
     llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>>
         import_ir_scopes,
-    SemIR::NameId name_id) -> SemIR::InstId;
+    SemIR::NameId name_id) -> std::pair<SemIR::InstId, SemIR::AccessKind>;
 
 }  // namespace Carbon::Check
 

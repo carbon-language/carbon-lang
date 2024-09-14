@@ -343,10 +343,8 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
   }
 
   if (!scope.import_ir_scopes.empty()) {
-    // TODO: Enforce other access modifiers for imports.
-    return {ImportNameFromOtherPackage(*this, loc, scope_id,
-                                       scope.import_ir_scopes, name_id),
-            SemIR::AccessKind::Public};
+    return ImportNameFromOtherPackage(*this, loc, scope_id,
+                                      scope.import_ir_scopes, name_id);
   }
   return {SemIR::InstId::Invalid, SemIR::AccessKind::Public};
 }
@@ -358,46 +356,73 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
                                                SemIR::AccessKind access_kind,
                                                bool is_parent_access,
                                                AccessInfo access_info) -> void {
-  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
-      context.constant_values().GetInstId(access_info.constant_id));
-  if (!class_type) {
-    return;
-  }
-
-  // TODO: Support scoped entities other than just classes.
-  auto class_info = context.classes().Get(class_type->class_id);
-
-  // TODO: Support passing AccessKind to diagnostics.
-  CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
-                    "Cannot access {0} member `{1}` of type `{2}`.",
-                    llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
-                    "The {0} member `{1}` is defined here.",
-                    llvm::StringLiteral, SemIR::NameId);
-
-  auto parent_type_id = class_info.self_type_id;
   auto access_desc = access_kind == SemIR::AccessKind::Private
                          ? llvm::StringLiteral("private")
                          : llvm::StringLiteral("protected");
 
-  if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
-    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
-            class_info.base_id)) {
-      parent_type_id = base_decl->base_type_id;
-    } else if (auto adapt_decl =
-                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
-                       class_info.adapt_id)) {
-      parent_type_id = adapt_decl->adapted_type_id;
-    } else {
-      CARBON_FATAL() << "Expected parent for parent access";
+  auto inst = context.insts().Get(
+      context.constant_values().GetInstId(access_info.constant_id));
+
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      CARBON_CHECK(class_type.class_id.is_valid(), "Invalid `class_id`.");
+
+      auto class_info = context.classes().Get(class_type.class_id);
+
+      // TODO: Support passing AccessKind to diagnostics.
+      CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
+                        "Cannot access {0} member `{1}` of type `{2}`.",
+                        llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
+      CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
+                        "The {0} member `{1}` is defined here.",
+                        llvm::StringLiteral, SemIR::NameId);
+
+      auto parent_type_id = class_info.self_type_id;
+
+      if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
+        if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
+                class_info.base_id)) {
+          parent_type_id = base_decl->base_type_id;
+        } else if (auto adapt_decl =
+                       context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
+                           class_info.adapt_id)) {
+          parent_type_id = adapt_decl->adapted_type_id;
+        } else {
+          CARBON_FATAL() << "Expected parent for parent access";
+        }
+      }
+
+      context.emitter()
+          .Build(loc, ClassInvalidMemberAccess, access_desc, name_id,
+                 parent_type_id)
+          .Note(scope_result_id, ClassMemberDefinition, access_desc, name_id)
+          .Emit();
+
+      break;
+    }
+    case CARBON_KIND(SemIR::Namespace namespace_info): {
+      CARBON_CHECK(namespace_info.name_scope_id.is_valid(),
+                   "Invalid `name_scope_id`.");
+
+      auto namespace_name_id =
+          context.name_scopes().Get(namespace_info.name_scope_id).name_id;
+
+      CARBON_DIAGNOSTIC(NamespaceInvalidAccess, Error,
+                        "Cannot access {0} member `{1}` of namespace `{2}`.",
+                        llvm::StringLiteral, SemIR::NameId, SemIR::NameId);
+
+      context.emitter()
+          .Build(loc, NamespaceInvalidAccess, access_desc, name_id,
+                 namespace_name_id)
+          .Emit();
+      break;
+    }
+
+    default: {
+      context.TODO(loc, llvm::formatv("Enforce {0} access for {1}", access_desc,
+                                      inst.kind()));
     }
   }
-
-  context.emitter()
-      .Build(loc, ClassInvalidMemberAccess, access_desc, name_id,
-             parent_type_id)
-      .Note(scope_result_id, ClassMemberDefinition, access_desc, name_id)
-      .Emit();
 }
 
 // Returns whether the access is prohibited by the access modifiers.
