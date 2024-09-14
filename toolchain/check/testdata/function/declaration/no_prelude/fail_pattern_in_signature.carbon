@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_pattern_in_signature.carbon
 
-// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+7]]:6: ERROR: Expected binding pattern.
+// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+7]]:6: ERROR: Expected name in binding pattern.
 // CHECK:STDERR: fn F((a: {}, b: {}), c: {});
 // CHECK:STDERR:      ^
 // CHECK:STDERR:

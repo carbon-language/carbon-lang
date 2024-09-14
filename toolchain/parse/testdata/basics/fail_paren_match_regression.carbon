@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_paren_match_regression.carbon
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+8]]:5: ERROR: Expected binding pattern.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+8]]:5: ERROR: Expected name in binding pattern.
 // CHECK:STDERR: var = (foo {})
 // CHECK:STDERR:     ^
 // CHECK:STDERR:

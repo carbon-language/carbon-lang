@@ -10,7 +10,7 @@
 
 let
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: ERROR: Expected binding pattern.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: ERROR: Expected name in binding pattern.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
