@@ -119,33 +119,39 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
   }
 
   auto self_class_info = context.classes().Get(self_class_type->class_id);
+  auto inst = context.insts().Get(
+      context.constant_values().GetInstId(name_scope_const_id));
 
-  // TODO: Support other types.
-  if (auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
-          context.constant_values().GetInstId(name_scope_const_id))) {
-    auto class_info = context.classes().Get(class_type->class_id);
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      auto class_info = context.classes().Get(class_type.class_id);
 
-    if (self_class_info.self_type_id == class_info.self_type_id) {
-      return SemIR::AccessKind::Private;
+      if (self_class_info.self_type_id == class_info.self_type_id) {
+        return SemIR::AccessKind::Private;
+      }
+
+      // If the `type_id` of `Self` does not match with the one we're currently
+      // accessing, try checking if this class is of the parent type of `Self`.
+      if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
+              self_class_info.base_id)) {
+        if (base_decl->base_type_id == class_info.self_type_id) {
+          return SemIR::AccessKind::Protected;
+        }
+      } else if (auto adapt_decl =
+                     context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
+                         self_class_info.adapt_id)) {
+        if (adapt_decl->adapted_type_id == class_info.self_type_id) {
+          return SemIR::AccessKind::Protected;
+        }
+      }
+
+      return SemIR::AccessKind::Public;
     }
 
-    // If the `type_id` of `Self` does not match with the one we're currently
-    // accessing, try checking if this class is of the parent type of `Self`.
-    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
-            self_class_info.base_id)) {
-      if (base_decl->base_type_id == class_info.self_type_id) {
-        return SemIR::AccessKind::Protected;
-      }
-    } else if (auto adapt_decl =
-                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
-                       self_class_info.adapt_id)) {
-      if (adapt_decl->adapted_type_id == class_info.self_type_id) {
-        return SemIR::AccessKind::Protected;
-      }
+    default: {
+      return SemIR::AccessKind::Public;
     }
   }
-
-  return SemIR::AccessKind::Public;
 }
 
 // Returns whether `scope` is a scope for which impl lookup should be performed

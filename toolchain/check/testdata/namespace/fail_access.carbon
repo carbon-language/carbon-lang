@@ -10,7 +10,15 @@
 
 namespace NS;
 
-private fn NS.A() {}
+private fn NS.X() {}
+
+private fn NS.A() {
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: ERROR: Cannot access private member `X` of namespace `NS`.
+  // CHECK:STDERR:   NS.X();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:
+  NS.X();
+}
 
 private class NS.B {}
 
@@ -28,8 +36,10 @@ alias B = NS.B;
 // CHECK:STDOUT: --- fail_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
+// CHECK:STDOUT:   %X.type: type = fn_type @X [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %X: %X.type = struct_value () [template]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -57,13 +67,15 @@ alias B = NS.B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .X [private] = %X.decl
 // CHECK:STDOUT:     .A [private] = %A.decl
 // CHECK:STDOUT:     .B [private] = %B.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X.decl: %X.type = fn_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %.loc21_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc21_9.2: type = converted %.loc21_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc36_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc36_9.2: type = converted %.loc36_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %B.ref: <error> = name_ref B, <error> [template = <error>]
 // CHECK:STDOUT:   %B: <error> = bind_alias B, <error> [template = <error>]
@@ -74,8 +86,15 @@ alias B = NS.B;
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @X() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
+// CHECK:STDOUT:   %X.ref: <error> = name_ref X, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
