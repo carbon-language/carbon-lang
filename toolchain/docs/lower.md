@@ -29,10 +29,9 @@ fragile.
 ## Mangling
 
 Part of lowering is choosing deterministically unique identifiers for each
-lowered entity to use in platform object files. Any feature of an entity (such as
-parent namespaces or overloaded function parameters) that
-would create a distinct entity must be included in some way in the generated
-identifier.
+lowered entity to use in platform object files. Any feature of an entity (such
+as parent namespaces or overloaded function parameters) that would create a
+distinct entity must be included in some way in the generated identifier.
 
 The current rudimentary name mangling scheme is as follows:
 
