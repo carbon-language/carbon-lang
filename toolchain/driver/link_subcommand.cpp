@@ -7,9 +7,6 @@
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/clang_runner.h"
 
-// TODO: Remove this include.
-#include "toolchain/driver/driver.h"
-
 namespace Carbon {
 
 constexpr CommandLine::CommandInfo LinkOptions::Info = {
@@ -24,8 +21,7 @@ TODO: Support linking against binary libraries.
 )""",
 };
 
-auto LinkOptions::Build(CommandLine::CommandBuilder& b,
-                        CodegenOptions& codegen_options) -> void {
+auto LinkOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
       {
           .name = "OBJECT_FILE",
@@ -84,8 +80,7 @@ static void AddOSFlags(llvm::StringRef target,
   }
 }
 
-auto Driver::Link(const LinkOptions& options,
-                  const CodegenOptions& codegen_options) -> RunResult {
+auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Currently we use the Clang driver to link. This works well on Unix
   // OSes but we likely need to directly build logic to invoke `link.exe` on
   // Windows where `cl.exe` doesn't typically cover that logic.
@@ -109,15 +104,15 @@ auto Driver::Link(const LinkOptions& options,
   clang_args.push_back("-nostdlib++");
 
   // Add OS-specific flags based on the target.
-  AddOSFlags(codegen_options.target, clang_args);
+  AddOSFlags(options_.codegen_options.target, clang_args);
 
   clang_args.push_back("-o");
-  clang_args.push_back(options.output_filename);
-  clang_args.append(options.object_filenames.begin(),
-                    options.object_filenames.end());
+  clang_args.push_back(options_.output_filename);
+  clang_args.append(options_.object_filenames.begin(),
+                    options_.object_filenames.end());
 
-  ClangRunner runner(driver_env_.installation, codegen_options.target,
-                     driver_env_.vlog_stream);
+  ClangRunner runner(driver_env.installation, options_.codegen_options.target,
+                     driver_env.vlog_stream);
   return {.success = runner.Run(clang_args)};
 }
 
