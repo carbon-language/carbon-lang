@@ -164,8 +164,8 @@ class Inst : public Printable<Inst> {
     requires Internal::InstLikeType<TypedInst>
   auto As() const -> TypedInst {
     using Info = Internal::InstLikeTypeInfo<TypedInst>;
-    CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
-                                  << " to wrong kind " << Info::DebugName();
+    CARBON_CHECK(Is<TypedInst>(), "Casting inst of kind {0} to wrong kind {1}",
+                 kind(), Info::DebugName());
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
       if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), type_id_onwards...};
@@ -393,9 +393,9 @@ class InstStore {
   }
 
   auto GetLocId(InstId inst_id) const -> LocId {
-    CARBON_CHECK(inst_id.index >= 0) << inst_id.index;
-    CARBON_CHECK(inst_id.index < (int)loc_ids_.size())
-        << inst_id.index << " " << loc_ids_.size();
+    CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
+    CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}", inst_id.index,
+                 loc_ids_.size());
     return loc_ids_[inst_id.index];
   }
 
@@ -452,6 +452,12 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
     auto global_init_id = AddDefaultValue();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
+  }
+
+  // Adds a block with the given content, returning an ID to reference it.
+  // Returns Empty rather than creating a unique ID if the block is empty.
+  auto AddOrEmpty(llvm::ArrayRef<ElementType> content) -> InstBlockId {
+    return content.empty() ? InstBlockId::Empty : Add(content);
   }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {

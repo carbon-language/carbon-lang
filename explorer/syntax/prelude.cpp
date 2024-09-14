@@ -19,8 +19,7 @@ void AddPrelude(llvm::vfs::FileSystem& fs, std::string_view prelude_file_name,
     // Try again with tracing, to help diagnose the problem.
     ErrorOr<AST> trace_parse_result =
         Parse(fs, arena, prelude_file_name, FileKind::Prelude, true);
-    CARBON_FATAL() << "Failed to parse prelude:\n"
-                   << trace_parse_result.error();
+    CARBON_FATAL("Failed to parse prelude:\n{0}", trace_parse_result.error());
   }
   const auto& prelude = *parse_result;
   declarations->insert(declarations->begin(), prelude.declarations.begin(),

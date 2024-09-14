@@ -62,7 +62,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             break;
           }
           default:
-            CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
+            CARBON_FATAL("Attempting to mangle unsupported SemIR.");
             break;
         }
         // Skip the tail of the loop that adds the parent name scope to the
@@ -86,7 +86,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
       }
       default:
-        CARBON_FATAL() << "Attempting to mangle unsupported SemIR.";
+        CARBON_FATAL("Attempting to mangle unsupported SemIR.");
         break;
     }
     names_to_render.push_back(

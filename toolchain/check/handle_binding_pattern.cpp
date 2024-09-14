@@ -108,8 +108,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                        cast_type_id);
       });
       if (parent_class_decl) {
-        CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer)
-            << "`returned var` at class scope";
+        CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer,
+                     "`returned var` at class scope");
         auto& class_info = context.classes().Get(parent_class_decl->class_id);
         auto field_type_id = context.GetUnboundElementType(
             class_info.self_type_id, cast_type_id);
@@ -157,7 +157,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
       auto param_id = context.AddInst<SemIR::Param>(
-          name_node, {.type_id = cast_type_id, .name_id = name_id});
+          name_node, {.type_id = cast_type_id,
+                      .name_id = name_id,
+                      .runtime_index = SemIR::RuntimeParamIndex::Invalid});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
       push_bind_name(bind_id);
       // TODO: Bindings should come into scope immediately in other contexts
@@ -185,8 +187,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     default:
-      CARBON_FATAL() << "Found a pattern binding in unexpected context "
-                     << context_node_kind;
+      CARBON_FATAL("Found a pattern binding in unexpected context {0}",
+                   context_node_kind);
   }
   return true;
 }

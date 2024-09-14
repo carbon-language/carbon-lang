@@ -346,7 +346,7 @@ class StatementAction : public Action {
 
   // Sets the location provided to an initializing expression.
   auto set_location_created(AllocationId location_created) {
-    CARBON_CHECK(!location_created_) << "location created set twice";
+    CARBON_CHECK(!location_created_, "location created set twice");
     location_created_ = location_created;
   }
   // Returns the location provided to an initializing expression, if any.

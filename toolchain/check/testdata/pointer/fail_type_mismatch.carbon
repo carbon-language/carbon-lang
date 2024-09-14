@@ -78,7 +78,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_21.2: type = const_type %.1 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_29: type = ptr_type %.2 [template = constants.%.3]
-// CHECK:STDOUT:     %p.loc11_18.1: %.3 = param p
+// CHECK:STDOUT:     %p.loc11_18.1: %.3 = param p, runtime_param0
 // CHECK:STDOUT:     @ConstMismatch.%p: %.3 = bind_name p, %p.loc11_18.1
 // CHECK:STDOUT:     %.loc11_43: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_44.1: type = converted %.loc11_43, constants.%.1 [template = constants.%.1]
@@ -110,7 +110,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc18_11.1: init type = call constants.%ImplicitAs(constants.%.5) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc18_11.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.5) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc18_11.2: %.11 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.5) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc18_11.2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc18_11.3: %.5 = converted %p.ref, <error> [template = <error>]

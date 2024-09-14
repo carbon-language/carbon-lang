@@ -404,13 +404,13 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
 // CHECK:STDOUT:   %a: %C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc24_18.1: init type = call constants.%ImplicitAs(constants.%AdaptC) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc24_18.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc24_18.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc24: %.11 = name_ref Convert, %.loc24_18.2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc24_18.3: %AdaptC = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, %b
-// CHECK:STDOUT:   %.loc33_13.1: init type = call constants.%ImplicitAs(constants.%C) [template = constants.%.14]
+// CHECK:STDOUT:   %.loc33_13.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc33_13.2: %.15 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.16]
 // CHECK:STDOUT:   %Convert.ref.loc33: %.15 = name_ref Convert, %.loc33_13.2 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc33_13.3: %C = converted %b.ref, <error> [template = <error>]
@@ -418,7 +418,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [template = constants.%MakeC]
 // CHECK:STDOUT:   %.loc46_22.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc46_22.1
-// CHECK:STDOUT:   %.loc46_24.1: init type = call constants.%ImplicitAs(constants.%AdaptC) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc46_24.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc46_24.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc46: %.11 = name_ref Convert, %.loc46_24.2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc46_22.2: ref %C = temporary %.loc46_22.1, %MakeC.call
@@ -427,7 +427,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
 // CHECK:STDOUT:   %.loc54_22.1: ref %AdaptC = temporary_storage
 // CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc54_22.1
-// CHECK:STDOUT:   %.loc54_24.1: init type = call constants.%ImplicitAs(constants.%C) [template = constants.%.14]
+// CHECK:STDOUT:   %.loc54_24.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc54_24.2: %.15 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.16]
 // CHECK:STDOUT:   %Convert.ref.loc54: %.15 = name_ref Convert, %.loc54_24.2 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc54_22.2: ref %AdaptC = temporary %.loc54_22.1, %MakeAdaptC.call

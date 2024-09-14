@@ -292,8 +292,8 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
     case Operator::BitShiftLeft:
     case Operator::BitShiftRight:
     case Operator::Complement:
-      CARBON_FATAL() << "operator " << OperatorToString(op)
-                     << " should always be rewritten";
+      CARBON_FATAL("operator {0} should always be rewritten",
+                   OperatorToString(op));
   }
 }
 
@@ -320,7 +320,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
           Nonnull<const Value*> value,
           todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
                             exp.source_loc()));
-      CARBON_CHECK(isa<LocationValue>(value)) << *value;
+      CARBON_CHECK(isa<LocationValue>(value), "{0}", *value);
       return todo_.FinishAction(value);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
@@ -361,8 +361,8 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
         if (constant_value) {
           return todo_.FinishAction(act.results().back());
         }
-        CARBON_CHECK(!access.member().interface().has_value())
-            << "unexpected location interface member";
+        CARBON_CHECK(!access.member().interface().has_value(),
+                     "unexpected location interface member");
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> val,
             Convert(act.results()[0], *access.member().base_type(),
@@ -411,8 +411,8 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
         return todo_.ReplaceWith(std::make_unique<LocationAction>(*rewrite));
       }
       if (op.op() != Operator::Deref) {
-        CARBON_FATAL()
-            << "Can't treat primitive operator expression as location: " << exp;
+        CARBON_FATAL(
+            "Can't treat primitive operator expression as location: {0}", exp);
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
@@ -442,9 +442,9 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::BuiltinConvertExpression:
-      CARBON_FATAL() << "Can't treat expression as location: " << exp;
+      CARBON_FATAL("Can't treat expression as location: {0}", exp);
     case ExpressionKind::UnimplementedExpression:
-      CARBON_FATAL() << "Unimplemented: " << exp;
+      CARBON_FATAL("Unimplemented: {0}", exp);
   }
 }
 
@@ -478,8 +478,8 @@ auto Interpreter::EvalAssociatedConstant(
 
   const auto* impl_witness = dyn_cast<ImplWitness>(witness);
   if (!impl_witness) {
-    CARBON_CHECK(phase() == Phase::CompileTime)
-        << "symbolic witnesses should only be formed at compile time";
+    CARBON_CHECK(phase() == Phase::CompileTime,
+                 "symbolic witnesses should only be formed at compile time");
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
                             InstantiateType(&assoc->base(), source_loc));
     return arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
@@ -500,10 +500,11 @@ auto Interpreter::EvalAssociatedConstant(
     }
   }
   if (!result) {
-    CARBON_FATAL() << impl_witness->declaration() << " with constraint "
-                   << *constraint
-                   << " is missing value for associated constant "
-                   << *interface << "." << assoc->constant().binding().name();
+    CARBON_FATAL(
+        "{0} with constraint {1} is missing value for associated constant "
+        "{2}.{3}",
+        impl_witness->declaration(), *constraint, *interface,
+        assoc->constant().binding().name());
   }
   return *result;
 }
@@ -615,9 +616,9 @@ auto Interpreter::ConvertStructToClass(
                           InstantiateType(class_type, source_loc));
   for (const auto& field : init_struct->elements()) {
     if (field.name == NominalClassValue::BaseField) {
-      CARBON_CHECK(class_type->base().has_value())
-          << "Invalid 'base' field for class '"
-          << class_type->declaration().name() << "' without base class.";
+      CARBON_CHECK(class_type->base().has_value(),
+                   "Invalid 'base' field for class '{0}' without base class.",
+                   class_type->declaration().name());
       CARBON_ASSIGN_OR_RETURN(
           auto base,
           Convert(field.value, class_type->base().value(), source_loc));
@@ -626,8 +627,8 @@ auto Interpreter::ConvertStructToClass(
       struct_values.push_back(field);
     }
   }
-  CARBON_CHECK(!cast<NominalClassType>(inst_class)->base() || base_instance)
-      << "Invalid conversion for `" << *inst_class << "`: base class missing";
+  CARBON_CHECK(!cast<NominalClassType>(inst_class)->base() || base_instance,
+               "Invalid conversion for `{0}`: base class missing", *inst_class);
   auto* converted_init_struct =
       arena_->New<StructValue>(std::move(struct_values));
   Nonnull<const NominalClassValue** const> class_value_ptr =
@@ -714,15 +715,15 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::ConstraintType:
         case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
-          CARBON_CHECK(struct_val.elements().empty())
-              << "only empty structs convert to `type`";
+          CARBON_CHECK(struct_val.elements().empty(),
+                       "only empty structs convert to `type`");
           return arena_->New<StructType>();
         }
         default: {
           CARBON_CHECK(IsValueKindDependent(destination_type) ||
-                       isa<TypeType, ConstraintType>(destination_type))
-              << "Can't convert value " << *value << " to type "
-              << *destination_type;
+                           (isa<TypeType, ConstraintType>(destination_type)),
+                       "Can't convert value {0} to type {1}", *value,
+                       *destination_type);
           return value;
         }
       }
@@ -757,9 +758,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
         default: {
           CARBON_CHECK(IsValueKindDependent(destination_type) ||
-                       isa<TypeType, ConstraintType>(destination_type))
-              << "Can't convert value " << *value << " to type "
-              << *destination_type;
+                           (isa<TypeType, ConstraintType>(destination_type)),
+                       "Can't convert value {0} to type {1}", *value,
+                       *destination_type);
           return value;
         }
       }
@@ -832,8 +833,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       const auto* src_ptr = cast<PointerValue>(value);
       CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                               heap_.Read(src_ptr->address(), source_loc))
-      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue)
-          << "Unexpected pointer type";
+      CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue,
+                   "Unexpected pointer type");
 
       // Conversion logic for subtyping for function arguments only.
       // TODO: Drop when able to rewrite subtyping in TypeChecker for arguments.
@@ -945,7 +946,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                   ExpressionResult::Value(converted_args),
                                   call.source_loc(), &function_scope,
                                   generic_args, trace_stream_, this->arena_);
-      CARBON_CHECK(success) << "Failed to bind arguments to parameters";
+      CARBON_CHECK(success, "Failed to bind arguments to parameters");
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body(),
                                                            location_received),
                          std::move(function_scope));
@@ -977,7 +978,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
           return todo_.FinishAction(arena_->New<ChoiceType>(
               &cast<ChoiceDeclaration>(decl), bindings));
         default:
-          CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
+          CARBON_FATAL("unknown kind of ParameterizedEntityName {0}", decl);
       }
     }
     default:
@@ -997,8 +998,8 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   BindSelfIfPresent(fun, receiver, method_scope, generic_args,
                     SourceLocation::DiagnosticsIgnored());
 
-  CARBON_CHECK(method.body().has_value())
-      << "Calling a method that's missing a body";
+  CARBON_CHECK(method.body().has_value(),
+               "Calling a method that's missing a body");
 
   auto act = std::make_unique<StatementAction>(*method.body(), std::nullopt);
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
@@ -1019,7 +1020,7 @@ void Interpreter::BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
       bool success =
           PatternMatch(placeholder, receiver, source_location, &method_scope,
                        generic_args, trace_stream_, this->arena_);
-      CARBON_CHECK(success) << "Failed to bind self";
+      CARBON_CHECK(success, "Failed to bind self");
     }
   } else {
     // Mutable self with `[addr self: Self*]`
@@ -1036,7 +1037,7 @@ void Interpreter::BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
     }
     bool success = PatternMatch(self_pattern, v, source_location, &method_scope,
                                 generic_args, trace_stream_, this->arena_);
-    CARBON_CHECK(success) << "Failed to bind addr self";
+    CARBON_CHECK(success, "Failed to bind addr self");
   }
 }
 
@@ -1245,8 +1246,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                        dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
           // suitable member name value.
-          CARBON_CHECK(phase() == Phase::CompileTime)
-              << "should not form MemberNames at runtime";
+          CARBON_CHECK(phase() == Phase::CompileTime,
+                       "should not form MemberNames at runtime");
           auto found_in_interface = access.found_in_interface();
           if (act.pos() == 1 && found_in_interface) {
             return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
@@ -1365,8 +1366,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             return todo_.FinishAction(act.results().back());
           }
         } else if (forming_member_name) {
-          CARBON_CHECK(phase() == Phase::CompileTime)
-              << "should not form MemberNames at runtime";
+          CARBON_CHECK(phase() == Phase::CompileTime,
+                       "should not form MemberNames at runtime");
           if (auto found_in_interface = access.member().interface();
               found_in_interface && act.pos() == 1) {
             return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
@@ -1378,9 +1379,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             if (found_in_interface) {
               found_in_interface = cast<InterfaceType>(act.results().back());
             }
-            CARBON_CHECK(!access.member().base_type().has_value())
-                << "compound member access forming a member name should be "
-                   "performing impl lookup";
+            CARBON_CHECK(!access.member().base_type().has_value(),
+                         "compound member access forming a member name should "
+                         "be performing impl lookup");
             auto* member_name =
                 arena_->New<MemberName>(act.results()[0], found_in_interface,
                                         &access.member().member());
@@ -1427,8 +1428,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             if (access.impl().has_value()) {
               witness = cast<Witness>(act.results()[1]);
             } else {
-              CARBON_CHECK(access.member().base_type().has_value())
-                  << "compound access should have base type or impl";
+              CARBON_CHECK(access.member().base_type().has_value(),
+                           "compound access should have base type or impl");
               CARBON_ASSIGN_OR_RETURN(
                   object, Convert(object, *access.member().base_type(),
                                   exp.source_loc()));
@@ -1582,7 +1583,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(act.results()[function_call_pos]);
         }
       } else {
-        CARBON_FATAL() << "in StepValueExp with Call pos " << act.pos();
+        CARBON_FATAL("in StepValueExp with Call pos {0}", act.pos());
       }
     }
     case ExpressionKind::IntrinsicExpression: {
@@ -1622,7 +1623,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               break;
             }
             default:
-              CARBON_FATAL() << "Too many format args: " << num_format_args;
+              CARBON_FATAL("Too many format args: {0}", num_format_args);
           }
           // Implicit newline; currently no way to disable it.
           *print_stream_ << "\n";
@@ -1712,9 +1713,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           // reproducible across builds/platforms.
           int64_t r = (generator() % range) + low;
           CARBON_CHECK(r >= std::numeric_limits<int32_t>::min() &&
-                       r <= std::numeric_limits<int32_t>::max())
-              << "Non-int32 result: " << r;
-          CARBON_CHECK(r >= low && r <= high) << "Out-of-range result: " << r;
+                           r <= std::numeric_limits<int32_t>::max(),
+                       "Non-int32 result: {0}", r);
+          CARBON_CHECK(r >= low && r <= high, "Out-of-range result: {0}", r);
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {
@@ -1747,8 +1748,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
-          CARBON_FATAL()
-              << "__intrinsic_implicit_as_convert should have been rewritten";
+          CARBON_FATAL(
+              "__intrinsic_implicit_as_convert should have been rewritten");
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);
@@ -1891,7 +1892,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::WhereExpression: {
       auto rewrite = cast<WhereExpression>(exp).rewritten_form();
-      CARBON_CHECK(rewrite) << "where expression should be rewritten";
+      CARBON_CHECK(rewrite, "where expression should be rewritten");
       return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
           *rewrite, act.preserve_nested_categories(), act.location_received()));
     }
@@ -1919,7 +1920,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       }
     }
     case ExpressionKind::UnimplementedExpression:
-      CARBON_FATAL() << "Unimplemented: " << exp;
+      CARBON_FATAL("Unimplemented: {0}", exp);
   }  // switch (exp->kind)
 }
 
@@ -1982,7 +1983,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
     }
 
     default:
-      CARBON_FATAL() << "unexpected kind of witness " << *witness;
+      CARBON_FATAL("unexpected kind of witness {0}", *witness);
   }
 }
 
@@ -2183,11 +2184,12 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           const auto init_location = act.location_created();
           v = v_expr ? (*v_expr)->value() : result;
           if (expr_category == ExpressionCategory::Reference) {
-            CARBON_CHECK(v_expr) << "Expecting ReferenceExpressionValue from "
-                                    "reference expression";
+            CARBON_CHECK(
+                v_expr,
+                "Expecting ReferenceExpressionValue from reference expression");
             v_location = (*v_expr)->address();
-            CARBON_CHECK(v_location)
-                << "Expecting a valid address from reference expression";
+            CARBON_CHECK(v_location,
+                         "Expecting a valid address from reference expression");
           } else if (has_initializing_expr && init_location &&
                      heap_.is_initialized(*init_location)) {
             // Bind even if a conversion is necessary.
@@ -2228,9 +2230,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               PatternMatch(p, ExpressionResult(v, v_location, expr_category),
                            stmt.source_loc(), &scope, generic_args,
                            trace_stream_, this->arena_);
-          CARBON_CHECK(matched)
-              << stmt.source_loc()
-              << ": internal error in variable definition, match failed";
+          CARBON_CHECK(
+              matched,
+              "{0}: internal error in variable definition, match failed",
+              stmt.source_loc());
         }
         todo_.MergeScope(std::move(scope));
         return todo_.FinishAction();
@@ -2435,9 +2438,8 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           const Address var_addr =
               object.ElementAddress(arena_->New<NamedElement>(var));
           const auto v = heap_.Read(var_addr, var->source_loc());
-          CARBON_CHECK(v.ok())
-              << "Failed to read member `" << var->binding().name()
-              << "` from class `" << class_decl.name() << "`";
+          CARBON_CHECK(v.ok(), "Failed to read member `{0}` from class `{1}`",
+                       var->binding().name(), class_decl.name());
           return todo_.Spawn(std::make_unique<DestroyAction>(
               arena_->New<LocationValue>(var_addr), *v));
         } else {
@@ -2487,7 +2489,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       todo_.Pop();
       return Success();
   }
-  CARBON_FATAL() << "Unreachable";
+  CARBON_FATAL("Unreachable");
 }
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
@@ -2577,9 +2579,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       CARBON_RETURN_IF_ERROR(StepInstantiateType());
       break;
     case Action::Kind::ScopeAction:
-      CARBON_FATAL() << "ScopeAction escaped ActionStack";
+      CARBON_FATAL("ScopeAction escaped ActionStack");
     case Action::Kind::RecursiveAction:
-      CARBON_FATAL() << "Tried to step a RecursiveAction";
+      CARBON_FATAL("Tried to step a RecursiveAction");
   }  // switch
   return Success();
 }

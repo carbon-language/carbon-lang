@@ -53,7 +53,7 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:     %int.make_type_32.loc11_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_14 [template = i32]
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32.loc11_14, %.loc11_14.1 [template = i32]
-// CHECK:STDOUT:     %n.loc11_11.1: i32 = param n
+// CHECK:STDOUT:     %n.loc11_11.1: i32 = param n, runtime_param0
 // CHECK:STDOUT:     @Negate.%n: i32 = bind_name n, %n.loc11_11.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_22.1: type = value_of_initializer %int.make_type_32.loc11_22 [template = i32]

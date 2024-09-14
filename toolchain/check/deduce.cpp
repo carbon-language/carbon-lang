@@ -6,8 +6,10 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -131,6 +133,25 @@ auto DeduceGenericCallArguments(
           context.types().GetInstId(param_type_id),
           context.types().GetInstId(context.insts().Get(arg_id).type_id()),
           needs_substitution);
+    } else {
+      // The argument needs to have the same type as the parameter.
+      DiagnosticAnnotationScope annotate_diagnostics(
+          &context.emitter(), [&](auto& builder) {
+            if (auto param = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+                    param_id)) {
+              CARBON_DIAGNOSTIC(
+                  InitializingGenericParam, Note,
+                  "Initializing generic parameter `{0}` declared here.",
+                  SemIR::NameId);
+              builder.Note(
+                  param_id, InitializingGenericParam,
+                  context.entity_names().Get(param->entity_name_id).name_id);
+            }
+          });
+      arg_id = ConvertToValueOfType(context, loc_id, arg_id, param_type_id);
+      if (arg_id == SemIR::InstId::BuiltinError) {
+        return SemIR::SpecificId::Invalid;
+      }
     }
 
     // If the parameter is a symbolic constant, deduce against it.
@@ -156,10 +177,10 @@ auto DeduceGenericCallArguments(
         auto& entity_name = context.entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index;
         if (index.is_valid() && index >= first_deduced_index) {
-          CARBON_CHECK(static_cast<size_t>(index.index) < result_arg_ids.size())
-              << "Deduced value for unexpected index " << index
-              << "; expected to deduce " << result_arg_ids.size()
-              << " arguments.";
+          CARBON_CHECK(static_cast<size_t>(index.index) < result_arg_ids.size(),
+                       "Deduced value for unexpected index {0}; expected to "
+                       "deduce {1} arguments.",
+                       index, result_arg_ids.size());
           auto arg_const_inst_id =
               context.constant_values().GetConstantInstId(arg_id);
           if (arg_const_inst_id.is_valid()) {

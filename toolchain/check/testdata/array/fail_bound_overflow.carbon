@@ -90,7 +90,7 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc30_9.1: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc30_9.2: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc30_9.2: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc30_9.3: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc30_9.3 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc30_9.4: type = converted %.loc30_9.1, <error> [template = <error>]

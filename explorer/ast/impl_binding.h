@@ -49,14 +49,14 @@ class ImplBinding : public AstNode {
   // The constraint being implemented.
   // TODO: Rename this to `constraint`.
   auto interface() const -> Nonnull<const Value*> {
-    CARBON_CHECK(iface_) << "interface has not been set yet";
+    CARBON_CHECK(iface_, "interface has not been set yet");
     return *iface_;
   }
 
   // Set the interface being implemented, if not set by the constructor. Should
   // only be called by typechecking.
   void set_interface(Nonnull<const Value*> iface) {
-    CARBON_CHECK(!iface_) << "interface set twice";
+    CARBON_CHECK(!iface_, "interface set twice");
     iface_ = iface;
   }
 
@@ -75,7 +75,7 @@ class ImplBinding : public AstNode {
   // These functions exist only so that an `ImplBinding` can be used as a
   // `ValueNodeView` as a key in a `StaticScope`.
   auto static_type() const -> const Value& {
-    CARBON_FATAL() << "an ImplBinding has no type";
+    CARBON_FATAL("an ImplBinding has no type");
   }
   auto expression_category() const -> ExpressionCategory {
     return ExpressionCategory::Value;

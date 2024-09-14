@@ -125,8 +125,8 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructTypeLiteralStart>();
 
-  CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
-      << "{} is handled by StructLiteral.";
+  CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty,
+               "{{}} is handled by StructLiteral.");
 
   if (DiagnoseDuplicateNames(context, refs_id, "struct type literal")) {
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);

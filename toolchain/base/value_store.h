@@ -151,7 +151,7 @@ class ValueStore
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
     IdT id(values_.size());
-    CARBON_CHECK(id.index >= 0) << "Id overflow";
+    CARBON_CHECK(id.index >= 0, "Id overflow");
     values_.push_back(std::move(value));
     return id;
   }
@@ -165,13 +165,13 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
-    CARBON_DCHECK(id.index >= 0) << id;
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     return values_[id.index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0) << id;
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     return values_[id.index];
   }
 

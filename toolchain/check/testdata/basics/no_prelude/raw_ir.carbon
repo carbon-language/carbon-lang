@@ -58,11 +58,11 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       1:               type(inst+8)
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
-// CHECK:STDOUT:     'inst+1':          {kind: Param, arg0: name1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+1':          {kind: Param, arg0: name1, arg1: runtime_param<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
-// CHECK:STDOUT:     'inst+5':          {kind: Param, arg0: name2, type: type(symbolicConstant2)}
+// CHECK:STDOUT:     'inst+5':          {kind: Param, arg0: name2, arg1: runtime_param0, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+6':          {kind: BindName, arg0: entity_name1, arg1: inst+5, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleType, arg0: type_block0, type: typeTypeType}

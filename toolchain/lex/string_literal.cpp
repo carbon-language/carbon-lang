@@ -282,7 +282,7 @@ static auto AppendFrontOfContents(char*& buffer_cursor,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            char*& buffer_cursor) -> void {
-  CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
+  CARBON_CHECK(!content.empty(), "should have escaped closing delimiter");
   char first = content.front();
   content = content.drop_front(1);
 
@@ -424,8 +424,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        CARBON_CHECK(contents.front() != ' ')
-            << "should not have stopped at a plain space";
+        CARBON_CHECK(contents.front() != ' ',
+                     "should not have stopped at a plain space");
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
@@ -487,9 +487,9 @@ auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
   auto result = ExpandEscapeSequencesAndRemoveIndent(
       emitter, content_, hash_level_, indent,
       allocator.Allocate<char>(content_.size()));
-  CARBON_CHECK(result.size() <= content_.size())
-      << "Content grew from " << content_.size() << " to " << result.size()
-      << ": `" << content_ << "`";
+  CARBON_CHECK(result.size() <= content_.size(),
+               "Content grew from {0} to {1}: `{2}`", content_.size(),
+               result.size(), content_);
   return result;
 }
 

@@ -88,8 +88,8 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
       // RequirementOperatorFinish state is only pushed in
       // HandleRequirementOperator on one of the three requirement operator
       // tokens.
-      CARBON_FATAL() << "Unexpected token kind for requirement operator: "
-                     << token_kind;
+      CARBON_FATAL("Unexpected token kind for requirement operator: {0}",
+                   token_kind);
       return;
   }
   if (state.has_error) {

@@ -29,8 +29,8 @@ auto HandleParseNode(Context& context, Parse::InvalidParseSubtreeId node_id)
 
 auto HandleParseNode(Context& /*context*/, Parse::PlaceholderId /*node_id*/)
     -> bool {
-  CARBON_FATAL()
-      << "Placeholder node should always be replaced before parse completes";
+  CARBON_FATAL(
+      "Placeholder node should always be replaced before parse completes");
 }
 
 }  // namespace Carbon::Check

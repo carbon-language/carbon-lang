@@ -99,7 +99,7 @@ var x: type = 42;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_15: i32 = int_literal 42 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_17.1: init type = call constants.%ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_17.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_17.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc17_17.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc17_17.3: type = converted %.loc17_15, <error> [template = <error>]

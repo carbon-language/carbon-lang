@@ -109,8 +109,8 @@ static auto BuildInterfaceDecl(Context& context,
     interface_info.generic_id = FinishGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
-      interface_decl.type_id =
-          context.GetGenericInterfaceType(interface_decl.interface_id);
+      interface_decl.type_id = context.GetGenericInterfaceType(
+          interface_decl.interface_id, context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(
@@ -137,8 +137,8 @@ auto HandleParseNode(Context& context,
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  CARBON_CHECK(!interface_info.is_defined())
-      << "Can't merge with defined interfaces.";
+  CARBON_CHECK(!interface_info.is_defined(),
+               "Can't merge with defined interfaces.");
   interface_info.definition_id = interface_decl_id;
   interface_info.scope_id =
       context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,

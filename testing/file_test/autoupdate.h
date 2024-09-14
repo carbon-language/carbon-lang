@@ -62,11 +62,12 @@ class FileTestAutoupdater {
             [&](const CheckLine& line) { return line.line_number() != -1; })),
         non_check_line_(non_check_lines_.begin()) {
     for (const auto& replacement : line_number_replacements_) {
-      CARBON_CHECK(replacement.has_file || default_file_re_)
-          << "For replacement with pattern `" << replacement.re->pattern()
-          << "` to have has_file=false, override GetDefaultFileRE.";
-      CARBON_CHECK(replacement.re->ok())
-          << "Invalid line replacement RE2: " << replacement.re->error();
+      CARBON_CHECK(replacement.has_file || default_file_re_,
+                   "For replacement with pattern `{0}` to have has_file=false, "
+                   "override GetDefaultFileRE.",
+                   replacement.re->pattern());
+      CARBON_CHECK(replacement.re->ok(), "Invalid line replacement RE2: {0}",
+                   replacement.re->error());
     }
   }
 

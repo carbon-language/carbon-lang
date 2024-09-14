@@ -661,6 +661,16 @@ class FormatterImpl {
     // By default, an instruction has a comma-separated argument list.
     using Info = Internal::InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
+      // Several instructions have a second operand that's a specific ID. We
+      // don't include it in the argument list if there is no corresponding
+      // specific, that is, when we're not in a generic context.
+      if constexpr (std::is_same_v<typename Info::template ArgType<1>,
+                                   SemIR::SpecificId>) {
+        if (!Info::template Get<1>(inst).is_valid()) {
+          FormatArgs(Info::template Get<0>(inst));
+          return;
+        }
+      }
       FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
     } else if constexpr (Info::NumArgs == 1) {
       FormatArgs(Info::template Get<0>(inst));
@@ -790,25 +800,9 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(FunctionType inst) -> void {
-    if (inst.specific_id.is_valid()) {
-      FormatArgs(inst.function_id, inst.specific_id);
-    } else {
-      FormatArgs(inst.function_id);
-    }
-  }
-
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
     FormatTrailingBlock(inst.decl_block_id);
-  }
-
-  auto FormatInstRHS(ClassType inst) -> void {
-    if (inst.specific_id.is_valid()) {
-      FormatArgs(inst.class_id, inst.specific_id);
-    } else {
-      FormatArgs(inst.class_id);
-    }
   }
 
   auto FormatInstRHS(ImplDecl inst) -> void {
@@ -819,14 +813,6 @@ class FormatterImpl {
   auto FormatInstRHS(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
     FormatTrailingBlock(inst.decl_block_id);
-  }
-
-  auto FormatInstRHS(InterfaceType inst) -> void {
-    if (inst.specific_id.is_valid()) {
-      FormatArgs(inst.interface_id, inst.specific_id);
-    } else {
-      FormatArgs(inst.interface_id);
-    }
   }
 
   auto FormatInstRHS(IntLiteral inst) -> void {
@@ -954,6 +940,8 @@ class FormatterImpl {
   }
 
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
+
+  auto FormatArg(RuntimeParamIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     OpenBrace();

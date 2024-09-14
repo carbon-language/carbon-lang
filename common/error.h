@@ -27,7 +27,7 @@ class [[nodiscard]] Error : public Printable<Error> {
   // Represents an error state.
   explicit Error(llvm::Twine location, llvm::Twine message)
       : location_(location.str()), message_(message.str()) {
-    CARBON_CHECK(!message_.empty()) << "Errors must have a message.";
+    CARBON_CHECK(!message_.empty(), "Errors must have a message.");
   }
 
   // Represents an error with no associated location.

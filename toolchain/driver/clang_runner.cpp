@@ -118,7 +118,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) {};
   std::unique_ptr<clang::driver::Compilation> compilation(
       driver.BuildCompilation(cstr_args));
-  CARBON_CHECK(compilation) << "Should always successfully allocate!";
+  CARBON_CHECK(compilation, "Should always successfully allocate!");
   if (compilation->containsError()) {
     // These should have been diagnosed by the driver.
     return false;

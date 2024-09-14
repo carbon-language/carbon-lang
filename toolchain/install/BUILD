@@ -35,7 +35,7 @@ write_file(
 symlink_filegroup(
     name = "symlink_core",
     srcs = ["//core:prelude"],
-    out_prefix = "prefix_root/lib/carbon/",
+    out_prefix = "prefix_root/lib/carbon/core/",
     visibility = ["//visibility:private"],
 )
 

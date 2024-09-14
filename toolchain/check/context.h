@@ -330,12 +330,15 @@ class Context {
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
   // type will be complete.
-  auto GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+  auto GetGenericClassType(SemIR::ClassId class_id,
+                           SemIR::SpecificId enclosing_specific_id)
+      -> SemIR::TypeId;
 
   // Gets a generic interface type, which is the type of a name of a generic
   // interface, such as the type of `AddWith` given
   // `interface AddWith(T:! type)`. The returned type will be complete.
-  auto GetGenericInterfaceType(SemIR::InterfaceId interface_id)
+  auto GetGenericInterfaceType(SemIR::InterfaceId interface_id,
+                               SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
@@ -363,8 +366,7 @@ class Context {
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
   auto SetTotalIRCount(int num_irs) -> void {
-    CARBON_CHECK(check_ir_map_.empty())
-        << "SetTotalIRCount is only called once";
+    CARBON_CHECK(check_ir_map_.empty(), "SetTotalIRCount is only called once");
     check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
   }
 

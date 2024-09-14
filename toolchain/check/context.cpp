@@ -142,9 +142,10 @@ auto Context::CheckCompatibleImportedNodeKind(
   auto& import_ir_inst = import_ir_insts().Get(imported_loc_id);
   const auto* import_ir = import_irs().Get(import_ir_inst.ir_id).sem_ir;
   auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id).kind();
-  CARBON_CHECK(HasCompatibleImportedNodeKind(imported_kind, kind))
-      << "Node of kind " << kind
-      << " created with location of imported node of kind " << imported_kind;
+  CARBON_CHECK(
+      HasCompatibleImportedNodeKind(imported_kind, kind),
+      "Node of kind {0} created with location of imported node of kind {1}",
+      kind, imported_kind);
 }
 
 auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
@@ -218,7 +219,7 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
-  CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
+  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "Class is incomplete within its definition.");
@@ -233,7 +234,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
 auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                                      DiagnosticBuilder& builder) -> void {
   const auto& interface_info = interfaces().Get(interface_id);
-  CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
+  CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
                       "Interface is currently being defined.");
@@ -417,7 +418,6 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
           .Emit();
       break;
     }
-
     default: {
       context.TODO(loc, llvm::formatv("Enforce {0} access for {1}", access_desc,
                                       inst.kind()));
@@ -640,7 +640,7 @@ auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
 
 auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
     -> void {
-  CARBON_CHECK(num_blocks >= 2) << "no convergence";
+  CARBON_CHECK(num_blocks >= 2, "no convergence");
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
@@ -658,7 +658,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
 auto Context::AddConvergenceBlockWithArgAndPush(
     Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
     -> SemIR::InstId {
-  CARBON_CHECK(block_args.size() >= 2) << "no convergence";
+  CARBON_CHECK(block_args.size() >= 2, "no convergence");
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
   for (auto arg_id : block_args) {
@@ -696,8 +696,8 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
     const_id = constant_values().Get(literal.value().value.ToBool() ? if_true
                                                                     : if_false);
   } else {
-    CARBON_CHECK(cond_const_id == SemIR::ConstantId::Error)
-        << "Unexpected constant branch condition.";
+    CARBON_CHECK(cond_const_id == SemIR::ConstantId::Error,
+                 "Unexpected constant branch condition.");
     const_id = SemIR::ConstantId::Error;
   }
 
@@ -709,11 +709,11 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
 }
 
 auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
-  CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
+  CARBON_CHECK(!inst_block_stack().empty(), "no current code block");
 
   if (return_scope_stack().empty()) {
-    CARBON_CHECK(node_id.is_valid())
-        << "No current function, but node_id not provided";
+    CARBON_CHECK(node_id.is_valid(),
+                 "No current function, but node_id not provided");
     TODO(node_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
@@ -823,16 +823,16 @@ class TypeCompleter {
         if (!AddNestedIncompleteTypes(inst)) {
           return false;
         }
-        CARBON_CHECK(work_list_.size() >= old_work_list_size)
-            << "AddNestedIncompleteTypes should not remove work items";
+        CARBON_CHECK(work_list_.size() >= old_work_list_size,
+                     "AddNestedIncompleteTypes should not remove work items");
         work_list_[old_work_list_size - 1].phase = Phase::BuildValueRepr;
         break;
 
       case Phase::BuildValueRepr: {
         auto value_rep = BuildValueRepr(type_id, inst);
         context_.types().SetValueRepr(type_id, value_rep);
-        CARBON_CHECK(old_work_list_size == work_list_.size())
-            << "BuildValueRepr should not change work items";
+        CARBON_CHECK(old_work_list_size == work_list_.size(),
+                     "BuildValueRepr should not change work items");
         work_list_.pop_back();
 
         // Also complete the value representation type, if necessary. This
@@ -944,11 +944,11 @@ class TypeCompleter {
   // Gets the value representation of a nested type, which should already be
   // complete.
   auto GetNestedValueRepr(SemIR::TypeId nested_type_id) const {
-    CARBON_CHECK(context_.types().IsComplete(nested_type_id))
-        << "Nested type should already be complete";
+    CARBON_CHECK(context_.types().IsComplete(nested_type_id),
+                 "Nested type should already be complete");
     auto value_rep = context_.types().GetValueRepr(nested_type_id);
-    CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown)
-        << "Complete type should have a value representation";
+    CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown,
+                 "Complete type should have a value representation");
     return value_rep;
   }
 
@@ -1130,7 +1130,7 @@ class TypeCompleter {
     requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT inst) const
       -> SemIR::ValueRepr {
-    CARBON_FATAL() << "Type refers to non-type inst " << inst;
+    CARBON_FATAL("Type refers to non-type inst {0}", inst);
   }
 
   // Builds and returns the value representation for the given type. All nested
@@ -1198,16 +1198,16 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
     -> SemIR::TypeId {
-  CARBON_CHECK(constant_id.is_constant())
-      << "Canonicalizing non-constant type: " << constant_id;
+  CARBON_CHECK(constant_id.is_constant(),
+               "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
       insts().Get(constant_values().GetInstId(constant_id)).type_id();
   // TODO: For now, we allow values of facet type to be used as types.
   CARBON_CHECK(type_id == SemIR::TypeId::TypeType ||
-               types().Is<SemIR::InterfaceType>(type_id) ||
-               constant_id == SemIR::ConstantId::Error)
-      << "Forming type ID for non-type constant of type "
-      << types().GetAsInst(type_id);
+                   types().Is<SemIR::InterfaceType>(type_id) ||
+                   constant_id == SemIR::ConstantId::Error,
+               "Forming type ID for non-type constant of type {0}",
+               types().GetAsInst(type_id));
 
   return SemIR::TypeId::ForTypeConstant(constant_id);
 }
@@ -1230,7 +1230,7 @@ static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
   bool complete = context.TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Type completion should not fail";
+  CARBON_CHECK(complete, "Type completion should not fail");
   return type_id;
 }
 
@@ -1256,7 +1256,7 @@ auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
   auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Failed to complete builtin type";
+  CARBON_CHECK(complete, "Failed to complete builtin type");
   return type_id;
 }
 
@@ -1265,13 +1265,18 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id,
   return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
 }
 
-auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id);
+auto Context::GetGenericClassType(SemIR::ClassId class_id,
+                                  SemIR::SpecificId enclosing_specific_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id,
+                                                      enclosing_specific_id);
 }
 
-auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id)
+auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id,
+                                      SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(*this, interface_id);
+  return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(
+      *this, interface_id, enclosing_specific_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

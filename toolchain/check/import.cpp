@@ -63,7 +63,7 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     }
 
     default:
-      CARBON_FATAL() << "Unsupported export kind: " << import_inst;
+      CARBON_FATAL("Unsupported export kind: {0}", import_inst);
   }
 }
 
@@ -152,9 +152,9 @@ static auto CacheCopiedNamespace(
     SemIR::NameScopeId import_scope_id, SemIR::NameScopeId to_scope_id)
     -> void {
   auto result = copied_namespaces.Insert(import_scope_id, to_scope_id);
-  CARBON_CHECK(result.is_inserted() || result.value() == to_scope_id)
-      << "Copy result for namespace changed from " << import_scope_id << " to "
-      << to_scope_id;
+  CARBON_CHECK(result.is_inserted() || result.value() == to_scope_id,
+               "Copy result for namespace changed from {0} to {1}",
+               import_scope_id, to_scope_id);
 }
 
 // Copies a namespace from the import IR, returning its ID. This may diagnose
@@ -431,8 +431,8 @@ auto ImportLibrariesFromOtherPackage(Context& context,
                                      IdentifierId package_id,
                                      llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void {
-  CARBON_CHECK(has_load_error || !import_irs.empty())
-      << "There should be either a load error or at least one IR.";
+  CARBON_CHECK(has_load_error || !import_irs.empty(),
+               "There should be either a load error or at least one IR.");
 
   auto name_id = SemIR::NameId::ForIdentifier(package_id);
 

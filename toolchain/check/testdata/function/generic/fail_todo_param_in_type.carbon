@@ -49,7 +49,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %int.make_type_32.loc14_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32.loc14_10, %.loc14_10.1 [template = i32]
-// CHECK:STDOUT:     %N.loc14_6.1: i32 = param N
+// CHECK:STDOUT:     %N.loc14_6.1: i32 = param N, runtime_param<invalid>
 // CHECK:STDOUT:     @F.%N.loc14: i32 = bind_symbolic_name N 0, %N.loc14_6.1 [symbolic = @F.%N.1 (constants.%N)]
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, @F.%N.loc14 [symbolic = @F.%N.1 (constants.%N)]
@@ -57,7 +57,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc14_25: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %a.loc14_15.1: <error> = param a
+// CHECK:STDOUT:     %a.loc14_15.1: <error> = param a, runtime_param0
 // CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc14_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

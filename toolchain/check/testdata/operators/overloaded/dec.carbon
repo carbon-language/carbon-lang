@@ -92,7 +92,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc18_21: type = ptr_type %C [template = constants.%.3]
-// CHECK:STDOUT:     %self.loc18_14.1: %.3 = param self
+// CHECK:STDOUT:     %self.loc18_14.1: %.3 = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc18_14.3: %.3 = bind_name self, %self.loc18_14.1
 // CHECK:STDOUT:     %.loc18_9: %.3 = addr_pattern %self.loc18_14.3
 // CHECK:STDOUT:   }

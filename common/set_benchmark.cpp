@@ -336,12 +336,12 @@ static void BM_SetInsertSeq(benchmark::State& state) {
     SetWrapperT s;
     for (auto k : keys) {
       bool inserted = s.BenchInsert(k);
-      CARBON_DCHECK(inserted) << "Must be a successful insert!";
+      CARBON_DCHECK(inserted, "Must be a successful insert!");
     }
 
     // Now insert a final random repeated key.
     bool inserted = s.BenchInsert(lookup_keys[i]);
-    CARBON_DCHECK(!inserted) << "Must already be in the map!";
+    CARBON_DCHECK(!inserted, "Must already be in the map!");
 
     // Rotate through the shuffled keys.
     i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
@@ -360,7 +360,7 @@ static void BM_SetInsertSeq(benchmark::State& state) {
     SetT s;
     for (auto k : keys) {
       bool inserted = s.Insert(k).is_inserted();
-      CARBON_DCHECK(inserted) << "Must be a successful insert!";
+      CARBON_DCHECK(inserted, "Must be a successful insert!");
     }
 
     ReportTableMetrics(s, state);

@@ -120,7 +120,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc25_12.1: %Class = param self
+// CHECK:STDOUT:     %self.loc25_12.1: %Class = param self, runtime_param0
 // CHECK:STDOUT:     @F.1.%self: %Class = bind_name self, %self.loc25_12.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
@@ -130,7 +130,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
-// CHECK:STDOUT:     %ws.loc45_18.1: %WrongSelf = param ws
+// CHECK:STDOUT:     %ws.loc45_18.1: %WrongSelf = param ws, runtime_param0
 // CHECK:STDOUT:     @CallWrongSelf.%ws: %WrongSelf = bind_name ws, %ws.loc45_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -157,7 +157,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc16_8.1: %Class = param self
+// CHECK:STDOUT:     %self.loc16_8.1: %Class = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc16_8.2: %Class = bind_name self, %self.loc16_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
@@ -174,7 +174,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @WrongSelf {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc42_8.1: %Class = param self
+// CHECK:STDOUT:     %self.loc42_8.1: %Class = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc42_8.2: %Class = bind_name self, %self.loc42_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -205,7 +205,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc55_5: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc55_7.1: init type = call constants.%ImplicitAs(constants.%Class) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc55_7.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc55_7.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc55_7.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc55_7.3: %Class = converted %ws.ref, <error> [template = <error>]

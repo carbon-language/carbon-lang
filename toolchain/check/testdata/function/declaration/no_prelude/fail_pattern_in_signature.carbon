@@ -1,0 +1,23 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_pattern_in_signature.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_pattern_in_signature.carbon
+
+// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+7]]:6: ERROR: Expected name in binding pattern.
+// CHECK:STDERR: fn F((a: {}, b: {}), c: {});
+// CHECK:STDERR:      ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+3]]:6: ERROR: Semantics TODO: `Error recovery from keyword name.`.
+// CHECK:STDERR: fn F((a: {}, b: {}), c: {});
+// CHECK:STDERR:      ^
+fn F((a: {}, b: {}), c: {});
+
+// CHECK:STDOUT: --- fail_pattern_in_signature.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:

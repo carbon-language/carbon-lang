@@ -639,7 +639,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc21_18: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc21_19.1: %.3 = struct_literal (%.loc21_18)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21_21.1: init type = call constants.%As(constants.%B) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc21_21.1: type = interface_type @As, @As(constants.%B) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc21_21.2: %.10 = specific_constant imports.%import_ref.4, @As(constants.%B) [template = constants.%.11]
 // CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc21_21.2 [template = constants.%.11]
 // CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc21_18) [template = constants.%struct]

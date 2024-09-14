@@ -8,7 +8,11 @@
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/driver/codegen_options.h"
+#include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/driver_env.h"
+#include "toolchain/driver/driver_subcommand.h"
+#include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
 
@@ -19,16 +23,6 @@ namespace Carbon {
 // with the language.
 class Driver {
  public:
-  // The result of RunCommand().
-  struct RunResult {
-    // Overall success result.
-    bool success;
-
-    // Per-file success results. May be empty if files aren't individually
-    // processed.
-    llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
-  };
-
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
   Driver(llvm::vfs::FileSystem& fs, const InstallPaths* installation,
@@ -45,32 +39,9 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, returns
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
-  auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult;
+  auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult;
 
  private:
-  struct Options;
-  struct CodegenOptions;
-  struct CompileOptions;
-  struct LinkOptions;
-  class CompilationUnit;
-
-  // Delegates to the command line library to parse the arguments and store the
-  // results in a custom `Options` structure that the rest of the driver uses.
-  auto ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
-      -> CommandLine::ParseResult;
-
-  // Does custom validation of the compile-subcommand options structure beyond
-  // what the command line parsing library supports.
-  auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
-
-  // Implements the compile subcommand of the driver.
-  auto Compile(const CompileOptions& options,
-               const CodegenOptions& codegen_options) -> RunResult;
-
-  // Implements the link subcommand of the driver.
-  auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
-      -> RunResult;
-
   DriverEnv driver_env_;
 };
 

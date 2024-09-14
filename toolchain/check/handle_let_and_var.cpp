@@ -237,8 +237,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   // the computation of the value.
   // TODO: Support other kinds of pattern here.
   auto bind_name = pattern.inst.As<SemIR::AnyBindName>();
-  CARBON_CHECK(!bind_name.value_id.is_valid())
-      << "Binding should not already have a value!";
+  CARBON_CHECK(!bind_name.value_id.is_valid(),
+               "Binding should not already have a value!");
   bind_name.value_id =
       decl_info->init_id ? *decl_info->init_id : SemIR::InstId::BuiltinError;
   context.ReplaceInstBeforeConstantUse(decl_info->pattern_id, bind_name);

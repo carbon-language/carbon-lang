@@ -150,7 +150,7 @@ class Assign : public Statement {
   // Set the rewritten form of this statement. Can only be called during type
   // checking.
   auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
-    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    CARBON_CHECK(!rewritten_form_.has_value(), "rewritten form set twice");
     rewritten_form_ = rewritten_form;
   }
 
@@ -196,7 +196,7 @@ class IncrementDecrement : public Statement {
   // Set the rewritten form of this statement. Can only be called during type
   // checking.
   auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
-    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    CARBON_CHECK(!rewritten_form_.has_value(), "rewritten form set twice");
     rewritten_form_ = rewritten_form;
   }
 
@@ -256,7 +256,7 @@ class VariableDefinition : public Statement {
 
   // Can only be called by type-checking, if a conversion was required.
   void set_init(Nonnull<Expression*> init) {
-    CARBON_CHECK(has_init()) << "should not add a new initializer";
+    CARBON_CHECK(has_init(), "should not add a new initializer");
     init_ = init;
   }
 

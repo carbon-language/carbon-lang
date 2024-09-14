@@ -239,7 +239,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     class_info.generic_id = FinishGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
-      class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
+      class_decl.type_id = context.GetGenericClassType(
+          class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
@@ -408,8 +409,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     } else if (auto* adapted_class_info =
                    TryGetAsClass(context, adapted_type_id)) {
       extended_scope_id = adapted_class_info->scope_id;
-      CARBON_CHECK(adapted_class_info->scope_id.is_valid())
-          << "Complete class should have a scope";
+      CARBON_CHECK(adapted_class_info->scope_id.is_valid(),
+                   "Complete class should have a scope");
     } else {
       // TODO: Accept any type that has a scope.
       context.TODO(node_id, "extending non-class type");
@@ -489,8 +490,8 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     DiagnoseBaseIsFinal(context, node_id, base_type_id);
   }
 
-  CARBON_CHECK(base_class_info->scope_id.is_valid())
-      << "Complete class should have a scope";
+  CARBON_CHECK(base_class_info->scope_id.is_valid(),
+               "Complete class should have a scope");
   return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
 }
 

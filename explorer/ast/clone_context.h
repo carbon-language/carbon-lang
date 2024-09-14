@@ -131,7 +131,7 @@ class CloneContext {
   template <typename T>
   auto GetExistingClone(Nonnull<const T*> node) -> Nonnull<T*> {
     AstNode* cloned = nodes_.lookup(node);
-    CARBON_CHECK(cloned) << "expected node to be cloned";
+    CARBON_CHECK(cloned, "expected node to be cloned");
     return llvm::cast<T>(cloned);
   }
 

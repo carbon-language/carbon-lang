@@ -65,6 +65,51 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
 }
 
+// Checks that the parameter lists specified in a function declaration are
+// valid for a function declaration, and numbers the parameters.
+static auto CheckFunctionSignature(Context& context,
+                                   const NameComponent& name_and_params)
+    -> void {
+  SemIR::RuntimeParamIndex next_index(0);
+  for (auto param_id : llvm::concat<const SemIR::InstId>(
+           context.inst_blocks().GetOrEmpty(name_and_params.implicit_params_id),
+           context.inst_blocks().GetOrEmpty(name_and_params.params_id))) {
+    auto param = context.insts().Get(param_id);
+
+    // Find the parameter in the pattern.
+    // TODO: This duplicates work done by Function::GetParamFromParamRefId.
+    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
+      param_id = addr_pattern->inner_id;
+      param = context.insts().Get(param_id);
+    }
+
+    auto bind_name = param.TryAs<SemIR::AnyBindName>();
+    if (bind_name) {
+      param_id = bind_name->value_id;
+      param = context.insts().Get(param_id);
+    }
+
+    auto param_inst = param.TryAs<SemIR::Param>();
+    if (!param_inst) {
+      // Once we support more generalized patterns we will need to diagnose
+      // parameters with unsupported patterns.
+      context.TODO(param_id, "unexpected syntax for parameter");
+      // TODO: Also repair the param ID so downstream code doesn't need to deal
+      // with this.
+      continue;
+    }
+
+    // If this is a runtime parameter, number it.
+    if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
+      param_inst->runtime_index = next_index;
+      context.ReplaceInstBeforeConstantUse(param_id, *param_inst);
+      ++next_index.index;
+    }
+  }
+
+  // TODO: Also assign a parameter index to the return storage, if present.
+}
+
 // Tries to merge new_function into prev_function_id. Since new_function won't
 // have a definition even if one is upcoming, set is_definition to indicate the
 // planned result.
@@ -182,6 +227,10 @@ static auto BuildFunctionDecl(Context& context,
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
   }
+
+  // Check that the function signature is valid and number the parameters.
+  CheckFunctionSignature(context, name);
+
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
@@ -315,26 +364,20 @@ static auto HandleFunctionDefinitionAfterSignature(
                           SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
+  for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
            context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
-    auto param = context.insts().Get(param_id);
-
-    // Find the parameter in the pattern.
-    // TODO: More general pattern handling?
-    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
-      param_id = addr_pattern->inner_id;
-      param = context.insts().Get(param_id);
-    }
+    auto [param_id, param] =
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param.type_id(), [&] {
+    context.TryToCompleteType(param.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "Parameter has incomplete type `{0}` in function definition.",
           SemIR::TypeId);
       return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
-                                     param.type_id());
+                                     param.type_id);
     });
   }
 

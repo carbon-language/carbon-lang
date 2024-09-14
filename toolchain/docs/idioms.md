@@ -289,7 +289,7 @@ CARBON_DCHECK([&] {
   return complicated && multiple_parts;
 
 // finish defining the lambda, and then immediately invoke it
-}()) << "Complicated things went wrong";
+}(), "Complicated things went wrong");
 ```
 
 See a description of this technique on
