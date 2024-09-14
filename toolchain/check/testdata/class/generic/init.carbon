@@ -75,14 +75,14 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.loc2_13.1: type = param T
+// CHECK:STDOUT:     %T.loc2_13.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc2_13.2: type = bind_symbolic_name T 0, %T.loc2_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [template = constants.%InitFromStructGeneric] {
-// CHECK:STDOUT:     %T.loc6_26.1: type = param T
+// CHECK:STDOUT:     %T.loc6_26.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     @InitFromStructGeneric.%T.loc6: type = bind_symbolic_name T 0, %T.loc6_26.1 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc6_39: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %x.loc6_36.1: @InitFromStructGeneric.%T.1 (%T) = param x
+// CHECK:STDOUT:     %x.loc6_36.1: @InitFromStructGeneric.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     @InitFromStructGeneric.%x: @InitFromStructGeneric.%T.1 (%T) = bind_name x, %x.loc6_36.1
 // CHECK:STDOUT:     %T.ref.loc6_45: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @InitFromStructGeneric.%return: ref @InitFromStructGeneric.%T.1 (%T) = var <return slot>
@@ -110,27 +110,25 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:   %Class.1: type = class_type @Class, @Class(%T.1) [symbolic = %Class.1 (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = struct_type {.k: @InitFromStructGeneric.%T.1 (%T)} [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %.2: type = unbound_element_type @InitFromStructGeneric.%Class (%Class.2), @InitFromStructGeneric.%T.1 (%T) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:   %.2: type = unbound_element_type @InitFromStructGeneric.%Class.1 (%Class.2), @InitFromStructGeneric.%T.1 (%T) [symbolic = %.2 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc6: type, %x: @InitFromStructGeneric.%T.1 (%T)) -> @InitFromStructGeneric.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_15: init type = call %Class.ref(%T.ref) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc7_17.1: type = value_of_initializer %.loc7_15 [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc7_17.2: type = converted %.loc7_15, %.loc7_17.1 [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class (%Class.2) = var v
-// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class (%Class.2) = bind_name v, %v.var
+// CHECK:STDOUT:     %Class.loc7: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.1 (constants.%Class.2)]
+// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.1 (%Class.2) = var v
+// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.1 (%Class.2) = bind_name v, %v.var
 // CHECK:STDOUT:     %x.ref: @InitFromStructGeneric.%T.1 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc7_28.1: @InitFromStructGeneric.%.1 (%.3) = struct_literal (%x.ref)
 // CHECK:STDOUT:     %.loc7_28.2: ref @InitFromStructGeneric.%T.1 (%T) = class_element_access %v.var, element0
 // CHECK:STDOUT:     %.loc7_28.3: init @InitFromStructGeneric.%T.1 (%T) = initialize_from %x.ref to %.loc7_28.2
-// CHECK:STDOUT:     %.loc7_28.4: init @InitFromStructGeneric.%Class (%Class.2) = class_init (%.loc7_28.3), %v.var
-// CHECK:STDOUT:     %.loc7_29: init @InitFromStructGeneric.%Class (%Class.2) = converted %.loc7_28.1, %.loc7_28.4
+// CHECK:STDOUT:     %.loc7_28.4: init @InitFromStructGeneric.%Class.1 (%Class.2) = class_init (%.loc7_28.3), %v.var
+// CHECK:STDOUT:     %.loc7_29: init @InitFromStructGeneric.%Class.1 (%Class.2) = converted %.loc7_28.1, %.loc7_28.4
 // CHECK:STDOUT:     assign %v.var, %.loc7_29
-// CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class (%Class.2) = name_ref v, %v
+// CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.1 (%Class.2) = name_ref v, %v
 // CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%.2 (%.2) = name_ref k, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:     %.loc8_11.1: ref @InitFromStructGeneric.%T.1 (%T) = class_element_access %v.ref, element0
 // CHECK:STDOUT:     %.loc8_11.2: @InitFromStructGeneric.%T.1 (%T) = bind_value %.loc8_11.1
@@ -225,7 +223,7 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.loc4_13.1: type = param T
+// CHECK:STDOUT:     %T.loc4_13.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [template = constants.%InitFromStructSpecific] {
@@ -280,14 +278,12 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc16_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc16_15.2: type = converted %int.make_type_32, %.loc16_15.1 [template = i32]
-// CHECK:STDOUT:   %.loc16_15.3: init type = call %Class.ref(%.loc16_15.2) [template = constants.%Class.3]
-// CHECK:STDOUT:   %.loc16_19.1: type = value_of_initializer %.loc16_15.3 [template = constants.%Class.3]
-// CHECK:STDOUT:   %.loc16_19.2: type = converted %.loc16_15.3, %.loc16_19.1 [template = constants.%Class.3]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(i32) [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
 // CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc16_29: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc16_30.1: %.7 = struct_literal (%.loc16_29)
-// CHECK:STDOUT:   %.loc16_30.2: init type = call constants.%ImplicitAs(constants.%T) [symbolic = constants.%.11]
+// CHECK:STDOUT:   %.loc16_30.2: type = interface_type @ImplicitAs, @ImplicitAs(constants.%T) [symbolic = constants.%.11]
 // CHECK:STDOUT:   %.loc16_30.3: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%T) [symbolic = constants.%.13]
 // CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc16_30.3 [symbolic = constants.%.13]
 // CHECK:STDOUT:   %.loc16_30.4: %T = converted %.loc16_29, <error> [template = <error>]

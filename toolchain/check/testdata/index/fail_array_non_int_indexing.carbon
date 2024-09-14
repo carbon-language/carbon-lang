@@ -133,7 +133,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_24
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc18_16.1: f64 = float_literal 2.6000000000000001 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc18_16.2: init type = call constants.%ImplicitAs(i32) [template = constants.%.12]
+// CHECK:STDOUT:   %.loc18_16.2: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.12]
 // CHECK:STDOUT:   %.loc18_16.3: %.13 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.14]
 // CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc18_16.3 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc18_16.4: i32 = converted %.loc18_16.1, <error> [template = <error>]

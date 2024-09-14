@@ -72,7 +72,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc21_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_15.1: type = value_of_initializer %int.make_type_32.loc21_15 [template = i32]
 // CHECK:STDOUT:     %.loc21_15.2: type = converted %int.make_type_32.loc21_15, %.loc21_15.1 [template = i32]
-// CHECK:STDOUT:     %n.loc21_12.1: i32 = param n
+// CHECK:STDOUT:     %n.loc21_12.1: i32 = param n, runtime_param0
 // CHECK:STDOUT:     @G.%n: i32 = bind_name n, %n.loc21_12.1
 // CHECK:STDOUT:     %int.make_type_32.loc21_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_23.1: type = value_of_initializer %int.make_type_32.loc21_23 [template = i32]
@@ -92,7 +92,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc12_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %int.make_type_32.loc12_11 [template = i32]
 // CHECK:STDOUT:     %.loc12_11.2: type = converted %int.make_type_32.loc12_11, %.loc12_11.1 [template = i32]
-// CHECK:STDOUT:     %n.loc12_8.1: i32 = param n
+// CHECK:STDOUT:     %n.loc12_8.1: i32 = param n, runtime_param0
 // CHECK:STDOUT:     %n.loc12_8.2: i32 = bind_name n, %n.loc12_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc12_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_19.1: type = value_of_initializer %int.make_type_32.loc12_19 [template = i32]
@@ -103,7 +103,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc16_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %int.make_type_32.loc16_11 [template = i32]
 // CHECK:STDOUT:     %.loc16_11.2: type = converted %int.make_type_32.loc16_11, %.loc16_11.1 [template = i32]
-// CHECK:STDOUT:     %n.loc16_8.1: i32 = param n
+// CHECK:STDOUT:     %n.loc16_8.1: i32 = param n, runtime_param0
 // CHECK:STDOUT:     %n.loc16_8.2: i32 = bind_name n, %n.loc16_8.1
 // CHECK:STDOUT:     %int.make_type_32.loc16_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_19.1: type = value_of_initializer %int.make_type_32.loc16_19 [template = i32]

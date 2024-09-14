@@ -86,7 +86,10 @@ cc_library(
         "link_subcommand.cpp",
         "link_subcommand.h",
     ],
-    hdrs = ["driver.h"],
+    hdrs = [
+        "driver.h",
+        "driver_subcommand.h",
+    ],
     data = [
         "//toolchain/install:install_lib_data",
     ],

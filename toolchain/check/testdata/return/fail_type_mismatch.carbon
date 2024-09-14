@@ -105,7 +105,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc18_10: f64 = float_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_13.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_13.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc18_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc18_13.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc18_13.3: i32 = converted %.loc18_10, <error> [template = <error>]

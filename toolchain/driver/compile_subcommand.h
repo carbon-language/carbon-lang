@@ -10,6 +10,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/codegen_options.h"
+#include "toolchain/driver/driver_env.h"
+#include "toolchain/driver/driver_subcommand.h"
 
 namespace Carbon {
 
@@ -30,8 +32,9 @@ struct CompileOptions {
   friend auto operator<<(llvm::raw_ostream& out, Phase phase)
       -> llvm::raw_ostream&;
 
-  auto Build(CommandLine::CommandBuilder& b, CodegenOptions& codegen_options)
-      -> void;
+  auto Build(CommandLine::CommandBuilder& b) -> void;
+
+  CodegenOptions codegen_options;
 
   Phase phase;
 
@@ -55,6 +58,21 @@ struct CompileOptions {
   bool include_debug_info = true;
 
   llvm::StringRef exclude_dump_file_prefix;
+};
+
+// Implements the compile subcommand of the driver.
+class CompileSubcommand : public DriverSubcommand {
+ public:
+  auto BuildOptions(CommandLine::CommandBuilder& b) { options_.Build(b); }
+
+  auto Run(DriverEnv& driver_env) -> DriverResult override;
+
+ private:
+  // Does custom validation of the compile-subcommand options structure beyond
+  // what the command line parsing library supports.
+  auto ValidateOptions(DriverEnv& driver_env) const -> bool;
+
+  CompileOptions options_;
 };
 
 }  // namespace Carbon

@@ -25,11 +25,13 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&]() {
+  auto on_error = [&](llvm::StringLiteral expected) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
-                        "Expected binding pattern.");
-      context.emitter().Emit(*context.position(), ExpectedBindingPattern);
+                        "Expected {0} in binding pattern.",
+                        llvm::StringLiteral);
+      context.emitter().Emit(*context.position(), ExpectedBindingPattern,
+                             expected);
       state.has_error = true;
     }
   };
@@ -50,7 +52,7 @@ auto HandleBindingPattern(Context& context) -> void {
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                         /*has_error=*/true);
-    on_error();
+    on_error("name");
   }
 
   if (auto kind = context.PositionKind();
@@ -63,7 +65,7 @@ auto HandleBindingPattern(Context& context) -> void {
     context.PushState(state);
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
-    on_error();
+    on_error("`:` or `:!`");
     // Add a placeholder for the type.
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);

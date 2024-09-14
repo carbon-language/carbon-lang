@@ -129,7 +129,7 @@ fn Run() {
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc20_21.1: init type = call constants.%ImplicitAs(i32) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc20_21.1: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc20_21.2: %.8 = specific_constant imports.%import_ref.5, @ImplicitAs(i32) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc20_21.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc20_19.1: ref f64 = temporary_storage

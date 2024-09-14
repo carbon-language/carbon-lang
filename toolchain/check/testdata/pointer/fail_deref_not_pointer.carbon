@@ -78,7 +78,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %int.make_type_32, %.loc11_13.1 [template = i32]
-// CHECK:STDOUT:     %n.loc11_10.1: i32 = param n
+// CHECK:STDOUT:     %n.loc11_10.1: i32 = param n, runtime_param0
 // CHECK:STDOUT:     @Deref.%n: i32 = bind_name n, %n.loc11_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

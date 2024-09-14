@@ -66,11 +66,11 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.loc11_13.1: type = param T
+// CHECK:STDOUT:     %T.loc11_13.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Declaration.decl: %Declaration.type = class_decl @Declaration [template = constants.%Declaration.1] {
-// CHECK:STDOUT:     %T.loc24_19.1: type = param T
+// CHECK:STDOUT:     %T.loc24_19.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc24_19.2: type = bind_symbolic_name T 0, %T.loc24_19.1 [symbolic = @Declaration.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -91,7 +91,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %.loc12_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetAddr.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref.loc12: type = name_ref Self, %.loc12_25 [symbolic = @GetAddr.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %.loc12_29: type = ptr_type %Class.2 [symbolic = @GetAddr.%.1 (constants.%.2)]
-// CHECK:STDOUT:       %self.loc12_19.1: @GetAddr.%.1 (%.2) = param self
+// CHECK:STDOUT:       %self.loc12_19.1: @GetAddr.%.1 (%.2) = param self, runtime_param0
 // CHECK:STDOUT:       %self.loc12_19.3: @GetAddr.%.1 (%.2) = bind_name self, %self.loc12_19.1
 // CHECK:STDOUT:       %.loc12_14: @GetAddr.%.1 (%.2) = addr_pattern %self.loc12_19.3
 // CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetAddr.%T (constants.%T)]
@@ -101,7 +101,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %GetValue.decl: @Class.%GetValue.type (%GetValue.type) = fn_decl @GetValue [symbolic = %GetValue (constants.%GetValue)] {
 // CHECK:STDOUT:       %.loc17: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @GetValue.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref.loc17: type = name_ref Self, %.loc17 [symbolic = @GetValue.%Class (constants.%Class.2)]
-// CHECK:STDOUT:       %self.loc17_15.1: @GetValue.%Class (%Class.2) = param self
+// CHECK:STDOUT:       %self.loc17_15.1: @GetValue.%Class (%Class.2) = param self, runtime_param0
 // CHECK:STDOUT:       %self.loc17_15.2: @GetValue.%Class (%Class.2) = bind_name self, %self.loc17_15.1
 // CHECK:STDOUT:       %T.ref.loc17: type = name_ref T, file.%T.loc11_13.2 [symbolic = @GetValue.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc17: ref @GetValue.%T (%T) = var <return slot>

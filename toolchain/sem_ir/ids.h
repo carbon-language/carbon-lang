@@ -229,6 +229,27 @@ struct CompileTimeBindIndex : public IndexBase,
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
 
+// The index of a runtime parameter in a function. These are allocated
+// sequentially, left-to-right, to the function parameters that will have
+// arguments passed to them at runtime. In a `call` instruction, a runtime
+// argument will have the position in the argument list corresponding to its
+// runtime parameter index.
+struct RuntimeParamIndex : public IndexBase,
+                           public Printable<RuntimeParamIndex> {
+  // An explicitly invalid index.
+  static const RuntimeParamIndex Invalid;
+
+  using IndexBase::IndexBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "runtime_param";
+    IndexBase::Print(out);
+  }
+};
+
+constexpr RuntimeParamIndex RuntimeParamIndex::Invalid =
+    RuntimeParamIndex(InvalidIndex);
+
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
   using ValueType = Function;

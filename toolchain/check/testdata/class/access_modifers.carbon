@@ -395,7 +395,7 @@ class A {
 // CHECK:STDOUT:   %.loc5_21: %.2 = field_decl radius, element0 [template]
 // CHECK:STDOUT:   %GetRadius.decl: %GetRadius.type = fn_decl @GetRadius [template = constants.%GetRadius] {
 // CHECK:STDOUT:     %Self.ref.loc7: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %self.loc7_16.1: %Circle = param self
+// CHECK:STDOUT:     %self.loc7_16.1: %Circle = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc7_16.2: %Circle = bind_name self, %self.loc7_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_33.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
@@ -410,7 +410,7 @@ class A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compute.decl: %Compute.type = fn_decl @Compute [template = constants.%Compute] {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %self.loc15_14.1: %Circle = param self
+// CHECK:STDOUT:     %self.loc15_14.1: %Circle = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc15_14.2: %Circle = bind_name self, %self.loc15_14.1
 // CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_31.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]

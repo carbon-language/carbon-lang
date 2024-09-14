@@ -59,7 +59,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %bool.make_type, %.loc11_16.1 [template = bool]
-// CHECK:STDOUT:     %b.loc11_13.1: bool = param b
+// CHECK:STDOUT:     %b.loc11_13.1: bool = param b, runtime_param0
 // CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc11_13.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32 [template = i32]

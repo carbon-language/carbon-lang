@@ -79,7 +79,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_30.2: type = converted %bool.make_type, %.loc4_30.1 [template = bool]
-// CHECK:STDOUT:     %b.loc4_27.1: bool = param b
+// CHECK:STDOUT:     %b.loc4_27.1: bool = param b, runtime_param0
 // CHECK:STDOUT:     @ConditionIsNonConstant.%b: bool = bind_name b, %b.loc4_27.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -149,7 +149,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [template = constants.%ChosenBranchIsNonConstant] {
-// CHECK:STDOUT:     %t.loc4_30.1: type = param t
+// CHECK:STDOUT:     %t.loc4_30.1: type = param t, runtime_param0
 // CHECK:STDOUT:     @ChosenBranchIsNonConstant.%t: type = bind_name t, %t.loc4_30.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

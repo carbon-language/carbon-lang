@@ -75,7 +75,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.loc11_13.1: type = param T
+// CHECK:STDOUT:     %T.loc11_13.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -83,10 +83,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %int.make_type_32.loc15_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_14.1: type = value_of_initializer %int.make_type_32.loc15_15 [template = i32]
 // CHECK:STDOUT:     %.loc15_14.2: type = converted %int.make_type_32.loc15_15, %.loc15_14.1 [template = i32]
-// CHECK:STDOUT:     %.loc15_14.3: init type = call %Class.ref.loc15(%.loc15_14.2) [template = constants.%Class.3]
-// CHECK:STDOUT:     %.loc15_18.1: type = value_of_initializer %.loc15_14.3 [template = constants.%Class.3]
-// CHECK:STDOUT:     %.loc15_18.2: type = converted %.loc15_14.3, %.loc15_18.1 [template = constants.%Class.3]
-// CHECK:STDOUT:     %c.loc15_6.1: %Class.3 = param c
+// CHECK:STDOUT:     %Class.loc15: type = class_type @Class, @Class(i32) [template = constants.%Class.3]
+// CHECK:STDOUT:     %c.loc15_6.1: %Class.3 = param c, runtime_param0
 // CHECK:STDOUT:     @F.%c: %Class.3 = bind_name c, %c.loc15_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc15_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_24.1: type = value_of_initializer %int.make_type_32.loc15_24 [template = i32]
@@ -94,27 +92,23 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %T.loc19_6.1: type = param T
+// CHECK:STDOUT:     %T.loc19_6.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     @G.%T.loc19: type = bind_symbolic_name T 0, %T.loc19_6.1 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:     %Class.ref.loc19: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc19_25: type = name_ref T, @G.%T.loc19 [symbolic = @G.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc19_24: init type = call %Class.ref.loc19(%T.ref.loc19_25) [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc19_26.1: type = value_of_initializer %.loc19_24 [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc19_26.2: type = converted %.loc19_24, %.loc19_26.1 [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:     %c.loc19_16.1: @G.%Class (%Class.2) = param c
+// CHECK:STDOUT:     %Class.loc19: type = class_type @Class, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
+// CHECK:STDOUT:     %c.loc19_16.1: @G.%Class (%Class.2) = param c, runtime_param0
 // CHECK:STDOUT:     @G.%c: @G.%Class (%Class.2) = bind_name c, %c.loc19_16.1
 // CHECK:STDOUT:     %T.ref.loc19_32: type = name_ref T, @G.%T.loc19 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:     @G.%return: ref @G.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
-// CHECK:STDOUT:     %U.loc23_6.1: type = param U
+// CHECK:STDOUT:     %U.loc23_6.1: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:     @H.%U.loc23: type = bind_symbolic_name U 0, %U.loc23_6.1 [symbolic = @H.%U.1 (constants.%U)]
 // CHECK:STDOUT:     %Class.ref.loc23: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %U.ref.loc23_25: type = name_ref U, @H.%U.loc23 [symbolic = @H.%U.1 (constants.%U)]
-// CHECK:STDOUT:     %.loc23_24: init type = call %Class.ref.loc23(%U.ref.loc23_25) [symbolic = @H.%Class (constants.%Class.4)]
-// CHECK:STDOUT:     %.loc23_26.1: type = value_of_initializer %.loc23_24 [symbolic = @H.%Class (constants.%Class.4)]
-// CHECK:STDOUT:     %.loc23_26.2: type = converted %.loc23_24, %.loc23_26.1 [symbolic = @H.%Class (constants.%Class.4)]
-// CHECK:STDOUT:     %c.loc23_16.1: @H.%Class (%Class.4) = param c
+// CHECK:STDOUT:     %Class.loc23: type = class_type @Class, @Class(constants.%U) [symbolic = @H.%Class (constants.%Class.4)]
+// CHECK:STDOUT:     %c.loc23_16.1: @H.%Class (%Class.4) = param c, runtime_param0
 // CHECK:STDOUT:     @H.%c: @H.%Class (%Class.4) = bind_name c, %c.loc23_16.1
 // CHECK:STDOUT:     %U.ref.loc23_32: type = name_ref U, @H.%U.loc23 [symbolic = @H.%U.1 (constants.%U)]
 // CHECK:STDOUT:     @H.%return: ref @H.%U.1 (%U) = var <return slot>

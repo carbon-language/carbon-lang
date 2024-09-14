@@ -122,7 +122,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.loc17_30.1: %.7 = tuple_literal (%.loc17_22, %.loc17_25)
 // CHECK:STDOUT:   %.loc17_30.2: ref i32 = tuple_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc17_30.3: init i32 = initialize_from %.loc17_22 to %.loc17_30.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc17_30.4: init type = call constants.%ImplicitAs(i32) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc17_30.4: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%.11]
 // CHECK:STDOUT:   %.loc17_30.5: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.13]
 // CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc17_30.5 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc17_30.6: i32 = converted %.loc17_25, <error> [template = <error>]

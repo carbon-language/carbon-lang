@@ -1188,19 +1188,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       context.inst_blocks().GetOrEmpty(callee.implicit_param_refs_id);
   auto param_refs = context.inst_blocks().GetOrEmpty(callee.param_refs_id);
 
-  // If sizes mismatch, fail early.
-  if (arg_refs.size() != param_refs.size()) {
-    CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                      "{0} argument(s) passed to function expecting "
-                      "{1} argument(s).",
-                      int, int);
-    context.emitter()
-        .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
-               param_refs.size())
-        .Note(callee.callee_loc, InCallToFunction)
-        .Emit();
-    return SemIR::InstBlockId::Invalid;
-  }
+  // The caller should have ensured this callee has the right arity.
+  CARBON_CHECK(arg_refs.size() == param_refs.size());
 
   // Start building a block to hold the converted arguments.
   llvm::SmallVector<SemIR::InstId> args;
@@ -1222,9 +1211,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       }
       args.push_back(converted_self_id);
     } else {
-      // TODO: Form argument values for implicit parameters.
-      context.TODO(call_loc_id, "Call with implicit parameters");
-      return SemIR::InstBlockId::Invalid;
+      CARBON_CHECK(!param.runtime_index.is_valid(),
+                   "Unexpected implicit parameter passed at runtime");
     }
   }
 
@@ -1239,8 +1227,17 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       });
 
   // Check type conversions per-element.
-  for (auto [i, arg_id, param_id] : llvm::enumerate(arg_refs, param_refs)) {
+  for (auto [i, arg_id, param_ref_id] : llvm::enumerate(arg_refs, param_refs)) {
     diag_param_index = i;
+
+    // TODO: In general we need to perform pattern matching here to find the
+    // argument corresponding to each parameter.
+    auto [param_id, param] =
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
+    if (!param.runtime_index.is_valid()) {
+      // Not a runtime parameter: we don't pass an argument.
+      continue;
+    }
 
     auto param_type_id =
         SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
@@ -1253,6 +1250,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       return SemIR::InstBlockId::Invalid;
     }
 
+    CARBON_CHECK(static_cast<int32_t>(args.size()) == param.runtime_index.index,
+                 "Parameters not numbered in order.");
     args.push_back(converted_arg_id);
   }
 
@@ -1261,7 +1260,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     args.push_back(return_storage_id);
   }
 
-  return context.inst_blocks().Add(args);
+  return context.inst_blocks().AddOrEmpty(args);
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)

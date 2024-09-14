@@ -49,7 +49,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+1':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+2':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+3':          {kind: Converted, arg0: inst+2, arg1: inst+1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+4':          {kind: Param, arg0: name1, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+4':          {kind: Param, arg0: name1, arg1: runtime_param0, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+5':          {kind: BindName, arg0: entity_name0, arg1: inst+4, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+6':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+7':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
@@ -168,7 +168,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %n.loc15_8.1: %.1 = param n
+// CHECK:STDOUT:     %n.loc15_8.1: %.1 = param n, runtime_param0
 // CHECK:STDOUT:     @Foo.%n: %.1 = bind_name n, %n.loc15_8.1
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()

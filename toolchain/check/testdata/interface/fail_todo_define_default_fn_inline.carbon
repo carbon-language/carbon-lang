@@ -71,12 +71,12 @@ interface Interface {
 // CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
 // CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_32.loc21_19, %.loc21_19.1 [template = i32]
-// CHECK:STDOUT:     %a.loc21_16.1: i32 = param a
+// CHECK:STDOUT:     %a.loc21_16.1: i32 = param a, runtime_param0
 // CHECK:STDOUT:     %a.loc21_16.2: i32 = bind_name a, %a.loc21_16.1
 // CHECK:STDOUT:     %int.make_type_32.loc21_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_32.loc21_27 [template = i32]
 // CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_32.loc21_27, %.loc21_27.1 [template = i32]
-// CHECK:STDOUT:     %b.loc21_24.1: i32 = param b
+// CHECK:STDOUT:     %b.loc21_24.1: i32 = param b, runtime_param1
 // CHECK:STDOUT:     %b.loc21_24.2: i32 = bind_name b, %b.loc21_24.1
 // CHECK:STDOUT:     %int.make_type_32.loc21_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]

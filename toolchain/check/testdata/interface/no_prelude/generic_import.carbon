@@ -47,7 +47,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
-// CHECK:STDOUT:     %T.loc4_19.1: type = param T
+// CHECK:STDOUT:     %T.loc4_19.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -131,13 +131,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_18 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_18, %.loc7_20.1 [template = constants.%.6]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, imports.%import_ref.1 [template = constants.%AddWith]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc7_18: init type = call %AddWith.ref(%C.ref.loc7_19) [template = constants.%.6]
+// CHECK:STDOUT:     %.loc7: type = interface_type @AddWith, @AddWith(constants.%C) [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

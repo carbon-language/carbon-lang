@@ -75,7 +75,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.loc4_13.1: type = param T
+// CHECK:STDOUT:     %T.loc4_13.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T 0, %T.loc4_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -94,7 +94,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
 // CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, file.%T.loc4_13.2 [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:       %n.loc5_8.1: @F.%T (%T) = param n
+// CHECK:STDOUT:       %n.loc5_8.1: @F.%T (%T) = param n, runtime_param0
 // CHECK:STDOUT:       %n.loc5_8.2: @F.%T (%T) = bind_name n, %n.loc5_8.1
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, file.%T.loc4_13.2 [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc5: ref @F.%T (%T) = var <return slot>
@@ -102,7 +102,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
 // CHECK:STDOUT:       %.loc9: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc9 [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:       %self.loc9_8.1: @G.%Class (%Class.2) = param self
+// CHECK:STDOUT:       %self.loc9_8.1: @G.%Class (%Class.2) = param self, runtime_param0
 // CHECK:STDOUT:       %self.loc9_8.2: @G.%Class (%Class.2) = bind_name self, %self.loc9_8.1
 // CHECK:STDOUT:       %T.ref.loc9: type = name_ref T, file.%T.loc4_13.2 [symbolic = @G.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc9: ref @G.%T (%T) = var <return slot>
@@ -211,7 +211,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %T.loc4_9.1: type = param T
+// CHECK:STDOUT:     %T.loc4_9.1: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
