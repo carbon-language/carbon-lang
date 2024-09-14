@@ -84,12 +84,12 @@ fn Run() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc5_8.1: %Base = param self
+// CHECK:STDOUT:     %self.loc5_8.1: %Base = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_name self, %self.loc5_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc6_13.1: %Base = param self
+// CHECK:STDOUT:     %self.loc6_13.1: %Base = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc6_13.2: %Base = bind_name self, %self.loc6_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]

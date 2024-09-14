@@ -58,17 +58,17 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %bool.make_type, %.loc11_9.1 [template = bool]
-// CHECK:STDOUT:     %b.loc11_6.1: bool = param b
+// CHECK:STDOUT:     %b.loc11_6.1: bool = param b, runtime_param0
 // CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc11_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_32.loc11_18 [template = i32]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_32.loc11_18, %.loc11_18.1 [template = i32]
-// CHECK:STDOUT:     %n.loc11_15.1: i32 = param n
+// CHECK:STDOUT:     %n.loc11_15.1: i32 = param n, runtime_param1
 // CHECK:STDOUT:     @F.%n: i32 = bind_name n, %n.loc11_15.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_26.1: type = value_of_initializer %int.make_type_32.loc11_26 [template = i32]
 // CHECK:STDOUT:     %.loc11_26.2: type = converted %int.make_type_32.loc11_26, %.loc11_26.1 [template = i32]
-// CHECK:STDOUT:     %m.loc11_23.1: i32 = param m
+// CHECK:STDOUT:     %m.loc11_23.1: i32 = param m, runtime_param2
 // CHECK:STDOUT:     @F.%m: i32 = bind_name m, %m.loc11_23.1
 // CHECK:STDOUT:     %int.make_type_32.loc11_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_32.loc11_34 [template = i32]

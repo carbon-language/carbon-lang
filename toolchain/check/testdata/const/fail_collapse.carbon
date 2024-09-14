@@ -89,7 +89,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc15_9: type = const_type %.2 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_26: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_27: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc15_6.1: %.4 = param p
+// CHECK:STDOUT:     %p.loc15_6.1: %.4 = param p, runtime_param0
 // CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc15_6.1
 // CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
@@ -124,7 +124,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: fn @G(%p: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc22_11.1: init type = call constants.%ImplicitAs(constants.%.6) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc22_11.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.6) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc22_11.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.6) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc22_11.2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc22_11.3: %.6 = converted %p.ref, <error> [template = <error>]

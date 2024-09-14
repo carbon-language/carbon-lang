@@ -109,8 +109,8 @@ static auto BuildInterfaceDecl(Context& context,
     interface_info.generic_id = FinishGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
-      interface_decl.type_id =
-          context.GetGenericInterfaceType(interface_decl.interface_id);
+      interface_decl.type_id = context.GetGenericInterfaceType(
+          interface_decl.interface_id, context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(

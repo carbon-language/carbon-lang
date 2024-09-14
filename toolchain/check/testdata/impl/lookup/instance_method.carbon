@@ -74,7 +74,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
-// CHECK:STDOUT:     %c.loc23_6.1: %C = param c
+// CHECK:STDOUT:     %c.loc23_6.1: %C = param c, runtime_param0
 // CHECK:STDOUT:     @F.3.%c: %C = bind_name c, %c.loc23_6.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -89,7 +89,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %self.loc14_8.1: @F.1.%Self (%Self) = param self
+// CHECK:STDOUT:     %self.loc14_8.1: @F.1.%Self (%Self) = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc14_8.2: @F.1.%Self (%Self) = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -107,7 +107,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: impl @impl: %C as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc19_10.1: %C = param self
+// CHECK:STDOUT:     %self.loc19_10.1: %C = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc19_10.2: %C = bind_name self, %self.loc19_10.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_27.1: type = value_of_initializer %int.make_type_32 [template = i32]

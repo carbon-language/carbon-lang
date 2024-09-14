@@ -98,7 +98,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %.loc18_10: String = string_literal "Hello" [template = constants.%.3]
-// CHECK:STDOUT:   %.loc18_17.1: init type = call constants.%ImplicitAs(bool) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_17.1: type = interface_type @ImplicitAs, @ImplicitAs(bool) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc18_17.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(bool) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc18_17.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc18_17.3: bool = converted %.loc18_10, <error> [template = <error>]

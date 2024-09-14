@@ -706,7 +706,10 @@ class ImportRefResolver {
           context_.GetTypeIdForTypeConstant(param_data.type_const_id);
 
       auto new_param_id = context_.AddInstInNoBlock<SemIR::Param>(
-          AddImportIRInst(param_id), {.type_id = type_id, .name_id = name_id});
+          AddImportIRInst(param_id),
+          {.type_id = type_id,
+           .name_id = name_id,
+           .runtime_index = param_inst.runtime_index});
       if (bind_inst) {
         switch (bind_inst->kind) {
           case SemIR::BindName::Kind: {
@@ -1195,7 +1198,8 @@ class ImportRefResolver {
   // Makes an incomplete class. This is necessary even with classes with a
   // complete declaration, because things such as `Self` may refer back to the
   // type.
-  auto MakeIncompleteClass(const SemIR::Class& import_class)
+  auto MakeIncompleteClass(const SemIR::Class& import_class,
+                           SemIR::SpecificId enclosing_specific_id)
       -> std::pair<SemIR::ClassId, SemIR::ConstantId> {
     SemIR::ClassDecl class_decl = {.type_id = SemIR::TypeId::TypeType,
                                    .class_id = SemIR::ClassId::Invalid,
@@ -1211,7 +1215,8 @@ class ImportRefResolver {
           .inheritance_kind = import_class.inheritance_kind}});
 
     if (import_class.has_parameters()) {
-      class_decl.type_id = context_.GetGenericClassType(class_decl.class_id);
+      class_decl.type_id = context_.GetGenericClassType(class_decl.class_id,
+                                                        enclosing_specific_id);
     }
 
     // Write the class ID into the ClassDecl.
@@ -1266,14 +1271,25 @@ class ImportRefResolver {
 
     SemIR::ClassId class_id = SemIR::ClassId::Invalid;
     if (!class_const_id.is_valid()) {
+      auto import_specific_id = SemIR::SpecificId::Invalid;
+      if (auto import_generic_class_type =
+              import_ir_.types().TryGetAs<SemIR::GenericClassType>(
+                  inst.type_id)) {
+        import_specific_id = import_generic_class_type->enclosing_specific_id;
+      }
+      auto specific_data = GetLocalSpecificData(import_specific_id);
       if (HasNewWork()) {
-        // This is the end of the first phase. Don't make a new class yet if we
-        // already have new work.
+        // This is the end of the first phase. Don't make a new class yet if
+        // we already have new work.
         return Retry();
       }
+
       // On the second phase, create a forward declaration of the class for any
       // recursive references.
-      std::tie(class_id, class_const_id) = MakeIncompleteClass(import_class);
+      auto enclosing_specific_id =
+          GetOrAddLocalSpecific(import_specific_id, specific_data);
+      std::tie(class_id, class_const_id) =
+          MakeIncompleteClass(import_class, enclosing_specific_id);
     } else {
       // On the third phase, compute the class ID from the constant
       // value of the declaration.
@@ -1428,10 +1444,9 @@ class ImportRefResolver {
         return Retry();
       }
 
+      // On the second phase, create a forward declaration of the interface.
       auto specific_id =
           GetOrAddLocalSpecific(import_specific_id, specific_data);
-
-      // On the second phase, create a forward declaration of the interface.
       std::tie(function_id, function_const_id) =
           MakeFunctionDecl(import_function, specific_id);
     } else {
@@ -1555,7 +1570,8 @@ class ImportRefResolver {
 
   // Make a declaration of an interface. This is done as a separate step from
   // importing the interface definition in order to resolve cycles.
-  auto MakeInterfaceDecl(const SemIR::Interface& import_interface)
+  auto MakeInterfaceDecl(const SemIR::Interface& import_interface,
+                         SemIR::SpecificId enclosing_specific_id)
       -> std::pair<SemIR::InterfaceId, SemIR::ConstantId> {
     SemIR::InterfaceDecl interface_decl = {
         .type_id = SemIR::TypeId::TypeType,
@@ -1572,8 +1588,8 @@ class ImportRefResolver {
          {}});
 
     if (import_interface.has_parameters()) {
-      interface_decl.type_id =
-          context_.GetGenericInterfaceType(interface_decl.interface_id);
+      interface_decl.type_id = context_.GetGenericInterfaceType(
+          interface_decl.interface_id, enclosing_specific_id);
     }
 
     // Write the interface ID into the InterfaceDecl.
@@ -1614,14 +1630,25 @@ class ImportRefResolver {
 
     SemIR::InterfaceId interface_id = SemIR::InterfaceId::Invalid;
     if (!interface_const_id.is_valid()) {
+      auto import_specific_id = SemIR::SpecificId::Invalid;
+      if (auto import_generic_interface_type =
+              import_ir_.types().TryGetAs<SemIR::GenericInterfaceType>(
+                  inst.type_id)) {
+        import_specific_id =
+            import_generic_interface_type->enclosing_specific_id;
+      }
+      auto specific_data = GetLocalSpecificData(import_specific_id);
       if (HasNewWork()) {
         // This is the end of the first phase. Don't make a new interface yet if
         // we already have new work.
         return Retry();
       }
+
       // On the second phase, create a forward declaration of the interface.
+      auto enclosing_specific_id =
+          GetOrAddLocalSpecific(import_specific_id, specific_data);
       std::tie(interface_id, interface_const_id) =
-          MakeInterfaceDecl(import_interface);
+          MakeInterfaceDecl(import_interface, enclosing_specific_id);
     } else {
       // On the third phase, compute the interface ID from the constant value of
       // the declaration.

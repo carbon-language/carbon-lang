@@ -77,7 +77,7 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %.loc18_18: i32 = int_literal 42 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_20.1: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_20.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc18_20.2: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc18_20.2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc18_20.3: type = converted %.loc18_18, <error> [template = <error>]

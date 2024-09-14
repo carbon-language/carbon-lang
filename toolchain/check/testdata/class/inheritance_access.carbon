@@ -295,7 +295,7 @@ class B {
 // CHECK:STDOUT:   %.loc10: %.5 = base_decl %Shape, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %self.loc12_18.1: %Circle = param self
+// CHECK:STDOUT:     %self.loc12_18.1: %Circle = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc12_18.2: %Circle = bind_name self, %self.loc12_18.1
 // CHECK:STDOUT:     %int.make_type_32.loc12_36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc12_41: init type = call constants.%Int32() [template = i32]
@@ -427,7 +427,7 @@ class B {
 // CHECK:STDOUT:   %.loc14: %.8 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc15_8.1: %C = param self
+// CHECK:STDOUT:     %self.loc15_8.1: %C = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc15_8.2: %C = bind_name self, %self.loc15_8.1
 // CHECK:STDOUT:     %.loc15_26.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_26.2: type = converted %.loc15_26.1, constants.%.1 [template = constants.%.1]
@@ -635,7 +635,7 @@ class B {
 // CHECK:STDOUT:   %.loc9: %.5 = base_decl %Shape, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [template = constants.%Square]
-// CHECK:STDOUT:     %self.loc11_18.1: %Square = param self
+// CHECK:STDOUT:     %self.loc11_18.1: %Square = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc11_18.2: %Square = bind_name self, %self.loc11_18.1
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_35.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -1015,7 +1015,7 @@ class B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SomeFunc.decl: %SomeFunc.type = fn_decl @SomeFunc [template = constants.%SomeFunc] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.loc36_15.1: %B = param self
+// CHECK:STDOUT:     %self.loc36_15.1: %B = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc36_15.2: %B = bind_name self, %self.loc36_15.1
 // CHECK:STDOUT:     %int.make_type_32.loc36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc36_32.1: type = value_of_initializer %int.make_type_32.loc36 [template = i32]
@@ -1112,7 +1112,7 @@ class B {
 // CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.loc10_8.1: %B = param self
+// CHECK:STDOUT:     %self.loc10_8.1: %B = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc10_8.2: %B = bind_name self, %self.loc10_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -1194,7 +1194,7 @@ class B {
 // CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.loc11_8.1: %B = param self
+// CHECK:STDOUT:     %self.loc11_8.1: %B = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc11_8.2: %B = bind_name self, %self.loc11_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

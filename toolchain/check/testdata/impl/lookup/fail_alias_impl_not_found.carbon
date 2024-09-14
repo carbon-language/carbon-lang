@@ -70,7 +70,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc19_6.1: %C = param c
+// CHECK:STDOUT:     %c.loc19_6.1: %C = param c, runtime_param0
 // CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %c.loc19_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

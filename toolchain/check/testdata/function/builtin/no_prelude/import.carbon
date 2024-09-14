@@ -43,12 +43,12 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5_15 [template = i32]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %int.make_type_32.loc5_15, %.loc5_15.1 [template = i32]
-// CHECK:STDOUT:     %a.loc5_12.1: i32 = param a
+// CHECK:STDOUT:     %a.loc5_12.1: i32 = param a, runtime_param0
 // CHECK:STDOUT:     @TestAdd.%a: i32 = bind_name a, %a.loc5_12.1
 // CHECK:STDOUT:     %int.make_type_32.loc5_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_23.1: type = value_of_initializer %int.make_type_32.loc5_23 [template = i32]
 // CHECK:STDOUT:     %.loc5_23.2: type = converted %int.make_type_32.loc5_23, %.loc5_23.1 [template = i32]
-// CHECK:STDOUT:     %b.loc5_20.1: i32 = param b
+// CHECK:STDOUT:     %b.loc5_20.1: i32 = param b, runtime_param1
 // CHECK:STDOUT:     @TestAdd.%b: i32 = bind_name b, %b.loc5_20.1
 // CHECK:STDOUT:     %int.make_type_32.loc5_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_31.1: type = value_of_initializer %int.make_type_32.loc5_31 [template = i32]

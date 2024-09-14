@@ -69,7 +69,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc17_14: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc17_15.1: %.2 = struct_literal (%.loc17_14)
-// CHECK:STDOUT:   %.loc17_15.2: init type = call constants.%ImplicitAs(type) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_15.2: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc17_15.3: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_15.3 [template = constants.%.9]
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc17_14) [template = constants.%struct]

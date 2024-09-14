@@ -239,7 +239,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     class_info.generic_id = FinishGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
-      class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
+      class_decl.type_id = context.GetGenericClassType(
+          class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
