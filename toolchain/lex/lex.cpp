@@ -116,12 +116,8 @@ class [[clang::internal_linkage]] Lexer {
   // Add a lexed token to the tokenized buffer, and reset any token-specific
   // state tracked in the lexer for the next token.
   auto AddLexedToken(TokenInfo info) -> TokenIndex {
-    TokenIndex token(buffer_.token_infos_.size());
-    buffer_.token_infos_.push_back(info);
-    buffer_.expected_max_parse_tree_size_ +=
-        info.kind().expected_max_parse_tree_size();
     has_leading_space_ = false;
-    return token;
+    return buffer_.AddToken(info);
   }
 
   // Lexes a token with no payload: builds the correctly encoded token info,
@@ -1409,9 +1405,7 @@ class Lexer::ErrorRecoveryBuffer {
     for (auto [next_offset, info] : new_tokens_) {
       buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
                                   old_tokens.begin() + next_offset.index);
-      buffer_.token_infos_.push_back(info);
-      buffer_.expected_max_parse_tree_size_ +=
-          info.kind().expected_max_parse_tree_size();
+      buffer_.AddToken(info);
       buffer_.recovery_tokens_.set(next_offset.index);
       old_tokens_offset = next_offset.index;
     }

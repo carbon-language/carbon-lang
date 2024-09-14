@@ -443,6 +443,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto AddLine(LineInfo info) -> LineIndex;
   auto GetTokenInfo(TokenIndex token) -> TokenInfo&;
   auto GetTokenInfo(TokenIndex token) const -> const TokenInfo&;
+  auto AddToken(TokenInfo info) -> TokenIndex;
   auto GetTokenPrintWidths(TokenIndex token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
@@ -499,6 +500,13 @@ inline auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
 inline auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const
     -> const TokenInfo& {
   return token_infos_[token.index];
+}
+
+inline auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
+  TokenIndex index(token_infos_.size());
+  token_infos_.push_back(info);
+  expected_max_parse_tree_size_ += info.kind().expected_max_parse_tree_size();
+  return index;
 }
 
 }  // namespace Carbon::Lex
