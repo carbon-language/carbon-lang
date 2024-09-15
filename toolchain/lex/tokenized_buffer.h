@@ -477,6 +477,38 @@ using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 // A diagnostic emitter that uses tokens as its source of location information.
 using TokenDiagnosticEmitter = DiagnosticEmitter<TokenIndex>;
 
+inline auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
+  return GetTokenInfo(token).kind();
+}
+
+inline auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const
+    -> bool {
+  return GetTokenInfo(token).has_leading_space();
+}
+
+inline auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const
+    -> bool {
+  TokenIterator it(token);
+  ++it;
+  return it != tokens().end() && GetTokenInfo(*it).has_leading_space();
+}
+
+inline auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
+  return token_infos_[token.index];
+}
+
+inline auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const
+    -> const TokenInfo& {
+  return token_infos_[token.index];
+}
+
+inline auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
+  TokenIndex index(token_infos_.size());
+  token_infos_.push_back(info);
+  expected_max_parse_tree_size_ += info.kind().expected_max_parse_tree_size();
+  return index;
+}
+
 }  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_

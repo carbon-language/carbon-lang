@@ -20,10 +20,6 @@
 
 namespace Carbon::Lex {
 
-auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
-  return GetTokenInfo(token).kind();
-}
-
 auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
   return FindLineIndex(GetTokenInfo(token).byte_offset());
 }
@@ -157,16 +153,6 @@ auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
   CARBON_CHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
                closing_token_info.kind());
   return closing_token_info.opening_token_index();
-}
-
-auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const -> bool {
-  return GetTokenInfo(token).has_leading_space();
-}
-
-auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const -> bool {
-  TokenIterator it(token);
-  ++it;
-  return it != tokens().end() && GetTokenInfo(*it).has_leading_space();
 }
 
 auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
@@ -357,20 +343,6 @@ auto TokenizedBuffer::GetLineInfo(LineIndex line) const -> const LineInfo& {
 auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   line_infos_.push_back(info);
   return LineIndex(static_cast<int>(line_infos_.size()) - 1);
-}
-
-auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
-  return token_infos_[token.index];
-}
-
-auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const -> const TokenInfo& {
-  return token_infos_[token.index];
-}
-
-auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
-  token_infos_.push_back(info);
-  expected_max_parse_tree_size_ += info.kind().expected_max_parse_tree_size();
-  return TokenIndex(static_cast<int>(token_infos_.size()) - 1);
 }
 
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
