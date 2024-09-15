@@ -6,16 +6,46 @@
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
 #include "common/map.h"
+#include "common/ostream.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::SemIR {
 
 // Access control for an entity.
-enum class AccessKind : int8_t {
-  Public,
-  Protected,
-  Private,
+class AccessKind : public Printable<AccessKind> {
+ public:
+  enum RawEnumType : int8_t {
+    Public,
+    Protected,
+    Private,
+  };
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  AccessKind(RawEnumType value) : value_(value) {}
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    switch (value_) {
+      case RawEnumType::Public:
+        out << "public";
+        break;
+      case RawEnumType::Protected:
+        out << "protected";
+        break;
+      case RawEnumType::Private:
+        out << "private";
+        break;
+    }
+  }
+
+  auto value() -> RawEnumType { return value_; }
+
+  auto operator==(const AccessKind& other) const -> bool {
+    return other.value_ == value_;
+  }
+
+ private:
+  RawEnumType value_;
 };
 
 struct NameScope : Printable<NameScope> {

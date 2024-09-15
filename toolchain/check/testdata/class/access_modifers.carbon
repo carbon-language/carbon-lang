@@ -143,19 +143,12 @@ library "[[@TEST_NAME]]";
 
 class A {
   private let internal: i32 = 10;
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE+13]]:16: ERROR: Member access into incomplete class `A`.
+  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE+6]]:16: ERROR: Member access into incomplete class `A`.
   // CHECK:STDERR:   let y: i32 = Self.internal;
   // CHECK:STDERR:                ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE-5]]:1: Class is incomplete within its definition.
   // CHECK:STDERR: class A {
   // CHECK:STDERR: ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE+6]]:16: ERROR: Cannot access private member `internal` of type `A`.
-  // CHECK:STDERR:   let y: i32 = Self.internal;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE-11]]:15: The private member `internal` is defined here.
-  // CHECK:STDERR:   private let internal: i32 = 10;
-  // CHECK:STDERR:               ^~~~~~~~
   let y: i32 = Self.internal;
 }
 
@@ -631,12 +624,12 @@ class A {
 // CHECK:STDOUT:   %.loc5_25.2: type = converted %int.make_type_32.loc5, %.loc5_25.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_31: i32 = int_literal 10 [template = constants.%.2]
 // CHECK:STDOUT:   %internal: i32 = bind_name internal, %.loc5_31
-// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc19_10.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:   %.loc19_10.2: type = converted %int.make_type_32.loc19, %.loc19_10.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
-// CHECK:STDOUT:   %internal.ref: <error> = name_ref internal, <error> [template = <error>]
-// CHECK:STDOUT:   %y: i32 = bind_name y, <error>
+// CHECK:STDOUT:   %internal.ref: i32 = name_ref internal, %internal
+// CHECK:STDOUT:   %y: i32 = bind_name y, %internal.ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A

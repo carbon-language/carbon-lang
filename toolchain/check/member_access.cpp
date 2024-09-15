@@ -100,41 +100,13 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-// Returns the FunctionId of the current function if it exists.
-static auto GetCurrentFunction(Context& context)
-    -> std::optional<SemIR::FunctionId> {
-  if (context.return_scope_stack().empty()) {
-    return std::nullopt;
-  }
-
-  return context.insts()
-      .GetAs<SemIR::FunctionDecl>(context.return_scope_stack().back().decl_id)
-      .function_id;
-}
-
 // Returns the highest allowed access. For example, if this returns `Protected`
 // then only `Public` and `Protected` accesses are allowed--not `Private`.
-static auto GetHighestAllowedAccess(Context& context, SemIRLoc loc,
+static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
-  // TODO: Maybe use LookupUnqualifiedName for `Self` to support things like
-  // `var x: Self.ParentProtectedType`?
-  auto current_function = GetCurrentFunction(context);
-  // If `current_function` is a `nullopt` then we're accessing from a global
-  // variable.
-  if (!current_function) {
-    return SemIR::AccessKind::Public;
-  }
-
-  auto scope_id = context.functions().Get(*current_function).parent_scope_id;
-  if (!scope_id.is_valid()) {
-    return SemIR::AccessKind::Public;
-  }
-  auto scope = context.name_scopes().Get(scope_id);
-
-  // Lookup the inst for `Self` in the parent scope of the current function.
-  auto [self_type_inst_id, _] = context.LookupNameInExactScope(
-      loc, SemIR::NameId::SelfType, scope_id, scope);
+  auto [_, self_type_inst_id] = context.LookupUnqualifiedName(
+      loc_id.node_id(), SemIR::NameId::SelfType, /*required=*/false);
   if (!self_type_inst_id.is_valid()) {
     return SemIR::AccessKind::Public;
   }
