@@ -41,8 +41,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc15_16.2: %.1 = converted %.loc15_16.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_17.1: <error> = tuple_index %.loc15_16.2, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_17.2: %.2 = converted %.loc15_16.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_17: %.2 = converted %.loc15_16.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

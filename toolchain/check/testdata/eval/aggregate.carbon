@@ -175,7 +175,7 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc15_56: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %tuple: %.20 = tuple_value (%.loc15_44, %.loc15_47, %.loc15_50, %.loc15_53) [template = constants.%tuple.2]
 // CHECK:STDOUT:   %.loc15_54.2: %.20 = converted %.loc15_54.1, %tuple [template = constants.%tuple.2]
-// CHECK:STDOUT:   %.loc15_55: i32 = tuple_index %.loc15_54.2, %.loc15_56 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_55: i32 = tuple_access %.loc15_54.2, element2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_38.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_38.2: type = converted %int.make_type_32.loc15, %.loc15_38.1 [template = i32]
 // CHECK:STDOUT:   %.loc15_57: type = array_type %.loc15_55, i32 [template = constants.%.13]

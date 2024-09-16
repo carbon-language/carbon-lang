@@ -86,7 +86,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc14_14: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_11.1: ref %.3 = temporary_storage
 // CHECK:STDOUT:   %.loc14_11.2: ref %.3 = temporary %.loc14_11.1, %F.call
-// CHECK:STDOUT:   %.loc14_13.1: ref i32 = tuple_index %.loc14_11.2, %.loc14_14
+// CHECK:STDOUT:   %.loc14_13.1: ref i32 = tuple_access %.loc14_11.2, element0
 // CHECK:STDOUT:   %.loc14_13.2: i32 = bind_value %.loc14_13.1
 // CHECK:STDOUT:   return %.loc14_13.2
 // CHECK:STDOUT: }

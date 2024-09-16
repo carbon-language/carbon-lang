@@ -102,8 +102,7 @@ struct AnyAggregateAccess {
 // Common representation for aggregate index nodes, which access an element
 // determined by evaluating an expression.
 struct AnyAggregateIndex {
-  static constexpr InstKind Kinds[] = {InstKind::ArrayIndex,
-                                       InstKind::TupleIndex};
+  static constexpr InstKind Kinds[] = {InstKind::ArrayIndex};
 
   InstKind kind;
   TypeId type_id;
@@ -959,17 +958,6 @@ struct TupleAccess {
   TypeId type_id;
   InstId tuple_id;
   ElementIndex index;
-};
-
-// Access to a tuple member by index, such as `tuple[index]`.
-struct TupleIndex {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::TupleIndex.Define<Parse::NodeId>({.ir_name = "tuple_index"});
-
-  TypeId type_id;
-  InstId tuple_id;
-  InstId index_id;
 };
 
 // Initializes the destination tuple with the given elements.

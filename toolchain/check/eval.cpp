@@ -4,6 +4,8 @@
 
 #include "toolchain/check/eval.h"
 
+#include <iostream>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -1336,7 +1338,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
     case SemIR::ArrayIndex::Kind:
-    case SemIR::TupleIndex::Kind:
       return PerformAggregateIndex(eval_context, inst);
 
     case CARBON_KIND(SemIR::Call call): {

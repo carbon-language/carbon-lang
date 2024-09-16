@@ -28,9 +28,9 @@ auto PerformCompoundMemberAccess(
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.
-auto PerformTupleIndex(Context& context, SemIR::LocId loc_id,
-                       SemIR::InstId tuple_inst_id, SemIR::InstId index_inst_id)
-    -> SemIR::InstId;
+auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
+                        SemIR::InstId tuple_inst_id,
+                        SemIR::InstId index_inst_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

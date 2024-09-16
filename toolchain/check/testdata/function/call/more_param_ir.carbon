@@ -95,7 +95,7 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %.3 = name_ref x, %x
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_index %x.ref, %.loc16_9
+// CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %.loc16_12: i32 = int_literal 6 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc16_8.2: i32 = bind_value %.loc16_8.1
 // CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_8.2, %.loc16_12)
