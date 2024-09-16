@@ -15,7 +15,10 @@ auto PopNameComponent(Context& context) -> NameComponent {
   // Explicit params.
   auto [params_loc_id, params_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+  auto param_patterns_id = SemIR::InstBlockId::Invalid;
   if (params_id) {
+    param_patterns_id =
+        context.pattern_node_stack().Pop<SemIR::InstBlockId>(params_loc_id);
     first_param_node_id =
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
@@ -26,7 +29,11 @@ auto PopNameComponent(Context& context) -> NameComponent {
   auto [implicit_params_loc_id, implicit_params_id] =
       context.node_stack()
           .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
+  auto implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   if (implicit_params_id) {
+    implicit_param_patterns_id =
+        context.pattern_node_stack().Pop<SemIR::InstBlockId>(
+            implicit_params_loc_id);
     // Implicit params always come before explicit params.
     first_param_node_id =
         context.node_stack()
@@ -46,8 +53,10 @@ auto PopNameComponent(Context& context) -> NameComponent {
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_params_id =
           implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
+      .implicit_param_patterns_id = implicit_param_patterns_id,
       .params_loc_id = params_loc_id,
       .params_id = params_id.value_or(SemIR::InstBlockId::Invalid),
+      .param_patterns_id = param_patterns_id,
   };
 }
 

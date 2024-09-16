@@ -24,22 +24,37 @@ namespace Carbon::Check {
 // while `PatternNodeStack` holds what `NodeStack` _will_ hold once we
 // fully transition to the new model.
 //
-// Since this class is intended to be temporary, it provides only the
-// minimal API needed to support the transition.
+// Since this class is intended to be temporary, it provides only a subset
+// of the `NodeStack` API, and that subset has minimal type/kind checking.
 class PatternNodeStack {
  public:
   PatternNodeStack() = default;
 
   auto Push(Parse::NodeId node_id, SemIR::InstId inst_id) -> void {
-    stack_.push_back({.node_id = node_id, .inst_id = inst_id});
+    // FIXME CHECK that node_id is right?
+    stack_.push_back({.node_id = node_id, .id = inst_id.index});
   }
 
-  auto PopPattern() -> SemIR::InstId { return stack_.pop_back_val().inst_id; }
+  auto Push(Parse::NodeId node_id, SemIR::InstBlockId inst_block_id) -> void {
+    // FIXME CHECK that node_id is right?
+    stack_.push_back({.node_id = node_id, .id = inst_block_id.index});
+  }
+
+  // FIXME comments
+  template <typename IdT>
+  auto Pop(Parse::NodeId node_id) -> IdT {
+    auto entry = stack_.pop_back_val();
+    CARBON_CHECK(entry.node_id == node_id)
+        << "Expected " << node_id << ", but found " << entry.node_id;
+    return IdT(entry.id);
+  }
+
+  auto empty() -> bool { return stack_.empty(); }
 
  private:
   struct Entry {
     Parse::NodeId node_id;
-    SemIR::InstId inst_id;
+    int32_t id;
   };
 
   llvm::SmallVector<Entry> stack_;

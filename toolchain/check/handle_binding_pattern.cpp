@@ -175,7 +175,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             name_node,
             {.type_id = cast_type_id, .entity_name_id = entity_name_id});
       }
-      context.pattern_node_stack().Push(name_node, pattern_inst);
+      context.pattern_node_stack().Push(node_id, pattern_inst);
 
       // TODO: use the pattern insts to generate the pattern-match insts
       // at the end of the full pattern, instead of eagerly generating them
@@ -219,8 +219,10 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
-  auto self_param_id = context.node_stack().PopPattern();
-  auto self_pattern_id = context.pattern_node_stack().PopPattern();
+  auto [self_node_id, self_param_id] =
+      context.node_stack().PopPatternWithNodeId();
+  auto self_pattern_id =
+      context.pattern_node_stack().Pop<SemIR::InstId>(self_node_id);
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
       self_param &&
@@ -238,6 +240,7 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
                       "`addr` can only be applied to a `self` parameter.");
     context.emitter().Emit(TokenOnly(node_id), AddrOnNonSelfParam);
     context.node_stack().Push(node_id, self_param_id);
+    context.pattern_node_stack().Push(node_id, self_pattern_id);
   }
   return true;
 }

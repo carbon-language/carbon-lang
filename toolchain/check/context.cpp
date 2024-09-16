@@ -49,7 +49,8 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       pattern_block_stack_(this),
-      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
+      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_,
+                                pattern_node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
@@ -83,6 +84,7 @@ auto Context::VerifyOnFinish() -> void {
   scope_stack_.VerifyOnFinish();
   inst_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
+  CARBON_CHECK(pattern_node_stack_.empty());
 }
 
 // Finish producing an instruction. Set its constant value, and register it in
