@@ -103,8 +103,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc25_9: %Derived = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
-// CHECK:STDOUT:     %a.loc25_9.1: %Derived = param a
-// CHECK:STDOUT:     @Call.%a: %Derived = bind_name a, %a.loc25_9.1
+// CHECK:STDOUT:     %param.loc25: %Derived = param
+// CHECK:STDOUT:     @Call.%a: %Derived = bind_name a, %param.loc25
 // CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_24.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
 // CHECK:STDOUT:     %.loc25_24.2: type = converted %int.make_type_32.loc25, %.loc25_24.1 [template = i32]
@@ -115,8 +115,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc29_27: type = ptr_type %Derived [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc29_17.1: %.8 = param p
-// CHECK:STDOUT:     @CallIndirect.%p: %.8 = bind_name p, %p.loc29_17.1
+// CHECK:STDOUT:     %param.loc29: %.8 = param
+// CHECK:STDOUT:     @CallIndirect.%p: %.8 = bind_name p, %param.loc29
 // CHECK:STDOUT:     %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_33.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:     %.loc29_33.2: type = converted %int.make_type_32.loc29, %.loc29_33.1 [template = i32]
@@ -126,8 +126,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc33_22: %Derived = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc33: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
-// CHECK:STDOUT:     %a.loc33_22.1: %Derived = param a
-// CHECK:STDOUT:     @PassDerivedToBase.%a: %Derived = bind_name a, %a.loc33_22.1
+// CHECK:STDOUT:     %param.loc33: %Derived = param
+// CHECK:STDOUT:     @PassDerivedToBase.%a: %Derived = bind_name a, %param.loc33
 // CHECK:STDOUT:     %int.make_type_32.loc33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_37.1: type = value_of_initializer %int.make_type_32.loc33 [template = i32]
 // CHECK:STDOUT:     %.loc33_37.2: type = converted %int.make_type_32.loc33, %.loc33_37.1 [template = i32]
@@ -138,8 +138,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc37: type = name_ref Derived, %Derived.decl.loc11 [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc37_40: type = ptr_type %Derived [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc37_30.1: %.8 = param p
-// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: %.8 = bind_name p, %p.loc37_30.1
+// CHECK:STDOUT:     %param.loc37: %.8 = param
+// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: %.8 = bind_name p, %param.loc37
 // CHECK:STDOUT:     %int.make_type_32.loc37: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc37_46.1: type = value_of_initializer %int.make_type_32.loc37 [template = i32]
 // CHECK:STDOUT:     %.loc37_46.2: type = converted %int.make_type_32.loc37, %.loc37_46.1 [template = i32]
@@ -154,15 +154,15 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc21: %Derived = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Derived [template = constants.%Derived]
-// CHECK:STDOUT:     %self.loc21_8.1: %Derived = param self
-// CHECK:STDOUT:     %self.loc21_8.2: %Derived = bind_name self, %self.loc21_8.1
+// CHECK:STDOUT:     %param.loc21: %Derived = param
+// CHECK:STDOUT:     %self.loc21: %Derived = bind_name self, %param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {
 // CHECK:STDOUT:     %.loc22: %Derived = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc22: type = name_ref Self, constants.%Derived [template = constants.%Derived]
-// CHECK:STDOUT:     %self.loc22_8.1: %Derived = param self
-// CHECK:STDOUT:     %self.loc22_8.2: %Derived = bind_name self, %self.loc22_8.1
+// CHECK:STDOUT:     %param.loc22: %Derived = param
+// CHECK:STDOUT:     %self.loc22: %Derived = bind_name self, %param.loc22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -178,8 +178,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc14_8: %Base = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc14_8.1: %Base = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %Base = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %param.loc14: %Base = param
+// CHECK:STDOUT:     %self.loc14: %Base = bind_name self, %param.loc14
 // CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32.loc14, %.loc14_25.1 [template = i32]
@@ -189,8 +189,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc15_8: %Derived = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [template = constants.%Derived]
-// CHECK:STDOUT:     %self.loc15_8.1: %Derived = param self
-// CHECK:STDOUT:     %self.loc15_8.2: %Derived = bind_name self, %self.loc15_8.1
+// CHECK:STDOUT:     %param.loc15: %Derived = param
+// CHECK:STDOUT:     %self.loc15: %Derived = bind_name self, %param.loc15
 // CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_28.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:     %.loc15_28.2: type = converted %int.make_type_32.loc15, %.loc15_28.1 [template = i32]
@@ -205,13 +205,13 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@Base.%self.loc14_8.2: %Base]() -> i32;
+// CHECK:STDOUT: fn @F.1[@Base.%self.loc14: %Base]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1[@Base.%self.loc15_8.2: %Derived]() -> i32;
+// CHECK:STDOUT: fn @G.1[@Base.%self.loc15: %Derived]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@Derived.%self.loc21_8.2: %Derived]();
+// CHECK:STDOUT: fn @F.2[@Derived.%self.loc21: %Derived]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[@Derived.%self.loc22_8.2: %Derived]();
+// CHECK:STDOUT: fn @G.2[@Derived.%self.loc22: %Derived]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:

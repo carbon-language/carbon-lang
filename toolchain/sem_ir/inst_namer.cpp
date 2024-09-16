@@ -522,8 +522,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
         continue;
       }
-      case CARBON_KIND(Param inst): {
-        add_inst_name_id(inst.name_id);
+      case InstKind::Param: {
+        // FIXME bring back the name
+        add_inst_name("param");
         continue;
       }
       case CARBON_KIND(SpliceBlock inst): {

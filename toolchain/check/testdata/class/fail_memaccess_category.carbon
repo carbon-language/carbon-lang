@@ -21,9 +21,9 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~
   // CHECK:STDERR:
   s.a.F();
 
@@ -32,9 +32,9 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~
   b.a.F();
 }
 
@@ -85,11 +85,11 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.6]
-// CHECK:STDOUT:     %s.loc19_6.1: %.6 = param s
-// CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %s.loc19_6.1
+// CHECK:STDOUT:     %param.loc19_6: %.6 = param
+// CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %param.loc19_6
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:     %b.loc19_18.1: %B = param b
-// CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %b.loc19_18.1
+// CHECK:STDOUT:     %param.loc19_18: %B = param
+// CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %param.loc19_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,9 +100,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
-// CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
-// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.3
+// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %self.loc12_13.2: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -119,7 +119,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @A.%self.loc12_13.3: %.1]();
+// CHECK:STDOUT: fn @F.1[addr @A.%self.loc12_13.2: %.1]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: %.6, %b: %B) {
 // CHECK:STDOUT: !entry:

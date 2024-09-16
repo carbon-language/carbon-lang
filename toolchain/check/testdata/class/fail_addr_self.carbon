@@ -17,18 +17,18 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:8: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: Class*]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   c.F();
 
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.G();
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-16]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-16]]:8: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   c.G();
 
@@ -38,9 +38,9 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `Class*` to `Class`.
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-28]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-28]]:8: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
   (*p).G();
 }
 
@@ -85,12 +85,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %.loc16_16: %.1 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc16_9: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc16_6.1: %Class = param c
-// CHECK:STDOUT:     @F.2.%c: %Class = bind_name c, %c.loc16_6.1
+// CHECK:STDOUT:     %param.loc16_6: %Class = param
+// CHECK:STDOUT:     @F.2.%c: %Class = bind_name c, %param.loc16_6
 // CHECK:STDOUT:     %Class.ref.loc16_19: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_24: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %p.loc16_16.1: %.1 = param p
-// CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %p.loc16_16.1
+// CHECK:STDOUT:     %param.loc16_16: %.1 = param
+// CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %param.loc16_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,18 +101,18 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_24: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self
-// CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
-// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.3
+// CHECK:STDOUT:     %param.loc12: %.1 = param
+// CHECK:STDOUT:     %self.loc12_13.2: %.1 = bind_name self, %param.loc12
+// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc13_13: %Class = binding_pattern self
 // CHECK:STDOUT:     %.loc13_8.1: %Class = addr_pattern %.loc13_13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc13_13.1: %Class = param self
-// CHECK:STDOUT:     %self.loc13_13.3: %Class = bind_name self, %self.loc13_13.1
-// CHECK:STDOUT:     %.loc13_8.2: %Class = addr_param %self.loc13_13.3
+// CHECK:STDOUT:     %param.loc13: %Class = param
+// CHECK:STDOUT:     %self.loc13_13.2: %Class = bind_name self, %param.loc13
+// CHECK:STDOUT:     %.loc13_8.2: %Class = addr_param %self.loc13_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -121,9 +121,9 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @Class.%self.loc12_13.3: %.1]();
+// CHECK:STDOUT: fn @F.1[addr @Class.%self.loc12_13.2: %.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr @Class.%self.loc13_13.3: %Class]();
+// CHECK:STDOUT: fn @G[addr @Class.%self.loc13_13.2: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: %Class, %p: %.1) {
 // CHECK:STDOUT: !entry:

@@ -80,8 +80,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %.loc23: %C = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc23_11.1: %C = param a
-// CHECK:STDOUT:     @TestOp.%a: %C = bind_name a, %a.loc23_11.1
+// CHECK:STDOUT:     %param: %C = param
+// CHECK:STDOUT:     @TestOp.%a: %C = bind_name a, %param
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -99,8 +99,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %.loc18: %C = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.loc18_9.1: %C = param self
-// CHECK:STDOUT:     %self.loc18_9.2: %C = bind_name self, %self.loc18_9.1
+// CHECK:STDOUT:     %param: %C = param
+// CHECK:STDOUT:     %self: %C = bind_name self, %param
 // CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -116,7 +116,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.%self.loc18_9.2: %C]() -> @impl.%return.var: %C {
+// CHECK:STDOUT: fn @Op.1[@impl.%self: %C]() -> @impl.%return.var: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), @impl.%return.var [template = constants.%struct]

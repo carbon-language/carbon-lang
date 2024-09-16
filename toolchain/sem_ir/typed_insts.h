@@ -823,7 +823,6 @@ struct Param {
       InstKind::Param.Define<Parse::NodeId>({.ir_name = "param"});
 
   TypeId type_id;
-  NameId name_id;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in

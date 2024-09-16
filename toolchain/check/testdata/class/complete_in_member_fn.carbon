@@ -56,8 +56,8 @@ class C {
 // CHECK:STDOUT:     %.loc12_8: %C = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc12_8.1: %C = param c
-// CHECK:STDOUT:     %c.loc12_8.2: %C = bind_name c, %c.loc12_8.1
+// CHECK:STDOUT:     %param: %C = param
+// CHECK:STDOUT:     %c: %C = bind_name c, %param
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32.loc12, %.loc12_17.1 [template = i32]
@@ -76,9 +76,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(@C.%c.loc12_8.2: %C) -> i32 {
+// CHECK:STDOUT: fn @F(@C.%c: %C) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %C = name_ref c, @C.%c.loc12_8.2
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, @C.%c
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @C.%.loc14_8 [template = @C.%.loc14_8]
 // CHECK:STDOUT:   %.loc12_31.1: ref i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc12_31.2: i32 = bind_value %.loc12_31.1

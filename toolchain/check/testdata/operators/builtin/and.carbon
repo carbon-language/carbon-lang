@@ -96,8 +96,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %bool.make_type.loc25: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
 // CHECK:STDOUT:     %.loc25_23.2: type = converted %bool.make_type.loc25, %.loc25_23.1 [template = bool]
-// CHECK:STDOUT:     %x.loc25_20.1: bool = param x
-// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc25_20.1
+// CHECK:STDOUT:     %param: bool = param
+// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

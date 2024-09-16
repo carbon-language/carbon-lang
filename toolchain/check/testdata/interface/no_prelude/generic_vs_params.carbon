@@ -96,14 +96,14 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = interface_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
 // CHECK:STDOUT:     %.loc6: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc6_28.1: type = param T
-// CHECK:STDOUT:     %T.loc6_28.2: type = bind_symbolic_name T 0, %T.loc6_28.1 [symbolic = @GenericAndParams.1.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc6: type = param
+// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %param.loc6 [symbolic = @GenericAndParams.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %.loc8: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc8_9.1: type = param T
-// CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T 0, %T.loc8_9.1 [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc8: type = param
+// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   impl_decl @impl.1 {} {
@@ -161,7 +161,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @GenericAndParams.1(file.%T.loc6_28.2: type) {
+// CHECK:STDOUT: generic interface @GenericAndParams.1(file.%T.loc6: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -177,7 +177,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @GenericNoParams(file.%T.loc8_9.2: type) {
+// CHECK:STDOUT: generic interface @GenericNoParams(file.%T.loc8: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.1: type = interface_type @GenericNoParams, @GenericNoParams(%T) [symbolic = %.1 (constants.%.6)]
@@ -192,7 +192,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @GenericAndParams.2(file.%T.loc8_9.2: type, @C.%U.loc10_30.2: type) {
+// CHECK:STDOUT: generic interface @GenericAndParams.2(file.%T.loc8: type, @C.%U: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -244,7 +244,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(file.%T.loc8_9.2: type) {
+// CHECK:STDOUT: generic class @C(file.%T.loc8: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -254,8 +254,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = interface_decl @GenericAndParams.2 [template = constants.%GenericAndParams.2] {
 // CHECK:STDOUT:       %.loc10: type = symbolic_binding_pattern U 1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %U.loc10_30.1: type = param U
-// CHECK:STDOUT:       %U.loc10_30.2: type = bind_symbolic_name U 1, %U.loc10_30.1 [symbolic = @GenericAndParams.2.%U (constants.%U)]
+// CHECK:STDOUT:       %param: type = param
+// CHECK:STDOUT:       %U: type = bind_symbolic_name U 1, %param [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -338,8 +338,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %.loc8: type = binding_pattern T
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc8_13.1: type = param T
-// CHECK:STDOUT:     %T.loc8_13.2: type = bind_name T, %T.loc8_13.1
+// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     %T: type = bind_name T, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,8 +368,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %.loc7: type = binding_pattern T
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc7_13.1: type = param T
-// CHECK:STDOUT:     %T.loc7_13.2: type = bind_name T, %T.loc7_13.1
+// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     %T: type = bind_name T, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

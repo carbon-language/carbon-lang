@@ -47,8 +47,8 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc11: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @G.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @G.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     @G.%T.loc11: type = bind_symbolic_name T 0, %param [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

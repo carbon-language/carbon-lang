@@ -138,8 +138,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32.loc8_27 [template = i32]
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_30: type = struct_type {.a: i32, .b: i32} [template = constants.%.11]
-// CHECK:STDOUT:     %S.loc8_9.1: %.11 = param S
-// CHECK:STDOUT:     %S.loc8_9.2: %.11 = bind_symbolic_name S 0, %S.loc8_9.1 [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:     %param: %.11 = param
+// CHECK:STDOUT:     %S: %.11 = bind_symbolic_name S 0, %param [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
@@ -155,7 +155,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(file.%S.loc8_9.2: %.11) {
+// CHECK:STDOUT: generic class @C(file.%S: %.11) {
 // CHECK:STDOUT:   %S: %.11 = bind_symbolic_name S 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

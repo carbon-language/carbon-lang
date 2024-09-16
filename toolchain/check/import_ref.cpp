@@ -693,51 +693,46 @@ class ImportRefResolver {
         inst = import_ir_.insts().Get(bind_id);
       }
 
-      auto bind_inst = inst.TryAs<SemIR::AnyBindName>();
-      if (bind_inst) {
-        param_id = bind_inst->value_id;
-        inst = import_ir_.insts().Get(param_id);
-      }
-      auto param_inst = inst.As<SemIR::Param>();
+      auto bind_inst = inst.As<SemIR::AnyBindName>();
+      param_id = bind_inst.value_id;
+      inst = import_ir_.insts().Get(param_id);
 
       // Rebuild the param instruction.
-      auto name_id = GetLocalNameId(param_inst.name_id);
+      auto entity_name =
+          import_ir_.entity_names().Get(bind_inst.entity_name_id);
+      auto name_id = GetLocalNameId(entity_name.name_id);
       auto type_id =
           context_.GetTypeIdForTypeConstant(param_data.type_const_id);
 
       auto new_param_id = context_.AddInstInNoBlock<SemIR::Param>(
-          AddImportIRInst(param_id), {.type_id = type_id, .name_id = name_id});
-      if (bind_inst) {
-        switch (bind_inst->kind) {
-          case SemIR::BindName::Kind: {
-            auto entity_name_id = context_.entity_names().Add(
-                {.name_id = name_id,
-                 .parent_scope_id = SemIR::NameScopeId::Invalid,
-                 .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-            new_param_id = context_.AddInstInNoBlock<SemIR::BindName>(
-                AddImportIRInst(bind_id), {.type_id = type_id,
-                                           .entity_name_id = entity_name_id,
-                                           .value_id = new_param_id});
-            break;
-          }
-          case SemIR::BindSymbolicName::Kind: {
-            // We already imported a constant value for this symbolic binding.
-            // We can reuse most of it, but update the value to point to our
-            // specific parameter, and preserve the constant value.
-            auto new_bind_inst =
-                context_.insts().GetAs<SemIR::BindSymbolicName>(
-                    context_.constant_values().GetInstId(
-                        param_data.bind_const_id));
-            new_bind_inst.value_id = new_param_id;
-            new_param_id = context_.AddInstInNoBlock(AddImportIRInst(bind_id),
-                                                     new_bind_inst);
-            context_.constant_values().Set(new_param_id,
-                                           param_data.bind_const_id);
-            break;
-          }
-          default: {
-            CARBON_FATAL() << "Unexpected kind: " << bind_inst->kind;
-          }
+          AddImportIRInst(param_id), {.type_id = type_id});
+      switch (bind_inst.kind) {
+        case SemIR::BindName::Kind: {
+          auto entity_name_id = context_.entity_names().Add(
+              {.name_id = name_id,
+               .parent_scope_id = SemIR::NameScopeId::Invalid,
+               .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+          new_param_id = context_.AddInstInNoBlock<SemIR::BindName>(
+              AddImportIRInst(bind_id), {.type_id = type_id,
+                                         .entity_name_id = entity_name_id,
+                                         .value_id = new_param_id});
+          break;
+        }
+        case SemIR::BindSymbolicName::Kind: {
+          // We already imported a constant value for this symbolic binding.
+          // We can reuse most of it, but update the value to point to our
+          // specific parameter, and preserve the constant value.
+          auto new_bind_inst = context_.insts().GetAs<SemIR::BindSymbolicName>(
+              context_.constant_values().GetInstId(param_data.bind_const_id));
+          new_bind_inst.value_id = new_param_id;
+          new_param_id = context_.AddInstInNoBlock(AddImportIRInst(bind_id),
+                                                   new_bind_inst);
+          context_.constant_values().Set(new_param_id,
+                                         param_data.bind_const_id);
+          break;
+        }
+        default: {
+          CARBON_FATAL() << "Unexpected kind: " << bind_inst.kind;
         }
       }
       if (addr_inst) {

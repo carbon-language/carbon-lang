@@ -133,8 +133,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %.loc15: %C = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc15_14.1: %C = param a
-// CHECK:STDOUT:     @TestUnary.%a: %C = bind_name a, %a.loc15_14.1
+// CHECK:STDOUT:     %param.loc15: %C = param
+// CHECK:STDOUT:     @TestUnary.%a: %C = bind_name a, %param.loc15
 // CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestUnary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -143,11 +143,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %.loc23_21: %C = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc23_15.1: %C = param a
-// CHECK:STDOUT:     @TestBinary.%a: %C = bind_name a, %a.loc23_15.1
+// CHECK:STDOUT:     %param.loc23_15: %C = param
+// CHECK:STDOUT:     @TestBinary.%a: %C = bind_name a, %param.loc23_15
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc23_21.1: %C = param b
-// CHECK:STDOUT:     @TestBinary.%b: %C = bind_name b, %b.loc23_21.1
+// CHECK:STDOUT:     %param.loc23_21: %C = param
+// CHECK:STDOUT:     @TestBinary.%b: %C = bind_name b, %param.loc23_21
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
@@ -155,8 +155,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %.loc31: %C = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc31_12.1: %C = param b
-// CHECK:STDOUT:     @TestRef.%b: %C = bind_name b, %b.loc31_12.1
+// CHECK:STDOUT:     %param.loc31: %C = param
+// CHECK:STDOUT:     @TestRef.%b: %C = bind_name b, %param.loc31
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

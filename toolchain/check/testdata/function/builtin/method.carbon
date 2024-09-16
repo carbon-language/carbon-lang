@@ -93,13 +93,13 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %self.loc12_8.1: @F.1.%Self (%Self) = param self
-// CHECK:STDOUT:     %self.loc12_8.2: @F.1.%Self (%Self) = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %param.loc12_8: @F.1.%Self (%Self) = param
+// CHECK:STDOUT:     %self: @F.1.%Self (%Self) = bind_name self, %param.loc12_8
 // CHECK:STDOUT:     %Self.ref.loc12_27: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_27.1: type = facet_type_access %Self.ref.loc12_27 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %other.loc12_20.1: @F.1.%Self (%Self) = param other
-// CHECK:STDOUT:     %other.loc12_20.2: @F.1.%Self (%Self) = bind_name other, %other.loc12_20.1
+// CHECK:STDOUT:     %param.loc12_20: @F.1.%Self (%Self) = param
+// CHECK:STDOUT:     %other: @F.1.%Self (%Self) = bind_name other, %param.loc12_20
 // CHECK:STDOUT:     %Self.ref.loc12_36: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.1: type = facet_type_access %Self.ref.loc12_36 [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = @F.1.%Self (constants.%Self)]
@@ -121,13 +121,13 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %int.make_type_32.loc16_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_14.1: type = value_of_initializer %int.make_type_32.loc16_14 [template = i32]
 // CHECK:STDOUT:     %.loc16_14.2: type = converted %int.make_type_32.loc16_14, %.loc16_14.1 [template = i32]
-// CHECK:STDOUT:     %self.loc16_8.1: i32 = param self
-// CHECK:STDOUT:     %self.loc16_8.2: i32 = bind_name self, %self.loc16_8.1
+// CHECK:STDOUT:     %param.loc16_8: i32 = param
+// CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc16_8
 // CHECK:STDOUT:     %int.make_type_32.loc16_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_26.1: type = value_of_initializer %int.make_type_32.loc16_26 [template = i32]
 // CHECK:STDOUT:     %.loc16_26.2: type = converted %int.make_type_32.loc16_26, %.loc16_26.1 [template = i32]
-// CHECK:STDOUT:     %other.loc16_19.1: i32 = param other
-// CHECK:STDOUT:     %other.loc16_19.2: i32 = bind_name other, %other.loc16_19.1
+// CHECK:STDOUT:     %param.loc16_19: i32 = param
+// CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc16_19
 // CHECK:STDOUT:     %int.make_type_32.loc16_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_34.1: type = value_of_initializer %int.make_type_32.loc16_34 [template = i32]
 // CHECK:STDOUT:     %.loc16_34.2: type = converted %int.make_type_32.loc16_34, %.loc16_34.1 [template = i32]
@@ -143,12 +143,12 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@I.%self.loc12_8.2: @F.1.%Self (%Self)](@I.%other.loc12_20.2: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
+// CHECK:STDOUT:   fn[@I.%self: @F.1.%Self (%Self)](@I.%other: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@impl.%self.loc16_8.2: i32](@impl.%other.loc16_19.2: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @F.2[@impl.%self: i32](@impl.%other: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

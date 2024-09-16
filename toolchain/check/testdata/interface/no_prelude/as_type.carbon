@@ -32,8 +32,8 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:     %.loc13: %.1 = binding_pattern e
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %e.loc13_6.1: %.1 = param e
-// CHECK:STDOUT:     @F.%e: %.1 = bind_name e, %e.loc13_6.1
+// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     @F.%e: %.1 = bind_name e, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

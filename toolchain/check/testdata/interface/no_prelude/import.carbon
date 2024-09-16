@@ -215,22 +215,22 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %.loc6: %.1 = binding_pattern e
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %e.loc6_13.1: %.1 = param e
-// CHECK:STDOUT:     @UseEmpty.%e: %.1 = bind_name e, %e.loc6_13.1
+// CHECK:STDOUT:     %param.loc6: %.1 = param
+// CHECK:STDOUT:     @UseEmpty.%e: %.1 = bind_name e, %param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [template = constants.%UseBasic] {
 // CHECK:STDOUT:     %.loc7: %.3 = binding_pattern e
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Basic.ref.loc7: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]
-// CHECK:STDOUT:     %e.loc7_13.1: %.3 = param e
-// CHECK:STDOUT:     @UseBasic.%e: %.3 = bind_name e, %e.loc7_13.1
+// CHECK:STDOUT:     %param.loc7: %.3 = param
+// CHECK:STDOUT:     @UseBasic.%e: %.3 = bind_name e, %param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [template = constants.%UseForwardDeclared] {
 // CHECK:STDOUT:     %.loc8: %.4 = binding_pattern f
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc8: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%.4]
-// CHECK:STDOUT:     %f.loc8_23.1: %.4 = param f
-// CHECK:STDOUT:     @UseForwardDeclared.%f: %.4 = bind_name f, %f.loc8_23.1
+// CHECK:STDOUT:     %param.loc8: %.4 = param
+// CHECK:STDOUT:     @UseForwardDeclared.%f: %.4 = bind_name f, %param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]
 // CHECK:STDOUT:   %T.ref.loc10: %.5 = name_ref T, imports.%import_ref.7 [template = constants.%.6]

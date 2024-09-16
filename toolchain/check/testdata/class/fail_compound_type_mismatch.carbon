@@ -69,8 +69,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:     %.loc19_15: %A = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %a.loc19_15.1: %A = param a
-// CHECK:STDOUT:     @AccessBInA.%a: %A = bind_name a, %a.loc19_15.1
+// CHECK:STDOUT:     %param: %A = param
+// CHECK:STDOUT:     @AccessBInA.%a: %A = bind_name a, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_24.2: type = converted %int.make_type_32, %.loc19_24.1 [template = i32]

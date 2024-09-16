@@ -141,15 +141,15 @@ class StructAdapter {
 // CHECK:STDOUT:     %.loc19: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref.loc19: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %a.loc19_29.1: %SomeClassAdapter = param a
-// CHECK:STDOUT:     @TestStaticMemberFunction.%a: %SomeClassAdapter = bind_name a, %a.loc19_29.1
+// CHECK:STDOUT:     %param.loc19: %SomeClassAdapter = param
+// CHECK:STDOUT:     @TestStaticMemberFunction.%a: %SomeClassAdapter = bind_name a, %param.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdapterMethod.decl: %TestAdapterMethod.type = fn_decl @TestAdapterMethod [template = constants.%TestAdapterMethod] {
 // CHECK:STDOUT:     %.loc23: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref.loc23: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %a.loc23_22.1: %SomeClassAdapter = param a
-// CHECK:STDOUT:     @TestAdapterMethod.%a: %SomeClassAdapter = bind_name a, %a.loc23_22.1
+// CHECK:STDOUT:     %param.loc23: %SomeClassAdapter = param
+// CHECK:STDOUT:     @TestAdapterMethod.%a: %SomeClassAdapter = bind_name a, %param.loc23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -176,8 +176,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %.loc12: %SomeClassAdapter = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %self.loc12_20.1: %SomeClassAdapter = param self
-// CHECK:STDOUT:     %self.loc12_20.2: %SomeClassAdapter = bind_name self, %self.loc12_20.1
+// CHECK:STDOUT:     %param: %SomeClassAdapter = param
+// CHECK:STDOUT:     %self: %SomeClassAdapter = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -192,7 +192,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @StaticMemberFunction();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdapterMethod[@SomeClass.%self.loc12_20.2: %SomeClassAdapter]();
+// CHECK:STDOUT: fn @AdapterMethod[@SomeClass.%self: %SomeClassAdapter]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestStaticMemberFunction(%a: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
@@ -251,8 +251,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %.loc12: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %a.loc12_6.1: %SomeClassAdapter = param a
-// CHECK:STDOUT:     @F.2.%a: %SomeClassAdapter = bind_name a, %a.loc12_6.1
+// CHECK:STDOUT:     %param: %SomeClassAdapter = param
+// CHECK:STDOUT:     @F.2.%a: %SomeClassAdapter = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -261,8 +261,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %.loc5: %SomeClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
-// CHECK:STDOUT:     %self.loc5_8.1: %SomeClass = param self
-// CHECK:STDOUT:     %self.loc5_8.2: %SomeClass = bind_name self, %self.loc5_8.1
+// CHECK:STDOUT:     %param: %SomeClass = param
+// CHECK:STDOUT:     %self: %SomeClass = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -279,7 +279,7 @@ class StructAdapter {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[@SomeClass.%self.loc5_8.2: %SomeClass]();
+// CHECK:STDOUT: fn @F.1[@SomeClass.%self: %SomeClass]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
@@ -333,8 +333,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %.loc13_6: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %a.loc13_6.1: %SomeClassAdapter = param a
-// CHECK:STDOUT:     @F.%a: %SomeClassAdapter = bind_name a, %a.loc13_6.1
+// CHECK:STDOUT:     %param: %SomeClassAdapter = param
+// CHECK:STDOUT:     @F.%a: %SomeClassAdapter = bind_name a, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32, %.loc13_30.1 [template = i32]

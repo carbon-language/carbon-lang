@@ -89,8 +89,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %.loc18: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc18_6.1: %Class = param c
-// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %c.loc18_6.1
+// CHECK:STDOUT:     %param: %Class = param
+// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,8 +100,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %.loc13: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc13_15.1: %Class = param self
-// CHECK:STDOUT:     %self.loc13_15.2: %Class = bind_name self, %self.loc13_15.1
+// CHECK:STDOUT:     %param: %Class = param
+// CHECK:STDOUT:     %self: %Class = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -112,7 +112,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[@Class.%self.loc13_15.2: %Class]();
+// CHECK:STDOUT: fn @WithSelf[@Class.%self: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: %Class) {
 // CHECK:STDOUT: !entry:

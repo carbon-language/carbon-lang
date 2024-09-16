@@ -58,6 +58,11 @@ struct Function : public EntityWithParamsBase,
   }
 
   // Given a parameter reference instruction from `param_refs_id` or
+  // `implicit_param_refs_id`, returns the NameID of the parameter.
+  static auto GetNameFromParamRefId(const File& sem_ir, InstId param_ref_id)
+      -> NameId;
+
+  // Given a parameter reference instruction from `param_refs_id` or
   // `implicit_param_refs_id`, returns the corresponding `Param` instruction
   // and its ID.
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)

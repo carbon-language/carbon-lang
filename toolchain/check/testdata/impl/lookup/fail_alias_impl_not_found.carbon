@@ -71,8 +71,8 @@ fn F(c: C) {
 // CHECK:STDOUT:     %.loc19: %C = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.loc19_6.1: %C = param c
-// CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %c.loc19_6.1
+// CHECK:STDOUT:     %param: %C = param
+// CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

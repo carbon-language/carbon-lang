@@ -64,8 +64,8 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %.loc21_12: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc21_12.1: %Class = param self
-// CHECK:STDOUT:     @F.%self: %Class = bind_name self, %self.loc21_12.1
+// CHECK:STDOUT:     %param: %Class = param
+// CHECK:STDOUT:     @F.%self: %Class = bind_name self, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_29.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc21_29.2: type = converted %int.make_type_32, %.loc21_29.1 [template = i32]
@@ -78,8 +78,8 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %.loc12_8: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc12_8.1: %Class = param self
-// CHECK:STDOUT:     %self.loc12_8.2: %Class = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %param: %Class = param
+// CHECK:STDOUT:     %self: %Class = bind_name self, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %int.make_type_32, %.loc12_25.1 [template = i32]

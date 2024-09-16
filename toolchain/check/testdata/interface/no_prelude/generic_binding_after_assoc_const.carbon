@@ -47,8 +47,8 @@ interface I {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %.loc12_8: type = symbolic_binding_pattern T 1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc12_8.1: type = param T
-// CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %param.loc12: type = param
+// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T 1, %param.loc12 [symbolic = @F.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_17: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
@@ -56,8 +56,8 @@ interface I {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc16_8: type = symbolic_binding_pattern T 1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc16_8.1: type = param T
-// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T 1, %T.loc16_8.1 [symbolic = @G.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %param.loc16: type = param
+// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T 1, %param.loc16 [symbolic = @G.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_17: %.7 = assoc_entity element2, %G.decl [template = constants.%.8]
 // CHECK:STDOUT:
@@ -69,16 +69,16 @@ interface I {
 // CHECK:STDOUT:   witness = (%F.decl, %U, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@I.%Self: %.1, @I.%T.loc12_8.2: type) {
+// CHECK:STDOUT: generic fn @F(@I.%Self: %.1, @I.%T.loc12: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 1 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@I.%T.loc12_8.2: type);
+// CHECK:STDOUT:   fn(@I.%T.loc12: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(@I.%Self: %.1, @I.%T.loc16_8.2: type) {
+// CHECK:STDOUT: generic fn @G(@I.%Self: %.1, @I.%T.loc16: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 1 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@I.%T.loc16_8.2: type);
+// CHECK:STDOUT:   fn(@I.%T.loc16: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self, constants.%T) {

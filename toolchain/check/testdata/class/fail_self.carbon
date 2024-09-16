@@ -95,8 +95,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %.loc25: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc25_12.1: %Class = param self
-// CHECK:STDOUT:     @F.1.%self: %Class = bind_name self, %self.loc25_12.1
+// CHECK:STDOUT:     %param.loc25: %Class = param
+// CHECK:STDOUT:     @F.1.%self: %Class = bind_name self, %param.loc25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
@@ -107,8 +107,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %.loc45: %WrongSelf = binding_pattern ws
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
-// CHECK:STDOUT:     %ws.loc45_18.1: %WrongSelf = param ws
-// CHECK:STDOUT:     @CallWrongSelf.%ws: %WrongSelf = bind_name ws, %ws.loc45_18.1
+// CHECK:STDOUT:     %param.loc45: %WrongSelf = param
+// CHECK:STDOUT:     @CallWrongSelf.%ws: %WrongSelf = bind_name ws, %param.loc45
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,8 +117,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %.loc16: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc16_8.1: %Class = param self
-// CHECK:STDOUT:     %self.loc16_8.2: %Class = bind_name self, %self.loc16_8.1
+// CHECK:STDOUT:     %param: %Class = param
+// CHECK:STDOUT:     %self: %Class = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
@@ -136,8 +136,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %.loc42: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc42_8.1: %Class = param self
-// CHECK:STDOUT:     %self.loc42_8.2: %Class = bind_name self, %self.loc42_8.1
+// CHECK:STDOUT:     %param: %Class = param
+// CHECK:STDOUT:     %self: %Class = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -160,7 +160,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@WrongSelf.%self.loc42_8.2: %Class]();
+// CHECK:STDOUT: fn @F.2[@WrongSelf.%self: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: %WrongSelf) {
 // CHECK:STDOUT: !entry:

@@ -51,27 +51,27 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %.loc11: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc11: type = param
+// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param.loc11 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %.loc16_10: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:     %.loc16_22: %Class.2 = binding_pattern self
 // CHECK:STDOUT:     %.loc16_34: %T = binding_pattern n
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc16_10.1: type = param T
-// CHECK:STDOUT:     %T.loc16_10.2: type = bind_symbolic_name T 0, %T.loc16_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %param.loc16_10: type = param
+// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T 0, %param.loc16_10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc16_28: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc16_28 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %self.loc16_22.1: %Class.2 = param self
-// CHECK:STDOUT:     @F.%self: %Class.2 = bind_name self, %self.loc16_22.1
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_10.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc16_34.1: %T = param n
-// CHECK:STDOUT:     @F.%n: %T = bind_name n, %n.loc16_34.1
+// CHECK:STDOUT:     %param.loc16_22: %Class.2 = param
+// CHECK:STDOUT:     @F.%self: %Class.2 = bind_name self, %param.loc16_22
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16 [symbolic = constants.%T]
+// CHECK:STDOUT:     %param.loc16_34: %T = param
+// CHECK:STDOUT:     @F.%n: %T = bind_name n, %param.loc16_34
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(file.%T.loc11_13.2: type) {
+// CHECK:STDOUT: generic class @Class(file.%T.loc11: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -81,7 +81,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc11 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:     %.loc12: @Class.%.1 (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
 // CHECK:STDOUT:       %.loc13_8: %Class.2 = binding_pattern self
@@ -89,11 +89,11 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @F.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc13_14 [symbolic = @F.%Class (constants.%Class.2)]
-// CHECK:STDOUT:       %self.loc13_8.1: @F.%Class (%Class.2) = param self
-// CHECK:STDOUT:       %self.loc13_8.2: @F.%Class (%Class.2) = bind_name self, %self.loc13_8.1
-// CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:       %n.loc13_20.1: @F.%T (%T) = param n
-// CHECK:STDOUT:       %n.loc13_20.2: @F.%T (%T) = bind_name n, %n.loc13_20.1
+// CHECK:STDOUT:       %param.loc13_8: @F.%Class (%Class.2) = param
+// CHECK:STDOUT:       %self: @F.%Class (%Class.2) = bind_name self, %param.loc13_8
+// CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, file.%T.loc11 [symbolic = @F.%T (constants.%T)]
+// CHECK:STDOUT:       %param.loc13_20: @F.%T (%T) = param
+// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param.loc13_20
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -103,7 +103,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(file.%T.loc11_13.2: type) {
+// CHECK:STDOUT: generic fn @F(file.%T.loc11: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:

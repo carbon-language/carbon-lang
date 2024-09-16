@@ -73,16 +73,16 @@ fn Initializing() {
 // CHECK:STDOUT:     %.loc17: %X = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %n.loc17_10.1: %X = param n
-// CHECK:STDOUT:     @Value.%n: %X = bind_name n, %n.loc17_10.1
+// CHECK:STDOUT:     %param.loc17: %X = param
+// CHECK:STDOUT:     @Value.%n: %X = bind_name n, %param.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
 // CHECK:STDOUT:     %.loc21_14: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc21_14.1: %.4 = param p
-// CHECK:STDOUT:     @Reference.%p: %.4 = bind_name p, %p.loc21_14.1
+// CHECK:STDOUT:     %param.loc21: %.4 = param
+// CHECK:STDOUT:     @Reference.%p: %.4 = bind_name p, %param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
 // CHECK:STDOUT:     %X.ref.loc25: type = name_ref X, %X.decl [template = constants.%X]

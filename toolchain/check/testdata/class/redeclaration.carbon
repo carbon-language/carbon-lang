@@ -56,13 +56,13 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %.loc17_24: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc17_12.1: %Class = param self
-// CHECK:STDOUT:     @F.%self: %Class = bind_name self, %self.loc17_12.1
+// CHECK:STDOUT:     %param.loc17_12: %Class = param
+// CHECK:STDOUT:     @F.%self: %Class = bind_name self, %param.loc17_12
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc17_27.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc17_27.2: type = converted %bool.make_type, %.loc17_27.1 [template = bool]
-// CHECK:STDOUT:     %b.loc17_24.1: bool = param b
-// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc17_24.1
+// CHECK:STDOUT:     %param.loc17_24: bool = param
+// CHECK:STDOUT:     @F.%b: bool = bind_name b, %param.loc17_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,13 +72,13 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %.loc14_20: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc14_8.1: %Class = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %Class = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %param.loc14_8: %Class = param
+// CHECK:STDOUT:     %self: %Class = bind_name self, %param.loc14_8
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_23.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_23.2: type = converted %bool.make_type, %.loc14_23.1 [template = bool]
-// CHECK:STDOUT:     %b.loc14_20.1: bool = param b
-// CHECK:STDOUT:     %b.loc14_20.2: bool = bind_name b, %b.loc14_20.1
+// CHECK:STDOUT:     %param.loc14_20: bool = param
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc14_20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

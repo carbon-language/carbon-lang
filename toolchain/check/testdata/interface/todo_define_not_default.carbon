@@ -78,13 +78,13 @@ interface I {
 // CHECK:STDOUT:     %int.make_type_32.loc14_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32.loc14_11 [template = i32]
 // CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32.loc14_11, %.loc14_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc14_8.1: i32 = param a
-// CHECK:STDOUT:     %a.loc14_8.2: i32 = bind_name a, %a.loc14_8.1
+// CHECK:STDOUT:     %param.loc14_8: i32 = param
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc14_8
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
-// CHECK:STDOUT:     %b.loc14_16.1: i32 = param b
-// CHECK:STDOUT:     %b.loc14_16.2: i32 = bind_name b, %b.loc14_16.1
+// CHECK:STDOUT:     %param.loc14_16: i32 = param
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc14_16
 // CHECK:STDOUT:     %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_27.1: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %int.make_type_32.loc14_27, %.loc14_27.1 [template = i32]
@@ -130,7 +130,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@I.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@I.%a.loc14_8.2: i32, @I.%b.loc14_16.2: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(@I.%a: i32, @I.%b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

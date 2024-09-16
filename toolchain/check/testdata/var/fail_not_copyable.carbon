@@ -64,8 +64,8 @@ fn F(x: X) {
 // CHECK:STDOUT:     %.loc14: %X = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %x.loc14_6.1: %X = param x
-// CHECK:STDOUT:     @F.%x: %X = bind_name x, %x.loc14_6.1
+// CHECK:STDOUT:     %param: %X = param
+// CHECK:STDOUT:     @F.%x: %X = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

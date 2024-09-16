@@ -120,8 +120,8 @@ fn Run() {
 // CHECK:STDOUT:     %.loc14: %ForwardDeclared = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %self.loc14_8.1: %ForwardDeclared = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %ForwardDeclared = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %param.loc14: %ForwardDeclared = param
+// CHECK:STDOUT:     %self.loc14: %ForwardDeclared = bind_name self, %param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %.loc15_13: %.5 = binding_pattern self
@@ -129,9 +129,9 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.5]
-// CHECK:STDOUT:     %self.loc15_13.1: %.5 = param self
-// CHECK:STDOUT:     %self.loc15_13.3: %.5 = bind_name self, %self.loc15_13.1
-// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_param %self.loc15_13.3
+// CHECK:STDOUT:     %param.loc15: %.5 = param
+// CHECK:STDOUT:     %self.loc15_13.2: %.5 = bind_name self, %param.loc15
+// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_param %self.loc15_13.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -144,9 +144,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@ForwardDeclared.%self.loc14_8.2: %ForwardDeclared]();
+// CHECK:STDOUT: fn @F[@ForwardDeclared.%self.loc14: %ForwardDeclared]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr @ForwardDeclared.%self.loc15_13.3: %.5]();
+// CHECK:STDOUT: fn @G[addr @ForwardDeclared.%self.loc15_13.2: %.5]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

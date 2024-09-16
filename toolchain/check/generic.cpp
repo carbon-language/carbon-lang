@@ -434,8 +434,7 @@ auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
       inst_id = context.AddInstInNoBlock(
           SemIR::LocIdAndInst::ReusingLoc<SemIR::Param>(
               context.insts().GetLocId(inst_id),
-              {.type_id = SemIR::TypeId::Error,
-               .name_id = SemIR::NameId::Base}));
+              {.type_id = SemIR::TypeId::Error}));
     }
   }
 }

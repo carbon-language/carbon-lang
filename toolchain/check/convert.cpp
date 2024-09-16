@@ -1121,10 +1121,10 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId callee_id,
-                        SemIR::SpecificId callee_specific_id,
-                        std::optional<SemIR::AddrParam> addr_pattern,
-                        SemIR::InstId self_param_id, SemIR::Param self_param,
-                        SemIR::InstId self_id) -> SemIR::InstId {
+                        SemIR::SpecificId callee_specific_id, bool addr_pattern,
+                        SemIR::InstId self_param_id,
+                        SemIR::TypeId self_param_type_id, SemIR::InstId self_id)
+    -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
                       "Missing object argument in method call.");
@@ -1171,7 +1171,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
   return ConvertToValueOfType(
       context, call_loc_id, self_or_addr_id,
       SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
-                               self_param.type_id));
+                               self_param_type_id));
 }
 
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
@@ -1206,14 +1206,13 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
-    auto addr_pattern =
-        context.insts().TryGetAs<SemIR::AddrParam>(implicit_param_id);
-    auto [param_id, param] = SemIR::Function::GetParamFromParamRefId(
-        context.sem_ir(), implicit_param_id);
-    if (param.name_id == SemIR::NameId::SelfValue) {
+    auto implicit_param = context.insts().Get(implicit_param_id);
+    bool addr_pattern = implicit_param.kind() == SemIR::InstKind::AddrParam;
+    if (SemIR::Function::GetNameFromParamRefId(
+            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
       auto converted_self_id = ConvertSelf(
           context, call_loc_id, callee.latest_decl_id(), callee_specific_id,
-          addr_pattern, param_id, param, self_id);
+          addr_pattern, implicit_param_id, implicit_param.type_id(), self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }

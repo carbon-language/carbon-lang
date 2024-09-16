@@ -419,8 +419,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %b.loc5_6.1: i32 = param b
-// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_6.1
+// CHECK:STDOUT:     %param.loc5: i32 = param
+// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %param.loc5
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
@@ -434,8 +434,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc6_6.1: %.3 = param c
-// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_6.1
+// CHECK:STDOUT:     %param.loc6: %.3 = param
+// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %param.loc6
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
@@ -513,8 +513,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_16.1: type = value_of_initializer %int.make_type_32.loc5_16 [template = i32]
 // CHECK:STDOUT:     %.loc5_16.2: type = converted %int.make_type_32.loc5_16, %.loc5_16.1 [template = i32]
-// CHECK:STDOUT:     %b.loc5_13.1: i32 = param b
-// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_13.1
+// CHECK:STDOUT:     %param.loc5: i32 = param
+// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %param.loc5
 // CHECK:STDOUT:     %int.make_type_32.loc5_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_24.1: type = value_of_initializer %int.make_type_32.loc5_24 [template = i32]
 // CHECK:STDOUT:     %.loc5_24.2: type = converted %int.make_type_32.loc5_24, %.loc5_24.1 [template = i32]
@@ -528,8 +528,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_21.2: type = value_of_initializer %int.make_type_32.loc6_17 [template = i32]
 // CHECK:STDOUT:     %.loc6_21.3: type = converted %int.make_type_32.loc6_17, %.loc6_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_21.4: type = converted %.loc6_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc6_13.1: %.3 = param c
-// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_13.1
+// CHECK:STDOUT:     %param.loc6: %.3 = param
+// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %param.loc6
 // CHECK:STDOUT:     %int.make_type_32.loc6_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_32.1: type = value_of_initializer %int.make_type_32.loc6_32 [template = i32]
 // CHECK:STDOUT:     %.loc6_32.2: type = converted %int.make_type_32.loc6_32, %.loc6_32.1 [template = i32]
@@ -748,8 +748,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %b.loc7_13.1: i32 = param b
-// CHECK:STDOUT:     %b.loc7_13.2: i32 = bind_name b, %b.loc7_13.1
+// CHECK:STDOUT:     %param.loc7: i32 = param
+// CHECK:STDOUT:     %b.loc7: i32 = bind_name b, %param.loc7
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
@@ -763,8 +763,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc8_13.1: %.3 = param c
-// CHECK:STDOUT:     %c.loc8_13.2: %.3 = bind_name c, %c.loc8_13.1
+// CHECK:STDOUT:     %param.loc8: %.3 = param
+// CHECK:STDOUT:     %c.loc8: %.3 = bind_name c, %param.loc8
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
@@ -905,8 +905,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %b.loc7_13.1: i32 = param b
-// CHECK:STDOUT:     %b.loc7_13.2: i32 = bind_name b, %b.loc7_13.1
+// CHECK:STDOUT:     %param.loc7: i32 = param
+// CHECK:STDOUT:     %b.loc7: i32 = bind_name b, %param.loc7
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
@@ -920,8 +920,8 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc8_13.1: %.3 = param c
-// CHECK:STDOUT:     %c.loc8_13.2: %.3 = bind_name c, %c.loc8_13.1
+// CHECK:STDOUT:     %param.loc8: %.3 = param
+// CHECK:STDOUT:     %c.loc8: %.3 = bind_name c, %param.loc8
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
