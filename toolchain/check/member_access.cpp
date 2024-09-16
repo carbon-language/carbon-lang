@@ -4,7 +4,6 @@
 
 #include "toolchain/check/member_access.h"
 
-#include <iostream>
 #include <optional>
 
 #include "llvm/ADT/STLExtras.h"

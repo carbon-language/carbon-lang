@@ -4,8 +4,6 @@
 
 #include "toolchain/check/eval.h"
 
-#include <iostream>
-
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
