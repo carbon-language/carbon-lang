@@ -39,6 +39,7 @@ class C {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %.6: type = struct_type {} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,6 +117,7 @@ class C {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc19: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = constants.%.2]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

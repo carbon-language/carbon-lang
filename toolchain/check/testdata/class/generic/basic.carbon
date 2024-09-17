@@ -39,7 +39,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [symbolic]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT:   %Declaration.type: type = generic_class_type @Declaration [template]
 // CHECK:STDOUT:   %Declaration.1: %Declaration.type = struct_value () [template]
 // CHECK:STDOUT:   %Declaration.2: type = class_type @Declaration, @Declaration(%T) [symbolic]
@@ -85,6 +86,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue: @Class.%GetValue.type (%GetValue.type) = struct_value () [symbolic = %GetValue (constants.%GetValue)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %.2: type = struct_type {.k: @Class.%T (%T)} [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness @Class.%.2 (%.5) [symbolic = %.3 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type) = fn_decl @GetAddr [symbolic = %GetAddr (constants.%GetAddr)] {
@@ -108,6 +111,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, file.%T.loc11_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:     %.loc21: @Class.%.1 (%.4) = field_decl k, element0 [template]
+// CHECK:STDOUT:     %.loc22: <witness> = complete_type_witness %.5 [symbolic = %.3 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
@@ -170,6 +174,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue => constants.%GetValue
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT:   %.3 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@GetAddr.%T) {

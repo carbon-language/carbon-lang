@@ -32,6 +32,7 @@ class Class {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,6 +70,7 @@ class Class {
 // CHECK:STDOUT:     %b.loc21_13.1: %.1 = param b, runtime_param0
 // CHECK:STDOUT:     %b.loc21_13.2: %.1 = bind_name b, %b.loc21_13.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

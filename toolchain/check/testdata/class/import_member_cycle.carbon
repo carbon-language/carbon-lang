@@ -33,6 +33,7 @@ fn Run() {
 // CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Cycle, %.1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: %.1} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -61,6 +62,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc5_15: type = ptr_type %Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
@@ -76,6 +78,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
 // CHECK:STDOUT:   %.2: type = ptr_type %Cycle [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: %.2} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

@@ -189,6 +189,7 @@ class C {
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc12_12.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc12_12.3: type = converted %.loc12_9, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
@@ -326,6 +327,7 @@ class C {
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc12_19.2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc12_19.3: type = converted %.loc12_16, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error>
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
@@ -383,6 +385,7 @@ class C {
 // CHECK:STDOUT:   %MultipleAdapts: type = class_type @MultipleAdapts [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %MultipleAdaptsSameType: type = class_type @MultipleAdaptsSameType [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -415,6 +418,7 @@ class C {
 // CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl %.1
 // CHECK:STDOUT:   %.loc13: %.2 = struct_literal ()
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.1 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MultipleAdapts
@@ -425,6 +429,7 @@ class C {
 // CHECK:STDOUT:   %.loc17_11: type = converted %.loc17_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl %.1
 // CHECK:STDOUT:   %.loc25: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc26: <witness> = complete_type_witness %.1 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MultipleAdaptsSameType
@@ -439,6 +444,7 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.3: type = interface_type @I.2 [template]
 // CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -486,6 +492,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%.3] {}
+// CHECK:STDOUT:   %.loc25: <witness> = complete_type_witness %.1 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

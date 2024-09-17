@@ -249,14 +249,15 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.type: type = fn_type @ExplicitAndAlsoDeduced [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced: %ExplicitAndAlsoDeduced.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced.type: type = fn_type @CallExplicitAndAlsoDeduced [template]
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced: %CallExplicitAndAlsoDeduced.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -292,8 +293,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %x.loc6_37.1: @ExplicitAndAlsoDeduced.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     @ExplicitAndAlsoDeduced.%x: @ExplicitAndAlsoDeduced.%T.1 (%T) = bind_name x, %x.loc6_37.1
 // CHECK:STDOUT:     %T.ref.loc6_46: type = name_ref T, @ExplicitAndAlsoDeduced.%T.loc6 [symbolic = @ExplicitAndAlsoDeduced.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6: type = ptr_type %T [symbolic = @ExplicitAndAlsoDeduced.%.1 (constants.%.2)]
-// CHECK:STDOUT:     @ExplicitAndAlsoDeduced.%return: ref @ExplicitAndAlsoDeduced.%.1 (%.2) = var <return slot>
+// CHECK:STDOUT:     %.loc6: type = ptr_type %T [symbolic = @ExplicitAndAlsoDeduced.%.1 (constants.%.3)]
+// CHECK:STDOUT:     @ExplicitAndAlsoDeduced.%return: ref @ExplicitAndAlsoDeduced.%.1 (%.3) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced.decl: %CallExplicitAndAlsoDeduced.type = fn_decl @CallExplicitAndAlsoDeduced [template = constants.%CallExplicitAndAlsoDeduced] {
 // CHECK:STDOUT:     %int.make_type_32.loc9_34: init type = call constants.%Int32() [template = i32]
@@ -304,26 +305,28 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %int.make_type_32.loc9_42: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc9_45.1: type = value_of_initializer %int.make_type_32.loc9_42 [template = i32]
 // CHECK:STDOUT:     %.loc9_45.2: type = converted %int.make_type_32.loc9_42, %.loc9_45.1 [template = i32]
-// CHECK:STDOUT:     %.loc9_45.3: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:     @CallExplicitAndAlsoDeduced.%return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %.loc9_45.3: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:     @CallExplicitAndAlsoDeduced.%return: ref %.5 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ExplicitAndAlsoDeduced(%T.loc6: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %.1: type = ptr_type @ExplicitAndAlsoDeduced.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.1: type = ptr_type @ExplicitAndAlsoDeduced.%T.1 (%T) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc6: type, %x: @ExplicitAndAlsoDeduced.%T.1 (%T)) -> @ExplicitAndAlsoDeduced.%.1 (%.2);
+// CHECK:STDOUT:   fn(%T.loc6: type, %x: @ExplicitAndAlsoDeduced.%T.1 (%T)) -> @ExplicitAndAlsoDeduced.%.1 (%.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallExplicitAndAlsoDeduced(%n: i32) -> %.4 {
+// CHECK:STDOUT: fn @CallExplicitAndAlsoDeduced(%n: i32) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.ref: %ExplicitAndAlsoDeduced.type = name_ref ExplicitAndAlsoDeduced, file.%ExplicitAndAlsoDeduced.decl [template = constants.%ExplicitAndAlsoDeduced]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -333,7 +336,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduce_implicit.carbon

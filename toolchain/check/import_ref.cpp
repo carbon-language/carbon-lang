@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -1011,6 +1012,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::ClassType inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::CompleteTypeWitness inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::ConstType inst): {
         return TryResolveTypedInst(inst);
       }
@@ -1228,12 +1232,11 @@ class ImportRefResolver {
   // Fills out the class definition for an incomplete class.
   auto AddClassDefinition(const SemIR::Class& import_class,
                           SemIR::Class& new_class,
-                          SemIR::ConstantId object_repr_const_id,
+                          SemIR::InstId complete_type_witness_id,
                           SemIR::InstId base_id) -> void {
     new_class.definition_id = new_class.first_owning_decl_id;
 
-    new_class.object_repr_id =
-        context_.GetTypeIdForTypeConstant(object_repr_const_id);
+    new_class.complete_type_witness_id = complete_type_witness_id;
 
     new_class.scope_id = context_.name_scopes().Add(
         new_class.first_owning_decl_id, SemIR::NameId::Invalid,
@@ -1312,10 +1315,10 @@ class ImportRefResolver {
     auto param_const_ids = GetLocalParamConstantIds(import_class.param_refs_id);
     auto generic_data = GetLocalGenericData(import_class.generic_id);
     auto self_const_id = GetLocalConstantId(import_class.self_type_id);
-    auto object_repr_const_id =
-        import_class.object_repr_id.is_valid()
-            ? GetLocalConstantId(import_class.object_repr_id)
-            : SemIR::ConstantId::Invalid;
+    auto complete_type_witness_id =
+        import_class.complete_type_witness_id.is_valid()
+            ? GetLocalConstantInstId(import_class.complete_type_witness_id)
+            : SemIR::InstId::Invalid;
     auto base_id = import_class.base_id.is_valid()
                        ? GetLocalConstantInstId(import_class.base_id)
                        : SemIR::InstId::Invalid;
@@ -1334,7 +1337,7 @@ class ImportRefResolver {
     new_class.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
     if (import_class.is_defined()) {
-      AddClassDefinition(import_class, new_class, object_repr_const_id,
+      AddClassDefinition(import_class, new_class, complete_type_witness_id,
                          base_id);
     }
 
@@ -1366,6 +1369,21 @@ class ImportRefResolver {
            .class_id = generic_class_type.class_id,
            .specific_id = specific_id});
     }
+  }
+
+  auto TryResolveTypedInst(SemIR::CompleteTypeWitness inst) -> ResolveResult {
+    CARBON_CHECK(import_ir_.types().GetInstId(inst.type_id) ==
+                 SemIR::InstId::BuiltinWitnessType);
+    auto object_repr_const_id = GetLocalConstantId(inst.object_repr_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+    auto object_repr_id =
+        context_.GetTypeIdForTypeConstant(object_repr_const_id);
+    return ResolveAs<SemIR::CompleteTypeWitness>(
+        {.type_id =
+             context_.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
+         .object_repr_id = object_repr_id});
   }
 
   auto TryResolveTypedInst(SemIR::ConstType inst) -> ResolveResult {

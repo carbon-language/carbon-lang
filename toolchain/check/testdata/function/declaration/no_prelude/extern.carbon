@@ -161,6 +161,7 @@ class C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -177,6 +178,7 @@ class C {
 // CHECK:STDOUT:     %self.loc13_15.1: %C = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc13_15.2: %C = bind_name self, %self.loc13_15.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

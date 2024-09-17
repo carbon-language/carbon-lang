@@ -31,25 +31,27 @@ fn G() {
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make, @Wrap(%T) [symbolic]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 100 [template]
-// CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %C, %.4 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.arr: %.4} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 100 [template]
+// CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type %C, %.5 [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.arr: %.5} [template]
+// CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Wrap.3: type = class_type @Wrap, @Wrap(i32) [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make, @Wrap(i32) [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %Wrap.4: type = class_type @Wrap, @Wrap(%.1) [template]
 // CHECK:STDOUT:   %Make.type.3: type = fn_type @Make, @Wrap(%.1) [template]
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.arr: %.5} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.7 [template]
+// CHECK:STDOUT:   %.11: type = struct_type {.arr: %.6} [template]
+// CHECK:STDOUT:   %.12: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %Wrap.5: type = class_type @Wrap, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.type.4: type = fn_type @Make, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.4: %Make.type.4 = struct_value () [template]
@@ -98,6 +100,7 @@ fn G() {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, file.%T.loc11_12.2 [symbolic = @Make.%T (constants.%T)]
 // CHECK:STDOUT:       %return.var: ref @Make.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Wrap.2
@@ -107,11 +110,12 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 100 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 100 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc15_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_21.2: type = converted %int.make_type_32, %.loc15_21.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_29: type = array_type %.loc15_26, i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc15_18: %.6 = field_decl arr, element0 [template]
+// CHECK:STDOUT:   %.loc15_29: type = array_type %.loc15_26, i32 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_18: %.7 = field_decl arr, element0 [template]
+// CHECK:STDOUT:   %.loc15_32: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

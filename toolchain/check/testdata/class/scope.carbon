@@ -39,13 +39,14 @@ fn Run() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -94,6 +95,7 @@ fn Run() {
 // CHECK:STDOUT:     %.loc16_13.2: type = converted %int.make_type_32.loc16, %.loc16_13.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc16: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -105,7 +107,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,7 +122,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   return %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

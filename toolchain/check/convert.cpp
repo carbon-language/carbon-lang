@@ -532,8 +532,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target) -> SemIR::InstId {
   PendingBlock target_block(context);
-  auto& class_info = context.classes().Get(dest_type.class_id);
-  if (class_info.inheritance_kind == SemIR::Class::Abstract) {
+  auto& dest_class_info = context.classes().Get(dest_type.class_id);
+  if (dest_class_info.inheritance_kind == SemIR::Class::Abstract) {
     CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
                       "Cannot construct instance of abstract class. "
                       "Consider using `partial {0}` instead.",
@@ -542,8 +542,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                            target.type_id);
     return SemIR::InstId::BuiltinError;
   }
-  auto object_repr_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), dest_type.specific_id, class_info.object_repr_id);
+  auto object_repr_id =
+      dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::TypeId::Error) {
     return SemIR::InstId::BuiltinError;
   }
@@ -683,8 +683,8 @@ static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
   if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = context.classes().Get(class_type->class_id);
     if (class_info.adapt_id.is_valid()) {
-      return SemIR::GetTypeInSpecific(context.sem_ir(), class_type->specific_id,
-                                      class_info.object_repr_id);
+      return class_info.GetObjectRepr(context.sem_ir(),
+                                      class_type->specific_id);
     }
   }
 

@@ -108,6 +108,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -145,6 +146,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %.loc37: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
@@ -181,7 +184,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT: }

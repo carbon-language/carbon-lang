@@ -1169,6 +1169,9 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::ClassType::specific_id);
+    case SemIR::CompleteTypeWitness::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);

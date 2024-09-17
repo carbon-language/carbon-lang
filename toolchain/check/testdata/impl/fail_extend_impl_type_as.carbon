@@ -50,6 +50,7 @@ class E {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
 // CHECK:STDOUT: }
@@ -115,6 +116,7 @@ class E {
 // CHECK:STDOUT:     %.loc18_15.2: type = converted %int.make_type_32, %.loc18_15.1 [template = i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -126,6 +128,7 @@ class E {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -137,6 +140,7 @@ class E {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc40: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E

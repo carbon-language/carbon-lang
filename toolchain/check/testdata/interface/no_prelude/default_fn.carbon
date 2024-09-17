@@ -38,7 +38,8 @@ class C {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %.6: type = struct_type {} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,6 +76,7 @@ class C {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc24: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

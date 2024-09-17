@@ -56,7 +56,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.type: type = fn_type @WithSelf [template]
 // CHECK:STDOUT:   %WithSelf: %WithSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -100,6 +101,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %self.loc13_15.1: %Class = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc13_15.2: %Class = bind_name self, %self.loc13_15.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
