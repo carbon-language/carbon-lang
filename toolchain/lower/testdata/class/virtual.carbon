@@ -10,6 +10,7 @@
 
 base class Foo {
   virtual fn Fn() {}
+  var v: i32;
 };
 
 fn Use(v: Foo*) {
@@ -36,7 +37,7 @@ fn Create() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   %v.var = alloca { i32 }, align 8, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,9 +52,9 @@ fn Create() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 1, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Create", linkageName: "_CCreate.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 7, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 19, column: 1, scope: !11)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 1, scope: !8)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Create", linkageName: "_CCreate.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 21, column: 7, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 20, column: 1, scope: !11)
