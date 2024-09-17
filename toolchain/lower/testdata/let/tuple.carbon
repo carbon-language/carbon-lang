@@ -59,11 +59,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:   store ptr %tuple.loc14_43, ptr %tuple.loc14_476, align 8, !dbg !15
 // CHECK:STDOUT:   %tuple.loc14_477 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1, !dbg !15
 // CHECK:STDOUT:   store ptr %tuple.loc14_46, ptr %tuple.loc14_477, align 8, !dbg !15
-// CHECK:STDOUT:   %.loc15_11.tuple.index = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1, !dbg !16
-// CHECK:STDOUT:   %.loc15_11.tuple.index.load = load ptr, ptr %.loc15_11.tuple.index, align 8, !dbg !16
-// CHECK:STDOUT:   %.loc15_13.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_11.tuple.index.load, i32 0, i32 1, !dbg !16
-// CHECK:STDOUT:   %.loc15_13.tuple.index.load = load i32, ptr %.loc15_13.tuple.index, align 4, !dbg !16
-// CHECK:STDOUT:   ret i32 %.loc15_13.tuple.index.load, !dbg !17
+// CHECK:STDOUT:   %.loc15_11.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc14_47, i32 0, i32 1, !dbg !16
+// CHECK:STDOUT:   %.loc15_11.tuple.elem.load = load ptr, ptr %.loc15_11.tuple.elem, align 8, !dbg !16
+// CHECK:STDOUT:   %.loc15_13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_11.tuple.elem.load, i32 0, i32 1, !dbg !16
+// CHECK:STDOUT:   %.loc15_13.tuple.elem.load = load i32, ptr %.loc15_13.tuple.elem, align 4, !dbg !16
+// CHECK:STDOUT:   ret i32 %.loc15_13.tuple.elem.load, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)

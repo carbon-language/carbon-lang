@@ -32,8 +32,8 @@ fn Run() {
 // CHECK:STDOUT:   %t.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc14_17.1.temp = alloca { i32, i32 }, align 8, !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_17.1.temp), !dbg !11
-// CHECK:STDOUT:   %.loc14_19.1.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_17.1.temp, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc14_19.2 = load i32, ptr %.loc14_19.1.tuple.index, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc14_19.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_17.1.temp, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   %.loc14_19.2 = load i32, ptr %.loc14_19.1.tuple.elem, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc14_19.2, ptr %t.var, align 4, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }

@@ -29,7 +29,7 @@ auto HandleParseNode(Context& context, Parse::MemberAccessExprId node_id)
     auto tuple_inst_id = context.node_stack().PopExpr();
 
     auto tuple_value_inst_id =
-        PerformTupleIndex(context, node_id, tuple_inst_id, index_inst_id);
+        PerformTupleAccess(context, node_id, tuple_inst_id, index_inst_id);
 
     context.node_stack().Push(node_id, tuple_value_inst_id);
   } else {
@@ -70,7 +70,7 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
     auto tuple_inst_id = PerformPointerDereference(
         context, node_id, tuple_pointer_inst_id, diagnose_not_pointer);
     auto tuple_value_inst_id =
-        PerformTupleIndex(context, node_id, tuple_inst_id, index_inst_id);
+        PerformTupleAccess(context, node_id, tuple_inst_id, index_inst_id);
 
     context.node_stack().Push(node_id, tuple_value_inst_id);
   } else {

@@ -710,6 +710,7 @@ constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
   using IndexBase::IndexBase;
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "element";
     IndexBase::Print(out);

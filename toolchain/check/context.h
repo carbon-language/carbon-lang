@@ -176,8 +176,8 @@ class Context {
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
-      -> LookupResult;
+  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
+                             bool required = true) -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
